@@ -5,104 +5,85 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import GalleryCoverField from '@/src/components/features/gallery/GalleryCoverField';
-import StoryCollaborationSection from '@/src/components/features/story/StoryCollaborationSection/StoryCollaborationSection';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
-import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { CommonActions, useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useState } from 'react';
+import type { FavoriteBehavior } from '@keres/shared/entities/Story';
+import { useNavigation } from '@react-navigation/native';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
-import { isServerless } from '../../utils/clientFlavor';
+import { useLoadedStory } from './useLoadedStory';
+import { useStorySettingsSave } from './useStorySettingsSave';
 
-type StorySettingsScreenNavigationProp = DrawerNavigationProp<
-  MainSystemDrawerParamList,
-  'MainDashboard'
->;
-
-const StorySettingsScreen = () => {
+/**
+ * The story's identity (title, type, description, genre, author, language, notes), the adults-only flag and
+ * the reading preferences. Saves only these; the cover, the theme and the server have sections of their own.
+ */
+const StorySettingsGeneralScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const navigation = useNavigation<StorySettingsScreenNavigationProp>();
-  const { selectedStory, setSelectedStory } = useStoryStore();
-  const storyId = selectedStory?.id;
+  const navigation = useNavigation();
+  const storyId = useStoryStore((state) => state.selectedStory?.id);
   const { canEdit, canManageStoryPolicy } = useStoryRole(storyId);
   const drizzleDb = useDrizzle();
-  const storyService = useCallback(() => createStoryService(drizzleDb), [drizzleDb]);
+  const storyService = useMemo(() => createStoryService(drizzleDb), [drizzleDb]);
   const { userId } = useUserSettingsStore();
   const identity = useStoryIdentityDraft();
+  const { saving, save } = useStorySettingsSave();
 
   useScreenHeader({
-    target: 'self',
-    title: t('story_settings_title'),
+    target: 'parent',
+    title: t('story_settings_section_general'),
   });
 
   const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
-  const [allowReaderComments, setAllowReaderComments] = useState(false);
   const [autoLinkMentions, setAutoLinkMentions] = useState(false);
   const [isNsfw, setIsNsfw] = useState(false);
-  const [coverGalleryId, setCoverGalleryId] = useState<string | null>(null);
   const [initialIsNsfw, setInitialIsNsfw] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
   const [converting, setConverting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const applyStoryIdentity = identity.applyStoryIdentity;
+  const { loading, error } = useLoadedStory(
+    useCallback(
+      (story) => {
+        applyStoryIdentity(story);
+        setNormalizeSceneTiming(story.normalizeSceneTiming);
+        setAutoLinkMentions(story.autoLinkMentions);
+        setIsNsfw(story.isNsfw ?? false);
+        setInitialIsNsfw(story.isNsfw ?? false);
+      },
+      [applyStoryIdentity],
+    ),
+  );
 
-  const [prevStoryId, setPrevStoryId] = useState<typeof storyId | null>(null);
-  if (storyId !== prevStoryId) {
-    setPrevStoryId(storyId);
-    if (!storyId) {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!storyId) {
+  const doSave = async () => {
+    if (!identity.title.trim()) {
+      AppAlert.alert(t('error'), t('title_required'));
       return;
     }
-    const loadStory = async () => {
-      try {
-        setLoading(true);
-        const fetchedStory = await storyService().getStoryById(storyId, userId ?? undefined);
-        if (!fetchedStory) {
-          setError(t('story_not_found'));
-          return;
-        }
-        applyStoryIdentity(fetchedStory);
-        setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
-        setAllowReaderComments(fetchedStory.allowReaderComments);
-        setAutoLinkMentions(fetchedStory.autoLinkMentions);
-        setIsNsfw(fetchedStory.isNsfw ?? false);
-        setCoverGalleryId(fetchedStory.coverGalleryId ?? null);
-        setInitialIsNsfw(fetchedStory.isNsfw ?? false);
-      } catch (err) {
-        console.error('Failed to load story or servers:', err);
-        setError(t('failed_to_load_story_settings'));
-      } finally {
-        setLoading(false);
-      }
-    };
-    void loadStory();
-    // Do not depend on `identity`: it is a new object each render and would re-fetch + reset
-    // every keystroke. `applyStoryIdentity` is stable (useCallback []).
-  }, [storyId, storyService, userId, t, applyStoryIdentity]);
+    await save({
+      title: identity.title.trim(),
+      description: identity.description,
+      genre: identity.genre,
+      language: identity.language,
+      author: identity.author,
+      isFavorite: identity.isFavorite,
+      extraNotes: identity.extraNotes,
+      normalizeSceneTiming,
+      autoLinkMentions,
+      ...(canManageStoryPolicy ? { favoriteBehavior: identity.favoriteBehavior, isNsfw } : {}),
+    });
+  };
 
   const handleSave = () => {
     // Flagging adults-only expels every collaborator who is not age-verified, on the server, as
@@ -110,52 +91,11 @@ const StorySettingsScreen = () => {
     if (canManageStoryPolicy && isNsfw && !initialIsNsfw) {
       AppAlert.alert(t('story_nsfw_confirm_title'), t('story_nsfw_confirm_message'), [
         { text: t('cancel'), style: 'cancel' },
-        { text: t('confirm'), onPress: () => void runSave(doSave) },
+        { text: t('confirm'), onPress: () => void doSave() },
       ]);
       return;
     }
-    return runSave(doSave);
-  };
-
-  const doSave = async () => {
-    if (!storyId) return;
-    if (!identity.title.trim()) {
-      AppAlert.alert(t('error'), t('title_required'));
-      return;
-    }
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    setError(null);
-    try {
-      const storyData: Partial<
-        Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
-      > = {
-        title: identity.title.trim(),
-        description: identity.description,
-        genre: identity.genre,
-        language: identity.language,
-        author: identity.author,
-        isFavorite: identity.isFavorite,
-        extraNotes: identity.extraNotes,
-        coverGalleryId,
-        normalizeSceneTiming,
-        autoLinkMentions,
-        ...(canManageStoryPolicy
-          ? { favoriteBehavior: identity.favoriteBehavior, allowReaderComments, isNsfw }
-          : {}),
-      };
-      await storyService().updateStory(userId, storyId, storyData);
-      if (selectedStory) setSelectedStory({ ...selectedStory, ...storyData });
-      setInitialIsNsfw(isNsfw);
-      AppAlert.alert(t('success'), t('story_updated_successfully'));
-      navigation.goBack();
-    } catch (err) {
-      console.error('Failed to save story settings:', err);
-      setError(t('failed_to_save_story_settings'));
-      AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
-    }
+    return doSave();
   };
 
   const handleTypeChange = (newType: 'linear' | 'branching') => {
@@ -169,7 +109,7 @@ const StorySettingsScreen = () => {
           onPress: async () => {
             try {
               setConverting(true);
-              await storyService().convertStoryType(userId, storyId, 'branching');
+              await storyService.convertStoryType(userId, storyId, 'branching');
               identity.setType('branching');
               AppAlert.alert(t('success'), t('story_type_converted_successfully'));
             } catch (err) {
@@ -187,7 +127,7 @@ const StorySettingsScreen = () => {
     void (async () => {
       try {
         setConverting(true);
-        const compatibility = await storyService().checkLinearCompatibility(storyId);
+        const compatibility = await storyService.checkLinearCompatibility(storyId);
         setConverting(false);
         if (!compatibility.compatible) {
           const reasonLines = compatibility.reasons
@@ -209,7 +149,7 @@ const StorySettingsScreen = () => {
             onPress: async () => {
               try {
                 setConverting(true);
-                await storyService().convertStoryType(userId, storyId, 'linear');
+                await storyService.convertStoryType(userId, storyId, 'linear');
                 identity.setType('linear');
                 AppAlert.alert(t('success'), t('story_type_converted_successfully'));
               } catch (err) {
@@ -229,41 +169,6 @@ const StorySettingsScreen = () => {
     })();
   };
 
-  const handleDelete = () => {
-    if (!storyId || !canManageStoryPolicy) return;
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    AppAlert.alert(t('delete_story_title'), t('delete_story_message'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setDeleting(true);
-            await storyService().deleteStory(storyId);
-            AppAlert.alert(t('success'), t('story_deleted_successfully'));
-            const rootStackNavigation = navigation.getParent();
-            const resetToStorySelection = CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'StorySelection' }],
-            });
-            if (rootStackNavigation) rootStackNavigation.dispatch(resetToStorySelection);
-            else navigation.dispatch(resetToStorySelection);
-          } catch (err) {
-            console.error('Failed to delete story:', err);
-            setError(t('failed_to_delete_story'));
-            AppAlert.alert(t('error'), t('failed_to_delete_story'));
-          } finally {
-            setDeleting(false);
-          }
-        },
-      },
-    ]);
-  };
-
   if (!storyId) {
     return (
       <ScreenError
@@ -277,21 +182,12 @@ const StorySettingsScreen = () => {
 
   return (
     <EntityFormContainer
-      title={t('story_settings_screen_title')}
-      description={t('story_settings_screen_description')}
+      title={t('story_settings_section_general')}
+      description={t('story_settings_section_general_description')}
       actions={
-        <>
-          <Button
-            onPress={handleDelete}
-            style={{ backgroundColor: colors.error }}
-            disabled={!canManageStoryPolicy || saving || deleting}
-          >
-            {t('delete_story_title')}
-          </Button>
-          <Button onPress={handleSave} disabled={!canEdit || saving || deleting}>
-            {t('update_story')}
-          </Button>
-        </>
+        <Button onPress={handleSave} disabled={!canEdit || saving}>
+          {t('update_story')}
+        </Button>
       }
     >
       {!canEdit && (
@@ -311,14 +207,6 @@ const StorySettingsScreen = () => {
         typeDisabled={!canManageStoryPolicy}
         favoriteBehaviorDisabled={!canManageStoryPolicy}
         showFavoriteBehavior={false}
-        editable={canEdit}
-      />
-
-      <Text style={[styles.coverLabel, { color: colors.text }]}>{t('cover')}</Text>
-      <GalleryCoverField
-        storyId={storyId}
-        value={coverGalleryId}
-        onChange={setCoverGalleryId}
         editable={canEdit}
       />
 
@@ -405,36 +293,11 @@ const StorySettingsScreen = () => {
           </Text>
         </View>
       </View>
-
-      {/* Collaboration is linking the story to a server and its people; a serverless build has neither. */}
-      {isServerless() ? null : (
-        <StoryCollaborationSection
-          storyId={storyId}
-          allowReaderComments={allowReaderComments}
-          onAllowReaderCommentsChange={setAllowReaderComments}
-          canManageStoryPolicy={canManageStoryPolicy}
-          onLeftStory={() => {
-            const rootStackNavigation = navigation.getParent();
-            const resetToStorySelection = CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'StorySelection' }],
-            });
-            if (rootStackNavigation) rootStackNavigation.dispatch(resetToStorySelection);
-            else navigation.dispatch(resetToStorySelection);
-          }}
-        />
-      )}
     </EntityFormContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  coverLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    marginTop: 16,
-  },
   preferencesCard: {
     borderRadius: 8,
     borderWidth: 1,
@@ -454,4 +317,4 @@ const styles = StyleSheet.create({
   preferenceDescription: { marginTop: 3 },
 });
 
-export default StorySettingsScreen;
+export default StorySettingsGeneralScreen;

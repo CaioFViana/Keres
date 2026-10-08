@@ -258,7 +258,7 @@ jest.mock('../../src/screens/mainstorystack/StoryEntityCountScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/mainstorystack/StorySettingsScreen', () => ({
+jest.mock('../../src/navigation/StorySettingsStack', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -575,6 +575,7 @@ it.each([
   ['StoryAnalysisStack', 'StoryAnalysis'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
+  ['StorySettings', 'StorySettingsIndex'],
 ])('returns %s to its list screen when its drawer item is pressed', async (drawerName, screen) => {
   await renderDrawer();
   const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
@@ -590,7 +591,7 @@ it.each([
   expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
 
-it.each([['MainDashboard'], ['GlobalSearch'], ['StorySettings']])(
+it.each([['MainDashboard'], ['GlobalSearch']])(
   'closes the drawer when the plain entry %s is tapped while focused',
   async (drawerName) => {
     await renderDrawer();

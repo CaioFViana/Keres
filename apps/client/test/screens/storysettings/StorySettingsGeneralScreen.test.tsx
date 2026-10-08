@@ -2,8 +2,6 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-nati
 import type { ReactNode } from 'react';
 
 const mockGoBack = jest.fn();
-const mockDispatch = jest.fn();
-const mockParentDispatch = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockAppAlert = jest.fn();
@@ -11,7 +9,6 @@ const mockGetStoryById = jest.fn();
 const mockUpdateStory = jest.fn();
 const mockConvertStoryType = jest.fn();
 const mockCheckLinearCompatibility = jest.fn();
-const mockDeleteStory = jest.fn();
 
 let mockSelectedStory: { id: string; title: string } | null = {
   id: 'story-1',
@@ -23,8 +20,6 @@ let mockCanManageStoryPolicy = true;
 // Stable identities for the loader effect.
 const mockNavigation = {
   goBack: mockGoBack,
-  dispatch: mockDispatch,
-  getParent: () => ({ dispatch: mockParentDispatch }),
 };
 const mockT = (key: string) => key;
 const mockDrizzleDb = {};
@@ -60,15 +55,14 @@ jest.mock('../../../src/services/storymanagement/StoryService', () => ({
     updateStory: mockUpdateStory,
     convertStoryType: mockConvertStoryType,
     checkLinearCompatibility: mockCheckLinearCompatibility,
-    deleteStory: mockDeleteStory,
   }),
 }));
 jest.mock('../../../src/state/storyStore', () => ({
   __esModule: true,
-  useStoryStore: () => ({
-    selectedStory: mockSelectedStory,
-    setSelectedStory: mockSetSelectedStory,
-  }),
+  useStoryStore: (selector?: (state: unknown) => unknown) => {
+    const state = { selectedStory: mockSelectedStory, setSelectedStory: mockSetSelectedStory };
+    return selector ? selector(state) : state;
+  },
 }));
 jest.mock('../../../src/state/userSettingsStore', () => ({
   __esModule: true,
@@ -124,23 +118,6 @@ jest.mock('../../../src/components/common', () => {
           change
         </Text>
       </>
-    ),
-  };
-});
-jest.mock('../../../src/components/features/gallery/GalleryCoverField', () => {
-  const { Text } = require('react-native');
-  return {
-    __esModule: true,
-    default: ({
-      value,
-      onChange,
-    }: {
-      value: string | null;
-      onChange: (value: string | null) => void;
-    }) => (
-      <Text testID="cover-field" onPress={() => onChange('gallery-7')}>
-        {`cover:${value}`}
-      </Text>
     ),
   };
 });
@@ -233,37 +210,6 @@ jest.mock('../../../src/components/features/story/StoryFieldsForm/StoryFieldsFor
     ),
   };
 });
-jest.mock(
-  '../../../src/components/features/story/StoryCollaborationSection/StoryCollaborationSection',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        storyId: string;
-        allowReaderComments: boolean;
-        canManageStoryPolicy: boolean;
-        onAllowReaderCommentsChange: (next: boolean) => void;
-      }) => (
-        <>
-          <Text testID="collab-marker">
-            {JSON.stringify({
-              storyId: props.storyId,
-              allowReaderComments: props.allowReaderComments,
-              canManage: props.canManageStoryPolicy,
-            })}
-          </Text>
-          <Text
-            testID="collab-toggle"
-            onPress={() => props.onAllowReaderCommentsChange(!props.allowReaderComments)}
-          >
-            toggle
-          </Text>
-        </>
-      ),
-    };
-  },
-);
 jest.mock('react-i18next', () => {
   const actual = jest.requireActual('react-i18next');
   return {
@@ -273,7 +219,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-import StorySettingsScreen from '../../../src/screens/mainstorystack/StorySettingsScreen';
+import StorySettingsGeneralScreen from '../../../src/screens/storysettings/StorySettingsGeneralScreen';
 
 function makeStory(overrides = {}) {
   return {
@@ -311,7 +257,7 @@ function alertButtons(callIndex: number): { text: string; onPress?: () => void }
   }[];
 }
 
-describe('StorySettingsScreen', () => {
+describe('StorySettingsGeneralScreen', () => {
   afterEach(() => {
     cleanup();
   });
@@ -325,14 +271,13 @@ describe('StorySettingsScreen', () => {
     mockUpdateStory.mockResolvedValue(undefined);
     mockConvertStoryType.mockResolvedValue(undefined);
     mockCheckLinearCompatibility.mockResolvedValue({ compatible: true, reasons: [] });
-    mockDeleteStory.mockResolvedValue(undefined);
   });
 
   it('loads the story into the settings form', async () => {
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(mockGetStoryById).toHaveBeenCalledWith('story-1', 'user-1'));
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
-    expect(view.getByTestId('form-title').props.children).toBe('story_settings_screen_title');
+    expect(view.getByTestId('form-title').props.children).toBe('story_settings_section_general');
     expect(jsonOf(view, 'identity-marker')).toMatchObject({
       title: 'My Story',
       type: 'linear',
@@ -349,57 +294,40 @@ describe('StorySettingsScreen', () => {
       disabled: false,
       options: ['global', 'individual', 'individual_public'],
     });
-    expect(jsonOf(view, 'collab-marker')).toMatchObject({
-      storyId: 'story-1',
-      allowReaderComments: false,
-      canManage: true,
-    });
     expect(view.getByTestId('btn-update_story').props.children).toBe('update_story:enabled');
   });
 
-  it('offers no collaboration in a serverless build', async () => {
-    process.env.EXPO_PUBLIC_SERVERLESS = '1';
-    try {
-      const view = await render(<StorySettingsScreen />);
-      await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
-      expect(view.queryByTestId('collab-marker')).toBeNull();
-    } finally {
-      delete process.env.EXPO_PUBLIC_SERVERLESS;
-    }
-  });
-
-  it('saves the edited settings and goes back', async () => {
-    const view = await render(<StorySettingsScreen />);
+  it('saves only its own fields and goes back', async () => {
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
-    // Flip both preference switches (the adults-only one comes first) and the collaboration
-    // toggle before saving.
+    // Flip both preference switches (the adults-only one comes first) before saving.
     await fireEvent.press(view.getAllByTestId('themed-switch')[1]);
     await fireEvent.press(view.getAllByTestId('themed-switch')[2]);
-    await fireEvent.press(view.getByTestId('collab-toggle'));
     await fireEvent.press(view.getByTestId('favorite-behavior-change'));
-    await fireEvent.press(view.getByTestId('cover-field'));
     await fireEvent.press(view.getByTestId('btn-update_story'));
     await waitFor(() => expect(mockUpdateStory).toHaveBeenCalled());
     expect(mockUpdateStory).toHaveBeenCalledWith(
       'user-1',
       'story-1',
       expect.objectContaining({
-        coverGalleryId: 'gallery-7',
         title: 'My Story',
         normalizeSceneTiming: false,
         autoLinkMentions: false,
-        allowReaderComments: true,
         favoriteBehavior: 'global',
         isNsfw: false,
       }),
     );
+    // The cover and the collaboration setting belong to other sections and are never written from here.
+    const written = mockUpdateStory.mock.calls[0][2];
+    expect(written).not.toHaveProperty('coverGalleryId');
+    expect(written).not.toHaveProperty('allowReaderComments');
     expect(mockSetSelectedStory).toHaveBeenCalled();
     expect(mockAppAlert).toHaveBeenCalledWith('success', 'story_updated_successfully');
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
   it('confirms before flagging adults-only, and saves only on confirm', async () => {
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
     await fireEvent.press(view.getAllByTestId('themed-switch')[0]);
     await fireEvent.press(view.getByTestId('btn-update_story'));
@@ -425,7 +353,7 @@ describe('StorySettingsScreen', () => {
   });
 
   it('requires a title before saving', async () => {
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
     await fireEvent.press(view.getByTestId('identity-clear-title'));
     await fireEvent.press(view.getByTestId('btn-update_story'));
@@ -434,7 +362,7 @@ describe('StorySettingsScreen', () => {
   });
 
   it('converts a linear story to branching after confirmation', async () => {
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
     await fireEvent.press(view.getByTestId('identity-change-type'));
     expect(mockAppAlert).toHaveBeenCalledWith(
@@ -456,7 +384,7 @@ describe('StorySettingsScreen', () => {
       compatible: false,
       reasons: [{ chapterName: 'Arrival', kind: 'fork' }],
     });
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
     await fireEvent.press(view.getByTestId('identity-change-type'));
     await waitFor(() =>
@@ -468,41 +396,18 @@ describe('StorySettingsScreen', () => {
     expect(mockConvertStoryType).not.toHaveBeenCalled();
   });
 
-  it('deletes the story and resets to story selection', async () => {
-    const view = await render(<StorySettingsScreen />);
-    await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
-    await fireEvent.press(view.getByTestId('btn-delete_story_title'));
-    expect(mockAppAlert).toHaveBeenCalledWith(
-      'delete_story_title',
-      'delete_story_message',
-      expect.any(Array),
-    );
-    const remove = alertButtons(0).find((button) => button.text === 'delete');
-    await remove!.onPress!();
-    await waitFor(() => expect(mockDeleteStory).toHaveBeenCalledWith('story-1'));
-    expect(mockAppAlert).toHaveBeenCalledWith('success', 'story_deleted_successfully');
-    expect(mockParentDispatch).toHaveBeenCalledTimes(1);
-    expect(mockParentDispatch.mock.calls[0][0]).toMatchObject({
-      type: 'RESET',
-      payload: { routes: [{ name: 'StorySelection' }] },
-    });
-  });
-
   it('shows the read-only notice for writers without policy rights', async () => {
     mockCanEdit = true;
     mockCanManageStoryPolicy = false;
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
     expect(view.getByText('story_owner_only_error')).toBeTruthy();
     expect(jsonOf(view, 'favorite-behavior').disabled).toBe(true);
-    expect(view.getByTestId('btn-delete_story_title').props.children).toBe(
-      'delete_story_title:disabled',
-    );
   });
 
   it('shows an error when no story is selected', async () => {
     mockSelectedStory = null;
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     expect(view.getByTestId('screen-error').props.children).toBe('no_story_selected_for_settings');
     await fireEvent.press(view.getByTestId('screen-error'));
     expect(mockGoBack).toHaveBeenCalledTimes(1);
@@ -511,7 +416,7 @@ describe('StorySettingsScreen', () => {
 
   it('shows an error when the story cannot be loaded', async () => {
     mockGetStoryById.mockResolvedValue(null);
-    const view = await render(<StorySettingsScreen />);
+    const view = await render(<StorySettingsGeneralScreen />);
     await waitFor(() => expect(view.queryByTestId('screen-error')).not.toBeNull());
     expect(view.getByTestId('screen-error').props.children).toBe('story_not_found');
   });

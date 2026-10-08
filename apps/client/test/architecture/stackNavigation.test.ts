@@ -34,7 +34,7 @@ describe('navigation between stacks', () => {
       const path = relativeOf(file);
       if (MAY_NAME_A_STACK(path)) continue;
       const source = readFileSync(file, 'utf8');
-      for (const match of source.matchAll(/\.navigate\(\s*['"][A-Za-z]+Stack['"]/g)) {
+      for (const match of source.matchAll(/\.navigate\(\s*['"](?:[A-Za-z]+Stack|StorySettings)['"]/g)) {
         const before = source.slice(Math.max(0, (match.index ?? 0) - 240), match.index);
         if (/onReturn/.test(before)) continue;
         const line = source.slice(0, match.index).split('\n').length;

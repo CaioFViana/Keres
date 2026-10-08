@@ -19,7 +19,6 @@ const SAVE_DELETE_FORMS: { file: string; save: RegExp; remove: RegExp }[] = [
   { file: 'screens/itemJourneys/ItemJourneyFormScreen.tsx' },
   { file: 'screens/items/ItemFormScreen.tsx' },
   { file: 'screens/locations/LocationFormContent.tsx' },
-  { file: 'screens/mainstorystack/StorySettingsScreen.tsx' },
   { file: 'screens/narrative-elements/chapters/ChapterFormScreen.tsx' },
   { file: 'screens/narrative-elements/choices/ChoiceFormScreen.tsx' },
   { file: 'screens/narrative-elements/scenes/SceneFormScreen.tsx' },

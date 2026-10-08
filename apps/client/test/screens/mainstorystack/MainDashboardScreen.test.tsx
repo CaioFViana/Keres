@@ -276,7 +276,7 @@ describe('MainDashboardScreen', () => {
     };
     expect(headerCall.title).toBe('My Story');
     headerCall.actions[0].onPress();
-    expect(mockNavigate).toHaveBeenCalledWith('StorySettings', { storyId: 'story-1' });
+    expect(mockNavigate).toHaveBeenCalledWith('StorySettings', { screen: 'StorySettingsIndex' });
   });
 
   it('warns when opening settings without a story', async () => {

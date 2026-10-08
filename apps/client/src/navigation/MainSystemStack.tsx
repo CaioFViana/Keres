@@ -28,7 +28,6 @@ import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
 import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
-import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import { readShowcaseRequest } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
@@ -45,6 +44,8 @@ import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
+import type { StorySettingsStackParamList } from './StorySettingsStack';
+import StorySettingsStackNavigator from './StorySettingsStack';
 import {
   ArcContextDrawerScreen,
   drawerIcon,
@@ -129,9 +130,7 @@ export type MainSystemDrawerParamList = {
   SketchStack: NavigatorScreenParams<SketchStackParamList> | undefined;
   SongStack: NavigatorScreenParams<SongStackParamList> | undefined;
   Settings: undefined;
-  // Optional on purpose: the dashboard passes the story explicitly, but arriving straight
-  // from the drawer navigates with no param at all (both screens read `selectedStory`).
-  StorySettings: { storyId: string } | undefined;
+  StorySettings: NavigatorScreenParams<StorySettingsStackParamList> | undefined;
   StoryAnalysisStack: NavigatorScreenParams<StoryAnalysisStackParamList> | undefined;
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
@@ -536,9 +535,9 @@ const MainSystemNavigator = () => {
         />
         <Drawer.Screen
           name="StorySettings"
-          component={StorySettingsScreen}
+          component={StorySettingsStackNavigator}
           options={{ title: t('story_settings_title'), drawerIcon: drawerIcon('settings-outline') }}
-          listeners={drawerItemListeners('StorySettings')}
+          listeners={drawerItemListeners('StorySettings', 'StorySettingsIndex')}
         />
         <Drawer.Screen
           name="StorySelection"

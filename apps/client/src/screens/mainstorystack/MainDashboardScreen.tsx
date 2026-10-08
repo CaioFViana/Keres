@@ -201,7 +201,7 @@ const MainDashboardScreen = () => {
         label: t('story_settings_title'),
         onPress: () => {
           if (selectedStory?.id) {
-            navigation.navigate('StorySettings', { storyId: selectedStory.id });
+            navigateAcross('StorySettings', 'StorySettingsIndex');
           } else {
             showNotification(t('no_story_selected_for_settings'), 'warning');
           }

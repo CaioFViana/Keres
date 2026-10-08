@@ -131,6 +131,24 @@ describe('POST /auth/login', () => {
     expect(typeof data.accessToken).toBe('string');
   });
 
+  it('keeps the session in cookies for the web client, unless the caller asks for the token only', async () => {
+    const user = await registerUser('ana');
+
+    const web = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: user.password },
+    });
+    expect(web.headers.getSetCookie().join(';')).toContain('access_token=');
+
+    // The admin panel and the public site share the web client's origin, and so its cookies: they ask
+    // for no cookie, or signing in there would swap the account the web client is using.
+    const panel = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: user.password, session: 'token' },
+    });
+    expect(panel.status).toBe(200);
+    expect(typeof panel.data.accessToken).toBe('string');
+    expect(panel.headers.getSetCookie()).toEqual([]);
+  });
+
   it('rejects a wrong password without saying which field was wrong', async () => {
     await registerUser('ana');
 

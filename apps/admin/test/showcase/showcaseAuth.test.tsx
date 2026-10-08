@@ -58,6 +58,7 @@ describe('showcase session requests', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       username: 'ana',
       password: 'secret',
+      session: 'token',
     });
     clearSessionToken();
     expect(readSessionToken()).toBeNull();
@@ -84,14 +85,14 @@ describe('showcase session requests', () => {
     expect(readSessionToken()).toBeNull();
   });
 
-  it('signs out locally even when the server cannot be reached', async () => {
+  it('signs out by forgetting the token, without asking the server to clear cookies', async () => {
     sessionStorage.setItem('keres_showcase_session', 'abc');
-    fetchMock.mockRejectedValueOnce(new Error('offline'));
 
     await logout();
 
     expect(readSessionToken()).toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+    // Those cookies are the web client's, on the same origin.
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

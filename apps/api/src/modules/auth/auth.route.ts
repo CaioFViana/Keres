@@ -106,23 +106,28 @@ export const authRoutes = new Elysia()
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
       const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });
 
-      cookie['access_token'].set({
-        value: accessToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 3600, // 1 hour
-      });
+      // The cookies belong to the web client this server hosts, and there is one pair per origin: the
+      // admin panel and the public site keep their own token and ask for none, or signing in there
+      // would swap the account the web client is using (and signing out there would end its session).
+      if (body.session !== 'token') {
+        cookie['access_token'].set({
+          value: accessToken,
+          httpOnly: true,
+          secure: env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 3600, // 1 hour
+        });
 
-      cookie['refresh_token'].set({
-        value: refreshToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 3600, // 7 days
-      });
+        cookie['refresh_token'].set({
+          value: refreshToken,
+          httpOnly: true,
+          secure: env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 7 * 24 * 3600, // 7 days
+        });
+      }
 
       return { accessToken, refreshToken, userId: user.id, username: user.username, tag: user.tag };
     },
@@ -130,6 +135,7 @@ export const authRoutes = new Elysia()
       body: t.Object({
         username: t.String(),
         password: t.String(),
+        session: t.Optional(t.Union([t.Literal('cookie'), t.Literal('token')])),
       }),
       response: {
         200: AuthSessionResponseSchema,
@@ -137,6 +143,8 @@ export const authRoutes = new Elysia()
       },
       detail: {
         summary: 'User login',
+        description:
+          "By default the session is also kept in HttpOnly cookies (the web client hosted by this server). `session: 'token'` returns the tokens only and sets no cookie: for callers that keep their own token and must not touch the web client's session.",
         tags: ['Auth'],
       },
     },
@@ -402,7 +410,7 @@ export const authRoutes = new Elysia()
       detail: {
         summary: 'Clear session cookies',
         description:
-          'Clears httpOnly access_token and refresh_token cookies. Idempotent. The admin SPA also drops its Bearer token from localStorage on its side.',
+          'Clears httpOnly access_token and refresh_token cookies, which belong to the hosted web client. Idempotent. The admin panel and the public site do not call it: they sign in for the token only and forget it locally.',
         tags: ['Auth'],
       },
     },

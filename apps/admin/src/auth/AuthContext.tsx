@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  clearServerSession,
   login as doLogin,
   logout as doLogout,
   probeAdminAccess,
@@ -40,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const onSessionCleared = () => {
       markLoggedOut();
-      void clearServerSession();
     };
     window.addEventListener(SESSION_CLEARED_EVENT, onSessionCleared);
     return () => window.removeEventListener(SESSION_CLEARED_EVENT, onSessionCleared);

@@ -6,18 +6,6 @@ export interface LoginResult {
 }
 
 /**
- * Best-effort clear of httpOnly session cookies set by `/auth/login`. Network failures are
- * ignored so local logout still completes.
- */
-export async function clearServerSession(): Promise<void> {
-  try {
-    await apiClient.post('/auth/logout');
-  } catch {
-    // Cookie clear is best-effort; local token is the admin SPA's source of truth.
-  }
-}
-
-/**
  * The login itself (`POST /auth/login`) does not say whether the account is an admin - the JWT
  * never carries that claim (see apps/api/src/utils/adminAuth.ts). So after logging in, this
  * service probes an admin-only endpoint; if it answers 403, the account is real but not an admin,
@@ -25,16 +13,19 @@ export async function clearServerSession(): Promise<void> {
  *
  * The apiClient's interceptor already turns axios errors into an `Error` carrying the API's
  * message, so telling 403 from anything else is done by the message (`Admin access required.`).
+ *
+ * The panel shares its origin with the web client the server hosts, and the session cookies are that
+ * client's: it signs in for the token only (`session: 'token'`) and signs out by forgetting it, so
+ * neither swaps nor ends the account the web client is using.
  */
 export async function login(username: string, password: string): Promise<LoginResult> {
-  const { data } = await apiClient.post('/auth/login', { username, password });
+  const { data } = await apiClient.post('/auth/login', { username, password, session: 'token' });
   setToken(data.accessToken);
 
   try {
     await apiClient.get('/admin/users', { params: { pageSize: 1 } });
   } catch (err) {
     clearLocalSession();
-    await clearServerSession();
     const message = err instanceof Error ? err.message : '';
     if (message === 'Admin access required.' || /admin access/i.test(message)) {
       throw new Error('This account does not have admin access.');
@@ -48,7 +39,6 @@ export async function login(username: string, password: string): Promise<LoginRe
 
 export async function logout(): Promise<void> {
   clearLocalSession();
-  await clearServerSession();
 }
 
 /** Cheap probe used on bootstrap to confirm a persisted token still has admin access. */

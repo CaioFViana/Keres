@@ -59,7 +59,8 @@ export async function login(username: string, password: string): Promise<Showcas
   const response = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    // Token only: the session cookies are the web client's, one pair per origin.
+    body: JSON.stringify({ username, password, session: 'token' }),
   });
   if (!response.ok) {
     throw new Error(await readError(response));
@@ -75,12 +76,7 @@ export async function login(username: string, password: string): Promise<Showcas
 }
 
 export async function logout(): Promise<void> {
+  // The sign-in set no cookie, so forgetting the token is the whole sign-out - and asking the server to
+  // clear cookies would end the web client's session on this origin.
   clearSessionToken();
-  try {
-    // Login also drops httpOnly session cookies (same origin): without clearing them, a
-    // "signed-out" tab would still browse as the account through the cookie.
-    await fetch('/api/auth/logout', { method: 'POST' });
-  } catch {
-    // Signed out locally either way.
-  }
 }

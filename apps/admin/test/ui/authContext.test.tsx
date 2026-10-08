@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   probeAdminAccess: vi.fn(),
-  clearServerSession: vi.fn(),
 }));
 
 vi.mock('../../src/api/apiClient', async () => {
@@ -28,7 +27,6 @@ vi.mock('../../src/api/AdminAuthService', () => ({
   login: mocks.login,
   logout: mocks.logout,
   probeAdminAccess: mocks.probeAdminAccess,
-  clearServerSession: mocks.clearServerSession,
 }));
 
 function AuthProbe() {
@@ -55,7 +53,6 @@ beforeEach(() => {
   mocks.login.mockResolvedValue({ userId: 'admin-1', username: 'admin' });
   mocks.logout.mockResolvedValue(undefined);
   mocks.probeAdminAccess.mockResolvedValue(undefined);
-  mocks.clearServerSession.mockResolvedValue(undefined);
 });
 
 describe('admin authentication context', () => {
@@ -178,7 +175,6 @@ describe('admin authentication context', () => {
     });
     await flush();
     expect(view.container.textContent).toContain('signed-out');
-    expect(mocks.clearServerSession).toHaveBeenCalled();
     await view.unmount();
   });
 });

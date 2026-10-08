@@ -39,7 +39,6 @@ vi.mock('../../src/api/AdminAuthService', () => ({
   login: mocks.login,
   logout: vi.fn().mockResolvedValue(undefined),
   probeAdminAccess: vi.fn().mockResolvedValue(undefined),
-  clearServerSession: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('../../src/api/AdminUserApiService', () => ({
   AdminUserApiService: {

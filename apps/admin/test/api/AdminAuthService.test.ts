@@ -30,33 +30,35 @@ describe('admin login', () => {
       userId: 'user-1',
       username: 'admin',
     });
+    // The session cookies are the web client's: the panel asks for the token only.
+    expect(mocks.post).toHaveBeenCalledWith('/auth/login', {
+      username: 'admin',
+      password: 'password',
+      session: 'token',
+    });
     expect(mocks.setToken).toHaveBeenCalledWith('token');
     expect(mocks.setStoredUsername).toHaveBeenCalledWith('admin');
     expect(mocks.get).toHaveBeenCalledWith('/admin/users', { params: { pageSize: 1 } });
     expect(mocks.clearLocalSession).not.toHaveBeenCalled();
   });
 
-  it('clears the local session and server cookies when the account is not an admin', async () => {
-    mocks.post
-      .mockResolvedValueOnce({
-        data: { accessToken: 'token', userId: 'user-1', username: 'reader' },
-      })
-      .mockResolvedValueOnce({ data: { message: 'Logged out' } });
+  it('clears the local session, and touches no server session, when the account is not an admin', async () => {
+    mocks.post.mockResolvedValueOnce({
+      data: { accessToken: 'token', userId: 'user-1', username: 'reader' },
+    });
     mocks.get.mockRejectedValue(new Error('Admin access required.'));
 
     await expect(login('reader', 'password')).rejects.toThrow(
       'This account does not have admin access.',
     );
     expect(mocks.clearLocalSession).toHaveBeenCalledOnce();
-    expect(mocks.post).toHaveBeenCalledWith('/auth/logout');
+    expect(mocks.post).not.toHaveBeenCalledWith('/auth/logout');
   });
 
   it('surfaces a generic error when the admin probe fails for another reason', async () => {
-    mocks.post
-      .mockResolvedValueOnce({
-        data: { accessToken: 'token', userId: 'user-1', username: 'admin' },
-      })
-      .mockResolvedValueOnce({ data: { message: 'Logged out' } });
+    mocks.post.mockResolvedValueOnce({
+      data: { accessToken: 'token', userId: 'user-1', username: 'admin' },
+    });
     mocks.get.mockRejectedValue(new Error('Network Error'));
 
     await expect(login('admin', 'password')).rejects.toThrow('Network Error');
@@ -97,10 +99,9 @@ describe('admin access probe', () => {
 describe('admin logout', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('clears local session then asks the API to drop cookies', async () => {
-    mocks.post.mockResolvedValue({ data: { message: 'Logged out' } });
+  it('forgets the token and leaves the cookies of the web client alone', async () => {
     await logout();
     expect(mocks.clearLocalSession).toHaveBeenCalledOnce();
-    expect(mocks.post).toHaveBeenCalledWith('/auth/logout');
+    expect(mocks.post).not.toHaveBeenCalled();
   });
 });

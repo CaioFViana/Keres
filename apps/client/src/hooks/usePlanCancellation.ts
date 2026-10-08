@@ -14,7 +14,7 @@ import { AppAlert } from '../utils/AppAlert';
  * say that, instead of "stop renewing".
  */
 export function usePlanCancellation(server: ServerSelect | undefined, onDone: () => void) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return useCallback(
     (paidUntil: string, autoRenews = true) => {
@@ -22,7 +22,7 @@ export function usePlanCancellation(server: ServerSelect | undefined, onDone: ()
       AppAlert.alert(
         t(autoRenews ? 'payment_cancel_title' : 'payment_cancel_no_renewal_title'),
         t(autoRenews ? 'payment_cancel_message' : 'payment_cancel_no_renewal_message', {
-          date: new Date(paidUntil).toLocaleDateString(),
+          date: new Date(paidUntil).toLocaleDateString(i18n.language),
         }),
         [
           { text: t('cancel'), style: 'cancel' },
@@ -47,6 +47,6 @@ export function usePlanCancellation(server: ServerSelect | undefined, onDone: ()
         { cancelable: true },
       );
     },
-    [server, onDone, t],
+    [server, onDone, t, i18n.language],
   );
 }

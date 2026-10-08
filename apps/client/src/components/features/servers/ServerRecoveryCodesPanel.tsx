@@ -17,6 +17,7 @@ export default function ServerRecoveryCodesPanel({
   const { colors } = useTheme();
   return (
     <EntityFormContainer
+      planUsage={false}
       title={t('recovery_codes_title')}
       description={t('recovery_codes_warning')}
       actions={<Button onPress={onContinue}>{t('recovery_codes_continue_button')}</Button>}

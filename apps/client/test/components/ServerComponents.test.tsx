@@ -25,6 +25,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+const mockContainerProps = jest.fn();
+
 jest.mock('../../src/components/common/forms/FormField/FormField', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
@@ -74,20 +76,24 @@ jest.mock('../../src/components/common/forms/EntityFormContainer/EntityFormConta
       description,
       actions,
       children,
+      planUsage,
     }: {
       title?: string;
       description?: string;
       actions?: React.ReactNode;
       children: React.ReactNode;
-    }) =>
-      ReactActual.createElement(
+      planUsage?: boolean;
+    }) => {
+      mockContainerProps({ planUsage });
+      return ReactActual.createElement(
         View,
         { testID: 'form-container' },
         title ? ReactActual.createElement(Text, null, title) : null,
         description ? ReactActual.createElement(Text, null, description) : null,
         actions,
         children,
-      ),
+      );
+    },
   };
 });
 
@@ -105,6 +111,14 @@ describe('ServerRecoveryCodesPanel', () => {
 
     await fireEvent.press(screen.getByTestId('button-recovery_codes_continue_button'));
     expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it('is not a story form: no plan banner and no form tour over the codes to copy', async () => {
+    mockContainerProps.mockClear();
+
+    await render(<ServerRecoveryCodesPanel codes={['alpha-1']} onContinue={jest.fn()} />);
+
+    expect(mockContainerProps).toHaveBeenCalledWith({ planUsage: false });
   });
 });
 

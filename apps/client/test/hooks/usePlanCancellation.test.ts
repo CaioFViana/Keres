@@ -7,6 +7,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>
       options ? `${key}:${JSON.stringify(options)}` : key,
+    i18n: { language: 'pt-BR' },
   }),
 }));
 jest.mock('../../src/services/apiClient', () => ({
@@ -45,6 +46,14 @@ describe('usePlanCancellation', () => {
     expect(mockAlert.mock.calls[0][1]).toContain('payment_cancel_message');
     expect(mockAlert.mock.calls[0][1]).toContain('date');
     expect(mockCancel).not.toHaveBeenCalled();
+  });
+
+  it('writes the date in the app language, as the rest of the plan screen does', async () => {
+    const { result } = await renderHook(() => usePlanCancellation(server, jest.fn()));
+
+    result.current('2026-04-03T12:00:00.000Z');
+
+    expect(mockAlert.mock.calls[0][1]).toContain('03/04/2026');
   });
 
   it('asks in other words when the method is paid again each time, and cancels all the same', async () => {

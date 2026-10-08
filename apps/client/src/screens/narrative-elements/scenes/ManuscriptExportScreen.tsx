@@ -74,6 +74,7 @@ const ManuscriptExportScreen = () => {
 
   return (
     <EntityFormContainer
+      planUsage={false}
       width="reading"
       description={t('export_manuscript_description')}
       actions={

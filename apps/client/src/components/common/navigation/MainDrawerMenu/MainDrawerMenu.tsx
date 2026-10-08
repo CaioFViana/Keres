@@ -80,42 +80,18 @@ export const MainDrawerMenu: React.FC<MainDrawerMenuProps> = ({
         arcLabel: { color: colors.text, flex: 1, fontSize: 14 },
         group: {
           alignItems: 'center',
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          borderRadius: 12,
-          borderWidth: 1,
           flexDirection: 'row',
-          gap: 12,
-          marginHorizontal: 10,
-          marginTop: 10,
-          paddingHorizontal: 12,
-          paddingVertical: 10,
+          gap: 10,
+          paddingBottom: 6,
+          paddingHorizontal: 16,
+          paddingTop: 16,
         },
-        groupBadge: {
-          alignItems: 'center',
-          borderRadius: 10,
-          height: 36,
-          justifyContent: 'center',
-          overflow: 'hidden',
-          width: 36,
-        },
-        groupBadgeTint: {
-          backgroundColor: colors.primary,
-          bottom: 0,
-          left: 0,
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          opacity: 0.15,
-        },
-        groupLabel: { color: colors.text, flex: 1, fontSize: 16, fontWeight: '700' },
-        groupCount: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+        groupLabel: { color: colors.text, flex: 1, fontSize: 15, fontWeight: '600' },
+        groupCount: { color: colors.textSecondary, fontSize: 12 },
         leaves: {
           borderLeftColor: colors.border,
-          borderLeftWidth: 2,
-          marginLeft: 28,
-          marginTop: 4,
-          paddingLeft: 2,
+          borderLeftWidth: StyleSheet.hairlineWidth,
+          marginLeft: 26,
         },
         divider: {
           backgroundColor: colors.border,
@@ -186,7 +162,7 @@ export const MainDrawerMenu: React.FC<MainDrawerMenuProps> = ({
               anchorId={drawerAnchorId(drawerId, `group:${group.id}`)}
               label={t(group.labelKey)}
               styles={styles}
-              iconColor={colors.primary}
+              iconColor={colors.textSecondary}
               chevronColor={colors.textSecondary}
               onToggle={() => setUserOpen((current) => ({ ...current, [group.id]: !open }))}
             />
@@ -212,7 +188,7 @@ const GroupHeader: React.FC<{
   open: boolean;
   anchorId: string;
   label: string;
-  styles: Record<'group' | 'groupBadge' | 'groupBadgeTint' | 'groupLabel' | 'groupCount', object>;
+  styles: Record<'group' | 'groupLabel' | 'groupCount', object>;
   iconColor: string;
   chevronColor: string;
   onToggle: () => void;
@@ -227,13 +203,10 @@ const GroupHeader: React.FC<{
         accessibilityState={{ expanded: open }}
         onPress={onToggle}
       >
-        <View style={styles.groupBadge}>
-          <View style={styles.groupBadgeTint} />
-          <Ionicons name={group.icon} size={20} color={iconColor} />
-        </View>
+        <Ionicons name={group.icon} size={18} color={iconColor} />
         <Text style={styles.groupLabel}>{label}</Text>
         <Text style={styles.groupCount}>{group.leaves.length}</Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={chevronColor} />
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={chevronColor} />
       </Pressable>
     </View>
   );

@@ -88,10 +88,10 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
   const [phase, setPhase] = useState<PlaybackPhase>('idle');
   const [progress, setProgress] = useState(0);
   const [problem, setProblem] = useState<PlaybackProblem | null>(null);
-  const [active, setActive] = useState<ActiveLine | null>(null);
   /** What the person asked to hear (`play`'s `tag`), so a list of things to hear can say which one sounds. */
   const [tag, setTag] = useState<string | null>(null);
-  const timeline = useRef<Timeline | null>(null);
+  /** What is being heard, kept as state because the line being sung is worked out from it while rendering. */
+  const [timeline, setTimeline] = useState<Timeline | null>(null);
   const run = useRef(0);
   const toneRun = useRef(0);
 
@@ -109,7 +109,6 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
     }
     setPhase('idle');
     setProgress(0);
-    setActive(null);
     setTag(null);
   }, [player]);
 
@@ -131,7 +130,6 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
       if (!input) return;
       const mine = ++run.current;
       setProblem(null);
-      setActive(null);
       setTag(options.tag ?? null);
       try {
         player.pause();
@@ -164,7 +162,7 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
         setTag(null);
         return;
       }
-      timeline.current = built;
+      setTimeline(built);
       setPhase('preparing');
       setProgress(0);
       try {
@@ -204,27 +202,26 @@ export function useSongPlayback(defaults?: SongPlaybackInput) {
     [defaults, player, service],
   );
 
-  // The words follow the sound: the line is found from the player's clock, a few times a second.
-  const lines = timeline.current?.lines;
-  const tempo = timeline.current?.tempo ?? 90;
-  useEffect(() => {
-    if (phase !== 'playing') return;
-    if (status.didJustFinish) {
-      setPhase('idle');
-      setActive(null);
-      return;
-    }
-    if (!status.playing || !lines) return;
-    const line = lineAt(lines, (status.currentTime * tempo) / 60);
-    setActive((current) =>
-      (current?.sectionIndex ?? -1) === (line?.sectionIndex ?? -1) &&
-      (current?.sourceIndex ?? -1) === (line?.sourceIndex ?? -1)
-        ? current
-        : line
-          ? { sectionIndex: line.sectionIndex, sourceIndex: line.sourceIndex, text: line.text }
-          : null,
-    );
-  }, [phase, status.didJustFinish, status.playing, status.currentTime, lines, tempo]);
+  // The words follow the sound: the line is found from the player's clock while rendering, and the
+  // same line keeps the same object, so nothing draws again until the singing moves on.
+  const lines = timeline?.lines;
+  const tempo = timeline?.tempo ?? 90;
+  // The end of the sound is read off the player while rendering, not set from an effect.
+  if (phase === 'playing' && status.didJustFinish) setPhase('idle');
+  const sung =
+    phase === 'playing' && !status.didJustFinish && lines
+      ? lineAt(lines, (status.currentTime * tempo) / 60)
+      : null;
+  const sungSection = sung?.sectionIndex;
+  const sungSource = sung?.sourceIndex;
+  const sungText = sung?.text;
+  const active = useMemo<ActiveLine | null>(
+    () =>
+      sungSection === undefined || sungSource === undefined || sungText === undefined
+        ? null
+        : { sectionIndex: sungSection, sourceIndex: sungSource, text: sungText },
+    [sungSection, sungSource, sungText],
+  );
 
   const playTone = useCallback(
     async (pitch: number, timbre: VoiceTimbre) => {

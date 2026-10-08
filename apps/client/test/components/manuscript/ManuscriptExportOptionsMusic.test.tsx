@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ManuscriptExportOptions from '../../../src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import {
   defaultExportSettings,
@@ -41,7 +41,9 @@ function Harness({ hasMusic, format }: { hasMusic?: boolean; format?: 'fountain'
     ...defaultExportSettings('Ana'),
     ...(format ? { format } : {}),
   }));
-  latest = settings;
+  useEffect(() => {
+    latest = settings;
+  });
   return (
     <ManuscriptExportOptions
       settings={settings}

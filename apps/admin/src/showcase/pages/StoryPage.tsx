@@ -19,7 +19,7 @@ import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 export function StoryPage() {
   const { storyId = '' } = useParams();
   const { resolved } = useShowcaseTheme();
-  const { t, i18n } = useTranslation('showcase');
+  const { t } = useTranslation('showcase');
   const { status: authStatus, seesNsfw } = useShowcaseAuth();
 
   const [detail, setDetail] = useState<ShowcaseStoryDetail | null>(null);

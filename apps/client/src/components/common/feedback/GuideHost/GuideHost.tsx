@@ -100,7 +100,7 @@ const ActiveGuideOverlay: React.FC = () => {
   // The drawer a step opened, so leaving the tour puts it back instead of leaving the menu open.
   const openedDrawer = useRef<ReturnType<typeof getGuideDrawer>>(undefined);
   const canvasReady = useCanvasKitReady();
-  const [spot, setSpot] = useState<GuideRect | null>(null);
+  const [measuredSpot, setSpot] = useState<GuideRect | null>(null);
 
   const guide: Guide | null = activeTour?.guide ?? null;
   const step = guide && activeTour ? guide.steps[activeTour.stepIndex] : undefined;
@@ -108,7 +108,12 @@ const ActiveGuideOverlay: React.FC = () => {
   // Nothing is drawn until the first step knows where its hole goes, and the canvas that draws it
   // can: showing the dim first and the hole after is the flash a person sees when a tour starts.
   // `waited` is the way out when either never comes - the tour then opens with what it has.
-  const [measured, setMeasured] = useState(() => (step?.anchors?.length ?? 0) === 0);
+  // A step with no anchors has no hole and nothing to measure, so both are read off the step instead of
+  // being set from an effect.
+  const hasAnchors = (step?.anchors?.length ?? 0) > 0;
+  const [measuredOnce, setMeasured] = useState(false);
+  const measured = measuredOnce || !hasAnchors;
+  const spot = hasAnchors ? measuredSpot : null;
   const [waited, setWaited] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setWaited(true), REVEAL_TIMEOUT_MS);
@@ -118,17 +123,15 @@ const ActiveGuideOverlay: React.FC = () => {
   // The hole and the card stay where they are while the next step is measured and then slide straight
   // to it: nothing is reset to a default place in between. The window height is read at that moment.
   const windowHeightRef = useRef(windowSize.height);
-  windowHeightRef.current = windowSize.height;
+  useEffect(() => {
+    windowHeightRef.current = windowSize.height;
+  }, [windowSize.height]);
 
   useEffect(() => {
     if (!activeTour || !step) return;
     let cancelled = false;
     const anchors = step.anchors ?? [];
-    if (anchors.length === 0) {
-      setSpot(null);
-      setMeasured(true);
-      return;
-    }
+    if (anchors.length === 0) return;
     (async () => {
       const measure = () => measureSettled(anchors, () => cancelled);
       if (step.drawerId) {

@@ -1,4 +1,4 @@
-import { sceneHeadingPlan } from '@keres/shared';
+import type { sceneHeadingPlan } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';

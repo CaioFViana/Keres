@@ -32,21 +32,25 @@ export function useTweenedRect(target: GuideRect | null, duration = SLIDE_MS): G
     };
   }, []);
 
-  const key = target ? `${target.x}|${target.y}|${target.width}|${target.height}` : '';
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for the numbers in `target`; the object itself is new on every render.
+  const present = target !== null;
+  const x = target?.x ?? 0;
+  const y = target?.y ?? 0;
+  const width = target?.width ?? 0;
+  const height = target?.height ?? 0;
   useEffect(() => {
+    const next: GuideRect | null = present ? { x, y, width, height } : null;
     const from = current.current;
     const same =
       from &&
-      target &&
-      from.x === target.x &&
-      from.y === target.y &&
-      from.width === target.width &&
-      from.height === target.height;
+      next &&
+      from.x === next.x &&
+      from.y === next.y &&
+      from.width === next.width &&
+      from.height === next.height;
     if (same) return;
-    if (!from || !target || duration <= 0 || reduceMotion.current) {
-      current.current = target;
-      setRect(target);
+    if (!from || !next || duration <= 0 || reduceMotion.current) {
+      current.current = next;
+      setRect(next);
       return;
     }
     const start = Date.now();
@@ -54,19 +58,19 @@ export function useTweenedRect(target: GuideRect | null, duration = SLIDE_MS): G
     const tick = () => {
       const progress = Math.min(1, (Date.now() - start) / duration);
       const amount = easeOutCubic(progress);
-      const next = {
-        x: lerp(from.x, target.x, amount),
-        y: lerp(from.y, target.y, amount),
-        width: lerp(from.width, target.width, amount),
-        height: lerp(from.height, target.height, amount),
+      const moved = {
+        x: lerp(from.x, next.x, amount),
+        y: lerp(from.y, next.y, amount),
+        width: lerp(from.width, next.width, amount),
+        height: lerp(from.height, next.height, amount),
       };
-      current.current = progress >= 1 ? target : next;
+      current.current = progress >= 1 ? next : moved;
       setRect(current.current);
       if (progress < 1) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [key, duration]);
+  }, [present, x, y, width, height, duration]);
 
   return rect;
 }

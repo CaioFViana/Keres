@@ -1,6 +1,6 @@
 import { assessManuscriptSize, screenplayGeometry, screenplayPreset } from '@keres/shared';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ManuscriptExportOptions from '../../../src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import {
   defaultExportSettings,
@@ -51,7 +51,9 @@ function Harness({
   branching?: boolean;
 }) {
   const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
-  latest = settings;
+  useEffect(() => {
+    latest = settings;
+  });
   return (
     <ManuscriptExportOptions
       settings={settings}
@@ -79,7 +81,9 @@ function ScriptHarness({
   estimate?: Parameters<typeof ManuscriptExportOptions>[0]['screenplayEstimate'];
 }) {
   const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
-  latest = settings;
+  useEffect(() => {
+    latest = settings;
+  });
   return (
     <ManuscriptExportOptions
       settings={settings}

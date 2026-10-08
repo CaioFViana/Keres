@@ -472,13 +472,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   settings: {
-    alignSelf: 'center',
     flexShrink: 0,
-    maxWidth: 1280,
     width: '100%',
   },
-  // One column on a phone; from a tablet up two, filled top to bottom, so the sides are used instead
-  // of leaving a narrow strip of settings in the middle of the window.
+  // One column on a phone; from a tablet up two, filled top to bottom, across the whole width like every
+  // other screen.
   columns: { flexDirection: 'column' },
   columnsSideBySide: { alignItems: 'flex-start', flexDirection: 'row', gap: 20 },
   columnSideBySide: { flexBasis: 0, flexGrow: 1, flexShrink: 1 },

@@ -1,20 +1,18 @@
 import {
-  compileLinearManuscript,
   compileGamebookManuscript,
-  isLooseScene,
+  compileLinearManuscript,
+  countSongsPrintedWhole,
   estimateManuscriptPages,
+  isLooseScene,
   type ManuscriptPageEstimate,
+  type ManuscriptScene,
+  type ManuscriptSizeAssessment,
+  manuscriptSizeAssessment,
   PAGE_FORMAT_ASPECT,
   pageFormatFor,
   presentManuscript,
   renderOptionsOf,
   sceneSeparatorText,
-  type ManuscriptScene,
-} from '@keres/shared';
-import {
-  countSongsPrintedWhole,
-  type ManuscriptSizeAssessment,
-  manuscriptSizeAssessment,
   utf8ByteLength,
 } from '@keres/shared';
 import { containsCjk } from '@keres/shared/manuscript/export';
@@ -65,6 +63,11 @@ import { useStoryStore } from '../../../state/storyStore';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
 import { exportFileLanguage } from '../../../utils/storyTransfer';
 
+// What there is while there is no story: the same empty values every time, so nothing draws again for them.
+const NO_LOCATIONS: LocationSelect[] = [];
+const NO_MUSIC_FACTS = { hasMusic: false, hasSungSongs: false };
+const NO_PAGE_BYTES = new Map<string, number[]>();
+
 /**
  * The manuscript export of the selected story: what the export screen needs to show (the loose
  * scenes, the arcs) and the run itself - compile the read model into format-neutral
@@ -91,19 +94,18 @@ export function useManuscriptExport() {
     [chapters],
   );
   // The places a screenplay writes its scene headings from; read only when the story has them to give.
-  const [locations, setLocations] = useState<LocationSelect[]>([]);
+  const [loadedLocations, setLocations] = useState<LocationSelect[]>(NO_LOCATIONS);
   const storyId = selectedStory?.id;
+  // No story, no places: read off the story, not set from an effect.
+  const locations = storyId ? loadedLocations : NO_LOCATIONS;
   useEffect(() => {
-    if (!storyId) {
-      setLocations([]);
-      return;
-    }
+    if (!storyId) return;
     let alive = true;
     const load = () =>
       void createLocationService(db)
         .getAllByStoryId(storyId)
         .then((rows) => alive && setLocations(rows))
-        .catch(() => alive && setLocations([]));
+        .catch(() => alive && setLocations(NO_LOCATIONS));
     load();
     entityEventEmitter.on('location_changed', load);
     return () => {
@@ -114,18 +116,16 @@ export function useManuscriptExport() {
 
   // What the music of the scenes offers the export: only with some does it offer to write it, and
   // only where a song is sung does it offer to print the song.
-  const [musicFacts, setMusicFacts] = useState({ hasMusic: false, hasSungSongs: false });
+  const [loadedMusicFacts, setMusicFacts] = useState(NO_MUSIC_FACTS);
+  const musicFacts = storyId ? loadedMusicFacts : NO_MUSIC_FACTS;
   useEffect(() => {
-    const none = { hasMusic: false, hasSungSongs: false };
+    const none = NO_MUSIC_FACTS;
     // The same facts keep the same state: a new object each time would draw the screen again for nothing.
     const keep = (next: typeof none) => (current: typeof none) =>
       current.hasMusic === next.hasMusic && current.hasSungSongs === next.hasSungSongs
         ? current
         : next;
-    if (!storyId) {
-      setMusicFacts(keep(none));
-      return;
-    }
+    if (!storyId) return;
     let alive = true;
     const load = () =>
       void storyMusicFacts(db, storyId)
@@ -140,17 +140,15 @@ export function useManuscriptExport() {
   }, [db, storyId]);
 
   // The pictures of each scene's pages, in bytes, from what is known without reading a file.
-  const [pageBytes, setPageBytes] = useState<Map<string, number[]>>(new Map());
+  const [loadedPageBytes, setPageBytes] = useState<Map<string, number[]>>(NO_PAGE_BYTES);
+  const pageBytes = storyId ? loadedPageBytes : NO_PAGE_BYTES;
   useEffect(() => {
-    if (!storyId) {
-      setPageBytes(new Map());
-      return;
-    }
+    if (!storyId) return;
     let alive = true;
     const load = () =>
       void estimateManuscriptPageBytes(db, storyId)
         .then((sizes) => alive && setPageBytes(sizes))
-        .catch(() => alive && setPageBytes(new Map()));
+        .catch(() => alive && setPageBytes(NO_PAGE_BYTES));
     load();
     entityEventEmitter.on('scene_page_changed', load);
     entityEventEmitter.on('gallery_changed', load);

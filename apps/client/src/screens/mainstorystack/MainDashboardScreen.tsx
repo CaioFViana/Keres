@@ -18,6 +18,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSyncConflictStore } from '../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { isServerless } from '../../utils/clientFlavor';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { shouldCompleteFirstStory } from '../../utils/tutorialProgress';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
@@ -265,9 +266,7 @@ const MainDashboardScreen = () => {
         onOpenArc={(arcId) => {
           navigateAcross('ArcsStack', 'StoryArcForm', { arcId });
         }}
-        onAddArc={
-          canEdit ? () => navigateAcross('ArcsStack', 'StoryArcForm', {}) : undefined
-        }
+        onAddArc={canEdit ? () => navigateAcross('ArcsStack', 'StoryArcForm', {}) : undefined}
         writing={{
           resume: resumeScene,
           canEdit,
@@ -280,6 +279,10 @@ const MainDashboardScreen = () => {
           onNewNote: () => navigateAcross('NotesStack', 'NoteForm', {}),
           onOpenManuscript: () => navigateAcross('NarrativeElementsStack', 'Manuscript', {}),
           onExportManuscript: () => navigateAcross('NarrativeElementsStack', 'ManuscriptExport'),
+          onPublishManuscript:
+            canEdit && !isServerless()
+              ? () => navigateAcross('StoryShare', 'StoryPublish')
+              : undefined,
         }}
       />
     </>

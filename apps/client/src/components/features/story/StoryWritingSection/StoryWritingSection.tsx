@@ -21,6 +21,8 @@ interface StoryWritingSectionProps {
   onNewNote: () => void;
   onOpenManuscript: () => void;
   onExportManuscript: () => void;
+  /** Absent where the story cannot be published: a reader, or a build with no server. */
+  onPublishManuscript?: () => void;
   /** Where the tour points; the section is one block. */
   anchorRef?: React.Ref<View>;
   now?: Date;
@@ -42,6 +44,7 @@ const StoryWritingSection: React.FC<StoryWritingSectionProps> = ({
   onNewNote,
   onOpenManuscript,
   onExportManuscript,
+  onPublishManuscript,
   anchorRef,
   now,
 }) => {
@@ -85,14 +88,33 @@ const StoryWritingSection: React.FC<StoryWritingSectionProps> = ({
     .filter(Boolean)
     .join(' · ');
 
-  const chips: { id: string; icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }[] =
-    canEdit
-      ? [
-          { id: 'scene', icon: 'add-circle-outline', label: t('story_writing_new_scene'), onPress: onNewScene },
-          { id: 'character', icon: 'person-add-outline', label: t('story_writing_new_character'), onPress: onNewCharacter },
-          { id: 'note', icon: 'document-text-outline', label: t('story_writing_new_note'), onPress: onNewNote },
-        ]
-      : [];
+  const chips: {
+    id: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+    onPress: () => void;
+  }[] = canEdit
+    ? [
+        {
+          id: 'scene',
+          icon: 'add-circle-outline',
+          label: t('story_writing_new_scene'),
+          onPress: onNewScene,
+        },
+        {
+          id: 'character',
+          icon: 'person-add-outline',
+          label: t('story_writing_new_character'),
+          onPress: onNewCharacter,
+        },
+        {
+          id: 'note',
+          icon: 'document-text-outline',
+          label: t('story_writing_new_note'),
+          onPress: onNewNote,
+        },
+      ]
+    : [];
 
   return (
     <View ref={anchorRef} collapsable={false}>
@@ -152,9 +174,18 @@ const StoryWritingSection: React.FC<StoryWritingSectionProps> = ({
               <Button onPress={onOpenManuscript} testID="story-writing-read">
                 {t('story_writing_read')}
               </Button>
-              <Button onPress={onExportManuscript} testID="story-writing-export" disabled={!hasManuscript}>
+              <Button
+                onPress={onExportManuscript}
+                testID="story-writing-export"
+                disabled={!hasManuscript}
+              >
                 {t('story_writing_export')}
               </Button>
+              {onPublishManuscript ? (
+                <Button onPress={onPublishManuscript} testID="story-writing-publish">
+                  {t('story_writing_publish')}
+                </Button>
+              ) : null}
             </View>
           </View>
         </View>

@@ -36,6 +36,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof StoryWritingSectio
     onNewNote: jest.fn(),
     onOpenManuscript: jest.fn(),
     onExportManuscript: jest.fn(),
+    onPublishManuscript: jest.fn(),
   };
   const props: React.ComponentProps<typeof StoryWritingSection> = {
     resume: {
@@ -104,6 +105,18 @@ describe('StoryWritingSection', () => {
 
     expect(handlers.onOpenManuscript).toHaveBeenCalledTimes(1);
     expect(handlers.onExportManuscript).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes the manuscript from its card, unless the story cannot be published', async () => {
+    const { element, handlers } = setup();
+    const view = await render(element);
+
+    await fireEvent.press(view.getByTestId('story-writing-publish'));
+    expect(handlers.onPublishManuscript).toHaveBeenCalledTimes(1);
+
+    const withoutPublish = setup({ onPublishManuscript: undefined });
+    const bare = await render(withoutPublish.element);
+    expect(bare.queryByTestId('story-writing-publish')).toBeNull();
   });
 
   it('has nothing to resume or export in a story with no scenes, but can still be read', async () => {

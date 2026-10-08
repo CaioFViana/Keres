@@ -3041,6 +3041,7 @@
   "story_writing_chapters_one": "{{count}} chapter",
   "story_writing_chapters_other": "{{count}} chapters",
   "story_writing_manuscript_empty": "Nothing written yet. The scenes you write add up here.",
+  "story_writing_publish": "Publish",
   "story_writing_read": "Read",
   "story_writing_export": "Export",
   "tour_dashboard_group_system_body": "Get answers in Help, tune the story in Story Settings, or head back to story selection.",

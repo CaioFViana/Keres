@@ -30,7 +30,7 @@ const page: HelpPage = {
         'Preencha Título; este é o único campo necessário para criar a história.',
         'Escolha Linear se a leitura tiver uma sequência única ou Ramificada se o leitor puder escolher caminhos.',
         'Toque em Criar história e abra o cartão da história criada.',
-        'Se preferir explorar antes, abra Menu › Histórias de exemplo e instale uma cópia no idioma desejado.',
+        'Se preferir explorar antes, abra Menu › Exemplos e instale uma cópia no idioma desejado.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

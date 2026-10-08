@@ -27,7 +27,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'No menu principal, abra Servidores e toque em adicionar.',
+        'No menu principal, abra Gerenciar Servidores e toque em adicionar.',
         'Escolha Entrar para uma conta existente ou Criar conta para um cadastro novo.',
         'Informe o Endereço do servidor, sem caminhos como /api, /admin ou /swagger, seu nome de usuário e senha.',
         'Ao criar conta, confirme a senha e, se quiser, dê um Nome ao servidor para reconhecê-lo na lista.',

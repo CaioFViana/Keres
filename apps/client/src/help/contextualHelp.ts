@@ -48,6 +48,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   ChapterDetail: 'chapters',
   ChapterForm: 'chapters',
   Manuscript: 'manuscript',
+  ManuscriptExport: 'manuscript',
   SceneDetail: 'scenes',
   SceneEditor: 'manuscript',
   ScenePages: 'scene-pages',

@@ -23,7 +23,7 @@ const page: HelpPage = {
         'Envie a história a um servidor e torne-se amigo da pessoa nesse mesmo servidor.',
         'Abra Menu da história › Configurações da história.',
         'Na área de colaboradores, escolha um amigo e o papel desejado e toque em Convidar.',
-        'O amigo aceita ou recusa em Amigos; até lá o convite aparece como pendente, e você pode trocar o papel oferecido ou cancelá-lo.',
+        'O amigo aceita ou recusa em Gerenciar Amizades; até lá o convite aparece como pendente, e você pode trocar o papel oferecido ou cancelá-lo.',
         'Para leitores, ative Permitir comentários de leitores se quiser que eles comentem campos.',
         'Altere o papel ou remova o colaborador a qualquer momento. Remover tira o acesso: o colaborador é avisado e a cópia da história nos aparelhos dele é removida - na hora, se estiver conectado, ou na próxima sincronização.',
         'Quem colabora pode sair por conta própria: nas Configurações de uma história de outra pessoa, toque em Sair desta história. O acesso é perdido, a cópia neste aparelho é removida e o dono pode convidar de novo.',

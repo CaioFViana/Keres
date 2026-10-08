@@ -20,8 +20,8 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Menu da história › Mundo.',
-        'Escolha Todas as peças ou uma seção, como Bestiário ou Mitologia.',
+        'Abra Menu da história › Mundo. O grupo tem Todas as peças, uma entrada para cada seção (Regras do mundo, Povos e culturas, Mitologia, Conhecimento do mundo, Bestiário, Herbário) e Calendários.',
+        'Escolha Todas as peças ou uma seção, como Bestiário ou Mitologia: cada uma abre a própria lista.',
         'Crie uma peça, informe Título e escolha a Seção.',
         'Use Tipo para classificá-la dentro da seção e preencha os demais campos que fizerem sentido.',
         'Use Conteúdo e relações do mundo para conectá-la a locais, outras peças ou entidades da história.',

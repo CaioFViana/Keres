@@ -3,7 +3,7 @@ import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'appearance',
   title: 'Story appearance',
-  summary: 'Choose the colors used while this story is open.',
+  summary: 'Choose the cover and the colors used while this story is open.',
   keywords: ['appearance', 'theme', 'colors', 'palette', 'preview'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
@@ -22,9 +22,10 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
+        'Under Cover, set the picture that stands for the story; it is saved with Update Story.',
         'Select Theme.',
         'Tap a theme to preview it in the picker and in the component examples below the setting.',
-        'Choose Save to make that theme the story default, or close the picker to return to the saved theme.',
+        'Choose Save to make that theme the story default, or close the picker to return to the saved theme. The theme is saved when you confirm it, not with the cover.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

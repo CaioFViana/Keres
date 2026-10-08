@@ -21,8 +21,8 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Story menu › World.',
-        'Choose All world pieces or a section, such as Bestiary or Mythology.',
+        'Open Story menu › World. The group has All pieces, one entry for each section (World rules, Peoples & cultures, Mythology, World knowledge, Bestiary, Herbarium) and Calendars.',
+        'Choose All pieces or a section, such as Bestiary or Mythology: each opens its own list.',
         'Create a piece, enter its Title, and choose its Section.',
         'Use Type to classify it within the Section, then fill any other fields that help.',
         'Use World content & relations to connect it to locations, other pieces, or story entities.',

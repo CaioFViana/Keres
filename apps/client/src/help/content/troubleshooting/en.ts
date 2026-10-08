@@ -21,7 +21,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'For an unreachable server, check the address and connection, then try again.',
-        'For an expired session, open Servers and sign in again.',
+        'For an expired session, open Manage Servers and sign in again.',
         'For a refused import or media item, check format, storage, and account limits.',
         'For a missing story, check the list and correct server, and use exported backups before resetting the app.',
         'If the app says the server needs a newer version of the app, synchronization with it stops until you update the app; your stories stay on this device.',

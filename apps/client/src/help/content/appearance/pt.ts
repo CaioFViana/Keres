@@ -22,9 +22,10 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
+        'Em Capa, defina a imagem que representa a história; ela é salva com Atualizar História.',
         'Selecione Tema.',
         'Toque em um tema para vê-lo no seletor e nos exemplos de componentes abaixo do ajuste.',
-        'Escolha Salvar para torná-lo o tema padrão da história ou feche o seletor para voltar ao tema salvo.',
+        'Escolha Salvar para torná-lo o tema padrão da história ou feche o seletor para voltar ao tema salvo. O tema é salvo quando você o confirma, não junto com a capa.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

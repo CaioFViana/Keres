@@ -28,7 +28,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Servidores no menu principal.',
+        'Abra Gerenciar Servidores no menu principal.',
         'No servidor desejado, toque no ícone de chave.',
         'Informe Senha atual, Nova senha e Confirmar nova senha.',
         'Salve. A nova senha precisa cumprir o tamanho mínimo informado pela tela.',

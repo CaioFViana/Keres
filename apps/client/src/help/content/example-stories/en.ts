@@ -17,7 +17,7 @@ const page: HelpPage = {
       text: 'Install a branching example to observe scenes, choices, and the map before creating them in your own story.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Main menu', 'Example stories'] },
+    { type: 'path', segments: ['Main menu', 'Examples'] },
     {
       type: 'steps',
       items: [

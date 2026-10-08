@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'guided-tours',
   title: 'Guided tours',
   summary:
-    'Short first-open tours walk each screen once — skip any of them, or switch them all off in Settings.',
+    'Short first-open tours walk each screen once — skip any of them, or switch them all off in App Settings.',
   keywords: ['tour', 'tutorial', 'onboarding', 'guide', 'first run', 'skip'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
@@ -37,7 +37,7 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Tours are per device, like the rest of the settings: they work offline and never sync. Their master switch and the reset button live in the app settings.',
     },
-    { type: 'path', segments: ['Main menu', 'Settings', 'Show tutorials'] },
+    { type: 'path', segments: ['Main menu', 'App Settings', 'Show tutorials'] },
     {
       type: 'paragraph',
       text: 'Turning the switch off silences every tour without erasing history; resetting clears the history and switches tours back on, so they show again.',

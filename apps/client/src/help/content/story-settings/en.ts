@@ -21,12 +21,12 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open the section you want to change.',
-        'Use Story type to convert between Linear and Branching.',
-        'Use Collaborators to invite, remove, or adjust access. On a story someone else owns, this area offers Leave this story instead - see Writing together.',
-        'Use Send to server to link a local story to a server.',
-        'Enable reader comments when you want observations from readers.',
-        'Use the reading-preferences card to choose favorite behavior, link mentions automatically, and normalize scene timing while it is displayed.',
+        'The screen is a list of sections. Open the one you want to change; each section saves only its own fields, so leaving one without saving never touches the others.',
+        'General holds the title, type, description and Adults-only (+18). Use Story type to convert between Linear and Branching, and the reading choices to set the behavior of favorites, link mentions automatically and normalize scene timing while it is displayed.',
+        'Appearance holds the cover and the story’s theme - see Appearance.',
+        'Vocabulary, Custom Attributes and Standard Suggestions open the screens that rename the story’s terms, add fields to its elements and choose the suggestions it offers.',
+        'Server and collaborators links a local story to a server (Send to Server), invites, removes or adjusts people’s access, and lets readers comment. On a story someone else owns, this section offers Leave this story instead - see Writing together. A build with no server does not have it.',
+        'Delete story is at the end of the list and is offered only to the story’s owner.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

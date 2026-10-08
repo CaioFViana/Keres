@@ -21,7 +21,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Para servidor inacessível, confira o endereço e a conexão e tente novamente.',
-        'Para sessão expirada, abra Servidores e entre novamente na conta.',
+        'Para sessão expirada, abra Gerenciar Servidores e entre novamente na conta.',
         'Para importação ou mídia recusada, confira formato, espaço e limite da conta.',
         'Para história ausente, confira a lista, o servidor correto e use exportações de backup antes de redefinir o aplicativo.',
         'Se o app disser que o servidor precisa de uma versão mais nova, a sincronização com ele para até você atualizar o app; suas histórias continuam neste aparelho.',

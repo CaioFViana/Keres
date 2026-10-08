@@ -26,7 +26,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'No primeiro acesso, escolha seu nome local e o idioma.',
-        'No menu principal, crie uma história.',
+        'Em Seleção de Histórias, a primeira entrada do menu principal, toque em + para criar uma história.',
         'Abra a história e comece pelo elemento que já conhece: um personagem, local, capítulo ou cena.',
         'Volte às listas sempre que quiser completar ou revisar as informações.',
       ],

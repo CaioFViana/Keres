@@ -23,7 +23,7 @@ const page: HelpPage = {
         'Send the story to a server and become friends with the person on that same server.',
         'Open Story menu › Story settings.',
         'In the collaborators area, choose a friend and the wanted role, then tap Invite.',
-        'The friend accepts or declines in Friends; until then the invitation shows as pending, where you can change the offered role or withdraw it.',
+        'The friend accepts or declines in Manage Friendships; until then the invitation shows as pending, where you can change the offered role or withdraw it.',
         'For readers, turn on Allow reader comments if you want them to comment on fields.',
         'Change the role or remove the collaborator at any time. Removing takes the access away: the collaborator is told, and the copy of the story on their devices is removed - at once if they are connected, otherwise the next time they sync.',
         'A collaborator can leave on their own: in Story settings of a story someone else owns, tap Leave this story. They lose access, the copy on this device is removed, and the owner can invite them again.',

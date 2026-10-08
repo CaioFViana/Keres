@@ -21,12 +21,12 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'No menu principal, abra Configurações.',
+        'No menu principal, abra Configurações do Aplicativo (no fim).',
         'Em Usuário, escreva o nome que identifica você neste aparelho.',
         'Em Idioma, escolha o idioma da interface. A Ajuda acompanha essa escolha.',
         'Ative ou desative Modo escuro para mudar a aparência do aplicativo.',
         'Ative ou desative Formato 24 horas para escolher como os atributos personalizados de Data mostram e editam a hora.',
-        'Ative ou desative Sugerir recursos literários para mostrar ou ocultar a lista de Recursos literários no menu.',
+        'Ative ou desative Sugerir recursos literários para mostrar ou ocultar a entrada Recursos literários no menu da história, em Organizar e revisar.',
         'Escolha o Formato da data usado nas datas gregorianas da história: dia/mês/ano, mês/dia/ano ou ISO (ano-mês-dia).',
         'Escolha o Formato de exportação, PNG (imagem) ou SVG (vetor), usado ao exportar mapas, gráficos, quadros e linhas do tempo.',
         'Desative Mostrar ajuda para esconder o atalho de ajuda dos cabeçalhos das páginas.',

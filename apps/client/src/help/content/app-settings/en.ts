@@ -21,12 +21,12 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'From the main menu, open Settings.',
+        'From the main menu, open App Settings (at the bottom).',
         'Under User, enter the name that identifies you on this device.',
         'Under Language, choose the interface language. Help follows this choice.',
         'Turn Dark mode on or off to change the app appearance.',
         'Turn 24-hour time on or off to choose how custom Date attributes show and edit their time.',
-        'Turn Suggest literary devices on or off to show or hide the Literary devices list in the menu.',
+        'Turn Suggest literary devices on or off to show or hide the Literary devices entry in the story menu, under Organize and review.',
         'Choose the Date format used for Gregorian story dates: day/month/year, month/day/year or ISO (year-month-day).',
         'Choose the Export format, PNG (image) or SVG (vector), used when exporting maps, graphs, boards and timelines.',
         'Turn Show help off to hide the help shortcut from page headers.',
@@ -37,7 +37,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Language and appearance apply throughout this device. Show help controls the contextual help shortcut in supported page headers. Suggest literary devices only shows or hides that menu item; nothing is deleted. The local name is not the same as a server account name, @tag, or profile. Resetting removes local stories, media, and saved connections from this device.',
+      text: 'Language and appearance apply throughout this device. Show help controls the contextual help shortcut in supported page headers. Suggest literary devices only shows or hides that story-menu item; nothing is deleted. The local name is not the same as a server account name, @tag, or profile. Resetting removes local stories, media, and saved connections from this device.',
     },
     {
       type: 'paragraph',

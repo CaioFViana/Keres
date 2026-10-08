@@ -4,6 +4,7 @@ import en from '../../src/locales/en.json';
 import pt from '../../src/locales/pt.json';
 import { getHelpPages } from '../../src/help/repository';
 import { buildMainDrawerMenu } from '../../src/navigation/mainDrawerMenu';
+import { buildStorySelectionMenu } from '../../src/navigation/storySelectionMenu';
 
 /**
  * Help that still names menus the app no longer has.
@@ -92,6 +93,43 @@ function claimedEntries(language: string): { page: string; entry: string }[] {
   return claims;
 }
 
+const MAIN_MENU = { en: 'Main menu', pt: 'Menu principal' };
+
+/** Every label the main menu (the one outside a story) renders, in the given language. */
+function mainMenuLabels(language: string): string[] {
+  const translations = TRANSLATIONS[language];
+  const menu = buildStorySelectionMenu({ t: (key) => translations[key] ?? key, serverless: false });
+  return [
+    ...menu.groups.map((group) => translations[group.labelKey]),
+    ...[...menu.top, ...menu.groups.flatMap((group) => group.leaves), ...menu.footer].map(
+      (leaf) => leaf.label,
+    ),
+    // The list's own screen: the story list is where a story is created.
+    translations.story_selection_title,
+  ];
+}
+
+/** The entry each page claims lives in the main menu, from `path` blocks and from `Menu › Entry` prose. */
+function claimedMainMenuEntries(language: string): { page: string; entry: string }[] {
+  const menu = MAIN_MENU[language as 'en' | 'pt'];
+  const claims: { page: string; entry: string }[] = [];
+  for (const page of getHelpPages(language)) {
+    for (const block of page.blocks) {
+      if (block.type === 'path' && block.segments[0] === menu && block.segments[1]) {
+        claims.push({ page: page.id, entry: block.segments[1] });
+      }
+    }
+    // Prose says it as "Menu › Examples"; the story menu's own claims are spelled with its name and are
+    // checked above.
+    for (const match of JSON.stringify(page.blocks).matchAll(
+      /(?<![A-Za-zà-ú] )Menu › ([^.,;"›]{1,60})/g,
+    )) {
+      claims.push({ page: page.id, entry: match[1].trim() });
+    }
+  }
+  return claims;
+}
+
 describe('help navigation paths', () => {
   it.each(['en', 'pt'])('only sends the reader to drawer entries that exist (%s)', (language) => {
     const labels = drawerLabels(language);
@@ -106,6 +144,27 @@ describe('help navigation paths', () => {
       .map((claim) => `${claim.page}: "${claim.entry}"`);
 
     expect([...new Set(stale)].sort()).toEqual([]);
+  });
+
+  it.each(['en', 'pt'])(
+    'only sends the reader to main menu entries that exist (%s)',
+    (language) => {
+      const names = mainMenuLabels(language).map((label) => label.toLowerCase());
+      const stale = claimedMainMenuEntries(language)
+        .filter((claim) => !names.some((name) => claim.entry.toLowerCase().startsWith(name)))
+        .map((claim) => `${claim.page}: "${claim.entry}"`);
+
+      expect([...new Set(stale)].sort()).toEqual([]);
+    },
+  );
+
+  it('finds the main menu labels at all, so an empty set cannot pass the check above', () => {
+    expect(mainMenuLabels('en')).toEqual(
+      expect.arrayContaining(['Create', 'Manage Servers', 'Examples']),
+    );
+    expect(mainMenuLabels('pt')).toEqual(
+      expect.arrayContaining(['Criar', 'Gerenciar Servidores', 'Exemplos']),
+    );
   });
 
   it('finds the drawer labels at all, so an empty set cannot pass the check above', () => {

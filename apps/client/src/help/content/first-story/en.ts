@@ -27,7 +27,7 @@ const page: HelpPage = {
         'Fill in Title; it is the only field needed to create a story.',
         'Choose Linear for one reading sequence or Branching if readers can choose paths.',
         'Tap Create story and open the newly created story card.',
-        'To explore first, open Menu › Example stories and install a copy in the language you want.',
+        'To explore first, open Menu › Examples and install a copy in the language you want.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

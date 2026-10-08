@@ -26,7 +26,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'On your first visit, choose your local name and language.',
-        'From the main menu, create a story.',
+        'From Story Selection, the first entry of the main menu, tap + to create a story.',
         'Open it and begin with the element you already know: a character, location, chapter, or scene.',
         'Return to the lists whenever you want to complete or revise information.',
       ],

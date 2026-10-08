@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Servers from the main menu.',
+        'Open Manage Servers from the main menu.',
         'On the wanted server, tap the profile icon.',
         'Choose Avatar color, Avatar icon, and write a Bio of up to 200 characters.',
         'Save. To change your @tag, tap it in the server list and confirm the edit. A tag has 3 to 20 lowercase letters, numbers or underscores - anything else you type (capitals, spaces) is adjusted when it is saved, and the tag shown afterwards is the one that counts.',

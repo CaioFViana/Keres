@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'guided-tours',
   title: 'Tours guiados',
   summary:
-    'Tours curtos de primeira abertura percorrem cada tela uma vez — pule qualquer um deles, ou desligue todos em Configurações.',
+    'Tours curtos de primeira abertura percorrem cada tela uma vez — pule qualquer um deles, ou desligue todos em Configurações do Aplicativo.',
   keywords: ['tour', 'tutorial', 'onboarding', 'guia', 'guia inicial', 'pular'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
@@ -37,7 +37,10 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Tours são por aparelho, como o resto das configurações: funcionam offline e nunca sincronizam. O interruptor geral e o botão de redefinir ficam nas configurações do app.',
     },
-    { type: 'path', segments: ['Menu principal', 'Configurações', 'Mostrar tutoriais'] },
+    {
+      type: 'path',
+      segments: ['Menu principal', 'Configurações do Aplicativo', 'Mostrar tutoriais'],
+    },
     {
       type: 'paragraph',
       text: 'Desligar o interruptor silencia todo tour sem apagar o histórico; redefinir limpa o histórico e religa os tours, para aparecerem de novo.',

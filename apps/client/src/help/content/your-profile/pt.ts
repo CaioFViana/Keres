@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Servidores no menu principal.',
+        'Abra Gerenciar Servidores no menu principal.',
         'No servidor desejado, toque no ícone de perfil.',
         'Escolha Cor do avatar, Ícone do avatar e escreva a Bio, com até 200 caracteres.',
         'Salve. Para alterar sua @tag, toque nela na lista de servidores e confirme a edição. Uma tag tem de 3 a 20 letras minúsculas, números ou sublinhados - o que mais você digitar (maiúsculas, espaços) é ajustado ao salvar, e a tag mostrada depois é a que vale.',

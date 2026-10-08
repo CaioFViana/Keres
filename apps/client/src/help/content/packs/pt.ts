@@ -35,7 +35,7 @@ const page: HelpPage = {
       text: 'Não existe editor de pacote, de propósito: um pacote é feito de uma história, então tudo nele é editado onde já mora. Para mudar um pacote, mude a história e use Extrair de novo — o que sobe a versão do pacote.',
     },
     { type: 'heading', level: 3, text: 'Usando um' },
-    { type: 'path', segments: ['Menu principal', 'Histórias', 'Nova história'] },
+    { type: 'path', segments: ['Menu principal', 'Seleção de Histórias', 'Nova história'] },
     {
       type: 'steps',
       items: [

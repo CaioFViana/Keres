@@ -21,12 +21,12 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra a seção que deseja alterar.',
-        'Use Tipo da história para converter entre Linear e Ramificada.',
-        'Use Colaboradores para convidar, remover ou ajustar acesso. Numa história de outra pessoa, esta área oferece Sair desta história no lugar disso - veja Escrevendo junto.',
-        'Use Enviar para servidor para ligar uma história local a um servidor.',
-        'Ative comentários de leitores quando quiser receber observações de leitores.',
-        'Use o cartão de preferências de leitura para escolher o comportamento dos favoritos, ligar menções automaticamente e normalizar o tempo das cenas ao exibi-lo.',
+        'A tela é uma lista de seções. Abra a que deseja alterar; cada seção salva só os próprios campos, então sair de uma sem salvar nunca mexe nas outras.',
+        'Geral reúne título, tipo, descrição e Só para adultos (+18). Use Tipo da história para converter entre Linear e Ramificada, e as escolhas de leitura para definir o comportamento dos favoritos, ligar menções automaticamente e normalizar o tempo das cenas ao exibi-lo.',
+        'Aparência reúne a capa e o tema da história - veja Aparência.',
+        'Vocabulário, Atributos Customizados e Sugestões Padrões abrem as telas que renomeiam os termos da história, acrescentam campos aos elementos e escolhem as sugestões oferecidas.',
+        'Servidor e colaboradores liga uma história local a um servidor (Enviar para o Servidor), convida, remove ou ajusta o acesso das pessoas e deixa leitores comentarem. Numa história de outra pessoa, esta seção oferece Sair desta história no lugar disso - veja Escrevendo junto. Uma versão sem servidor não a tem.',
+        'Excluir história fica no fim da lista e só é oferecida ao dono da história.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

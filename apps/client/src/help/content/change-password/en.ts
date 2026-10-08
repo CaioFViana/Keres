@@ -21,7 +21,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Servers from the main menu.',
+        'Open Manage Servers from the main menu.',
         'On the wanted server, tap the key icon.',
         'Enter Current password, New password, and Confirm new password.',
         'Save. The new password must meet the minimum length shown by the screen.',

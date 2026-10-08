@@ -20,10 +20,10 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Amigos no menu principal e toque no ícone de mensagens para ver suas conversas.',
+        'Abra Gerenciar Amizades no menu principal e toque no ícone de mensagens para ver suas conversas.',
         'Para começar uma, toque em nova mensagem e escolha um amigo ou os administradores de um servidor. Você também pode tocar no ícone de mensagem em um amigo, ou abrir o amigo e usar o ícone de mensagem no topo.',
         'Escreva a mensagem e toque em enviar. O contador mostra quantos caracteres ainda cabem, e a linha abaixo mostra quantas mensagens você ainda pode enviar hoje.',
-        'Uma pequena marca de mensagem no ícone de Amigos do menu principal, e no ícone da caixa de entrada, avisa que há uma mensagem que você ainda não abriu. Ela some quando você abre a conversa, e fica guardada só neste dispositivo.',
+        'Um pequeno ponto em Gerenciar Amizades no menu principal (e no grupo Servidor enquanto ele está fechado), e uma marca no ícone da caixa de entrada, avisa que há uma mensagem que você ainda não abriu; um ponto em Gerenciar Servidores diz o mesmo sobre os administradores de um servidor. Ela some quando você abre a conversa, e fica guardada só neste dispositivo.',
         'Para remover uma mensagem só para você, toque na lixeira dela. Para limpar a conversa inteira, use a lixeira no topo. O outro lado mantém a cópia dele.',
       ],
     },

@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'No menu principal, abra Servidores.',
+        'No menu principal, abra Gerenciar Servidores.',
         'Cadastre um servidor ou entre em uma conta existente.',
         'Abra uma história e use Configurações da história para enviá-la ao servidor quando quiser sincronizá-la.',
         'Para trabalhar junto, adicione colaboradores à história enviada ao servidor.',

@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'From the main menu, open Servers.',
+        'From the main menu, open Manage Servers.',
         'Add a server or sign in to an existing account.',
         'Open a story and use Story settings to send it to the server when you want to synchronize it.',
         'To work together, add collaborators to a story sent to a server.',

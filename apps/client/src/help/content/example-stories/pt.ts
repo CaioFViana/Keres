@@ -17,7 +17,7 @@ const page: HelpPage = {
       text: 'Instale um exemplo ramificado para observar cenas, escolhas e o mapa antes de criar esses elementos na sua própria história.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu principal', 'Histórias de exemplo'] },
+    { type: 'path', segments: ['Menu principal', 'Exemplos'] },
     {
       type: 'steps',
       items: [

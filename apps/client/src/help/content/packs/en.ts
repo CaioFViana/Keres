@@ -35,7 +35,7 @@ const page: HelpPage = {
       text: 'There is no pack editor, on purpose: a pack is made from a story, so everything in it is edited where it already lives. To change a pack, change the story and use Extract again — which raises the pack’s version.',
     },
     { type: 'heading', level: 3, text: 'Using one' },
-    { type: 'path', segments: ['Main menu', 'Stories', 'New story'] },
+    { type: 'path', segments: ['Main menu', 'Story Selection', 'New story'] },
     {
       type: 'steps',
       items: [

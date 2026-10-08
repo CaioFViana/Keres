@@ -39,6 +39,18 @@ it('uses the supported picker configuration and distinguishes cancellation from 
   );
 });
 
+it('opens a picker for pictures only, one or several', async () => {
+  getDocumentAsync.mockResolvedValueOnce({ canceled: true });
+  await expect(mediaFileService.pickImages()).resolves.toBeNull();
+
+  const asset = { name: 'page.png', uri: 'file://page.png' } as any;
+  getDocumentAsync.mockResolvedValueOnce({ canceled: false, assets: [asset] });
+  await expect(mediaFileService.pickImages()).resolves.toEqual([asset]);
+  expect(getDocumentAsync).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'image/*', copyToCacheDirectory: false, multiple: true }),
+  );
+});
+
 it('opens a separate picker for documents', async () => {
   getDocumentAsync.mockResolvedValueOnce({ canceled: true });
   await expect(mediaFileService.pickDocuments()).resolves.toBeNull();

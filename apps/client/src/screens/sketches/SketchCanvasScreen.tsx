@@ -54,6 +54,7 @@ import { createSketchService } from '../../services/storymanagement/SketchServic
 import { useNotificationStore } from '../../state/notificationStore';
 import { useSketchDraftStore } from '../../state/sketchDraftStore';
 import { isObjectTool, useSketchToolStore, type SketchTool } from '../../state/sketchToolStore';
+import { useHeaderBackActionStore } from '../../state/headerBackActionStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -172,7 +173,17 @@ const SketchCanvasScreen = () => {
     onFinished: closeExport,
   });
 
-  useBackButtonHandler({ showWebBackButton: true, onBack: () => navigation.goBack() });
+  useBackButtonHandler({
+    showWebBackButton: true,
+    // Opened from a scene's pages as well as from the list: back takes the way back the page registered, if any.
+    onBack: () => {
+      const wayBack = useHeaderBackActionStore
+        .getState()
+        .consumeCrossStackReturnAction('SketchCanvas');
+      if (wayBack) wayBack();
+      else navigation.goBack();
+    },
+  });
   useScreenTour('SketchCanvas', canEdit);
 
   const load = useCallback(async () => {

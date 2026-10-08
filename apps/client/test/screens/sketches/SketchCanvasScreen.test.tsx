@@ -227,6 +227,28 @@ describe('SketchCanvasScreen', () => {
     await screen.findByTestId('sketch-tool-brush');
   }
 
+  it('goes back to the page that opened it when there is one, and one screen back otherwise', async () => {
+    const { useBackButtonHandler } = jest.requireMock(
+      '../../../src/hooks/useBackButtonHandler',
+    ) as {
+      useBackButtonHandler: jest.Mock;
+    };
+    const { useHeaderBackActionStore } = jest.requireActual(
+      '../../../src/state/headerBackActionStore',
+    ) as typeof import('../../../src/state/headerBackActionStore');
+    await open();
+    const onBack = useBackButtonHandler.mock.calls.at(-1)?.[0].onBack as () => void;
+
+    onBack();
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+
+    const toPages = jest.fn();
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(toPages, 'SketchCanvas');
+    onBack();
+    expect(toPages).toHaveBeenCalledTimes(1);
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps the zoom and export controls on the screen, outside the canvas plane', async () => {
     await open();
     expect(screen.getByLabelText('zoom_in')).toBeTruthy();

@@ -42,7 +42,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Set the work’s medium to Comic or Storyboard (arc settings). The scene then offers its pages.',
-        'Open the scene, then its pages, and add one with +. Choose a Sketch of the story or an image from the Gallery.',
+        'Open the scene, then its pages, and add one with +. Choose Draw a page (a blank sketch in the work’s page size, opened for you), Upload pictures (one or several from your device; each becomes a page, in the order you choose) or, once the story has some, one you already have: a Sketch or an image from the Gallery.',
         'Write the page’s text under it, and choose how the image sits in the frame.',
         'Use the arrows to move a page up or down. Only that page changes, so two people can reorder different pages at the same time.',
         'Compile the manuscript to get the pages, in order, with their text.',

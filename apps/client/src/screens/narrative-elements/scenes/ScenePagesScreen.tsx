@@ -1,6 +1,6 @@
 import type { ScenePageFit } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -9,15 +9,19 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import ScenePageAddSheet from '@/src/components/features/scenes/ScenePages/ScenePageAddSheet';
 import ScenePageCard from '@/src/components/features/scenes/ScenePages/ScenePageCard';
 import ScenePageMediaPicker from '@/src/components/features/scenes/ScenePages/ScenePageMediaPicker';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
+import { useAddScenePages } from '@/src/hooks/useAddScenePages';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
+import { useSceneArcPageFormat } from '@/src/hooks/useSceneArcPageFormat';
 import { useScenePages } from '@/src/hooks/useScenePages';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
@@ -58,7 +62,23 @@ const ScenePagesScreen = () => {
   const medium = useSceneArcMedium(scene ?? { chapterId: null });
   const kind = scenePageKind(medium);
   const { pages, loading } = useScenePages(sceneId, scene?.storyId);
+  /** Which page the add sheet is for: `add` for a new one, a page's id to replace its picture. */
+  const [sheetFor, setSheetFor] = useState<'add' | string | null>(null);
   const [pickerFor, setPickerFor] = useState<'add' | string | null>(null);
+  const navigateAcross = useNavigateAcrossStacks();
+  const pageFormat = useSceneArcPageFormat(scene ?? { chapterId: null });
+  const addPages = useAddScenePages({ storyId: scene?.storyId, userId, pageFormat });
+
+  // A sheet left open would stay over whatever the person goes to next (a Sketch they chose to draw in).
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        setSheetFor(null);
+        setPickerFor(null);
+      },
+      [],
+    ),
+  );
 
   useEffect(() => {
     let alive = true;
@@ -97,7 +117,7 @@ const ScenePagesScreen = () => {
         id: 'add-page',
         icon: 'add',
         label: addLabel,
-        onPress: () => setPickerFor('add'),
+        onPress: () => setSheetFor('add'),
         visible: !!canEdit && !!scene,
       },
     ],
@@ -123,6 +143,62 @@ const ScenePagesScreen = () => {
           : service.replaceMedia(userId, target, media),
       target === 'add' ? 'add a page' : 'replace the image of a page',
     );
+  };
+
+  const labelOf = (index: number) => t(`scene_pages_label_${kind}`, { index });
+
+  /** A blank Sketch in the work's page size becomes the picture, and opens to be drawn on. */
+  const drawIt = () => {
+    const target = sheetFor;
+    setSheetFor(null);
+    if (!userId || !target) return;
+    void attempt(async () => {
+      const index =
+        target === 'add' ? pages.length + 1 : pages.findIndex((v) => v.page.id === target) + 1;
+      const sketchId = await addPages.drawNewPage(`${scene.name} · ${labelOf(index)}`);
+      if (!sketchId) return;
+      if (target === 'add') {
+        await service.createPage(userId, { storyId: scene.storyId, sceneId, media: { sketchId } });
+      } else {
+        await service.replaceMedia(userId, target, { sketchId });
+      }
+      navigateAcross('SketchStack', 'SketchCanvas', { sketchId });
+    }, 'draw a page');
+  };
+
+  /** Pictures from the device, each into the Gallery, each a page in the order they were chosen. */
+  const uploadThem = () => {
+    const target = sheetFor;
+    setSheetFor(null);
+    if (!userId || !target) return;
+    void attempt(async () => {
+      const uploaded = await addPages.uploadPictures();
+      if (uploaded.cancelled) return;
+      if (uploaded.rejected > 0) {
+        showNotification(t('scene_pages_upload_rejected', { count: uploaded.rejected }), 'warning');
+      }
+      if (uploaded.galleryIds.length === 0) return;
+      if (target === 'add') {
+        for (const galleryId of uploaded.galleryIds) {
+          await service.createPage(userId, {
+            storyId: scene.storyId,
+            sceneId,
+            media: { galleryId },
+          });
+        }
+        showNotification(
+          t(`scene_pages_uploaded_${kind}`, { count: uploaded.galleryIds.length }),
+          'success',
+        );
+      } else {
+        await service.replaceMedia(userId, target, { galleryId: uploaded.galleryIds[0] });
+      }
+    }, 'upload pictures');
+  };
+
+  const chooseExisting = () => {
+    setPickerFor(sheetFor);
+    setSheetFor(null);
   };
 
   return (
@@ -157,7 +233,7 @@ const ScenePagesScreen = () => {
             userId &&
             void attempt(() => service.movePage(userId, view.page.id, index + delta), 'move')
           }
-          onReplace={() => setPickerFor(view.page.id)}
+          onReplace={() => setSheetFor(view.page.id)}
           onDelete={() =>
             confirmDelete({
               titleKey: 'scene_pages_delete_title',
@@ -172,9 +248,19 @@ const ScenePagesScreen = () => {
       ))}
       {canEdit ? (
         <View style={styles.add}>
-          <Button onPress={() => setPickerFor('add')}>{addLabel}</Button>
+          <Button onPress={() => setSheetFor('add')}>{addLabel}</Button>
         </View>
       ) : null}
+      <ScenePageAddSheet
+        visible={sheetFor !== null}
+        storyId={scene.storyId}
+        kind={kind}
+        replacing={sheetFor !== null && sheetFor !== 'add'}
+        onClose={() => setSheetFor(null)}
+        onDraw={drawIt}
+        onUpload={uploadThem}
+        onChooseExisting={chooseExisting}
+      />
       <ScenePageMediaPicker
         visible={pickerFor !== null}
         storyId={scene.storyId}

@@ -46,7 +46,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Defina o meio da obra como Quadrinhos ou Storyboard (configurações do arco). A cena passa a oferecer suas páginas.',
-        'Abra a cena, depois as páginas, e adicione uma com +. Escolha um Esboço da história ou uma imagem da Galeria.',
+        'Abra a cena, depois as páginas, e adicione uma com +. Escolha Desenhar uma página (um sketch em branco no tamanho de página da obra, aberto para você), Enviar imagens (uma ou várias do seu aparelho; cada uma vira uma página, na ordem escolhida) ou, quando a história já tiver algumas, uma que você já tem: um Sketch ou uma imagem da Galeria.',
         'Escreva o texto da página embaixo dela e escolha como a imagem fica no quadro.',
         'Use as setas para subir ou descer uma página. Só aquela página muda, então duas pessoas podem reordenar páginas diferentes ao mesmo tempo.',
         'Compile o manuscrito para obter as páginas, em ordem, com seus textos.',

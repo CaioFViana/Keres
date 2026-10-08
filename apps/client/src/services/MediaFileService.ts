@@ -353,6 +353,21 @@ export const mediaFileService = {
     return result.assets;
   },
 
+  /** The system picker for pictures only, one or several - what a page of a comic is made of. */
+  async pickImages(): Promise<DocumentPicker.DocumentPickerAsset[] | null> {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'image/*',
+      // Off for the same sandbox reason as `pick()`.
+      copyToCacheDirectory: false,
+      multiple: true,
+    });
+
+    if (result.canceled || !result.assets || result.assets.length === 0) {
+      return null;
+    }
+    return result.assets;
+  },
+
   async pickDocuments(): Promise<DocumentPicker.DocumentPickerAsset[] | null> {
     const result = await DocumentPicker.getDocumentAsync({
       type: [...DOCUMENT_PICKER_MIME_FILTERS],

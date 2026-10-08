@@ -12,6 +12,16 @@ const mockDeletePage = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockShowNotification = jest.fn();
 const mockGetScene = jest.fn();
+const mockDrawNewPage = jest.fn();
+const mockUploadPictures = jest.fn();
+const mockNavigateAcross = jest.fn();
+let mockSheetProps: {
+  visible: boolean;
+  replacing?: boolean;
+  onDraw: () => void;
+  onUpload: () => void;
+  onChooseExisting: () => void;
+} | null = null;
 
 let mockCanEdit = true;
 let mockMedium: string | null = 'comic';
@@ -25,7 +35,15 @@ let mockPickerProps: {
 jest.mock('@react-navigation/native', () => {
   const route = { params: { sceneId: 'scene-1' } };
   const navigation = { goBack: () => mockGoBack() };
-  return { __esModule: true, useNavigation: () => navigation, useRoute: () => route };
+  return {
+    __esModule: true,
+    useNavigation: () => navigation,
+    useRoute: () => route,
+    useFocusEffect: (effect: () => void | (() => void)) => {
+      const react = jest.requireActual('react') as typeof import('react');
+      react.useEffect(effect, [effect]);
+    },
+  };
 });
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -81,6 +99,18 @@ jest.mock('../../../../src/hooks/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
+jest.mock('../../../../src/hooks/useSceneArcPageFormat', () => ({
+  __esModule: true,
+  useSceneArcPageFormat: () => 'comic-us',
+}));
+jest.mock('../../../../src/hooks/useNavigateAcrossStacks', () => ({
+  __esModule: true,
+  useNavigateAcrossStacks: () => mockNavigateAcross,
+}));
+jest.mock('../../../../src/hooks/useAddScenePages', () => ({
+  __esModule: true,
+  useAddScenePages: () => ({ drawNewPage: mockDrawNewPage, uploadPictures: mockUploadPictures }),
+}));
 jest.mock('../../../../src/hooks/useScenePages', () => ({
   __esModule: true,
   useScenePages: () => ({ pages: mockViews, loading: false, reload: jest.fn() }),
@@ -130,6 +160,29 @@ jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageThumb'
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageAddSheet', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: NonNullable<typeof mockSheetProps>) => {
+      mockSheetProps = props;
+      return props.visible ? (
+        <>
+          <Text testID="sheet-open">{props.replacing ? 'replace' : 'add'}</Text>
+          <Text testID="door-draw" onPress={props.onDraw}>
+            draw
+          </Text>
+          <Text testID="door-upload" onPress={props.onUpload}>
+            upload
+          </Text>
+          <Text testID="door-existing" onPress={props.onChooseExisting}>
+            existing
+          </Text>
+        </>
+      ) : null;
+    },
+  };
+});
 jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageMediaPicker', () => {
   const { Text } = require('react-native');
   return {
@@ -187,6 +240,12 @@ beforeEach(() => {
   mockViews = [view('p1'), view('p2'), view('p3')];
   mockHeader = null;
   mockPickerProps = null;
+  mockSheetProps = null;
+  mockDrawNewPage.mockReset().mockResolvedValue('sk-new');
+  mockUploadPictures
+    .mockReset()
+    .mockResolvedValue({ galleryIds: ['g1', 'g2'], rejected: 0, cancelled: false });
+  mockNavigateAcross.mockReset();
   mockGetScene.mockResolvedValue({
     id: 'scene-1',
     storyId: 'story-1',
@@ -238,10 +297,13 @@ describe('ScenePagesScreen', () => {
     expect(screen.getByText('scene_pages_empty_page')).toBeTruthy();
   });
 
-  it('adds a page from the picker, at the end of the scene', async () => {
+  it('adds a page from one that already exists, at the end of the scene', async () => {
     const screen = await renderScreen();
 
     await act(async () => mockHeader?.actions?.[0].onPress());
+    expect(screen.getByTestId('sheet-open')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('door-existing'));
+    expect(screen.queryByTestId('sheet-open')).toBeNull();
     expect(screen.getByTestId('picker-open')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('pick-sketch'));
 
@@ -251,6 +313,101 @@ describe('ScenePagesScreen', () => {
       media: { sketchId: 'sk-1' },
     });
     expect(screen.queryByTestId('picker-open')).toBeNull();
+  });
+
+  it('draws a new page: a blank sketch, named for the scene and the page, opened to draw on', async () => {
+    const screen = await renderScreen();
+
+    await act(async () => mockHeader?.actions?.[0].onPress());
+    await fireEvent.press(screen.getByTestId('door-draw'));
+
+    await waitFor(() => expect(mockCreatePage).toHaveBeenCalled());
+    expect(mockDrawNewPage).toHaveBeenCalledWith('Standoff · scene_pages_label_page:4');
+    expect(mockCreatePage).toHaveBeenCalledWith('user-1', {
+      storyId: 'story-1',
+      sceneId: 'scene-1',
+      media: { sketchId: 'sk-new' },
+    });
+    expect(mockNavigateAcross).toHaveBeenCalledWith('SketchStack', 'SketchCanvas', {
+      sketchId: 'sk-new',
+    });
+    expect(screen.queryByTestId('sheet-open')).toBeNull();
+  });
+
+  it('draws in place of a page picture: the sketch replaces it and opens', async () => {
+    const screen = await renderScreen();
+
+    await fireEvent.press(screen.getAllByLabelText('scene_pages_replace')[1]);
+    await fireEvent.press(screen.getByTestId('door-draw'));
+
+    await waitFor(() => expect(mockReplaceMedia).toHaveBeenCalled());
+    expect(mockDrawNewPage).toHaveBeenCalledWith('Standoff · scene_pages_label_page:2');
+    expect(mockReplaceMedia).toHaveBeenCalledWith('user-1', 'p2', { sketchId: 'sk-new' });
+    expect(mockCreatePage).not.toHaveBeenCalled();
+    expect(mockNavigateAcross).toHaveBeenCalledWith('SketchStack', 'SketchCanvas', {
+      sketchId: 'sk-new',
+    });
+  });
+
+  it('adds one page for each picture uploaded, in the order they were chosen', async () => {
+    const screen = await renderScreen();
+
+    await act(async () => mockHeader?.actions?.[0].onPress());
+    await fireEvent.press(screen.getByTestId('door-upload'));
+
+    await waitFor(() => expect(mockCreatePage).toHaveBeenCalledTimes(2));
+    expect(mockCreatePage.mock.calls.map((call) => call[1].media)).toEqual([
+      { galleryId: 'g1' },
+      { galleryId: 'g2' },
+    ]);
+    expect(mockShowNotification).toHaveBeenCalledWith('scene_pages_uploaded_page', 'success');
+  });
+
+  it('says how many files could not be used, and adds the rest', async () => {
+    mockUploadPictures.mockResolvedValue({ galleryIds: ['g1'], rejected: 2, cancelled: false });
+    const screen = await renderScreen();
+
+    await act(async () => mockHeader?.actions?.[0].onPress());
+    await fireEvent.press(screen.getByTestId('door-upload'));
+
+    await waitFor(() => expect(mockCreatePage).toHaveBeenCalledTimes(1));
+    expect(mockShowNotification).toHaveBeenCalledWith('scene_pages_upload_rejected', 'warning');
+  });
+
+  it('does nothing when the picker is closed without choosing', async () => {
+    mockUploadPictures.mockResolvedValue({ galleryIds: [], rejected: 0, cancelled: true });
+    const screen = await renderScreen();
+
+    await act(async () => mockHeader?.actions?.[0].onPress());
+    await fireEvent.press(screen.getByTestId('door-upload'));
+
+    await waitFor(() => expect(mockUploadPictures).toHaveBeenCalled());
+    expect(mockCreatePage).not.toHaveBeenCalled();
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('puts the first uploaded picture in place of a page picture', async () => {
+    const screen = await renderScreen();
+
+    await fireEvent.press(screen.getAllByLabelText('scene_pages_replace')[0]);
+    await fireEvent.press(screen.getByTestId('door-upload'));
+
+    await waitFor(() => expect(mockReplaceMedia).toHaveBeenCalled());
+    expect(mockReplaceMedia).toHaveBeenCalledWith('user-1', 'p1', { galleryId: 'g1' });
+    expect(mockCreatePage).not.toHaveBeenCalled();
+  });
+
+  it('tells the person when drawing fails, and opens nothing', async () => {
+    mockDrawNewPage.mockRejectedValue(new Error('boom'));
+    const screen = await renderScreen();
+
+    await act(async () => mockHeader?.actions?.[0].onPress());
+    await fireEvent.press(screen.getByTestId('door-draw'));
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith('scene_pages_save_failed', 'error'),
+    );
+    expect(mockNavigateAcross).not.toHaveBeenCalled();
   });
 
   it('moves a page to the place it lands on, and offers no move past either end', async () => {
@@ -304,6 +461,8 @@ describe('ScenePagesScreen', () => {
 
     expect(screen.getByText('scene_pages_media_removed')).toBeTruthy();
     await fireEvent.press(screen.getByText('scene_pages_media_removed'));
+    expect(screen.getByTestId('sheet-open').props.children).toBe('replace');
+    await fireEvent.press(screen.getByTestId('door-existing'));
     await fireEvent.press(screen.getByTestId('pick-sketch'));
 
     expect(mockReplaceMedia).toHaveBeenCalledWith('user-1', 'p1', { sketchId: 'sk-1' });

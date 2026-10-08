@@ -200,14 +200,16 @@ const ActiveGuideOverlay: React.FC = () => {
     topInset: insets.top,
     bottomInset: insets.bottom,
   });
-  const cardRect = useTweenedRect({
-    x: targetLayout.left,
-    y: targetLayout.top,
-    width: targetLayout.width,
-    height: 1,
-  });
+  // Until the tour is shown the card has no place: it must not start from the default one and slide to
+  // the first target the moment it appears.
+  const revealed = (measured && canvasReady) || waited;
+  const cardRect = useTweenedRect(
+    revealed
+      ? { x: targetLayout.left, y: targetLayout.top, width: targetLayout.width, height: 1 }
+      : null,
+  );
 
-  if (!guide || !step || !activeTour || !((measured && canvasReady) || waited)) {
+  if (!guide || !step || !activeTour || !revealed) {
     return null;
   }
 

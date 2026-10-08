@@ -104,8 +104,9 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
+const mockBackHandlerOptions = jest.fn();
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
-  useBackButtonHandler: () => {},
+  useBackButtonHandler: (options: unknown) => mockBackHandlerOptions(options),
 }));
 
 jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
@@ -314,6 +315,12 @@ describe('StoryPublishScreen', () => {
   afterEach(() => {
     cleanup();
     jest.restoreAllMocks();
+  });
+
+  it('takes the header back to where it was opened from, the dashboard or the hub', async () => {
+    await render(<StoryPublishScreen />);
+
+    expect(mockBackHandlerOptions).toHaveBeenCalledWith({ showWebBackButton: true });
   });
 
   it('says the story is only on this device, and offers to send it to a server', async () => {

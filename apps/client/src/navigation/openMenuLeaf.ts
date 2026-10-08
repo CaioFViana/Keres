@@ -1,5 +1,6 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { CommonActions } from '@react-navigation/native';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import type { MenuLeaf, NestedFocus } from './drawerMenuModel';
 
 type DrawerNavigation = DrawerContentComponentProps['navigation'];
@@ -42,6 +43,9 @@ export function openMenuLeaf(
   state: DrawerState,
   leaf: MenuLeaf,
 ): void {
+  // The menu starts the person afresh: a way back left by a shortcut they did not take back is no longer theirs.
+  useHeaderBackActionStore.getState().clearCrossStackReturnAction();
+
   const drawerRoute = state.routes.find((route) => route.name === leaf.route) as
     | ((typeof state.routes)[number] & { state?: { key?: string } })
     | undefined;

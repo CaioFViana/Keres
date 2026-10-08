@@ -1,5 +1,6 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
 const mockRootDispatch = jest.fn();
@@ -108,7 +109,12 @@ jest.mock(
   '../../src/components/common/navigation/NavigationBackButton/NavigationBackButton',
   () => {
     const { View } = jest.requireActual('react-native');
-    return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
+    return {
+      __esModule: true,
+      default: ({ onPress }: { onPress: () => void }) => (
+        <View testID="navigation-back-button" onPress={onPress} />
+      ),
+    };
   },
 );
 jest.mock(
@@ -557,6 +563,62 @@ it('keeps the World index root screen free of a back button', async () => {
 
   expect(queryByTestId('navigation-back-button')).toBeNull();
   expect(getByTestId('drawer-menu-button')).toBeTruthy();
+});
+
+describe('a root screen opened by a shortcut elsewhere', () => {
+  const openManuscriptRoot = async () => {
+    mockResponsiveLayout.isCompact = true;
+    mockResponsiveLayout.isWide = false;
+    mockResponsiveLayout.width = 500;
+    const navigationModule = jest.requireMock('@react-navigation/native') as {
+      getFocusedRouteNameFromRoute: jest.Mock;
+    };
+    navigationModule.getFocusedRouteNameFromRoute.mockReturnValue('Manuscript');
+    await renderDrawer();
+    const navigator = mockDrawerNavigatorProps.at(-1);
+    const options = navigator?.screenOptions({
+      navigation: { getState: () => ({ routes: [] }), dispatch: mockRootDispatch },
+      route: {
+        key: 'narrative-key',
+        name: 'NarrativeElementsStack',
+        state: {
+          type: 'stack',
+          key: 'narrative-stack',
+          index: 0,
+          routes: [{ name: 'Manuscript' }],
+        },
+      },
+    });
+    return render(<>{options.headerLeft()}</>);
+  };
+
+  afterEach(() => {
+    useHeaderBackActionStore.getState().clearCrossStackReturnAction();
+  });
+
+  it('has no arrow when it was opened from the menu', async () => {
+    const { queryByTestId } = await openManuscriptRoot();
+
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it('has an arrow that takes the way back the shortcut left', async () => {
+    const wayBack = jest.fn();
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(wayBack, 'Manuscript');
+    const { getByTestId } = await openManuscriptRoot();
+
+    await fireEvent.press(getByTestId('navigation-back-button'));
+
+    expect(wayBack).toHaveBeenCalledTimes(1);
+    expect(mockRootDispatch).not.toHaveBeenCalled();
+  });
+
+  it('ignores a way back that was left for another screen', async () => {
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(jest.fn(), 'StoryAnalysis');
+    const { queryByTestId } = await openManuscriptRoot();
+
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
 });
 
 it.each([

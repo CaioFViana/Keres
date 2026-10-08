@@ -62,6 +62,7 @@ jest.mock('../../../src/utils/clientFlavor', () => ({
 }));
 
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { useHeaderBackActionStore } from '../../../src/state/headerBackActionStore';
 import StoryShareIndexScreen from '../../../src/screens/storyshare/StoryShareIndexScreen';
 
 beforeEach(() => {
@@ -80,6 +81,36 @@ describe('StoryShareIndexScreen', () => {
     await fireEvent.press(view.getByTestId('story-share-publish'));
 
     expect(mockNavigate).toHaveBeenCalledWith('StoryPublish');
+  });
+
+  it('forgets a way back to the dashboard left by an earlier visit, so back comes back here', async () => {
+    const toDashboard = jest.fn();
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(toDashboard, 'StoryPublish');
+    const view = await render(<StoryShareIndexScreen />);
+
+    await fireEvent.press(view.getByTestId('story-share-publish'));
+
+    expect(
+      useHeaderBackActionStore.getState().consumeCrossStackReturnAction('StoryPublish'),
+    ).toBeUndefined();
+
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(toDashboard, 'ManuscriptExport');
+    await fireEvent.press(view.getByTestId('story-share-manuscript'));
+    expect(
+      useHeaderBackActionStore.getState().consumeCrossStackReturnAction('ManuscriptExport'),
+    ).toBeUndefined();
+  });
+
+  it('keeps the way back of another screen when it opens this one', async () => {
+    const toList = jest.fn();
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(toList, 'StoryArcForm');
+    const view = await render(<StoryShareIndexScreen />);
+
+    await fireEvent.press(view.getByTestId('story-share-publish'));
+
+    expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction('StoryArcForm')).toBe(
+      toList,
+    );
   });
 
   it('opens the manuscript export inside this stack, so back returns here', async () => {

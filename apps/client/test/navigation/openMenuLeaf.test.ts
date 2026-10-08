@@ -1,5 +1,6 @@
 import type { MenuLeaf } from '../../src/navigation/mainDrawerMenu';
 import { nestedFocusOf, openMenuLeaf } from '../../src/navigation/openMenuLeaf';
+import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
 
 const stateOf = (routes: object[], index = 0) => ({ index, routes }) as never;
 
@@ -32,6 +33,14 @@ const manuscript: MenuLeaf = {
 };
 
 describe('openMenuLeaf', () => {
+  it('forgets a way back a shortcut left, since the menu starts the person afresh', () => {
+    useHeaderBackActionStore.getState().setCrossStackReturnAction(jest.fn(), 'Manuscript');
+
+    openMenuLeaf(drawer(true) as never, stateOf([{ name: 'ItemsStack', key: 'items-key' }]), plain);
+
+    expect(useHeaderBackActionStore.getState().crossStackReturnAction).toBeUndefined();
+  });
+
   it('lets the drawer entry return its own stack to the list', () => {
     const navigation = drawer(true);
 

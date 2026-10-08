@@ -16,6 +16,13 @@ interface HeaderBackActionState {
    * stays, for the screen it belongs to.
    */
   consumeCrossStackReturnAction: (fromScreen?: string) => BackAction | undefined;
+  /**
+   * Forgets the way back registered for `screen`, or whichever is registered when no screen is given (the
+   * menu starts the person afresh). A screen that is opened from inside its own stack too must
+   * do this first: a return left by an earlier visit from another stack would otherwise be the one the
+   * back button takes.
+   */
+  clearCrossStackReturnAction: (screen?: string) => void;
 }
 
 /**
@@ -31,6 +38,12 @@ export const useHeaderBackActionStore = create<HeaderBackActionState>((set, get)
     set((state) => (state.backAction === backAction ? { backAction: undefined } : state)),
   setCrossStackReturnAction: (crossStackReturnAction, crossStackReturnScreen) =>
     set({ crossStackReturnAction, crossStackReturnScreen }),
+  clearCrossStackReturnAction: (screen) =>
+    set((state) =>
+      screen === undefined || state.crossStackReturnScreen === screen
+        ? { crossStackReturnAction: undefined, crossStackReturnScreen: undefined }
+        : state,
+    ),
   consumeCrossStackReturnAction: (fromScreen) => {
     const { crossStackReturnAction: action, crossStackReturnScreen: screen } = get();
     if (!action) return undefined;

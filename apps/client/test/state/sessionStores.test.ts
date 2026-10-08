@@ -83,6 +83,18 @@ describe('small session stores', () => {
     );
     expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBeUndefined();
   });
+
+  it('forgets a way back only for the screen it was registered for', () => {
+    const returnToOrigin = jest.fn();
+    const store = useHeaderBackActionStore.getState();
+    store.setCrossStackReturnAction(returnToOrigin, 'StoryPublish');
+
+    store.clearCrossStackReturnAction('StoryArcForm');
+    expect(useHeaderBackActionStore.getState().crossStackReturnAction).toBe(returnToOrigin);
+
+    store.clearCrossStackReturnAction('StoryPublish');
+    expect(useHeaderBackActionStore.getState().crossStackReturnAction).toBeUndefined();
+  });
 });
 
 describe('theme persistence', () => {

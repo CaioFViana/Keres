@@ -31,7 +31,9 @@ const StoryPublishScreen = () => {
   const { t } = useTranslation();
   useScreenHeader({ target: 'parent', title: t('publish_story_title') });
   const { colors } = useTheme();
-  useBackButtonHandler();
+  // Opened from the dashboard's card as well as from the hub: the header's back takes the way back registered
+  // for it (the dashboard) or, from the hub, goes back one screen.
+  useBackButtonHandler({ showWebBackButton: true });
   const navigateAcross = useNavigateAcrossStacks();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
   const publishing = useStoryPublishing(storyId);

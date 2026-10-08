@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
+import type { NavigationState } from '@react-navigation/native';
+import { DrawerActions, StackActions, useNavigation } from '@react-navigation/native';
 import React from 'react';
 import MapIcon from '../components/common/display/MapIcon/MapIcon';
 import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import type { MainSystemDrawerParamList } from './MainSystemStack';
 
 /**
@@ -68,3 +70,39 @@ export const ArcContextDrawerScreen = () => {
   React.useEffect(() => navigation.navigate('MainDashboard'), [navigation]);
   return null;
 };
+
+/**
+ * What the drawer header's back arrow does for the stack on show: the way back a shortcut registered for this
+ * screen (the dashboard, say), or else one screen back in the stack. The stack is resolved when the arrow is
+ * pressed - the route object received while the header mounts can hold a partial state, while the drawer's
+ * navigation always has the live one.
+ */
+export function headerBackAction({
+  navigation,
+  routeKey,
+  fallbackStackKey,
+  screen,
+}: {
+  navigation: {
+    getState: () => { routes: { key: string }[] };
+    dispatch: (action: never) => void;
+  };
+  routeKey: string;
+  fallbackStackKey?: string;
+  screen: string;
+}) {
+  return () => {
+    const wayBack = useHeaderBackActionStore.getState().consumeCrossStackReturnAction(screen);
+    if (wayBack) {
+      wayBack();
+      return;
+    }
+    const liveDrawerRoute = navigation.getState().routes.find((route) => route.key === routeKey) as
+      | { state?: NavigationState }
+      | undefined;
+    const target = liveDrawerRoute?.state?.key ?? fallbackStackKey;
+    (navigation.dispatch as (action: object) => void)(
+      target ? { ...StackActions.pop(), target } : StackActions.pop(),
+    );
+  };
+}

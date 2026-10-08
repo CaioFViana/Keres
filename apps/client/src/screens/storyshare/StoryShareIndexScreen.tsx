@@ -9,6 +9,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryBackupExport } from '../../hooks/useStoryBackupExport';
 import type { StoryShareStackParamList } from '../../navigation/StoryShareStack';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useHeaderBackActionStore } from '../../state/headerBackActionStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
@@ -65,6 +66,13 @@ const StoryShareIndexScreen = () => {
     note: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 8 },
   });
 
+  // Both screens are opened from the dashboard too, which leaves a way back to the dashboard for them. Opened from
+  // here, back must come back here.
+  const openHere = (screen: 'StoryPublish' | 'ManuscriptExport') => {
+    useHeaderBackActionStore.getState().clearCrossStackReturnAction(screen);
+    navigation.navigate(screen);
+  };
+
   const entries: {
     id: string;
     icon: keyof typeof Ionicons.glyphMap;
@@ -84,7 +92,7 @@ const StoryShareIndexScreen = () => {
               canPublish ? 'story_share_publish_description' : 'story_share_publish_owner_only',
             ),
             disabled: !canPublish,
-            open: () => navigation.navigate('StoryPublish'),
+            open: () => openHere('StoryPublish'),
           },
         ]),
     {
@@ -92,7 +100,7 @@ const StoryShareIndexScreen = () => {
       icon: 'document-text-outline' as const,
       title: t('export_manuscript_title'),
       description: t('story_share_manuscript_description'),
-      open: () => navigation.navigate('ManuscriptExport'),
+      open: () => openHere('ManuscriptExport'),
     },
   ];
 

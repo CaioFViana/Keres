@@ -87,6 +87,9 @@ export function buildMainDrawerMenu({
           route: 'StoryShare',
           label: t('story_share_title'),
           icon: 'share-outline',
+          // Opened as the stack's only screen: the dashboard's shortcuts open its screens first, and the menu must
+          // lead to the hub whatever they left in the stack.
+          target: { screen: 'StoryShareIndex' },
         },
       ],
     },

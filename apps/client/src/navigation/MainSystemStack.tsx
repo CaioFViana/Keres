@@ -6,7 +6,6 @@ import type { NavigationState, NavigatorScreenParams } from '@react-navigation/n
 import {
   CommonActions,
   getFocusedRouteNameFromRoute,
-  StackActions,
   useNavigation,
 } from '@react-navigation/native';
 import React from 'react';
@@ -60,6 +59,7 @@ import {
   drawerIcon,
   drawerStoredIcon,
   DrawerToggleButton,
+  headerBackAction,
   type MainDashboardScreenNavigationProp,
   mainSystemStackRootScreens,
 } from './MainSystemDrawerHelpers';
@@ -162,6 +162,7 @@ const MainSystemNavigator = () => {
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
   const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
+  const crossStackReturnScreen = useHeaderBackActionStore((state) => state.crossStackReturnScreen);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
@@ -229,25 +230,20 @@ const MainSystemNavigator = () => {
           const nestedStackKey = nestedState?.key;
           const isNestedDestination =
             activeRouteName !== route.name && !mainSystemStackRootScreens.has(activeRouteName);
+          // A root screen has no arrow - nothing is behind it - unless a shortcut elsewhere opened it and left
+          // the way back: the dashboard's Read, Analysis and History cards open roots of other stacks.
+          const isRootWithWayBack =
+            activeRouteName !== route.name && crossStackReturnScreen === activeRouteName;
           const showNestedBackButton =
             isNestedDestination ||
+            isRootWithWayBack ||
             (nestedState?.type === 'stack' && (nestedState.index ?? 0) > 0 && nestedStackKey);
-          const goBackInNestedStack = () => {
-            // Resolve the nested navigator lazily: the route object received while the header
-            // mounts can hold a partial state, while Drawer navigation always has the live one.
-            const liveDrawerRoute = navigation
-              .getState()
-              .routes.find((drawerRoute) => drawerRoute.key === route.key) as
-              | (typeof route & { state?: NavigationState })
-              | undefined;
-            const target = liveDrawerRoute?.state?.key ?? nestedStackKey;
-
-            if (target) {
-              navigation.dispatch({ ...StackActions.pop(), target });
-            } else {
-              navigation.dispatch(StackActions.pop());
-            }
-          };
+          const goBackFromHeader = headerBackAction({
+            navigation,
+            routeKey: route.key,
+            fallbackStackKey: nestedStackKey,
+            screen: activeRouteName,
+          });
 
           return {
             headerShown: true,
@@ -276,7 +272,7 @@ const MainSystemNavigator = () => {
                 ? () => (
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       {showNestedBackButton ? (
-                        <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
+                        <NavigationBackButton onPress={nestedBackAction ?? goBackFromHeader} />
                       ) : null}
                       {!isWide ? (
                         <DrawerToggleButton

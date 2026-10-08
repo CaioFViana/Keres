@@ -285,5 +285,7 @@ describe('compileStoryManuscript limits', () => {
     await expect(compileStoryManuscript(big, { format: 'txt' })).rejects.toThrow(
       `exceeds the ${MAX_MANUSCRIPT_BYTES}-byte limit`,
     );
-  });
+    // It builds, validates and renders fifty megabytes of text: a fraction of a second here, but on a busy
+    // CI machine the default five seconds is not a margin for that.
+  }, 60_000);
 });

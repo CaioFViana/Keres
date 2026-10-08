@@ -164,3 +164,26 @@ it('uses a one-shot cross-stack return before the destination stack back action'
   expect(mockNavigation.goBack).not.toHaveBeenCalled();
   expect(useHeaderBackActionStore.getState().crossStackReturnAction).toBeUndefined();
 });
+
+it('takes the way back only from the screen it was registered for', async () => {
+  const returnToOrigin = jest.fn();
+  useHeaderBackActionStore.getState().setCrossStackReturnAction(returnToOrigin, 'StoryArcList');
+
+  // A form opened from the list: its back is the stack's own.
+  mockNavigation.getState.mockReturnValue({
+    index: 1,
+    routes: [{ name: 'StoryArcList' }, { name: 'StoryArcForm' }],
+  });
+  const form = await renderHook(() => useBackButtonHandler({ showWebBackButton: true }));
+  useHeaderBackActionStore.getState().backAction?.();
+  expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+  expect(returnToOrigin).not.toHaveBeenCalled();
+  form.unmount();
+
+  // The list itself: its back is the way back to where it was opened from.
+  mockNavigation.getState.mockReturnValue({ index: 0, routes: [{ name: 'StoryArcList' }] });
+  await renderHook(() => useBackButtonHandler({ showWebBackButton: true }));
+  useHeaderBackActionStore.getState().backAction?.();
+  expect(returnToOrigin).toHaveBeenCalledTimes(1);
+  expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+});

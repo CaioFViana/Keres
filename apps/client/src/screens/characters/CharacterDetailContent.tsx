@@ -1,3 +1,4 @@
+import { navigateAcrossStacks } from '@/src/utils/stackNavigation';
 import Button from '@/src/components/common/controls/Button/Button';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
@@ -209,7 +210,8 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
             data={statData}
             notation={(selectedStory?.statNotation ?? 'letter') as StatNotation}
             onCompare={(modeId) =>
-              navigation.navigate('CustomizationStack', {
+              navigateAcrossStacks(navigation as never, {
+                stack: 'CustomizationStack',
                 screen: 'StatComparison',
                 params: { characterId, modeId: modeId ?? undefined },
               })

@@ -6,7 +6,7 @@ import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,7 @@ const OperationLogScreen: React.FC = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const navigation = useNavigation<OperationLogScreenNavigationProp>();
+  const navigateAcross = useNavigateAcrossStacks();
   const { selectedStory } = useStoryStore();
 
   const [shouldRefetch, setShouldRefetch] = useState(false); // New state for refetch trigger
@@ -46,12 +46,9 @@ const OperationLogScreen: React.FC = () => {
     (logId: string) => {
       // Navigate to the OperationLogDetail screen within the OperationLogStack
       // This now works because OperationLogScreenNavigationProp is a CompositeNavigationProp
-      navigation.navigate('OperationLogStack', {
-        screen: 'OperationLogDetail',
-        params: { logId: logId },
-      });
+      navigateAcross('OperationLogStack', 'OperationLogDetail', { logId });
     },
-    [navigation],
+    [navigateAcross],
   );
 
   // Listen for operation_log_updated event to trigger refetch

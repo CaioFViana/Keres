@@ -58,6 +58,15 @@ export const useBackButtonHandler = ({
   const consumeCrossStackReturnAction = useHeaderBackActionStore(
     (state) => state.consumeCrossStackReturnAction,
   );
+  // The screen this back is pressed on: a way back registered for another screen of the stack is not its.
+  const focusedScreenName = useCallback((): string | undefined => {
+    try {
+      const state = navigation.getState?.();
+      return state?.routes[state.index]?.name;
+    } catch {
+      return undefined;
+    }
+  }, [navigation]);
   // A ref keeps the custom way back out of the effects' dependencies: the caller almost
   // always passes a new function on every render, and without this the handler would register itself again
   // on every key typed on the screen.
@@ -75,7 +84,7 @@ export const useBackButtonHandler = ({
       const backAction = () => {
         if (onBackRef.current) onBackRef.current();
         else {
-          const crossStackReturn = consumeCrossStackReturnAction();
+          const crossStackReturn = consumeCrossStackReturnAction(focusedScreenName());
           if (crossStackReturn) crossStackReturn();
           else navigation.goBack();
         }
@@ -86,6 +95,7 @@ export const useBackButtonHandler = ({
     }, [
       clearBackAction,
       consumeCrossStackReturnAction,
+      focusedScreenName,
       navigation,
       setBackAction,
       showWebBackButton,
@@ -121,7 +131,7 @@ export const useBackButtonHandler = ({
         onBackRef.current();
         return true;
       }
-      const crossStackReturn = consumeCrossStackReturnAction();
+      const crossStackReturn = consumeCrossStackReturnAction(focusedScreenName());
       if (crossStackReturn) {
         crossStackReturn();
         return true;
@@ -148,5 +158,5 @@ export const useBackButtonHandler = ({
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
-  }, [consumeCrossStackReturnAction, navigation]);
+  }, [consumeCrossStackReturnAction, focusedScreenName, navigation]);
 };

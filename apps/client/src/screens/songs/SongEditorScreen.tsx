@@ -35,6 +35,7 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { useDrizzle } from '../../db';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useNavigateAcrossStacks } from '../../hooks/useNavigateAcrossStacks';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -72,6 +73,7 @@ const SongEditorScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const navigateAcross = useNavigateAcrossStacks();
   const { songId } = useRoute<RouteProps>().params;
   const db = useDrizzle();
   const { userId } = useUserSettingsStore();
@@ -275,10 +277,7 @@ const SongEditorScreen = () => {
   });
 
   const openScene = (sceneId: string) =>
-    (navigation as unknown as { navigate: (stack: string, params: unknown) => void }).navigate(
-      'NarrativeElementsStack',
-      { screen: 'SceneDetail', params: { sceneId } },
-    );
+    navigateAcross('NarrativeElementsStack', 'SceneDetail', { sceneId });
 
   return (
     <KeyboardAwareScreen

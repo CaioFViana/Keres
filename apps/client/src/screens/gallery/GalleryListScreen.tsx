@@ -16,6 +16,7 @@ import GalleryGridItem from '@/src/components/features/list-items/GalleryGridIte
 import { useDrizzle } from '../../db';
 import type { GallerySelect } from '../../db/schemas/galleries';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
@@ -47,6 +48,7 @@ const GalleryListScreen = () => {
   const { colors } = useTheme();
   const { breakpoint } = useResponsiveLayout();
   const navigation = useNavigation<GalleryScreenNavigationProp>();
+  const navigateAcross = useNavigateAcrossStacks();
   const db = useDrizzle();
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
@@ -169,12 +171,12 @@ const GalleryListScreen = () => {
   }, [importFromPicker, t]);
 
   const handleOpenSketches = useCallback(() => {
-    navigation.navigate('SketchStack', { screen: 'SketchList' });
-  }, [navigation]);
+    navigateAcross('SketchStack', 'SketchList');
+  }, [navigateAcross]);
 
   const handleOpenSongs = useCallback(() => {
-    navigation.navigate('SongStack', { screen: 'SongList' });
-  }, [navigation]);
+    navigateAcross('SongStack', 'SongList');
+  }, [navigateAcross]);
 
   useScreenHeader({
     target: 'parent',

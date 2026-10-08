@@ -5,10 +5,17 @@ type BackAction = () => void;
 interface HeaderBackActionState {
   backAction?: BackAction;
   crossStackReturnAction?: BackAction;
+  /** The screen the return belongs to: only a back from it takes the way back to where it was opened from. */
+  crossStackReturnScreen?: string;
   setBackAction: (backAction: BackAction) => void;
   clearBackAction: (backAction: BackAction) => void;
-  setCrossStackReturnAction: (action: BackAction) => void;
-  consumeCrossStackReturnAction: () => BackAction | undefined;
+  setCrossStackReturnAction: (action: BackAction, screen?: string) => void;
+  /**
+   * The way back to the screen that opened another stack, taken once. Asked from a screen other than
+   * the one it was registered for - a form opened from the screen that was opened across stacks - it
+   * stays, for the screen it belongs to.
+   */
+  consumeCrossStackReturnAction: (fromScreen?: string) => BackAction | undefined;
 }
 
 /**
@@ -18,13 +25,17 @@ interface HeaderBackActionState {
 export const useHeaderBackActionStore = create<HeaderBackActionState>((set, get) => ({
   backAction: undefined,
   crossStackReturnAction: undefined,
+  crossStackReturnScreen: undefined,
   setBackAction: (backAction) => set({ backAction }),
   clearBackAction: (backAction) =>
     set((state) => (state.backAction === backAction ? { backAction: undefined } : state)),
-  setCrossStackReturnAction: (crossStackReturnAction) => set({ crossStackReturnAction }),
-  consumeCrossStackReturnAction: () => {
-    const action = get().crossStackReturnAction;
-    set({ crossStackReturnAction: undefined });
+  setCrossStackReturnAction: (crossStackReturnAction, crossStackReturnScreen) =>
+    set({ crossStackReturnAction, crossStackReturnScreen }),
+  consumeCrossStackReturnAction: (fromScreen) => {
+    const { crossStackReturnAction: action, crossStackReturnScreen: screen } = get();
+    if (!action) return undefined;
+    if (screen !== undefined && fromScreen !== undefined && screen !== fromScreen) return undefined;
+    set({ crossStackReturnAction: undefined, crossStackReturnScreen: undefined });
     return action;
   },
 }));

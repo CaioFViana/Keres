@@ -2,6 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -65,6 +66,7 @@ const CharacterRelationGraphScreen = () => {
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
+  const navigateAcross = useNavigateAcrossStacks();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
   const { showNotification } = useNotificationStore();
@@ -171,12 +173,9 @@ const CharacterRelationGraphScreen = () => {
   const handleOpenCharacter = useCallback(
     (characterId: string) => {
       setSelectedNodeId(null);
-      navigation.navigate('CharactersStack', {
-        screen: 'CharacterDetail',
-        params: { characterId },
-      });
+      navigateAcross('CharactersStack', 'CharacterDetail', { characterId });
     },
-    [navigation],
+    [navigateAcross],
   );
 
   const mapSubtitle = useMemo(

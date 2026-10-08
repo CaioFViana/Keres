@@ -15,6 +15,7 @@ import SceneMusicTargetPicker from '@/src/components/features/scenes/SceneMusic/
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
+import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -53,6 +54,7 @@ const SceneMusicScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const navigateAcross = useNavigateAcrossStacks();
   const { sceneId } = useRoute<RouteProps>().params;
   const db = useDrizzle();
   const { userId } = useUserSettingsStore();
@@ -231,12 +233,7 @@ const SceneMusicScreen = () => {
             onReplace={() => setPickerFor(view.music.id)}
             onOpen={() =>
               view.music.songId
-                ? (
-                    navigation as unknown as { navigate: (stack: string, params: unknown) => void }
-                  ).navigate('SongStack', {
-                    screen: 'SongEditor',
-                    params: { songId: view.music.songId },
-                  })
+                ? navigateAcross('SongStack', 'SongEditor', { songId: view.music.songId })
                 : view.music.galleryId && openMedia(view.music.galleryId)
             }
             onListen={view.targetKind === 'song' ? () => void listen(view) : undefined}
@@ -268,9 +265,7 @@ const SceneMusicScreen = () => {
           canEdit
             ? () => {
                 setPickerFor(null);
-                (
-                  navigation as unknown as { navigate: (stack: string, params: unknown) => void }
-                ).navigate('SongStack', { screen: 'SongList' });
+                navigateAcross('SongStack', 'SongList');
               }
             : undefined
         }

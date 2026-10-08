@@ -15,6 +15,7 @@ import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/sha
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -50,6 +51,7 @@ const BoardCanvasScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<BoardStackParamList, 'BoardCanvas'>>();
+  const navigateAcross = useNavigateAcrossStacks();
   const { boardId } = useRoute<RouteProp<BoardStackParamList, 'BoardCanvas'>>().params;
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
@@ -532,10 +534,7 @@ const BoardCanvasScreen = () => {
               return;
             }
             if (selected.entityType === 'Gallery') {
-              navigation.getParent()?.navigate('GalleryStack', {
-                screen: 'GalleryDetail',
-                params: { galleryId: selected.entityId },
-              });
+              navigateAcross('GalleryStack', 'GalleryDetail', { galleryId: selected.entityId });
               return;
             }
             const type = toNavigableEntityType(selected.entityType);

@@ -20,6 +20,7 @@ import { useSyncConflictStore } from '../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { shouldCompleteFirstStory } from '../../utils/tutorialProgress';
+import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { MainDashboardContent } from './MainDashboardContent';
 
 const MainDashboardScreen = () => {
@@ -28,6 +29,7 @@ const MainDashboardScreen = () => {
   const db = useDrizzle();
   const navigation =
     useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
+  const navigateAcross = useNavigateAcrossStacks();
   const { showNotification } = useNotificationStore();
   const { t } = useTranslation();
   const tutorialProgress = useUserSettingsStore((state) => state.tutorialProgress);
@@ -248,27 +250,21 @@ const MainDashboardScreen = () => {
         analysisIssueCount={analysisIssueCount}
         onOpenAnalysis={() => {
           if (selectedStory?.id) {
-            navigation.navigate('StoryAnalysisStack', {
-              screen: 'StoryAnalysis',
-              params: { storyId: selectedStory.id },
-            });
+            navigateAcross('StoryAnalysisStack', 'StoryAnalysis', { storyId: selectedStory.id });
           }
         }}
         onOpenOperationLog={() => {
-          navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
+          navigateAcross('OperationLogStack', 'OperationLog');
         }}
         arcs={arcs}
         onOpenArcs={() => {
-          navigation.navigate('CustomizationStack', { screen: 'StoryArcList' });
+          navigateAcross('CustomizationStack', 'StoryArcList');
         }}
         onOpenArc={(arcId) => {
-          navigation.navigate('CustomizationStack', { screen: 'StoryArcForm', params: { arcId } });
+          navigateAcross('CustomizationStack', 'StoryArcForm', { arcId });
         }}
         onAddArc={
-          canEdit
-            ? () =>
-                navigation.navigate('CustomizationStack', { screen: 'StoryArcForm', params: {} })
-            : undefined
+          canEdit ? () => navigateAcross('CustomizationStack', 'StoryArcForm', {}) : undefined
         }
       />
     </>

@@ -4,7 +4,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 // real require cycle (see db/index.ts's history for what that broke). A type-only import
 // erases at compile time and never touches the runtime require graph.
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import { navigateAcrossStacks } from './stackNavigation';
 import type { OccurrenceTarget } from './occurrenceTarget';
 
 export type NavigableEntityType =
@@ -27,11 +27,6 @@ interface EntityRoute {
   stack: keyof MainSystemDrawerParamList;
   screen: string;
   paramKey: string;
-}
-
-interface NavigationStateLike {
-  index: number;
-  routes: { name: string; params?: object; state?: NavigationStateLike }[];
 }
 
 const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
@@ -90,34 +85,22 @@ export function navigateToEntityDetail(
   options?: { onReturn?: () => void; occurrence?: OccurrenceTarget },
 ): void {
   const route = ENTITY_ROUTES[entityType];
-  const state = drawerNavigation.getState?.() as NavigationStateLike | undefined;
-  const origin = state?.routes[state.index];
-  const originScreen = origin?.state?.routes[origin.state.index];
-
   /*
    * A Detail reached through an entity link may live in a sibling Drawer stack. That stack has no
    * native history entry for the originating screen, so `goBack()` would silently reveal whatever
-   * it was last showing. Preserve the focused source by default; callers only need `onReturn` for
-   * deliberate alternatives such as returning to a filtered matrix or reader.
+   * it was last showing: `navigateAcrossStacks` preserves the focused source by default. Callers only
+   * need `onReturn` for deliberate alternatives such as returning to a filtered matrix or reader.
    */
-  const returnAction =
-    options?.onReturn ??
-    (origin && origin.name !== route.stack
-      ? () => {
-          (drawerNavigation.navigate as (name: string, params?: unknown) => void)(origin.name, {
-            ...(originScreen
-              ? { screen: originScreen.name, params: originScreen.params }
-              : undefined),
-          });
-        }
-      : undefined);
-  if (returnAction) useHeaderBackActionStore.getState().setCrossStackReturnAction(returnAction);
-
-  (drawerNavigation.navigate as (name: string, params: unknown) => void)(route.stack, {
-    screen: route.screen,
-    params: {
-      [route.paramKey]: entityId,
-      ...(options?.occurrence ? { occurrence: options.occurrence } : null),
+  navigateAcrossStacks(
+    drawerNavigation,
+    {
+      stack: route.stack,
+      screen: route.screen,
+      params: {
+        [route.paramKey]: entityId,
+        ...(options?.occurrence ? { occurrence: options.occurrence } : null),
+      },
     },
-  });
+    { onReturn: options?.onReturn },
+  );
 }

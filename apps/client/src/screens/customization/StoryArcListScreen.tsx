@@ -13,7 +13,7 @@ import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { ArcsStackParamList } from '@/src/navigation/ArcsStack';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
@@ -34,7 +34,7 @@ const StoryArcListScreen = () => {
   const notify = useNotificationStore((state) => state.showNotification);
   const vocab = useStoryVocabulary();
   const navigation =
-    useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryArcList'>>();
+    useNavigation<NativeStackNavigationProp<ArcsStackParamList, 'StoryArcList'>>();
   const [arcs, setArcs] = useState<StoryArcSelect[]>([]);
 
   const reload = useCallback(async () => {

@@ -43,6 +43,8 @@ export interface SceneService {
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<SceneSelect[]>;
   getSceneCount(storyId?: string): Promise<number>;
+  /** The scene written in most recently, for picking the story back up where it was left. */
+  getLastEdited(storyId: string): Promise<SceneSelect | undefined>;
   getById(sceneId: string): Promise<SceneSelect | undefined>;
   createScene(
     currentUserId: string,
@@ -187,6 +189,17 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
   return {
     async getSceneCount(storyId?: string): Promise<number> {
       return countActiveStoryEntities(db, scenes, storyId);
+    },
+
+    async getLastEdited(storyId: string): Promise<SceneSelect | undefined> {
+      const latest = await db
+        .select()
+        .from(scenes)
+        .where(and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)))
+        .orderBy(desc(scenes.updatedAt))
+        .limit(1)
+        .all();
+      return (await withLiveChapters(latest))[0];
     },
 
     async getScenesByStoryId(

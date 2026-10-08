@@ -484,7 +484,7 @@ describe('CharacterDetailContent', () => {
     expect(enabled.getByTestId('section-stats_title')).toBeTruthy();
     expect(enabled.getByTestId('stat-panel').props.children).toBe('char-1:Aria:letter');
     await fireEvent.press(enabled.getByTestId('stat-panel-compare'));
-    expect(props.navigation.navigate).toHaveBeenCalledWith('CustomizationStack', {
+    expect(props.navigation.navigate).toHaveBeenCalledWith('StatsStack', {
       screen: 'StatComparison',
       params: { characterId: 'char-1', modeId: 'mode-1' },
     });

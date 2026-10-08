@@ -8,7 +8,6 @@ describe('screenGuides', () => {
       'BoardsStack',
       'CharactersStack',
       'CommentsStack',
-      'CustomizationStack',
       'EntityForm',
       'ExampleStories',
       'GalleryStack',
@@ -34,7 +33,6 @@ describe('screenGuides', () => {
       'SongTune',
       'StatList',
       'StoryAnalysis',
-      'StoryAppearance',
       'StoryArcList',
       'StoryCalendarList',
       'StoryEntityCount',
@@ -44,7 +42,6 @@ describe('screenGuides', () => {
       'Suggestions',
       'TagsStack',
       'Vocabulary',
-      'WorldRulesStack',
     ]);
     for (const [screenId, guide] of Object.entries(screenGuides)) {
       expect(guide.id).toBe(screenId);

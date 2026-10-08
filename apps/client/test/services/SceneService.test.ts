@@ -200,6 +200,25 @@ describe('SceneService listing', () => {
     expect(await service.getSceneCount(TEST_STORY_ID)).toBe(1);
     expect(await service.getSceneCount()).toBe(1);
   });
+
+  it('finds the scene written in most recently, leaving out deleted ones', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('old', { index: 1, updatedAt: new Date('2026-01-01T00:00:00.000Z') });
+    await seedScene('latest', { index: 2, updatedAt: new Date('2026-03-01T00:00:00.000Z') });
+    await seedScene('gone', {
+      index: 3,
+      isDeleted: true,
+      updatedAt: new Date('2026-04-01T00:00:00.000Z'),
+    });
+
+    expect((await service.getLastEdited(TEST_STORY_ID))?.id).toBe('latest');
+  });
+
+  it('has no last scene in a story with none', async () => {
+    const service = createSceneService(database.db);
+
+    expect(await service.getLastEdited(TEST_STORY_ID)).toBeUndefined();
+  });
 });
 
 describe('SceneService mutation edges', () => {

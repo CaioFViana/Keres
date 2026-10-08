@@ -11,7 +11,7 @@ import { useStoryArcs } from '@/src/hooks/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
@@ -29,7 +29,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-type VocabularyNavigation = NativeStackNavigationProp<CustomizationStackParamList, 'Vocabulary'>;
+type VocabularyNavigation = NativeStackNavigationProp<StorySettingsStackParamList, 'Vocabulary'>;
 type DraftTerms = Record<
   StoryVocabularyEntityType,
   {

@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra Menu da história › Logs de operação.',
+        'Abra Menu da história › Histórico.',
         'Use a lista para localizar uma criação, edição ou vínculo.',
         'Toque no registro para ver o detalhe e o elemento relacionado.',
       ],

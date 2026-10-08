@@ -12,7 +12,7 @@ import { ScreenLoading } from '../../components/common/feedback/ScreenState/Scre
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -21,14 +21,14 @@ import { useStatFormActions } from './useStatFormActions';
 import { useStatFormResources } from './useStatFormResources';
 import { useStatFormState } from './useStatFormState';
 
-type StatFormNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatForm'>;
+type StatFormNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatForm'>;
 
 const StatFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatFormNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatForm'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatForm'>>();
   const statId = route.params?.statId;
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();

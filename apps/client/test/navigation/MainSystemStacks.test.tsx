@@ -52,11 +52,19 @@ jest.mock('../../src/screens/comments/CommentListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/customization/CustomizationIndexScreen', () => ({
+jest.mock('../../src/screens/storysettings/StorySettingsAppearanceScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/customization/StoryAppearanceScreen', () => ({
+jest.mock('../../src/screens/storysettings/StorySettingsCollaborationScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/storysettings/StorySettingsGeneralScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/storysettings/StorySettingsIndexScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -328,10 +336,6 @@ jest.mock('../../src/screens/tags/TagListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/worldrules/WorldIndexScreen', () => ({
-  __esModule: true,
-  default: () => null,
-}));
 jest.mock('../../src/screens/worldrules/WorldRuleDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -350,7 +354,6 @@ import {
   BoardsStackNavigator,
   CharacterStackNavigator,
   CommentsStackNavigator,
-  CustomizationStackNavigator,
   GalleryStackNavigator,
   ItemStackNavigator,
   LocationStackNavigator,
@@ -362,6 +365,10 @@ import {
   TagStackNavigator,
   WorldRuleStackNavigator,
 } from '../../src/navigation/MainSystemStacks';
+import ArcsStackNavigator from '../../src/navigation/ArcsStack';
+import CalendarsStackNavigator from '../../src/navigation/CalendarsStack';
+import StatsStackNavigator from '../../src/navigation/StatsStack';
+import StorySettingsStackNavigator from '../../src/navigation/StorySettingsStack';
 import { resetShowcaseRequestCacheForTests } from '../../src/showcase/showcaseRequest';
 
 const stacks: Array<{
@@ -461,7 +468,7 @@ const stacks: Array<{
   {
     label: 'WorldRulesStack',
     Navigator: WorldRuleStackNavigator,
-    screens: ['WorldIndex', 'WorldRules', 'WorldRuleDetail', 'WorldRuleForm'],
+    screens: ['WorldRules', 'WorldRuleDetail', 'WorldRuleForm'],
   },
   {
     label: 'OperationLogStack',
@@ -479,26 +486,33 @@ const stacks: Array<{
     screens: ['CommentsList'],
   },
   {
-    label: 'CustomizationStack',
-    Navigator: CustomizationStackNavigator,
+    label: 'ArcsStack',
+    Navigator: ArcsStackNavigator,
+    screens: ['StoryArcList', 'StoryArcForm'],
+  },
+  {
+    label: 'CalendarsStack',
+    Navigator: CalendarsStackNavigator,
+    screens: ['StoryCalendarList', 'StoryCalendarForm', 'StoryAgenda'],
+  },
+  {
+    label: 'StatsStack',
+    Navigator: StatsStackNavigator,
+    screens: ['StatList', 'StatForm', 'StatLadder', 'StatComparison', 'StatRanking'],
+  },
+  {
+    label: 'StorySettingsStack',
+    Navigator: StorySettingsStackNavigator,
     screens: [
-      'CustomizationIndex',
-      'StoryAppearance',
+      'StorySettingsIndex',
+      'StorySettingsGeneral',
+      'StorySettingsAppearance',
+      'StorySettingsCollaboration',
       'Vocabulary',
-      'StoryArcList',
-      'StoryArcForm',
-      'StoryCalendarList',
-      'StoryCalendarForm',
-      'StoryAgenda',
       'StorySchemaList',
       'StorySchemaFieldForm',
       'Suggestions',
       'SuggestionUsage',
-      'StatList',
-      'StatForm',
-      'StatLadder',
-      'StatComparison',
-      'StatRanking',
     ],
   },
 ];

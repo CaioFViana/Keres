@@ -28,11 +28,11 @@ const page: HelpPage = {
       text: 'Create an arc for each book of a trilogy. Assign each chapter to its book. A character introduced in the first book remains the same character in the second, while the chapter lists and narrative views can stay focused on the book you are revising.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Customization', 'Arcs'] },
+    { type: 'path', segments: ['Story menu', 'Dashboard', 'Arcs'] },
     {
       type: 'steps',
       items: [
-        'Open Customization from the story menu and choose Arcs.',
+        'Open the Dashboard and choose Manage in the arcs section.',
         'Choose Add to create another arc, then give it a clear name.',
         'Optionally add a description, pick an Icon (search the library or choose from the recent ones) and choose a theme for that arc.',
         'Open a chapter or event and choose the arc it belongs to.',

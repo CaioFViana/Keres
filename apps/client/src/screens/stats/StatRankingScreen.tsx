@@ -11,9 +11,9 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import type {
-  CustomizationStackParamList,
   MainSystemDrawerParamList,
 } from '../../navigation/MainSystemStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -22,7 +22,7 @@ import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import { buildStatRanking } from '../../utils/statRanking';
 
 type StatRankingNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
+  StatsStackParamList,
   'StatRanking'
 >;
 
@@ -35,7 +35,7 @@ const StatRankingScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatRankingNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatRanking'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatRanking'>>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const notation = (selectedStory?.statNotation ?? 'letter') as StatNotation;

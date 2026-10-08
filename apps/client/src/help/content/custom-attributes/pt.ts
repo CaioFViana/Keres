@@ -19,7 +19,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'path',
-      segments: ['Menu da história', 'Personalização', 'Atributos Customizados', '+'],
+      segments: ['Menu da história', 'Configurações da História', 'Atributos Customizados', '+'],
     },
     {
       type: 'steps',

@@ -22,7 +22,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useStoryAgenda } from '@/src/hooks/useStoryAgenda';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
@@ -52,7 +52,7 @@ const StoryAgendaScreen = () => {
   const story = useStoryStore((state) => state.selectedStory);
   const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
   const { calendars, definition: primaryDefinition } = useStoryCalendar(story?.id);
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StoryAgenda'>>();
+  const route = useRoute<RouteProp<CalendarsStackParamList, 'StoryAgenda'>>();
   const definition = useMemo(() => {
     const requestedId = route.params?.calendarId;
     return requestedId
@@ -60,7 +60,7 @@ const StoryAgendaScreen = () => {
       : primaryDefinition;
   }, [calendars, primaryDefinition, route.params?.calendarId]);
   const navigation =
-    useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryAgenda'>>();
+    useNavigation<NativeStackNavigationProp<CalendarsStackParamList, 'StoryAgenda'>>();
   const { entries, loading } = useStoryAgenda(definition);
   const [cursor, setCursor] = useState<number | null>(null);
   const navigateToDetail = useNavigateToEntityDetail();

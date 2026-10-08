@@ -90,7 +90,6 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   TagDetail: 'tags',
   TagForm: 'tags',
   WorldRulesStack: 'world-rules',
-  WorldIndex: 'world-rules',
   WorldRules: 'world-rules',
   WorldRuleDetail: 'world-rules',
   WorldRuleForm: 'world-rules',
@@ -113,14 +112,11 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   CharacterRelationView: 'character-relationships',
   StorySchemaStack: 'custom-attributes',
   StorySchemaList: 'custom-attributes',
-  /*
-   * The index lists four areas, so there is no single page it belongs to. Custom attributes is the
-   * one it is most often opened for, and the page links on to the other three.
-   */
-  CustomizationIndex: 'custom-attributes',
-  CustomizationStack: 'custom-attributes',
-  StoryAppearance: 'appearance',
+  StorySettingsAppearance: 'appearance',
   Vocabulary: 'vocabulary',
+  ArcsStack: 'arcs',
+  CalendarsStack: 'calendars',
+  StatsStack: 'stats',
   StoryArcList: 'arcs',
   StoryArcForm: 'arcs',
   StorySchemaFieldForm: 'custom-attributes',
@@ -137,7 +133,6 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   StorySettings: 'story-settings',
   StorySettingsIndex: 'story-settings',
   StorySettingsGeneral: 'story-settings',
-  StorySettingsAppearance: 'story-settings',
   StorySettingsCollaboration: 'story-settings',
   StoryCalendarList: 'calendars',
   StoryCalendarForm: 'calendars',

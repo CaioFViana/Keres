@@ -27,11 +27,11 @@ const page: HelpPage = {
       text: 'Crie um arco para cada livro de uma trilogia. Atribua cada capítulo ao seu livro. Um personagem apresentado no primeiro livro continua sendo o mesmo no segundo, enquanto as listas de capítulos e as visões narrativas podem ficar focadas no livro que você está revisando.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Personalização', 'Arcos'] },
+    { type: 'path', segments: ['Menu da história', 'Painel Principal', 'Arcos'] },
     {
       type: 'steps',
       items: [
-        'Abra Personalização no menu da história e escolha Arcos.',
+        'Abra o Painel Principal e escolha Gerenciar na seção de arcos.',
         'Escolha Adicionar para criar outro arco e dê a ele um nome claro.',
         'Se quiser, acrescente uma descrição, escolha um Ícone (busque na biblioteca ou use os recentes) e um tema para o arco.',
         'Abra um capítulo ou evento e escolha o arco ao qual ele pertence.',

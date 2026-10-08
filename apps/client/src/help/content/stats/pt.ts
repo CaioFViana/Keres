@@ -23,12 +23,12 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Como fazer' },
     {
       type: 'path',
-      segments: ['Menu da história', 'Personalização', 'Status'],
+      segments: ['Menu da história', 'Componentes', 'Status'],
     },
     {
       type: 'steps',
       items: [
-        'Abra Status em Personalização, ligue o sistema e escolha a notação: letras ou números.',
+        'Abra Status em Componentes, ligue o sistema e escolha a notação: letras ou números.',
         'Crie os eixos. Marque como primários os que devem entrar no gráfico.',
         'Edite a escada padrão da história e dê escada própria a um status só quando ele precisar de outra faixa.',
         'Abra um personagem, escolha Editar e preencha os valores. Um modo sem valor próprio herda o do modo normal.',

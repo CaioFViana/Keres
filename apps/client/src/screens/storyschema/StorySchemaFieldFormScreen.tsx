@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
+import type { StorySettingsStackParamList } from '../../navigation/StorySettingsStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -27,11 +27,11 @@ import { useStorySchemaFieldFormResources } from './useStorySchemaFieldFormResou
 import { useStorySchemaFieldFormState } from './useStorySchemaFieldFormState';
 
 type StorySchemaFieldFormScreenRouteProp = RouteProp<
-  CustomizationStackParamList,
+  StorySettingsStackParamList,
   'StorySchemaFieldForm'
 >;
 type StorySchemaFieldFormScreenNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
+  StorySettingsStackParamList,
   'StorySchemaFieldForm'
 >;
 

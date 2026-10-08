@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
-const mockNavigateAcross = jest.fn();
 const mockResetToStorySelection = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockAppAlert = jest.fn();
@@ -32,10 +31,6 @@ jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
-}));
-jest.mock('../../../src/hooks/useNavigateAcrossStacks', () => ({
-  __esModule: true,
-  useNavigateAcrossStacks: () => mockNavigateAcross,
 }));
 jest.mock('../../../src/screens/storysettings/useResetToStorySelection', () => ({
   __esModule: true,
@@ -176,7 +171,6 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 
-import StorySettingsAppearanceScreen from '../../../src/screens/storysettings/StorySettingsAppearanceScreen';
 import StorySettingsCollaborationScreen from '../../../src/screens/storysettings/StorySettingsCollaborationScreen';
 import StorySettingsIndexScreen from '../../../src/screens/storysettings/StorySettingsIndexScreen';
 
@@ -203,7 +197,7 @@ afterEach(() => {
 });
 
 describe('StorySettingsIndexScreen', () => {
-  it('opens each section of its own, and the customization screens it borrows', async () => {
+  it('opens each section, all in this stack', async () => {
     const view = await render(<StorySettingsIndexScreen />);
 
     await fireEvent.press(view.getByTestId('story-settings-general'));
@@ -214,11 +208,11 @@ describe('StorySettingsIndexScreen', () => {
     expect(mockNavigate).toHaveBeenLastCalledWith('StorySettingsCollaboration');
 
     await fireEvent.press(view.getByTestId('story-settings-vocabulary'));
-    expect(mockNavigateAcross).toHaveBeenLastCalledWith('CustomizationStack', 'Vocabulary');
+    expect(mockNavigate).toHaveBeenLastCalledWith('Vocabulary');
     await fireEvent.press(view.getByTestId('story-settings-schema'));
-    expect(mockNavigateAcross).toHaveBeenLastCalledWith('CustomizationStack', 'StorySchemaList');
+    expect(mockNavigate).toHaveBeenLastCalledWith('StorySchemaList');
     await fireEvent.press(view.getByTestId('story-settings-suggestions'));
-    expect(mockNavigateAcross).toHaveBeenLastCalledWith('CustomizationStack', 'Suggestions');
+    expect(mockNavigate).toHaveBeenLastCalledWith('Suggestions');
   });
 
   it('offers no server section in a serverless build', async () => {
@@ -256,37 +250,6 @@ describe('StorySettingsIndexScreen', () => {
       'delete_story_title:disabled',
     );
     expect(view.getByText('story_owner_only_error')).toBeTruthy();
-  });
-});
-
-describe('StorySettingsAppearanceScreen', () => {
-  it('saves only the cover and goes back', async () => {
-    const view = await render(<StorySettingsAppearanceScreen />);
-    await waitFor(() => expect(view.getByTestId('cover-field').props.children).toBe('cover:gallery-1'));
-
-    await fireEvent.press(view.getByTestId('cover-field'));
-    await fireEvent.press(view.getByTestId('btn-update_story'));
-
-    await waitFor(() => expect(mockUpdateStory).toHaveBeenCalled());
-    expect(mockUpdateStory).toHaveBeenCalledWith('user-1', 'story-1', {
-      coverGalleryId: 'gallery-7',
-    });
-    expect(mockSetSelectedStory).toHaveBeenCalled();
-    expect(mockGoBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('opens the theme screen and comes back here', async () => {
-    const view = await render(<StorySettingsAppearanceScreen />);
-    await waitFor(() => expect(view.queryByTestId('story-settings-theme')).not.toBeNull());
-    await fireEvent.press(view.getByTestId('story-settings-theme'));
-    expect(mockNavigateAcross).toHaveBeenCalledWith('CustomizationStack', 'StoryAppearance');
-  });
-
-  it('does not let a reader save', async () => {
-    mockCanEdit = false;
-    const view = await render(<StorySettingsAppearanceScreen />);
-    await waitFor(() => expect(view.queryByTestId('btn-update_story')).not.toBeNull());
-    expect(view.getByTestId('btn-update_story').props.children).toBe('update_story:disabled');
   });
 });
 

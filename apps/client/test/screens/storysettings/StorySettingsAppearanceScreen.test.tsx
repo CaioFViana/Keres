@@ -5,28 +5,42 @@ const mockUpdateStory = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockApplyTheme = jest.fn();
 const mockAlert = jest.fn();
+const mockSave = jest.fn();
+const mockGoBack = jest.fn();
 const mockDb = {};
 const mockT = (key: string) => key;
 let mockStory: { id: string; theme: string | null } | null = { id: 'story-1', theme: null };
 let mockCanEdit = true;
 let mockUserId: string | null = 'user-1';
-const mockUseScreenTour = jest.fn();
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
-  __esModule: true,
-  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
-}));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  __esModule: true,
+  useNavigation: () => ({ goBack: mockGoBack }),
+}));
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
-jest.mock('@/src/components/common', () => ({
+jest.mock('../../../src/components/common', () => ({
   __esModule: true,
-  Button: ({ onPress, children }: { onPress: () => void; children?: React.ReactNode }) => {
+  Button: ({
+    onPress,
+    disabled,
+    children,
+  }: {
+    onPress: () => void;
+    disabled?: boolean;
+    children?: React.ReactNode;
+  }) => {
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');
-    return react.createElement(native.Text, { testID: `btn-${children}`, onPress }, children);
+    return react.createElement(
+      native.Text,
+      { testID: `btn-${children}`, onPress: disabled ? undefined : onPress },
+      `${children}${disabled ? ':disabled' : ''}`,
+    );
   },
   ThemePickerModal: (props: {
     visible: boolean;
@@ -62,15 +76,64 @@ jest.mock('@/src/components/common', () => ({
     );
   },
 }));
-jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => ({
-  __esModule: true,
-  default: ({ children }: { children?: React.ReactNode }) => {
-    const react = jest.requireActual('react') as typeof import('react');
-    const native = jest.requireActual('react-native') as typeof import('react-native');
-    return react.createElement(native.View, { testID: 'keyboard-screen' }, children);
-  },
-}));
-jest.mock('../../../src/screens/customization/ThemePreview', () => ({
+jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+  const react = jest.requireActual('react') as typeof import('react');
+  const native = jest.requireActual('react-native') as typeof import('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      title,
+      description,
+      actions,
+      children,
+      planUsage,
+    }: {
+      title: string;
+      description?: string;
+      actions?: React.ReactNode;
+      children?: React.ReactNode;
+      planUsage?: boolean;
+    }) =>
+      react.createElement(
+        native.View,
+        { testID: `form-plan-usage-${String(planUsage)}` },
+        react.createElement(native.Text, null, title),
+        react.createElement(native.Text, null, description),
+        actions,
+        children,
+      ),
+  };
+});
+jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+  const react = jest.requireActual('react') as typeof import('react');
+  const native = jest.requireActual('react-native') as typeof import('react-native');
+  return {
+    __esModule: true,
+    ScreenLoading: () => react.createElement(native.Text, null, 'loading'),
+    ScreenError: ({ message }: { message: string }) =>
+      react.createElement(native.Text, { testID: 'screen-error' }, message),
+  };
+});
+jest.mock('../../../src/components/features/gallery/GalleryCoverField', () => {
+  const react = jest.requireActual('react') as typeof import('react');
+  const native = jest.requireActual('react-native') as typeof import('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      value,
+      onChange,
+    }: {
+      value: string | null;
+      onChange: (value: string | null) => void;
+    }) =>
+      react.createElement(
+        native.Text,
+        { testID: 'cover-field', onPress: () => onChange('gallery-7') },
+        `cover:${value}`,
+      ),
+  };
+});
+jest.mock('../../../src/screens/storysettings/ThemePreview', () => ({
   __esModule: true,
   default: () => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -78,32 +141,42 @@ jest.mock('../../../src/screens/customization/ThemePreview', () => ({
     return react.createElement(native.Text, { testID: 'theme-preview' }, 'preview');
   },
 }));
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('../../../src/screens/storysettings/useLoadedStory', () => ({
+  __esModule: true,
+  useLoadedStory: (onLoad: (story: unknown) => void) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    react.useEffect(() => {
+      onLoad({ coverGalleryId: 'gallery-1' });
+    }, [onLoad]);
+    return { loading: false, error: null };
+  },
+}));
+jest.mock('../../../src/screens/storysettings/useStorySettingsSave', () => ({
+  __esModule: true,
+  useStorySettingsSave: () => ({ saving: false, save: mockSave }),
+}));
+jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
-  __esModule: true,
-  useFormScrollBottomPadding: () => 0,
-}));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('../../../src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('../../../src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('../../../src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory, setSelectedStory: mockSetSelectedStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('../../../src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('@/src/theme', () => ({
+jest.mock('../../../src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -117,16 +190,17 @@ jest.mock('@/src/theme', () => ({
     setTheme: mockApplyTheme,
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('../../../src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
+  ...jest.requireActual('react-i18next'),
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
 
-import StoryAppearanceScreen from '../../../src/screens/customization/StoryAppearanceScreen';
+import StorySettingsAppearanceScreen from '../../../src/screens/storysettings/StorySettingsAppearanceScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -140,37 +214,49 @@ afterEach(() => {
   cleanup();
 });
 
-it('requests its guided tour', async () => {
-  await render(<StoryAppearanceScreen />);
+it('says so when no story is selected', async () => {
+  mockStory = null;
+  const view = await render(<StorySettingsAppearanceScreen />);
 
-  expect(mockUseScreenTour).toHaveBeenCalledWith('StoryAppearance');
+  expect(view.getByTestId('screen-error').props.children).toBe('no_story_selected_for_settings');
 });
 
-it('asks for a story when none is selected', async () => {
-  mockStory = null;
-  const view = await render(<StoryAppearanceScreen />);
+it('is not a story form: it keeps the form tour and the plan banner away', async () => {
+  const view = await render(<StorySettingsAppearanceScreen />);
 
-  expect(view.getByText('story_not_found')).toBeTruthy();
+  expect(view.getByTestId('form-plan-usage-false')).toBeTruthy();
 });
 
 it('renders the current theme with its label', async () => {
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   expect(view.getByText('appearance_title')).toBeTruthy();
-  expect(view.getByText('appearance_screen_description')).toBeTruthy();
   expect(view.getByText('theme_default_label')).toBeTruthy();
   expect(view.getByTestId('theme-preview')).toBeTruthy();
 });
 
 it('labels a stored theme', async () => {
   mockStory = { id: 'story-1', theme: 'ocean' };
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   expect(view.getByText('theme_ocean_label')).toBeTruthy();
 });
 
+it('saves only the cover with its own button', async () => {
+  const view = await render(<StorySettingsAppearanceScreen />);
+  await waitFor(() =>
+    expect(view.getByTestId('cover-field').props.children).toBe('cover:gallery-1'),
+  );
+
+  await fireEvent.press(view.getByTestId('cover-field'));
+  await fireEvent.press(view.getByTestId('btn-update_story'));
+
+  expect(mockSave).toHaveBeenCalledWith({ coverGalleryId: 'gallery-7' });
+  expect(mockUpdateStory).not.toHaveBeenCalled();
+});
+
 it('confirms a new theme through the picker', async () => {
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   await fireEvent.press(view.getByTestId('btn-select_theme'));
   expect(view.getByTestId('theme-picker')).toBeTruthy();
@@ -184,14 +270,13 @@ it('confirms a new theme through the picker', async () => {
     expect(mockUpdateStory).toHaveBeenCalledWith('user-1', 'story-1', { theme: 'ocean' }),
   );
   expect(mockSetSelectedStory).toHaveBeenCalledWith({ id: 'story-1', theme: 'ocean' });
-  expect(mockApplyTheme).toHaveBeenCalledWith('ocean');
   expect(view.queryByTestId('theme-picker')).toBeNull();
   expect(mockAlert).toHaveBeenCalledWith('success', 'theme_updated_successfully');
 });
 
 it('stores the default theme as null', async () => {
   mockStory = { id: 'story-1', theme: 'ocean' };
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   await fireEvent.press(view.getByTestId('btn-select_theme'));
   await fireEvent.press(view.getByTestId('picker-default'));
@@ -203,7 +288,7 @@ it('stores the default theme as null', async () => {
 
 it('restores the theme when closing without confirming', async () => {
   mockStory = { id: 'story-1', theme: 'ocean' };
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   await fireEvent.press(view.getByTestId('btn-select_theme'));
   await fireEvent.press(view.getByTestId('picker-close'));
@@ -214,7 +299,7 @@ it('restores the theme when closing without confirming', async () => {
 
 it('reports save failures and restores the theme', async () => {
   mockUpdateStory.mockRejectedValueOnce(new Error('boom'));
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   await fireEvent.press(view.getByTestId('btn-select_theme'));
   await fireEvent.press(view.getByTestId('picker-confirm'));
@@ -224,17 +309,18 @@ it('reports save failures and restores the theme', async () => {
 
 it('does nothing without a user', async () => {
   mockUserId = null;
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   await fireEvent.press(view.getByTestId('btn-select_theme'));
   await fireEvent.press(view.getByTestId('picker-confirm'));
   expect(mockUpdateStory).not.toHaveBeenCalled();
 });
 
-it('hides the picker action when read-only', async () => {
+it('hides the theme picker and the cover save from a reader', async () => {
   mockCanEdit = false;
-  const view = await render(<StoryAppearanceScreen />);
+  const view = await render(<StorySettingsAppearanceScreen />);
 
   expect(view.getByText('story_read_only_error')).toBeTruthy();
   expect(view.queryByTestId('btn-select_theme')).toBeNull();
+  expect(view.getByTestId('btn-update_story').props.children).toBe('update_story:disabled');
 });

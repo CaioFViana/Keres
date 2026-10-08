@@ -54,6 +54,16 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
     isLoading: false,
   }),
 }));
+let mockResume: { id: string; name: string; chapterName: string | null; editedAt: Date } | null = {
+  id: 'scene-9',
+  name: 'The bridge',
+  chapterName: 'Arrival',
+  editedAt: new Date('2026-10-08T10:00:00.000Z'),
+};
+jest.mock('../../../src/hooks/useResumeScene', () => ({
+  __esModule: true,
+  useResumeScene: () => mockResume,
+}));
 jest.mock('../../../src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: [] }),
@@ -111,6 +121,16 @@ jest.mock('../../../src/screens/mainstorystack/MainDashboardContent', () => ({
     forkCount?: number;
     onOpenAnalysis: () => void;
     onOpenOperationLog: () => void;
+    writing?: {
+      resume: { id: string } | null;
+      canEdit: boolean;
+      onContinue: (sceneId: string) => void;
+      onNewScene: () => void;
+      onNewCharacter: () => void;
+      onNewNote: () => void;
+      onOpenManuscript: () => void;
+      onExportManuscript: () => void;
+    };
   }) => {
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');
@@ -143,6 +163,44 @@ jest.mock('../../../src/screens/mainstorystack/MainDashboardContent', () => ({
         native.Text,
         { testID: 'open-analysis', onPress: props.onOpenAnalysis },
         'analysis',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-resume' },
+        props.writing?.resume?.id ?? 'none',
+      ),
+      react.createElement(
+        native.Text,
+        {
+          testID: 'writing-continue',
+          onPress: () => props.writing?.onContinue(props.writing.resume?.id ?? ''),
+        },
+        'continue',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-new-scene', onPress: props.writing?.onNewScene },
+        'scene',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-new-character', onPress: props.writing?.onNewCharacter },
+        'character',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-new-note', onPress: props.writing?.onNewNote },
+        'note',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-manuscript', onPress: props.writing?.onOpenManuscript },
+        'manuscript',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-export', onPress: props.writing?.onExportManuscript },
+        'export',
       ),
       react.createElement(
         native.Text,
@@ -277,6 +335,41 @@ describe('MainDashboardScreen', () => {
     expect(headerCall.title).toBe('My Story');
     headerCall.actions[0].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('StorySettings', { screen: 'StorySettingsIndex' });
+  });
+
+  it('hands the writing block the last scene and opens where each shortcut leads', async () => {
+    const view = await render(<MainDashboardScreen />);
+    expect(view.getByTestId('writing-resume').props.children).toBe('scene-9');
+
+    await fireEvent.press(view.getByTestId('writing-continue'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      screen: 'SceneEditor',
+      params: { sceneId: 'scene-9' },
+    });
+    await fireEvent.press(view.getByTestId('writing-new-scene'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      screen: 'SceneForm',
+      params: {},
+    });
+    await fireEvent.press(view.getByTestId('writing-new-character'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('CharactersStack', {
+      screen: 'CharacterForm',
+      params: {},
+    });
+    await fireEvent.press(view.getByTestId('writing-new-note'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NotesStack', {
+      screen: 'NoteForm',
+      params: {},
+    });
+    await fireEvent.press(view.getByTestId('writing-manuscript'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      screen: 'Manuscript',
+      params: {},
+    });
+    await fireEvent.press(view.getByTestId('writing-export'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      screen: 'ManuscriptExport',
+    });
   });
 
   it('warns when opening settings without a story', async () => {

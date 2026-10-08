@@ -18,7 +18,7 @@ const page: HelpPage = {
       text: 'A comic can name Characters “Heroes”, Scenes “Pages”, Items “Artifacts”, and Choices “Decisions” while keeping all of Keres’ normal features.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Customization', 'Vocabulary'] },
+    { type: 'path', segments: ['Story menu', 'Story Settings', 'Vocabulary'] },
     {
       type: 'steps',
       items: [

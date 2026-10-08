@@ -21,6 +21,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { shouldCompleteFirstStory } from '../../utils/tutorialProgress';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
+import { useResumeScene } from '@/src/hooks/useResumeScene';
 import { MainDashboardContent } from './MainDashboardContent';
 
 const MainDashboardScreen = () => {
@@ -41,6 +42,7 @@ const MainDashboardScreen = () => {
   // the action, and local-only stories have no administrators to report to.
   const { role, canEdit } = useStoryRole(selectedStory?.id);
   const { arcs } = useStoryArcs();
+  const resumeScene = useResumeScene(selectedStory?.id);
   const storyReport = useStoryReport(selectedStory?.id);
   const showReportAction = role !== null && role !== 'owner' && storyReport.canReport;
 
@@ -258,14 +260,27 @@ const MainDashboardScreen = () => {
         }}
         arcs={arcs}
         onOpenArcs={() => {
-          navigateAcross('CustomizationStack', 'StoryArcList');
+          navigateAcross('ArcsStack', 'StoryArcList');
         }}
         onOpenArc={(arcId) => {
-          navigateAcross('CustomizationStack', 'StoryArcForm', { arcId });
+          navigateAcross('ArcsStack', 'StoryArcForm', { arcId });
         }}
         onAddArc={
-          canEdit ? () => navigateAcross('CustomizationStack', 'StoryArcForm', {}) : undefined
+          canEdit ? () => navigateAcross('ArcsStack', 'StoryArcForm', {}) : undefined
         }
+        writing={{
+          resume: resumeScene,
+          canEdit,
+          onContinue: (sceneId) =>
+            navigateAcross('NarrativeElementsStack', canEdit ? 'SceneEditor' : 'SceneDetail', {
+              sceneId,
+            }),
+          onNewScene: () => navigateAcross('NarrativeElementsStack', 'SceneForm', {}),
+          onNewCharacter: () => navigateAcross('CharactersStack', 'CharacterForm', {}),
+          onNewNote: () => navigateAcross('NotesStack', 'NoteForm', {}),
+          onOpenManuscript: () => navigateAcross('NarrativeElementsStack', 'Manuscript', {}),
+          onExportManuscript: () => navigateAcross('NarrativeElementsStack', 'ManuscriptExport'),
+        }}
       />
     </>
   );

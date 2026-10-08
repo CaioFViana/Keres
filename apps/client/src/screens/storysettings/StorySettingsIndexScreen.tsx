@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateAcrossStacks } from '../../hooks/useNavigateAcrossStacks';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { StorySettingsStackParamList } from '../../navigation/StorySettingsStack';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -27,8 +26,7 @@ type Entry = {
 };
 
 /**
- * The story's settings, one section per screen, each saving on its own. Vocabulary, custom fields and
- * suggestions are the screens the Customization menu already has; they are opened from here and return here.
+ * The story's settings, one section per screen, each saving on its own.
  */
 const StorySettingsIndexScreen = () => {
   useBackButtonHandler();
@@ -36,7 +34,6 @@ const StorySettingsIndexScreen = () => {
   const { colors } = useTheme();
   const navigation =
     useNavigation<NativeStackNavigationProp<StorySettingsStackParamList, 'StorySettingsIndex'>>();
-  const navigateAcross = useNavigateAcrossStacks();
   const resetToStorySelection = useResetToStorySelection();
   const drizzleDb = useDrizzle();
   const storyService = useMemo(() => createStoryService(drizzleDb), [drizzleDb]);
@@ -66,21 +63,21 @@ const StorySettingsIndexScreen = () => {
       icon: 'text-outline',
       titleKey: 'vocabulary_title',
       descriptionKey: 'vocabulary_index_description',
-      open: () => navigateAcross('CustomizationStack', 'Vocabulary'),
+      open: () => navigation.navigate('Vocabulary'),
     },
     {
       id: 'schema',
       icon: 'construct-outline',
       titleKey: 'story_schema_management_title',
       descriptionKey: 'customization_schema_description',
-      open: () => navigateAcross('CustomizationStack', 'StorySchemaList'),
+      open: () => navigation.navigate('StorySchemaList'),
     },
     {
       id: 'suggestions',
       icon: 'bulb-outline',
       titleKey: 'standard_suggestions_title',
       descriptionKey: 'customization_suggestions_description',
-      open: () => navigateAcross('CustomizationStack', 'Suggestions'),
+      open: () => navigation.navigate('Suggestions'),
     },
     // A story is linked to a server and its people only where there is a server to link to.
     ...(isServerless()

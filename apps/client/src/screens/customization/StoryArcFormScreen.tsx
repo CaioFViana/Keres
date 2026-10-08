@@ -11,7 +11,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useStoryArcs } from '@/src/hooks/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { ArcsStackParamList } from '@/src/navigation/ArcsStack';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
@@ -38,7 +38,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-type Nav = NativeStackNavigationProp<CustomizationStackParamList, 'StoryArcForm'>;
+type Nav = NativeStackNavigationProp<ArcsStackParamList, 'StoryArcForm'>;
 
 type ArcFormDraftFields = {
   title: string;
@@ -84,7 +84,7 @@ const StoryArcFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
   const db = useDrizzle();
   const navigation = useNavigation<Nav>();
-  const { arcId } = useRoute<RouteProp<CustomizationStackParamList, 'StoryArcForm'>>().params;
+  const { arcId } = useRoute<RouteProp<ArcsStackParamList, 'StoryArcForm'>>().params;
   const story = useStoryStore((state) => state.selectedStory);
   const { activeArc } = useStoryArcs();
   const { canEdit } = useStoryRole(story?.id);

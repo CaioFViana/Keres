@@ -13,7 +13,7 @@ import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { createStatStrengthService } from '../../services/storymanagement/StatStrengthService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -24,7 +24,7 @@ import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/
 import { StatLadderBar } from '../../components/features/stats/StatLadderBar/StatLadderBar';
 
 type StatLadderNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
+  StatsStackParamList,
   'StatLadder'
 >;
 
@@ -52,7 +52,7 @@ const StatLadderScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatLadderNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatLadder'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatLadder'>>();
   const statId = route.params?.statId ?? null;
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();

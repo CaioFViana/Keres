@@ -41,6 +41,8 @@ interface ResizableDrawerContentProps extends DrawerContentComponentProps {
   resizable: boolean;
   /** Which navigator this drawer belongs to; keys the tour anchors and the guide registry. */
   drawerId: GuideDrawerId;
+  /** Replaces the plain list of the drawer's routes, for a menu that groups them. */
+  children?: React.ReactNode;
 }
 
 const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
@@ -49,6 +51,7 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
   onDrawerWidthChange,
   resizable,
   drawerId,
+  children,
   ...drawerProps
 }) => {
   const { colors } = useTheme();
@@ -159,12 +162,14 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
           scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
         }}
       >
-        <AnchoredDrawerItemList
-          state={drawerProps.state}
-          navigation={drawerProps.navigation}
-          descriptors={drawerProps.descriptors}
-          drawerId={drawerId}
-        />
+        {children ?? (
+          <AnchoredDrawerItemList
+            state={drawerProps.state}
+            navigation={drawerProps.navigation}
+            descriptors={drawerProps.descriptors}
+            drawerId={drawerId}
+          />
+        )}
       </DrawerContentScrollView>
       {resizable && (
         <View style={styles.resizeHandle} {...panResponder.panHandlers}>

@@ -15,7 +15,7 @@ import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
+import type { StorySettingsStackParamList } from '../../navigation/StorySettingsStack';
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -35,7 +35,7 @@ const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
 };
 
 type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
+  StorySettingsStackParamList,
   'StorySchemaList'
 >;
 

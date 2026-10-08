@@ -5,6 +5,8 @@ import OperationLogList from '@/src/components/features/operation-log/OperationL
 import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
 import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
 import StoryIdentityCard from '@/src/components/features/story/StoryIdentityCard';
+import StoryWritingSection from '@/src/components/features/story/StoryWritingSection/StoryWritingSection';
+import type { ComponentProps } from 'react';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import type { Story } from '@keres/shared/entities/Story';
@@ -44,6 +46,8 @@ export type MainDashboardContentProps = {
   /** Opens one work, and starts a new one (only for those who can edit). */
   onOpenArc?: (arcId: string) => void;
   onAddArc?: () => void;
+  /** The scene to pick up, the shortcuts to start something and the manuscript; absent leaves the block out. */
+  writing?: Omit<ComponentProps<typeof StoryWritingSection>, 'anchorRef' | 'chapterCount' | 'sceneCount'>;
 };
 
 function languageLabel(t: TFunction, language: string | null | undefined): string | null {
@@ -83,10 +87,12 @@ export function MainDashboardContent({
   onOpenArcs,
   onOpenArc,
   onAddArc,
+  writing,
 }: MainDashboardContentProps) {
   const { colors } = useTheme();
   const overviewAnchorRef = useScreenAnchor('MainDashboard', 'overview');
   const worksAnchorRef = useScreenAnchor('MainDashboard', 'works');
+  const writingAnchorRef = useScreenAnchor('MainDashboard', 'writing');
   const styles = StyleSheet.create({
     sectionLink: {
       color: colors.primary,
@@ -110,6 +116,15 @@ export function MainDashboardContent({
           description={story.description}
           extraNotes={story.extraNotes}
           syncedLog={story.serverId ? story.lastServerSyncedLog : null}
+        />
+      )}
+
+      {!!story && !!writing && (
+        <StoryWritingSection
+          {...writing}
+          chapterCount={chapterCount}
+          sceneCount={sceneCount}
+          anchorRef={writingAnchorRef}
         />
       )}
 

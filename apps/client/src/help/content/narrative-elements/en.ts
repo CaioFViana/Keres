@@ -2,7 +2,7 @@ import type { HelpPage } from '../../types';
 
 const page: HelpPage = {
   id: 'narrative-elements',
-  title: 'Narrative Elements',
+  title: 'Chapters and scenes',
   summary:
     'Plan chapters, scenes, and, in branching stories, the choices between scenes in one place.',
   keywords: ['narrative', 'chapters', 'scenes', 'choices', 'story map'],
@@ -10,7 +10,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'Narrative Elements is the story workspace for its structure. Chapters group scenes; scenes hold the events; branching stories connect scenes with choices.',
+      text: 'Chapters and scenes is the story workspace for its structure. Chapters group scenes; scenes hold the events; branching stories connect scenes with choices.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {

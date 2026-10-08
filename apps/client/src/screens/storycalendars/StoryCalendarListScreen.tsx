@@ -35,7 +35,7 @@ import CalendarAnchorsModal from '@/src/components/features/calendars/CalendarAn
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
 
 /**
  * The story's calendars.
@@ -57,7 +57,7 @@ const StoryCalendarListScreen = () => {
   const { userId: currentUserId, dateDisplayFormat } = useUserSettingsStore();
   const notify = useNotificationStore((state) => state.showNotification);
   const navigation =
-    useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryCalendarList'>>();
+    useNavigation<NativeStackNavigationProp<CalendarsStackParamList, 'StoryCalendarList'>>();
   const { calendars, primary, reload } = useStoryCalendar(story?.id);
   const [busy, setBusy] = useState(false);
   const [inspectedCalendar, setInspectedCalendar] = useState<StoryCalendarSelect | null>(null);

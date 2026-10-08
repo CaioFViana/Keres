@@ -21,11 +21,11 @@ const page: HelpPage = {
       text: 'With the ladder F starting at 0, C at 50 and A at 400, a character with 100 in Strength sits inside C, one third of the way to A. Someone above the last tier is drawn in the dashed band outside the chart.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Customization', 'Stats'] },
+    { type: 'path', segments: ['Story menu', 'Components', 'Stats'] },
     {
       type: 'steps',
       items: [
-        'Open Stats in Customization, turn on the stat system, and choose the notation: letters or numbers.',
+        'Open Stats in the Components group, turn on the stat system, and choose the notation: letters or numbers.',
         'Create the axes. Mark as primary the ones you want on the chart.',
         'Edit the story default ladder, and give a stat its own ladder only when it needs a different scale.',
         'Open a character, choose Edit, and fill in the values. A mode without its own value inherits the normal mode.',

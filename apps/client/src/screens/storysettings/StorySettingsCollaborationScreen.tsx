@@ -52,6 +52,7 @@ const StorySettingsCollaborationScreen = () => {
 
   return (
     <EntityFormContainer
+      planUsage={false}
       title={t('story_settings_section_collaboration')}
       description={t('story_settings_section_collaboration_description')}
       actions={

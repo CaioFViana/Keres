@@ -95,7 +95,7 @@ export const AnchoredDrawerItemList: React.FC<AnchoredDrawerItemListProps> = ({
   );
 };
 
-const AnchoredDrawerRow: React.FC<{ anchorId: string; children: React.ReactNode }> = ({
+export const AnchoredDrawerRow: React.FC<{ anchorId: string; children: React.ReactNode }> = ({
   anchorId,
   children,
 }) => {

@@ -2,7 +2,7 @@ import type { HelpPage } from '../../types';
 
 const page: HelpPage = {
   id: 'narrative-elements',
-  title: 'Elementos narrativos',
+  title: 'Capítulos e cenas',
   summary:
     'Planeje capítulos, cenas e, em histórias branching, as escolhas entre cenas em um só lugar.',
   keywords: ['narrativa', 'capítulos', 'cenas', 'escolhas', 'mapa da história'],
@@ -10,7 +10,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Elementos narrativos é o espaço de trabalho da estrutura da história. Capítulos agrupam cenas; cenas guardam os acontecimentos; histórias branching conectam cenas por escolhas.',
+      text: 'Capítulos e cenas é o espaço de trabalho da estrutura da história. Capítulos agrupam cenas; cenas guardam os acontecimentos; histórias branching conectam cenas por escolhas.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {

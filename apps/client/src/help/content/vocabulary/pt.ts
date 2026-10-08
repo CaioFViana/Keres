@@ -27,7 +27,7 @@ const page: HelpPage = {
       text: 'Uma história em quadrinhos pode nomear Personagens como “Heróis”, Cenas como “Páginas”, Itens como “Artefatos” e Escolhas como “Decisões”, mantendo todos os recursos normais do Keres.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Personalização', 'Vocabulário'] },
+    { type: 'path', segments: ['Menu da história', 'Configurações da História', 'Vocabulário'] },
     {
       type: 'steps',
       items: [

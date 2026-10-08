@@ -318,10 +318,6 @@ jest.mock('../../src/screens/stats/StatRankingScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/customization/CustomizationIndexScreen', () => ({
-  __esModule: true,
-  default: () => null,
-}));
 jest.mock('../../src/screens/storycalendars/StoryAgendaScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -441,8 +437,8 @@ it('leaves the story on screen when its access is lost, and only that story', as
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
-  // Three entries (story schema, suggestions, stats) became one: the Customization drawer.
-  expect(mockDrawerScreens).toHaveLength(23);
+  // The customization stack is gone: arcs, calendars and stats have a stack each, the rest went to the settings.
+  expect(mockDrawerScreens).toHaveLength(25);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -537,7 +533,7 @@ it('keeps the World index root screen free of a back button', async () => {
   const navigationModule = jest.requireMock('@react-navigation/native') as {
     getFocusedRouteNameFromRoute: jest.Mock;
   };
-  navigationModule.getFocusedRouteNameFromRoute.mockReturnValue('WorldIndex');
+  navigationModule.getFocusedRouteNameFromRoute.mockReturnValue('WorldRules');
   await renderDrawer();
   const navigator = mockDrawerNavigatorProps.at(-1);
   const options = navigator?.screenOptions({
@@ -549,7 +545,7 @@ it('keeps the World index root screen free of a back button', async () => {
         type: 'stack',
         key: 'world-rules-stack',
         index: 0,
-        routes: [{ name: 'WorldIndex' }],
+        routes: [{ name: 'WorldRules' }],
       },
     },
   });
@@ -565,11 +561,13 @@ it.each([
   ['LocationsStack', 'Locations'],
   ['ItemsStack', 'Items'],
   ['TagsStack', 'Tags'],
-  ['WorldRulesStack', 'WorldIndex'],
+  ['WorldRulesStack', 'WorldRules'],
   ['NotesStack', 'Notes'],
   ['GalleryStack', 'GalleryList'],
   ['BoardsStack', 'BoardList'],
-  ['CustomizationStack', 'CustomizationIndex'],
+  ['ArcsStack', 'StoryArcList'],
+  ['CalendarsStack', 'StoryCalendarList'],
+  ['StatsStack', 'StatList'],
   ['CommentsStack', 'CommentsList'],
   ['OperationLogStack', 'OperationLog'],
   ['StoryAnalysisStack', 'StoryAnalysis'],

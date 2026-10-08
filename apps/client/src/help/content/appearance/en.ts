@@ -18,7 +18,7 @@ const page: HelpPage = {
       text: 'Use a cooler palette for a story set in winter or a high-contrast palette when you prefer its readability. The story content remains exactly the same.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Customization', 'Appearance'] },
+    { type: 'path', segments: ['Story menu', 'Story Settings', 'Appearance'] },
     {
       type: 'steps',
       items: [

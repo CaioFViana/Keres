@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Story menu › Operation Logs.',
+        'Open Story menu › History.',
         'Use the list to find a creation, edit, or link.',
         'Tap a record to see details and its related element.',
       ],

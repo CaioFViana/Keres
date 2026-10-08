@@ -29,7 +29,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'How to do it' },
     {
       type: 'path',
-      segments: ['Story menu', 'Narrative Elements', 'Open scene', 'Write manuscript'],
+      segments: ['Story menu', 'Chapters and scenes', 'Open scene', 'Write manuscript'],
     },
     {
       type: 'steps',

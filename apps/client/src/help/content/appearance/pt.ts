@@ -18,7 +18,7 @@ const page: HelpPage = {
       text: 'Use uma paleta mais fria para uma história ambientada no inverno ou uma de alto contraste quando preferir sua legibilidade. O conteúdo da história permanece exatamente o mesmo.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Personalização', 'Aparência'] },
+    { type: 'path', segments: ['Menu da história', 'Configurações da História', 'Aparência'] },
     {
       type: 'steps',
       items: [

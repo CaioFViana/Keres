@@ -16,6 +16,7 @@ import { TouchableOpacity, View } from 'react-native';
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
+import MainDrawerMenu from '../components/common/navigation/MainDrawerMenu/MainDrawerMenu';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
@@ -40,6 +41,12 @@ import {
   DRAWER_SWIPE_MIN_DISTANCE,
   drawerItemListeners,
 } from './drawerInteraction';
+import type { ArcsStackParamList } from './ArcsStack';
+import ArcsStackNavigator from './ArcsStack';
+import type { CalendarsStackParamList } from './CalendarsStack';
+import CalendarsStackNavigator from './CalendarsStack';
+import type { StatsStackParamList } from './StatsStack';
+import StatsStackNavigator from './StatsStack';
 import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
@@ -59,7 +66,6 @@ import {
   BoardsStackNavigator,
   CharacterStackNavigator,
   CommentsStackNavigator,
-  CustomizationStackNavigator,
   GalleryStackNavigator,
   ItemStackNavigator,
   LocationStackNavigator,
@@ -75,7 +81,6 @@ import {
   type BoardStackParamList,
   type CharacterStackParamList,
   type CommentsStackParamList,
-  type CustomizationStackParamList,
   type GalleryStackParamList,
   type ItemStackParamList,
   type LocationStackParamList,
@@ -94,7 +99,6 @@ export type {
   BoardStackParamList,
   CharacterStackParamList,
   CommentsStackParamList,
-  CustomizationStackParamList,
   GalleryStackParamList,
   ItemDetailScreenParamList,
   ItemStackParamList,
@@ -134,7 +138,9 @@ export type MainSystemDrawerParamList = {
   StoryAnalysisStack: NavigatorScreenParams<StoryAnalysisStackParamList> | undefined;
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
-  CustomizationStack: NavigatorScreenParams<CustomizationStackParamList> | undefined;
+  ArcsStack: NavigatorScreenParams<ArcsStackParamList> | undefined;
+  CalendarsStack: NavigatorScreenParams<CalendarsStackParamList> | undefined;
+  StatsStack: NavigatorScreenParams<StatsStackParamList> | undefined;
   StorySelection: undefined;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
@@ -192,7 +198,23 @@ const MainSystemNavigator = () => {
             maximumWidth={maximumWidth}
             onDrawerWidthChange={setDrawerWidth}
             resizable={!isCompact}
-          />
+          >
+            <MainDrawerMenu
+              state={props.state}
+              navigation={props.navigation}
+              drawerId="main-system"
+              story={
+                selectedStory
+                  ? { title: selectedStory.title, typeLabel: t(selectedStory.type) }
+                  : null
+              }
+              arcLabel={
+                showSelector
+                  ? activeArc?.title || t('all_arcs', { arcs: term('Arc', true) })
+                  : undefined
+              }
+            />
+          </ResizableDrawerContent>
         )}
         screenOptions={({ navigation, route }) => {
           const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
@@ -404,7 +426,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('world_title'),
             drawerIcon: drawerIcon('globe-outline'),
           }}
-          listeners={drawerItemListeners('WorldRulesStack', 'WorldIndex')}
+          listeners={drawerItemListeners('WorldRulesStack', 'WorldRules')}
         />
         <Drawer.Screen
           name="NotesStack"
@@ -469,14 +491,22 @@ const MainSystemNavigator = () => {
           listeners={drawerItemListeners('SongStack', 'SongList')}
         />
         <Drawer.Screen
-          name="CustomizationStack"
-          component={CustomizationStackNavigator}
-          options={{
-            title: t('customization_title'),
-            drawerLabel: t('customization_title'),
-            drawerIcon: drawerIcon('color-wand-outline'),
-          }}
-          listeners={drawerItemListeners('CustomizationStack', 'CustomizationIndex')}
+          name="ArcsStack"
+          component={ArcsStackNavigator}
+          options={{ title: t('arcs_title'), drawerIcon: drawerIcon('library-outline') }}
+          listeners={drawerItemListeners('ArcsStack', 'StoryArcList')}
+        />
+        <Drawer.Screen
+          name="CalendarsStack"
+          component={CalendarsStackNavigator}
+          options={{ title: t('calendar_list_title'), drawerIcon: drawerIcon('calendar-outline') }}
+          listeners={drawerItemListeners('CalendarsStack', 'StoryCalendarList')}
+        />
+        <Drawer.Screen
+          name="StatsStack"
+          component={StatsStackNavigator}
+          options={{ title: t('stats_title'), drawerIcon: drawerIcon('stats-chart-outline') }}
+          listeners={drawerItemListeners('StatsStack', 'StatList')}
         />
         <Drawer.Screen
           name="CommentsStack"

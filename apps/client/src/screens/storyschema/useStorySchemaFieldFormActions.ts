@@ -4,13 +4,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
+import type { StorySettingsStackParamList } from '../../navigation/StorySettingsStack';
 import type { StorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { AppAlert } from '../../utils/AppAlert';
 import type { StorySchemaFieldFormState } from './useStorySchemaFieldFormState';
 
 type StorySchemaFieldNavigation = NativeStackNavigationProp<
-  CustomizationStackParamList,
+  StorySettingsStackParamList,
   'StorySchemaFieldForm'
 >;
 

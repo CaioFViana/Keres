@@ -18,7 +18,7 @@ import CalendarRowList from '@/src/components/features/calendars/CalendarRowList
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useNotificationStore } from '@/src/state/notificationStore';
@@ -41,9 +41,9 @@ const StoryCalendarFormScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StoryCalendarForm'>>();
+  const route = useRoute<RouteProp<CalendarsStackParamList, 'StoryCalendarForm'>>();
   const navigation =
-    useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryCalendarForm'>>();
+    useNavigation<NativeStackNavigationProp<CalendarsStackParamList, 'StoryCalendarForm'>>();
   const calendarId = route.params?.calendarId;
   const story = useStoryStore((state) => state.selectedStory);
   const { canEdit } = useStoryRole(story?.id);

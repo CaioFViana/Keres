@@ -1,4 +1,3 @@
-import { type StorySchemaEntityType } from '@keres/shared';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
@@ -14,11 +13,6 @@ import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
 import CharacterFormScreen from '../screens/characters/CharacterFormScreen';
 import CharactersScreen from '../screens/characters/CharacterListScreen';
 import CommentListScreen from '../screens/comments/CommentListScreen';
-import CustomizationIndexScreen from '../screens/customization/CustomizationIndexScreen';
-import StoryAppearanceScreen from '../screens/customization/StoryAppearanceScreen';
-import StoryArcFormScreen from '../screens/customization/StoryArcFormScreen';
-import StoryArcListScreen from '../screens/customization/StoryArcListScreen';
-import VocabularyScreen from '../screens/customization/VocabularyScreen';
 import GalleryDetailScreen from '../screens/gallery/GalleryDetailScreen';
 import GalleryListScreen from '../screens/gallery/GalleryListScreen';
 import ItemJourneyDetailScreen from '../screens/itemJourneys/ItemJourneyDetailScreen';
@@ -71,23 +65,10 @@ import RouteReaderScreen from '../screens/routes/RouteReaderScreen';
 import RouteStepsScreen from '../screens/routes/RouteStepsScreen';
 import RouteTimelineScreen from '../screens/routes/RouteTimelineScreen';
 import StoryNavigatorScreen from '../screens/routes/StoryNavigatorScreen';
-import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
-import StatFormScreen from '../screens/stats/StatFormScreen';
-import StatLadderScreen from '../screens/stats/StatLadderScreen';
-import StatListScreen from '../screens/stats/StatListScreen';
-import StatRankingScreen from '../screens/stats/StatRankingScreen';
-import StoryAgendaScreen from '../screens/storycalendars/StoryAgendaScreen';
-import StoryCalendarFormScreen from '../screens/storycalendars/StoryCalendarFormScreen';
-import StoryCalendarListScreen from '../screens/storycalendars/StoryCalendarListScreen';
-import StorySchemaFieldFormScreen from '../screens/storyschema/StorySchemaFieldFormScreen';
-import StorySchemaListScreen from '../screens/storyschema/StorySchemaListScreen';
-import SuggestionsScreen from '../screens/suggestions/SuggestionsScreen';
-import SuggestionUsageScreen from '../screens/suggestions/SuggestionUsageScreen';
 import type { TagDetailScreenParamList } from '../screens/tags/TagDetailScreen';
 import TagDetailScreen from '../screens/tags/TagDetailScreen';
 import TagFormScreen from '../screens/tags/TagFormScreen';
 import TagsScreen from '../screens/tags/TagListScreen';
-import WorldIndexScreen from '../screens/worldrules/WorldIndexScreen';
 import type { WorldRuleDetailScreenParamList } from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
@@ -416,7 +397,6 @@ export const NoteStackNavigator = () => {
 const WorldRulesStack = createNativeStackNavigator<WorldRulesStackParamList>();
 
 export type WorldRulesStackParamList = {
-  WorldIndex: undefined;
   WorldRules:
     | { section?: import('@keres/shared/entities/WorldRule').WorldPieceSection }
     | undefined;
@@ -428,7 +408,6 @@ export const WorldRuleStackNavigator = () => {
   useBackButtonHandler();
   return (
     <WorldRulesStack.Navigator screenOptions={{ headerShown: false }}>
-      <WorldRulesStack.Screen name="WorldIndex" component={WorldIndexScreen} />
       <WorldRulesStack.Screen name="WorldRules" component={WorldRulesScreen} />
       <WorldRulesStack.Screen name="WorldRuleDetail" component={WorldRuleDetailScreen} />
       <WorldRulesStack.Screen name="WorldRuleForm" component={WorldRuleFormScreen} />
@@ -488,69 +467,6 @@ export const CommentsStackNavigator = () => {
     <CommentsStack.Navigator screenOptions={{ headerShown: false }}>
       <CommentsStack.Screen name="CommentsList" component={CommentListScreen} />
     </CommentsStack.Navigator>
-  );
-};
-//#endregion
-//#region Customization
-
-const CustomizationStack = createNativeStackNavigator<CustomizationStackParamList>();
-
-/**
- * Everything a writer shapes once and then works inside: the story's calendars, its custom fields,
- * its suggestion catalogues and its stat system.
- *
- * These were four drawer entries. Each was reached rarely and each sat between things reached
- * constantly, so the drawer read as a list of everything rather than a list of places to write.
- * They are one stack rather than four nested ones because a nested navigator per area would put a
- * second back stack between the index and the screens for no gain - the areas share no state and
- * never navigate into each other.
- */
-export type CustomizationStackParamList = {
-  CustomizationIndex: undefined;
-  StoryAppearance: undefined;
-  Vocabulary: undefined;
-  StoryArcList: undefined;
-  StoryArcForm: { arcId?: string };
-  StoryCalendarList: undefined;
-  StoryCalendarForm: { calendarId?: string };
-  StoryAgenda: { calendarId?: string } | undefined;
-  StorySchemaList: undefined;
-  StorySchemaFieldForm: { entityType: StorySchemaEntityType; fieldId?: string };
-  Suggestions: undefined;
-  SuggestionUsage: { type: string; value: string };
-  StatList: undefined;
-  StatForm: { statId?: string } | undefined;
-  /** An absent `statId` = the story's default ladder. */
-  StatLadder: { statId?: string } | undefined;
-  StatComparison: { characterId?: string; modeId?: string } | undefined;
-  StatRanking: { statId?: string } | undefined;
-};
-
-export const CustomizationStackNavigator = () => {
-  useBackButtonHandler();
-  return (
-    <CustomizationStack.Navigator screenOptions={{ headerShown: false }}>
-      <CustomizationStack.Screen name="CustomizationIndex" component={CustomizationIndexScreen} />
-      <CustomizationStack.Screen name="StoryAppearance" component={StoryAppearanceScreen} />
-      <CustomizationStack.Screen name="Vocabulary" component={VocabularyScreen} />
-      <CustomizationStack.Screen name="StoryArcList" component={StoryArcListScreen} />
-      <CustomizationStack.Screen name="StoryArcForm" component={StoryArcFormScreen} />
-      <CustomizationStack.Screen name="StoryCalendarList" component={StoryCalendarListScreen} />
-      <CustomizationStack.Screen name="StoryCalendarForm" component={StoryCalendarFormScreen} />
-      <CustomizationStack.Screen name="StoryAgenda" component={StoryAgendaScreen} />
-      <CustomizationStack.Screen name="StorySchemaList" component={StorySchemaListScreen} />
-      <CustomizationStack.Screen
-        name="StorySchemaFieldForm"
-        component={StorySchemaFieldFormScreen}
-      />
-      <CustomizationStack.Screen name="Suggestions" component={SuggestionsScreen} />
-      <CustomizationStack.Screen name="SuggestionUsage" component={SuggestionUsageScreen} />
-      <CustomizationStack.Screen name="StatList" component={StatListScreen} />
-      <CustomizationStack.Screen name="StatForm" component={StatFormScreen} />
-      <CustomizationStack.Screen name="StatLadder" component={StatLadderScreen} />
-      <CustomizationStack.Screen name="StatComparison" component={StatComparisonScreen} />
-      <CustomizationStack.Screen name="StatRanking" component={StatRankingScreen} />
-    </CustomizationStack.Navigator>
   );
 };
 //#endregion

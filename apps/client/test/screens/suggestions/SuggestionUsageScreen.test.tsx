@@ -262,7 +262,7 @@ describe('SuggestionUsageScreen', () => {
     );
     const onReturn = mockNavigateToEntityDetail.mock.calls[0][3].onReturn as () => void;
     onReturn();
-    expect(mockDrawerNavigate).toHaveBeenCalledWith('CustomizationStack', {
+    expect(mockDrawerNavigate).toHaveBeenCalledWith('StorySettings', {
       screen: 'SuggestionUsage',
       params: { type: 'character_role', value: 'Healer' },
     });

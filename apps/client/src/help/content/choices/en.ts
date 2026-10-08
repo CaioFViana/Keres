@@ -20,7 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Story menu › Narrative Elements. Choices are only listed there in branching stories.',
+        'Open Story menu › Chapters and scenes. Choices are only listed there in branching stories.',
         'Tap + to create a choice, or open one to edit it.',
         'Choose the Source scene and Destination scene, write the Text, and add Choice notes if needed.',
         'Save. After saving a new choice, you can add tags, notes, See also links, conditions, and effects.',

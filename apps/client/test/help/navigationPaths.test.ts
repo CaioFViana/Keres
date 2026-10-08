@@ -3,13 +3,14 @@ import { join } from 'node:path';
 import en from '../../src/locales/en.json';
 import pt from '../../src/locales/pt.json';
 import { getHelpPages } from '../../src/help/repository';
+import { buildMainDrawerMenu } from '../../src/navigation/mainDrawerMenu';
 
 /**
  * Help that still names menus the app no longer has.
  *
- * The drawer has been reorganised several times - chapters and scenes became Narrative Elements,
- * and the story schema, suggestions and stats became Customization - and each time the help kept
- * sending readers to an entry that had stopped existing. Nothing caught it, because a `path` block
+ * The drawer has been reorganised several times - chapters and scenes became Narrative Elements and
+ * then went back, and the customization entries were spread over the groups and the settings - and each
+ * time the help kept sending readers to an entry that had stopped existing. Nothing caught it, because a `path` block
  * is just an array of strings and prose is just prose.
  *
  * This reads the drawer's own labels out of the navigator and checks both against them. It is
@@ -20,6 +21,22 @@ import { getHelpPages } from '../../src/help/repository';
 
 const STORY_MENU = { en: 'Story menu', pt: 'Menu da história' };
 const TRANSLATIONS: Record<string, Record<string, string>> = { en, pt };
+
+/** Every label the story menu renders, in the given language: its groups and what is inside them. */
+function menuLabels(language: string): string[] {
+  const translations = TRANSLATIONS[language];
+  const terms = { Character: 'characters', Location: 'locations', Item: 'items' } as const;
+  const menu = buildMainDrawerMenu({
+    t: (key) => translations[key] ?? key,
+    term: (key) => translations[terms[key]] ?? key,
+    showLiteraryDevices: true,
+  });
+  return [
+    ...menu.groups.map((group) => translations[group.labelKey]),
+    ...menu.groups.flatMap((group) => group.leaves.map((leaf) => leaf.label)),
+    ...menu.footer.map((leaf) => leaf.label),
+  ];
+}
 
 /** Every label the drawer actually renders, in the given language. */
 function drawerLabels(language: string): Set<string> {
@@ -34,6 +51,8 @@ function drawerLabels(language: string): Set<string> {
     const label = key ? TRANSLATIONS[language][key] : undefined;
     if (label) labels.add(label);
   }
+
+  for (const label of menuLabels(language)) labels.add(label);
 
   // These two labels are intentionally vocabulary-aware in the drawer.  With no story-specific
   // vocabulary selected, `term()` renders the translated defaults below; help authored for the
@@ -90,8 +109,9 @@ describe('help navigation paths', () => {
   });
 
   it('finds the drawer labels at all, so an empty set cannot pass the check above', () => {
-    expect(drawerLabels('en')).toContain('Narrative Elements');
-    expect(drawerLabels('en')).toContain('Customization');
-    expect(drawerLabels('pt')).toContain('Personalização');
+    expect(drawerLabels('en')).toContain('Chapters and scenes');
+    expect(drawerLabels('en')).toContain('Components');
+    expect(drawerLabels('pt')).toContain('Componentes');
+    expect(drawerLabels('pt')).toContain('Mundo');
   });
 });

@@ -41,10 +41,7 @@ const WorldRulesScreen = () => {
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
   const route = useRoute();
   const section = (route.params as { section?: WorldPieceSection } | undefined)?.section;
-  useBackButtonHandler({
-    showWebBackButton: true,
-    onBack: () => navigation.navigate('WorldIndex'),
-  });
+  useBackButtonHandler({ showWebBackButton: true });
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [tagService] = useState(() => createTagService(drizzleDb));

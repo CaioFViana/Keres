@@ -15,9 +15,9 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import type {
-  CustomizationStackParamList,
   MainSystemDrawerParamList,
 } from '../../navigation/MainSystemStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -35,7 +35,7 @@ import { resolveStatValue } from '../../utils/statValues';
 import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
+  StatsStackParamList,
   'StatComparison'
 >;
 
@@ -63,7 +63,7 @@ const StatComparisonScreen = () => {
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
   const navigation = useNavigation<StatComparisonNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatComparison'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatComparison'>>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const notation = (selectedStory?.statNotation ?? 'letter') as StatNotation;

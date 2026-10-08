@@ -18,7 +18,7 @@ import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
+import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { createStatService } from '../../services/storymanagement/StatService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -28,7 +28,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 
-type StatListNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatList'>;
+type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
 /** The root of the "Stats" menu: the registered axes, and the shortcuts to the ladder, the comparison and the ranking. */
 const StatListScreen = () => {

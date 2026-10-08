@@ -211,7 +211,7 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
             notation={(selectedStory?.statNotation ?? 'letter') as StatNotation}
             onCompare={(modeId) =>
               navigateAcrossStacks(navigation as never, {
-                stack: 'CustomizationStack',
+                stack: 'StatsStack',
                 screen: 'StatComparison',
                 params: { characterId, modeId: modeId ?? undefined },
               })

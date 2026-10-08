@@ -32,28 +32,6 @@ jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () =
   };
 });
 
-jest.mock('../../../src/components/layout/ScreenSection/ScreenSection', () => {
-  const { Text } = require('react-native');
-  return {
-    __esModule: true,
-    default: ({
-      title,
-      actions,
-      children,
-    }: {
-      title: string;
-      actions?: ReactNode;
-      children?: ReactNode;
-    }) => (
-      <>
-        <Text testID={`section-${title}`}>{title}</Text>
-        {actions}
-        {children}
-      </>
-    ),
-  };
-});
-
 jest.mock('../../../src/components/features/arcs/UniverseWorksSection', () => {
   const { Text } = require('react-native');
   return {

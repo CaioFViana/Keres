@@ -10,8 +10,7 @@ interface SyncConflictBannerProps {
 }
 
 /**
- * A tappable, non-blocking line summarising how many sync conflicts are waiting for review - the same
- * visual convention as `AnalysisSummaryBanner` (`SummaryCard.tsx`). It replaces the old
+ * A tappable, non-blocking line summarising how many sync conflicts are waiting for review. It replaces the old
  * `SyncConflictModal`, which opened itself over any screen: a conflict stalls that entity's
  * synchronization, but it does not justify interrupting what the user is doing.
  */

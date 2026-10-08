@@ -129,7 +129,6 @@ const PRESENTATIONAL_SEEDS = [
   'components/common/display/CollapsibleCard/CollapsibleCard.tsx',
   'components/common/lists/GenericListItem/GenericListItem.tsx',
   'components/features/relations/RelationManager/GenericRelationDisplay.tsx',
-  'components/features/relations/RelationManager/RelationRow.tsx',
 ];
 
 describe('import boundaries', () => {

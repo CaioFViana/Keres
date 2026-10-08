@@ -8,7 +8,6 @@ import {
   RICH_BODY_EDITOR_WEB_CSS,
   RichBodyEditor,
 } from '../../../src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
-import { SceneBodyEditor } from '../../../src/components/features/manuscript/SceneBodyEditor/SceneBodyEditor';
 import { SceneBodyFooter } from '../../../src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
 import { SceneBodyToolbar } from '../../../src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
 
@@ -71,45 +70,6 @@ function marksState(active: {
     strikeThrough: state(active.strikeThrough),
   };
 }
-
-describe('SceneBodyEditor', () => {
-  it('seeds and forwards HTML and marks through the alias', async () => {
-    const onHtmlChange = jest.fn();
-    const onMarksChange = jest.fn();
-    const view = await render(
-      <SceneBodyEditor
-        defaultHtml="<html><p>hello world</p></html>"
-        onHtmlChange={onHtmlChange}
-        onMarksChange={onMarksChange}
-        testID="editor"
-      />,
-    );
-
-    const input = view.getByTestId('editor.input');
-    expect(input.props.defaultValue).toBe('<html><p>hello world</p></html>');
-    await fireEvent(input, 'changeHtml', {
-      nativeEvent: { value: '<html><p>hello world!</p></html>' },
-    });
-    expect(onHtmlChange).toHaveBeenCalledWith('<html><p>hello world!</p></html>');
-    await fireEvent(input, 'changeState', { nativeEvent: marksState({ italic: true }) });
-    expect(onMarksChange).toHaveBeenCalledWith(['italic']);
-  });
-
-  it('uses the shared manuscript metrics for a seamless preview swap', async () => {
-    const view = await render(
-      <SceneBodyEditor
-        defaultHtml="<html><p>hello</p></html>"
-        onHtmlChange={jest.fn()}
-        onMarksChange={jest.fn()}
-        testID="editor"
-      />,
-    );
-
-    const style = StyleSheet.flatten(view.getByTestId('editor.input').props.style);
-    expect(style.fontSize).toBe(manuscriptTextMetrics.fontSize);
-    expect(style.lineHeight).toBe(manuscriptTextMetrics.lineHeight);
-  });
-});
 
 describe('RichBodyEditor', () => {
   const HTML = '<html><p>Prologue</p><p><b>bold</b> and <s>cut</s> line.</p></html>';

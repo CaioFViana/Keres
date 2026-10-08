@@ -1,4 +1,3 @@
-import * as components from '../../../src/components';
 import * as common from '../../../src/components/common';
 import * as controls from '../../../src/components/common/controls';
 import * as display from '../../../src/components/common/display';
@@ -8,19 +7,8 @@ import * as inputs from '../../../src/components/common/inputs';
 import * as lists from '../../../src/components/common/lists';
 import * as modals from '../../../src/components/common/modals';
 import * as navigation from '../../../src/components/common/navigation';
-import * as layout from '../../../src/components/layout';
 
 describe('component barrels', () => {
-  it('keeps the stable screen import surface', () => {
-    expect(components.Button).toBeDefined();
-    expect(components.TagList).toBeDefined();
-    expect(components.FormField).toBeDefined();
-    expect(components.ReorderModal).toBeDefined();
-    expect(components.HeaderActions).toBeDefined();
-    expect(components.ScreenTitle).toBeDefined();
-    expect(components.DetailContainer).toBeDefined();
-  });
-
   it('re-exports every common group', () => {
     expect(common.Button).toBe(controls.Button);
     expect(common.TagList).toBe(display.TagList);
@@ -102,15 +90,5 @@ describe('component barrels', () => {
     expect(navigation.NavigationBackButton).toBeDefined();
     expect(navigation.NavigationDrawerButton).toBeDefined();
     expect(navigation.HeaderActions).toBeDefined();
-  });
-
-  it('exposes the layout group', () => {
-    expect(layout.KeyboardAwareScreen).toBeDefined();
-    expect(layout.ResponsiveGrid).toBeDefined();
-    expect(layout.ResponsiveModal).toBeDefined();
-    expect(layout.ScreenContainer).toBeDefined();
-    expect(layout.ScreenTitle).toBeDefined();
-    expect(layout.DetailContainer).toBeDefined();
-    expect(layout.ScreenSection).toBeDefined();
   });
 });

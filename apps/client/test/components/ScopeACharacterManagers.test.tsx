@@ -4,8 +4,7 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React from 'react';
 import type { SceneSelect } from '../../src/db/schema';
 import CharacterSceneManager from '../../src/components/features/characters/CharacterManager/CharacterSceneManager';
-// Imported through the barrel so the re-export itself is covered too.
-import SceneCharacterManager from '../../src/components/features/characters/CharacterManager/index';
+import SceneCharacterManager from '../../src/components/features/characters/CharacterManager/SceneCharacterManager';
 
 jest.mock('../../src/theme', () => ({
   useTheme: () => ({

@@ -3,7 +3,6 @@ import { Text } from 'react-native';
 import GenericRelationDisplay from '../../src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '../../src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '../../src/components/features/relations/RelationManager/RelationManager';
-import RelationRow from '../../src/components/features/relations/RelationManager/RelationRow';
 import { relationSectionStyleDefs } from '../../src/components/features/relations/RelationManager/relationSectionStyles';
 
 jest.mock('../../src/theme', () => ({
@@ -81,46 +80,6 @@ describe('RelationAttributeLine', () => {
 
     expect(screen.getByText('Scene:')).toBeTruthy();
     expect(screen.getByText('Throne Room')).toBeTruthy();
-  });
-});
-
-describe('RelationRow', () => {
-  it('shows its content without any action by default', async () => {
-    const screen = await render(
-      <RelationRow>
-        <Text>Content</Text>
-      </RelationRow>,
-    );
-
-    expect(screen.getByText('Content')).toBeTruthy();
-    expect(screen.queryByTestId('icon-chevron-forward')).toBeNull();
-    expect(screen.queryByTestId('icon-trash-outline')).toBeNull();
-  });
-
-  it('taps through to its content and shows the chevron when pressable', async () => {
-    const onPress = jest.fn();
-    const screen = await render(
-      <RelationRow onPress={onPress}>
-        <Text>Content</Text>
-      </RelationRow>,
-    );
-
-    expect(screen.getByTestId('icon-chevron-forward')).toBeTruthy();
-    await fireEvent.press(screen.getByText('Content'));
-    expect(onPress).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders the extra actions and the remove button', async () => {
-    const onRemove = jest.fn();
-    const screen = await render(
-      <RelationRow extraActions={<Text>extra</Text>} onRemove={onRemove}>
-        <Text>Content</Text>
-      </RelationRow>,
-    );
-
-    expect(screen.getByText('extra')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('icon-trash-outline').parent!);
-    expect(onRemove).toHaveBeenCalledTimes(1);
   });
 });
 

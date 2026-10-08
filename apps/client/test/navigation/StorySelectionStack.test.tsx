@@ -6,7 +6,6 @@ const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
 const mockResponsiveLayout = { isCompact: false, isWide: true, width: 1200 };
 // An object, and not a loose boolean: `jest.mock` is hoisted above the assignments, so the
 // factory has to read the value at call time, not capture it at definition time.
-const mockHasRegisteredServer = { value: true };
 
 function mockDrawerNavigator({
   children,
@@ -61,10 +60,6 @@ jest.mock('../../src/theme', () => ({
 jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => mockResponsiveLayout,
-}));
-jest.mock('../../src/hooks/useHasRegisteredServer', () => ({
-  __esModule: true,
-  useHasRegisteredServer: () => mockHasRegisteredServer.value,
 }));
 jest.mock(
   '../../src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent',
@@ -139,11 +134,7 @@ jest.mock('../../src/screens/enterstack/MessageInboxScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ImportExportScreen', () => ({
-  __esModule: true,
-  default: () => null,
-}));
-jest.mock('../../src/screens/enterstack/PublishStoryScreen', () => ({
+jest.mock('../../src/screens/enterstack/ImportStoryScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -205,7 +196,7 @@ beforeEach(() => {
 
 async function renderDrawer() {
   await render(<StorySelectionStack />);
-  expect(mockDrawerScreens).toHaveLength(10);
+  expect(mockDrawerScreens).toHaveLength(9);
 }
 
 it('keeps the wide story-selection menu permanently open with its main routes', async () => {
@@ -219,8 +210,7 @@ it('keeps the wide story-selection menu permanently open with its main routes', 
     'StorySelectionMain',
     'ServerManagementDrawer',
     'FriendshipDrawer',
-    'ImportExport',
-    'PublishStory',
+    'ImportStory',
     'PacksDrawer',
     'ExampleStories',
     'StoryDevicesDrawer',
@@ -252,7 +242,7 @@ it.each([
   expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
 
-it.each([['ImportExport'], ['PublishStory'], ['ExampleStories']])(
+it.each([['ImportStory'], ['ExampleStories']])(
   'closes the drawer when the plain entry %s is tapped while focused',
   async (drawerName) => {
     await renderDrawer();
@@ -286,39 +276,16 @@ it('uses the compact front drawer dimensions on small screens', async () => {
   expect(options.drawerStyle).toMatchObject({ minWidth: 300, width: 300 });
 });
 
-describe('the publish entry', () => {
-  it('is offered when a server is registered', async () => {
-    mockHasRegisteredServer.value = true;
-    await renderDrawer();
-
-    expect(drawerScreen('PublishStory')?.options.drawerItemStyle).toMatchObject({
-      height: undefined,
-    });
-  });
-
-  // The screen stays registered - only the menu item disappears, so that a direct navigation (or the
-  // help's link) does not break when the last server is removed.
-  it('is hidden when no server is registered', async () => {
-    mockHasRegisteredServer.value = false;
-    await renderDrawer();
-
-    expect(drawerScreen('PublishStory')?.options.drawerItemStyle).toMatchObject({
-      height: 0,
-      overflow: 'hidden',
-    });
-  });
-});
-
 describe('a serverless build', () => {
   // The web build on GitHub Pages runs on the device alone: what only talks to a server is not
   // registered at all, so nothing can navigate there.
-  it('registers no server, friend or publish entry', async () => {
+  it('registers no server or friend entry', async () => {
     process.env.EXPO_PUBLIC_SERVERLESS = '1';
     await render(<StorySelectionStack />);
 
     expect(mockDrawerScreens.map((screen) => screen.name)).toEqual([
       'StorySelectionMain',
-      'ImportExport',
+      'ImportStory',
       'PacksDrawer',
       'ExampleStories',
       'StoryDevicesDrawer',

@@ -25,7 +25,7 @@ const page: HelpPage = {
         'Tap the star to mark or unmark Favorite.',
         'Tap the pencil to edit story details.',
         'Use the + button to create a new story.',
-        'Open Menu › Import and export to bring in an exported copy or save a backup.',
+        'Open Menu › Import a story to bring in an exported copy. To save a backup, open the story and choose Publish and export.',
         'When editing a story, use Delete only when you are sure; export first if you want to keep a copy.',
       ],
     },

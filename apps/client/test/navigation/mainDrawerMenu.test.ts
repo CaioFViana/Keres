@@ -27,7 +27,12 @@ describe('the story menu model', () => {
       'material',
       'review',
     ]);
-    expect(leavesOf('write')).toEqual(['MainDashboard', 'NarrativeElementsStack', 'Manuscript']);
+    expect(leavesOf('write')).toEqual([
+      'MainDashboard',
+      'NarrativeElementsStack',
+      'Manuscript',
+      'StoryShare',
+    ]);
     expect(leavesOf('components')).toEqual([
       'CharactersStack',
       'LocationsStack',
@@ -35,7 +40,12 @@ describe('the story menu model', () => {
       'PlotsStack',
       'StatsStack',
     ]);
-    expect(leavesOf('material')).toEqual(['GalleryStack', 'BoardsStack', 'SketchStack', 'SongStack']);
+    expect(leavesOf('material')).toEqual([
+      'GalleryStack',
+      'BoardsStack',
+      'SketchStack',
+      'SongStack',
+    ]);
     expect(build().footer.map((leaf) => leaf.id)).toEqual([
       'StorySettings',
       'HelpDrawer',
@@ -57,7 +67,9 @@ describe('the story menu model', () => {
   });
 
   it('names the characters, places and items the way the story does', () => {
-    const labels = build().groups.find((group) => group.id === 'components')!.leaves.map((l) => l.label);
+    const labels = build()
+      .groups.find((group) => group.id === 'components')!
+      .leaves.map((l) => l.label);
     expect(labels.slice(0, 3)).toEqual(['term:Character', 'term:Location', 'term:Item']);
   });
 
@@ -68,7 +80,9 @@ describe('the story menu model', () => {
   });
 
   it('opens a few groups at the start and keeps the long ones shut', () => {
-    expect(Object.fromEntries(build().groups.map((group) => [group.id, group.defaultOpen]))).toEqual({
+    expect(
+      Object.fromEntries(build().groups.map((group) => [group.id, group.defaultOpen])),
+    ).toEqual({
       write: true,
       components: true,
       world: false,
@@ -78,7 +92,10 @@ describe('the story menu model', () => {
   });
 
   it('only names routes the drawer registers', () => {
-    const source = readFileSync(join(__dirname, '../../src/navigation/MainSystemStack.tsx'), 'utf8');
+    const source = readFileSync(
+      join(__dirname, '../../src/navigation/MainSystemStack.tsx'),
+      'utf8',
+    );
     const registered = new Set(
       Array.from(source.matchAll(/<Drawer\.Screen\s+name="([^"]+)"/g), (match) => match[1]),
     );
@@ -96,17 +113,21 @@ describe('which entry is on screen', () => {
     )!;
 
   it('tells the manuscript from the chapter list inside the same stack', () => {
-    expect(isLeafActive(leaf('Manuscript'), 'NarrativeElementsStack', { screen: 'Manuscript' })).toBe(
-      true,
-    );
+    expect(
+      isLeafActive(leaf('Manuscript'), 'NarrativeElementsStack', { screen: 'Manuscript' }),
+    ).toBe(true);
     expect(
       isLeafActive(leaf('Manuscript'), 'NarrativeElementsStack', { screen: 'ManuscriptExport' }),
     ).toBe(true);
     expect(
-      isLeafActive(leaf('NarrativeElementsStack'), 'NarrativeElementsStack', { screen: 'Manuscript' }),
+      isLeafActive(leaf('NarrativeElementsStack'), 'NarrativeElementsStack', {
+        screen: 'Manuscript',
+      }),
     ).toBe(false);
     expect(
-      isLeafActive(leaf('NarrativeElementsStack'), 'NarrativeElementsStack', { screen: 'SceneEditor' }),
+      isLeafActive(leaf('NarrativeElementsStack'), 'NarrativeElementsStack', {
+        screen: 'SceneEditor',
+      }),
     ).toBe(true);
   });
 
@@ -115,10 +136,12 @@ describe('which entry is on screen', () => {
     expect(isLeafActive(leaf('WorldRulesStack:fauna'), 'WorldRulesStack', onFauna)).toBe(true);
     expect(isLeafActive(leaf('WorldRulesStack:flora'), 'WorldRulesStack', onFauna)).toBe(false);
     expect(isLeafActive(leaf('WorldRulesStack'), 'WorldRulesStack', onFauna)).toBe(false);
-    expect(isLeafActive(leaf('WorldRulesStack'), 'WorldRulesStack', { screen: 'WorldRules' })).toBe(true);
-    expect(isLeafActive(leaf('WorldRulesStack'), 'WorldRulesStack', { screen: 'WorldRuleDetail' })).toBe(
+    expect(isLeafActive(leaf('WorldRulesStack'), 'WorldRulesStack', { screen: 'WorldRules' })).toBe(
       true,
     );
+    expect(
+      isLeafActive(leaf('WorldRulesStack'), 'WorldRulesStack', { screen: 'WorldRuleDetail' }),
+    ).toBe(true);
   });
 
   it('is never on screen for another route', () => {

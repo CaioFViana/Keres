@@ -25,7 +25,7 @@ const page: HelpPage = {
         'Toque na estrela para marcar ou desmarcar Favorita.',
         'Toque no lápis para editar os dados da história.',
         'Use o botão + para criar uma nova história.',
-        'Abra Menu › Importar e exportar para trazer uma cópia exportada ou guardar um backup.',
+        'Abra Menu › Importar uma história para trazer uma cópia exportada. Para guardar um backup, abra a história e escolha Publicar e exportar.',
         'Ao editar uma história, use Excluir somente quando tiver certeza; exporte antes se quiser conservar uma cópia.',
       ],
     },

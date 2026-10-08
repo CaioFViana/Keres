@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { buildStoryPublicUrl } from '../../src/screens/enterstack/PublishStoryScreen';
+import { buildStoryPublicUrl } from '../../src/screens/storyshare/useStoryPublishing';
 
 describe('buildStoryPublicUrl', () => {
   it('points at the story page of the same server the story syncs with', () => {

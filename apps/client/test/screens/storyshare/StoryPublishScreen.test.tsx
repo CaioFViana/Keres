@@ -1,3 +1,4 @@
+const mockNavigateAcross = jest.fn();
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -12,7 +13,7 @@ const mockFindStories = jest.fn();
 const mockFindLogs = jest.fn();
 const mockDrizzle = {
   query: {
-    stories: { findMany: (...args: unknown[]) => mockFindStories(...args) },
+    stories: { findFirst: (...args: unknown[]) => mockFindStories(...args) },
     operationLogs: { findMany: (...args: unknown[]) => mockFindLogs(...args) },
   },
 };
@@ -86,6 +87,18 @@ jest.mock('../../../src/theme', () => {
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
+
+jest.mock('../../../src/hooks/useNavigateAcrossStacks', () => ({
+  useNavigateAcrossStacks:
+    () =>
+    (...args: unknown[]) =>
+      mockNavigateAcross(...args),
+}));
+
+jest.mock('../../../src/state/storyStore', () => ({
+  useStoryStore: (selector: (state: unknown) => unknown) =>
+    selector({ selectedStory: { id: 'story-1', title: 'Epic' } }),
+}));
 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
@@ -199,7 +212,8 @@ jest.mock('../../../src/services/storymanagement/ManuscriptMusicService', () => 
   storyMusicFacts: async () => ({ hasMusic: mockSungSongs, hasSungSongs: mockSungSongs }),
 }));
 jest.mock('../../../src/state/userSettingsStore', () => ({
-  useUserSettingsStore: () => ({ userId: 'user-1' }),
+  useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
+    typeof selector === 'function' ? selector({ userId: 'user-1' }) : { userId: 'user-1' },
 }));
 
 jest.mock('../../../src/state/notificationStore', () => ({
@@ -209,9 +223,8 @@ jest.mock('../../../src/state/notificationStore', () => ({
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Linking } from 'react-native';
-import PublishStoryScreen, {
-  buildStoryPublicUrl,
-} from '../../../src/screens/enterstack/PublishStoryScreen';
+import StoryPublishScreen from '../../../src/screens/storyshare/StoryPublishScreen';
+import { buildStoryPublicUrl } from '../../../src/screens/storyshare/useStoryPublishing';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://s.example///' };
@@ -222,6 +235,7 @@ const story = {
   type: 'linear',
   lastOperationLog: 5,
   lastServerSyncedLog: 5,
+  myRole: 'owner',
 };
 const manuscriptLabels = {
   goToPage: 'export_manuscript_go_to_page',
@@ -276,13 +290,13 @@ describe('buildStoryPublicUrl', () => {
   });
 });
 
-describe('PublishStoryScreen', () => {
+describe('StoryPublishScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRefreshSnapshots.mockResolvedValue(0);
     jest.spyOn(Linking, 'openURL').mockResolvedValue(true as never);
     mockGetAllServers.mockResolvedValue([server]);
-    mockFindStories.mockResolvedValue([story]);
+    mockFindStories.mockResolvedValue(story);
     mockFindLogs.mockResolvedValue([]);
     mockGetPubs.mockResolvedValue([]);
     mockGetShowcase.mockResolvedValue(remoteUnpublished);
@@ -302,56 +316,67 @@ describe('PublishStoryScreen', () => {
     jest.restoreAllMocks();
   });
 
-  it('shows the empty state without eligible stories', async () => {
-    mockFindStories.mockResolvedValue([]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('publish_no_eligible_stories');
-    expect(view.getByText('publish_story_description')).toBeTruthy();
+  it('says the story is only on this device, and offers to send it to a server', async () => {
+    mockFindStories.mockResolvedValue({ ...story, serverId: null });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByText('story_publish_no_server_title');
+    await fireEvent.press(view.getByTestId('story-publish-open-collaboration'));
+    expect(mockNavigateAcross).toHaveBeenCalledWith(
+      'StorySettings',
+      'StorySettingsCollaboration',
+      {},
+    );
   });
 
   it('shows the error screen when loading fails', async () => {
     await withSilencedConsole(['log'], async () => {
       mockGetAllServers.mockRejectedValue(new Error('db down'));
-      const view = await render(<PublishStoryScreen />);
-      await view.findByText('failed_to_load_stories');
+      const view = await render(<StoryPublishScreen />);
+      await view.findByText('failed_to_load_story');
     });
   });
 
-  it('skips stories whose server is unknown locally', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, id: 'orphan', serverId: 'srv-x' }]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('publish_no_eligible_stories');
+  it('treats a story whose server is unknown locally as not on a server', async () => {
+    mockFindStories.mockResolvedValue({ ...story, serverId: 'srv-x' });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByText('story_publish_no_server_title');
+  });
+
+  it('leaves publishing to the owner', async () => {
+    mockFindStories.mockResolvedValue({ ...story, myRole: 'writer' });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByText('story_publish_not_owner_title');
+    expect(view.queryByTestId('story-publish-submit')).toBeNull();
+    expect(mockPublish).not.toHaveBeenCalled();
   });
 
   it('explains why a story cannot be published right now', async () => {
     mockIsOffline.mockReturnValue(true);
-    const offline = await render(<PublishStoryScreen />);
+    const offline = await render(<StoryPublishScreen />);
     await offline.findByText('publish_blocked_offline');
-    expect(offline.getByText('Epic')).toBeTruthy();
   });
 
   it('blocks publishing with pending operations or missing sync', async () => {
     mockFindLogs.mockResolvedValue([{ id: 'op-1' }]);
-    const pending = await render(<PublishStoryScreen />);
+    const pending = await render(<StoryPublishScreen />);
     await pending.findByText('publish_blocked_pending_operations');
 
     // Behind the server's own sequence: somebody else wrote since this device last read it.
     mockFindLogs.mockResolvedValue([]);
-    mockFindStories.mockResolvedValue([{ ...story, lastServerSyncedLog: 3 }]);
-    const unsynced = await render(<PublishStoryScreen />);
+    mockFindStories.mockResolvedValue({ ...story, lastServerSyncedLog: 3 });
+    const unsynced = await render(<StoryPublishScreen />);
     await unsynced.findByText('publish_blocked_not_synced');
   });
 
   it('treats a story just sent up as synced, whatever its local counter', async () => {
     // Written offline (local counter 45), then uploaded: the server's sequence restarts at 0.
-    mockFindStories.mockResolvedValue([{ ...story, lastOperationLog: 45, lastServerSyncedLog: 0 }]);
+    mockFindStories.mockResolvedValue({ ...story, lastOperationLog: 45, lastServerSyncedLog: 0 });
     mockFetchPreviews.mockResolvedValue([{ storyId: 'story-1', lastOperationVersion: 0 }]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
 
     expect(view.queryByText('publish_blocked_not_synced')).toBeNull();
     expect(view.getByText(/publish_synced_version/)).toBeTruthy();
-    await fireEvent.press(view.getByText('Epic'));
     await fireEvent.press(await view.findByText('publish_create_version'));
     await waitFor(() => expect(mockPublish).toHaveBeenCalled());
     // The server checks the version in its own sequence.
@@ -359,18 +384,17 @@ describe('PublishStoryScreen', () => {
   });
 
   it('leaves the stale check to the server when it cannot tell its version', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, lastServerSyncedLog: 3 }]);
+    mockFindStories.mockResolvedValue({ ...story, lastServerSyncedLog: 3 });
     mockFetchPreviews.mockResolvedValue([]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
 
     expect(view.queryByText('publish_blocked_not_synced')).toBeNull();
   });
 
   it('publishes a new version and shows its public address', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     await fireEvent.press(view.getByText('publish_label_style_version'));
     await fireEvent.press(view.getByText('publish_create_version'));
@@ -403,9 +427,8 @@ describe('PublishStoryScreen', () => {
 
   it('redraws a changed sketch picture first and asks for a sync instead of publishing a stale one', async () => {
     mockRefreshSnapshots.mockResolvedValue(2);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     await fireEvent.press(view.getByText('publish_create_version'));
 
@@ -417,10 +440,9 @@ describe('PublishStoryScreen', () => {
   });
 
   it('requires a long enough password when the padlock is on', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
-    await fireEvent.press(view.getByTestId('publish-password-switch-story-1'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await fireEvent.press(view.getByTestId('publish-password-switch'));
     await fireEvent.changeText(view.getByPlaceholderText('publish_password_placeholder'), 'abc');
     await fireEvent.press(view.getByText('publish_create_version'));
     expect(mockNotify).toHaveBeenCalledWith('publish_password_too_short', 'error');
@@ -461,10 +483,9 @@ describe('PublishStoryScreen', () => {
         },
       ],
     });
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
-    await fireEvent.press(view.getByTestId('publish-password-switch-story-1'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await fireEvent.press(view.getByTestId('publish-password-switch'));
     expect(view.queryByPlaceholderText('publish_password_placeholder')).toBeNull();
     await fireEvent.press(view.getByText('publish_create_version'));
     await waitFor(() =>
@@ -484,9 +505,8 @@ describe('PublishStoryScreen', () => {
 
   it('maps publish failures to notifications', async () => {
     await withSilencedConsole(['log'], async () => {
-      const view = await render(<PublishStoryScreen />);
-      await view.findByText('Epic');
-      await fireEvent.press(view.getByText('Epic'));
+      const view = await render(<StoryPublishScreen />);
+      await view.findByTestId('story-publish-status');
       await view.findByText('publish_create_version');
 
       mockPublish.mockRejectedValueOnce({ response: { status: 409 } });
@@ -537,9 +557,8 @@ describe('PublishStoryScreen', () => {
         },
       ],
     });
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('v1');
     expect(view.getByText('https://s.example/showcase/story/story-1')).toBeTruthy();
     await fireEvent.press(view.getByTestId('icon-trash-outline'));
@@ -583,9 +602,8 @@ describe('PublishStoryScreen', () => {
         },
       ],
     });
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_unpublish_confirm');
     expect(view.getByText('publish_visibility_applies_to_all')).toBeTruthy();
     await fireEvent.press(view.getByText('publish_open_link'));
@@ -601,8 +619,8 @@ describe('PublishStoryScreen', () => {
 
   it('keeps the local mirror when the server state cannot be read', async () => {
     mockGetShowcase.mockRejectedValue({ isOffline: true });
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     expect(view.getByText(/publish_not_published/)).toBeTruthy();
   });
 
@@ -612,9 +630,8 @@ describe('PublishStoryScreen', () => {
       { id: 's-1', chapterId: 'ch-1', isDeleted: false },
       { id: 's-2', chapterId: null, isDeleted: false },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     expect(mockGetChapters).toHaveBeenCalledWith('story-1', null);
@@ -653,16 +670,15 @@ describe('PublishStoryScreen', () => {
   });
 
   it('sends the same options the device export offers', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, author: 'Ana' }]);
+    mockFindStories.mockResolvedValue({ ...story, author: 'Ana' });
     mockGetChapters.mockResolvedValue([{ id: 'ch-1', type: 'chapter' }]);
     mockGetScenes.mockResolvedValue([{ id: 's-2', chapterId: null, isDeleted: false }]);
     mockGetArcs.mockResolvedValue([
       { id: 'arc-1', title: 'One' },
       { id: 'arc-2', title: 'Two' },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -693,9 +709,8 @@ describe('PublishStoryScreen', () => {
 
   it('offers the songs only where one is sung, and sends the choices for them', async () => {
     mockSungSongs = true;
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -717,9 +732,8 @@ describe('PublishStoryScreen', () => {
   });
 
   it('asks nothing about songs where none is sung', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -732,14 +746,13 @@ describe('PublishStoryScreen', () => {
   });
 
   it('releases one work: no package, its own author, the arc in the request', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, author: 'Story Author' }]);
+    mockFindStories.mockResolvedValue({ ...story, author: 'Story Author' });
     mockGetArcs.mockResolvedValue([
       { id: 'arc-1', title: 'Issue One', author: 'Arc Author', medium: 'comic' },
       { id: 'arc-2', title: 'Issue Two', author: null, medium: 'comic' },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     expect(view.getByTestId('publish-package-switch-story-1')).toBeTruthy();
 
@@ -761,9 +774,8 @@ describe('PublishStoryScreen', () => {
       { id: 'arc-1', title: 'Board', author: null, medium: 'storyboard', pageFormat: null },
       { id: 'arc-2', title: 'Book', author: null, medium: 'generic', pageFormat: null },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     await fireEvent.press(view.getByTestId('route-option-arc-1'));
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -780,14 +792,13 @@ describe('PublishStoryScreen', () => {
   });
 
   it('credits the story author when the released work has none', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, author: 'Story Author' }]);
+    mockFindStories.mockResolvedValue({ ...story, author: 'Story Author' });
     mockGetArcs.mockResolvedValue([
       { id: 'arc-1', title: 'Issue One', author: 'Arc Author', medium: 'comic' },
       { id: 'arc-2', title: 'Issue Two', author: null, medium: 'comic' },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('route-option-arc-2'));
@@ -805,9 +816,8 @@ describe('PublishStoryScreen', () => {
       { id: 'arc-1', title: 'One', author: null, medium: 'generic' },
       { id: 'arc-2', title: 'Two', author: null, medium: 'generic' },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('route-option-arc-1'));
@@ -823,9 +833,8 @@ describe('PublishStoryScreen', () => {
       { id: 'arc-1', title: 'One', author: null, medium: 'generic' },
       { id: 'arc-2', title: 'Two', author: null, medium: 'generic' },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('route-option-arc-1'));
@@ -841,9 +850,8 @@ describe('PublishStoryScreen', () => {
     mockGetArcs.mockResolvedValue([
       { id: 'arc-1', title: 'Only', author: null, medium: 'generic' },
     ]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     expect(view.queryByTestId('publish-release-story-1')).toBeNull();
@@ -855,9 +863,8 @@ describe('PublishStoryScreen', () => {
       { id: 'arc-2', title: 'Two', author: null, medium: 'generic' },
     ]);
     mockPublish.mockRejectedValueOnce({ response: { status: 429 } });
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('route-option-arc-2'));
@@ -870,10 +877,9 @@ describe('PublishStoryScreen', () => {
   });
 
   it('offers a branching story its scene order instead of a route, discovery by default', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    mockFindStories.mockResolvedValue({ ...story, type: 'branching' });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -900,10 +906,9 @@ describe('PublishStoryScreen', () => {
   });
 
   it('sends the shuffled order a branching story asks for', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    mockFindStories.mockResolvedValue({ ...story, type: 'branching' });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -916,9 +921,8 @@ describe('PublishStoryScreen', () => {
   });
 
   it('leaves a linear story without a scene order', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -931,9 +935,8 @@ describe('PublishStoryScreen', () => {
   });
 
   it('publishes the reading online with the manuscript choices, no file format, its own words', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
@@ -958,10 +961,9 @@ describe('PublishStoryScreen', () => {
   });
 
   it('sends the manuscript and the reader together, and the scene order to a branching one', async () => {
-    mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    mockFindStories.mockResolvedValue({ ...story, type: 'branching' });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
@@ -978,9 +980,8 @@ describe('PublishStoryScreen', () => {
   it('says so when the server publishes the version but drops the reading it was asked for', async () => {
     // An old server answers without the reader's size: the field is simply not there.
     mockPublish.mockResolvedValue({ label: 'v1' });
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
     await fireEvent.press(view.getByText('publish_create_version'));
@@ -990,9 +991,8 @@ describe('PublishStoryScreen', () => {
 
   it('stays quiet when the server did publish the reading', async () => {
     mockPublish.mockResolvedValue({ label: 'v1', readerByteSize: 1200 });
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
     await fireEvent.press(view.getByText('publish_create_version'));
@@ -1002,9 +1002,8 @@ describe('PublishStoryScreen', () => {
   });
 
   it('publishes the story file by default, and says to select at least one', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     expect(view.getByText('publish_select_one')).toBeTruthy();
@@ -1015,9 +1014,8 @@ describe('PublishStoryScreen', () => {
   });
 
   it('publishes the reading alone once the story file is switched off', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
@@ -1030,9 +1028,8 @@ describe('PublishStoryScreen', () => {
   });
 
   it('will not publish a version with nothing in it: the button is off and pressing says why', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-package-switch-story-1'));
@@ -1047,9 +1044,8 @@ describe('PublishStoryScreen', () => {
   });
 
   it('sends no reader unless asked', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     await fireEvent.press(view.getByText('publish_create_version'));
 

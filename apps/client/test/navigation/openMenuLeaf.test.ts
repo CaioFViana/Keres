@@ -17,7 +17,12 @@ function drawer(prevented: boolean) {
   };
 }
 
-const plain: MenuLeaf = { id: 'ItemsStack', route: 'ItemsStack', label: 'Items', icon: 'cube-outline' };
+const plain: MenuLeaf = {
+  id: 'ItemsStack',
+  route: 'ItemsStack',
+  label: 'Items',
+  icon: 'cube-outline',
+};
 const manuscript: MenuLeaf = {
   id: 'Manuscript',
   route: 'NarrativeElementsStack',
@@ -61,7 +66,10 @@ describe('openMenuLeaf', () => {
       expect.objectContaining({
         type: 'RESET',
         target: 'nested-key',
-        payload: expect.objectContaining({ index: 0, routes: [{ name: 'Manuscript', params: undefined }] }),
+        payload: expect.objectContaining({
+          index: 0,
+          routes: [{ name: 'Manuscript', params: undefined }],
+        }),
       }),
     );
     expect(navigation.navigate).toHaveBeenCalledWith('NarrativeElementsStack', {
@@ -94,7 +102,11 @@ describe('openMenuLeaf', () => {
       target: { screen: 'WorldRules', params: { section: 'fauna' } },
     };
 
-    openMenuLeaf(navigation as never, stateOf([{ name: 'WorldRulesStack', key: 'world-key' }]), fauna);
+    openMenuLeaf(
+      navigation as never,
+      stateOf([{ name: 'WorldRulesStack', key: 'world-key' }]),
+      fauna,
+    );
 
     expect(navigation.navigate).toHaveBeenCalledWith('WorldRulesStack', {
       screen: 'WorldRules',
@@ -110,7 +122,10 @@ describe('nestedFocusOf', () => {
         { name: 'MainDashboard' },
         {
           name: 'WorldRulesStack',
-          state: { index: 1, routes: [{ name: 'WorldRules' }, { name: 'WorldRuleDetail', params: { a: 1 } }] },
+          state: {
+            index: 1,
+            routes: [{ name: 'WorldRules' }, { name: 'WorldRuleDetail', params: { a: 1 } }],
+          },
         },
       ],
       1,

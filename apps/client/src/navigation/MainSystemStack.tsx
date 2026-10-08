@@ -53,6 +53,8 @@ import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
 import type { StorySettingsStackParamList } from './StorySettingsStack';
 import StorySettingsStackNavigator from './StorySettingsStack';
+import type { StoryShareStackParamList } from './StoryShareStack';
+import StoryShareStackNavigator from './StoryShareStack';
 import {
   ArcContextDrawerScreen,
   drawerIcon,
@@ -135,6 +137,7 @@ export type MainSystemDrawerParamList = {
   SongStack: NavigatorScreenParams<SongStackParamList> | undefined;
   Settings: undefined;
   StorySettings: NavigatorScreenParams<StorySettingsStackParamList> | undefined;
+  StoryShare: NavigatorScreenParams<StoryShareStackParamList> | undefined;
   StoryAnalysisStack: NavigatorScreenParams<StoryAnalysisStackParamList> | undefined;
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
@@ -562,6 +565,12 @@ const MainSystemNavigator = () => {
             drawerIcon: drawerIcon('help-circle-outline'),
           }}
           listeners={drawerItemListeners('HelpDrawer', 'HelpIndex')}
+        />
+        <Drawer.Screen
+          name="StoryShare"
+          component={StoryShareStackNavigator}
+          options={{ title: t('story_share_title'), drawerIcon: drawerIcon('share-outline') }}
+          listeners={drawerItemListeners('StoryShare', 'StoryShareIndex')}
         />
         <Drawer.Screen
           name="StorySettings"

@@ -25,7 +25,8 @@ const page: HelpPage = {
     {
       type: 'list',
       items: [
-        'The story must belong to you. Stories shared with you, even with permission to write, never appear on this screen.',
+        'The story must belong to you. On a story shared with you, even with permission to write, the screen says that only its owner publishes.',
+        'The story must be on a server. One that only exists on this device offers to be sent to one.',
         'You must be connected to the story server at that moment.',
         'The story must be fully synced - no local change still waiting to reach the server.',
       ],
@@ -35,11 +36,11 @@ const page: HelpPage = {
       text: 'When something is missing, the screen says which of the three it is instead of just refusing.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Main menu', 'Publish story'] },
+    { type: 'path', segments: ['Story menu', 'Publish and export'] },
     {
       type: 'steps',
       items: [
-        'Open the story you want to publish on the list.',
+        'Open the story you want to publish and choose Publish online.',
         'Choose how the version should be named.',
         'Choose what the version carries: the story file (.zip), the manuscript, the reading online. At least one must be on; the screen says Select at least one until it is.',
         'Decide whether it is listed publicly or hidden behind a password.',

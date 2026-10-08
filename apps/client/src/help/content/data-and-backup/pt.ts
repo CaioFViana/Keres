@@ -20,9 +20,9 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'No menu principal, abra Importar e exportar.',
-        'Escolha a história e exporte uma cópia para um local que você controla.',
-        'Para recuperar uma cópia, importe o arquivo; a importação cria uma nova história local.',
+        'Abra a história e escolha Publicar e exportar no menu dela.',
+        'Em Cópia da história, exporte uma cópia para um local que você controla.',
+        'Para recuperar uma cópia, abra Importar uma história no menu principal e escolha o arquivo; a importação cria uma nova história local.',
         'Antes de redefinir ou desinstalar o aplicativo, exporte as histórias locais que deseja preservar.',
       ],
     },

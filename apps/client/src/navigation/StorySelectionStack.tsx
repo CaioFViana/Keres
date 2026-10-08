@@ -20,7 +20,6 @@ import ResizableDrawerContent, {
 } from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
 import { screenHelpPage } from '../help/contextualHelp';
-import { useHasRegisteredServer } from '../hooks/useHasRegisteredServer';
 import { isServerless } from '../utils/clientFlavor';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
@@ -31,13 +30,12 @@ import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import ConversationScreen from '../screens/enterstack/ConversationScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
 import MessageInboxScreen from '../screens/enterstack/MessageInboxScreen';
-import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
+import ImportStoryScreen from '../screens/enterstack/ImportStoryScreen';
 import PackBrowseScreen from '../screens/packs/PackBrowseScreen';
 import PackFormScreen from '../screens/packs/PackFormScreen';
 import PackListScreen from '../screens/packs/PackListScreen';
 import ShippedPacksScreen from '../screens/packs/ShippedPacksScreen';
 import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
-import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import ServerDetailScreen from '../screens/enterstack/ServerDetailScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
 import ServerPaymentHistoryScreen from '../screens/enterstack/ServerPaymentHistoryScreen';
@@ -115,8 +113,7 @@ export type StorySelectionDrawerParamList = {
   StorySelectionMain: NavigatorScreenParams<StorySelectionMainStackParamList>;
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
   FriendshipDrawer: NavigatorScreenParams<FriendshipStackParamList>;
-  ImportExport: undefined;
-  PublishStory: undefined;
+  ImportStory: undefined;
   ExampleStories: undefined;
   PacksDrawer: NavigatorScreenParams<PacksStackParamList>;
   Settings: NavigatorScreenParams<SettingsStackParamList>;
@@ -329,7 +326,6 @@ const SettingsStackNavigator = () => {
 const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const hasServers = useHasRegisteredServer();
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
   const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
@@ -483,45 +479,21 @@ const StorySelectionNavigator = () => {
           </>
         )}
         {/*
-        Import/export lives in the main menu, not in a story's menu: importing creates
-        a new story (there is no active story at that point) and exporting must reach
-        any story, not just the open one.
+        Importing lives in the main menu, not in a story's menu: it creates a new story, so there is
+        no active one at that point. Taking a story out (publish, export) lives in the story's own menu.
       */}
         <Drawer.Screen
-          name="ImportExport"
-          component={ImportExportScreen}
+          name="ImportStory"
+          component={ImportStoryScreen}
           options={{
-            title: t('import_export_title'),
-            drawerLabel: t('import_export_title'),
-            drawerIcon: drawerIcon('swap-horizontal-outline'),
+            title: t('import_story_title'),
+            drawerLabel: t('import_story_title'),
+            drawerIcon: drawerIcon('download-outline'),
           }}
-          listeners={drawerItemListeners('ImportExport')}
+          listeners={drawerItemListeners('ImportStory')}
         />
         {/*
-        Publishing only exists with a server: a story that never left this device has
-        nowhere to be published. The item is hidden by height, as the Choices one in
-        MainSystemStack does with linear stories - the screen stays registered, so a
-        direct navigation (or the help link) does not break when the server is removed.
-        A serverless build can never have a server, so there it is not registered at all.
-      */}
-        {isServerless() ? null : (
-          <Drawer.Screen
-            name="PublishStory"
-            component={PublishStoryScreen}
-            options={{
-              title: t('publish_story_title'),
-              drawerLabel: t('publish_story_title'),
-              drawerIcon: drawerIcon('cloud-upload-outline'),
-              drawerItemStyle: {
-                height: hasServers ? undefined : 0,
-                overflow: 'hidden',
-              },
-            }}
-            listeners={drawerItemListeners('PublishStory')}
-          />
-        )}
-        {/*
-        Same reasoning as Import/Export and the examples above: a pack is made from a story and
+        Same reasoning as Import and the examples below: a pack is made from a story and
         applied when a new one is created, so it belongs to the app's menu rather than to any single
         story's.
       */}
@@ -536,7 +508,7 @@ const StorySelectionNavigator = () => {
           listeners={drawerItemListeners('PacksDrawer', 'PackList')}
         />
         {/*
-        Same reasoning as Import/Export above: installing an example creates a new
+        Same reasoning as Import above: installing an example creates a new
         story, so it depends on (and belongs to the menu of) no already-open story.
       */}
         <Drawer.Screen

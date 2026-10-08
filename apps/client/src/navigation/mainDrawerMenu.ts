@@ -109,6 +109,12 @@ export function buildMainDrawerMenu({
           target: { screen: 'Manuscript' },
           active: (focus) => MANUSCRIPT_SCREENS.has(focus.screen ?? ''),
         },
+        {
+          id: 'StoryShare',
+          route: 'StoryShare',
+          label: t('story_share_title'),
+          icon: 'share-outline',
+        },
       ],
     },
     {

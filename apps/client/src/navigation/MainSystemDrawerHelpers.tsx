@@ -28,6 +28,7 @@ export const mainSystemStackRootScreens = new Set([
   'StoryAnalysis',
   'CommentsList',
   'StorySettingsIndex',
+  'StoryShareIndex',
   'StatList',
   'StoryCalendarList',
   'Manuscript',

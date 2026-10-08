@@ -262,6 +262,10 @@ jest.mock('../../src/navigation/StorySettingsStack', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/navigation/StoryShareStack', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/notes/NoteDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -438,7 +442,7 @@ it('leaves the story on screen when its access is lost, and only that story', as
 async function renderDrawer() {
   await render(<MainSystemStack />);
   // The customization stack is gone: arcs, calendars and stats have a stack each, the rest went to the settings.
-  expect(mockDrawerScreens).toHaveLength(25);
+  expect(mockDrawerScreens).toHaveLength(26);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -574,6 +578,7 @@ it.each([
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
   ['StorySettings', 'StorySettingsIndex'],
+  ['StoryShare', 'StoryShareIndex'],
 ])('returns %s to its list screen when its drawer item is pressed', async (drawerName, screen) => {
   await renderDrawer();
   const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };

@@ -26,7 +26,8 @@ const page: HelpPage = {
     {
       type: 'list',
       items: [
-        'A história precisa ser sua. Histórias compartilhadas com você, mesmo com permissão de escrita, nunca aparecem nesta tela.',
+        'A história precisa ser sua. Numa história compartilhada com você, mesmo com permissão de escrita, a tela avisa que só o dono publica.',
+        'A história precisa estar num servidor. Uma que só existe neste aparelho oferece enviá-la para um.',
         'Você precisa estar conectado ao servidor da história naquele momento.',
         'A história precisa estar sincronizada - nenhuma alteração local esperando para chegar ao servidor.',
       ],
@@ -36,11 +37,11 @@ const page: HelpPage = {
       text: 'Quando falta alguma dessas coisas, a tela diz qual das três é, em vez de simplesmente recusar.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu principal', 'Publicar história'] },
+    { type: 'path', segments: ['Menu da história', 'Publicar e exportar'] },
     {
       type: 'steps',
       items: [
-        'Abra na lista a história que quer publicar.',
+        'Abra a história que quer publicar e escolha Publicar online.',
         'Escolha como a versão deve ser nomeada.',
         'Escolha o que a versão leva: o arquivo da história (.zip), o manuscrito, a leitura online. Ao menos um precisa estar ligado; a tela diz Selecione ao menos um até isso acontecer.',
         'Decida se ela fica listada publicamente ou escondida atrás de uma senha.',

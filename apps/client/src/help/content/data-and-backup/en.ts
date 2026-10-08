@@ -20,9 +20,9 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'From the main menu, open Import and export.',
-        'Choose the story and export a copy to a place you control.',
-        'To recover a copy, import the file; importing creates a new local story.',
+        'Open the story and choose Publish and export in its menu.',
+        'Under Copy of the story, export a copy to a place you control.',
+        'To recover a copy, open Import a story in the main menu and choose the file; importing creates a new local story.',
         'Before resetting or uninstalling the app, export local stories you want to keep.',
       ],
     },

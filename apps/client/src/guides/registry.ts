@@ -44,11 +44,11 @@ export const screenGuides: Record<string, Guide> = {
       {
         id: 'drawer-create',
         drawerId: 'story-selection',
-        anchors: drawerGroup('story-selection', ['PacksDrawer', 'ExampleStories']),
+        anchors: drawerGroup('story-selection', ['PacksDrawer', 'ExampleStories', 'ImportStory']),
         titleKey: 'tour_selection_group_create_title',
         bodyKey: 'tour_selection_group_create_body',
       },
-      // A serverless build has no servers, friends or publishing to walk through.
+      // A serverless build has no servers or friends to walk through.
       ...(isServerless()
         ? []
         : [
@@ -58,8 +58,6 @@ export const screenGuides: Record<string, Guide> = {
               anchors: drawerGroup('story-selection', [
                 'ServerManagementDrawer',
                 'FriendshipDrawer',
-                'ImportExport',
-                'PublishStory',
               ]),
               titleKey: 'tour_selection_group_servers_title',
               bodyKey: 'tour_selection_group_servers_body',

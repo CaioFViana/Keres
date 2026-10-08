@@ -446,6 +446,18 @@ describe('StorySelectionScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('StoryForm', { storyId: 'story-1' });
   });
 
+  it('brings a story in from the list, as the menu does', async () => {
+    await render(<StorySelectionScreen />);
+    const header = mockUseScreenHeader.mock.calls[0][0] as {
+      actions: Array<{ label: string; onPress: () => void }>;
+    };
+
+    expect(header.actions[1].label).toBe('import_story_title');
+    header.actions[1].onPress();
+
+    expect(mockParentNavigate).toHaveBeenCalledWith('ImportStory');
+  });
+
   it('toggles story favorites', async () => {
     await withSilencedConsole(['error'], async () => {
       const view = await render(<StorySelectionScreen />);

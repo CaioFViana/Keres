@@ -14,6 +14,7 @@ import ServerDrawerIcon from '../components/features/messages/ServerDrawerIcon';
 import { TouchableOpacity, View } from 'react-native';
 import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
+import SelectionDrawerMenu from '../components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
 import ResizableDrawerContent, {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
@@ -49,8 +50,6 @@ import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
-import type { StoryDevicesStackParamList } from './StoryDevicesStack';
-import StoryDevicesStackNavigator from './StoryDevicesStack';
 import {
   DRAWER_SWIPE_EDGE_WIDTH,
   DRAWER_SWIPE_MIN_DISTANCE,
@@ -117,7 +116,6 @@ export type StorySelectionDrawerParamList = {
   ExampleStories: undefined;
   PacksDrawer: NavigatorScreenParams<PacksStackParamList>;
   Settings: NavigatorScreenParams<SettingsStackParamList>;
-  StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
 
@@ -135,7 +133,6 @@ const storySelectionStackRootScreens = new Set([
   'PackList',
   // The same reason as the story's drawer: the root of a stack opened from the menu shows no arrow.
   'HelpIndex',
-  'DeviceIndex',
   // The settings stack's own root: the drawer entry it sits behind is called `Settings`.
   'SettingsHome',
 ]);
@@ -327,7 +324,6 @@ const StorySelectionNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
-  const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
@@ -349,7 +345,13 @@ const StorySelectionNavigator = () => {
             maximumWidth={maximumWidth}
             onDrawerWidthChange={setDrawerWidth}
             resizable={!isCompact}
-          />
+          >
+            <SelectionDrawerMenu
+              state={props.state}
+              navigation={props.navigation}
+              drawerId="story-selection"
+            />
+          </ResizableDrawerContent>
         )}
         screenOptions={({ navigation, route }) => {
           const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
@@ -520,22 +522,6 @@ const StorySelectionNavigator = () => {
             drawerIcon: drawerIcon('flask-outline'),
           }}
           listeners={drawerItemListeners('ExampleStories')}
-        />
-        <Drawer.Screen
-          name="StoryDevicesDrawer"
-          component={StoryDevicesStackNavigator}
-          options={{
-            title: t('story_devices_title'),
-            drawerLabel: t('story_devices_title'),
-            drawerIcon: drawerIcon('bulb-outline'),
-            // The screen stays registered when the setting is off so a direct navigation
-            // or a help link does not break; only the menu item disappears.
-            drawerItemStyle: {
-              height: suggestLiteraryDevices ? undefined : 0,
-              overflow: 'hidden',
-            },
-          }}
-          listeners={drawerItemListeners('StoryDevicesDrawer', 'DeviceIndex')}
         />
         <Drawer.Screen
           name="HelpDrawer"

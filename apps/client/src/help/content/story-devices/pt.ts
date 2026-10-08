@@ -27,11 +27,11 @@ const page: HelpPage = {
       text: 'Ao planejar um capítulo você quer um nome para a técnica de cortar a cena no auge da tensão. Busca por "corte", encontra o verbete do gancho de suspense, lê as armadilhas, e volta a escrever.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu', 'Recursos literários'] },
+    { type: 'path', segments: ['Menu da história', 'Organizar e revisar', 'Recursos literários'] },
     {
       type: 'steps',
       items: [
-        'Abra Recursos literários pelo menu. Ele aparece nos dois menus, o de escolher história e o de dentro da história.',
+        'Abra uma história e escolha Recursos literários no menu dela, em Organizar e revisar.',
         'Navegue por seção, ou busque: a busca também encontra o nome em inglês de cada recurso.',
         'Abra um verbete e siga os links relacionados no fim da página.',
         'Para ocultar o item do menu, desligue "Sugerir recursos literários" nas Configurações do Aplicativo.',

@@ -44,7 +44,7 @@ export const screenGuides: Record<string, Guide> = {
       {
         id: 'drawer-create',
         drawerId: 'story-selection',
-        anchors: drawerGroup('story-selection', ['PacksDrawer', 'ExampleStories', 'ImportStory']),
+        anchors: [drawerAnchorId('story-selection', 'group:create')],
         titleKey: 'tour_selection_group_create_title',
         bodyKey: 'tour_selection_group_create_body',
       },
@@ -55,10 +55,7 @@ export const screenGuides: Record<string, Guide> = {
             {
               id: 'drawer-servers',
               drawerId: 'story-selection' as const,
-              anchors: drawerGroup('story-selection', [
-                'ServerManagementDrawer',
-                'FriendshipDrawer',
-              ]),
+              anchors: [drawerAnchorId('story-selection', 'group:server')],
               titleKey: 'tour_selection_group_servers_title',
               bodyKey: 'tour_selection_group_servers_body',
             },
@@ -66,7 +63,7 @@ export const screenGuides: Record<string, Guide> = {
       {
         id: 'drawer-system',
         drawerId: 'story-selection',
-        anchors: drawerGroup('story-selection', ['StoryDevicesDrawer', 'HelpDrawer', 'Settings']),
+        anchors: drawerGroup('story-selection', ['HelpDrawer', 'Settings']),
         titleKey: 'tour_selection_group_system_title',
         bodyKey: 'tour_selection_group_system_body',
       },

@@ -27,11 +27,11 @@ const page: HelpPage = {
       text: 'While planning a chapter you want a name for the technique of cutting the scene at its highest tension. You search for "cut", find the cliffhanger entry, read the pitfalls, and go back to writing.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Menu', 'Literary devices'] },
+    { type: 'path', segments: ['Story menu', 'Organize and review', 'Literary devices'] },
     {
       type: 'steps',
       items: [
-        'Open Literary devices from the menu. It appears in both menus, the one for choosing a story and the one inside a story.',
+        'Open a story and choose Literary devices in its menu, under Organize and review.',
         'Browse by section, or search: the search also matches the English name of each device.',
         'Open an entry and follow its related links at the end of the page.',
         'To hide the menu item, turn off "Suggest literary devices" in App Settings.',

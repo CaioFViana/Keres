@@ -203,6 +203,13 @@ const StorySelectionScreen = () => {
     title: t('story_selection_title'),
     actions: [
       { id: 'action-0', icon: 'add', label: t('create_new_story'), onPress: handleCreateNewStory },
+      // Where a person looking at their stories goes to bring one in; the menu has it too.
+      {
+        id: 'action-1',
+        icon: 'download-outline',
+        label: t('import_story_title'),
+        onPress: () => navigation.getParent()?.navigate('ImportStory'),
+      },
     ],
   });
 

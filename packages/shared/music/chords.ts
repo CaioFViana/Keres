@@ -1,4 +1,4 @@
-import { readDirective } from './chordpro';
+import { readDirective, readSectionHeading } from './chordpro';
 
 /** The twelve pitch classes, spelled with sharps and with flats. */
 export const NOTE_NAMES_SHARP = [
@@ -112,7 +112,7 @@ export function transposeLyrics(text: string, semitones: number, preferFlats: bo
   return text
     .split(/(\r?\n)/)
     .map((line) => {
-      if (line.trim().startsWith('#')) return line;
+      if (line.trim().startsWith('#') || readSectionHeading(line)) return line;
       const directive = readDirective(line);
       if (directive) {
         return directive.name === 'key'

@@ -1,4 +1,4 @@
-import { parseChordPro, readDirective } from './chordpro';
+import { headingsToDirectives, parseChordPro, readDirective } from './chordpro';
 
 /** A song as a `.cho` file carries it: its facts and its lyrics. */
 export interface ChordProFile {
@@ -18,7 +18,7 @@ export function chordProFileOf(song: ChordProFile): string {
   if (song.key) head.push(`{key: ${song.key}}`);
   if (song.meter) head.push(`{time: ${song.meter}}`);
   if (song.tempo) head.push(`{tempo: ${song.tempo}}`);
-  return `${head.join('\n')}\n\n${song.lyrics.trim()}\n`;
+  return `${head.join('\n')}\n\n${headingsToDirectives(song.lyrics).trim()}\n`;
 }
 
 /**

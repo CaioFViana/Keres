@@ -6,6 +6,7 @@
  *   {title: Tavern song}   {key: G}   {tempo: 90}   {time: 3/4}          the song's facts
  *   {start_of_verse: Verse 1} ... {end_of_verse}                            a section (also chorus, bridge)
  *   {chorus} or {chorus: Chorus}                                            "the chorus again, here"
+ *   [Verse] or [Chorus 2] or Verse 1:   on a line of their own                  a section too, as anyone would write it
  *   {comment: text}  {comment_italic: text}                                 a line for the reader
  *   [G]Night de[Em]scends                                                   a line of lyrics with chords
  *   # a line the writer keeps for themselves                                never read
@@ -97,6 +98,52 @@ const START_KIND: Record<string, Exclude<SongSectionKind, 'none'>> = {
 const END_NAMES = new Set(['end_of_verse', 'eov', 'end_of_chorus', 'eoc', 'end_of_bridge', 'eob']);
 
 const DIRECTIVE = /^\{\s*([a-z_]+)\s*(?:[:\s]\s*([^}]*?))?\s*\}$/i;
+
+/** The words that name a section in a line of its own, in the two languages the app speaks. */
+const HEADING_WORDS: Record<string, Exclude<SongSectionKind, 'none'>> = {
+  verse: 'verse',
+  verso: 'verse',
+  chorus: 'chorus',
+  refrain: 'chorus',
+  refrão: 'chorus',
+  refrao: 'chorus',
+  bridge: 'bridge',
+  ponte: 'bridge',
+};
+const HEADING_BRACKETS = /^\[\s*([^[\]]+?)\s*\]$/;
+const HEADING_COLON = /^([^\s[\]{}:]+(?:\s+\d+)?)\s*:$/;
+const HEADING_TEXT = /^(\p{L}+)(?:\s+(\d+))?$/u;
+
+/**
+ * A line that is only `[Verse]`, `[Chorus 2]` or `Verse 1:` - the way anyone writes a part of a song - read as the
+ * start of that section. A bare word takes the numbering of its kind like an unlabelled directive does;
+ * with a number, the label stays as written. `null` for any other line, chords included: a line of only
+ * `[G]` is a chord.
+ */
+export function readSectionHeading(
+  line: string,
+): { kind: Exclude<SongSectionKind, 'none'>; label: string | null } | null {
+  const trimmed = line.trim();
+  const inner = (HEADING_BRACKETS.exec(trimmed) ?? HEADING_COLON.exec(trimmed))?.[1];
+  if (!inner) return null;
+  const parts = HEADING_TEXT.exec(inner.trim());
+  if (!parts) return null;
+  const kind = HEADING_WORDS[parts[1].toLowerCase()];
+  if (!kind) return null;
+  return { kind, label: parts[2] ? inner.trim() : null };
+}
+
+/** The directive a heading line stands for, for a file other ChordPro readers will open. */
+export function headingsToDirectives(text: string): string {
+  return text
+    .split(/(\r?\n)/)
+    .map((line) => {
+      const heading = readSectionHeading(line);
+      if (!heading) return line;
+      return `{start_of_${heading.kind}${heading.label ? `: ${heading.label}` : ''}}`;
+    })
+    .join('');
+}
 const CHORD_TOKEN = /\[([^\]]*)\]/g;
 
 /** One directive, or `null` for a line that is not one. The value is trimmed; `''` when it has none. */
@@ -183,6 +230,13 @@ export function parseChordPro(
       target().push({ kind: 'blank' });
       continue;
     }
+    const heading = readSectionHeading(trimmed);
+    if (heading) {
+      if (open) raw.push({ section: null, pending: open });
+      else closeOutside();
+      open = { kind: heading.kind, label: heading.label, lines: [] };
+      continue;
+    }
     const directive = readDirective(trimmed);
     if (directive) {
       const { name, value } = directive;
@@ -255,7 +309,7 @@ export function lyricLinesOf(section: SongSection): SongSegment[][] {
 export function chordsOf(text: string): string[] {
   const chords: string[] = [];
   for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
-    if (line.trim().startsWith('#') || readDirective(line)) continue;
+    if (line.trim().startsWith('#') || readDirective(line) || readSectionHeading(line)) continue;
     for (const match of line.matchAll(CHORD_TOKEN)) {
       const chord = match[1].trim();
       if (chord) chords.push(chord);

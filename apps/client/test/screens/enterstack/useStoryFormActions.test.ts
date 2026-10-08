@@ -58,6 +58,8 @@ const createState = (overrides: Partial<StoryFormState> = {}): StoryFormState =>
     togglePackExtras: jest.fn(),
     arcMedium: 'generic',
     setArcMedium: jest.fn(),
+    isNsfw: false,
+    setIsNsfw: jest.fn(),
     loading: false,
     error: null,
     setError: jest.fn(),
@@ -175,6 +177,28 @@ it('creates the first work in the form the author chose', async () => {
   expect(storyService.createStory).toHaveBeenCalledWith('user-1', expect.anything(), {
     arcMedium: 'comic',
   });
+});
+
+it('creates the story for everyone unless the author marked it adults-only', async () => {
+  const everyone = await renderActions(createState());
+  await act(async () => everyone.result.current.handleSave());
+  expect(storyService.createStory).toHaveBeenLastCalledWith(
+    'user-1',
+    expect.objectContaining({ isNsfw: false }),
+    expect.anything(),
+  );
+});
+
+it('creates an adults-only story when the author marked it so', async () => {
+  const view = await renderActions(createState({ isNsfw: true }));
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(storyService.createStory).toHaveBeenCalledWith(
+    'user-1',
+    expect.objectContaining({ isNsfw: true }),
+    expect.anything(),
+  );
 });
 
 it('stops creation when selected packs conflict', async () => {

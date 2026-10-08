@@ -245,6 +245,39 @@ describe('StoryFormScreen', () => {
     expect(mockUseScreenTour).toHaveBeenCalledWith('StoryFormEdit');
   });
 
+  it('offers the adults-only switch while creating, off, with what it does', async () => {
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+
+    expect(view.getByText('story_nsfw')).toBeTruthy();
+    expect(view.getByText('story_nsfw_description')).toBeTruthy();
+    expect(view.getByTestId('story-form-nsfw-switch').props.value).toBe(false);
+  });
+
+  it('leaves the adults-only flag to Story Settings once the story exists', async () => {
+    mockRoute.params = { storyId: 'story-1' };
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('update_story');
+
+    expect(view.queryByTestId('story-form-nsfw')).toBeNull();
+  });
+
+  it('creates the story adults-only when the author switched it on', async () => {
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+    await fireEvent.press(view.getByTestId('set-title'));
+    await act(async () => view.getByTestId('story-form-nsfw-switch').props.onValueChange(true));
+
+    await fireEvent.press(view.getByText('create_story'));
+
+    await waitFor(() => expect(mockCreateStory).toHaveBeenCalled());
+    expect(mockCreateStory).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ isNsfw: true }),
+      expect.anything(),
+    );
+  });
+
   it('creates a story with selected packs', async () => {
     const view = await render(<StoryFormScreen />);
     await view.findByText('create_story');

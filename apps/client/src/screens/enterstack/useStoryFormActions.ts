@@ -107,8 +107,9 @@ export function useStoryFormActions({
             // Off, like every existing story: whether an element must be referenced somewhere is the
             // writer's judgement. Story Analysis keeps reporting broken references either way.
             completenessChecks: false,
-            // New stories are never adults-only: the flag is opt-in, in Story Settings, by the owner.
-            isNsfw: false,
+            // Off unless the owner turned it on in the form; the flag is the owner's to change later,
+            // in Story Settings. A new story has no collaborators to lose by it.
+            isNsfw: state.isNsfw,
             // The stats system is turned on later, in Story Settings: a new story
             // never comes into the world with it.
             statSystem: false,

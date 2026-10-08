@@ -31,6 +31,8 @@ export function useStoryFormState({
   }, []);
   // The form of the first work; only used while creating, when the story's first Arc is made.
   const [arcMedium, setArcMedium] = useState<ArcMedium>(DEFAULT_ARC_MEDIUM);
+  // Whether the story is for adults only, chosen as it is made; afterwards it is Story Settings' to change.
+  const [isNsfw, setIsNsfw] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isEditing = !!initialStoryId;
@@ -78,6 +80,8 @@ export function useStoryFormState({
     togglePackExtras,
     arcMedium,
     setArcMedium,
+    isNsfw,
+    setIsNsfw,
     loading,
     error,
     setError,

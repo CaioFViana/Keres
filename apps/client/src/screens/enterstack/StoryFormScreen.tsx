@@ -51,6 +51,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   browseText: { fontSize: 14, marginLeft: 6 },
+  adultsRow: { alignItems: 'center', flexDirection: 'row', gap: 12, marginTop: 4 },
+  adultsLabels: { flexGrow: 1, flexShrink: 1 },
+  adultsTitle: { marginTop: 0 },
   extrasRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -109,6 +112,8 @@ const StoryFormScreen = () => {
     togglePackExtras,
     arcMedium,
     setArcMedium,
+    isNsfw,
+    setIsNsfw,
     loading,
     error,
     isEditing,
@@ -208,6 +213,23 @@ const StoryFormScreen = () => {
         favoriteBehaviorDisabled={!canManageStoryPolicy}
         editable={canEdit}
       />
+
+      {!isEditing && (
+        <View style={styles.adultsRow} testID="story-form-nsfw">
+          <View style={styles.adultsLabels}>
+            <Text style={[styles.sectionLabel, styles.adultsTitle, { color: colors.text }]}>
+              {t('story_nsfw')}
+            </Text>
+            <Text style={{ color: colors.textSecondary }}>{t('story_nsfw_description')}</Text>
+          </View>
+          <ThemedSwitch
+            value={isNsfw}
+            onValueChange={setIsNsfw}
+            disabled={!canEdit}
+            testID="story-form-nsfw-switch"
+          />
+        </View>
+      )}
 
       {!isEditing && (
         <View>

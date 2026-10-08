@@ -53,6 +53,8 @@ const MainDashboardScreen = () => {
   const [galleryCount, setGalleryCount] = useState<number | undefined>(undefined);
   const [tagCount, setTagCount] = useState<number | undefined>(undefined);
   const [customAttributeCount, setCustomAttributeCount] = useState<number | undefined>(undefined);
+  const [plotCount, setPlotCount] = useState<number | undefined>(undefined);
+  const [boardCount, setBoardCount] = useState<number | undefined>(undefined);
   const [forkCount, setForkCount] = useState<number | undefined>(undefined);
   const [analysisIssueCount, setAnalysisIssueCount] = useState<number | undefined>(undefined);
 
@@ -117,6 +119,8 @@ const MainDashboardScreen = () => {
         setGalleryCount(counts.galleryCount);
         setTagCount(counts.tagCount);
         setCustomAttributeCount(counts.customAttributeCount);
+        setPlotCount(counts.plotCount);
+        setBoardCount(counts.boardCount);
         setForkCount(counts.branchingStoryForkCount);
       } catch (error) {
         console.error('Error fetching entity counts:', error);
@@ -133,6 +137,8 @@ const MainDashboardScreen = () => {
       setGalleryCount(undefined);
       setTagCount(undefined);
       setCustomAttributeCount(undefined);
+      setPlotCount(undefined);
+      setBoardCount(undefined);
       setForkCount(undefined);
     }
   }, [selectedStory?.id, db]);
@@ -236,6 +242,8 @@ const MainDashboardScreen = () => {
         galleryCount={galleryCount}
         tagCount={tagCount}
         customAttributeCount={customAttributeCount}
+        plotCount={plotCount}
+        boardCount={boardCount}
         forkCount={forkCount}
         analysisIssueCount={analysisIssueCount}
         onOpenAnalysis={() => {

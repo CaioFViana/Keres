@@ -182,6 +182,8 @@ const baseCounts = {
   galleryCount: undefined,
   tagCount: undefined,
   customAttributeCount: undefined,
+  plotCount: undefined,
+  boardCount: undefined,
   forkCount: undefined,
   analysisIssueCount: undefined,
 };

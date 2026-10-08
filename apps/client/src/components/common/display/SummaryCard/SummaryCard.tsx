@@ -103,6 +103,8 @@ interface SummaryCardProps {
   galleryCount?: number;
   tagCount?: number;
   customAttributeCount?: number;
+  plotCount?: number;
+  boardCount?: number;
   branchingStoryForkCount?: number; // New prop for the count of forks in branching stories
   isBranchingStory?: boolean; // New prop to indicate if the summary is for a single branching story
   title?: string; // Optional title for the card, e.g., "Global Summary" or "Story Summary"
@@ -129,6 +131,8 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   galleryCount,
   tagCount,
   customAttributeCount,
+  plotCount,
+  boardCount,
   branchingStoryForkCount,
   isBranchingStory, // Destructure new prop
   title,
@@ -146,45 +150,78 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   const tileWidth =
     gridWidth > 0 ? Math.floor((gridWidth - TILE_GAP * (columns - 1)) / columns) : undefined;
 
+  // Twelve counts, so the grid divides evenly into two, three, four or six columns as the window
+  // resizes. A branching story swaps the two that describe the story's organisation (tags and custom
+  // fields) for the two that describe its branching (forks and choices): the number stays twelve.
+  const branching = isBranchingStory || (branchingStories && branchingStories > 0);
   const tilesData = [
-    { label: term('Chapter', true), count: chapterCount, ...getEntityAppearance('Chapter') },
-    { label: term('Scene', true), count: sceneCount, ...getEntityAppearance('Scene') },
-    { label: term('Location', true), count: locationCount, ...getEntityAppearance('Location') },
-    { label: term('Character', true), count: characterCount, ...getEntityAppearance('Character') },
-    { label: t('notes'), count: noteCount, ...getEntityAppearance('Note') },
-    { label: term('WorldRule', true), count: worldRuleCount, ...getEntityAppearance('WorldRule') },
-    { label: term('Item', true), count: itemCount, ...getEntityAppearance('Item') },
-    { label: t('gallery'), count: galleryCount, ...getEntityAppearance('Gallery') },
-    { label: t('tags_title'), count: tagCount, ...getEntityAppearance('Tag') },
     {
-      label: t('custom_attributes'),
-      count: customAttributeCount,
-      ...getEntityAppearance('StorySchemaField'),
+      key: 'chapters',
+      label: term('Chapter', true),
+      count: chapterCount,
+      ...getEntityAppearance('Chapter'),
     },
+    {
+      key: 'scenes',
+      label: term('Scene', true),
+      count: sceneCount,
+      ...getEntityAppearance('Scene'),
+    },
+    { key: 'plots', label: t('plots_title'), count: plotCount, ...getEntityAppearance('Plot') },
+    {
+      key: 'locations',
+      label: term('Location', true),
+      count: locationCount,
+      ...getEntityAppearance('Location'),
+    },
+    {
+      key: 'characters',
+      label: term('Character', true),
+      count: characterCount,
+      ...getEntityAppearance('Character'),
+    },
+    { key: 'notes', label: t('notes'), count: noteCount, ...getEntityAppearance('Note') },
+    {
+      key: 'world',
+      label: term('WorldRule', true),
+      count: worldRuleCount,
+      ...getEntityAppearance('WorldRule'),
+    },
+    { key: 'items', label: term('Item', true), count: itemCount, ...getEntityAppearance('Item') },
+    { key: 'gallery', label: t('gallery'), count: galleryCount, ...getEntityAppearance('Gallery') },
+    { key: 'boards', label: t('boards_title'), count: boardCount, ...getEntityAppearance('Board') },
+    ...(branching
+      ? [
+          {
+            key: 'forks',
+            label: t('forks'),
+            count: branchingStoryForkCount,
+            ...getEntityAppearance('Fork'),
+          },
+          {
+            key: 'choices',
+            label: term('Choice', true),
+            count: choiceCount,
+            ...getEntityAppearance('Choice'),
+          },
+        ]
+      : [
+          { key: 'tags', label: t('tags_title'), count: tagCount, ...getEntityAppearance('Tag') },
+          {
+            key: 'attributes',
+            label: t('custom_attributes'),
+            count: customAttributeCount,
+            ...getEntityAppearance('StorySchemaField'),
+          },
+        ]),
   ];
-
-  // Add "Forks" and "Choices" tiles if it's a branching story or if there are multiple branching stories.
-  // The specific tile will only render if its count is provided and not undefined.
-  if (isBranchingStory || (branchingStories && branchingStories > 0)) {
-    tilesData.unshift({
-      label: term('Choice', true),
-      count: choiceCount,
-      ...getEntityAppearance('Choice'),
-    });
-    tilesData.unshift({
-      label: t('forks'),
-      count: branchingStoryForkCount,
-      ...getEntityAppearance('Fork'),
-    });
-  }
 
   const tiles = (
     <View style={styles.tiles} onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}>
-      {tilesData.map((data, index) =>
+      {tilesData.map((data) =>
         data.count !== undefined ? (
           <SummaryTile
-            // biome-ignore lint/suspicious/noArrayIndexKey: the tiles are a fixed list in a fixed order.
-            key={index}
+            key={data.key}
             iconName={data.icon as keyof typeof Ionicons.glyphMap}
             label={data.label}
             count={data.count}

@@ -171,6 +171,8 @@ const fullCounts = {
   galleryCount: 8,
   tagCount: 9,
   customAttributeCount: 11,
+  plotCount: 12,
+  boardCount: 13,
   branchingStoryForkCount: 2,
 };
 

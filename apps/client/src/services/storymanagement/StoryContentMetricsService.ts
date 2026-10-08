@@ -1,6 +1,6 @@
 import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
-import { choices, scenes, stories } from '../../db/schema';
+import { boards, choices, plots, scenes, stories } from '../../db/schema';
 import { createChapterService } from './ChapterService';
 import { createCharacterService } from './CharacterService';
 import { createChoiceService } from './ChoiceService';
@@ -10,6 +10,7 @@ import { createLocationService } from './LocationService';
 import { createNoteService } from './NoteService';
 import { createSceneService } from './SceneService';
 import { createStorySchemaFieldService } from './StorySchemaFieldService';
+import { countActiveStoryEntities } from './storyEntityCount';
 import { createTagService } from './TagService';
 import { createWorldRuleService } from './WorldRuleService';
 
@@ -31,6 +32,8 @@ export interface StoryContentCounts {
   galleryCount: number;
   tagCount: number;
   customAttributeCount: number;
+  plotCount: number;
+  boardCount: number;
   branchingStoryForkCount: number;
 }
 
@@ -114,6 +117,8 @@ export const createStoryContentMetricsService = (
         galleryCount,
         tagCount,
         customAttributeCount,
+        plotCount,
+        boardCount,
         branchingStoryForkCount,
       ] = await Promise.all([
         characterService.getCharacterCount(storyId),
@@ -127,6 +132,8 @@ export const createStoryContentMetricsService = (
         galleryService.getGalleryCount(storyId),
         tagService.getTagCount(storyId),
         storySchemaFieldService.getCustomAttributeCount(storyId),
+        countActiveStoryEntities(db, plots, storyId),
+        countActiveStoryEntities(db, boards, storyId),
         getBranchingStoryForkCount(storyId),
       ]);
 
@@ -142,6 +149,8 @@ export const createStoryContentMetricsService = (
         galleryCount,
         tagCount,
         customAttributeCount,
+        plotCount,
+        boardCount,
         branchingStoryForkCount,
       };
     },

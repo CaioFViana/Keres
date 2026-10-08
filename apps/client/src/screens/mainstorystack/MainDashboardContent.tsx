@@ -32,6 +32,8 @@ export type MainDashboardContentProps = {
   galleryCount: number | undefined;
   tagCount: number | undefined;
   customAttributeCount: number | undefined;
+  plotCount: number | undefined;
+  boardCount: number | undefined;
   forkCount: number | undefined;
   analysisIssueCount: number | undefined;
   onOpenAnalysis: () => void;
@@ -71,6 +73,8 @@ export function MainDashboardContent({
   galleryCount,
   tagCount,
   customAttributeCount,
+  plotCount,
+  boardCount,
   forkCount,
   analysisIssueCount,
   onOpenAnalysis,
@@ -139,6 +143,8 @@ export function MainDashboardContent({
           galleryCount={galleryCount}
           tagCount={tagCount}
           customAttributeCount={customAttributeCount}
+          plotCount={plotCount}
+          boardCount={boardCount}
           isBranchingStory={story?.type === 'branching'}
           branchingStoryForkCount={forkCount}
           analysisSummary={

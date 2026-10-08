@@ -416,3 +416,46 @@ describe('SummaryCard as a block of the story home', () => {
     expect(screen.queryByText('common_na')).toBeNull();
   });
 });
+
+describe('SummaryCard counts', () => {
+  // Every count is 1 here, so the number of tiles is the number of 1s drawn.
+  const tilesOf = (screen: { queryAllByText: (text: string) => unknown[] }) =>
+    screen.queryAllByText('1');
+  const all = {
+    chapterCount: 1,
+    sceneCount: 1,
+    plotCount: 1,
+    locationCount: 1,
+    characterCount: 1,
+    noteCount: 1,
+    worldRuleCount: 1,
+    itemCount: 1,
+    galleryCount: 1,
+    boardCount: 1,
+    tagCount: 1,
+    customAttributeCount: 1,
+    branchingStoryForkCount: 1,
+    choiceCount: 1,
+  };
+
+  it('shows twelve for a linear story, so the grid divides into 2, 3, 4 or 6 columns', async () => {
+    const screen = await render(<SummaryCard layout="section" title="Overview" {...all} />);
+
+    expect(tilesOf(screen)).toHaveLength(12);
+    expect(screen.queryByText('plots_title')).toBeTruthy();
+    expect(screen.queryByText('boards_title')).toBeTruthy();
+    expect(screen.queryByText('forks')).toBeNull();
+  });
+
+  it('still shows twelve for a branching story, swapping tags and fields for forks and choices', async () => {
+    const screen = await render(
+      <SummaryCard layout="section" title="Overview" isBranchingStory {...all} />,
+    );
+
+    expect(tilesOf(screen)).toHaveLength(12);
+    expect(screen.queryByText('forks')).toBeTruthy();
+    expect(screen.queryByText('Choices')).toBeTruthy();
+    expect(screen.queryByText('tags_title')).toBeNull();
+    expect(screen.queryByText('custom_attributes')).toBeNull();
+  });
+});

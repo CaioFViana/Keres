@@ -31,6 +31,8 @@ export type MenuGroupId = 'write' | 'components' | 'world' | 'material' | 'revie
 export interface MenuGroup {
   id: MenuGroupId;
   labelKey: string;
+  /** Stands for the group when its entries are folded away. */
+  icon: IconName;
   leaves: MenuLeaf[];
   /** Open on a fresh start; the group with the screen on show opens regardless. */
   defaultOpen: boolean;
@@ -82,6 +84,7 @@ export function buildMainDrawerMenu({
     {
       id: 'write',
       labelKey: 'drawer_group_write',
+      icon: 'create-outline',
       defaultOpen: true,
       leaves: [
         {
@@ -111,6 +114,7 @@ export function buildMainDrawerMenu({
     {
       id: 'components',
       labelKey: 'drawer_group_components',
+      icon: 'shapes-outline',
       defaultOpen: true,
       leaves: [
         {
@@ -143,6 +147,7 @@ export function buildMainDrawerMenu({
     {
       id: 'world',
       labelKey: 'drawer_group_world',
+      icon: 'earth-outline',
       defaultOpen: false,
       leaves: [
         {
@@ -175,9 +180,15 @@ export function buildMainDrawerMenu({
     {
       id: 'material',
       labelKey: 'drawer_group_material',
+      icon: 'color-palette-outline',
       defaultOpen: true,
       leaves: [
-        { id: 'GalleryStack', route: 'GalleryStack', label: t('gallery_title'), icon: 'images-outline' },
+        {
+          id: 'GalleryStack',
+          route: 'GalleryStack',
+          label: t('gallery_title'),
+          icon: 'images-outline',
+        },
         {
           id: 'BoardsStack',
           route: 'BoardsStack',
@@ -201,6 +212,7 @@ export function buildMainDrawerMenu({
     {
       id: 'review',
       labelKey: 'drawer_group_review',
+      icon: 'checkmark-done-outline',
       defaultOpen: false,
       leaves: [
         {
@@ -209,7 +221,12 @@ export function buildMainDrawerMenu({
           label: t('global_search_title'),
           icon: 'search-outline',
         },
-        { id: 'NotesStack', route: 'NotesStack', label: t('notes_title'), icon: 'document-text-outline' },
+        {
+          id: 'NotesStack',
+          route: 'NotesStack',
+          label: t('notes_title'),
+          icon: 'document-text-outline',
+        },
         { id: 'TagsStack', route: 'TagsStack', label: t('tags_title'), icon: 'pricetag-outline' },
         {
           id: 'StoryAnalysisStack',

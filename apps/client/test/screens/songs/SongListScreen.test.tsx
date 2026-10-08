@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { SongSelect } from '../../../src/db/schema';
+import { useMusicToolsStore } from '../../../src/state/musicToolsStore';
 import SongListScreen, {
   cueSheetFileName,
   songFactsLine,
@@ -123,6 +124,7 @@ const song = (id: string, title: string, rest: Partial<SongSelect> = {}): SongSe
   ({ id, title, key: null, tempo: null, meter: null, lyrics: '', ...rest }) as SongSelect;
 
 beforeEach(() => {
+  useMusicToolsStore.setState({ enabled: true });
   mockCanEdit = true;
   mockLoading = false;
   mockHeader = null;
@@ -182,7 +184,27 @@ describe('SongListScreen', () => {
     mockSongs = [];
     const view = await render(<SongListScreen />);
 
+    expect(view.getByText('songs_empty_tools')).toBeTruthy();
+  });
+
+  it('says only to add one when the music tools are off: no ChordPro to bring in', async () => {
+    useMusicToolsStore.setState({ enabled: false });
+    mockSongs = [];
+    const view = await render(<SongListScreen />);
+
     expect(view.getByText('songs_empty')).toBeTruthy();
+  });
+
+  it('keeps the cue sheets and the ChordPro import for the music tools', async () => {
+    useMusicToolsStore.setState({ enabled: false });
+    await render(<SongListScreen />);
+
+    const visible = (id: string) =>
+      mockHeader?.actions?.find((action) => action.id === id)?.visible;
+    expect(visible('cue-sheet-csv')).toBe(false);
+    expect(visible('cue-sheet-md')).toBe(false);
+    expect(visible('import-song')).toBe(false);
+    expect(visible('add-song')).toBe(true);
   });
 
   it('shows a loading state while the songs load', async () => {

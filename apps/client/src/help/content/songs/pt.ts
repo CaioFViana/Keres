@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'songs',
   title: 'Canções',
   summary:
-    'Escreva as canções da sua história como cifras: a letra com seus acordes, em seções, e uma tradução se for cantada em outra língua. Uma cena pode cantar a canção toda ou só o refrão. Você também pode escrever a melodia e ouvi-la cantarolada.',
+    'Escreva as canções da sua história: a letra, em partes, e uma tradução se for cantada em outra língua. Uma cena pode cantar a canção toda ou só o refrão. Você também pode escrever uma melodia e ouvi-la cantarolada. Para cifras - acordes, transposição, acompanhamento, arquivos MIDI e ChordPro - ligue as Ferramentas de música nas Configurações do Aplicativo.',
   keywords: [
     'canção',
     'cancao',
@@ -38,7 +38,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Uma canção é uma música com palavras: uma canção de taverna, um hino, uma cantiga de ninar. Você escreve a letra como uma cifra — as palavras, com os acordes entre colchetes logo antes da sílaba em que caem — e marca as seções: versos, refrão, ponte. Ela é guardada como texto simples num formato comum (ChordPro), então lê-se sem o app e qualquer outra ferramenta que conheça o formato abre.',
+      text: 'Uma canção é uma música com palavras: uma canção de taverna, um hino, uma cantiga de ninar. Você escreve a letra e marca as partes - [Verso], [Refrão], [Ponte] - cada uma numa linha só dela. Com as Ferramentas de música ligadas (Configurações do Aplicativo), a letra vira uma cifra: os acordes vão entre colchetes logo antes da sílaba em que caem, e a canção é guardada como texto simples num formato comum (ChordPro), que qualquer outra ferramenta que o conheça abre.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
@@ -50,10 +50,11 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Abra as Canções pela Galeria e adicione uma canção com seu título.',
-        'Escreva a letra. Ponha o acorde entre colchetes antes da sílaba em que cai: [G]A noite des[Em]ce.',
+        'Abra Canções no menu da história (em Material) e adicione uma canção com seu título.',
+        'Escreva a letra. Marque cada parte numa linha só dela - [Verso], [Refrão 2] - ou use os botões Verso, Refrão e Ponte.',
         'Acrescente os versos e o refrão com os botões acima da letra. Cada seção recebe um nome na língua da história, escrito no texto, então trocar a língua do app nunca a renomeia; duas seções não podem ter o mesmo.',
-        'Passe para Cifra para ver os acordes sobre as palavras, e conte as sílabas se quiser conferir a métrica.',
+        'Na aba Melodia, ouça-a cantarolada e escreva uma melodia: Sugerir uma melodia preenche uma a partir da letra, ou toque o teclado nota por nota. Tom, andamento e compasso ficam em Detalhes musicais ali.',
+        'Para acordes, ligue as Ferramentas de música nas Configurações do Aplicativo. Aí ponha o acorde entre colchetes antes da sílaba em que cai - [G]A noite des[Em]ce - e passe para Cifra para ver os acordes sobre as palavras e contar as sílabas.',
         'Numa cena, abra sua música, adicione a canção e escolha quais seções a cena canta.',
       ],
     },

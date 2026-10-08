@@ -29,6 +29,8 @@ interface SongLyricsEditorProps {
   /** The words that name a section when it is added; the text keeps the label that was written. */
   newSectionWords?: SectionWords;
   syllableLanguage: SyllableLanguage;
+  /** The music tools are on: the sheet, transposing and the chord hint. Off, the words are all there is. */
+  musicTools?: boolean;
   /** The line being sung while the tune plays, to follow on the sheet. */
   activeLine?: { sectionIndex: number; sourceIndex: number } | null;
 }
@@ -52,11 +54,14 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
   words,
   newSectionWords = words,
   syllableLanguage,
+  musicTools = true,
   activeLine = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [mode, setMode] = useState<Mode>('write');
+  const [chosenMode, setMode] = useState<Mode>('write');
+  // Without the music tools there is no sheet to switch to: the words are written in one place.
+  const mode: Mode = musicTools ? chosenMode : 'write';
   const [showSyllables, setShowSyllables] = useState(false);
   const selection = useRef({ start: value.length, end: value.length });
   // A cursor placed by the app (after a section is added) is held only until the person moves it.
@@ -66,7 +71,8 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
 
   const addSection = (kind: (typeof SECTION_KINDS)[number]) => {
     const label = nextSectionLabel(kind, value, newSectionWords);
-    const block = sectionBlock(kind, label);
+    // A heading anyone can read, unless the person works with ChordPro: then the directive block it is.
+    const block = musicTools ? sectionBlock(kind, label) : `[${label}]\n`;
     const at = selection.current.start;
     const next = insertBlockAt(value, at, block);
     onChange(next);
@@ -107,22 +113,24 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
 
   return (
     <View>
-      <View style={styles.bar}>
-        {(['write', 'sheet'] as const).map((option) => (
-          <TouchableOpacity
-            key={option}
-            testID={`song-mode-${option}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: mode === option }}
-            style={[styles.button, mode === option && styles.active]}
-            onPress={() => setMode(option)}
-          >
-            <Text style={{ color: mode === option ? colors.onPrimary : colors.text }}>
-              {t(`song_mode_${option}`)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {musicTools ? (
+        <View style={styles.bar}>
+          {(['write', 'sheet'] as const).map((option) => (
+            <TouchableOpacity
+              key={option}
+              testID={`song-mode-${option}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected: mode === option }}
+              style={[styles.button, mode === option && styles.active]}
+              onPress={() => setMode(option)}
+            >
+              <Text style={{ color: mode === option ? colors.onPrimary : colors.text }}>
+                {t(`song_mode_${option}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : null}
 
       {mode === 'write' ? (
         <>
@@ -140,7 +148,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
                   <Text style={{ color: colors.text }}>{t(`song_add_${kind}`)}</Text>
                 </TouchableOpacity>
               ))}
-              {([-1, 1] as const).map((step) => (
+              {(musicTools ? ([-1, 1] as const) : []).map((step) => (
                 <TouchableOpacity
                   key={step}
                   testID={`song-transpose-${step > 0 ? 'up' : 'down'}`}
@@ -157,7 +165,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
                   <Text style={{ color: colors.text }}>{t('song_transpose')}</Text>
                 </TouchableOpacity>
               ))}
-              {canUndoTranspose ? (
+              {musicTools && canUndoTranspose ? (
                 <TouchableOpacity
                   testID="song-transpose-undo"
                   accessibilityRole="button"
@@ -197,7 +205,9 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
             maxLength={MAX_SONG_LYRICS_LENGTH}
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder={t('song_lyrics_placeholder')}
+            placeholder={t(
+              musicTools ? 'song_lyrics_placeholder' : 'song_lyrics_placeholder_simple',
+            )}
             style={styles.input}
             onChangeText={onChange}
             selection={placed}

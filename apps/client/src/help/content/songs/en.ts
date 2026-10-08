@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'songs',
   title: 'Songs',
   summary:
-    'Write the songs of your story as lead sheets: the lyrics with their chords, in sections, with a translation if it is sung in another language. A scene can sing a whole song or only its chorus. You can also write its tune and hear it hummed.',
+    'Write the songs of your story: the words, in parts, with a translation if it is sung in another language. A scene can sing a whole song or only its chorus. You can also write a tune and hear it hummed. For lead sheets - chords, transposing, accompaniment, MIDI and ChordPro files - switch on Music tools in App Settings.',
   keywords: [
     'song',
     'songs',
@@ -29,7 +29,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'A song is a piece of music with words: a tavern song, a hymn, a lullaby. You write its lyrics as a lead sheet — the words, with the chords in square brackets right before the syllable they fall on — and mark its sections: verses, chorus, bridge. It is kept as plain text in a common format (ChordPro), so it reads without the app and any other tool that knows the format can open it.',
+      text: 'A song is a piece of music with words: a tavern song, a hymn, a lullaby. You write its words and mark its parts - [Verse], [Chorus], [Bridge] - each on a line of its own. With Music tools on (App Settings) the words become a lead sheet: the chords go in square brackets right before the syllable they fall on, and the song is kept as plain text in a common format (ChordPro), so any other tool that knows the format can open it.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
@@ -41,10 +41,11 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
-        'Open Songs from the Gallery and add a song with its title.',
-        'Write the lyrics. Put a chord in square brackets before the syllable it falls on: [G]Night de[Em]scends.',
+        'Open Songs in the story menu (under Material) and add a song with its title.',
+        'Write the words. Mark each part on a line of its own - [Verse], [Chorus 2] - or use the Verse, Chorus and Bridge buttons.',
         'Add the verses and the chorus with the buttons above the lyrics. Each section gets a name in the language of the story, written into the text, so changing the language of the app never renames it; two sections cannot share one.',
-        'Switch to Sheet to see the chords over the words, and count the syllables if you want a check on the meter.',
+        'In the Tune tab, hear it hummed, and write a tune: Suggest a tune fills one from the words, or play the keyboard note by note. The key, tempo and meter are under Musical details there.',
+        'For chords, turn on Music tools in App Settings. Then put a chord in square brackets before the syllable it falls on - [G]Night de[Em]scends - and switch to Sheet to see the chords over the words and count the syllables.',
         'In a scene, open its music, add the song and choose which sections the scene sings.',
       ],
     },

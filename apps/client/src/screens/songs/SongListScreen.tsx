@@ -21,6 +21,7 @@ import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useSongs } from '../../hooks/useSongs';
+import { useMusicTools } from '../../hooks/useMusicTools';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SongStackParamList } from '../../navigation/MainSystemStacks';
 import { loadCueSheet } from '../../services/storymanagement/CueSheetService';
@@ -62,6 +63,8 @@ const SongListScreen = () => {
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
   const { canEdit } = useStoryRole(storyId);
+  // The cue sheets and ChordPro files are for musicians; a song starts as words.
+  const musicTools = useMusicTools();
   const { songs, loading } = useSongs(storyId);
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
@@ -177,21 +180,21 @@ const SongListScreen = () => {
         icon: 'grid-outline',
         label: t('cue_sheet_csv'),
         onPress: () => void exportCueSheet('csv'),
-        visible: true,
+        visible: musicTools,
       },
       {
         id: 'cue-sheet-md',
         icon: 'document-text-outline',
         label: t('cue_sheet_md'),
         onPress: () => void exportCueSheet('md'),
-        visible: true,
+        visible: musicTools,
       },
       {
         id: 'import-song',
         icon: 'download-outline',
         label: t('song_import'),
         onPress: () => void importFile(),
-        visible: !!canEdit,
+        visible: !!canEdit && musicTools,
       },
       {
         id: 'add-song',
@@ -238,7 +241,13 @@ const SongListScreen = () => {
         contentContainerStyle={{ paddingTop: 12 }}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            {t(songs.length === 0 ? 'songs_empty' : 'songs_no_match')}
+            {t(
+              songs.length === 0
+                ? musicTools
+                  ? 'songs_empty_tools'
+                  : 'songs_empty'
+                : 'songs_no_match',
+            )}
           </Text>
         }
         renderItem={({ item }) => (

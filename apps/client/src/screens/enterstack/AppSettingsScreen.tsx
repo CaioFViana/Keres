@@ -34,6 +34,7 @@ import { useGuideStore } from '../../state/guideStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
+import { useMusicToolsStore } from '../../state/musicToolsStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
@@ -185,6 +186,9 @@ const SettingsScreen = () => {
     useGuideStore.getState().reset();
     showNotification(t('tutorials_reset_success'), 'success');
   };
+
+  const musicTools = useMusicToolsStore((state) => state.enabled);
+  const setMusicTools = useMusicToolsStore((state) => state.setEnabled);
 
   const handleLiteraryDevicesToggle = (value: boolean) => {
     setSuggestLiteraryDevices(drizzleClient, value);
@@ -374,6 +378,12 @@ const SettingsScreen = () => {
                     onValueChange={handleLiteraryDevicesToggle}
                   />
                 }
+              />
+              <SettingsRow
+                icon="musical-notes-outline"
+                label={t('music_tools')}
+                hint={musicTools ? t('music_tools_on') : t('music_tools_off')}
+                control={<ThemedSwitch value={musicTools} onValueChange={setMusicTools} />}
               />
               <SettingsRow
                 icon="help-circle-outline"

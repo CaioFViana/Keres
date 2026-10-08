@@ -29,7 +29,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import MelodyPanel from '@/src/components/features/songs/MelodyPanel';
 import SongTabs, { type SongTab } from '@/src/components/features/songs/SongTabs';
-import SongFactsFields from '@/src/components/features/songs/SongFactsFields';
+import MusicalDetails from '@/src/components/features/songs/MusicalDetails';
 import SongLyricsEditor from '@/src/components/features/songs/SongLyricsEditor';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
@@ -44,6 +44,7 @@ import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer
 import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useSong, useSongUses } from '../../hooks/useSongs';
 import { useSongDraft } from '../../hooks/useSongDraft';
+import { useMusicTools } from '../../hooks/useMusicTools';
 import { useNewSectionWords } from '../../hooks/useNewSectionWords';
 import { type PlaybackVoice, useSongPlayback } from '../../hooks/useSongPlayback';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -83,6 +84,7 @@ const SongEditorScreen = () => {
   const scrollBottomPadding = useFormScrollBottomPadding();
   const song = useSong(songId);
   const { canEdit } = useStoryRole(song?.storyId);
+  const musicTools = useMusicTools();
   const draft = useSongDraft(song);
   const uses = useSongUses(songId, song?.storyId);
   const syllableLanguage = i18n.language.toLowerCase().startsWith('pt') ? 'pt' : 'en';
@@ -233,7 +235,8 @@ const SongEditorScreen = () => {
         icon: 'share-outline',
         label: t('song_export'),
         onPress: () => void exportFile(),
-        visible: !!song,
+        // A ChordPro file is for musicians' programs.
+        visible: !!song && musicTools,
       },
       {
         id: 'delete-song',
@@ -295,16 +298,6 @@ const SongEditorScreen = () => {
         onBlur={() => void draft.flush()}
       />
 
-      <SongFactsFields
-        keyValue={draft.value('key')}
-        tempo={draft.value('tempo')}
-        meter={draft.value('meter')}
-        editable={editable}
-        onKeyChange={(next) => draft.setField('key', next)}
-        onTempoChange={(next) => draft.setField('tempo', next)}
-        onMeterChange={(next) => draft.setField('meter', next)}
-      />
-
       <View ref={tabsAnchorRef} collapsable={false}>
         <SongTabs value={tab} onChange={setTab} />
       </View>
@@ -322,6 +315,7 @@ const SongEditorScreen = () => {
               canUndoTranspose={undoDepth > 0}
               onUndoTranspose={undoTransposition}
               editable={editable}
+              musicTools={musicTools}
               words={words}
               newSectionWords={newSectionWords}
               syllableLanguage={syllableLanguage}
@@ -347,29 +341,41 @@ const SongEditorScreen = () => {
       ) : null}
 
       {tab === 'tune' ? (
-        <MelodyPanel
-          lyrics={lyrics}
-          melody={melody}
-          songKey={draft.value('key') ?? null}
-          tempo={draft.value('tempo') ?? null}
-          meter={draft.value('meter') ?? null}
-          editable={editable}
-          words={words}
-          language={syllableLanguage}
-          onChange={(next) => {
-            forgetTransposition();
-            draft.setField('melody', next);
-          }}
-          onBlur={() => void draft.flush()}
-          phase={playback.phase}
-          progress={playback.progress}
-          problem={playback.problem}
-          active={playback.active}
-          onPlay={(scope, voice) => void playback.play(scope, voice)}
-          onStop={playback.stop}
-          onTone={(pitch, timbre) => void playback.playTone(pitch, timbre)}
-          onExport={(kind, voice) => void exportTune(kind, voice)}
-        />
+        <>
+          <MusicalDetails
+            keyValue={draft.value('key')}
+            tempo={draft.value('tempo')}
+            meter={draft.value('meter')}
+            editable={editable}
+            onKeyChange={(next) => draft.setField('key', next)}
+            onTempoChange={(next) => draft.setField('tempo', next)}
+            onMeterChange={(next) => draft.setField('meter', next)}
+          />
+          <MelodyPanel
+            musicTools={musicTools}
+            lyrics={lyrics}
+            melody={melody}
+            songKey={draft.value('key') ?? null}
+            tempo={draft.value('tempo') ?? null}
+            meter={draft.value('meter') ?? null}
+            editable={editable}
+            words={words}
+            language={syllableLanguage}
+            onChange={(next) => {
+              forgetTransposition();
+              draft.setField('melody', next);
+            }}
+            onBlur={() => void draft.flush()}
+            phase={playback.phase}
+            progress={playback.progress}
+            problem={playback.problem}
+            active={playback.active}
+            onPlay={(scope, voice) => void playback.play(scope, voice)}
+            onStop={playback.stop}
+            onTone={(pitch, timbre) => void playback.playTone(pitch, timbre)}
+            onExport={(kind, voice) => void exportTune(kind, voice)}
+          />
+        </>
       ) : null}
 
       {tab === 'details' ? (

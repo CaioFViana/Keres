@@ -27,6 +27,7 @@ const page: HelpPage = {
         'Turn Dark mode on or off to change the app appearance.',
         'Turn 24-hour time on or off to choose how custom Date attributes show and edit their time.',
         'Turn Suggest literary devices on or off to show or hide the Literary devices entry in the story menu, under Organize and review.',
+        'Turn Music tools on to write songs as lead sheets: chords, transposing, the sheet view, accompaniment and MIDI and ChordPro files. Off, a song is its words and an optional tune.',
         'Choose the Date format used for Gregorian story dates: day/month/year, month/day/year or ISO (year-month-day).',
         'Choose the Export format, PNG (image) or SVG (vector), used when exporting maps, graphs, boards and timelines.',
         'Turn Show help off to hide the help shortcut from page headers.',

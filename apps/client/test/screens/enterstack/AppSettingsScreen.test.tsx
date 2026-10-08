@@ -213,6 +213,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 import SettingsScreen from '../../../src/screens/enterstack/AppSettingsScreen';
+import { useMusicToolsStore } from '../../../src/state/musicToolsStore';
 
 type AlertButton = { text: string; onPress?: () => void | Promise<void> };
 
@@ -325,7 +326,8 @@ describe('AppSettingsScreen', () => {
     const view = await render(<SettingsScreen />);
     await view.findByText('dark_mode');
     const switches = view.getAllByRole('switch');
-    expect(switches).toHaveLength(6);
+    expect(switches).toHaveLength(7);
+    useMusicToolsStore.setState({ enabled: false });
     await fireEvent.press(switches[0]);
     expect(mockSetDarkMode).toHaveBeenCalledWith(mockDrizzle, true);
     await fireEvent.press(switches[1]);
@@ -333,10 +335,12 @@ describe('AppSettingsScreen', () => {
     await fireEvent.press(switches[2]);
     expect(mockSetSuggestLiteraryDevices).toHaveBeenCalledWith(mockDrizzle, true);
     await fireEvent.press(switches[3]);
-    expect(mockSetShowContextualHelp).toHaveBeenCalledWith(mockDrizzle, false);
+    expect(useMusicToolsStore.getState().enabled).toBe(true);
     await fireEvent.press(switches[4]);
-    expect(mockSetShowTutorials).toHaveBeenCalledWith(mockDrizzle, false);
+    expect(mockSetShowContextualHelp).toHaveBeenCalledWith(mockDrizzle, false);
     await fireEvent.press(switches[5]);
+    expect(mockSetShowTutorials).toHaveBeenCalledWith(mockDrizzle, false);
+    await fireEvent.press(switches[6]);
     expect(mockSetWarnPaymentDue).toHaveBeenCalledWith(mockDrizzle, false);
   });
 

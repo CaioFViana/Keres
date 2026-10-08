@@ -27,6 +27,7 @@ const page: HelpPage = {
         'Ative ou desative Modo escuro para mudar a aparência do aplicativo.',
         'Ative ou desative Formato 24 horas para escolher como os atributos personalizados de Data mostram e editam a hora.',
         'Ative ou desative Sugerir recursos literários para mostrar ou ocultar a entrada Recursos literários no menu da história, em Organizar e revisar.',
+        'Ative Ferramentas de música para escrever canções como cifras: acordes, transposição, a cifra, acompanhamento e arquivos MIDI e ChordPro. Desligadas, uma canção é a letra e uma melodia opcional.',
         'Escolha o Formato da data usado nas datas gregorianas da história: dia/mês/ano, mês/dia/ano ou ISO (ano-mês-dia).',
         'Escolha o Formato de exportação, PNG (imagem) ou SVG (vetor), usado ao exportar mapas, gráficos, quadros e linhas do tempo.',
         'Desative Mostrar ajuda para esconder o atalho de ajuda dos cabeçalhos das páginas.',

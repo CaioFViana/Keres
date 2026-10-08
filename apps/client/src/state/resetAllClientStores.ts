@@ -8,6 +8,7 @@ import { useGuideStore } from './guideStore';
 import { useItemStore } from './itemStore';
 import { useLocationMapDraftStore } from './locationMapDraftStore';
 import { useLocationStore } from './locationStore';
+import { useMusicToolsStore } from './musicToolsStore';
 import { useNoteStore } from './noteStore';
 import { useNotificationStore } from './notificationStore';
 import { usePlanUsageStore } from './planUsageStore';
@@ -35,6 +36,7 @@ export function resetAllClientStores(): void {
   useGalleryMediaViewerStore.getState().close();
   useGuideStore.getState().reset();
   useUnseenMessagesStore.getState().reset();
+  useMusicToolsStore.getState().reset();
   usePlanUsageStore.getState().clear();
 
   useChapterStore.getState().resetStore();

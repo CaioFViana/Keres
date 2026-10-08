@@ -48,6 +48,8 @@ interface MelodyPanelProps {
   onPlay: (scope: PlaybackScope, voice: PlaybackVoice) => void;
   onStop: () => void;
   onTone: (pitch: number, timbre: VoiceTimbre) => void;
+  /** The music tools are on: the sound options, the notes as text and the MIDI and ABC files. */
+  musicTools?: boolean;
   /** The file asked for, and the sound chosen: a MIDI file carries the accompaniment picked here. */
   onExport: (kind: 'midi' | 'abc', voice: PlaybackVoice) => void;
 }
@@ -78,6 +80,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
   onStop,
   onTone,
   onExport,
+  musicTools = true,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -160,6 +163,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
           total={view.total}
           onPlay={() => onPlay({ kind: 'song' }, voice)}
           onStop={onStop}
+          showOptions={musicTools}
         />
       </View>
 
@@ -263,21 +267,23 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
         </Text>
       ) : null}
 
-      <TouchableOpacity
-        testID="melody-more-toggle"
-        accessibilityRole="button"
-        accessibilityState={{ expanded: moreOpen }}
-        style={styles.moreToggle}
-        onPress={() => setMoreOpen((open) => !open)}
-      >
-        <Ionicons
-          name={moreOpen ? 'chevron-down' : 'chevron-forward'}
-          size={18}
-          color={colors.text}
-        />
-        <Text style={[styles.title, { color: colors.text }]}>{t('melody_more')}</Text>
-      </TouchableOpacity>
-      {moreOpen ? (
+      {musicTools ? (
+        <TouchableOpacity
+          testID="melody-more-toggle"
+          accessibilityRole="button"
+          accessibilityState={{ expanded: moreOpen }}
+          style={styles.moreToggle}
+          onPress={() => setMoreOpen((open) => !open)}
+        >
+          <Ionicons
+            name={moreOpen ? 'chevron-down' : 'chevron-forward'}
+            size={18}
+            color={colors.text}
+          />
+          <Text style={[styles.title, { color: colors.text }]}>{t('melody_more')}</Text>
+        </TouchableOpacity>
+      ) : null}
+      {musicTools && moreOpen ? (
         <View style={styles.more}>
           <Text style={[styles.small, { color: colors.textSecondary }]}>
             {t('melody_text_hint')}

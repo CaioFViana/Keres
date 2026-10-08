@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import type { SongSelect } from '../../../src/db/schema';
+import { useMusicToolsStore } from '../../../src/state/musicToolsStore';
 import { useStoryStore } from '../../../src/state/storyStore';
 import SongEditorScreen, { songFileName } from '../../../src/screens/songs/SongEditorScreen';
 
@@ -179,6 +180,8 @@ const baseSong = {
 } as unknown as SongSelect;
 
 beforeEach(() => {
+  // The suite is of the music tools; the simple editor has a describe of its own.
+  useMusicToolsStore.setState({ enabled: true });
   mockCanEdit = true;
   mockSong = baseSong;
   mockUses = [];
@@ -227,10 +230,12 @@ describe('SongEditorScreen', () => {
     const view = await render(<SongEditorScreen />);
 
     expect(view.getByTestId('song-title').props.value).toBe('The Lantern Song');
-    expect(view.getByTestId('song-key').props.value).toBe('G');
-    expect(view.getByTestId('song-tempo').props.value).toBe('90');
     expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
     expect(view.getByTestId('song-translation').props.value).toBe('Acende o lampião');
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('song-details-toggle'));
+    expect(view.getByTestId('song-key').props.value).toBe('G');
+    expect(view.getByTestId('song-tempo').props.value).toBe('90');
     await fireEvent.press(view.getByTestId('song-tab-details'));
     expect(view.getByTestId('song-notes').props.value).toBe('Sung at the gate');
     expect(mockHeader?.title).toBe('The Lantern Song');
@@ -243,9 +248,9 @@ describe('SongEditorScreen', () => {
     expect(view.getByTestId('song-lyrics')).toBeTruthy();
     expect(view.queryByTestId('melody-panel')).toBeNull();
     expect(view.queryByTestId('song-notes')).toBeNull();
-    // The title and the facts are the song's, whichever part is open.
+    // The title is the song's, whichever part is open; the key, tempo and meter belong to the tune.
     expect(view.getByTestId('song-title')).toBeTruthy();
-    expect(view.getByTestId('song-key')).toBeTruthy();
+    expect(view.queryByTestId('song-key')).toBeNull();
 
     await fireEvent.press(view.getByTestId('song-tab-tune'));
     expect(view.getByTestId('melody-panel')).toBeTruthy();
@@ -380,8 +385,9 @@ describe('SongEditorScreen', () => {
     await fireEvent.press(view.getByTestId('song-transpose-undo'));
 
     expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
-    expect(view.getByTestId('song-key').props.value).toBe('G');
     await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('song-details-toggle'));
+    expect(view.getByTestId('song-key').props.value).toBe('G');
     await fireEvent.press(view.getByTestId('melody-more-toggle'));
     expect(view.getByTestId('song-melody').props.value).toBe('P:Verse 1\nC D E2');
     expect(view.queryByTestId('song-transpose-undo')).toBeNull();
@@ -632,5 +638,68 @@ describe('SongEditorScreen', () => {
     expect(view.getByTestId('song-title').props.editable).toBe(false);
     expect(view.getByTestId('song-notes').props.editable).toBe(false);
     expect(mockHeader?.actions?.find((action) => action.id === 'delete-song')?.visible).toBe(false);
+  });
+});
+
+describe('with the music tools off', () => {
+  beforeEach(() => {
+    useMusicToolsStore.setState({ enabled: false });
+  });
+
+  it('writes the words in one place: no sheet to switch to, no chords to move', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-lyrics')).toBeTruthy();
+    expect(view.queryByTestId('song-mode-sheet')).toBeNull();
+    expect(view.queryByTestId('song-transpose-up')).toBeNull();
+    expect(view.queryByTestId('song-transpose-down')).toBeNull();
+    expect(view.getByTestId('song-add-verse')).toBeTruthy();
+  });
+
+  it('asks for the words and a part marked on a line of its own, not for chords', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-lyrics').props.placeholder).toBe(
+      'song_lyrics_placeholder_simple',
+    );
+  });
+
+  it('adds a part as a heading anyone can read, not as a ChordPro block', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-add-chorus'));
+
+    const lyrics = view.getByTestId('song-lyrics').props.value as string;
+    expect(lyrics).toMatch(/^\[[^\]{}]+\]$/m);
+    expect(lyrics).not.toContain('{start_of_chorus');
+  });
+
+  it('keeps the ChordPro export for the music tools', async () => {
+    await render(<SongEditorScreen />);
+
+    expect(mockHeader?.actions?.find((action) => action.id === 'export-song')?.visible).toBe(false);
+  });
+
+  it('lets the tune be heard and written, without the sound options or the files', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    expect(view.getByTestId('melody-play')).toBeTruthy();
+    expect(view.queryByTestId('melody-options-toggle')).toBeNull();
+    expect(view.queryByTestId('melody-more-toggle')).toBeNull();
+    expect(view.queryByTestId('melody-export-midi')).toBeNull();
+  });
+
+  it('folds the key, tempo and meter away behind what they come to', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    expect(view.queryByTestId('song-key')).toBeNull();
+    expect(view.getByTestId('song-details-summary').props.children).toContain('3/4');
+
+    await fireEvent.press(view.getByTestId('song-details-toggle'));
+    expect(view.getByTestId('song-key').props.value).toBe('G');
+    expect(view.getByTestId('song-tempo').props.value).toBe('90');
   });
 });

@@ -43,6 +43,8 @@ interface MelodyPlayerCardProps {
   total: { seconds: number; exact: boolean };
   onPlay: () => void;
   onStop: () => void;
+  /** The voice, click and accompaniment to choose; off, the song is hummed and that is all. */
+  showOptions?: boolean;
 }
 
 /**
@@ -58,6 +60,7 @@ const MelodyPlayerCard: React.FC<MelodyPlayerCardProps> = ({
   total,
   onPlay,
   onStop,
+  showOptions = true,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -114,20 +117,22 @@ const MelodyPlayerCard: React.FC<MelodyPlayerCardProps> = ({
             </Text>
           ) : null}
         </View>
-        <TouchableOpacity
-          testID="melody-options-toggle"
-          accessibilityRole="button"
-          accessibilityState={{ expanded: optionsOpen }}
-          accessibilityLabel={t('melody_options')}
-          style={styles.iconButton}
-          onPress={() => setOptionsOpen((open) => !open)}
-        >
-          <Ionicons
-            name={optionsOpen ? 'options' : 'options-outline'}
-            size={24}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
+        {showOptions ? (
+          <TouchableOpacity
+            testID="melody-options-toggle"
+            accessibilityRole="button"
+            accessibilityState={{ expanded: optionsOpen }}
+            accessibilityLabel={t('melody_options')}
+            style={styles.iconButton}
+            onPress={() => setOptionsOpen((open) => !open)}
+          >
+            <Ionicons
+              name={optionsOpen ? 'options' : 'options-outline'}
+              size={24}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       {busy ? (
@@ -151,7 +156,7 @@ const MelodyPlayerCard: React.FC<MelodyPlayerCardProps> = ({
         </Text>
       ) : null}
 
-      {optionsOpen ? (
+      {showOptions && optionsOpen ? (
         <View testID="melody-options">
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('melody_voice')}</Text>
           <View style={styles.group}>

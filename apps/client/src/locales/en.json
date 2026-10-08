@@ -2474,6 +2474,7 @@
   "send_to_server_already_exists": "This story already exists on that server",
   "send_to_server_description": "This story is fully local. Send it to a server to start syncing it.",
   "send_to_server_failed": "Failed to send the story to the server",
+  "send_to_server_refused": "The server did not take the story: {{reason}} Your plan is under Plan and payment, on the server's page.",
   "send_to_server_success": "Story sent to the server",
   "sent_to": "Sent to {{friendUsername}}",
   "server": "Server",

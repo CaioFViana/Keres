@@ -97,6 +97,14 @@ function installAdapter() {
     });
 
     const key = Object.keys(routes).find((fragment) => url.includes(fragment));
+    const scripted = key === undefined ? undefined : (routes[key] as { refusedWith?: string });
+    if (scripted?.refusedWith) {
+      const error: any = new Error('Request failed with status code 403');
+      error.config = config;
+      error.request = {};
+      error.response = { status: 403, data: { message: scripted.refusedWith }, config, headers: {} };
+      throw error;
+    }
     if (key === undefined || routes[key] === null) {
       const error: any = new Error('Request failed with status code 500');
       error.config = config;
@@ -359,6 +367,20 @@ describe('uploadNewStoryToServer', () => {
       'server-user',
       LOCAL_USER,
     );
+  });
+
+  it('hands on the reason when the server refuses the story, such as the plan limit', async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = { refusedWith: 'Story limit reached for your plan (1).' };
+
+    const result = await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    expect(result).toEqual({
+      success: false,
+      reason: 'refused',
+      message: 'Story limit reached for your plan (1).',
+    });
+    expect(mockStoryService.updateStory).not.toHaveBeenCalled();
   });
 
   it('marks every operation included in the imported snapshot as already sent', async () => {

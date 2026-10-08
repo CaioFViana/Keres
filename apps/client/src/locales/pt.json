@@ -2474,6 +2474,7 @@
   "send_to_server_already_exists": "Esta história já existe nesse servidor",
   "send_to_server_description": "Esta história é totalmente local. Envie-a para um servidor para começar a sincronizá-la.",
   "send_to_server_failed": "Falha ao enviar a história para o servidor",
+  "send_to_server_refused": "O servidor não aceitou a história: {{reason}} O seu plano fica em Plano e pagamento, na página do servidor.",
   "send_to_server_success": "História enviada para o servidor",
   "sent_to": "Enviado para {{friendUsername}}",
   "server": "Servidor",

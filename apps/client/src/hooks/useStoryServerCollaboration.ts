@@ -222,6 +222,8 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
         AppAlert.alert(t('success'), t('send_to_server_success'));
       } else if (result.reason === 'already_exists') {
         AppAlert.alert(t('error'), t('send_to_server_already_exists'));
+      } else if (result.reason === 'refused') {
+        AppAlert.alert(t('error'), t('send_to_server_refused', { reason: result.message }));
       } else {
         AppAlert.alert(t('error'), t('send_to_server_failed'));
       }

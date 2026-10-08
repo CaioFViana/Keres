@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   browseText: { fontSize: 14, marginLeft: 6 },
-  adultsRow: { alignItems: 'center', flexDirection: 'row', gap: 12, marginTop: 4 },
+  adultsRow: { alignItems: 'center', flexDirection: 'row', gap: 12, marginBottom: 12, marginTop: 4 },
   adultsLabels: { flexGrow: 1, flexShrink: 1 },
   adultsTitle: { marginTop: 0 },
   extrasRow: {

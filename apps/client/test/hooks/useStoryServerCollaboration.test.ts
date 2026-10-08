@@ -238,6 +238,10 @@ describe('useStoryServerCollaboration', () => {
     await act(async () => view.result.current.handleSendToServer());
     expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_already_exists');
 
+    mockUpload.mockResolvedValue({ success: false, reason: 'refused', message: 'Over the limit.' });
+    await act(async () => view.result.current.handleSendToServer());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_refused');
+
     mockUpload.mockResolvedValue({ success: false, reason: 'other' });
     await act(async () => view.result.current.handleSendToServer());
     expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_failed');

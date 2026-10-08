@@ -20,7 +20,9 @@ export interface ServerStoryPreview {
 
 export type StoryUploadResult =
   | { success: true }
-  | { success: false; reason: 'already_exists' | 'error'; message?: string };
+  | { success: false; reason: 'already_exists' | 'error'; message?: string }
+  /** The server said no on purpose (the plan's story limit, say) and gave the reason. */
+  | { success: false; reason: 'refused'; message: string };
 
 /**
  * What the server lets this user read, or `null` when it could not be asked. The difference matters to
@@ -113,6 +115,15 @@ export async function downloadAndImportStory(
   }
 }
 
+/** The reason the server gave for refusing (403) a request, when it gave one: its limits speak for themselves. */
+function serverRefusalMessage(error: unknown): string | null {
+  const response = (error as { response?: { status?: number; data?: { message?: unknown } } })
+    ?.response;
+  if (response?.status !== 403) return null;
+  const message = response.data?.message;
+  return typeof message === 'string' && message.trim() ? message : null;
+}
+
 export async function uploadNewStoryToServer(
   db: AppDrizzleClient | null,
   storyId: string,
@@ -162,6 +173,8 @@ export async function uploadNewStoryToServer(
     // upload. Best effort - a retry migrates forward again anyway.
     await createFavoriteService(db).migrateUserIdentity(storyId, server.idUser, userId);
     await createCommentService(db).migrateAuthorIdentity(storyId, server.idUser, userId);
+    const refusal = serverRefusalMessage(error);
+    if (refusal) return { success: false, reason: 'refused', message: refusal };
     return { success: false, reason: 'error', message: (error as Error)?.message };
   }
   await db

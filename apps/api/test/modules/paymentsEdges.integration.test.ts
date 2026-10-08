@@ -692,6 +692,19 @@ describe('what the administrators see, ordered and searched', () => {
     expect(data.endingSoon).toBe(1);
   });
 
+  it('does not count a subscription told not to renew as recurring', async () => {
+    await seed();
+    await db
+      .update(paymentSubscriptions)
+      .set({ cancelAtPeriodEnd: true })
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+
+    const { data } = await request('GET', '/admin/api/payments/summary', { token: admin.token });
+
+    expect(data.subscriptions.active).toBe(2);
+    expect(data.monthlyRecurringCents).toBe(Math.round(19900 / 12));
+  });
+
   it('lists a notice about nobody with no person, and a person since removed as removed', async () => {
     await webhook([paid({ subscriptionReference: 'sub_ghost' })]);
     await subscribe(cris, 'sub_cris');

@@ -114,10 +114,16 @@ export class AdminPaymentService {
       .from(paymentEvents)
       .where(and(eq(paymentEvents.kind, 'payment_failed'), gte(paymentEvents.createdAt, since)));
 
+    // A subscription told not to renew is not recurring revenue: it runs out its paid period and ends.
     const active = await db
       .select({ interval: paymentSubscriptions.interval, amount: paymentSubscriptions.amountCents })
       .from(paymentSubscriptions)
-      .where(eq(paymentSubscriptions.status, 'active'));
+      .where(
+        and(
+          eq(paymentSubscriptions.status, 'active'),
+          eq(paymentSubscriptions.cancelAtPeriodEnd, false),
+        ),
+      );
     const monthlyRecurringCents = active.reduce(
       (total, row) =>
         total + (row.interval === 'yearly' ? Math.round(row.amount / 12) : row.amount),

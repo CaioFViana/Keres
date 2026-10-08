@@ -351,7 +351,7 @@
     "kinds": {
       "payment_succeeded": "Payment received",
       "payment_failed": "Payment failed",
-      "subscription_canceled": "Subscription ended",
+      "subscription_canceled": "Renewal cancelled or subscription ended",
       "subscription_due": "Period ran out unpaid",
       "checkout_expired": "Attempt expired",
       "gift_granted": "Plan given",

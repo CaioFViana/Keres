@@ -171,6 +171,35 @@ describe('ActionMenu', () => {
     expect(StyleSheet.flatten(screen.getByText('Block').props.style).color).toBe('#111111');
   });
 
+  it('can be a button with a word, for the last place in a row of buttons', async () => {
+    const onBlock = jest.fn();
+    const screen = await render(
+      <ActionMenu
+        testID="menu"
+        appearance="button"
+        label="More"
+        triggerStyle={{ flexGrow: 1 }}
+        items={items(jest.fn(), onBlock)}
+      />,
+    );
+
+    // The word is on it, and the style the row asked for.
+    expect(screen.getByText('More')).toBeTruthy();
+    expect(StyleSheet.flatten(screen.getByTestId('menu').props.style)).toMatchObject({
+      borderWidth: 1.5,
+      flexGrow: 1,
+    });
+    await fireEvent.press(screen.getByTestId('menu'));
+    await fireEvent.press(screen.getByTestId('menu-block'));
+    expect(onBlock).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no word on the icon appearance', async () => {
+    const screen = await render(<ActionMenu testID="menu" label="More" items={items()} />);
+
+    expect(screen.queryByText('More')).toBeNull();
+  });
+
   it('closes on the backdrop without running anything', async () => {
     const onBlock = jest.fn();
     const screen = await render(<ActionMenu testID="menu" items={items(jest.fn(), onBlock)} />);

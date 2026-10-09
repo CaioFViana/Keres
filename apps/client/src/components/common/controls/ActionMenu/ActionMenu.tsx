@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 
@@ -18,13 +19,28 @@ interface ActionMenuProps {
   /** Names the "more" button; defaults to a generic label. */
   accessibilityLabel?: string;
   testID?: string;
+  /**
+   * `icon` is the bare ellipsis of a row; `button` is an outlined button with the ellipsis and a word, for a
+   * row of buttons where it takes its place as the last of them.
+   */
+  appearance?: 'icon' | 'button';
+  /** The word on the `button` appearance. */
+  label?: string;
+  triggerStyle?: StyleProp<ViewStyle>;
 }
 
 /**
  * A "more" button that opens a list of the actions a row has besides its main one, each with an icon
  * and a word: a row of bare icons asks the person to guess which is which.
  */
-const ActionMenu: React.FC<ActionMenuProps> = ({ items, accessibilityLabel, testID }) => {
+const ActionMenu: React.FC<ActionMenuProps> = ({
+  items,
+  accessibilityLabel,
+  testID,
+  appearance = 'icon',
+  label,
+  triggerStyle,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -37,9 +53,22 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ items, accessibilityLabel, test
         accessibilityLabel={accessibilityLabel ?? t('more_actions')}
         onPress={() => setOpen(true)}
         hitSlop={6}
-        style={({ pressed }) => [styles.trigger, { opacity: pressed ? 0.6 : 1 }]}
+        style={({ pressed }) => [
+          appearance === 'button'
+            ? [styles.buttonTrigger, { borderColor: colors.border }]
+            : styles.trigger,
+          triggerStyle,
+          { opacity: pressed ? 0.6 : 1 },
+        ]}
       >
-        <Ionicons name="ellipsis-horizontal" size={22} color={colors.textSecondary} />
+        <Ionicons
+          name="ellipsis-horizontal"
+          size={22}
+          color={appearance === 'button' ? colors.text : colors.textSecondary}
+        />
+        {appearance === 'button' && label ? (
+          <Text style={[styles.buttonLabel, { color: colors.text }]}>{label}</Text>
+        ) : null}
       </Pressable>
       <Modal
         visible={open}
@@ -86,6 +115,17 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ items, accessibilityLabel, test
 
 const styles = StyleSheet.create({
   trigger: { minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' },
+  buttonTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  buttonLabel: { fontSize: 16, fontWeight: 'bold' },
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   sheet: {
     width: '100%',

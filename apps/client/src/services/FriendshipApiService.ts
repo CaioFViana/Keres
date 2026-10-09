@@ -1,4 +1,4 @@
-import type { EnrichedFriendship, Friendship } from '@keres/shared'; // Assuming Friendship is the type returned by the API
+import type { EnrichedFriendship, Friendship, SharedStory } from '@keres/shared'; // Assuming Friendship is the type returned by the API
 import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -53,6 +53,12 @@ export class FriendshipApiService {
 
   async getFriendships(server: ServerSelect): Promise<EnrichedFriendship[]> {
     const response = await this.clientFor(server).get('/friend/');
+    return response.data;
+  }
+
+  /** The stories the caller and a friend work on together on this server (empty if not friends). */
+  async getSharedStories(server: ServerSelect, otherUserId: string): Promise<SharedStory[]> {
+    const response = await this.clientFor(server).get(`/friend/shared-stories/${otherUserId}`);
     return response.data;
   }
 

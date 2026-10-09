@@ -2,7 +2,7 @@ import { and, eq, or, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db, type CompatibleDb } from '../db';
 import { stories, storyInvitations, storyPermissions } from '../db/schema';
-import { FriendStatus } from '@keres/shared';
+import { FriendStatus, type SharedStory } from '@keres/shared';
 import { friendships } from '../db/schema/tables/friendships';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
@@ -25,6 +25,42 @@ export class StoryPermissionService {
       ),
     });
     return !!friendship;
+  }
+
+  /**
+   * The stories two friends work on together: ones the first owns and the second collaborates on, and the
+   * other way round. Access only ever exists between friends (it ends with the friendship), so for people
+   * who are not friends there is nothing to show. A revoked permission or a deleted story does not count.
+   */
+  async getStoriesSharedBetween(userId: string, otherUserId: string): Promise<SharedStory[]> {
+    if (!(await this.areFriends(userId, otherUserId))) return [];
+    const rows = await db
+      .select({
+        storyId: stories.id,
+        title: stories.title,
+        ownerId: stories.userId,
+        permissionType: storyPermissions.permissionType,
+      })
+      .from(storyPermissions)
+      .innerJoin(stories, eq(storyPermissions.storyId, stories.id))
+      .where(
+        and(
+          eq(storyPermissions.isDeleted, false),
+          eq(stories.isDeleted, false),
+          or(
+            and(eq(stories.userId, userId), eq(storyPermissions.userId, otherUserId)),
+            and(eq(stories.userId, otherUserId), eq(storyPermissions.userId, userId)),
+          ),
+        ),
+      );
+    return rows
+      .map((row) => ({
+        storyId: row.storyId,
+        title: row.title,
+        ownedByMe: row.ownerId === userId,
+        permissionType: row.permissionType,
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title));
   }
 
   /**

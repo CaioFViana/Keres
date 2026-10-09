@@ -1,24 +1,34 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import Button from '@/src/components/common/controls/Button/Button';
-import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import FriendConversationCard from '../../components/features/friendship/FriendConversationCard';
+import FriendDetailActions, {
+  type FriendDetailMode,
+} from '../../components/features/friendship/FriendDetailActions';
+import FriendInvitationsBetween from '../../components/features/friendship/FriendInvitationsBetween';
+import FriendProfileHeader from '../../components/features/friendship/FriendProfileHeader';
+import FriendSharedStories from '../../components/features/friendship/FriendSharedStories';
+import InviteToStoryModal from '../../components/features/friendship/InviteToStoryModal';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
+import { useFriendActivity } from '../../hooks/useFriendActivity';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
+import { useInviteFriendToStory } from '../../hooks/useInviteFriendToStory';
+import { useOpenStoryById } from '../../hooks/useOpenStoryById';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
+import { useStoryInvitationList } from '../../hooks/useStoryInvitationList';
 import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import type { FriendshipWithServer } from '../../services/FriendshipService';
 import { createFriendshipService } from '../../services/FriendshipService';
@@ -35,21 +45,11 @@ type FriendDetailScreenNavigationProp = NativeStackNavigationProp<
   'FriendDetail'
 >;
 
-const statusLabelKey = (status: string) => {
-  switch (status) {
-    case FriendStatus.PENDING:
-      return 'status_pending';
-    case FriendStatus.FRIEND:
-      return 'status_friend';
-    default:
-      return 'status_blacklisted';
-  }
-};
-
 const FriendDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { isCompact } = useResponsiveLayout();
   const navigation = useNavigation<FriendDetailScreenNavigationProp>();
   const route = useRoute<FriendDetailScreenRouteProp>();
   const { friendshipId } = route.params;
@@ -63,7 +63,9 @@ const FriendDetailScreen = () => {
 
   const [friendship, setFriendship] = useState<FriendshipWithServer | null>(null);
   const [server, setServer] = useState<ServerSelect | null>(null);
+  const [alsoOn, setAlsoOn] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inviting, setInviting] = useState(false);
 
   // Messages are for friends only (the API refuses anybody else), so the way in only shows for them.
   const openConversation = useCallback(() => {
@@ -124,6 +126,20 @@ const FriendDetailScreen = () => {
       }
       setFriendship(found);
       setServer(allServers.find((s) => s.id === found.serverId) ?? null);
+      // The same @tag on another server is somebody else: say so, so the two are not taken for one.
+      const tag = found.otherUserTag?.toLowerCase();
+      setAlsoOn(
+        tag
+          ? allFriendships
+              .filter(
+                (other) =>
+                  other.id !== found.id &&
+                  other.serverId !== found.serverId &&
+                  other.otherUserTag?.toLowerCase() === tag,
+              )
+              .map((other) => other.serverName || other.serverId)
+          : [],
+      );
     } catch (err) {
       console.error('Failed to load friend detail:', err);
       showNotification(t('failed_to_load_friendships'), 'error');
@@ -148,6 +164,8 @@ const FriendDetailScreen = () => {
     load,
   );
 
+  // Answering, withdrawing and unblocking are harmless to do by mistake and go through at once;
+  // removing a friend and blocking ask first.
   const handleAccept = runFriendshipAction(
     friendshipService.acceptFriendRequest.bind(friendshipService),
     t('accept_request_confirmation_title'),
@@ -195,36 +213,73 @@ const FriendDetailScreen = () => {
     { confirm: false },
   );
 
+  const currentUsersServerId = server?.idUser;
+  const isPendingReceived =
+    friendship?.status === FriendStatus.PENDING && friendship.receiverId === currentUsersServerId;
+  const isPendingSent =
+    friendship?.status === FriendStatus.PENDING && friendship.senderId === currentUsersServerId;
+  const isFriend = friendship?.status === FriendStatus.FRIEND;
+  const isBlacklisted = friendship?.status === FriendStatus.BLACKLISTED;
+  // Only whoever issued the blacklist can undo it - the server enforces this too (see
+  // FriendshipService.unblacklistUser on the API), this just keeps the button from being
+  // offered to the blocked side in the first place. Legacy rows with no recorded blocker
+  // (`blockedById: null`) are shown to both sides, matching the server's permissive fallback
+  // for data that predates this column - there's no way to recover who actually blocked whom.
+  const isBlockedByMe =
+    isBlacklisted &&
+    (friendship?.blockedById === null || friendship?.blockedById === currentUsersServerId);
+
+  // What the friend and the person have going on, read from their server: only for a friend.
+  const activity = useFriendActivity(
+    server,
+    friendship?.otherUserId ?? null,
+    !!isFriend,
+    friendship,
+  );
+
+  // The invitations still open between the two, in both directions (they live in the app's invitation list).
+  const invitations = useStoryInvitationList(
+    useCallback((id: string) => (server && server.id === id ? server : undefined), [server]),
+  );
+  const between = useMemo(() => {
+    if (!friendship) return { received: [], sent: [] };
+    const mine = (invitation: { serverId: string }) => invitation.serverId === friendship.serverId;
+    return {
+      received: invitations.received.filter(
+        (invitation) => mine(invitation) && invitation.inviterId === friendship.otherUserId,
+      ),
+      sent: invitations.sent.filter(
+        (invitation) => mine(invitation) && invitation.inviteeId === friendship.otherUserId,
+      ),
+    };
+  }, [friendship, invitations.received, invitations.sent]);
+  // Stories that need no invitation: already worked on together, or already offered.
+  const noInviteNeeded = useMemo(
+    () => [
+      ...(activity.sharedStories ?? []).filter((story) => story.ownedByMe).map((s) => s.storyId),
+      ...between.sent.map((invitation) => invitation.storyId),
+    ],
+    [activity.sharedStories, between.sent],
+  );
+
+  const openStory = useOpenStoryById();
+  const closeInvite = useCallback(() => setInviting(false), []);
+  const invite = useInviteFriendToStory({
+    open: inviting,
+    server,
+    friendId: friendship?.otherUserId ?? null,
+    excludeStoryIds: noInviteNeeded,
+    onInvited: closeInvite,
+  });
+
   const styles = StyleSheet.create({
-    profile: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-    profileTexts: { flex: 1, minWidth: 0 },
-    username: { fontSize: 22, fontWeight: 'bold', color: colors.text },
-    tag: { fontSize: 15, color: colors.textSecondary, marginTop: 2 },
-    meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 8 },
-    serverChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      paddingVertical: 3,
-      paddingHorizontal: 10,
-    },
-    serverChipText: { fontSize: 13, color: colors.text },
-    statusBadge: { fontSize: 13, color: colors.textSecondary },
-    label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5, color: colors.text },
-    bio: { fontSize: 15, color: colors.text, lineHeight: 21 },
-    serverInfo: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginBottom: 20,
-    },
-    // Buttons keep their own size and sit side by side, wrapping when the row is full.
-    actionsContainer: { marginTop: 28, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    actionButton: { minWidth: 160 },
+    bio: { fontSize: 15, color: colors.text, lineHeight: 21, marginTop: 16 },
+    blockedNote: { fontSize: 13, color: colors.textSecondary, marginTop: 20 },
+    sections: { marginTop: 28, gap: 28 },
+    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 32 },
+    column: { minWidth: 0, gap: 28 },
+    // Only side by side do the columns share the width: stacked, `flex: 1` has no height to share.
+    columnShare: { flex: 1 },
   });
 
   if (loading) {
@@ -235,128 +290,94 @@ const FriendDetailScreen = () => {
     return <ScreenError message={t('friendship_not_found')} onGoBack={() => navigation.goBack()} />;
   }
 
-  const currentUsersServerId = server?.idUser;
-  const isPendingReceived =
-    friendship.status === FriendStatus.PENDING && friendship.receiverId === currentUsersServerId;
-  const isPendingSent =
-    friendship.status === FriendStatus.PENDING && friendship.senderId === currentUsersServerId;
-  const isFriend = friendship.status === FriendStatus.FRIEND;
-  const isBlacklisted = friendship.status === FriendStatus.BLACKLISTED;
-  // Only whoever issued the blacklist can undo it - the server enforces this too (see
-  // FriendshipService.unblacklistUser on the API), this just keeps the button from being
-  // offered to the blocked side in the first place. Legacy rows with no recorded blocker
-  // (`blockedById: null`) are shown to both sides, matching the server's permissive fallback
-  // for data that predates this column - there's no way to recover who actually blocked whom.
-  const isBlockedByMe =
-    isBlacklisted &&
-    (friendship.blockedById === null || friendship.blockedById === currentUsersServerId);
+  const mode: FriendDetailMode = isPendingReceived
+    ? 'received'
+    : isPendingSent
+      ? 'sent'
+      : isFriend
+        ? 'friend'
+        : isBlockedByMe
+          ? 'blocked-by-me'
+          : 'blocked-by-them';
+
+  const sharedStories = isFriend ? (
+    <FriendSharedStories
+      friendName={friendship.friendUsername}
+      stories={activity.sharedStories}
+      loading={activity.loading}
+      failed={activity.sharedStoriesFailed}
+      canInvite={!!server}
+      onOpenStory={(storyId) => void openStory(storyId)}
+      onInvite={() => setInviting(true)}
+    />
+  ) : null;
+  const invitationsBetween = (
+    <FriendInvitationsBetween
+      received={between.received}
+      sent={between.sent}
+      busyId={invitations.busyId}
+      onAccept={invitations.accept}
+      onDecline={invitations.decline}
+      onWithdraw={invitations.withdraw}
+    />
+  );
+  const conversation = activity.lastMessage ? (
+    <FriendConversationCard
+      message={activity.lastMessage}
+      unseen={hasUnseenMessage}
+      onPress={openConversation}
+    />
+  ) : null;
+  const hasInvitations = between.received.length + between.sent.length > 0;
 
   return (
     <DetailContainer>
-      <View style={styles.profile}>
-        <Avatar
-          color={friendship.otherUserAvatarColor}
-          icon={friendship.otherUserAvatarIcon}
-          seed={friendship.otherUserId}
-          size={80}
-        />
-        <View style={styles.profileTexts}>
-          <Text style={styles.username}>{friendship.friendUsername}</Text>
-          {friendship.otherUserTag ? (
-            <Text style={styles.tag}>@{friendship.otherUserTag}</Text>
-          ) : null}
-          {/* The same @tag on another server is another person: the server is part of who this is. */}
-          <View style={styles.meta}>
-            <View style={styles.serverChip} testID="friend-server">
-              <Ionicons name="cloud-outline" size={14} color={colors.textSecondary} />
-              <Text style={styles.serverChipText}>
-                {friendship.serverName || friendship.serverId}
-              </Text>
-            </View>
-            <Text style={styles.statusBadge}>{t(statusLabelKey(friendship.status))}</Text>
-          </View>
-        </View>
-      </View>
+      <FriendProfileHeader friendship={friendship} alsoOn={alsoOn} />
 
-      {friendship.otherUserBio && (
-        <>
-          <Text style={styles.label}>{t('bio')}</Text>
-          <Text style={styles.bio}>{friendship.otherUserBio}</Text>
-        </>
+      {friendship.otherUserBio ? <Text style={styles.bio}>{friendship.otherUserBio}</Text> : null}
+
+      <FriendDetailActions
+        mode={mode}
+        compact={isCompact}
+        friendName={friendship.friendUsername}
+        hasConversation={!!activity.lastMessage}
+        onMessage={openConversation}
+        onInvite={() => setInviting(true)}
+        onAccept={() => handleAccept(friendship.id, friendship.serverId)}
+        onDecline={() => handleDecline(friendship.id, friendship.serverId)}
+        onCancel={() => handleCancel(friendship.id, friendship.serverId)}
+        onUnblock={() => handleUnblacklist(friendship.id, friendship.serverId)}
+        onUnfriend={() => handleUnfriend(friendship.id, friendship.serverId)}
+        onBlock={() => handleBlacklist(friendship.id, friendship.serverId)}
+      />
+
+      {mode === 'blocked-by-them' && (
+        <Text style={styles.blockedNote}>{t('blocked_by_other_user')}</Text>
       )}
 
-      <View style={styles.actionsContainer}>
-        {isPendingReceived && (
-          <>
-            <Button
-              onPress={() => handleAccept(friendship.id, friendship.serverId)}
-              style={styles.actionButton}
-            >
-              {t('friend_accept')}
-            </Button>
-            <Button
-              variant="secondary"
-              onPress={() => handleDecline(friendship.id, friendship.serverId)}
-              style={styles.actionButton}
-            >
-              {t('friend_decline')}
-            </Button>
-            <Button
-              variant="danger"
-              onPress={() => handleBlacklist(friendship.id, friendship.serverId)}
-              style={styles.actionButton}
-            >
-              {t('friend_block')}
-            </Button>
-          </>
-        )}
+      {(isFriend || hasInvitations) && (
+        <View style={[styles.sections, !isCompact && styles.columns]}>
+          <View style={[styles.column, !isCompact && styles.columnShare]}>
+            {hasInvitations && invitationsBetween}
+            {sharedStories}
+          </View>
+          {conversation && (
+            <View style={[styles.column, !isCompact && styles.columnShare]}>{conversation}</View>
+          )}
+        </View>
+      )}
 
-        {isPendingSent && (
-          <Button
-            variant="secondary"
-            onPress={() => handleCancel(friendship.id, friendship.serverId)}
-            style={styles.actionButton}
-          >
-            {t('friend_cancel_request')}
-          </Button>
-        )}
-
-        {isFriend && (
-          <>
-            <Button onPress={openConversation} style={styles.actionButton}>
-              {t('send_message')}
-            </Button>
-            <Button
-              variant="danger"
-              onPress={() => handleUnfriend(friendship.id, friendship.serverId)}
-              style={styles.actionButton}
-            >
-              {t('friend_unfriend')}
-            </Button>
-            <Button
-              variant="danger"
-              onPress={() => handleBlacklist(friendship.id, friendship.serverId)}
-              style={styles.actionButton}
-            >
-              {t('friend_block')}
-            </Button>
-          </>
-        )}
-
-        {isBlacklisted && isBlockedByMe && (
-          <Button
-            variant="secondary"
-            onPress={() => handleUnblacklist(friendship.id, friendship.serverId)}
-            style={styles.actionButton}
-          >
-            {t('friend_unblock')}
-          </Button>
-        )}
-
-        {isBlacklisted && !isBlockedByMe && (
-          <Text style={styles.statusBadge}>{t('blocked_by_other_user')}</Text>
-        )}
-      </View>
+      {server && (
+        <InviteToStoryModal
+          visible={inviting}
+          onClose={closeInvite}
+          friendName={friendship.friendUsername}
+          serverName={server.name}
+          stories={invite.stories}
+          busy={invite.busy}
+          onInvite={invite.invite}
+        />
+      )}
     </DetailContainer>
   );
 };

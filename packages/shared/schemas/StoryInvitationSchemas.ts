@@ -28,3 +28,14 @@ export interface StoryInvitation {
   permissionType: z.infer<typeof SharedStoryPermissionTypeEnum>;
   createdAt: string;
 }
+
+/**
+ * A story one friend owns and the other collaborates on: what two friends do together. `ownedByMe` is from
+ * the point of view of whoever asked; `permissionType` is the role of the one who does not own it.
+ */
+export interface SharedStory {
+  storyId: string;
+  title: string;
+  ownedByMe: boolean;
+  permissionType: z.infer<typeof SharedStoryPermissionTypeEnum>;
+}

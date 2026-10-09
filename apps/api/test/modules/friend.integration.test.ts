@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import {
+  newId,
+  registerUser,
+  request,
+  shareStory,
+  type TestUser,
+  uploadTestStory,
+} from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -359,6 +366,96 @@ describe('GET /friend/', () => {
 
   it('requires a session', async () => {
     const { status } = await request('GET', '/friend/');
+
+    expect(status).toBe(401);
+  });
+});
+
+describe('GET /friend/shared-stories/:targetUserId', () => {
+  const sharedWith = (who: TestUser, other: TestUser) =>
+    request('GET', `/friend/shared-stories/${other.userId}`, { token: who.token });
+  const befriend = async (from: TestUser, to: TestUser) => {
+    await sendRequest(from, to);
+    await accept(to, from);
+  };
+
+  beforeEach(async () => {
+    await befriend(ana, bia);
+  });
+
+  it('lists what each owns and the other collaborates on, with the role of the one who does not own it', async () => {
+    const mine = await uploadTestStory(ana.token, 'Casa de Ana');
+    const theirs = await uploadTestStory(bia.token, 'Casa de Bia');
+    await shareStory(ana, bia, mine.id, 'writer');
+    await shareStory(bia, ana, theirs.id, 'reader');
+
+    const { status, data } = await sharedWith(ana, bia);
+
+    expect(status).toBe(200);
+    expect(data).toEqual([
+      { storyId: mine.id, title: 'Casa de Ana', ownedByMe: true, permissionType: 'writer' },
+      { storyId: theirs.id, title: 'Casa de Bia', ownedByMe: false, permissionType: 'reader' },
+    ]);
+  });
+
+  it('is seen the other way round from the other side', async () => {
+    const mine = await uploadTestStory(ana.token, 'Casa de Ana');
+    await shareStory(ana, bia, mine.id, 'reader');
+
+    const { data } = await sharedWith(bia, ana);
+
+    expect(data).toEqual([
+      { storyId: mine.id, title: 'Casa de Ana', ownedByMe: false, permissionType: 'reader' },
+    ]);
+  });
+
+  it('leaves out stories that are not shared with this friend', async () => {
+    const carla = await registerUser('carla');
+    await befriend(ana, carla);
+    const alone = await uploadTestStory(ana.token, 'Só minha');
+    const withCarla = await uploadTestStory(ana.token, 'Com a Carla');
+    await shareStory(ana, carla, withCarla.id, 'reader');
+
+    const { data } = await sharedWith(ana, bia);
+
+    expect(data).toEqual([]);
+    expect(JSON.stringify(data)).not.toContain(alone.id);
+  });
+
+  it('leaves out access that was revoked', async () => {
+    const mine = await uploadTestStory(ana.token, 'Casa de Ana');
+    await shareStory(ana, bia, mine.id, 'writer');
+    await request('DELETE', `/story-permissions/story/${mine.id}/user/${bia.userId}`, {
+      token: ana.token,
+    });
+
+    const { data } = await sharedWith(ana, bia);
+
+    expect(data).toEqual([]);
+  });
+
+  it('is empty once they are no longer friends', async () => {
+    const mine = await uploadTestStory(ana.token, 'Casa de Ana');
+    await shareStory(ana, bia, mine.id, 'writer');
+    await unfriend(ana, bia);
+
+    const { status, data } = await sharedWith(ana, bia);
+
+    expect(status).toBe(200);
+    expect(data).toEqual([]);
+  });
+
+  it('is empty for people who were never friends, even by a story that links them', async () => {
+    const carla = await registerUser('carla');
+
+    const { status, data } = await sharedWith(ana, carla);
+
+    expect(status).toBe(200);
+    expect(data).toEqual([]);
+  });
+
+  it('requires a session', async () => {
+    const { status } = await request('GET', `/friend/shared-stories/${bia.userId}`);
 
     expect(status).toBe(401);
   });

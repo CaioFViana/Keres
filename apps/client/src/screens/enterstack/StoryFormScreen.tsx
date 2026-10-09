@@ -2,12 +2,12 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ArcMediumSelect from '@/src/components/features/arcs/ArcMediumSelect';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
+import StoryPacksPicker from '@/src/components/features/story/StoryPacksPicker';
+import StoryStartChoice from '@/src/components/features/story/StoryStartChoice';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   NativeStackNavigationProp,
@@ -15,9 +15,7 @@ import type {
 } from '@react-navigation/native-stack';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
+import { StyleSheet, Text, View } from 'react-native';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { packHasExtras } from '../../services/storymanagement/PackService';
 import { useShippedPacksInstallerStore } from '../../state/shippedPacksInstallerStore';
@@ -29,7 +27,7 @@ import { useStoryFormResources } from './useStoryFormResources';
 import { useStoryFormState } from './useStoryFormState';
 
 type RootStackParamList = {
-  StoryForm: { storyId?: string };
+  StoryForm: { storyId?: string; start?: 'blank' | 'packs' };
   StorySelection: undefined;
 };
 
@@ -43,25 +41,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
-  browseRow: {
-    flexDirection: 'row',
+  adultsRow: {
     alignItems: 'center',
-    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
     marginTop: 4,
-    marginBottom: 8,
   },
-  browseText: { fontSize: 14, marginLeft: 6 },
-  adultsRow: { alignItems: 'center', flexDirection: 'row', gap: 12, marginBottom: 12, marginTop: 4 },
   adultsLabels: { flexGrow: 1, flexShrink: 1 },
   adultsTitle: { marginTop: 0 },
-  extrasRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  extrasLabels: { flex: 1, marginRight: 12 },
-  extrasName: { fontSize: 16, fontWeight: 'bold' },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -75,11 +63,7 @@ const StoryFormScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<StoryFormScreenNavigationProp>();
   const route = useRoute<StoryFormScreenRouteProp>();
-  const { storyId: initialStoryId } = route.params || {};
-  // The creation tour only: editing keeps the form quiet, so edits resolve to an id with no guide.
-  useScreenTour(initialStoryId ? 'StoryFormEdit' : 'StoryForm');
-  const packsAnchorRef = useScreenAnchor('StoryForm', 'packs');
-  const extrasAnchorRef = useScreenAnchor('StoryForm', 'extras');
+  const { storyId: initialStoryId, start: initialStart } = route.params || {};
   useScreenHeader({
     target: 'parent',
     title: initialStoryId ? t('edit_story') : t('create_new_story_screen_title'),
@@ -103,9 +87,12 @@ const StoryFormScreen = () => {
     initialStoryId,
     storyServiceRef,
     userId,
+    initialStart,
   });
   const {
     identity,
+    start,
+    setStart,
     selectedPackIds,
     setSelectedPackIds,
     packsWithoutExtras,
@@ -132,20 +119,6 @@ const StoryFormScreen = () => {
       setSelectedPackIds([...selectedPackIds, lastInstalledPackId]);
     }
   }, [isEditing, lastInstalledPackId, packs, selectedPackIds, setSelectedPackIds]);
-
-  const browseShippedPacks = (
-    <TouchableOpacity
-      style={styles.browseRow}
-      onPress={openInstaller}
-      testID="browse-shipped-packs"
-      accessibilityRole="button"
-    >
-      <Ionicons name="gift-outline" size={18} color={colors.primary} />
-      <Text style={[styles.browseText, { color: colors.primary }]}>
-        {t('packs_apply_browse_shipped')}
-      </Text>
-    </TouchableOpacity>
-  );
 
   const { deleting, handleDelete, handleSave, saving } = useStoryFormActions({
     state: storyFormState,
@@ -206,6 +179,23 @@ const StoryFormScreen = () => {
         </Text>
       )}
 
+      {!isEditing && (
+        <StoryStartChoice value={start} onChange={setStart} disabled={!canEdit}>
+          <StoryPacksPicker
+            packs={packs.map((pack) => ({
+              id: pack.id,
+              name: pack.name,
+              hasExtras: packHasExtras(pack.counts),
+            }))}
+            selectedPackIds={selectedPackIds}
+            onSelectionChange={setSelectedPackIds}
+            packsWithoutExtras={packsWithoutExtras}
+            onToggleExtras={togglePackExtras}
+            onBrowse={openInstaller}
+          />
+        </StoryStartChoice>
+      )}
+
       <StoryFieldsForm
         {...identity.storyFieldsFormProps}
         onTypeChange={identity.setType}
@@ -243,65 +233,6 @@ const StoryFormScreen = () => {
             hint={t('story_form_arc_medium_hint', { arc: t('arc') })}
             disabled={!canEdit}
           />
-        </View>
-      )}
-
-      {!isEditing && (
-        <View ref={packsAnchorRef} collapsable={false}>
-          <Text style={[styles.sectionLabel, { color: colors.text }]}>
-            {t('packs_apply_title')}
-          </Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-            {t('packs_apply_hint')}
-          </Text>
-          {packs.length > 0 ? (
-            <>
-              <MultiSelectPill
-                options={packs.map((pack) => ({ label: pack.name, value: pack.id }))}
-                selectedValues={selectedPackIds}
-                onSelectionChange={setSelectedPackIds}
-                placeholder={t('packs_apply_title')}
-              />
-              {packs.some(
-                (pack) => selectedPackIds.includes(pack.id) && packHasExtras(pack.counts),
-              ) && (
-                <View ref={extrasAnchorRef} collapsable={false}>
-                  <Text style={{ color: colors.textSecondary, marginBottom: 8, marginTop: 8 }}>
-                    {t('packs_apply_extras_hint')}
-                  </Text>
-                  {packs
-                    .filter(
-                      (pack) => selectedPackIds.includes(pack.id) && packHasExtras(pack.counts),
-                    )
-                    .map((pack) => (
-                      <View key={pack.id} style={styles.extrasRow}>
-                        <View style={styles.extrasLabels}>
-                          <Text style={[styles.extrasName, { color: colors.text }]}>
-                            {pack.name}
-                          </Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-                            {t('packs_apply_extras')}
-                          </Text>
-                        </View>
-                        <ThemedSwitch
-                          value={!packsWithoutExtras.includes(pack.id)}
-                          onValueChange={(value) => togglePackExtras(pack.id, value)}
-                          testID={`pack-install-extras-${pack.id}`}
-                        />
-                      </View>
-                    ))}
-                </View>
-              )}
-              {browseShippedPacks}
-            </>
-          ) : (
-            <>
-              <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-                {t('packs_apply_none')}
-              </Text>
-              {browseShippedPacks}
-            </>
-          )}
         </View>
       )}
     </EntityFormContainer>

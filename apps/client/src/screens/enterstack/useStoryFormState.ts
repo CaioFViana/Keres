@@ -3,12 +3,15 @@ import { DEFAULT_ARC_MEDIUM, type ArcMedium } from '@keres/shared/metadata/ArcMe
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { StoryStart } from '../../components/features/story/StoryStartChoice';
 import type { StoryService } from '../../services/storymanagement/StoryService';
 
 type UseStoryFormStateOptions = {
   initialStoryId?: string;
   storyServiceRef: RefObject<StoryService | null>;
   userId?: string | null;
+  /** How the form opens: the list's cards send a person straight to the option they chose. */
+  initialStart?: StoryStart;
 };
 
 /** Owns field state and initial story hydration for a Story form. */
@@ -16,10 +19,17 @@ export function useStoryFormState({
   initialStoryId,
   storyServiceRef,
   userId,
+  initialStart,
 }: UseStoryFormStateOptions) {
   const { t } = useTranslation();
   const identity = useStoryIdentityDraft();
   const [selectedPackIds, setSelectedPackIds] = useState<string[]>([]);
+  const [start, setStartState] = useState<StoryStart>(initialStart ?? 'blank');
+  // Going back to a blank story lets go of the packs picked: what is hidden must not be applied.
+  const setStart = useCallback((next: StoryStart) => {
+    setStartState(next);
+    if (next === 'blank') setSelectedPackIds([]);
+  }, []);
   // Selected packs whose skeletons stay out: an opt-out list, so a newly picked pack installs its
   // extras unless the author says otherwise - and a deselected pack keeps its answer for reselection.
   const [packsWithoutExtras, setPacksWithoutExtras] = useState<string[]>([]);
@@ -74,6 +84,8 @@ export function useStoryFormState({
   return {
     initialStoryId,
     identity,
+    start,
+    setStart,
     selectedPackIds,
     setSelectedPackIds,
     packsWithoutExtras,

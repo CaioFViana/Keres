@@ -22,6 +22,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
+        'Escolha como começar: História em branco, ou Com pacotes iniciais (um pacote é uma estrutura pronta, e só pode ser escolhido enquanto a história é criada).',
         'Preencha Título.',
         'Escolha Tipo antes de criar; ele não é alterado neste formulário depois que a história existe.',
         'Preencha os demais campos quando ajudarem você a reconhecer ou apresentar a história.',

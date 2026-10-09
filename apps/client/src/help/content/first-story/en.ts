@@ -23,7 +23,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Enter a local username with at least three characters and select a language.',
-        'In the story list, tap the + button.',
+        'In the story list, pick how to begin on the cards at the top: a blank story, starter packs, or an example. Or tap the + button.',
         'Fill in Title; it is the only field needed to create a story.',
         'Choose Linear for one reading sequence or Branching if readers can choose paths.',
         'Tap Create story and open the newly created story card.',

@@ -58,7 +58,7 @@ import {
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
-  StoryForm: { storyId?: string };
+  StoryForm: { storyId?: string; start?: 'blank' | 'packs' };
 };
 
 export type ServerManagementStackParamList = {

@@ -3,7 +3,7 @@ const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigation = { goBack: (...args: unknown[]) => mockGoBack(...args) };
-const mockRoute: { params?: { storyId?: string } } = { params: {} };
+const mockRoute: { params?: { storyId?: string; start?: 'blank' | 'packs' } } = { params: {} };
 const mockDrizzle = {};
 const mockGetStoryById = jest.fn();
 const mockCreateStory = jest.fn();
@@ -13,7 +13,6 @@ const mockListPacks = jest.fn();
 const mockFindConflicts = jest.fn();
 const mockCreateStoryWithPacks = jest.fn();
 const mockStoryRole = { role: null, canEdit: true, canManageStoryPolicy: true, loading: false };
-const mockUseScreenTour = jest.fn();
 const mockUserSettings = { userId: 'user-1' as string | null };
 const mockOpenInstaller = jest.fn();
 const mockInstallerState = {
@@ -63,9 +62,6 @@ jest.mock('../../../src/theme', () => {
 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
-}));
-jest.mock('../../../src/guides/useScreenTour', () => ({
-  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
@@ -236,13 +232,61 @@ describe('StoryFormScreen', () => {
     cleanup();
   });
 
-  it('requests the creation tour, and none while editing', async () => {
-    await render(<StoryFormScreen />);
-    expect(mockUseScreenTour).toHaveBeenCalledWith('StoryForm');
+  it('asks how to begin before anything else, each option saying what it is', async () => {
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
 
+    expect(view.getByText('story_start_title')).toBeTruthy();
+    expect(view.getByText('story_start_blank_body')).toBeTruthy();
+    expect(view.getByText('story_start_packs_body')).toBeTruthy();
+    expect(view.getByTestId('story-start-blank').props.accessibilityState.selected).toBe(true);
+    expect(view.getByTestId('story-start-packs').props.accessibilityState.selected).toBe(false);
+    // A blank start has no pack controls to explain or to skip.
+    expect(view.queryByTestId('story-packs-picker')).toBeNull();
+    expect(view.queryByTestId('browse-shipped-packs')).toBeNull();
+  });
+
+  it('opens the pack controls right under the choice when packs are chosen', async () => {
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+
+    await fireEvent.press(view.getByTestId('story-start-packs'));
+
+    expect(view.getByTestId('story-start-packs').props.accessibilityState.selected).toBe(true);
+    expect(view.getByTestId('story-packs-picker')).toBeTruthy();
+    expect(view.getByText('packs_apply_hint')).toBeTruthy();
+  });
+
+  it('opens already on the packs when the list sent the person there', async () => {
+    mockRoute.params = { start: 'packs' };
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+
+    expect(view.getByTestId('story-start-packs').props.accessibilityState.selected).toBe(true);
+    expect(view.getByTestId('story-packs-picker')).toBeTruthy();
+  });
+
+  it('lets go of the packs picked when going back to a blank story', async () => {
+    mockRoute.params = { start: 'packs' };
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+    await fireEvent.press(view.getByTestId('set-title'));
+    await fireEvent.press(view.getByTestId('pack-pack-1'));
+
+    await fireEvent.press(view.getByTestId('story-start-blank'));
+    expect(view.queryByTestId('story-packs-picker')).toBeNull();
+    await fireEvent.press(view.getByText('create_story'));
+
+    await waitFor(() => expect(mockCreateStory).toHaveBeenCalled());
+    expect(mockCreateStoryWithPacks).not.toHaveBeenCalled();
+  });
+
+  it('does not ask how to begin while editing', async () => {
     mockRoute.params = { storyId: 'story-1' };
-    await render(<StoryFormScreen />);
-    expect(mockUseScreenTour).toHaveBeenCalledWith('StoryFormEdit');
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('update_story');
+
+    expect(view.queryByTestId('story-start-choice')).toBeNull();
   });
 
   it('offers the adults-only switch while creating, off, with what it does', async () => {
@@ -279,6 +323,7 @@ describe('StoryFormScreen', () => {
   });
 
   it('creates a story with selected packs', async () => {
+    mockRoute.params = { start: 'packs' };
     const view = await render(<StoryFormScreen />);
     await view.findByText('create_story');
     expect(view.getByText('packs_apply_hint')).toBeTruthy();
@@ -297,6 +342,7 @@ describe('StoryFormScreen', () => {
   });
 
   it('offers an extras switch for each selected pack that carries a skeleton', async () => {
+    mockRoute.params = { start: 'packs' };
     const extras = {
       chapters: 2,
       scenes: 3,
@@ -336,6 +382,7 @@ describe('StoryFormScreen', () => {
   });
 
   it('installs extras only for the packs left switched on', async () => {
+    mockRoute.params = { start: 'packs' };
     mockListPacks.mockResolvedValue([
       {
         id: 'pack-1',
@@ -374,6 +421,7 @@ describe('StoryFormScreen', () => {
   });
 
   it('creates a plain story without packs', async () => {
+    mockRoute.params = { start: 'packs' };
     mockListPacks.mockResolvedValue([]);
     const view = await render(<StoryFormScreen />);
     await view.findByText('create_story');
@@ -467,6 +515,7 @@ describe('StoryFormScreen', () => {
   });
 
   it('offers the shipped-packs installer alongside the pack list', async () => {
+    mockRoute.params = { start: 'packs' };
     const view = await render(<StoryFormScreen />);
     await view.findByText('create_story');
 
@@ -475,6 +524,7 @@ describe('StoryFormScreen', () => {
   });
 
   it('offers the shipped-packs installer when no packs are on the device', async () => {
+    mockRoute.params = { start: 'packs' };
     mockListPacks.mockResolvedValue([]);
     const view = await render(<StoryFormScreen />);
     await view.findByText('create_story');
@@ -485,6 +535,7 @@ describe('StoryFormScreen', () => {
   });
 
   it('pre-selects a pack installed from the overlay', async () => {
+    mockRoute.params = { start: 'packs' };
     mockInstallerState.lastInstalledPackId = 'pack-1';
     const view = await render(<StoryFormScreen />);
     await view.findByText('create_story');

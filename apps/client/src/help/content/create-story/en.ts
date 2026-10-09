@@ -22,6 +22,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
+        'Choose how to begin: Blank story, or With starter packs (a pack is ready-made structure, and it can only be chosen while the story is created).',
         'Fill in Title.',
         'Choose Type before creating; this form does not change it after the story exists.',
         'Fill in other fields whenever they help you recognize or present the story.',

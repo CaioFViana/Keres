@@ -1,6 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
+import FirstStoryStart from '@/src/components/features/story/FirstStoryStart';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,15 +9,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  BackHandler,
-  FlatList,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { BackHandler, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
@@ -37,7 +29,7 @@ type RootStackParamList = {
   ColdInstall: undefined;
   StorySelection: undefined;
   MainSystem: { storyId: string };
-  StoryForm: { storyId?: string };
+  StoryForm: { storyId?: string; start?: 'blank' | 'packs' };
   Settings: undefined;
 };
 
@@ -159,37 +151,22 @@ const StorySelectionScreen = () => {
     [drizzleClient, setFirstStoryProgress],
   );
 
-  const handleFirstStoryCta = useCallback(() => {
-    // Tapping outside dismisses without choosing ("ask again later"); only "Later" silences the trail.
-    AppAlert.alert(
-      t('first_story_choice_title'),
-      t('first_story_choice_message'),
-      [
-        {
-          text: t('first_story_choice_create'),
-          onPress: () => {
-            navigation.navigate('StoryForm', {});
-            recordTrailChoice({ choice: 'create' });
-          },
-        },
-        {
-          text: t('first_story_choice_example'),
-          onPress: () => {
-            navigation.getParent()?.navigate('ExampleStories');
-            recordTrailChoice({ choice: 'example' });
-          },
-        },
-        {
-          text: t('first_story_choice_later'),
-          style: 'cancel',
-          onPress: () => {
-            recordTrailChoice({ dismissed: true });
-          },
-        },
-      ],
-      { cancelable: true },
-    );
-  }, [navigation, recordTrailChoice, t]);
+  // Each card of the first-story panel goes straight to what it describes; the choice is remembered
+  // so the dashboard can celebrate the first story once one is open.
+  const handleStartBlank = useCallback(() => {
+    navigation.navigate('StoryForm', { start: 'blank' });
+    recordTrailChoice({ choice: 'create' });
+  }, [navigation, recordTrailChoice]);
+
+  const handleStartWithPacks = useCallback(() => {
+    navigation.navigate('StoryForm', { start: 'packs' });
+    recordTrailChoice({ choice: 'create' });
+  }, [navigation, recordTrailChoice]);
+
+  const handleStartFromExample = useCallback(() => {
+    navigation.getParent()?.navigate('ExampleStories');
+    recordTrailChoice({ choice: 'example' });
+  }, [navigation, recordTrailChoice]);
 
   const handleTrailLater = useCallback(() => {
     recordTrailChoice({ dismissed: true });
@@ -268,32 +245,6 @@ const StorySelectionScreen = () => {
     list: {
       flex: 1,
     },
-    trailBanner: {
-      backgroundColor: colors.primaryContainer,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 16,
-    },
-    trailText: {
-      color: colors.onPrimaryContainer,
-      fontSize: 14,
-      lineHeight: 20,
-      marginBottom: 12,
-    },
-    trailActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-    },
-    trailLater: {
-      paddingVertical: 8,
-    },
-    trailLaterText: {
-      color: colors.onPrimaryContainer,
-      fontSize: 14,
-      fontWeight: '600',
-      textDecorationLine: 'underline',
-    },
   });
 
   return (
@@ -317,21 +268,12 @@ const StorySelectionScreen = () => {
 
               <Text style={styles.title}>{t('your_stories')}</Text>
               {showTrailCta && (
-                <View style={styles.trailBanner} testID="first-story-banner">
-                  <Text style={styles.trailText}>{t('first_story_choice_message')}</Text>
-                  <View style={styles.trailActions}>
-                    <Button onPress={handleFirstStoryCta} testID="first-story-cta">
-                      {t('first_story_cta')}
-                    </Button>
-                    <TouchableOpacity
-                      style={styles.trailLater}
-                      onPress={handleTrailLater}
-                      testID="first-story-later"
-                    >
-                      <Text style={styles.trailLaterText}>{t('first_story_choice_later')}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <FirstStoryStart
+                  onBlank={handleStartBlank}
+                  onPacks={handleStartWithPacks}
+                  onExample={handleStartFromExample}
+                  onLater={handleTrailLater}
+                />
               )}
             </>
           }

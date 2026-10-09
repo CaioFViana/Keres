@@ -26,7 +26,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Digite um nome de usuário local com pelo menos três caracteres e escolha o idioma.',
-        'Na lista de histórias, toque no botão +.',
+        'Na lista de histórias, escolha como começar nos cartões do topo: história em branco, pacotes iniciais ou um exemplo. Ou toque no botão +.',
         'Preencha Título; este é o único campo necessário para criar a história.',
         'Escolha Linear se a leitura tiver uma sequência única ou Ramificada se o leitor puder escolher caminhos.',
         'Toque em Criar história e abra o cartão da história criada.',

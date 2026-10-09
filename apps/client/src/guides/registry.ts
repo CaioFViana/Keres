@@ -12,7 +12,7 @@ const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string
  * The tour per screen, keyed by route name (the same vocabulary as `screenHelpPage`). Screens
  * without an entry show no tour.
  *
- * Pilot: story selection, story creation and the dashboard. Every guide keeps the article's
+ * Pilot: story selection and the dashboard. Every guide keeps the article's
  * rules: at most 4 steps, one idea per step, benefits over feature lists, and a drawer finale
  * in semantic groups - never item by item.
  *
@@ -79,25 +79,6 @@ export const screenGuides: Record<string, Guide> = {
         anchors: [screenAnchorId('ExampleStories', 'list')],
         titleKey: 'tour_examplestories_install_title',
         bodyKey: 'tour_examplestories_install_body',
-      },
-    ],
-  },
-  StoryForm: {
-    id: 'StoryForm',
-    drawerId: 'story-selection',
-    helpPageId: 'create-story',
-    steps: [
-      {
-        id: 'packs',
-        anchors: [screenAnchorId('StoryForm', 'packs')],
-        titleKey: 'tour_storyform_packs_title',
-        bodyKey: 'tour_storyform_packs_body',
-      },
-      {
-        id: 'extras',
-        anchors: [screenAnchorId('StoryForm', 'extras')],
-        titleKey: 'tour_storyform_extras_title',
-        bodyKey: 'tour_storyform_extras_body',
       },
     ],
   },

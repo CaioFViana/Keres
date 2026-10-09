@@ -10,7 +10,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import type { StoryFormState } from './useStoryFormState';
 
 type StoryFormNavigation = NavigationProp<{
-  StoryForm: { storyId?: string };
+  StoryForm: { storyId?: string; start?: 'blank' | 'packs' };
   StorySelection: undefined;
 }>;
 

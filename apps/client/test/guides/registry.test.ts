@@ -36,7 +36,6 @@ describe('screenGuides', () => {
       'StoryArcList',
       'StoryCalendarList',
       'StoryEntityCount',
-      'StoryForm',
       'StorySchemaList',
       'StorySelectionMain',
       'Suggestions',

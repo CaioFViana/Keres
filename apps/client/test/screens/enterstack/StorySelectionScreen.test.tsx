@@ -280,38 +280,42 @@ describe('StorySelectionScreen', () => {
       mockStoryListState.stories = [];
       mockUserSettings.showTutorials = true;
       const view = await render(<StorySelectionScreen />);
-      await view.findByText('first_story_cta');
+      await view.findByTestId('first-story-banner');
       return view;
     };
 
-    const choiceButtons = () =>
-      mockAlert.mock.calls[0][2] as { text: string; onPress?: () => void }[];
-
-    it('offers the trail from a banner above the list', async () => {
+    it('explains the three ways to begin on cards above the list, with no dialog in between', async () => {
       const view = await renderEmpty();
 
-      expect(view.getByTestId('first-story-banner')).toBeTruthy();
-      await fireEvent.press(view.getByText('first_story_cta'));
+      expect(view.getByText('first_story_title')).toBeTruthy();
+      expect(view.getByText('story_start_blank')).toBeTruthy();
+      expect(view.getByText('story_start_blank_body')).toBeTruthy();
+      expect(view.getByText('story_start_packs')).toBeTruthy();
+      expect(view.getByText('story_start_packs_body')).toBeTruthy();
+      expect(view.getByText('first_story_example_title')).toBeTruthy();
+      expect(view.getByText('first_story_example_body')).toBeTruthy();
+      expect(mockAlert).not.toHaveBeenCalled();
+    });
 
-      expect(mockAlert).toHaveBeenCalledWith(
-        'first_story_choice_title',
-        'first_story_choice_message',
-        expect.arrayContaining([
-          expect.objectContaining({ text: 'first_story_choice_create' }),
-          expect.objectContaining({ text: 'first_story_choice_example' }),
-          expect.objectContaining({ text: 'first_story_choice_later' }),
-        ]),
-        { cancelable: true },
+    it('starts blank: records the choice and opens the form on the blank option', async () => {
+      const view = await renderEmpty();
+
+      await fireEvent.press(view.getByTestId('first-story-blank-action'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('StoryForm', { start: 'blank' });
+      await waitFor(() =>
+        expect(mockSetFirstStoryProgress).toHaveBeenCalledWith(mockDrizzle, {
+          choice: 'create',
+        }),
       );
     });
 
-    it('records the create choice and opens the form', async () => {
+    it('starts with packs: opens the form already on the packs option', async () => {
       const view = await renderEmpty();
-      await fireEvent.press(view.getByText('first_story_cta'));
 
-      choiceButtons()[0].onPress?.();
+      await fireEvent.press(view.getByTestId('first-story-packs-action'));
 
-      expect(mockNavigate).toHaveBeenCalledWith('StoryForm', {});
+      expect(mockNavigate).toHaveBeenCalledWith('StoryForm', { start: 'packs' });
       await waitFor(() =>
         expect(mockSetFirstStoryProgress).toHaveBeenCalledWith(mockDrizzle, {
           choice: 'create',
@@ -321,9 +325,8 @@ describe('StorySelectionScreen', () => {
 
     it('records the example choice and opens the examples', async () => {
       const view = await renderEmpty();
-      await fireEvent.press(view.getByText('first_story_cta'));
 
-      choiceButtons()[1].onPress?.();
+      await fireEvent.press(view.getByTestId('first-story-example-action'));
 
       expect(mockParentNavigate).toHaveBeenCalledWith('ExampleStories');
       await waitFor(() =>
@@ -339,37 +342,11 @@ describe('StorySelectionScreen', () => {
 
       await view.findByTestId('story-story-1');
       expect(view.getByTestId('first-story-banner')).toBeTruthy();
-      await fireEvent.press(view.getByText('first_story_cta'));
-
-      expect(mockAlert).toHaveBeenCalledWith(
-        'first_story_choice_title',
-        'first_story_choice_message',
-        expect.arrayContaining([
-          expect.objectContaining({ text: 'first_story_choice_create' }),
-          expect.objectContaining({ text: 'first_story_choice_example' }),
-        ]),
-        { cancelable: true },
-      );
     });
 
     it('dismisses the trail straight from the banner', async () => {
       const view = await renderEmpty();
       await fireEvent.press(view.getByTestId('first-story-later'));
-
-      expect(mockNavigate).not.toHaveBeenCalled();
-      expect(mockParentNavigate).not.toHaveBeenCalled();
-      await waitFor(() =>
-        expect(mockSetFirstStoryProgress).toHaveBeenCalledWith(mockDrizzle, {
-          dismissed: true,
-        }),
-      );
-    });
-
-    it('silences the trail without navigating when dismissed', async () => {
-      const view = await renderEmpty();
-      await fireEvent.press(view.getByText('first_story_cta'));
-
-      choiceButtons()[2].onPress?.();
 
       expect(mockNavigate).not.toHaveBeenCalled();
       expect(mockParentNavigate).not.toHaveBeenCalled();
@@ -390,7 +367,7 @@ describe('StorySelectionScreen', () => {
       };
       const done = await render(<StorySelectionScreen />);
       await done.findByText('no_stories_found_create_one');
-      expect(done.queryByText('first_story_cta')).toBeNull();
+      expect(done.queryByTestId('first-story-banner')).toBeNull();
 
       mockUserSettings.tutorialProgress = {
         version: 1,
@@ -399,13 +376,13 @@ describe('StorySelectionScreen', () => {
       };
       const dismissed = await render(<StorySelectionScreen />);
       await dismissed.findByText('no_stories_found_create_one');
-      expect(dismissed.queryByText('first_story_cta')).toBeNull();
+      expect(dismissed.queryByTestId('first-story-banner')).toBeNull();
 
       mockUserSettings.showTutorials = false;
       mockUserSettings.tutorialProgress = { version: 1, seen: [] };
       const off = await render(<StorySelectionScreen />);
       await off.findByText('no_stories_found_create_one');
-      expect(off.queryByText('first_story_cta')).toBeNull();
+      expect(off.queryByTestId('first-story-banner')).toBeNull();
     });
   });
 

@@ -13,27 +13,24 @@ import CharacterListItem from '@/src/components/features/list-items/CharacterLis
 import CharacterRelationRows from '@/src/components/features/relations/CharacterRelationRows';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema';
 import type { CharacterSelect } from '../../db/schemas/characters';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
-import { useArcSearchScope } from '../../hooks/useArcSearchScope';
-import { useEntityArcIds } from '../../hooks/useEntityArcIds';
+import { useEntityArcScope } from '../../hooks/useEntityArcScope';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useStoryTagFilterOptions } from '../../hooks/useStoryTagFilterOptions';
 import type { CharacterWithTags } from '../../services/storymanagement/CharacterService';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useCharacterStore } from '../../state/characterStore';
 import { useStoryStore } from '../../state/storyStore';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 const CharactersScreen = () => {
@@ -57,63 +54,33 @@ const CharactersScreen = () => {
     advancedSearchCriteria: storeAdvancedSearchCriteria,
     setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria,
     findMatching,
-    toggleFavorite,
+    handleToggleFavorite,
   } = useEntityListScreen({
     useStore: useCharacterStore,
     collectionKey: 'characters',
     changeEvent: 'character_changed',
   });
 
-  const activeArcId = useStoryStore((state) => state.activeArcId);
-  const arcIdsByCharacter = useEntityArcIds(storyId ?? '', 'character');
-  const inActiveArc = useCallback(
-    (character: CharacterWithTags) =>
-      entityBelongsToActiveArc(arcIdsByCharacter.get(character.id), activeArcId),
-    [arcIdsByCharacter, activeArcId],
-  );
-  // The filters dialog counts what this list would show: the active arc's rows, like the list itself.
-  const previewCount = useCallback(
-    async (criteria: { [key: string]: any }) =>
-      ((await findMatching(criteria)) as CharacterWithTags[]).filter(inActiveArc).length,
-    [findMatching, inActiveArc],
-  );
   const {
     data: visibleCharacters,
     outsideCount,
     expanded: showingOtherArcs,
     toggle: toggleOtherArcs,
-  } = useArcSearchScope(
-    characters as CharacterWithTags[],
-    inActiveArc,
-    listProps.currentSearchTerm,
-  );
+    previewCount,
+  } = useEntityArcScope({
+    storyId,
+    kind: 'character',
+    rows: characters as CharacterWithTags[],
+    searchTerm: listProps.currentSearchTerm,
+    findMatching,
+  });
 
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [relations, setRelations] = useState<CharacterRelation[]>([]);
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
-  const [tagService] = useState(() => createTagService(drizzleDb));
   const { canEdit } = useStoryRole(storyId);
+  const memoizedTagFilterOptions = useStoryTagFilterOptions(storyId);
 
   // Styles are always defined at the top
-
-  // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
-  const fetchTags = useCallback(async () => {
-    if (!storyId) {
-      setAllTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId);
-      setAllTags(fetchedTags);
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    }
-  }, [storyId, tagService]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    fetchTags();
-  }, [fetchTags]);
 
   const fetchRelations = useCallback(async () => {
     if (!storyId) {
@@ -133,14 +100,6 @@ const CharactersScreen = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchRelations` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchRelations();
   }, [fetchRelations]);
-
-  useEffect(() => {
-    const handleTagChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchTags();
-    };
-    entityEventEmitter.on('tag_changed', handleTagChange);
-    return () => entityEventEmitter.off('tag_changed', handleTagChange);
-  }, [fetchTags, storyId]);
 
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
@@ -176,13 +135,6 @@ const CharactersScreen = () => {
       },
     ],
   });
-
-  const handleToggleFavorite = useCallback(
-    async (characterId: string, isFavorite: boolean) => {
-      await toggleFavorite(characterId, isFavorite);
-    },
-    [toggleFavorite],
-  );
 
   const handleViewDetails = useCallback(
     (characterId: string) => {
@@ -230,10 +182,6 @@ const CharactersScreen = () => {
     ),
     [allCharacters, handleToggleFavorite, handleViewDetails, relations],
   );
-
-  const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
-  }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {
     return [

@@ -13,7 +13,7 @@ let mockListState = {
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
 };
 let mockListProps: {
   data: { id: string; title: string }[];
@@ -148,7 +148,7 @@ const freshListState = () => ({
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
 });
 
 describe('NotesScreen', () => {

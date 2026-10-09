@@ -22,7 +22,7 @@ const freshListState = () => ({
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
 });
 
 let mockListState = freshListState();

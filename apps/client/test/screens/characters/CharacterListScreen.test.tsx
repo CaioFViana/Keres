@@ -27,7 +27,7 @@ let mockListState = {
   storyId: 'story-1' as string | undefined,
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
   findMatching: jest.fn() as jest.Mock,
 };
 let mockListProps: {
@@ -230,7 +230,7 @@ const freshListState = () => ({
   storyId: 'story-1' as string | undefined,
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
   findMatching: jest.fn(async () => [] as unknown[]),
 });
 

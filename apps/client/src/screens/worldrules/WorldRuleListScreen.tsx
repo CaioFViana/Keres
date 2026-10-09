@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
@@ -13,18 +13,15 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import WorldRuleListItem from '@/src/components/features/list-items/WorldRuleListItem'; // Will create this later
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema';
 import type { WorldRuleWithTags } from '../../db/schemas/worldRules';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useStoryTagFilterOptions } from '../../hooks/useStoryTagFilterOptions';
 import type {
   MainSystemDrawerParamList,
   WorldRulesStackParamList,
 } from '../../navigation/MainSystemStack'; // Will create/update this later
-import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
@@ -37,14 +34,10 @@ const WorldRulesScreen = () => {
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
 
-  const drizzleDb = useDrizzle();
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
   const route = useRoute();
   const section = (route.params as { section?: WorldPieceSection } | undefined)?.section;
   useBackButtonHandler({ showWebBackButton: true });
-
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const [tagService] = useState(() => createTagService(drizzleDb));
 
   const {
     listProps,
@@ -52,7 +45,7 @@ const WorldRulesScreen = () => {
     isInitialLoading,
     error,
     storyId,
-    toggleFavorite,
+    handleToggleFavorite,
   } = useEntityListScreen({
     useStore: useWorldRuleStore,
     collectionKey: 'worldRules',
@@ -60,33 +53,7 @@ const WorldRulesScreen = () => {
   });
 
   const { canEdit } = useStoryRole(storyId);
-
-  // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
-  const fetchTags = useCallback(async () => {
-    if (!storyId) {
-      setAllTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId);
-      setAllTags(fetchedTags);
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    }
-  }, [storyId, tagService]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    fetchTags();
-  }, [fetchTags]);
-
-  useEffect(() => {
-    const handleTagChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchTags();
-    };
-    entityEventEmitter.on('tag_changed', handleTagChange);
-    return () => entityEventEmitter.off('tag_changed', handleTagChange);
-  }, [fetchTags, storyId]);
+  const memoizedTagFilterOptions = useStoryTagFilterOptions(storyId);
 
   useScreenHeader({
     target: 'parent',
@@ -101,13 +68,6 @@ const WorldRulesScreen = () => {
       },
     ],
   });
-
-  const handleToggleFavorite = useCallback(
-    async (worldRuleId: string, isFavorite: boolean) => {
-      await toggleFavorite(worldRuleId, isFavorite);
-    },
-    [toggleFavorite],
-  );
 
   const handleViewDetails = useCallback(
     (worldRuleId: string) => {
@@ -126,10 +86,6 @@ const WorldRulesScreen = () => {
     ),
     [handleViewDetails, handleToggleFavorite],
   );
-
-  const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
-  }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {
     return [

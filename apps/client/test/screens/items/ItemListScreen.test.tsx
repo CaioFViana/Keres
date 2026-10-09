@@ -27,7 +27,7 @@ let mockListState = {
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
   findMatching: jest.fn() as jest.Mock,
 };
 let mockListProps: {
@@ -294,7 +294,7 @@ const freshListState = () => ({
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
   findMatching: jest.fn(async () => [] as unknown[]),
 });
 

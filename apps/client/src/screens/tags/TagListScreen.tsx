@@ -43,7 +43,7 @@ const TagsScreen = () => {
     isInitialLoading,
     error,
     storyId,
-    toggleFavorite,
+    handleToggleFavorite,
   } = useEntityListScreen({
     useStore: useTagStore,
     collectionKey: 'tags',
@@ -62,13 +62,6 @@ const TagsScreen = () => {
       },
     ],
   });
-
-  const handleToggleFavorite = useCallback(
-    async (tagId: string, isFavorite: boolean) => {
-      await toggleFavorite(tagId, isFavorite);
-    },
-    [toggleFavorite],
-  );
 
   const handleViewDetails = useCallback(
     (tagId: string) => {

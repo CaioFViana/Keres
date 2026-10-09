@@ -193,6 +193,13 @@ export function useEntityListScreen<
     [findMatching],
   );
 
+  const handleToggleFavorite = useCallback(
+    async (entityId: string, isFavorite: boolean) => {
+      await toggleFavorite(entityId, isFavorite);
+    },
+    [toggleFavorite],
+  );
+
   // Spread into GenericFilterSortList; content, available filters and row rendering stay local.
   const listProps: EntityListFilterProps = useMemo(
     () => ({
@@ -256,6 +263,8 @@ export function useEntityListScreen<
     /** The rows the list would hold with other field filters (for a count that has to be narrowed further, as by arc). */
     findMatching,
     toggleFavorite,
+    /** `toggleFavorite` with the awaiting wrapper every list row takes as its favorite handler. */
+    handleToggleFavorite,
     refetch: fetchItems,
   };
 }

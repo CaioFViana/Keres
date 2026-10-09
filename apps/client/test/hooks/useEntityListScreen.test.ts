@@ -336,6 +336,34 @@ describe('previewing the field filters', () => {
   });
 });
 
+describe('favorites', () => {
+  it('toggles through the store and resolves once the store has', async () => {
+    let finishToggle: (() => void) | undefined;
+    store = buildStore({
+      toggleFavorite: jest.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            finishToggle = resolve;
+          }),
+      ),
+    });
+    const { result } = await render();
+
+    let settled = false;
+    const pending = result.current.handleToggleFavorite('t1', true).then(() => {
+      settled = true;
+    });
+
+    expect(store.toggleFavorite).toHaveBeenCalledWith('t1', true);
+    await act(async () => {});
+    expect(settled).toBe(false);
+
+    finishToggle?.();
+    await pending;
+    expect(settled).toBe(true);
+  });
+});
+
 describe('another story', () => {
   it('empties the search box', async () => {
     const { result, rerender } = await render();

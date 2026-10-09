@@ -4,7 +4,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -13,21 +13,18 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { useStoryTagFilterOptions } from '../../hooks/useStoryTagFilterOptions';
 import type {
   MainSystemDrawerParamList,
   NotesStackParamList,
 } from '../../navigation/MainSystemStack';
 import type { NoteWithTags } from '../../services/storymanagement/NoteService';
-import { createTagService } from '../../services/storymanagement/TagService';
 import { useNoteStore } from '../../state/noteStore';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NotesStack'>,
@@ -40,11 +37,7 @@ const NotesScreen = () => {
   const listAnchorRef = useScreenAnchor('Notes', 'list');
   const { t } = useTranslation();
 
-  const drizzleDb = useDrizzle();
   const navigation = useNavigation<NotesScreenNavigationProp>();
-
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const [tagService] = useState(() => createTagService(drizzleDb));
 
   const {
     listProps,
@@ -52,7 +45,7 @@ const NotesScreen = () => {
     isInitialLoading,
     error,
     storyId,
-    toggleFavorite,
+    handleToggleFavorite,
   } = useEntityListScreen({
     useStore: useNoteStore,
     collectionKey: 'notes',
@@ -60,33 +53,7 @@ const NotesScreen = () => {
   });
 
   const { canEdit } = useStoryRole(storyId);
-
-  // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
-  const fetchTags = useCallback(async () => {
-    if (!storyId) {
-      setAllTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId);
-      setAllTags(fetchedTags);
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    }
-  }, [storyId, tagService]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    fetchTags();
-  }, [fetchTags]);
-
-  useEffect(() => {
-    const handleTagChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchTags();
-    };
-    entityEventEmitter.on('tag_changed', handleTagChange);
-    return () => entityEventEmitter.off('tag_changed', handleTagChange);
-  }, [fetchTags, storyId]);
+  const memoizedTagFilterOptions = useStoryTagFilterOptions(storyId);
 
   useScreenHeader({
     target: 'parent',
@@ -101,13 +68,6 @@ const NotesScreen = () => {
       },
     ],
   });
-
-  const handleToggleFavorite = useCallback(
-    async (noteId: string, isFavorite: boolean) => {
-      await toggleFavorite(noteId, isFavorite);
-    },
-    [toggleFavorite],
-  );
 
   const handleViewDetails = useCallback(
     (noteId: string) => {
@@ -126,10 +86,6 @@ const NotesScreen = () => {
     ),
     [handleViewDetails, handleToggleFavorite],
   );
-
-  const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
-  }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {
     return [

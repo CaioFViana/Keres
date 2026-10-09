@@ -27,8 +27,7 @@ import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
-import { useArcSearchScope } from '../../hooks/useArcSearchScope';
-import { useEntityArcIds } from '../../hooks/useEntityArcIds';
+import { useEntityArcScope } from '../../hooks/useEntityArcScope';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -48,7 +47,6 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
-import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
@@ -68,7 +66,7 @@ const ItemListScreen = () => {
   const navigation = useNavigation<ItemsScreenNavigationProp>();
   const { openItemList } = useOpenPresenceMatrixViewer();
 
-  const { listProps, items, isInitialLoading, error, storyId, toggleFavorite, findMatching } =
+  const { listProps, items, isInitialLoading, error, storyId, handleToggleFavorite, findMatching } =
     useEntityListScreen({
       useStore: useItemStore,
       collectionKey: 'items',
@@ -180,8 +178,6 @@ const ItemListScreen = () => {
     };
   }, [loadTags, storyId]);
 
-  const activeArcId = useStoryStore((state) => state.activeArcId);
-  const arcIdsByItem = useEntityArcIds(storyId ?? '', 'item');
   const foundItems = useMemo(
     () =>
       (items as ItemSelect[])
@@ -193,34 +189,25 @@ const ItemListScreen = () => {
         ),
     [activeTagIds, items, tagsByItemId],
   );
-  const inActiveArc = useCallback(
-    (item: ItemSelect) => entityBelongsToActiveArc(arcIdsByItem.get(item.id), activeArcId),
-    [arcIdsByItem, activeArcId],
-  );
-  // The filters dialog counts what this list would show: the active arc's rows, like the list itself.
-  const previewCount = useCallback(
-    async (criteria: { [key: string]: any }) =>
-      ((await findMatching(criteria)) as ItemSelect[]).filter(inActiveArc).length,
-    [findMatching, inActiveArc],
-  );
   const {
     data: itemsWithTags,
     outsideCount,
     expanded: showingOtherArcs,
     toggle: toggleOtherArcs,
-  } = useArcSearchScope(foundItems, inActiveArc, listProps.currentSearchTerm);
+    previewCount,
+  } = useEntityArcScope({
+    storyId,
+    kind: 'item',
+    rows: foundItems,
+    searchTerm: listProps.currentSearchTerm,
+    findMatching,
+  });
 
   const handleViewDetails = useCallback(
     (itemId: string) => {
       navigation.navigate('ItemDetail', { itemId });
     },
     [navigation],
-  );
-  const handleToggleFavorite = useCallback(
-    async (itemId: string, isFavorite: boolean) => {
-      await toggleFavorite(itemId, isFavorite);
-    },
-    [toggleFavorite],
   );
   const handleOpenJourney = useCallback(
     (itemJourneyId: string) => navigation.navigate('ItemJourneyDetail', { itemJourneyId }),

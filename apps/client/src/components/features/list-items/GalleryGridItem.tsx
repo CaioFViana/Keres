@@ -82,6 +82,8 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
   );
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
+  // Without a thumbnail the type's icon is already the preview, so the corner badge would repeat it.
+  const showsThumbnail = hasLocalImage || hasVideoThumbnail;
   // A URL is already usable; an old local row can carry a stale transfer state, but it must not
   // turn that bookkeeping mistake into a misleading status for the person using the gallery.
   const isDownloading = galleryHasFile(mediaType) && media.downloadState === 'pending';
@@ -138,7 +140,8 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
       left: 6,
       right: 6,
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      // The star stays at the right even when the type badge is not shown.
+      justifyContent: showsThumbnail ? 'space-between' : 'flex-end',
       alignItems: 'flex-start',
     },
     badge: {
@@ -158,7 +161,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(media.id)}>
       <View style={styles.preview}>
-        {hasLocalImage || hasVideoThumbnail ? (
+        {showsThumbnail ? (
           <Image
             source={{ uri: resolvedUri as string }}
             style={styles.image}
@@ -180,13 +183,15 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
         )}
 
         <View style={styles.badgeRow}>
-          <View style={styles.badge}>
-            <Ionicons
-              name={iconForGalleryMedia(mediaType, media.mimeType)}
-              size={14}
-              color={colors.text}
-            />
-          </View>
+          {showsThumbnail && (
+            <View style={styles.badge}>
+              <Ionicons
+                name={iconForGalleryMedia(mediaType, media.mimeType)}
+                size={14}
+                color={colors.text}
+              />
+            </View>
+          )}
           {onToggleFavorite && (
             <TouchableOpacity
               style={styles.badge}

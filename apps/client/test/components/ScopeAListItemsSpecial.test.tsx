@@ -265,7 +265,15 @@ describe('GalleryGridItem', () => {
     expect(mockImage).not.toHaveBeenCalled();
     expect(view.getByText('map.png')).toBeTruthy();
     const icons = view.container.queryAll((node: any) => node.type === Ionicons);
-    expect(icons.some((icon) => icon.props.name === 'musical-notes-outline')).toBe(true);
+    // The icon is the preview itself; a corner badge would only repeat it.
+    expect(icons.filter((icon) => icon.props.name === 'musical-notes-outline')).toHaveLength(1);
+  });
+
+  it('badges the type in the corner only when a thumbnail hides the type icon', async () => {
+    const view = await render(<GalleryGridItem media={gallery()} onPress={jest.fn()} />);
+
+    const icons = view.container.queryAll((node: any) => node.type === Ionicons);
+    expect(icons.filter((icon) => icon.props.name === 'image-outline')).toHaveLength(1);
   });
 
   it('keeps a fixed width when given one, so a short last row does not stretch', async () => {

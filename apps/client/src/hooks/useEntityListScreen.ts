@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
 import type { EntityStoreCore } from '../state/createEntityStore';
 import { useStoryStore } from '../state/storyStore';
-import type { FavoriteFilterState, SortDirection } from '../types/entityFilters';
+import type {
+  AdvancedSearchCriteria,
+  FavoriteFilterState,
+  SortDirection,
+} from '../types/entityFilters';
 import { debounce } from '../utils/debounce';
 import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
 
@@ -39,10 +43,10 @@ export type EntityListFilterProps = {
   currentSortValue: string | null;
   onFavoriteFilterChange: (state: FavoriteFilterState) => void;
   currentFavoriteFilterState: FavoriteFilterState;
-  onAdvancedSearch: (criteria: { [key: string]: any }) => void;
+  onAdvancedSearch: (criteria: AdvancedSearchCriteria) => void;
   /** How many rows the list would hold with these field filters - what the filters dialog shows before it applies. */
-  onPreviewCount: (criteria: { [key: string]: any }) => Promise<number>;
-  currentAdvancedSearchCriteria: { [key: string]: any };
+  onPreviewCount: (criteria: AdvancedSearchCriteria) => Promise<number>;
+  currentAdvancedSearchCriteria: AdvancedSearchCriteria;
   isLoading: boolean;
 };
 
@@ -189,7 +193,7 @@ export function useEntityListScreen<
   );
 
   const previewCount = useCallback(
-    async (criteria: { [key: string]: any }) => (await findMatching(criteria)).length,
+    async (criteria: AdvancedSearchCriteria) => (await findMatching(criteria)).length,
     [findMatching],
   );
 

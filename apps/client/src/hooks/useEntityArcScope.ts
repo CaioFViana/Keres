@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import type { ArcMembershipKind } from '../services/storymanagement/StoryArcService';
 import { useStoryStore } from '../state/storyStore';
+import type { AdvancedSearchCriteria } from '../types/entityFilters';
 import { entityBelongsToActiveArc } from '../utils/storyArcFilter';
 import { useArcSearchScope } from './useArcSearchScope';
 import { useEntityArcIds } from './useEntityArcIds';
@@ -21,7 +22,7 @@ export function useEntityArcScope<T extends { id: string }>({
   kind: ArcMembershipKind;
   rows: T[];
   searchTerm: string | undefined;
-  findMatching: (criteria: { [key: string]: any }) => Promise<unknown>;
+  findMatching: (criteria: AdvancedSearchCriteria) => Promise<unknown>;
 }) {
   const activeArcId = useStoryStore((state) => state.activeArcId);
   const arcIds = useEntityArcIds(storyId ?? '', kind);
@@ -31,7 +32,7 @@ export function useEntityArcScope<T extends { id: string }>({
   );
   // The filters dialog counts what this list would show: the active arc's rows, like the list itself.
   const previewCount = useCallback(
-    async (criteria: { [key: string]: any }) =>
+    async (criteria: AdvancedSearchCriteria) =>
       ((await findMatching(criteria)) as T[]).filter(inActiveArc).length,
     [findMatching, inActiveArc],
   );

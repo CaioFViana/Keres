@@ -3,6 +3,7 @@ import { DEFAULT_ARC_MEDIUM, STORY_OWNER_ONLY_FIELDS } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryInsert, StorySelect } from '../../db/schema';
+import type { ServerSelect } from '../../db/schemas/servers';
 import { choices, comments, favorites, plots, servers, stories } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
@@ -107,6 +108,28 @@ export interface StoryService {
   exportFullStory(storyId: string): Promise<FullStoryExportType>;
 }
 
+/**
+ * Asks a story's server to delete its copy and returns the conflict the server reported, if any. The
+ * route answers 200 and reports each operation's outcome in the body, so a refusal is only seen here.
+ */
+async function requestServerStoryDelete(server: ServerSelect, storyId: string) {
+  const client = createKeresAxiosInstance({ baseURL: server.url });
+  client.setTokenProvider(authTokenManager);
+  client.setActiveServer(server);
+  const response = await client.post(`/sync/${storyId}`, [
+    {
+      entity: 'Story',
+      id: storyId,
+      type: 'delete',
+    },
+  ]);
+  return (
+    response.data?.conflicts as
+      | { entity: string; entityId: string; message?: string; reason?: string }[]
+      | undefined
+  )?.find((c) => c.entity === 'Story' && c.entityId === storyId);
+}
+
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
   const serverService = createServerService(db);
   const favoriteService = createFavoriteService(db);
@@ -118,22 +141,25 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
     const server = serverId ? await serverService.getServerById(serverId) : undefined;
     return server?.idUser || currentUserId;
   };
+  /** The story with this user's favourite flag applied (a story is favourited under its own id). */
+  const withFavoriteFlag = async (
+    story: StorySelect,
+    currentLocalUserId: string,
+  ): Promise<StorySelect> => ({
+    ...story,
+    isFavorite: await favoriteService.isFavorite(
+      story.id,
+      story.id,
+      'Story',
+      currentLocalUserId,
+      story.isFavorite,
+    ),
+  });
   return {
     async getAllStories(currentLocalUserId?: string): Promise<StorySelect[]> {
       const rows = await db.select().from(stories).where(eq(stories.isDeleted, false)).all();
       if (!currentLocalUserId) return rows;
-      return Promise.all(
-        rows.map(async (story) => ({
-          ...story,
-          isFavorite: await favoriteService.isFavorite(
-            story.id,
-            story.id,
-            'Story',
-            currentLocalUserId,
-            story.isFavorite,
-          ),
-        })),
-      );
+      return Promise.all(rows.map((story) => withFavoriteFlag(story, currentLocalUserId)));
     },
 
     async getStoryById(
@@ -146,16 +172,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         .where(and(eq(stories.id, storyId), eq(stories.isDeleted, false)))
         .get();
       if (!story || !currentLocalUserId) return story;
-      return {
-        ...story,
-        isFavorite: await favoriteService.isFavorite(
-          story.id,
-          story.id,
-          'Story',
-          currentLocalUserId,
-          story.isFavorite,
-        ),
-      };
+      return withFavoriteFlag(story, currentLocalUserId);
     },
 
     async createStory(
@@ -463,9 +480,6 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         });
         if (server?.url) {
           try {
-            const client = createKeresAxiosInstance({ baseURL: server.url });
-            client.setTokenProvider(authTokenManager);
-            client.setActiveServer(server);
             // No `version`: the local `stories.version` was never in lockstep with the
             // server's, so sending the number from here would make OCC refuse the delete. The server
             // fills in the current version when the owner omits the base (for a Story delete only).
@@ -474,18 +488,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             // device/emulator clock has no guarantee whatsoever of being in sync with the
             // server's. Omitting it lets the server use its own `new Date()` - the only
             // clock that check can safely compare against.
-            const response = await client.post(`/sync/${storyId}`, [
-              {
-                entity: 'Story',
-                id: storyId,
-                type: 'delete',
-              },
-            ]);
-            const conflict = (
-              response.data?.conflicts as
-                | { entity: string; entityId: string; message?: string; reason?: string }[]
-                | undefined
-            )?.find((c) => c.entity === 'Story' && c.entityId === storyId);
+            const conflict = await requestServerStoryDelete(server, storyId);
             if (conflict) {
               console.warn(
                 `Server rejected deletion for story ${storyId} (proceeding with local deletion regardless): ${conflict.message || conflict.reason}`,
@@ -580,25 +583,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // its own clock (`parseOperationTime`), and a device/emulator's clock has no guarantee
       // of being in sync with the server's. Omitting it lets the server fall back to its own
       // `new Date()` - the only clock this check can safely compare against.
-      const client = createKeresAxiosInstance({ baseURL: server.url });
-      client.setTokenProvider(authTokenManager);
-      client.setActiveServer(server);
-      const response = await client.post(`/sync/${storyId}`, [
-        {
-          entity: 'Story',
-          id: storyId,
-          type: 'delete',
-        },
-      ]);
-
       // The route always answers 200 and reports per-operation outcome in the body - a
       // rejected operation never throws, so this check is the only way to actually know
       // whether the server's copy is gone.
-      const conflict = (
-        response.data?.conflicts as
-          | { entity: string; entityId: string; message?: string; reason?: string }[]
-          | undefined
-      )?.find((c) => c.entity === 'Story' && c.entityId === storyId);
+      const conflict = await requestServerStoryDelete(server, storyId);
       if (conflict) {
         throw new Error(
           `Server rejected the delete: ${conflict.message || conflict.reason || 'unknown reason'}`,

@@ -28,9 +28,9 @@ interface AdvancedSearchModalProps {
   entityName: string;
   isVisible: boolean;
   onClose: () => void;
-  onSearch: (criteria: { [key: string]: any }) => void;
+  onSearch: (criteria: AdvancedSearchCriteria) => void;
   storyId: string;
-  initialCriteria?: { [key: string]: any };
+  initialCriteria?: AdvancedSearchCriteria;
   scopes?: AdvancedSearchScope[];
   /**
    * Native fields (by name, unprefixed) the list already filters another way and that are left out of

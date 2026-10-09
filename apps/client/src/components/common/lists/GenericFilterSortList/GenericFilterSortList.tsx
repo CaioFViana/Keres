@@ -11,7 +11,7 @@ import type { AdvancedSearchScope } from '@/src/components/common/modals/Advance
 import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import type { FavoriteFilterState } from '../../../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../../../types/entityFilters';
 import ActiveFilterChips from './ActiveFilterChips';
 import { GuidedEmptyState, NoResultsState } from './ListEmptyStates';
 import type { GuidedEmptyStateAction } from './ListEmptyStates';
@@ -67,10 +67,10 @@ interface GenericFilterSortListProps<T> {
   // Advanced Search Props
   entityName?: string;
   storyId?: string;
-  onAdvancedSearch?: (criteria: { [key: string]: any }) => void;
+  onAdvancedSearch?: (criteria: AdvancedSearchCriteria) => void;
   /** Rows the list would hold with given field filters; the filters dialog shows it on its apply button. */
-  onPreviewCount?: (criteria: { [key: string]: any }) => Promise<number>;
-  currentAdvancedSearchCriteria?: { [key: string]: any };
+  onPreviewCount?: (criteria: AdvancedSearchCriteria) => Promise<number>;
+  currentAdvancedSearchCriteria?: AdvancedSearchCriteria;
   advancedSearchScopes?: AdvancedSearchScope[];
   disableTagFilter?: boolean;
   isLoading?: boolean;
@@ -237,7 +237,7 @@ const GenericFilterSortList = <T,>({
     [],
   );
   const handleAdvancedSearchSubmit = useCallback(
-    (criteria: { [key: string]: any }) => {
+    (criteria: AdvancedSearchCriteria) => {
       onAdvancedSearch && onAdvancedSearch(criteria);
       setIsAdvancedSearchModalVisible(false);
     },

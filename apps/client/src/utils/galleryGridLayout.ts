@@ -1,5 +1,7 @@
 /** The widest a gallery tile grows before another column is added. */
 const MAX_TILE = 240;
+/** The narrowest a card gets; below it the grid drops to one column. */
+const MIN_CARD = 150;
 const MIN_COLUMNS = 2;
 /** `GalleryGridItem` keeps a 5 px margin on each side. */
 const TILE_MARGIN = 5;
@@ -25,7 +27,10 @@ export interface GalleryGridLayout {
 export function galleryGridLayout(listWidth: number, scrollbar = 0): GalleryGridLayout {
   const sides = 2 * (LIST_PADDING + GALLERY_ROW_PADDING);
   const inner = Math.max(0, listWidth - sides - scrollbar);
-  const numColumns = Math.max(MIN_COLUMNS, Math.ceil(inner / MAX_TILE));
-  const cardWidth = Math.floor(inner / numColumns) - TILE_MARGIN * 2;
+  const wanted = Math.max(MIN_COLUMNS, Math.ceil(inner / MAX_TILE));
+  // On a very small screen one wide tile beats two cramped ones.
+  const fitting = Math.max(1, Math.floor(inner / (MIN_CARD + TILE_MARGIN * 2)));
+  const numColumns = Math.min(wanted, fitting);
+  const cardWidth = Math.max(0, Math.floor(inner / numColumns) - TILE_MARGIN * 2);
   return { numColumns, cardWidth };
 }

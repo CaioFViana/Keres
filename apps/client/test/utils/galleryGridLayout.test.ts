@@ -3,7 +3,8 @@ import { galleryGridLayout } from '../../src/utils/galleryGridLayout';
 describe('galleryGridLayout', () => {
   it('shows two columns on a phone, at least', () => {
     expect(galleryGridLayout(360)).toEqual({ numColumns: 2, cardWidth: 155 });
-    expect(galleryGridLayout(0).numColumns).toBe(2);
+    // an unmeasured list does not make a negative card
+    expect(galleryGridLayout(0)).toEqual({ numColumns: 1, cardWidth: 0 });
   });
 
   it('adds columns as the list widens, so tiles never grow past the maximum', () => {
@@ -25,8 +26,14 @@ describe('galleryGridLayout', () => {
     }
   });
 
+  it('drops to one wide column when two would be cramped', () => {
+    expect(galleryGridLayout(320)).toEqual({ numColumns: 1, cardWidth: 280 });
+    expect(galleryGridLayout(349).numColumns).toBe(1);
+    expect(galleryGridLayout(350)).toEqual({ numColumns: 2, cardWidth: 150 });
+  });
+
   it('never makes a tile narrower than it is on a phone', () => {
-    for (let width = 360; width <= 3840; width += 40) {
+    for (let width = 200; width <= 3840; width += 10) {
       expect(galleryGridLayout(width).cardWidth).toBeGreaterThanOrEqual(150);
     }
   });

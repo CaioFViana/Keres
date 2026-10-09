@@ -6,7 +6,7 @@ import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/Co
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { SKETCH_PALETTE } from '../../../state/sketchToolStore';
 import { useTheme } from '../../../theme';
-import { space, type } from '../../../theme/tokens';
+import { space, typography } from '../../../theme/tokens';
 
 interface SketchColorSheetProps {
   color: string;
@@ -26,7 +26,7 @@ const SketchColorSheet: React.FC<SketchColorSheetProps> = ({
   const { colors } = useTheme();
   const [custom, setCustom] = useState(false);
   const styles = StyleSheet.create({
-    title: { ...type.title, color: colors.text, marginBottom: space.lg },
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
     label: {
       color: colors.textSecondary,
       fontSize: 12,

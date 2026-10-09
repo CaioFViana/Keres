@@ -3,7 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { StorySchemaEntityType } from '@keres/shared';
 import { AttributeType, decodeAttributeValue } from '@keres/shared';
 import type { StorySchemaFieldSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 
 export type CustomAttributeValues = Record<string, string | null>;
@@ -65,22 +67,7 @@ const CustomAttributeFields: React.FC<CustomAttributeFieldsProps> = ({
   values,
   onChange,
 }) => {
-  const { colors } = useTheme();
-
-  const styles = StyleSheet.create({
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginTop: 15,
-      marginBottom: 5,
-      color: colors.text,
-    },
-    description: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginBottom: 5,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (fields.length === 0) {
     return null;
@@ -109,5 +96,20 @@ const CustomAttributeFields: React.FC<CustomAttributeFieldsProps> = ({
     </>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    label: {
+      ...typography.sectionTitle,
+      marginTop: 15,
+      marginBottom: 5,
+      color: colors.text,
+    },
+    description: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: 5,
+    },
+  });
 
 export default CustomAttributeFields;

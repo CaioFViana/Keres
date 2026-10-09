@@ -6,7 +6,9 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import DatePickerModal from '@/src/components/common/inputs/DatePickerInput/DatePickerModal';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 
 interface DatePickerInputProps {
   /** Canonical `YYYY-MM-DD` / `YYYY-MM-DDTHH:mm`, or `null`. */
@@ -50,43 +52,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
     setModalVisible(false);
   };
 
-  const styles = StyleSheet.create({
-    // A single border, here. `commonInputStyles.input` is NOT applied to the container nor to the inner
-    // TextInput: it already brings a border + height, and added to this wrapper's border it drew two nested
-    // frames (and a box that was too tall, with `height: 50` on top of `customComponentInput`, which still
-    // adds `paddingBottom: 50`).
-    container: {
-      marginBottom: 10,
-      width: '100%',
-    },
-    inputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 5,
-      backgroundColor: colors.surface,
-      height: 50,
-      overflow: 'hidden',
-    },
-    calendarButton: {
-      width: 46,
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    textInput: {
-      flex: 1,
-      height: '100%',
-      color: colors.text,
-      fontSize: 16,
-      paddingHorizontal: 0,
-      paddingRight: 10,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
-      textTransform: 'capitalize',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={[styles.container, style]}>
@@ -120,5 +86,44 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    // A single border, here. `commonInputStyles.input` is NOT applied to the container nor to the inner
+    // TextInput: it already brings a border + height, and added to this wrapper's border it drew two nested
+    // frames (and a box that was too tall, with `height: 50` on top of `customComponentInput`, which still
+    // adds `paddingBottom: 50`).
+    container: {
+      marginBottom: 10,
+      width: '100%',
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 5,
+      backgroundColor: colors.surface,
+      height: 50,
+      overflow: 'hidden',
+    },
+    calendarButton: {
+      width: 46,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    textInput: {
+      ...typography.bodyLarge,
+      flex: 1,
+      height: '100%',
+      color: colors.text,
+      paddingHorizontal: 0,
+      paddingRight: 10,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      textTransform: 'capitalize',
+    },
+  });
 
 export default DatePickerInput;

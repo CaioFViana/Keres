@@ -3,9 +3,11 @@ import type { StoryPlan } from '@keres/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { typography } from '../../../../theme/tokens';
 import { getEntityTypeBadge } from '../../../../utils/entityTypeBadge';
 import { planUsageLevel } from '../../../../utils/planUsage';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 type SortKey = 'name' | 'count';
 type SortDirection = 'asc' | 'desc';
@@ -78,77 +80,7 @@ const EntityCountCard = ({
     return level === 'alert' ? colors.error : level === 'warning' ? colors.accent : colors.primary;
   };
 
-  const styles = StyleSheet.create({
-    card: {
-      backgroundColor: colors.card,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 15,
-      marginBottom: 14,
-    },
-    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    titleIcon: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primaryContainer,
-    },
-    title: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '700' },
-    totalNumber: { color: colors.primary, fontSize: 26, fontWeight: '800' },
-    hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginTop: 10 },
-    plan: {
-      marginTop: 12,
-      padding: 12,
-      borderRadius: 8,
-      backgroundColor: colors.surface,
-      gap: 10,
-    },
-    planTitle: { color: colors.text, fontSize: 14, fontWeight: '700' },
-    usageHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-    usageLabel: { color: colors.textSecondary, fontSize: 13, flex: 1 },
-    usageValue: { color: colors.text, fontSize: 13, fontWeight: '700' },
-    track: { height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' },
-    fill: { height: '100%', borderRadius: 3 },
-    headerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 14,
-      paddingBottom: 6,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    headerButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
-    headerText: {
-      color: colors.textSecondary,
-      fontSize: 12,
-      fontWeight: '700',
-      letterSpacing: 0.6,
-    },
-    headerTextActive: { color: colors.primary },
-    row: { paddingVertical: 7 },
-    rowTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    rowIcon: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    rowLabel: { flex: 1, color: colors.text, fontSize: 14 },
-    rowValue: { color: colors.text, fontSize: 15, fontWeight: '700' },
-    rowTrack: {
-      height: 3,
-      borderRadius: 2,
-      backgroundColor: colors.border,
-      marginTop: 6,
-      overflow: 'hidden',
-    },
-    empty: { color: colors.textSecondary, fontSize: 14, paddingVertical: 14, textAlign: 'center' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const usage = (label: string, used: number, limit: number | null, testID: string) => (
     <View testID={testID}>
@@ -282,5 +214,78 @@ const EntityCountCard = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 14,
+    },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    titleIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+    },
+    title: { ...typography.sectionTitle, flex: 1, color: colors.text },
+    totalNumber: { color: colors.primary, fontSize: 26, fontWeight: '800' },
+    hint: { ...typography.hint, color: colors.textSecondary, marginTop: 10 },
+    plan: {
+      marginTop: 12,
+      padding: 12,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      gap: 10,
+    },
+    planTitle: { color: colors.text, fontSize: 14, fontWeight: '700' },
+    usageHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    usageLabel: { color: colors.textSecondary, fontSize: 13, flex: 1 },
+    usageValue: { color: colors.text, fontSize: 13, fontWeight: '700' },
+    track: { height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' },
+    fill: { height: '100%', borderRadius: 3 },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 14,
+      paddingBottom: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerButton: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+    headerText: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 0.6,
+    },
+    headerTextActive: { color: colors.primary },
+    row: { paddingVertical: 7 },
+    rowTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    rowIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowLabel: { flex: 1, color: colors.text, fontSize: 14 },
+    rowValue: { color: colors.text, fontSize: 15, fontWeight: '700' },
+    rowTrack: {
+      height: 3,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginTop: 6,
+      overflow: 'hidden',
+    },
+    empty: { color: colors.textSecondary, fontSize: 14, paddingVertical: 14, textAlign: 'center' },
+  });
 
 export default EntityCountCard;

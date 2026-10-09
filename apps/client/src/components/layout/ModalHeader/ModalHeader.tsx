@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { layout } from '../../../theme/layout';
-import { space, type } from '../../../theme/tokens';
+import { space, typography } from '../../../theme/tokens';
 
 interface ModalHeaderProps {
   title: string;
@@ -43,13 +43,13 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
   return (
     <View style={[layout.row, styles.header]}>
       <View style={layout.fill}>
-        <Text accessibilityRole="header" style={[type.title, { color: colors.text }]}>
+        <Text accessibilityRole="header" style={[typography.title, { color: colors.text }]}>
           {title}
         </Text>
         {subtitle ? (
           <Text
             style={[
-              type.caption,
+              typography.caption,
               styles.subtitle,
               { color: subtitleColor ?? colors.textSecondary },
             ]}

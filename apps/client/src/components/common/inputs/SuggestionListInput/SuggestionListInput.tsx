@@ -2,12 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { typography } from '../../../../theme/tokens';
 import { getContrastTextColor } from '@keres/shared';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SuggestionCatalogModal from '../SuggestionCatalogModal/SuggestionCatalogModal';
 import { useSuggestionCatalog } from '../SuggestionCatalogModal/useSuggestionCatalog';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface SuggestionListInputProps {
   values: string[];
@@ -86,91 +88,7 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
   const pillBackgroundColor = colors.primaryContainer;
   const pillTextColor = getContrastTextColor(pillBackgroundColor);
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: 10,
-    },
-    chipRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      marginBottom: 6,
-      // Spacing between pills belongs to the container: with it on each pill, the last row still charged its
-      // bottom margin and left dead space under the row.
-      gap: 8,
-    },
-    pill: {
-      flexDirection: 'row',
-      borderRadius: 15,
-      paddingVertical: 5,
-      paddingHorizontal: 10,
-      alignItems: 'center',
-      backgroundColor: pillBackgroundColor,
-    },
-    pillText: {
-      fontSize: 14,
-      color: pillTextColor,
-    },
-    removeButton: {
-      marginLeft: 6,
-    },
-    inputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 5,
-      backgroundColor: colors.surface,
-      minHeight: 50,
-    },
-    draftInput: {
-      flex: 1,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
-      marginBottom: 0,
-    },
-    suggestionButton: {
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      backgroundColor: colors.primary,
-      marginLeft: -1,
-      alignSelf: 'stretch',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    suggestionItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    suggestionText: {
-      color: colors.text,
-      fontSize: 16,
-      flex: 1,
-    },
-    suggestionMeta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginLeft: 8,
-    },
-    // The same reason as the options field: the reserved checkmark stops the row from growing when it is
-    // ticked.
-    suggestionCheck: {
-      width: 20,
-      height: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    suggestionCount: {
-      color: colors.textSecondary,
-      fontSize: 16,
-      marginRight: 8,
-    },
-  });
+  const styles = useThemedStyles(createStyles, [pillBackgroundColor, pillTextColor]);
 
   return (
     <View style={[styles.container, style]}>
@@ -256,5 +174,95 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
     </View>
   );
 };
+
+const createStyles = (
+  colors: ThemeColors,
+  [pillBackgroundColor, pillTextColor]: [string, string],
+) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: 10,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      marginBottom: 6,
+      // Spacing between pills belongs to the container: with it on each pill, the last row still charged its
+      // bottom margin and left dead space under the row.
+      gap: 8,
+    },
+    pill: {
+      flexDirection: 'row',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      alignItems: 'center',
+      backgroundColor: pillBackgroundColor,
+    },
+    pillText: {
+      fontSize: 14,
+      color: pillTextColor,
+    },
+    removeButton: {
+      marginLeft: 6,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 5,
+      backgroundColor: colors.surface,
+      minHeight: 50,
+    },
+    draftInput: {
+      flex: 1,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      marginBottom: 0,
+    },
+    suggestionButton: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      backgroundColor: colors.primary,
+      marginLeft: -1,
+      alignSelf: 'stretch',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    suggestionItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    suggestionText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      flex: 1,
+    },
+    suggestionMeta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
+    },
+    // The same reason as the options field: the reserved checkmark stops the row from growing when it is
+    // ticked.
+    suggestionCheck: {
+      width: 20,
+      height: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    suggestionCount: {
+      ...typography.bodyLarge,
+      color: colors.textSecondary,
+      marginRight: 8,
+    },
+  });
 
 export default SuggestionListInput;

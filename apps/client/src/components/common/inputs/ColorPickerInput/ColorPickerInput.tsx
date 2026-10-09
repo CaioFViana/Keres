@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
 
@@ -30,53 +32,7 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
     setModalVisible(false);
   };
 
-  const styles = StyleSheet.create({
-    // A single border. `commonInputStyles.input` does NOT go here: it already brings a border +
-    // `height: 50`, and added to this wrapper's border it drew two nested frames - and taller than it
-    // should be, because `customComponentInput` still adds `paddingBottom: 50`. `marginBottom: 0` like
-    // `commonInputStyles.input`: the forms' vertical rhythm comes from the next label's `marginTop`, not
-    // from the field.
-    container: {
-      marginBottom: 0,
-      width: '100%',
-    },
-    inputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 5,
-      backgroundColor: colors.surface,
-      height: 50,
-      overflow: 'hidden',
-    },
-    colorSwatchButton: {
-      width: 50,
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: currentColor || colors.border,
-    },
-    colorSwatchInner: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.text,
-    },
-    textInput: {
-      flex: 1,
-      height: '100%',
-      color: colors.text,
-      fontSize: 16,
-      paddingHorizontal: 10,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
-    },
-    modalView: {
-      alignItems: 'center',
-    },
-  });
+  const styles = useThemedStyles(createStyles, [currentColor]);
 
   return (
     <View style={[styles.container, style]}>
@@ -115,5 +71,54 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors, [currentColor]: [string]) =>
+  StyleSheet.create({
+    // A single border. `commonInputStyles.input` does NOT go here: it already brings a border +
+    // `height: 50`, and added to this wrapper's border it drew two nested frames - and taller than it
+    // should be, because `customComponentInput` still adds `paddingBottom: 50`. `marginBottom: 0` like
+    // `commonInputStyles.input`: the forms' vertical rhythm comes from the next label's `marginTop`, not
+    // from the field.
+    container: {
+      marginBottom: 0,
+      width: '100%',
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 5,
+      backgroundColor: colors.surface,
+      height: 50,
+      overflow: 'hidden',
+    },
+    colorSwatchButton: {
+      width: 50,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: currentColor || colors.border,
+    },
+    colorSwatchInner: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.text,
+    },
+    textInput: {
+      ...typography.bodyLarge,
+      flex: 1,
+      height: '100%',
+      color: colors.text,
+      paddingHorizontal: 10,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+    },
+    modalView: {
+      alignItems: 'center',
+    },
+  });
 
 export default ColorPickerInput;

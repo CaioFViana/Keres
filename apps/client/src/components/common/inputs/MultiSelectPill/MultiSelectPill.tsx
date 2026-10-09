@@ -13,7 +13,9 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 export interface MultiSelectOption {
   label: string;
@@ -222,200 +224,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   const showGroupPicker = !activeGroup && effectiveGroups.length > 1;
   const singleValueAppearance = singleSelect || maxSelections === 1;
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: 10,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
-    pillContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      padding: 10,
-      minHeight: 50,
-      borderColor: colors.primary,
-      borderWidth: 1,
-    },
-    /*
-     * Pills wrap here; the trailing icon stays outside this box. Putting `flexWrap` and
-     * `marginLeft: 'auto'` on the same row made the icon drop to a second line when a pill
-     * appeared, which grew the field a few pixels (relation map / boards toolbars).
-     */
-    triggerContent: {
-      flex: 1,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      minWidth: 0,
-      // Spacing between pills belongs to this wrap box, not to each pill (a per-pill margin still
-      // charged the last item and made the field grow when the first option was chosen).
-      gap: 8,
-    },
-    singleValueContent: {
-      flexWrap: 'nowrap',
-    },
-    singleValueContainer: {
-      borderRadius: 5,
-    },
-    triggerIcon: {
-      width: 24,
-      height: 24,
-      marginLeft: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    },
-    singleValueText: {
-      color: colors.text,
-      fontSize: 16,
-      flexShrink: 1,
-    },
-    disabled: {
-      opacity: 0.4,
-    },
-    pill: {
-      flexDirection: 'row',
-      borderRadius: 15,
-      paddingVertical: 5,
-      paddingHorizontal: 10,
-      alignItems: 'center',
-    },
-    pillText: {
-      fontSize: 14,
-    },
-    placeholderText: {
-      color: colors.textSecondary,
-      fontSize: 16,
-    },
-    selectionSummary: {
-      color: colors.text,
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    modalHeaderTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    backButton: {
-      padding: 5,
-      marginRight: 5,
-    },
-    modalTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      flexShrink: 1,
-    },
-    closeButton: {
-      padding: 5,
-    },
-    searchInput: {
-      marginHorizontal: 15,
-      marginTop: 12,
-      marginBottom: 4,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      color: colors.text,
-      fontSize: 15,
-    },
-    groupContainer: {
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    groupContainerDisabled: {
-      opacity: 0.4,
-    },
-    groupIcon: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    groupTextWrap: {
-      flex: 1,
-    },
-    groupLabel: {
-      fontSize: 16,
-      color: colors.text,
-    },
-    groupCount: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-    optionContainer: {
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    optionDisabled: {
-      opacity: 0.45,
-    },
-    optionLeading: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-      gap: 10,
-    },
-    optionColor: {
-      width: 16,
-      height: 16,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    optionIcon: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    optionText: {
-      fontSize: 16,
-      color: colors.text,
-    },
-    // The check's space is always reserved: appearing only when ticked, it pushed the row a few pixels
-    // down, and the whole list danced with every choice.
-    optionCheck: {
-      width: 24,
-      height: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    noOptionsText: {
-      padding: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={trigger ? style : [styles.container, style]}>
@@ -632,5 +441,198 @@ export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
     trigger={trigger}
   />
 );
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: 10,
+    },
+    label: {
+      ...typography.sectionTitle,
+      color: colors.text,
+      marginBottom: 5,
+    },
+    pillContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 10,
+      minHeight: 50,
+      borderColor: colors.primary,
+      borderWidth: 1,
+    },
+    /*
+     * Pills wrap here; the trailing icon stays outside this box. Putting `flexWrap` and
+     * `marginLeft: 'auto'` on the same row made the icon drop to a second line when a pill
+     * appeared, which grew the field a few pixels (relation map / boards toolbars).
+     */
+    triggerContent: {
+      flex: 1,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      minWidth: 0,
+      // Spacing between pills belongs to this wrap box, not to each pill (a per-pill margin still
+      // charged the last item and made the field grow when the first option was chosen).
+      gap: 8,
+    },
+    singleValueContent: {
+      flexWrap: 'nowrap',
+    },
+    singleValueContainer: {
+      borderRadius: 5,
+    },
+    triggerIcon: {
+      width: 24,
+      height: 24,
+      marginLeft: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    singleValueText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    disabled: {
+      opacity: 0.4,
+    },
+    pill: {
+      flexDirection: 'row',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      alignItems: 'center',
+    },
+    pillText: {
+      fontSize: 14,
+    },
+    placeholderText: {
+      ...typography.bodyLarge,
+      color: colors.textSecondary,
+    },
+    selectionSummary: {
+      ...typography.label,
+      color: colors.text,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalHeaderTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexShrink: 1,
+    },
+    backButton: {
+      padding: 5,
+      marginRight: 5,
+    },
+    modalTitle: {
+      ...typography.title,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    closeButton: {
+      padding: 5,
+    },
+    searchInput: {
+      marginHorizontal: 15,
+      marginTop: 12,
+      marginBottom: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      color: colors.text,
+      fontSize: 15,
+    },
+    groupContainer: {
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    groupContainerDisabled: {
+      opacity: 0.4,
+    },
+    groupIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    groupTextWrap: {
+      flex: 1,
+    },
+    groupLabel: {
+      ...typography.bodyLarge,
+      color: colors.text,
+    },
+    groupCount: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    optionContainer: {
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    optionDisabled: {
+      opacity: 0.45,
+    },
+    optionLeading: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 10,
+    },
+    optionColor: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    optionIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    optionText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+    },
+    // The check's space is always reserved: appearing only when ticked, it pushed the row a few pixels
+    // down, and the whole list danced with every choice.
+    optionCheck: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    noOptionsText: {
+      padding: 15,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+  });
 
 export default MultiSelectPill;

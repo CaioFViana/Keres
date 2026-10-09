@@ -47,9 +47,9 @@ export const fontSize = {
 
 /**
  * Text styles without a colour (the colour comes from the palette in the component): the sizes and weights
- * that kept being written out by hand. Use as `[type.title, { color: colors.text }]`.
+ * that kept being written out by hand. Use as `[typography.title, { color: colors.text }]`.
  */
-export const type = {
+export const typography = {
   caption: { fontSize: fontSize.sm },
   hint: { fontSize: fontSize.md, lineHeight: 18 },
   body: { fontSize: fontSize.base, lineHeight: 20 },

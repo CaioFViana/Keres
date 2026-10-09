@@ -12,7 +12,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonChipStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useTheme } from '../../../theme';
-import { space, type } from '../../../theme/tokens';
+import { space, typography } from '../../../theme/tokens';
 
 interface Props {
   visible: boolean;
@@ -54,7 +54,7 @@ const SketchCreateModal: React.FC<Props> = ({
     }
   }
   const styles = StyleSheet.create({
-    title: { ...type.title, color: colors.text, marginBottom: space.lg },
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
     label: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
     presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
     ...getCommonChipStyles(colors),

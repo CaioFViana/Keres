@@ -4,7 +4,9 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface ReorderModalProps<T> {
   isVisible: boolean;
@@ -75,43 +77,7 @@ function ReorderModal<T>({
     onClose();
   }, [onClose, onReorderConfirm, reorderedItems]);
 
-  const styles = StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    content: {
-      width: '90%',
-      maxHeight: '80%',
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: 20,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 20,
-    },
-    title: { flex: 1, fontSize: 20, fontWeight: 'bold', color: colors.text },
-    item: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: 10,
-      paddingHorizontal: 5,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    itemLabel: { flex: 1, fontSize: 16, color: colors.text },
-    controls: { flexDirection: 'row' },
-    controlButton: { padding: 8 },
-    buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <Modal animationType="fade" transparent visible={isVisible} onRequestClose={onClose}>
@@ -187,5 +153,44 @@ function ReorderModal<T>({
     </Modal>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    content: {
+      width: '90%',
+      maxHeight: '80%',
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 20,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 20,
+    },
+    title: { ...typography.heading, flex: 1, color: colors.text },
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 10,
+      paddingHorizontal: 5,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    itemLabel: { ...typography.bodyLarge, flex: 1, color: colors.text },
+    controls: { flexDirection: 'row' },
+    controlButton: { padding: 8 },
+    buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
+  });
 
 export default ReorderModal;

@@ -19,7 +19,9 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface DatePickerModalProps {
   /** Canonical value, or anything else - a value this picker cannot read is kept, not erased. */
@@ -167,107 +169,7 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
     onSelect(formatAttributeDate(currentParts));
   };
 
-  const styles = StyleSheet.create({
-    container: { backgroundColor: colors.background, flexShrink: 1 },
-    content: { padding: 20 },
-    // Close and confirm live in the header, like the color and icon pickers: no bottom
-    // action row wasting vertical room on short windows.
-    header: {
-      width: '100%',
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    titleWrap: {
-      flex: 1,
-      alignItems: 'center',
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      textAlign: 'center',
-    },
-    headerButton: {
-      padding: 5,
-    },
-    preview: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors.primary,
-      textAlign: 'center',
-      marginBottom: 16,
-      textTransform: 'capitalize',
-    },
-    navRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 12,
-    },
-    navButton: { padding: 8 },
-    monthLabel: {
-      flex: 1,
-      textAlign: 'center',
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      textTransform: 'capitalize',
-    },
-    yearRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-    yearLabel: { color: colors.textSecondary, fontSize: 13, marginRight: 8 },
-    yearInput: { width: 90, height: 40, marginBottom: 0 },
-    quickActions: { flexDirection: 'row', marginLeft: 'auto' },
-    iconButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginLeft: 8,
-    },
-    weekRow: { flexDirection: 'row' },
-    weekdayCell: {
-      flex: 1,
-      alignItems: 'center',
-      paddingVertical: 6,
-    },
-    weekdayText: { fontSize: 12, color: colors.textSecondary, textTransform: 'uppercase' },
-    dayCell: {
-      flex: 1,
-      aspectRatio: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 6,
-      margin: 1,
-    },
-    dayCellSelected: { backgroundColor: colors.primary },
-    dayText: { fontSize: 15, color: colors.text },
-    dayTextSelected: { color: colors.onPrimary, fontWeight: 'bold' },
-    timeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 16,
-    },
-    timeLabel: { fontSize: 15, color: colors.text },
-    timeInputs: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-    timeInput: { width: 64, height: 44, marginBottom: 0, textAlign: 'center' },
-    timeSeparator: { fontSize: 20, color: colors.text, marginHorizontal: 8 },
-    periodButton: {
-      marginLeft: 12,
-      paddingHorizontal: 14,
-      height: 44,
-      borderRadius: 22,
-      borderWidth: 1,
-      borderColor: colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    periodText: { color: colors.primary, fontWeight: 'bold', fontSize: 15 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const dayCells: (number | null)[] = [
     ...Array.from({ length: leadingBlanks }, () => null),
@@ -459,5 +361,106 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { backgroundColor: colors.background, flexShrink: 1 },
+    content: { padding: 20 },
+    // Close and confirm live in the header, like the color and icon pickers: no bottom
+    // action row wasting vertical room on short windows.
+    header: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    titleWrap: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    title: {
+      ...typography.heading,
+      color: colors.text,
+      textAlign: 'center',
+    },
+    headerButton: {
+      padding: 5,
+    },
+    preview: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.primary,
+      textAlign: 'center',
+      marginBottom: 16,
+      textTransform: 'capitalize',
+    },
+    navRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    navButton: { padding: 8 },
+    monthLabel: {
+      ...typography.sectionTitle,
+      flex: 1,
+      textAlign: 'center',
+      color: colors.text,
+      textTransform: 'capitalize',
+    },
+    yearRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    yearLabel: { color: colors.textSecondary, fontSize: 13, marginRight: 8 },
+    yearInput: { width: 90, height: 40, marginBottom: 0 },
+    quickActions: { flexDirection: 'row', marginLeft: 'auto' },
+    iconButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: 8,
+    },
+    weekRow: { flexDirection: 'row' },
+    weekdayCell: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 6,
+    },
+    weekdayText: { ...typography.caption, color: colors.textSecondary, textTransform: 'uppercase' },
+    dayCell: {
+      flex: 1,
+      aspectRatio: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 6,
+      margin: 1,
+    },
+    dayCellSelected: { backgroundColor: colors.primary },
+    dayText: { fontSize: 15, color: colors.text },
+    dayTextSelected: { color: colors.onPrimary, fontWeight: 'bold' },
+    timeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 16,
+    },
+    timeLabel: { fontSize: 15, color: colors.text },
+    timeInputs: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+    timeInput: { width: 64, height: 44, marginBottom: 0, textAlign: 'center' },
+    timeSeparator: { fontSize: 20, color: colors.text, marginHorizontal: 8 },
+    periodButton: {
+      marginLeft: 12,
+      paddingHorizontal: 14,
+      height: 44,
+      borderRadius: 22,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    periodText: { color: colors.primary, fontWeight: 'bold', fontSize: 15 },
+  });
 
 export default DatePickerModal;

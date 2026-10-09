@@ -11,7 +11,8 @@ import {
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 export type SuggestionCatalogEntry = [string, number];
 
@@ -53,29 +54,7 @@ const SuggestionCatalogModal: React.FC<SuggestionCatalogModalProps> = ({
     return suggestions.filter(([suggestion]) => suggestion.toLocaleLowerCase().includes(query));
   }, [searchQuery, suggestions]);
 
-  const styles = StyleSheet.create({
-    searchInput: {
-      width: '100%',
-      marginBottom: 10,
-    },
-    noSuggestionsText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
-    },
-    closeButton: {
-      marginTop: 20,
-      alignSelf: 'flex-end',
-    },
-    suggestionsList: {
-      maxHeight: Math.min(screenHeight * 0.56, 520),
-    },
-    loadingContainer: {
-      minHeight: 90,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-  });
+  const styles = useThemedStyles(createStyles, [screenHeight]);
 
   return (
     <ResponsiveModal
@@ -114,5 +93,30 @@ const SuggestionCatalogModal: React.FC<SuggestionCatalogModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors, [screenHeight]: [number]) =>
+  StyleSheet.create({
+    searchInput: {
+      width: '100%',
+      marginBottom: 10,
+    },
+    noSuggestionsText: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingVertical: 20,
+    },
+    closeButton: {
+      marginTop: 20,
+      alignSelf: 'flex-end',
+    },
+    suggestionsList: {
+      maxHeight: Math.min(screenHeight * 0.56, 520),
+    },
+    loadingContainer: {
+      minHeight: 90,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
 
 export default SuggestionCatalogModal;

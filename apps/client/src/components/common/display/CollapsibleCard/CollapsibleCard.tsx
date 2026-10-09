@@ -8,7 +8,9 @@ import Animated, {
   useAnimatedReaction,
   withTiming,
 } from 'react-native-reanimated';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 
 interface CollapsibleCardProps {
   title: string;
@@ -74,42 +76,7 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
     borderBottomWidth: expandedValue.value || animatedHeight.value > 0 ? 1 : 0,
   }));
 
-  const styles = StyleSheet.create({
-    container: {
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      marginBottom: 10,
-      overflow: 'hidden',
-      borderColor: colors.border,
-      borderWidth: 1,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 15,
-      borderBottomColor: colors.border,
-    },
-    titleText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    animatedWrapper: {
-      overflow: 'hidden',
-    },
-    // Absolute so the wrapper's animated height never squashes the content: the children keep
-    // their natural height, which is exactly what `onLayout` reports back as the open height.
-    // Measuring the content that is actually shown (instead of a hidden second copy of it, as
-    // this card used to do) is what keeps the two from drifting apart.
-    childrenWrapper: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      padding: 15,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const onLayout = React.useCallback(
     (event: LayoutChangeEvent) => {
@@ -144,5 +111,42 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      marginBottom: 10,
+      overflow: 'hidden',
+      borderColor: colors.border,
+      borderWidth: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      borderBottomColor: colors.border,
+    },
+    titleText: {
+      ...typography.title,
+      color: colors.text,
+    },
+    animatedWrapper: {
+      overflow: 'hidden',
+    },
+    // Absolute so the wrapper's animated height never squashes the content: the children keep
+    // their natural height, which is exactly what `onLayout` reports back as the open height.
+    // Measuring the content that is actually shown (instead of a hidden second copy of it, as
+    // this card used to do) is what keeps the two from drifting apart.
+    childrenWrapper: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      padding: 15,
+    },
+  });
 
 export default CollapsibleCard;

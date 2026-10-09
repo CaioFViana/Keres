@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface TriStateToggleButtonProps {
   label: string;
@@ -51,7 +52,20 @@ const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({
     }
   }, [value, colors]);
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles);
+
+  return (
+    <TouchableOpacity
+      style={[styles.buttonContainer, { backgroundColor: backgroundColor }, style]}
+      onPress={handlePress}
+    >
+      <Ionicons name={iconName} size={20} color={iconColor} />
+    </TouchableOpacity>
+  );
+};
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     buttonContainer: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -63,15 +77,5 @@ const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({
       borderColor: colors.border,
     },
   });
-
-  return (
-    <TouchableOpacity
-      style={[styles.buttonContainer, { backgroundColor: backgroundColor }, style]}
-      onPress={handlePress}
-    >
-      <Ionicons name={iconName} size={20} color={iconColor} />
-    </TouchableOpacity>
-  );
-};
 
 export default TriStateToggleButton;

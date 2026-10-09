@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import type { StyleProp, TextInputProps, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 type PasswordInputProps = Omit<TextInputProps, 'secureTextEntry' | 'style'> & {
   /** Layout of the whole control (margins and the like); the field's own look is fixed. */
@@ -23,27 +24,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({ style, ...rest }) => {
   const commonInputStyles = getCommonInputStyles(colors);
   const [visible, setVisible] = useState(false);
 
-  const styles = StyleSheet.create({
-    wrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 5,
-      backgroundColor: colors.surface,
-      minHeight: 50,
-      overflow: 'hidden',
-    },
-    toggle: {
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      backgroundColor: colors.primary,
-      marginLeft: -1, // Overlap border
-      alignSelf: 'stretch',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -80,5 +61,28 @@ const PasswordInput: React.FC<PasswordInputProps> = ({ style, ...rest }) => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 5,
+      backgroundColor: colors.surface,
+      minHeight: 50,
+      overflow: 'hidden',
+    },
+    toggle: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      backgroundColor: colors.primary,
+      marginLeft: -1, // Overlap border
+      alignSelf: 'stretch',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
 
 export default PasswordInput;

@@ -8,7 +8,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface GenericListItemProps {
   headerContent: React.ReactNode;
@@ -83,60 +84,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     borderBottomWidth: isOpen || animatedHeight.value > 0 ? 1 : 0,
   }));
 
-  const styles = StyleSheet.create({
-    container: {
-      backgroundColor: colors.card,
-      marginVertical: 4,
-      borderRadius: 8,
-      overflow: 'hidden',
-      borderColor: colors.border,
-      borderWidth: 1,
-    },
-    nestedContainer: {
-      marginVertical: 2,
-      borderRadius: 6,
-      backgroundColor: colors.surface,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 10,
-      borderBottomColor: colors.border,
-    },
-    headerRight: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      zIndex: 1,
-    },
-    headerContent: {
-      flex: 1,
-      minWidth: 0,
-    },
-    leadingIcon: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 10,
-    },
-    headerToggle: {
-      ...StyleSheet.absoluteFill,
-    },
-    dropdownArrow: {
-      marginLeft: 10,
-    },
-    measurementContent: {
-      position: 'absolute',
-      opacity: 0,
-      left: 0,
-      right: 0,
-    },
-    animatedWrapper: {
-      overflow: 'hidden',
-    },
-    expandedContentInner: {
-      padding: 10,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const onLayout = React.useCallback(
     (event: LayoutChangeEvent) => {
@@ -213,5 +161,61 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      marginVertical: 4,
+      borderRadius: 8,
+      overflow: 'hidden',
+      borderColor: colors.border,
+      borderWidth: 1,
+    },
+    nestedContainer: {
+      marginVertical: 2,
+      borderRadius: 6,
+      backgroundColor: colors.surface,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 10,
+      borderBottomColor: colors.border,
+    },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      zIndex: 1,
+    },
+    headerContent: {
+      flex: 1,
+      minWidth: 0,
+    },
+    leadingIcon: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+    },
+    headerToggle: {
+      ...StyleSheet.absoluteFill,
+    },
+    dropdownArrow: {
+      marginLeft: 10,
+    },
+    measurementContent: {
+      position: 'absolute',
+      opacity: 0,
+      left: 0,
+      right: 0,
+    },
+    animatedWrapper: {
+      overflow: 'hidden',
+    },
+    expandedContentInner: {
+      padding: 10,
+    },
+  });
 
 export default GenericListItem;

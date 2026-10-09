@@ -8,8 +8,9 @@ import {
   registerGuideDrawer,
   unregisterGuideDrawer,
 } from '../../../../navigation/drawerGuideRegistry';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
 import { AnchoredDrawerItemList } from './AnchoredDrawerItemList';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 export const DRAWER_MIN_WIDTH = 280;
 export const DRAWER_DEFAULT_WIDTH = 280;
@@ -54,7 +55,6 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
   children,
   ...drawerProps
 }) => {
-  const { colors } = useTheme();
   const currentWidthRef = useRef(drawerWidth);
   const dragStartWidthRef = useRef(drawerWidth);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -113,7 +113,40 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
     [maximumWidth, onDrawerWidthChange, resizable],
   );
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles, [resizable]);
+
+  return (
+    <View ref={containerRef} style={styles.container}>
+      <DrawerContentScrollView
+        {...drawerProps}
+        ref={scrollRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        scrollEventThrottle={16}
+        onScroll={(event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        }}
+      >
+        {children ?? (
+          <AnchoredDrawerItemList
+            state={drawerProps.state}
+            navigation={drawerProps.navigation}
+            descriptors={drawerProps.descriptors}
+            drawerId={drawerId}
+          />
+        )}
+      </DrawerContentScrollView>
+      {resizable && (
+        <View style={styles.resizeHandle} {...panResponder.panHandlers}>
+          <View style={styles.resizeIndicator} />
+        </View>
+      )}
+    </View>
+  );
+};
+
+const createStyles = (colors: ThemeColors, [resizable]: [boolean]) =>
+  StyleSheet.create({
     container: {
       flex: 1,
     },
@@ -149,35 +182,5 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
       width: 2,
     },
   });
-
-  return (
-    <View ref={containerRef} style={styles.container}>
-      <DrawerContentScrollView
-        {...drawerProps}
-        ref={scrollRef}
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        scrollEventThrottle={16}
-        onScroll={(event) => {
-          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
-        }}
-      >
-        {children ?? (
-          <AnchoredDrawerItemList
-            state={drawerProps.state}
-            navigation={drawerProps.navigation}
-            descriptors={drawerProps.descriptors}
-            drawerId={drawerId}
-          />
-        )}
-      </DrawerContentScrollView>
-      {resizable && (
-        <View style={styles.resizeHandle} {...panResponder.panHandlers}>
-          <View style={styles.resizeIndicator} />
-        </View>
-      )}
-    </View>
-  );
-};
 
 export default ResizableDrawerContent;

@@ -1,7 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 
 export interface EntityMetadataProps {
@@ -20,24 +22,7 @@ export interface EntityMetadataProps {
  */
 const EntityMetadata: React.FC<EntityMetadataProps> = ({ version, createdAt, updatedAt }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 4,
-    },
-    label: {
-      fontSize: 12,
-      color: colors.textSecondary,
-    },
-    value: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      fontWeight: '600',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const formatDateTime = (date: Date) =>
     date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
@@ -59,5 +44,23 @@ const EntityMetadata: React.FC<EntityMetadataProps> = ({ version, createdAt, upd
     </CollapsibleCard>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 4,
+    },
+    label: {
+      ...typography.caption,
+      color: colors.textSecondary,
+    },
+    value: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+  });
 
 export default EntityMetadata;

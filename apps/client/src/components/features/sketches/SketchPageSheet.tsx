@@ -11,7 +11,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
 import { getCommonChipStyles } from '../../../theme/commonStyles';
-import { space, type } from '../../../theme/tokens';
+import { space, typography } from '../../../theme/tokens';
 
 interface SketchPageSheetProps {
   page: SketchPageType;
@@ -39,7 +39,7 @@ const SketchPageSheet: React.FC<SketchPageSheetProps> = ({ page, onApply, onClos
   const [background, setBackground] = useState<SketchPageBackground>(page.background);
   const landscape = width >= height;
   const styles = StyleSheet.create({
-    title: { ...type.title, color: colors.text, marginBottom: space.lg },
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
     label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 12, marginBottom: 6 },
     row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
     ...getCommonChipStyles(colors),

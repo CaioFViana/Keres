@@ -1,5 +1,5 @@
 import { layout } from '../../src/theme/layout';
-import { fontSize, fontWeight, radius, space, type } from '../../src/theme/tokens';
+import { fontSize, fontWeight, radius, space, typography } from '../../src/theme/tokens';
 
 const ascending = (values: number[]) => values.every((v, i) => i === 0 || v > values[i - 1]);
 
@@ -15,8 +15,8 @@ describe('theme tokens', () => {
   });
 
   it('builds the text styles from the scales, without a colour', () => {
-    expect(type.title).toEqual({ fontSize: fontSize.xl, fontWeight: fontWeight.bold });
-    for (const style of Object.values(type)) {
+    expect(typography.title).toEqual({ fontSize: fontSize.xl, fontWeight: fontWeight.bold });
+    for (const style of Object.values(typography)) {
       expect(style).not.toHaveProperty('color');
     }
   });

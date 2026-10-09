@@ -2,11 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { typography } from '../../../../theme/tokens';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput'; // Reusing existing TextInput
 import SuggestionCatalogModal from '../SuggestionCatalogModal/SuggestionCatalogModal';
 import { useSuggestionCatalog } from '../SuggestionCatalogModal/useSuggestionCatalog';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface SuggestionTextInputProps {
   value: string;
@@ -48,52 +50,7 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     closeSuggestions();
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: 10,
-    },
-    inputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 5,
-      backgroundColor: colors.surface,
-      minHeight: 50,
-      overflow: 'hidden',
-    },
-    inputField: {
-      flex: 1,
-      paddingHorizontal: 10,
-      color: colors.text,
-    },
-    suggestionButton: {
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      backgroundColor: colors.primary,
-      marginLeft: -1, // Overlap border
-      alignSelf: 'stretch',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    suggestionItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    suggestionText: {
-      color: colors.text,
-      fontSize: 16,
-    },
-    suggestionCount: {
-      color: colors.textSecondary,
-      fontSize: 16,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={[styles.container, style]}>
@@ -142,5 +99,53 @@ const SuggestionTextInput: React.FC<SuggestionTextInputProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: 10,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.primary,
+      borderRadius: 5,
+      backgroundColor: colors.surface,
+      minHeight: 50,
+      overflow: 'hidden',
+    },
+    inputField: {
+      flex: 1,
+      paddingHorizontal: 10,
+      color: colors.text,
+    },
+    suggestionButton: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      backgroundColor: colors.primary,
+      marginLeft: -1, // Overlap border
+      alignSelf: 'stretch',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    suggestionItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    suggestionText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+    },
+    suggestionCount: {
+      ...typography.bodyLarge,
+      color: colors.textSecondary,
+    },
+  });
 
 export default SuggestionTextInput;

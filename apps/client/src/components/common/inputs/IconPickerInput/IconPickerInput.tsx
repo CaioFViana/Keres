@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import IconPickerModal from '@/src/components/common/inputs/IconPickerInput/IconPickerModal';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface IconPickerInputProps {
   onSelectIcon: (icon: string) => void;
@@ -33,7 +34,38 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
     setModalVisible(false);
   };
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles, [currentIcon]);
+
+  return (
+    <View style={[styles.container, style]}>
+      <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
+        <View style={styles.iconPreview}>
+          <MapIcon name={currentIcon || 'help-outline'} size={20} color={colors.text} />
+        </View>
+        <Text style={styles.label}>{currentIcon || placeholder}</Text>
+      </Pressable>
+
+      <ResponsiveModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        contentStyle={styles.modalView}
+        inset="roomy"
+        maxHeight="92%"
+      >
+        <IconPickerModal
+          currentIcon={currentIcon}
+          onSelectIcon={handleSelectIcon}
+          onClose={() => setModalVisible(false)}
+          title={placeholder}
+          options={iconOptions}
+        />
+      </ResponsiveModal>
+    </View>
+  );
+};
+
+const createStyles = (colors: ThemeColors, [currentIcon]: [string | null]) =>
+  StyleSheet.create({
     // A single border. `commonInputStyles.input` does NOT go here: it already brings a border +
     // `height: 50`, and added to this wrapper's border it drew two nested frames - and taller than it
     // should be, because `customComponentInput` still adds `paddingBottom: 50`. `marginBottom: 0` like
@@ -71,33 +103,5 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
       alignItems: 'center',
     },
   });
-
-  return (
-    <View style={[styles.container, style]}>
-      <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
-        <View style={styles.iconPreview}>
-          <MapIcon name={currentIcon || 'help-outline'} size={20} color={colors.text} />
-        </View>
-        <Text style={styles.label}>{currentIcon || placeholder}</Text>
-      </Pressable>
-
-      <ResponsiveModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        contentStyle={styles.modalView}
-        inset="roomy"
-        maxHeight="92%"
-      >
-        <IconPickerModal
-          currentIcon={currentIcon}
-          onSelectIcon={handleSelectIcon}
-          onClose={() => setModalVisible(false)}
-          title={placeholder}
-          options={iconOptions}
-        />
-      </ResponsiveModal>
-    </View>
-  );
-};
 
 export default IconPickerInput;

@@ -10,6 +10,14 @@ type CustomTextInputProps = TextInputProps & {
   suppressInteractionBorder?: boolean;
 };
 
+const styles = StyleSheet.create({
+  multilineInput: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    textAlignVertical: 'top',
+  },
+});
+
 const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
   (
     {
@@ -29,14 +37,6 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
     const [isFocused, setIsFocused] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const commonInputStyles = getCommonInputStyles(colors);
-
-    const styles = StyleSheet.create({
-      multilineInput: {
-        paddingTop: 10,
-        paddingBottom: 10,
-        textAlignVertical: 'top',
-      },
-    });
 
     // A multiline field asks to grow taller than the single-line default via `minHeight` in its
     // own `style` prop (normally `commonInputStyles.multiline`) - but every fixed

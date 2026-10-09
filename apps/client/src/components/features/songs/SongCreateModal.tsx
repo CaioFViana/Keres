@@ -6,7 +6,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
-import { space, type } from '@/src/theme/tokens';
+import { space, typography } from '@/src/theme/tokens';
 
 interface SongCreateModalProps {
   visible: boolean;
@@ -26,7 +26,7 @@ const SongCreateModal: React.FC<SongCreateModalProps> = ({ visible, onCancel, on
     if (visible) setTitle('');
   }
   const styles = StyleSheet.create({
-    title: { ...type.title, color: colors.text, marginBottom: space.lg },
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
     label: { color: colors.text, fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
     actions: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end', marginTop: 18 },
   });

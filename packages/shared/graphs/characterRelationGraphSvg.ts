@@ -1,9 +1,19 @@
 import type {
   CharacterRelationGraphLayout,
   RelationGraphEdge,
-  RelationGraphNode,
 } from './characterRelationGraphLayout';
-import { GRAPH_PADDING } from './characterRelationGraphLayout';
+import {
+  MAP_HEADER_TOP,
+  MAP_LEGEND_ROW_HEIGHT,
+  MAP_MIN_CANVAS_WIDTH,
+  renderDashedLegendEntry,
+  renderEdgeLabelChip,
+  renderMapTitle,
+  renderRelationMapNode,
+  renderSvgDocument,
+  round,
+  truncate,
+} from './graphSvgShared';
 
 /**
  * Serialises the relation map as a complete SVG file - the same reasoning as the story map
@@ -33,19 +43,16 @@ export interface CharacterRelationMapSvgOptions {
   };
 }
 
-const HEADER_TOP = 30;
-const LEGEND_ROW_HEIGHT = 24;
 /** Average width of a character at 12px - only to size a label's background. */
 const APPROX_CHAR_WIDTH = 6.2;
-const MIN_CANVAS_WIDTH = 560;
 
 export function renderCharacterRelationMapSvg(
   layout: CharacterRelationGraphLayout,
   options: CharacterRelationMapSvgOptions,
 ): string {
-  const canvasWidth = Math.max(layout.width, MIN_CANVAS_WIDTH);
+  const canvasWidth = Math.max(layout.width, MAP_MIN_CANVAS_WIDTH);
   const hasIsolatedLegend = layout.isolatedCount > 0;
-  const headerHeight = HEADER_TOP + 44 + (hasIsolatedLegend ? LEGEND_ROW_HEIGHT : 0) + 8;
+  const headerHeight = MAP_HEADER_TOP + 44 + (hasIsolatedLegend ? MAP_LEGEND_ROW_HEIGHT : 0) + 8;
   const totalHeight = headerHeight + layout.height;
   const highlightedIds = new Set(options.highlightedNodeIds ?? []);
 
@@ -56,34 +63,28 @@ export function renderCharacterRelationMapSvg(
     // Edges first: passing under the nodes keeps a line from striking through a character's name.
     ...layout.edges.map((edge) => renderEdge(edge, options)),
     ...(options.showEdgeLabels ? layout.edges.map((edge) => renderEdgeLabel(edge, options)) : []),
-    ...layout.nodes.map((node) => renderNode(node, options, highlightedIds)),
+    ...layout.nodes.map((node) =>
+      renderRelationMapNode(node, node.height / 2, options.colors, highlightedIds),
+    ),
     '</g>',
   ].join('\n');
 
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(canvasWidth)}" height="${round(totalHeight)}" viewBox="0 0 ${round(canvasWidth)} ${round(totalHeight)}" font-family="Helvetica, Arial, sans-serif">`,
-    `<title>${escapeXml(options.title)}</title>`,
-    body,
-    '</svg>',
-    '',
-  ].join('\n');
+  return renderSvgDocument(options.title, canvasWidth, totalHeight, body);
 }
 
 function renderHeader(options: CharacterRelationMapSvgOptions, hasIsolatedLegend: boolean): string {
-  const parts = [
-    `<text x="${GRAPH_PADDING}" y="${HEADER_TOP}" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
-    `<text x="${GRAPH_PADDING}" y="${HEADER_TOP + 20}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
-  ];
+  const parts = renderMapTitle(options.title, options.subtitle, options.colors);
 
   // The only possible legend item: the dashed stroke marks characters with no relation at all.
   // Unlike the story map (several chapters), there is never more than one line to draw here, so that
   // file's multi-line wrapping machinery does not apply.
   if (hasIsolatedLegend) {
-    const y = HEADER_TOP + 44;
     parts.push(
-      `<rect x="${GRAPH_PADDING}" y="${round(y - 11)}" width="12" height="12" rx="3" fill="none" stroke="${options.colors.textSecondary}" stroke-width="2" stroke-dasharray="3 2"/>`,
-      `<text x="${GRAPH_PADDING + 18}" y="${round(y)}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.labels.isolated)}</text>`,
+      renderDashedLegendEntry(
+        MAP_HEADER_TOP + 44,
+        options.labels.isolated,
+        options.colors.textSecondary,
+      ),
     );
   }
 
@@ -98,68 +99,5 @@ function renderEdgeLabel(edge: RelationGraphEdge, options: CharacterRelationMapS
   const label = truncate(edge.label, 30);
   if (!label) return '';
 
-  const width = label.length * APPROX_CHAR_WIDTH + 10;
-  const height = 15;
-  const x = edge.labelPosition.x - width / 2;
-  const y = edge.labelPosition.y - height / 2;
-
-  return [
-    // An opaque background: without it the text disappears over the line it describes.
-    `<rect x="${round(x)}" y="${round(y)}" width="${round(width)}" height="${height}" rx="4" fill="${options.colors.background}" fill-opacity="0.92"/>`,
-    `<text x="${round(edge.labelPosition.x)}" y="${round(edge.labelPosition.y + 4)}" font-size="10" text-anchor="middle" fill="${options.colors.textSecondary}">${escapeXml(label)}</text>`,
-  ].join('');
-}
-
-function renderNode(
-  node: RelationGraphNode,
-  options: CharacterRelationMapSvgOptions,
-  highlightedIds: Set<string>,
-): string {
-  const fill = node.isIsolated ? options.colors.surface : options.colors.primaryContainer;
-  const dash = node.isIsolated ? ' stroke-dasharray="4 3"' : '';
-  const highlighted = highlightedIds.has(node.id);
-  // The focused characters keep their own outline (same as the interactive canvas), so the exported
-  // file shows the same selection the screen does.
-  const stroke = highlighted ? options.colors.primary : options.colors.border;
-  const strokeWidth = highlighted ? 2.5 : 1.2;
-
-  const parts = [
-    `<rect x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}" rx="${node.height / 2}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${dash}/>`,
-  ];
-
-  const centerX = node.x + node.width / 2;
-  const firstLineY =
-    node.y + (node.labelLines.length > 1 ? node.height / 2 - 4 : node.height / 2 + 4);
-  node.labelLines.forEach((line, index) => {
-    parts.push(
-      `<text x="${round(centerX)}" y="${round(firstLineY + index * 14)}" font-size="12" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${escapeXml(line)}</text>`,
-    );
-  });
-
-  return parts.join('');
-}
-
-function truncate(value: string, maxChars: number): string {
-  const normalized = (value ?? '').trim().replace(/\s+/g, ' ');
-  if (normalized.length <= maxChars) return normalized;
-  return `${normalized.slice(0, maxChars - 1)}…`;
-}
-
-/**
- * Escapes whatever would break the XML.
- *
- * A character's name and a relation type are free text typed by the author: an `&` or a `<` would
- * make the whole file invalid, and the error would only show up when trying to open the map.
- */
-function escapeXml(value: string): string {
-  return (value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
+  return renderEdgeLabelChip(label, edge.labelPosition, APPROX_CHAR_WIDTH, options.colors);
 }

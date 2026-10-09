@@ -1,4 +1,4 @@
-import type { GraphPoint } from './storyGraphLayout';
+import { maxOf, normalizeToPadding, straightEdgeBetween } from './graphLayoutShared';
 import { wrapLabel } from './storyGraphLayout';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
 
@@ -37,7 +37,6 @@ export const GRAPH_PADDING = 28;
 const NODE_GAP = 18;
 const LAYER_GAP = 46;
 const CLUSTER_GAP = 60;
-const EDGE_NODE_GAP = 4;
 const LABEL_MAX_CHARS = 14;
 const LABEL_MAX_LINES = 2;
 /** A defence against corrupted data (a cycle that escaped validation) - it should never be reached on a valid tree. */
@@ -170,7 +169,7 @@ export function buildLocationGraphLayout(
 
   const nodes = [...packed.nodes, ...isolatedGraphNodes];
   if (direction === 'left-to-right') orientNodesLeftToRight(nodes);
-  const { width, height } = normalizeToPadding(nodes);
+  const { width, height } = normalizeToPadding(nodes, GRAPH_PADDING);
 
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const edges: LocationGraphEdge[] = [];
@@ -410,47 +409,13 @@ function buildNode(positioned: PositionedNode, isIsolated = false): LocationGrap
   };
 }
 
-function normalizeToPadding(nodes: LocationGraphNode[]): { width: number; height: number } {
-  if (nodes.length === 0) {
-    return { width: GRAPH_PADDING * 2, height: GRAPH_PADDING * 2 };
-  }
-
-  const shiftX = GRAPH_PADDING - minOf(nodes.map((node) => node.x));
-  const shiftY = GRAPH_PADDING - minOf(nodes.map((node) => node.y));
-  for (const node of nodes) {
-    node.x += shiftX;
-    node.y += shiftY;
-  }
-
-  return {
-    width: round(maxOf(nodes.map((node) => node.x + node.width)) + GRAPH_PADDING),
-    height: round(maxOf(nodes.map((node) => node.y + node.height)) + GRAPH_PADDING),
-  };
-}
-
-function pointOnNodeBoundary(node: LocationGraphNode, towards: GraphPoint): GraphPoint {
-  const centerX = node.x + node.width / 2;
-  const centerY = node.y + node.height / 2;
-  const dx = towards.x - centerX;
-  const dy = towards.y - centerY;
-  if (dx === 0 && dy === 0) return { x: centerX, y: centerY };
-
-  const rx = node.width / 2 + EDGE_NODE_GAP;
-  const ry = node.height / 2 + EDGE_NODE_GAP;
-  const scale = 1 / Math.sqrt((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry));
-  return { x: centerX + dx * scale, y: centerY + dy * scale };
-}
-
 function buildEdge(
   relation: GraphLocationRelation,
   relationType: LocationRelationKind,
   source: LocationGraphNode,
   target: LocationGraphNode,
 ): LocationGraphEdge {
-  const sourceCenter = { x: source.x + source.width / 2, y: source.y + source.height / 2 };
-  const targetCenter = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
-  const start = pointOnNodeBoundary(source, targetCenter);
-  const end = pointOnNodeBoundary(target, sourceCenter);
+  const { path } = straightEdgeBetween(source, target);
 
   return {
     id: relation.id,
@@ -458,18 +423,6 @@ function buildEdge(
     relationType,
     sourceId: source.id,
     targetId: target.id,
-    path: `M ${round(start.x)} ${round(start.y)} L ${round(end.x)} ${round(end.y)}`,
+    path,
   };
-}
-
-function minOf(values: number[]): number {
-  return values.reduce((min, value) => (value < min ? value : min), values[0] ?? 0);
-}
-
-function maxOf(values: number[]): number {
-  return values.reduce((max, value) => (value > max ? value : max), values[0] ?? 0);
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

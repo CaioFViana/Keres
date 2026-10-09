@@ -1,5 +1,6 @@
 import { getChapterPalette } from '../theme/graphEntityPalettes';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
+import { findConnectedComponents } from './graphLayoutShared';
 import {
   normalizeToPadding,
   placeEdges,
@@ -407,31 +408,11 @@ function buildLegend(
 
 /** Connected components, ignoring the direction of the edges. */
 function findComponents(nodes: WorkNode[]): WorkNode[][] {
-  const components: WorkNode[][] = [];
-
-  for (const start of nodes) {
-    if (start.component !== -1) continue;
-    const componentIndex = components.length;
-    const members: WorkNode[] = [];
-    const queue = [start];
-    start.component = componentIndex;
-
-    while (queue.length > 0) {
-      const node = queue.pop()!;
-      members.push(node);
-      for (const edge of [...node.outgoing, ...node.incoming]) {
-        const neighbour = edge.source === node ? edge.target : edge.source;
-        if (neighbour.component === -1) {
-          neighbour.component = componentIndex;
-          queue.push(neighbour);
-        }
-      }
-    }
-
-    components.push(members.sort(compareByStoryOrder));
-  }
-
-  return components;
+  return findConnectedComponents(nodes, (node) =>
+    [...node.outgoing, ...node.incoming].map((edge) =>
+      edge.source === node ? edge.target : edge.source,
+    ),
+  ).map((members) => members.sort(compareByStoryOrder));
 }
 
 /**

@@ -1,6 +1,14 @@
 import type { GraphPoint } from './storyGraphLayout';
 import { wrapLabel } from './storyGraphLayout';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
+import {
+  findConnectedComponents,
+  maxOf,
+  minOf,
+  normalizeToPadding,
+  round,
+  straightEdgeBetween,
+} from './graphLayoutShared';
 
 /**
  * Positioning for the character relation graph: characters become nodes, relations become edges.
@@ -47,8 +55,6 @@ const NODE_GAP = 18;
 const CLUSTER_GAP = 60;
 /** Minimum radius even for clusters of 2-3 characters, so they are not squeezed together. */
 const MIN_CLUSTER_RADIUS = NODE_HEIGHT * 1.6;
-/** How far the edge's tip stays from the node's border - the line must not touch the text. */
-const EDGE_NODE_GAP = 4;
 const LABEL_MAX_CHARS = 14;
 const LABEL_MAX_LINES = 2;
 
@@ -159,7 +165,7 @@ export function buildCharacterRelationGraphLayout(
         );
 
   const nodes = [...packed.nodes, ...isolatedNodes];
-  const { width, height } = normalizeToPadding(nodes);
+  const { width, height } = normalizeToPadding(nodes, GRAPH_PADDING);
 
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const edges: RelationGraphEdge[] = [];
@@ -182,31 +188,9 @@ export function buildCharacterRelationGraphLayout(
 
 /** Connected components, ignoring any notion of direction - there never was one here. */
 function findComponents(nodes: WorkNode[]): WorkNode[][] {
-  const components: WorkNode[][] = [];
-
-  for (const start of nodes) {
-    if (start.component !== -1) continue;
-    const componentIndex = components.length;
-    const members: WorkNode[] = [];
-    const queue = [start];
-    start.component = componentIndex;
-
-    while (queue.length > 0) {
-      const node = queue.pop()!;
-      members.push(node);
-      for (const edge of node.neighbors) {
-        const neighbor = edge.a === node ? edge.b : edge.a;
-        if (neighbor.component === -1) {
-          neighbor.component = componentIndex;
-          queue.push(neighbor);
-        }
-      }
-    }
-
-    components.push(members);
-  }
-
-  return components;
+  return findConnectedComponents(nodes, (node) =>
+    node.neighbors.map((edge) => (edge.a === node ? edge.b : edge.a)),
+  );
 }
 
 /**
@@ -385,53 +369,12 @@ function buildNode(work: WorkNode, x: number, y: number): RelationGraphNode {
   };
 }
 
-/** Shifts everything inside the margin and returns the final drawing size. */
-function normalizeToPadding(nodes: RelationGraphNode[]): { width: number; height: number } {
-  if (nodes.length === 0) {
-    return { width: GRAPH_PADDING * 2, height: GRAPH_PADDING * 2 };
-  }
-
-  const shiftX = GRAPH_PADDING - minOf(nodes.map((node) => node.x));
-  const shiftY = GRAPH_PADDING - minOf(nodes.map((node) => node.y));
-  for (const node of nodes) {
-    node.x += shiftX;
-    node.y += shiftY;
-  }
-
-  return {
-    width: round(maxOf(nodes.map((node) => node.x + node.width)) + GRAPH_PADDING),
-    height: round(maxOf(nodes.map((node) => node.y + node.height)) + GRAPH_PADDING),
-  };
-}
-
-/**
- * A point on the node's border, in the direction of `towards` - where the edge should
- * start/finish so it does not cross over the character's text. The node is treated as an ellipse
- * for this calculation: a cheap visual approximation, enough for a straight line to touch the
- * rounded border instead of stopping in the middle of the name.
- */
-function pointOnNodeBoundary(node: RelationGraphNode, towards: GraphPoint): GraphPoint {
-  const centerX = node.x + node.width / 2;
-  const centerY = node.y + node.height / 2;
-  const dx = towards.x - centerX;
-  const dy = towards.y - centerY;
-  if (dx === 0 && dy === 0) return { x: centerX, y: centerY };
-
-  const rx = node.width / 2 + EDGE_NODE_GAP;
-  const ry = node.height / 2 + EDGE_NODE_GAP;
-  const scale = 1 / Math.sqrt((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry));
-  return { x: centerX + dx * scale, y: centerY + dy * scale };
-}
-
 function buildEdge(
   work: WorkEdge,
   source: RelationGraphNode,
   target: RelationGraphNode,
 ): RelationGraphEdge {
-  const sourceCenter = { x: source.x + source.width / 2, y: source.y + source.height / 2 };
-  const targetCenter = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
-  const start = pointOnNodeBoundary(source, targetCenter);
-  const end = pointOnNodeBoundary(target, sourceCenter);
+  const { start, end, path } = straightEdgeBetween(source, target);
 
   return {
     id: work.relation.id,
@@ -439,23 +382,7 @@ function buildEdge(
     sourceId: source.id,
     targetId: target.id,
     label: work.relation.relationType ?? '',
-    path: `M ${round(start.x)} ${round(start.y)} L ${round(end.x)} ${round(end.y)}`,
+    path,
     labelPosition: { x: round((start.x + end.x) / 2), y: round((start.y + end.y) / 2) },
   };
-}
-
-/**
- * `Math.max(...values)`/`Math.min(...values)` blow the argument stack on very large arrays -
- * exactly the risk this module exists to avoid on a "massive" graph.
- */
-function minOf(values: number[]): number {
-  return values.reduce((min, value) => (value < min ? value : min), values[0] ?? 0);
-}
-
-function maxOf(values: number[]): number {
-  return values.reduce((max, value) => (value > max ? value : max), values[0] ?? 0);
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

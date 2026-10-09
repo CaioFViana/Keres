@@ -1,8 +1,15 @@
-import type {
-  LocationGraphEdge,
-  LocationGraphLayout,
-  LocationGraphNode,
-} from './locationGraphLayout';
+import type { LocationGraphEdge, LocationGraphLayout } from './locationGraphLayout';
+import {
+  MAP_HEADER_TOP,
+  MAP_LEGEND_ROW_HEIGHT,
+  MAP_MIN_CANVAS_WIDTH,
+  escapeXml,
+  renderDashedLegendEntry,
+  renderMapTitle,
+  renderRelationMapNode,
+  renderSvgDocument,
+  round,
+} from './graphSvgShared';
 import { GRAPH_PADDING } from './locationGraphLayout';
 
 /**
@@ -35,22 +42,18 @@ export interface LocationGraphSvgOptions {
   };
 }
 
-const HEADER_TOP = 30;
-const LEGEND_ROW_HEIGHT = 24;
-const MIN_CANVAS_WIDTH = 560;
-
 export function renderLocationGraphMapSvg(
   layout: LocationGraphLayout,
   options: LocationGraphSvgOptions,
 ): string {
-  const canvasWidth = Math.max(layout.width, MIN_CANVAS_WIDTH);
+  const canvasWidth = Math.max(layout.width, MAP_MIN_CANVAS_WIDTH);
   const hasIsolatedLegend = layout.isolatedCount > 0;
   const hasContainsLegend = layout.edges.some((edge) => edge.relationType === 'contains');
   const hasConnectedLegend = layout.edges.some((edge) => edge.relationType === 'connected_to');
   const legendRows = [hasContainsLegend, hasConnectedLegend, hasIsolatedLegend].filter(
     Boolean,
   ).length;
-  const headerHeight = HEADER_TOP + 44 + legendRows * LEGEND_ROW_HEIGHT + 8;
+  const headerHeight = MAP_HEADER_TOP + 44 + legendRows * MAP_LEGEND_ROW_HEIGHT + 8;
   const totalHeight = headerHeight + layout.height;
   const highlightedIds = new Set(options.highlightedNodeIds ?? []);
 
@@ -60,18 +63,11 @@ export function renderLocationGraphMapSvg(
     `<g transform="translate(0 ${round(headerHeight)})">`,
     // Edges first: passing under the nodes keeps a line from striking through a Location's name.
     ...layout.edges.map((edge) => renderEdge(edge, options)),
-    ...layout.nodes.map((node) => renderNode(node, options, highlightedIds)),
+    ...layout.nodes.map((node) => renderRelationMapNode(node, 8, options.colors, highlightedIds)),
     '</g>',
   ].join('\n');
 
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(canvasWidth)}" height="${round(totalHeight)}" viewBox="0 0 ${round(canvasWidth)} ${round(totalHeight)}" font-family="Helvetica, Arial, sans-serif">`,
-    `<title>${escapeXml(options.title)}</title>`,
-    body,
-    '</svg>',
-    '',
-  ].join('\n');
+  return renderSvgDocument(options.title, canvasWidth, totalHeight, body);
 }
 
 function renderHeader(
@@ -80,13 +76,10 @@ function renderHeader(
   hasConnectedLegend: boolean,
   hasIsolatedLegend: boolean,
 ): string {
-  const parts = [
-    `<text x="${GRAPH_PADDING}" y="${HEADER_TOP}" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
-    `<text x="${GRAPH_PADDING}" y="${HEADER_TOP + 20}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
-  ];
+  const parts = renderMapTitle(options.title, options.subtitle, options.colors);
 
   let row = 0;
-  const nextY = () => HEADER_TOP + 44 + row++ * LEGEND_ROW_HEIGHT;
+  const nextY = () => MAP_HEADER_TOP + 44 + row++ * MAP_LEGEND_ROW_HEIGHT;
 
   if (hasContainsLegend) {
     const y = nextY();
@@ -105,10 +98,8 @@ function renderHeader(
   }
 
   if (hasIsolatedLegend) {
-    const y = nextY();
     parts.push(
-      `<rect x="${GRAPH_PADDING}" y="${round(y - 11)}" width="12" height="12" rx="3" fill="none" stroke="${options.colors.textSecondary}" stroke-width="2" stroke-dasharray="3 2"/>`,
-      `<text x="${GRAPH_PADDING + 18}" y="${round(y)}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.labels.isolated)}</text>`,
+      renderDashedLegendEntry(nextY(), options.labels.isolated, options.colors.textSecondary),
     );
   }
 
@@ -122,52 +113,4 @@ function renderEdge(edge: LocationGraphEdge, options: LocationGraphSvgOptions): 
   const opacity = edge.relationType === 'contains' ? 0.9 : 0.65;
   const dash = edge.relationType === 'connected_to' ? ' stroke-dasharray="6 4"' : '';
   return `<path d="${edge.path}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-opacity="${opacity}"${dash}/>`;
-}
-
-function renderNode(
-  node: LocationGraphNode,
-  options: LocationGraphSvgOptions,
-  highlightedIds: Set<string>,
-): string {
-  const fill = node.isIsolated ? options.colors.surface : options.colors.primaryContainer;
-  const dash = node.isIsolated ? ' stroke-dasharray="4 3"' : '';
-  const highlighted = highlightedIds.has(node.id);
-  // The focused locations keep their own outline (same as the interactive canvas), so the exported
-  // file shows the same selection the screen does.
-  const stroke = highlighted ? options.colors.primary : options.colors.border;
-  const strokeWidth = highlighted ? 2.5 : 1.2;
-
-  const parts = [
-    `<rect x="${round(node.x)}" y="${round(node.y)}" width="${node.width}" height="${node.height}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"${dash}/>`,
-  ];
-
-  const centerX = node.x + node.width / 2;
-  const firstLineY =
-    node.y + (node.labelLines.length > 1 ? node.height / 2 - 4 : node.height / 2 + 4);
-  node.labelLines.forEach((line, index) => {
-    parts.push(
-      `<text x="${round(centerX)}" y="${round(firstLineY + index * 14)}" font-size="12" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${escapeXml(line)}</text>`,
-    );
-  });
-
-  return parts.join('');
-}
-
-/**
- * Escapes whatever would break the XML.
- *
- * A Location's name is free text typed by the author: an `&` or a `<` would make the whole file
- * invalid, and the error would only show up when trying to open the map.
- */
-function escapeXml(value: string): string {
-  return (value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

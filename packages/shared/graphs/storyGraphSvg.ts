@@ -5,6 +5,17 @@ import type {
   StoryGraphLayout,
 } from './storyGraphLayout';
 import { GRAPH_PADDING } from './storyGraphLayout';
+import {
+  MAP_HEADER_TOP,
+  MAP_LEGEND_ROW_HEIGHT,
+  MAP_MIN_CANVAS_WIDTH,
+  escapeXml,
+  renderEdgeLabelChip,
+  renderMapTitle,
+  renderSvgDocument,
+  round,
+  truncate,
+} from './graphSvgShared';
 
 /**
  * Serialises the story map as a complete SVG file.
@@ -41,19 +52,16 @@ export interface StoryMapSvgOptions {
   };
 }
 
-const HEADER_TOP = 30;
-const LEGEND_ROW_HEIGHT = 24;
 const LEGEND_GAP = 14;
 const SWATCH_SIZE = 12;
 /** Average width of a character at 12px - only to size label backgrounds and chips. */
 const APPROX_CHAR_WIDTH = 6.4;
-const MIN_CANVAS_WIDTH = 560;
 
 export function renderStoryMapSvg(layout: StoryGraphLayout, options: StoryMapSvgOptions): string {
-  const canvasWidth = Math.max(layout.width, MIN_CANVAS_WIDTH);
+  const canvasWidth = Math.max(layout.width, MAP_MIN_CANVAS_WIDTH);
   const legend = buildLegendItems(layout, options);
   const legendRows = wrapLegendRows(legend, canvasWidth - GRAPH_PADDING * 2);
-  const headerHeight = HEADER_TOP + 44 + legendRows.length * LEGEND_ROW_HEIGHT + 12;
+  const headerHeight = MAP_HEADER_TOP + 44 + legendRows.length * MAP_LEGEND_ROW_HEIGHT + 12;
   const totalHeight = headerHeight + layout.height;
 
   const body = [
@@ -67,14 +75,7 @@ export function renderStoryMapSvg(layout: StoryGraphLayout, options: StoryMapSvg
     '</g>',
   ].join('\n');
 
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(canvasWidth)}" height="${round(totalHeight)}" viewBox="0 0 ${round(canvasWidth)} ${round(totalHeight)}" font-family="Helvetica, Arial, sans-serif">`,
-    `<title>${escapeXml(options.title)}</title>`,
-    body,
-    '</svg>',
-    '',
-  ].join('\n');
+  return renderSvgDocument(options.title, canvasWidth, totalHeight, body);
 }
 
 interface LegendItem {
@@ -153,14 +154,11 @@ function renderHeader(
   canvasWidth: number,
   legendRows: LegendItem[][],
 ): string {
-  const parts = [
-    `<text x="${GRAPH_PADDING}" y="${HEADER_TOP}" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
-    `<text x="${GRAPH_PADDING}" y="${HEADER_TOP + 20}" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
-  ];
+  const parts = renderMapTitle(options.title, options.subtitle, options.colors);
 
   legendRows.forEach((row, rowIndex) => {
     let x = GRAPH_PADDING;
-    const y = HEADER_TOP + 44 + rowIndex * LEGEND_ROW_HEIGHT;
+    const y = MAP_HEADER_TOP + 44 + rowIndex * MAP_LEGEND_ROW_HEIGHT;
     for (const item of row) {
       parts.push(renderLegendItem(item, x, y, options));
       x += item.width + LEGEND_GAP;
@@ -205,16 +203,7 @@ function renderEdgeLabel(edge: GraphEdge, options: StoryMapSvgOptions): string {
   const label = truncate(edge.label, 28);
   if (!label) return '';
 
-  const width = label.length * APPROX_CHAR_WIDTH + 10;
-  const height = 15;
-  const x = edge.labelPosition.x - width / 2;
-  const y = edge.labelPosition.y - height / 2;
-
-  return [
-    // Opaque background: without it the text disappears over the curve it describes.
-    `<rect x="${round(x)}" y="${round(y)}" width="${round(width)}" height="${height}" rx="4" fill="${options.colors.background}" fill-opacity="0.92"/>`,
-    `<text x="${round(edge.labelPosition.x)}" y="${round(edge.labelPosition.y + 4)}" font-size="10" text-anchor="middle" fill="${options.colors.textSecondary}">${escapeXml(label)}</text>`,
-  ].join('');
+  return renderEdgeLabelChip(label, edge.labelPosition, APPROX_CHAR_WIDTH, options.colors);
 }
 
 function renderNode(node: GraphNode, options: StoryMapSvgOptions): string {
@@ -247,29 +236,4 @@ function renderNode(node: GraphNode, options: StoryMapSvgOptions): string {
   }
 
   return parts.join('');
-}
-
-function truncate(value: string, maxChars: number): string {
-  const normalized = (value ?? '').trim().replace(/\s+/g, ' ');
-  if (normalized.length <= maxChars) return normalized;
-  return `${normalized.slice(0, maxChars - 1)}…`;
-}
-
-/**
- * Escapes whatever would break the XML.
- *
- * A scene's title is free text typed by the author: an `&` or a `<` in a name would make the whole
- * file invalid, and the error would only show up when trying to open the map.
- */
-function escapeXml(value: string): string {
-  return (value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

@@ -298,6 +298,42 @@ describe('MelodyPanel writing a part', () => {
     expect(view.getByTestId('melody-octave-up').props.accessibilityState.disabled).toBe(true);
   });
 
+  it('uses a wide screen: more octaves across the whole width, the tools in one row above', async () => {
+    const view = await render(panel());
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+    const narrowKeys = view.getAllByTestId(/^piano-key-/).length;
+
+    await fireEvent(view.getByTestId('melody-editor-0'), 'layout', {
+      nativeEvent: { layout: { width: 1128, height: 300, x: 0, y: 0 } },
+    });
+
+    // 3 octaves from C3: 22 white keys and 15 black ones, against 15 and 10 on a narrow screen.
+    expect(view.getByTestId('melody-range').props.children).toBe('C3 – C6');
+    expect(view.getAllByTestId(/^piano-key-/).length).toBe(37);
+    expect(narrowKeys).toBe(25);
+    expect(view.getByTestId('piano-key-48')).toBeTruthy();
+    expect(view.getByTestId('piano-key-84')).toBeTruthy();
+    expect(view.getByTestId('melody-suggest')).toBeTruthy();
+    expect(view.getByTestId('melody-rest')).toBeTruthy();
+
+    // Writing still lands where the key says, whatever the size.
+    await fireEvent.press(view.getByTestId('piano-key-48'));
+    expect(onChange).toHaveBeenLastCalledWith('P:Verse 1\nC,');
+  });
+
+  it('stays on two octaves, and one column of tools, on a narrow screen', async () => {
+    const view = await render(panel());
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+
+    await fireEvent(view.getByTestId('melody-editor-0'), 'layout', {
+      nativeEvent: { layout: { width: 343, height: 400, x: 0, y: 0 } },
+    });
+
+    expect(view.getByTestId('melody-range').props.children).toBe('C4 – C6');
+  });
+
   it('keeps the keys clear of the arrows above them', async () => {
     const view = await render(panel());
     await settle();

@@ -14,13 +14,29 @@ interface ModalHeaderProps {
   onClose?: () => void;
   /** Buttons placed before the close button. */
   actions?: React.ReactNode;
+  /** Spoken label of the close button; `close` unless the dialog calls it something else (e.g. cancel). */
+  closeLabel?: string;
+  closeTestID?: string;
+  /** Keeps the close button from acting, e.g. while something is being saved. */
+  closeDisabled?: boolean;
+  /** Colour of the subtitle, when it carries meaning (the colour of a chapter or a plot). */
+  subtitleColor?: string;
 }
 
 /**
  * The top of a modal or sheet: its title, optional actions and the way out. One header for every
  * dialog, so the title size, the spacing under it and the close button do not differ from sheet to sheet.
  */
-const ModalHeader: React.FC<ModalHeaderProps> = ({ title, subtitle, onClose, actions }) => {
+const ModalHeader: React.FC<ModalHeaderProps> = ({
+  title,
+  subtitle,
+  onClose,
+  actions,
+  closeLabel,
+  closeTestID,
+  closeDisabled,
+  subtitleColor,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -31,7 +47,13 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({ title, subtitle, onClose, act
           {title}
         </Text>
         {subtitle ? (
-          <Text style={[type.caption, styles.subtitle, { color: colors.textSecondary }]}>
+          <Text
+            style={[
+              type.caption,
+              styles.subtitle,
+              { color: subtitleColor ?? colors.textSecondary },
+            ]}
+          >
             {subtitle}
           </Text>
         ) : null}
@@ -40,8 +62,11 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({ title, subtitle, onClose, act
       {onClose ? (
         <TouchableOpacity
           onPress={onClose}
+          disabled={closeDisabled}
+          testID={closeTestID}
           accessibilityRole="button"
-          accessibilityLabel={t('close')}
+          accessibilityLabel={closeLabel ?? t('close')}
+          accessibilityState={{ disabled: !!closeDisabled }}
           hitSlop={8}
         >
           <Ionicons name="close" size={24} color={colors.textSecondary} />

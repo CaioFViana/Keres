@@ -35,4 +35,26 @@ describe('ModalHeader', () => {
     );
     expect(view.getByTestId('extra')).toBeTruthy();
   });
+
+  it('lets a dialog name its close button, test it, disable it and colour the subtitle', async () => {
+    const onClose = jest.fn();
+    const view = await render(
+      <ModalHeader
+        title="Export"
+        subtitle="Chapter"
+        subtitleColor="#ff0000"
+        onClose={onClose}
+        closeLabel="cancel"
+        closeTestID="export-close"
+        closeDisabled
+      />,
+    );
+
+    await fireEvent.press(view.getByTestId('export-close'));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(view.getByLabelText('cancel').props.accessibilityState.disabled).toBe(true);
+    expect(view.getByText('Chapter').props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ color: '#ff0000' })]),
+    );
+  });
 });

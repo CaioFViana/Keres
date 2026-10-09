@@ -17,6 +17,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { softDeleteRowSync } from './softDelete';
 import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -344,33 +345,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         currentUserId,
       );
       const updatedNote = await runLocalWrite(db, noteToDelete.storyId, () => {
-        const deleted = db
-          .update(notes)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${notes.version} + 1`,
-          })
-          .where(eq(notes.id, noteId))
-          .returning({
-            id: notes.id,
-            storyId: notes.storyId,
-            isDeleted: notes.isDeleted,
-            version: notes.version,
-          })
-          .get();
-
-        if (!deleted) {
-          throw new Error(`Failed to delete note ${noteId} or note not found.`);
-        }
-
-        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Note', noteId, {
-          id: deleted.id,
-          isDeleted: deleted.isDeleted,
-          version: deleted.version,
-        });
-        return deleted;
+        return softDeleteRowSync(db, notes, 'Note', noteId, userIdToLog);
       });
       entityEventEmitter.emit('note_changed', updatedNote.storyId, updatedNote.id);
     },

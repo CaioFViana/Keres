@@ -14,6 +14,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { softDeleteRowSync } from './softDelete';
 import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -223,29 +224,7 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
         currentUserId,
       );
       const updatedItem = await runLocalWrite(db, itemToDelete.storyId, () => {
-        const deleted = db
-          .update(items)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${items.version} + 1`,
-          })
-          .where(eq(items.id, itemId))
-          .returning({
-            id: items.id,
-            storyId: items.storyId,
-            isDeleted: items.isDeleted,
-            version: items.version,
-          })
-          .get();
-        if (!deleted) throw new Error(`Failed to delete item ${itemId} or item not found.`);
-        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Item', itemId, {
-          id: deleted.id,
-          isDeleted: deleted.isDeleted,
-          version: deleted.version,
-        });
-        return deleted;
+        return softDeleteRowSync(db, items, 'Item', itemId, userIdToLog);
       });
       entityEventEmitter.emit('item_changed', updatedItem.storyId, updatedItem.id);
     },

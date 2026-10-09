@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import type { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
 import { ENTITY_TYPE_ICONS } from '../../../utils/entityTypeIcons';
 
@@ -12,7 +13,7 @@ interface GlobalSearchResultItemProps {
 
 const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result, onPress }) => {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const styles = useThemedStyles(createStyles);
 
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(result)}>
@@ -51,7 +52,7 @@ const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result,
   );
 };
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       flexDirection: 'row',

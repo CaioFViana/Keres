@@ -4,8 +4,10 @@ const mockAlert = jest.fn();
 const mockNavigate = jest.fn();
 const mockUnsubscribe = jest.fn();
 const mockFocusListeners: Array<() => void> = [];
+const mockParentNavigate = jest.fn();
 const mockNavigation = {
   navigate: (...args: unknown[]) => mockNavigate(...args),
+  getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
   addListener: (_event: string, cb: () => void) => {
     mockFocusListeners.push(cb);
     return mockUnsubscribe;
@@ -58,6 +60,11 @@ jest.mock('@expo/vector-icons', () => {
     ),
   };
 });
+
+const mockSetClipboard = jest.fn(async (..._args: unknown[]) => undefined);
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: (...args: unknown[]) => mockSetClipboard(...args),
+}));
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
@@ -208,22 +215,35 @@ describe('FriendshipListScreen', () => {
     cleanup();
   });
 
-  it('groups friendships by status on focus', async () => {
+  it('groups friendships by what they ask of the person, with counts', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('status_pending');
-    expect(view.getByText('status_friend')).toBeTruthy();
-    expect(view.getByText('received_from')).toBeTruthy();
-    expect(view.getByText('sent_to')).toBeTruthy();
+    await view.findByText('friend_requests_received · 1');
+    expect(view.getByText('friend_requests_sent · 1')).toBeTruthy();
+    expect(view.getByText('friends_title · 1')).toBeTruthy();
+    expect(view.getByText('friend_wants_to_be_friend')).toBeTruthy();
+    expect(view.getByText('Max')).toBeTruthy();
     expect(view.getByText('Ana')).toBeTruthy();
-    expect(view.getAllByText(/Main/)).toHaveLength(3);
-    expect(view.getByText('your_friendships')).toBeTruthy();
+    // One server: naming it on every row says nothing, and its address is never shown.
+    expect(view.queryByText(/Main/)).toBeNull();
+    expect(view.queryByText(/s\.example/)).toBeNull();
+  });
+
+  it('names the server on a row only when there are several to tell apart', async () => {
+    mockGetAllServers.mockResolvedValue([
+      server,
+      { id: 'srv-2', idUser: 'me-on-srv-2', name: 'Other' },
+    ]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('friends_title · 1');
+    expect(view.getAllByText(/Main/).length).toBeGreaterThan(0);
   });
 
   it('opens the add form from the header action', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('your_friendships');
+    await view.findByText('friends_title · 1');
     const header = mockUseScreenHeader.mock.calls[0][0] as {
       actions: Array<{ onPress: () => void }>;
     };
@@ -234,7 +254,7 @@ describe('FriendshipListScreen', () => {
   it('opens the inbox from the header, next to the add action', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('your_friendships');
+    await view.findByText('friends_title · 1');
     const header = mockUseScreenHeader.mock.calls[0][0] as {
       actions: Array<{ id: string; icon: string; onPress: () => void }>;
     };
@@ -248,7 +268,7 @@ describe('FriendshipListScreen', () => {
     const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('your_friendships');
+    await view.findByText('friends_title · 1');
     const lastActions = () =>
       (
         mockUseScreenHeader.mock.calls.at(-1)![0] as {
@@ -277,7 +297,7 @@ describe('FriendshipListScreen', () => {
     mockGetAllFriendships.mockResolvedValue([pendingReceived, friend]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('status_friend');
+    await view.findByText('friends_title · 1');
 
     const icons = view.getAllByTestId('icon-chatbubble-outline-24');
     expect(icons).toHaveLength(1);
@@ -298,41 +318,48 @@ describe('FriendshipListScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('FriendDetail', { friendshipId: 'f3' });
   });
 
-  it('accepts a received request after confirmation', async () => {
+  it('answers a request with spelled-out buttons, without a dialog', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('received_from');
-    await fireEvent.press(view.getByTestId('icon-checkmark-circle-outline-24'));
-    expect(mockAlert).toHaveBeenCalledWith(
-      'accept_request_confirmation_title',
-      'accept_request_confirmation_message',
-      expect.any(Array),
-      { cancelable: true },
-    );
-    const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
-    await act(async () => {
-      await proceed?.onPress?.();
-    });
+    await view.findByText('friend_wants_to_be_friend');
+
+    await fireEvent.press(view.getByTestId('friend-accept-f1'));
     await waitFor(() => expect(mockAccept).toHaveBeenCalledWith('f1', 'me-on-server'));
+    expect(mockAlert).not.toHaveBeenCalled();
     expect(mockNotify).toHaveBeenCalledWith('request_accepted_successfully', 'success');
+
+    await fireEvent.press(view.getByTestId('friend-decline-f1'));
+    await waitFor(() => expect(mockDecline).toHaveBeenCalledWith('f1', 'me-on-server'));
+    expect(mockAlert).not.toHaveBeenCalled();
   });
 
-  it('declines, cancels, unfriends, blacklists and unblacklists', async () => {
-    mockGetAllFriendships.mockResolvedValue([
-      pendingReceived,
-      pendingSent,
-      friend,
-      blacklistedByMe,
-      blacklistedByOther,
-    ]);
+  it('withdraws a sent request and unblocks at once, and only the blocker can unblock', async () => {
+    mockGetAllFriendships.mockResolvedValue([pendingSent, blacklistedByMe, blacklistedByOther]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('status_blacklisted');
+    await view.findByText('friends_blocked_title · 2');
 
-    async function confirm(testID: string, index: number, service: jest.Mock, id: string) {
+    await fireEvent.press(view.getByText('friend_cancel_request'));
+    await waitFor(() => expect(mockCancelSent).toHaveBeenCalledWith('f2', 'me-on-server'));
+
+    // Blocked by the other side offers no unblock button.
+    expect(view.getAllByText('friend_unblock')).toHaveLength(1);
+    await fireEvent.press(view.getByText('friend_unblock'));
+    await waitFor(() => expect(mockUnblacklist).toHaveBeenCalledWith('f4', 'me-on-server'));
+    expect(mockAlert).not.toHaveBeenCalled();
+  });
+
+  it('asks before removing a friend or blocking, from the row menu', async () => {
+    mockGetAllFriendships.mockResolvedValue([pendingReceived, friend]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('Ana');
+
+    async function confirm(menu: string, item: string, service: jest.Mock, id: string) {
       const callsBefore = mockAlert.mock.calls.length;
-      const icons = view.getAllByTestId(testID);
-      await fireEvent.press(icons[index]);
+      await fireEvent.press(view.getByTestId(menu));
+      await fireEvent.press(view.getByTestId(item));
+      expect(mockAlert.mock.calls.length).toBe(callsBefore + 1);
       const buttons = mockAlert.mock.calls[callsBefore][2] as AlertButton[];
       const proceed = buttons.find((b) => b.text === 'proceed');
       await act(async () => {
@@ -341,13 +368,12 @@ describe('FriendshipListScreen', () => {
       await waitFor(() => expect(service).toHaveBeenCalledWith(id, 'me-on-server'));
     }
 
-    await confirm('icon-close-circle-outline-24', 0, mockDecline, 'f1');
-    await confirm('icon-close-circle-outline-24', 1, mockCancelSent, 'f2');
-    await confirm('icon-ban-outline-24', 0, mockBlacklist, 'f1');
-    await confirm('icon-person-remove-outline-24', 0, mockUnfriend, 'f3');
-    await confirm('icon-person-add-outline-24', 0, mockUnblacklist, 'f4');
-    // Blocked by the other side offers no unblacklist button.
-    expect(view.getAllByTestId('icon-person-add-outline-24')).toHaveLength(1);
+    await confirm('friend-menu-f3', 'friend-menu-f3-unfriend', mockUnfriend, 'f3');
+    await confirm('friend-menu-f3', 'friend-menu-f3-block', mockBlacklist, 'f3');
+    // A request can be blocked from its own menu, which has no unfriend.
+    await fireEvent.press(view.getByTestId('friend-menu-f1'));
+    expect(view.queryByTestId('friend-menu-f1-unfriend')).toBeNull();
+    expect(view.getByTestId('friend-menu-f1-block')).toBeTruthy();
   });
 
   it('reports action failures', async () => {
@@ -355,24 +381,47 @@ describe('FriendshipListScreen', () => {
       mockAccept.mockRejectedValue(new Error('boom'));
       const view = await render(<FriendshipListScreen />);
       await focusLast();
-      await view.findByText('received_from');
-      await fireEvent.press(view.getByTestId('icon-checkmark-circle-outline-24'));
-      const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find(
-        (b) => b.text === 'proceed',
-      );
-      await act(async () => {
-        await proceed?.onPress?.();
-      });
+      await view.findByText('friend_wants_to_be_friend');
+      await fireEvent.press(view.getByTestId('friend-accept-f1'));
       await waitFor(() =>
         expect(mockNotify).toHaveBeenCalledWith('failed_to_accept_request', 'error'),
       );
     });
   });
 
+  it('labels every icon button of a row', async () => {
+    mockGetAllFriendships.mockResolvedValue([friend]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('Ana');
+
+    expect(view.getByLabelText('send_message')).toBeTruthy();
+    expect(view.getByLabelText('friend_more_actions')).toBeTruthy();
+  });
+
+  it('shows the own tag with a button to copy it', async () => {
+    mockGetAllServers.mockResolvedValue([{ ...server, tag: 'caio' }]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByTestId('own-tag-card');
+
+    expect(view.getByText('@caio')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('copy-tag-srv-1'));
+    expect(mockSetClipboard).toHaveBeenCalledWith('@caio');
+    expect(mockNotify).toHaveBeenCalledWith('friend_tag_copied', 'success');
+  });
+
+  it('shows no own-tag card when no server has given one', async () => {
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('friends_title · 1');
+    expect(view.queryByTestId('own-tag-card')).toBeNull();
+  });
+
   it('reloads when friendships change elsewhere', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('received_from');
+    await view.findByText('friend_wants_to_be_friend');
     expect(mockGetAllFriendships).toHaveBeenCalledTimes(1);
     await act(async () => {
       entityEventEmitter.emit('friendship_changed');
@@ -380,12 +429,45 @@ describe('FriendshipListScreen', () => {
     await waitFor(() => expect(mockGetAllFriendships).toHaveBeenCalledTimes(2));
   });
 
-  it('shows the empty state and load failures', async () => {
+  it('guides an empty list to adding a friend', async () => {
+    mockGetAllFriendships.mockResolvedValue([]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('friends_empty_title');
+    expect(view.getByText('friends_empty_message')).toBeTruthy();
+    // An icon of its own: this is not an entity's list, so there is no entity icon to borrow.
+    expect(view.getByTestId('guided-empty-icon')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('friends-empty-add'));
+    expect(mockNavigate).toHaveBeenCalledWith('FriendshipForm');
+  });
+
+  it('sends a person with no server to register one, and says why', async () => {
+    mockGetAllFriendships.mockResolvedValue([]);
+    mockGetAllServers.mockResolvedValue([]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('friends_empty_no_server_message');
+
+    await fireEvent.press(view.getByTestId('friends-empty-register'));
+    expect(mockParentNavigate).toHaveBeenCalledWith('ServerManagementDrawer', {
+      screen: 'ServerManagement',
+    });
+  });
+
+  it('does not guess the empty state before the first load', async () => {
+    mockGetAllFriendships.mockResolvedValue([]);
+    const view = await render(<FriendshipListScreen />);
+    expect(view.queryByText('friends_empty_title')).toBeNull();
+    expect(view.queryByText('friends_empty_no_server_message')).toBeNull();
+  });
+
+  it('reports load failures', async () => {
     await withSilencedConsole(['error'], async () => {
       mockGetAllFriendships.mockResolvedValue([]);
       const view = await render(<FriendshipListScreen />);
       await focusLast();
-      await view.findByText('no_friendships_found');
+      await view.findByText('friends_empty_title');
 
       mockGetAllServers.mockRejectedValueOnce(new Error('db down'));
       await act(async () => {
@@ -410,7 +492,7 @@ describe('FriendshipListScreen', () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('not_logged_in', 'error'));
-    await view.findByText('no_friendships_found');
+    await view.findByText('friends_empty_title');
   });
 });
 

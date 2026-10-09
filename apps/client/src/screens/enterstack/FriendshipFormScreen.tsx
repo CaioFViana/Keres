@@ -3,13 +3,19 @@ import FormField from '@/src/components/common/forms/FormField/FormField';
 import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { GuidedEmptyState } from '@/src/components/common/lists/GenericFilterSortList/ListEmptyStates';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { Ionicons } from '@expo/vector-icons';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
+import type {
+  FriendshipStackParamList,
+  StorySelectionDrawerParamList,
+} from '../../navigation/StorySelectionStack';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
@@ -25,6 +31,9 @@ type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
 /**
  * Add-only: sending a friend request. Status transitions go through
  * FriendshipListScreen / FriendDetailScreen API-backed actions.
+ *
+ * The tag is looked up as it is typed and the answer shows under the field, so sending is one step
+ * after typing: no "check" button and no dialog between the two.
  */
 const FriendshipFormScreen = () => {
   const navigation = useNavigation<FriendshipFormScreenNavigationProp>();
@@ -42,73 +51,128 @@ const FriendshipFormScreen = () => {
   const {
     friendTag,
     selectedServerId,
+    selectedServer,
     servers,
+    serversLoaded,
     friendUsername,
     isCheckingFriend,
     friendFound,
+    checkFailed,
     handleServerChange,
     handleFriendTagChange,
   } = friendshipFormState;
 
-  const { handleCheckFriendTag, handleSaveFriendship } = useFriendshipFormActions({
+  const { handleSaveFriendship } = useFriendshipFormActions({
     state: friendshipFormState,
     friendshipServiceRef,
     navigation,
     currentUserId,
   });
 
+  const handleRegisterServer = () => {
+    navigation
+      .getParent<DrawerNavigationProp<StorySelectionDrawerParamList>>()
+      ?.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
+  };
+
+  if (serversLoaded && servers.length === 0) {
+    return (
+      <View style={commonContainerStyles.container}>
+        <GuidedEmptyState
+          icon="cloud-outline"
+          title={t('friend_form_no_server_title')}
+          message={t('friends_empty_no_server_message')}
+          actions={[
+            {
+              label: t('friends_empty_register_server'),
+              onPress: handleRegisterServer,
+              testID: 'friend-form-register-server',
+            },
+          ]}
+          fallbackText={t('no_servers_available')}
+        />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAwareScreen
       style={commonContainerStyles.container}
       contentContainerStyle={styles.content}
     >
-      <Text style={[styles.title, { color: colors.text }]}>{t('add_new_friendship')}</Text>
+      {/* One server is chosen for the person; the picker is only for telling several apart. */}
+      {servers.length > 1 && (
+        <FormField label={t('server')}>
+          <SingleSelectPill
+            options={servers.map((server) => ({
+              label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
+              value: server.id,
+            }))}
+            value={selectedServerId || null}
+            onValueChange={handleServerChange}
+            placeholder={t('select_server')}
+            multiple={false}
+          />
+        </FormField>
+      )}
 
-      <FormField label={t('server')}>
-        <SingleSelectPill
-          options={servers.map((server) => ({
-            label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
-            value: server.id,
-          }))}
-          value={selectedServerId || null}
-          onValueChange={handleServerChange}
-          placeholder={servers.length === 0 ? t('no_servers_available') : t('select_server')}
-          multiple={false}
-        />
+      <FormField label={t('friend_id')} help={t('friend_form_hint')}>
+        {(accessibility) => (
+          <TextInput
+            {...accessibility}
+            style={commonInputStyles.input}
+            placeholder={t('enter_friend_id')}
+            value={friendTag}
+            onChangeText={handleFriendTagChange}
+            onSubmitEditing={handleSaveFriendship}
+            returnKeyType="send"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoFocus
+          />
+        )}
       </FormField>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
-      <View style={styles.inputWithButton}>
-        <TextInput
-          style={[commonInputStyles.input, styles.friendIdInput]}
-          placeholder={t('enter_friend_id')}
-          value={friendTag}
-          onChangeText={handleFriendTagChange}
-          autoCapitalize="none"
-        />
-        <Button
-          onPress={handleCheckFriendTag}
-          disabled={isCheckingFriend || !friendTag.trim() || !selectedServerId}
-        >
-          {t('check_user')}
-        </Button>
+      <View style={styles.status} accessibilityLiveRegion="polite" testID="friend-lookup-status">
+        {isCheckingFriend && (
+          <>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={[styles.statusText, { color: colors.textSecondary }]}>
+              {t('friend_form_checking')}
+            </Text>
+          </>
+        )}
+        {friendFound === true && friendUsername && (
+          <>
+            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+            <Text style={[styles.statusText, { color: colors.text }]}>
+              {t('friend_form_found', { name: friendUsername })}
+            </Text>
+          </>
+        )}
+        {friendFound === false && (
+          <>
+            <Ionicons name="close-circle" size={20} color={colors.error} />
+            <Text style={[styles.statusText, { color: colors.error }]}>
+              {t('friend_form_not_found')}
+            </Text>
+          </>
+        )}
+        {checkFailed && (
+          <>
+            <Ionicons name="cloud-offline-outline" size={20} color={colors.error} />
+            <Text style={[styles.statusText, { color: colors.error }]}>
+              {t('friend_form_check_failed')}
+            </Text>
+          </>
+        )}
       </View>
-
-      {isCheckingFriend && <ActivityIndicator size="small" color={colors.primary} />}
-      {friendFound === true && friendUsername && (
-        <Text style={[styles.friendInfo, { color: colors.primary }]}>
-          {t('user_found')}: {friendUsername}
-        </Text>
-      )}
-      {friendFound === false && (
-        <Text style={[styles.friendInfo, { color: colors.error }]}>{t('user_not_found')}</Text>
-      )}
 
       <Button
         onPress={handleSaveFriendship}
-        disabled={isCheckingFriend || friendFound === false || !friendUsername}
+        disabled={!selectedServer || !friendTag.trim() || isCheckingFriend || friendFound === false}
       >
-        {t('add_friendship')}
+        {t('friend_send_request')}
       </Button>
     </KeyboardAwareScreen>
   );
@@ -118,33 +182,16 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 5,
-    marginTop: 10,
-  },
-  friendInfo: {
-    fontSize: 14,
-    marginTop: -10,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  inputWithButton: {
+  // Always tall enough for one line, so the button does not jump when the answer arrives.
+  status: {
+    minHeight: 28,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 14,
   },
-  friendIdInput: {
-    flex: 1,
-    marginRight: 10,
-  },
+  statusText: { fontSize: 14, flexShrink: 1 },
 });
 
 export default FriendshipFormScreen;

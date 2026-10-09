@@ -17,12 +17,14 @@ export const GuidedEmptyState: React.FC<{
   message?: string;
   actions?: GuidedEmptyStateAction[];
   entityName?: string;
+  /** For a screen that is not an entity's list: the icon to show in place of the entity's. */
+  icon?: keyof typeof Ionicons.glyphMap;
   fallbackText: string;
-}> = ({ title, message, actions, entityName, fallbackText }) => {
+}> = ({ title, message, actions, entityName, icon, fallbackText }) => {
   const { colors } = useTheme();
-  const entityIcon = entityName
-    ? (getEntityAppearance(entityName).icon as keyof typeof Ionicons.glyphMap)
-    : null;
+  const entityIcon =
+    icon ??
+    (entityName ? (getEntityAppearance(entityName).icon as keyof typeof Ionicons.glyphMap) : null);
   const visibleActions = (actions ?? []).slice(0, 2);
   if (!title && !message && visibleActions.length === 0) {
     return <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{fallbackText}</Text>;

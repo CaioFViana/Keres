@@ -93,3 +93,44 @@ it('editing the friend tag clears the previously resolved friend', async () => {
   expect(view.result.current.resolvedFriendUserId).toBeNull();
   expect(view.result.current.friendFound).toBeNull();
 });
+
+it('does not call the servers "none" until they have been read', async () => {
+  const pending = new Promise<never[]>((resolve) => setTimeout(() => resolve([]), 50));
+  const serverServiceRef = { current: { getAllServers: () => pending } as never };
+  const view = await renderHook(() => useFriendshipFormState({ serverServiceRef }));
+  expect(view.result.current.serversLoaded).toBe(false);
+
+  await waitFor(() => expect(view.result.current.serversLoaded).toBe(true));
+  expect(view.result.current.servers).toEqual([]);
+});
+
+it('counts a failed read of the servers as read, so the form is not left waiting', async () => {
+  await withSilencedConsole(['error'], async () => {
+    const { view } = await renderState(new Error('offline'));
+    await waitFor(() => expect(view.result.current.serversLoaded).toBe(true));
+  });
+});
+
+it('keeps "could not ask the server" apart from "no such tag", and clears it on any edit', async () => {
+  const { view } = await renderState([{ id: 'server-1' }, { id: 'server-2' }]);
+  await waitFor(() => expect(view.result.current.servers).toHaveLength(2));
+
+  await act(async () => {
+    view.result.current.setCheckFailed(true);
+  });
+  expect(view.result.current.checkFailed).toBe(true);
+  expect(view.result.current.friendFound).toBeNull();
+
+  await act(async () => {
+    view.result.current.handleFriendTagChange('friend');
+  });
+  expect(view.result.current.checkFailed).toBe(false);
+
+  await act(async () => {
+    view.result.current.setCheckFailed(true);
+  });
+  await act(async () => {
+    view.result.current.handleServerChange('server-2');
+  });
+  expect(view.result.current.checkFailed).toBe(false);
+});

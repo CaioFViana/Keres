@@ -4,7 +4,14 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../theme';
 
+/**
+ * `primary` is the filled call to action; `secondary` and `danger` are outlined, for what is offered
+ * next to it - so a row of choices does not read as a row of equally loud buttons.
+ */
+export type ButtonVariant = 'primary' | 'secondary' | 'danger';
+
 interface ButtonProps {
+  variant?: ButtonVariant;
   onPress: () => void;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -15,6 +22,7 @@ interface ButtonProps {
 }
 
 const Button: React.FC<ButtonProps> = ({
+  variant = 'primary',
   onPress,
   children,
   style,
@@ -26,8 +34,11 @@ const Button: React.FC<ButtonProps> = ({
   const { colors } = useTheme();
 
   const styles = useMemo(() => {
+    const outline = variant === 'secondary' ? colors.primary : colors.error;
+    const outlined = variant !== 'primary';
     const base = {
-      backgroundColor: colors.primary,
+      backgroundColor: outlined ? 'transparent' : colors.primary,
+      ...(outlined ? { borderWidth: 1.5, borderColor: outline } : {}),
       paddingVertical: 12,
       paddingHorizontal: 20,
       borderRadius: 8,
@@ -45,12 +56,12 @@ const Button: React.FC<ButtonProps> = ({
         opacity: 0.6,
       },
       buttonText: {
-        color: getOnColorForFill(colors, background),
+        color: outlined ? outline : getOnColorForFill(colors, background),
         fontSize: 16,
         fontWeight: 'bold',
       },
     });
-  }, [colors, style]);
+  }, [colors, style, variant]);
 
   return (
     <TouchableOpacity

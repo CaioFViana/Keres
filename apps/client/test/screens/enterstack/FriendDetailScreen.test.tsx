@@ -167,17 +167,37 @@ describe('FriendDetailScreen', () => {
     expect(view.getByText(/zoe/)).toBeTruthy();
     expect(view.getByText('bio')).toBeTruthy();
     expect(view.getByText('Hello there')).toBeTruthy();
-    expect(view.getByText('accept_request_confirmation_title')).toBeTruthy();
-    expect(view.getByText('decline_request_confirmation_title')).toBeTruthy();
-    expect(view.getByText('blacklist_confirmation_title')).toBeTruthy();
+    expect(view.getByText('friend_accept')).toBeTruthy();
+    expect(view.getByText('friend_decline')).toBeTruthy();
+    expect(view.getByText('friend_block')).toBeTruthy();
 
-    await fireEvent.press(view.getByText('accept_request_confirmation_title'));
+    // Answering a request is harmless to do by mistake: no dialog in the way.
+    await fireEvent.press(view.getByText('friend_accept'));
+    await waitFor(() => expect(mockAccept).toHaveBeenCalledWith('f1', 'me-on-server'));
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockNotify).toHaveBeenCalledWith('request_accepted_successfully', 'success');
+
+    await fireEvent.press(view.getByText('friend_decline'));
+    await waitFor(() => expect(mockDecline).toHaveBeenCalledWith('f1', 'me-on-server'));
+    expect(mockAlert).not.toHaveBeenCalled();
+  });
+
+  it('asks before blocking', async () => {
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    await fireEvent.press(view.getByText('friend_block'));
+    expect(mockAlert).toHaveBeenCalledWith(
+      'blacklist_confirmation_title',
+      'blacklist_confirmation_message',
+      expect.any(Array),
+      { cancelable: true },
+    );
     const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
     await act(async () => {
       await proceed?.onPress?.();
     });
-    await waitFor(() => expect(mockAccept).toHaveBeenCalledWith('f1', 'me-on-server'));
-    expect(mockNotify).toHaveBeenCalledWith('request_accepted_successfully', 'success');
+    await waitFor(() => expect(mockBlacklist).toHaveBeenCalledWith('f1', 'me-on-server'));
   });
 
   it('offers the way to message a friend in the header, and only for a friend', async () => {
@@ -218,16 +238,13 @@ describe('FriendDetailScreen', () => {
     ]);
     const view = await render(<FriendDetailScreen />);
     await view.findByText('Zoe');
-    expect(view.getByText('cancel_request_confirmation_title')).toBeTruthy();
-    expect(view.queryByText('accept_request_confirmation_title')).toBeNull();
+    expect(view.getByText('friend_cancel_request')).toBeTruthy();
+    expect(view.queryByText('friend_accept')).toBeNull();
     expect(view.queryByText('bio')).toBeNull();
 
-    await fireEvent.press(view.getByText('cancel_request_confirmation_title'));
-    const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
-    await act(async () => {
-      await proceed?.onPress?.();
-    });
+    await fireEvent.press(view.getByText('friend_cancel_request'));
     await waitFor(() => expect(mockCancelSent).toHaveBeenCalledWith('f1', 'me-on-server'));
+    expect(mockAlert).not.toHaveBeenCalled();
   });
 
   it('shows a friend with unfriend and blacklist actions', async () => {
@@ -235,14 +252,34 @@ describe('FriendDetailScreen', () => {
     const view = await render(<FriendDetailScreen />);
     await view.findByText('Zoe');
     expect(view.getByText('status_friend')).toBeTruthy();
-    expect(view.getByText('unfriend_confirmation_title')).toBeTruthy();
+    expect(view.getByText('friend_unfriend')).toBeTruthy();
+    expect(view.getByText('friend_block')).toBeTruthy();
 
-    await fireEvent.press(view.getByText('unfriend_confirmation_title'));
+    await fireEvent.press(view.getByText('friend_unfriend'));
     const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
     await act(async () => {
       await proceed?.onPress?.();
     });
     await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f1', 'me-on-server'));
+  });
+
+  it('opens the conversation from a button in the page, for a friend', async () => {
+    mockGetAllFriendships.mockResolvedValue([friendship({ status: FriendStatus.FRIEND })]);
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    await fireEvent.press(view.getByText('send_message'));
+    expect(mockNavigate).toHaveBeenCalledWith('Conversation', {
+      serverId: 'srv-1',
+      peer: 'them',
+      peerName: 'Zoe',
+    });
+  });
+
+  it('offers no message button for a request', async () => {
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+    expect(view.queryByText('send_message')).toBeNull();
   });
 
   it('lets only the blocking side undo a blacklist', async () => {
@@ -251,20 +288,17 @@ describe('FriendDetailScreen', () => {
     ]);
     const byMe = await render(<FriendDetailScreen />);
     await byMe.findByText('status_blacklisted');
-    expect(byMe.getByText('unblacklist_confirmation_title')).toBeTruthy();
-    await fireEvent.press(byMe.getByText('unblacklist_confirmation_title'));
-    const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
-    await act(async () => {
-      await proceed?.onPress?.();
-    });
+    expect(byMe.getByText('friend_unblock')).toBeTruthy();
+    await fireEvent.press(byMe.getByText('friend_unblock'));
     await waitFor(() => expect(mockUnblacklist).toHaveBeenCalledWith('f1', 'me-on-server'));
+    expect(mockAlert).not.toHaveBeenCalled();
 
     mockGetAllFriendships.mockResolvedValue([
       friendship({ status: FriendStatus.BLACKLISTED, blockedById: 'them' }),
     ]);
     const byOther = await render(<FriendDetailScreen />);
     await byOther.findByText('blocked_by_other_user');
-    expect(byOther.queryByText('unblacklist_confirmation_title')).toBeNull();
+    expect(byOther.queryByText('friend_unblock')).toBeNull();
   });
 
   it('navigates away once when the friendship is gone', async () => {

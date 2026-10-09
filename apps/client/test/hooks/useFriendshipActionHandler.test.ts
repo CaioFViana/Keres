@@ -75,3 +75,20 @@ it('reports action failures without refreshing the friendship list', async () =>
   expect(showNotification).toHaveBeenCalledWith('Falhou', 'error');
   expect(onSuccess).not.toHaveBeenCalled();
 });
+
+it('skips the dialog and acts at once when the action does not ask first', async () => {
+  const action = jest.fn(async () => undefined);
+  const onSuccess = jest.fn();
+  const { result } = await renderHook(() =>
+    useFriendshipActionHandler((() => ({ idUser: 'current-user' })) as never, onSuccess),
+  );
+
+  await result.current(action, 'Aceitar', 'Tem certeza?', 'Concluído', 'Falhou', {
+    confirm: false,
+  })('friendship-1', 'server-1');
+
+  expect(alert).not.toHaveBeenCalled();
+  expect(action).toHaveBeenCalledWith('friendship-1', 'current-user');
+  expect(showNotification).toHaveBeenCalledWith('Concluído', 'success');
+  expect(onSuccess).toHaveBeenCalledTimes(1);
+});

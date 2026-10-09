@@ -18,9 +18,13 @@ export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormSt
   const [resolvedFriendUserId, setResolvedFriendUserId] = useState<string | null>(null);
   const [selectedServerId, setSelectedServerId] = useState('');
   const [servers, setServers] = useState<ServerSelect[]>([]);
+  /** Until the servers are read, "no servers" is only a guess. */
+  const [serversLoaded, setServersLoaded] = useState(false);
   const [friendUsername, setFriendUsername] = useState<string | null>(null);
   const [isCheckingFriend, setIsCheckingFriend] = useState(false);
   const [friendFound, setFriendFound] = useState<boolean | null>(null);
+  /** The server could not be asked, as opposed to answering that there is no such tag. */
+  const [checkFailed, setCheckFailed] = useState(false);
 
   useEffect(() => {
     const fetchServers = async () => {
@@ -36,6 +40,8 @@ export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormSt
       } catch (error) {
         console.error('Error fetching servers for friendship form:', error);
         AppAlert.alert(t('error'), t('failed_to_load_form_data'));
+      } finally {
+        setServersLoaded(true);
       }
     };
     void fetchServers();
@@ -47,6 +53,7 @@ export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormSt
     setSelectedServerId(serverId || '');
     setFriendUsername(null);
     setFriendFound(null);
+    setCheckFailed(false);
     setResolvedFriendUserId(null);
   };
 
@@ -54,6 +61,7 @@ export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormSt
     setFriendTag(text);
     setFriendUsername(null);
     setFriendFound(null);
+    setCheckFailed(false);
     setResolvedFriendUserId(null);
   };
 
@@ -63,12 +71,15 @@ export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormSt
     setResolvedFriendUserId,
     selectedServerId,
     servers,
+    serversLoaded,
     friendUsername,
     setFriendUsername,
     isCheckingFriend,
     setIsCheckingFriend,
     friendFound,
     setFriendFound,
+    checkFailed,
+    setCheckFailed,
     selectedServer,
     handleServerChange,
     handleFriendTagChange,

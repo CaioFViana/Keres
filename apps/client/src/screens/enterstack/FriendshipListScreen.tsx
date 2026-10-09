@@ -1,28 +1,32 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import { Ionicons } from '@expo/vector-icons';
+import { GuidedEmptyState } from '@/src/components/common/lists/GenericFilterSortList/ListEmptyStates';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import FriendChatButton from '../../components/features/messages/FriendChatButton';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
+import FriendshipRow from '../../components/features/friendship/FriendshipRow';
+import OwnTagCard from '../../components/features/friendship/OwnTagCard';
 import StoryInvitationList from '../../components/features/story/StoryInvitationList/StoryInvitationList';
 import { useDrizzle } from '../../db';
-import type { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
+import type { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
-import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
+import type {
+  FriendshipStackParamList,
+  StorySelectionDrawerParamList,
+} from '../../navigation/StorySelectionStack';
 import type { FriendshipWithServer } from '../../services/FriendshipService';
 import { createFriendshipService } from '../../services/FriendshipService';
-import { createServerService } from '../../services/ServerService'; // Import createServerService
+import { createServerService } from '../../services/ServerService';
 import { createStoryInvitationService } from '../../services/StoryInvitationService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useHasUnseenMessages } from '../../state/unseenMessagesStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
@@ -32,6 +36,7 @@ type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 type FriendshipSection = {
+  key: string;
   title: string;
   data: FriendshipWithServer[];
 };
@@ -47,22 +52,23 @@ const FriendshipListScreen = () => {
   // in fetchFriendshipsAndServers' dependency array and would re-subscribe/re-run on every render.
   const [friendshipService] = useState(() => createFriendshipService(drizzleClient));
   const [serverService] = useState(() => createServerService(drizzleClient));
-  const { userId: localUserId } = useUserSettingsStore(); // Renamed userId to localUserId
+  const { userId: localUserId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
 
   const [friendships, setFriendships] = useState<FriendshipWithServer[]>([]);
-  const [serversMap, setServersMap] = useState<Map<string, ServerSelect>>(new Map()); // State to store servers map
+  const [servers, setServers] = useState<ServerSelect[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const serversMap = useMemo(
+    () => new Map(servers.map((server) => [server.id, server])),
+    [servers],
+  );
 
   const commonContainerStyles = getCommonContainerStyles(colors);
-  const commonCardStyles = getCommonCardStyles(colors);
 
-  const fetchFriendshipsAndServers = useCallback(async () => {
-    // Fetch all servers first
+  const loadFriendshipsAndServers = useCallback(async () => {
     try {
       const allServers = await serverService.getAllServers();
-      const newServersMap = new Map<string, ServerSelect>();
-      allServers.forEach((server) => newServersMap.set(server.id, server));
-      setServersMap(newServersMap);
+      setServers(allServers);
       // Invitations are not kept locally: opening the screen asks every server for the open ones.
       const invitationService = createStoryInvitationService(drizzleClient);
       for (const server of allServers) {
@@ -76,20 +82,27 @@ const FriendshipListScreen = () => {
       return;
     }
 
-    // Now fetch friendships
     if (!localUserId) {
-      showNotification(t('not_logged_in'), 'error'); // Use general not_logged_in
+      showNotification(t('not_logged_in'), 'error');
       setFriendships([]);
       return;
     }
     try {
-      const allFetched = await friendshipService.getAllFriendships();
-      setFriendships(allFetched);
+      setFriendships(await friendshipService.getAllFriendships());
     } catch (error) {
       console.error('Error fetching friendships:', error);
       AppAlert.alert(t('error'), t('failed_to_load_friendships'));
     }
   }, [drizzleClient, friendshipService, serverService, showNotification, t, localUserId]);
+
+  // The empty state waits for the first load: before it, "no servers" and "no friends" are only guesses.
+  const fetchFriendshipsAndServers = useCallback(async () => {
+    try {
+      await loadFriendshipsAndServers();
+    } finally {
+      setLoaded(true);
+    }
+  }, [loadFriendshipsAndServers]);
 
   useEffect(() => {
     const unsubscribeFocus = navigation.addListener('focus', () => {
@@ -107,6 +120,12 @@ const FriendshipListScreen = () => {
   // born anew on every render and would make the effect run every time.
   const handleAddFriendship = useCallback(() => {
     navigation.navigate('FriendshipForm');
+  }, [navigation]);
+
+  const handleRegisterServer = useCallback(() => {
+    navigation
+      .getParent<DrawerNavigationProp<StorySelectionDrawerParamList>>()
+      ?.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
   }, [navigation]);
 
   const hasUnseenMessages = useHasUnseenMessages();
@@ -134,12 +153,15 @@ const FriendshipListScreen = () => {
     fetchFriendshipsAndServers,
   );
 
+  // Answering, withdrawing and unblocking are harmless to do by mistake and go through at once;
+  // removing a friend and blocking ask first.
   const handleAcceptFriendRequest = runFriendshipAction(
     friendshipService.acceptFriendRequest.bind(friendshipService),
     t('accept_request_confirmation_title'),
     t('accept_request_confirmation_message'),
     t('request_accepted_successfully'),
     t('failed_to_accept_request'),
+    { confirm: false },
   );
 
   const handleDeclineFriendRequest = runFriendshipAction(
@@ -148,6 +170,7 @@ const FriendshipListScreen = () => {
     t('decline_request_confirmation_message'),
     t('request_declined_successfully'),
     t('failed_to_decline_request'),
+    { confirm: false },
   );
 
   const handleCancelSentFriendRequest = runFriendshipAction(
@@ -156,6 +179,7 @@ const FriendshipListScreen = () => {
     t('cancel_request_confirmation_message'),
     t('request_cancelled_successfully'),
     t('failed_to_cancel_request'),
+    { confirm: false },
   );
 
   const handleUnfriendUser = runFriendshipAction(
@@ -180,132 +204,52 @@ const FriendshipListScreen = () => {
     t('unblacklist_confirmation_message'),
     t('unblacklist_successful'),
     t('failed_to_unblacklist'),
+    { confirm: false },
   );
 
   const sections = useMemo<FriendshipSection[]>(() => {
+    const isReceived = (f: FriendshipWithServer) =>
+      f.status === FriendStatus.PENDING && f.receiverId === serversMap.get(f.serverId)?.idUser;
     const pending = friendships.filter((f) => f.status === FriendStatus.PENDING);
+    const received = pending.filter(isReceived);
+    const sent = pending.filter((f) => !isReceived(f));
     const friends = friendships.filter((f) => f.status === FriendStatus.FRIEND);
-    const blacklisted = friendships.filter((f) => f.status === FriendStatus.BLACKLISTED);
+    const blocked = friendships.filter((f) => f.status === FriendStatus.BLACKLISTED);
     return [
-      { title: t('status_pending'), data: pending },
-      { title: t('status_friend'), data: friends },
-      { title: t('status_blacklisted'), data: blacklisted },
+      { key: 'received', title: t('friend_requests_received'), data: received },
+      { key: 'sent', title: t('friend_requests_sent'), data: sent },
+      { key: 'friends', title: t('friends_title'), data: friends },
+      { key: 'blocked', title: t('friends_blocked_title'), data: blocked },
     ].filter((section) => section.data.length > 0);
-  }, [friendships, t]);
+  }, [friendships, serversMap, t]);
 
-  const renderFriendshipItem = ({ item }: { item: FriendshipWithServer }) => {
-    const server = serversMap.get(item.serverId);
-    const currentUsersServerId = server?.idUser;
+  // A server is only worth naming on a row when there is another to tell it from.
+  const showServer = servers.length > 1;
 
-    return (
-      <TouchableOpacity
-        style={[commonCardStyles.cardContainer, styles.friendshipItem]}
-        onPress={() => navigation.navigate('FriendDetail', { friendshipId: item.id })}
-      >
-        <Avatar
-          color={item.otherUserAvatarColor}
-          icon={item.otherUserAvatarIcon}
-          seed={item.otherUserId}
-          size={44}
-        />
-        <View style={styles.friendshipInfo}>
-          <Text style={[styles.friendshipText, { color: colors.text }]}>
-            {item.status === FriendStatus.PENDING
-              ? item.senderId === currentUsersServerId
-                ? t('sent_to', { friendUsername: item.friendUsername })
-                : t('received_from', { friendUsername: item.friendUsername })
-              : item.friendUsername}
-          </Text>
-          <Text style={[styles.friendshipText, { color: colors.textSecondary }]}>
-            {item.otherUserTag && `@${item.otherUserTag} · `}
-            {t('server')}: {item.serverName || item.serverId}{' '}
-            {item.serverUrl && `(${item.serverUrl})`}
-          </Text>
-        </View>
-        <View style={styles.friendshipActions}>
-          {item.status === FriendStatus.PENDING && item.receiverId === currentUsersServerId && (
-            <>
-              <TouchableOpacity
-                onPress={() => handleAcceptFriendRequest(item.id, item.serverId)}
-                style={styles.actionButton}
-              >
-                <Ionicons name="checkmark-circle-outline" size={24} color={colors.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleDeclineFriendRequest(item.id, item.serverId)}
-                style={styles.actionButton}
-              >
-                <Ionicons name="close-circle-outline" size={24} color={colors.error} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleBlacklistUser(item.id, item.serverId)}
-                style={styles.actionButton}
-              >
-                <Ionicons name="ban-outline" size={24} color={colors.accent} />
-              </TouchableOpacity>
-            </>
-          )}
-
-          {item.status === FriendStatus.PENDING && item.senderId === currentUsersServerId && (
-            <TouchableOpacity
-              onPress={() => handleCancelSentFriendRequest(item.id, item.serverId)}
-              style={styles.actionButton}
-            >
-              <Ionicons name="close-circle-outline" size={24} color={colors.secondary} />
-            </TouchableOpacity>
-          )}
-
-          {item.status === FriendStatus.FRIEND && (
-            <>
-              <FriendChatButton
-                serverId={item.serverId}
-                friendUserId={item.otherUserId}
-                friendName={item.friendUsername}
-                onPress={() =>
-                  navigation.navigate('Conversation', {
-                    serverId: item.serverId,
-                    peer: item.otherUserId,
-                    peerName: item.friendUsername,
-                  })
-                }
-                style={styles.actionButton}
-              />
-              <TouchableOpacity
-                onPress={() => handleUnfriendUser(item.id, item.serverId)}
-                style={styles.actionButton}
-              >
-                <Ionicons name="person-remove-outline" size={24} color={colors.error} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleBlacklistUser(item.id, item.serverId)}
-                style={styles.actionButton}
-              >
-                <Ionicons name="ban-outline" size={24} color={colors.accent} />
-              </TouchableOpacity>
-            </>
-          )}
-
-          {item.status === FriendStatus.BLACKLISTED &&
-            // Only the side that issued the blacklist can undo it (server-enforced too, see
-            // FriendshipService.unblacklistUser) - null `blockedById` is a legacy row from
-            // before this column existed, shown to both sides since who blocked whom can't
-            // be recovered for it.
-            (item.blockedById === null || item.blockedById === currentUsersServerId) && (
-              <TouchableOpacity
-                onPress={() => handleUnblacklistUser(item.id, item.serverId)}
-                style={styles.actionButton}
-              >
-                <Ionicons name="person-add-outline" size={24} color={colors.primary} />
-              </TouchableOpacity>
-            )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderFriendshipItem = ({ item }: { item: FriendshipWithServer }) => (
+    <FriendshipRow
+      item={item}
+      currentUsersServerId={serversMap.get(item.serverId)?.idUser}
+      showServer={showServer}
+      onOpen={() => navigation.navigate('FriendDetail', { friendshipId: item.id })}
+      onChat={() =>
+        navigation.navigate('Conversation', {
+          serverId: item.serverId,
+          peer: item.otherUserId,
+          peerName: item.friendUsername,
+        })
+      }
+      onAccept={() => handleAcceptFriendRequest(item.id, item.serverId)}
+      onDecline={() => handleDeclineFriendRequest(item.id, item.serverId)}
+      onCancel={() => handleCancelSentFriendRequest(item.id, item.serverId)}
+      onUnfriend={() => handleUnfriendUser(item.id, item.serverId)}
+      onBlock={() => handleBlacklistUser(item.id, item.serverId)}
+      onUnblock={() => handleUnblacklistUser(item.id, item.serverId)}
+    />
+  );
 
   return (
     <View style={commonContainerStyles.container}>
-      <Text style={[styles.title, { color: colors.text }]}>{t('your_friendships')}</Text>
       <SectionList
         sections={sections}
         renderItem={renderFriendshipItem}
@@ -316,16 +260,47 @@ const FriendshipListScreen = () => {
               { color: colors.textSecondary, backgroundColor: colors.background },
             ]}
           >
-            {section.title}
+            {`${section.title} · ${section.data.length}`}
           </Text>
         )}
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}
-        ListHeaderComponent={<StoryInvitationList serverFor={(id) => serversMap.get(id)} />}
+        ListHeaderComponent={
+          <>
+            <OwnTagCard servers={servers} />
+            <StoryInvitationList serverFor={(id) => serversMap.get(id)} />
+          </>
+        }
         ListEmptyComponent={
-          <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
-            {t('no_friendships_found')}
-          </Text>
+          loaded ? (
+            <GuidedEmptyState
+              icon="people-outline"
+              title={t('friends_empty_title')}
+              message={
+                servers.length > 0
+                  ? t('friends_empty_message')
+                  : t('friends_empty_no_server_message')
+              }
+              actions={
+                servers.length > 0
+                  ? [
+                      {
+                        label: t('friends_empty_add'),
+                        onPress: handleAddFriendship,
+                        testID: 'friends-empty-add',
+                      },
+                    ]
+                  : [
+                      {
+                        label: t('friends_empty_register_server'),
+                        onPress: handleRegisterServer,
+                        testID: 'friends-empty-register',
+                      },
+                    ]
+              }
+              fallbackText={t('no_friendships_found')}
+            />
+          ) : null
         }
       />
     </View>
@@ -333,41 +308,12 @@ const FriendshipListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
   sectionHeader: {
     fontSize: 14,
     fontWeight: 'bold',
     textTransform: 'uppercase',
     marginTop: 10,
-    marginBottom: 5,
-  },
-  friendshipItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-    padding: 15,
-  },
-  friendshipInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  friendshipText: {
-    fontSize: 16,
-    marginBottom: 2,
-  },
-  friendshipActions: {
-    flexDirection: 'row',
-    marginLeft: 10,
-  },
-  actionButton: {
-    padding: 8,
-    marginLeft: 5,
+    marginBottom: 8,
   },
 });
 

@@ -1,6 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import {
@@ -154,6 +153,7 @@ const FriendDetailScreen = () => {
     t('accept_request_confirmation_message'),
     t('request_accepted_successfully'),
     t('failed_to_accept_request'),
+    { confirm: false },
   );
   const handleDecline = runFriendshipAction(
     friendshipService.declineFriendRequest.bind(friendshipService),
@@ -161,6 +161,7 @@ const FriendDetailScreen = () => {
     t('decline_request_confirmation_message'),
     t('request_declined_successfully'),
     t('failed_to_decline_request'),
+    { confirm: false },
   );
   const handleCancel = runFriendshipAction(
     friendshipService.cancelSentFriendRequest.bind(friendshipService),
@@ -168,6 +169,7 @@ const FriendDetailScreen = () => {
     t('cancel_request_confirmation_message'),
     t('request_cancelled_successfully'),
     t('failed_to_cancel_request'),
+    { confirm: false },
   );
   const handleUnfriend = runFriendshipAction(
     friendshipService.unfriendUser.bind(friendshipService),
@@ -189,6 +191,7 @@ const FriendDetailScreen = () => {
     t('unblacklist_confirmation_message'),
     t('unblacklist_successful'),
     t('failed_to_unblacklist'),
+    { confirm: false },
   );
 
   const styles = StyleSheet.create({
@@ -209,9 +212,9 @@ const FriendDetailScreen = () => {
       textAlign: 'center',
       marginBottom: 20,
     },
-    actionsContainer: { marginTop: 35 },
+    // On a wide screen the buttons stay a thumb's width, centered under the person.
+    actionsContainer: { marginTop: 35, width: '100%', maxWidth: 420, alignSelf: 'center' },
     actionButton: { marginTop: 10 },
-    destructiveButton: { backgroundColor: colors.error },
   });
 
   if (loading) {
@@ -264,60 +267,69 @@ const FriendDetailScreen = () => {
 
       <View style={styles.actionsContainer}>
         {isPendingReceived && (
-          <FormActions stackOnCompact>
+          <>
             <Button
               onPress={() => handleAccept(friendship.id, friendship.serverId)}
               style={styles.actionButton}
             >
-              {t('accept_request_confirmation_title')}
+              {t('friend_accept')}
             </Button>
             <Button
+              variant="secondary"
               onPress={() => handleDecline(friendship.id, friendship.serverId)}
-              style={[styles.actionButton, styles.destructiveButton]}
+              style={styles.actionButton}
             >
-              {t('decline_request_confirmation_title')}
+              {t('friend_decline')}
             </Button>
             <Button
+              variant="danger"
               onPress={() => handleBlacklist(friendship.id, friendship.serverId)}
-              style={[styles.actionButton, styles.destructiveButton]}
+              style={styles.actionButton}
             >
-              {t('blacklist_confirmation_title')}
+              {t('friend_block')}
             </Button>
-          </FormActions>
+          </>
         )}
 
         {isPendingSent && (
           <Button
+            variant="secondary"
             onPress={() => handleCancel(friendship.id, friendship.serverId)}
-            style={[styles.actionButton, styles.destructiveButton]}
+            style={styles.actionButton}
           >
-            {t('cancel_request_confirmation_title')}
+            {t('friend_cancel_request')}
           </Button>
         )}
 
         {isFriend && (
-          <FormActions stackOnCompact>
+          <>
+            <Button onPress={openConversation} style={styles.actionButton}>
+              {t('send_message')}
+            </Button>
             <Button
+              variant="danger"
               onPress={() => handleUnfriend(friendship.id, friendship.serverId)}
-              style={[styles.actionButton, styles.destructiveButton]}
+              style={styles.actionButton}
             >
-              {t('unfriend_confirmation_title')}
+              {t('friend_unfriend')}
             </Button>
             <Button
+              variant="danger"
               onPress={() => handleBlacklist(friendship.id, friendship.serverId)}
-              style={[styles.actionButton, styles.destructiveButton]}
+              style={styles.actionButton}
             >
-              {t('blacklist_confirmation_title')}
+              {t('friend_block')}
             </Button>
-          </FormActions>
+          </>
         )}
 
         {isBlacklisted && isBlockedByMe && (
           <Button
+            variant="secondary"
             onPress={() => handleUnblacklist(friendship.id, friendship.serverId)}
             style={styles.actionButton}
           >
-            {t('unblacklist_confirmation_title')}
+            {t('friend_unblock')}
           </Button>
         )}
 

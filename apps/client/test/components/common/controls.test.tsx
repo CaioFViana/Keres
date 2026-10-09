@@ -1,4 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import ActionMenu from '../../../src/components/common/controls/ActionMenu/ActionMenu';
 import { StyleSheet, View } from 'react-native';
 import Button from '../../../src/components/common/controls/Button/Button';
 import ThemedSwitch from '../../../src/components/common/controls/ThemedSwitch/ThemedSwitch';
@@ -97,6 +98,87 @@ describe('Button', () => {
     expect(StyleSheet.flatten(host.props.style).backgroundColor).toBe('#123456');
     expect(host.props.accessibilityLabel).toBe('Save story');
     expect(host.props.accessibilityHint).toBe('Saves the current story');
+  });
+});
+
+describe('Button variants', () => {
+  const styleOf = (screen: Awaited<ReturnType<typeof render>>, testID: string) =>
+    StyleSheet.flatten(screen.getByTestId(testID).props.style);
+
+  it('draws secondary and danger as outlines, and primary as the fill', async () => {
+    const screen = await render(
+      <>
+        <Button testID="primary" onPress={jest.fn()}>
+          Go
+        </Button>
+        <Button testID="secondary" variant="secondary" onPress={jest.fn()}>
+          Maybe
+        </Button>
+        <Button testID="danger" variant="danger" onPress={jest.fn()}>
+          Stop
+        </Button>
+      </>,
+    );
+
+    expect(styleOf(screen, 'primary')).toMatchObject({ backgroundColor: '#0000ff' });
+    expect(styleOf(screen, 'secondary')).toMatchObject({
+      backgroundColor: 'transparent',
+      borderColor: '#0000ff',
+    });
+    expect(styleOf(screen, 'danger')).toMatchObject({
+      backgroundColor: 'transparent',
+      borderColor: '#ff0000',
+    });
+    // The label takes the outline's color, so it reads on the page behind it.
+    expect(StyleSheet.flatten(screen.getByText('Stop').props.style).color).toBe('#ff0000');
+    expect(StyleSheet.flatten(screen.getByText('Maybe').props.style).color).toBe('#0000ff');
+  });
+});
+
+describe('ActionMenu', () => {
+  const items = (onUnfriend = jest.fn(), onBlock = jest.fn()) => [
+    {
+      id: 'unfriend',
+      label: 'Remove friend',
+      icon: 'person-remove-outline' as const,
+      destructive: true,
+      onPress: onUnfriend,
+    },
+    { id: 'block', label: 'Block', icon: 'ban-outline' as const, onPress: onBlock },
+  ];
+
+  it('opens a labeled list from its button, runs the chosen action and closes', async () => {
+    const onUnfriend = jest.fn();
+    const screen = await render(
+      <ActionMenu testID="menu" accessibilityLabel="More for Ana" items={items(onUnfriend)} />,
+    );
+    expect(screen.queryByText('Remove friend')).toBeNull();
+
+    await fireEvent.press(screen.getByLabelText('More for Ana'));
+    expect(screen.getByText('Remove friend')).toBeTruthy();
+    expect(screen.getByText('Block')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('menu-unfriend'));
+    expect(onUnfriend).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Remove friend')).toBeNull();
+  });
+
+  it('draws a destructive action in the error color and the others in the text color', async () => {
+    const screen = await render(<ActionMenu testID="menu" items={items()} />);
+    await fireEvent.press(screen.getByTestId('menu'));
+
+    expect(StyleSheet.flatten(screen.getByText('Remove friend').props.style).color).toBe('#ff0000');
+    expect(StyleSheet.flatten(screen.getByText('Block').props.style).color).toBe('#111111');
+  });
+
+  it('closes on the backdrop without running anything', async () => {
+    const onBlock = jest.fn();
+    const screen = await render(<ActionMenu testID="menu" items={items(jest.fn(), onBlock)} />);
+    await fireEvent.press(screen.getByTestId('menu'));
+    await fireEvent.press(screen.getByTestId('menu-backdrop'));
+
+    expect(screen.queryByText('Block')).toBeNull();
+    expect(onBlock).not.toHaveBeenCalled();
   });
 });
 

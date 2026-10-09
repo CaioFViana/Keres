@@ -358,7 +358,7 @@ const SuggestionsScreen = () => {
     description: { color: colors.textSecondary, marginBottom: 16 },
     wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
     /** Bounded pane so the values ScrollView can scroll instead of growing past the screen. */
-    contentPane: { flex: 1, minHeight: 0, width: '100%', maxWidth: 720 },
+    contentPane: { flex: 1, minHeight: 0 },
     key: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 },
     inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 },
     input: { flex: 1, marginBottom: 0, width: undefined },

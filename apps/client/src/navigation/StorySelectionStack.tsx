@@ -76,7 +76,8 @@ export type ServerManagementStackParamList = {
 
 export type FriendshipStackParamList = {
   FriendshipList: undefined;
-  FriendshipForm: undefined;
+  /** `serverId`: the server whose friend is being added, when the person came from that server's header. */
+  FriendshipForm: { serverId?: string } | undefined;
   FriendDetail: { friendshipId: string };
   MessageInbox: undefined;
   /** `peer` is `admin` or the friend's id on that server; `peerName` is only for the header. */

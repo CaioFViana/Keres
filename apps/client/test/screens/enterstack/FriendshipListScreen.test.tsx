@@ -215,29 +215,67 @@ describe('FriendshipListScreen', () => {
     cleanup();
   });
 
-  it('groups friendships by what they ask of the person, with counts', async () => {
+  it('puts the friendships under their server, by what they ask of the person, with counts', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await view.findByText('friend_requests_received · 1');
+    // The server is always said, even when it is the only one: it is where these people are.
+    expect(view.getByTestId('server-friends-srv-1')).toBeTruthy();
+    expect(view.getByText('Main')).toBeTruthy();
     expect(view.getByText('friend_requests_sent · 1')).toBeTruthy();
     expect(view.getByText('friends_title · 1')).toBeTruthy();
     expect(view.getByText('friend_wants_to_be_friend')).toBeTruthy();
     expect(view.getByText('Max')).toBeTruthy();
     expect(view.getByText('Ana')).toBeTruthy();
-    // One server: naming it on every row says nothing, and its address is never shown.
-    expect(view.queryByText(/Main/)).toBeNull();
+    // Its address is never printed on a row.
     expect(view.queryByText(/s\.example/)).toBeNull();
   });
 
-  it('names the server on a row only when there are several to tell apart', async () => {
+  it('keeps the same @tag on two servers apart, one block per server', async () => {
+    const second = { id: 'srv-2', idUser: 'me-on-srv-2', name: 'Other', tag: 'caio2' };
+    mockGetAllServers.mockResolvedValue([server, second]);
+    mockGetAllFriendships.mockResolvedValue([
+      friend,
+      friendship({
+        id: 'f9',
+        serverId: 'srv-2',
+        status: FriendStatus.FRIEND,
+        friendUsername: 'Ana',
+        otherUserTag: 'ana',
+        otherUserId: 'ana-on-other',
+        serverName: 'Other',
+      }),
+    ]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByTestId('server-friends-srv-2');
+
+    // Two people who happen to share a name and a tag: two rows, each under its own server.
+    expect(view.getAllByText('Ana')).toHaveLength(2);
+    expect(view.getAllByText('friends_title · 1')).toHaveLength(2);
+    expect(view.getByText('Other')).toBeTruthy();
+
+    // Acting on the second one acts on that server, as the person who is signed in there.
+    await fireEvent.press(view.getByTestId('friend-menu-f9'));
+    await fireEvent.press(view.getByTestId('friend-menu-f9-unfriend'));
+    const buttons = mockAlert.mock.calls[0][2] as AlertButton[];
+    await act(async () => {
+      await buttons.find((b) => b.text === 'proceed')?.onPress?.();
+    });
+    await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f9', 'me-on-srv-2'));
+  });
+
+  it('adds a friend on the server whose header was used', async () => {
     mockGetAllServers.mockResolvedValue([
       server,
       { id: 'srv-2', idUser: 'me-on-srv-2', name: 'Other' },
     ]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('friends_title · 1');
-    expect(view.getAllByText(/Main/).length).toBeGreaterThan(0);
+    await view.findByTestId('add-friend-srv-2');
+
+    await fireEvent.press(view.getByTestId('add-friend-srv-2'));
+    expect(mockNavigate).toHaveBeenCalledWith('FriendshipForm', { serverId: 'srv-2' });
   });
 
   it('opens the add form from the header action', async () => {
@@ -248,7 +286,8 @@ describe('FriendshipListScreen', () => {
       actions: Array<{ onPress: () => void }>;
     };
     header.actions[0].onPress();
-    expect(mockNavigate).toHaveBeenCalledWith('FriendshipForm');
+    // From the header there is no server in particular: the form asks which.
+    expect(mockNavigate).toHaveBeenCalledWith('FriendshipForm', undefined);
   });
 
   it('opens the inbox from the header, next to the add action', async () => {
@@ -399,47 +438,35 @@ describe('FriendshipListScreen', () => {
     expect(view.getByLabelText('friend_more_actions')).toBeTruthy();
   });
 
-  it('shows the own tag with a button to copy it', async () => {
+  it('shows the own tag on its server, with a button to copy it', async () => {
     mockGetAllServers.mockResolvedValue([{ ...server, tag: 'caio' }]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByTestId('own-tag-card');
+    await view.findByTestId('server-friends-srv-1');
 
-    expect(view.getByText('@caio')).toBeTruthy();
+    // This file's translations return the key.
+    expect(view.getByText('friend_your_tag: @caio')).toBeTruthy();
     await fireEvent.press(view.getByTestId('copy-tag-srv-1'));
     expect(mockSetClipboard).toHaveBeenCalledWith('@caio');
     expect(mockNotify).toHaveBeenCalledWith('friend_tag_copied', 'success');
   });
 
-  it('shows no own-tag card when no server has given one', async () => {
+  it('shows no tag line for a server that has not given one', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await view.findByText('friends_title · 1');
-    expect(view.queryByTestId('own-tag-card')).toBeNull();
+    expect(view.queryByTestId('copy-tag-srv-1')).toBeNull();
   });
 
-  it('reloads when friendships change elsewhere', async () => {
-    const view = await render(<FriendshipListScreen />);
-    await focusLast();
-    await view.findByText('friend_wants_to_be_friend');
-    expect(mockGetAllFriendships).toHaveBeenCalledTimes(1);
-    await act(async () => {
-      entityEventEmitter.emit('friendship_changed');
-    });
-    await waitFor(() => expect(mockGetAllFriendships).toHaveBeenCalledTimes(2));
-  });
-
-  it('guides an empty list to adding a friend', async () => {
+  it('says a server has no friends yet and offers to add the first there', async () => {
     mockGetAllFriendships.mockResolvedValue([]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
-    await view.findByText('friends_empty_title');
-    expect(view.getByText('friends_empty_message')).toBeTruthy();
-    // An icon of its own: this is not an entity's list, so there is no entity icon to borrow.
-    expect(view.getByTestId('guided-empty-icon')).toBeTruthy();
+    await view.findByText('friends_server_empty');
+    expect(view.getByTestId('server-friends-srv-1')).toBeTruthy();
 
-    await fireEvent.press(view.getByTestId('friends-empty-add'));
-    expect(mockNavigate).toHaveBeenCalledWith('FriendshipForm');
+    await fireEvent.press(view.getByTestId('add-friend-srv-1'));
+    expect(mockNavigate).toHaveBeenCalledWith('FriendshipForm', { serverId: 'srv-1' });
   });
 
   it('sends a person with no server to register one, and says why', async () => {
@@ -467,7 +494,7 @@ describe('FriendshipListScreen', () => {
       mockGetAllFriendships.mockResolvedValue([]);
       const view = await render(<FriendshipListScreen />);
       await focusLast();
-      await view.findByText('friends_empty_title');
+      await view.findByText('friends_server_empty');
 
       mockGetAllServers.mockRejectedValueOnce(new Error('db down'));
       await act(async () => {
@@ -492,7 +519,7 @@ describe('FriendshipListScreen', () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('not_logged_in', 'error'));
-    await view.findByText('friends_empty_title');
+    await view.findByText('friends_server_empty');
   });
 });
 

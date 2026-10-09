@@ -88,6 +88,11 @@ jest.mock('../../../src/theme', () => {
   };
 });
 
+const mockCompact: { current: boolean } = { current: true };
+jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({ isCompact: mockCompact.current }),
+}));
+
 jest.mock('../../../src/hooks/useNavigateAcrossStacks', () => ({
   useNavigateAcrossStacks:
     () =>
@@ -228,7 +233,7 @@ jest.mock('expo-clipboard', () => ({
 }));
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { Linking } from 'react-native';
+import { Linking, StyleSheet } from 'react-native';
 import StoryPublishScreen from '../../../src/screens/storyshare/StoryPublishScreen';
 import { buildStoryPublicUrl } from '../../../src/screens/storyshare/useStoryPublishing';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
@@ -298,6 +303,7 @@ describe('buildStoryPublicUrl', () => {
 
 describe('StoryPublishScreen', () => {
   beforeEach(() => {
+    mockCompact.current = true;
     jest.clearAllMocks();
     mockRefreshSnapshots.mockResolvedValue(0);
     jest.spyOn(Linking, 'openURL').mockResolvedValue(true as never);
@@ -627,6 +633,25 @@ describe('StoryPublishScreen', () => {
     });
     await waitFor(() => expect(mockUnpublish).toHaveBeenCalledWith(server, 'story-1'));
     expect(mockNotify).toHaveBeenCalledWith('publish_unpublished', 'success');
+  });
+
+  it('lays what goes out beside who sees it on a wide screen', async () => {
+    mockCompact.current = false;
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-columns');
+
+    expect(StyleSheet.flatten(view.getByTestId('story-publish-columns').props.style)).toMatchObject(
+      {
+        flexDirection: 'row',
+      },
+    );
+  });
+
+  it('stacks them on a narrow screen', async () => {
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-columns');
+
+    expect(view.getByTestId('story-publish-columns').props.style).toBeUndefined();
   });
 
   it('copies the public link to the clipboard', async () => {

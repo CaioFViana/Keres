@@ -8,6 +8,7 @@ import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import type { FriendshipWithServer } from '../../../services/FriendshipService';
 import { useTheme } from '../../../theme';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
+import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import FriendChatButton from '../messages/FriendChatButton';
 
 export interface FriendshipRowActions {
@@ -25,18 +26,16 @@ interface FriendshipRowProps extends FriendshipRowActions {
   item: FriendshipWithServer;
   /** The user's id on the friendship's server: tells a request received from one sent. */
   currentUsersServerId: string | undefined;
-  /** Name the server only when there is more than one to tell apart. */
-  showServer: boolean;
 }
 
 /**
  * One friendship, by what it is: a request to answer (with the answers spelled out, not as icons), a
- * request waiting on the other side, a friend (chat first, the rest behind a menu) or a block.
+ * request waiting on the other side, a friend (chat first, the rest behind a menu) or a block. It sits
+ * under its server's header, so it does not name the server again.
  */
 const FriendshipRow: React.FC<FriendshipRowProps> = ({
   item,
   currentUsersServerId,
-  showServer,
   onOpen,
   onChat,
   onAccept,
@@ -49,6 +48,7 @@ const FriendshipRow: React.FC<FriendshipRowProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const cardStyles = getCommonCardStyles(colors);
+  const { isCompact } = useResponsiveLayout();
 
   const isPending = item.status === FriendStatus.PENDING;
   const isReceived = isPending && item.receiverId === currentUsersServerId;
@@ -65,7 +65,6 @@ const FriendshipRow: React.FC<FriendshipRowProps> = ({
     : item.friendUsername;
   const subtitle = [
     item.otherUserTag ? `@${item.otherUserTag}` : null,
-    showServer ? item.serverName || item.serverId : null,
     isSent ? t('friend_request_sent_label') : null,
     isBlocked ? t('friend_blocked_label') : null,
   ]
@@ -98,6 +97,27 @@ const FriendshipRow: React.FC<FriendshipRowProps> = ({
       ]}
     />
   );
+
+  const answers = isReceived ? (
+    <View style={isCompact ? styles.answers : styles.answersInline}>
+      <Button
+        onPress={onAccept}
+        style={isCompact ? styles.answer : styles.answerInline}
+        testID={`friend-accept-${item.id}`}
+      >
+        {t('friend_accept')}
+      </Button>
+      <Button
+        variant="secondary"
+        onPress={onDecline}
+        style={isCompact ? styles.answer : styles.answerInline}
+        testID={`friend-decline-${item.id}`}
+      >
+        {t('friend_decline')}
+      </Button>
+      {blockMenu}
+    </View>
+  ) : null;
 
   return (
     <View style={[cardStyles.cardContainer, styles.card, isBlocked && styles.blocked]}>
@@ -148,24 +168,10 @@ const FriendshipRow: React.FC<FriendshipRowProps> = ({
             {t('friend_unblock')}
           </Button>
         )}
+        {!isCompact && answers}
       </View>
 
-      {isReceived && (
-        <View style={styles.answers}>
-          <Button onPress={onAccept} style={styles.answer} testID={`friend-accept-${item.id}`}>
-            {t('friend_accept')}
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={onDecline}
-            style={styles.answer}
-            testID={`friend-decline-${item.id}`}
-          >
-            {t('friend_decline')}
-          </Button>
-          {blockMenu}
-        </View>
-      )}
+      {isCompact && answers}
     </View>
   );
 };
@@ -183,6 +189,9 @@ const styles = StyleSheet.create({
   compactButton: { paddingVertical: 8, paddingHorizontal: 12 },
   answers: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
   answer: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
+  // On a wide screen the answers are buttons of their own size at the end of the row, not bars.
+  answersInline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  answerInline: { minWidth: 110, paddingVertical: 10 },
 });
 
 export default FriendshipRow;

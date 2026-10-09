@@ -7,7 +7,8 @@ import { GuidedEmptyState } from '@/src/components/common/lists/GenericFilterSor
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
@@ -37,6 +38,7 @@ type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
  */
 const FriendshipFormScreen = () => {
   const navigation = useNavigation<FriendshipFormScreenNavigationProp>();
+  const route = useRoute<RouteProp<FriendshipStackParamList, 'FriendshipForm'>>();
   useBackButtonHandler({ showWebBackButton: true });
 
   const { colors } = useTheme();
@@ -47,7 +49,10 @@ const FriendshipFormScreen = () => {
   const commonInputStyles = getCommonInputStyles(colors);
 
   const { friendshipServiceRef, serverServiceRef } = useFriendshipFormResources();
-  const friendshipFormState = useFriendshipFormState({ serverServiceRef });
+  const friendshipFormState = useFriendshipFormState({
+    serverServiceRef,
+    initialServerId: route.params?.serverId,
+  });
   const {
     friendTag,
     selectedServerId,
@@ -100,9 +105,9 @@ const FriendshipFormScreen = () => {
       style={commonContainerStyles.container}
       contentContainerStyle={styles.content}
     >
-      {/* One server is chosen for the person; the picker is only for telling several apart. */}
-      {servers.length > 1 && (
-        <FormField label={t('server')}>
+      {/* A tag means a different person on each server: the server is always said, and chosen when there are several. */}
+      <FormField label={t('server')}>
+        {servers.length > 1 ? (
           <SingleSelectPill
             options={servers.map((server) => ({
               label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
@@ -113,8 +118,15 @@ const FriendshipFormScreen = () => {
             placeholder={t('select_server')}
             multiple={false}
           />
-        </FormField>
-      )}
+        ) : (
+          <View style={styles.oneServer} testID="friend-form-server">
+            <Ionicons name="cloud-outline" size={20} color={colors.textSecondary} />
+            <Text style={[styles.oneServerText, { color: colors.text }]}>
+              {selectedServer?.name ?? ''}
+            </Text>
+          </View>
+        )}
+      </FormField>
 
       <FormField label={t('friend_id')} help={t('friend_form_hint')}>
         {(accessibility) => (
@@ -146,7 +158,7 @@ const FriendshipFormScreen = () => {
           <>
             <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
             <Text style={[styles.statusText, { color: colors.text }]}>
-              {t('friend_form_found', { name: friendUsername })}
+              {t('friend_form_found', { name: friendUsername, server: selectedServer?.name ?? '' })}
             </Text>
           </>
         )}
@@ -154,7 +166,7 @@ const FriendshipFormScreen = () => {
           <>
             <Ionicons name="close-circle" size={20} color={colors.error} />
             <Text style={[styles.statusText, { color: colors.error }]}>
-              {t('friend_form_not_found')}
+              {t('friend_form_not_found', { server: selectedServer?.name ?? '' })}
             </Text>
           </>
         )}
@@ -192,6 +204,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   statusText: { fontSize: 14, flexShrink: 1 },
+  oneServer: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  oneServerText: { fontSize: 16 },
 });
 
 export default FriendshipFormScreen;

@@ -4,6 +4,7 @@ const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
 const mockParentNavigate = jest.fn();
 const mockNotify = jest.fn();
+const mockRoute: { params?: { serverId?: string } } = {};
 const mockNavigation = {
   goBack: (...args: unknown[]) => mockGoBack(...args),
   getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
@@ -44,6 +45,7 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
+  useRoute: () => mockRoute,
 }));
 
 jest.mock('../../../src/theme', () => {
@@ -133,7 +135,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import FriendshipFormScreen from '../../../src/screens/enterstack/FriendshipFormScreen';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 
@@ -149,6 +151,7 @@ async function typeTag(view: Awaited<ReturnType<typeof render>>, tag: string) {
 describe('FriendshipFormScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRoute.params = undefined;
     mockUserSettings.userId = 'local-user';
     mockGetAllServers.mockResolvedValue([mainServer]);
     mockAddFriendship.mockResolvedValue(undefined);
@@ -160,11 +163,12 @@ describe('FriendshipFormScreen', () => {
     cleanup();
   });
 
-  it('picks the only server itself and looks the tag up as it is typed', async () => {
+  it('names the only server, picks it itself and looks the tag up as it is typed', async () => {
     const view = await render(<FriendshipFormScreen />);
     await view.findByPlaceholderText('enter_friend_id');
-    // One server: there is nothing to choose, so no picker.
+    // One server: nothing to choose, but it is still said where the friend is being added.
     expect(view.queryByTestId('server-pill')).toBeNull();
+    expect(within(view.getByTestId('friend-form-server')).getByText('Main')).toBeTruthy();
 
     await typeTag(view, 'friend123');
     await waitFor(
@@ -292,6 +296,34 @@ describe('FriendshipFormScreen', () => {
 
     await fireEvent.press(view.getByTestId('server-srv-2'));
     await waitFor(() => expect(view.queryByText('friend_form_found')).toBeNull());
+  });
+
+  it('starts on the server the person came from, among several', async () => {
+    mockRoute.params = { serverId: 'srv-2' };
+    mockGetAllServers.mockResolvedValue([mainServer, otherServer]);
+    const view = await render(<FriendshipFormScreen />);
+    await view.findByText('Backup');
+    await waitFor(() =>
+      expect(view.getByTestId('server-pill').props.children).toBe('select_server:srv-2'),
+    );
+
+    await typeTag(view, 'friend123');
+    await waitFor(
+      () => expect(mockGetUserByTag).toHaveBeenCalledWith(otherServer, 'friend123'),
+      LOOKUP,
+    );
+  });
+
+  it('asks the person to choose when there are several servers and none was asked for', async () => {
+    mockGetAllServers.mockResolvedValue([mainServer, otherServer]);
+    const view = await render(<FriendshipFormScreen />);
+    await view.findByText('Backup');
+    expect(view.getByTestId('server-pill').props.children).toBe('select_server:null');
+
+    // A tag means a different person on each server: nothing is looked up until one is chosen.
+    await typeTag(view, 'friend123');
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(mockGetUserByTag).not.toHaveBeenCalled();
   });
 
   it('explains that friends need a server, and offers to register one', async () => {

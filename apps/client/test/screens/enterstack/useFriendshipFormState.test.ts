@@ -134,3 +134,20 @@ it('keeps "could not ask the server" apart from "no such tag", and clears it on 
   });
   expect(view.result.current.checkFailed).toBe(false);
 });
+
+it('starts on the server asked for when there are several, and ignores one that does not exist', async () => {
+  const getAllServers = jest.fn().mockResolvedValue([server('server-1'), server('server-2')]);
+  const serverServiceRef = { current: { getAllServers } as never };
+
+  const asked = await renderHook(() =>
+    useFriendshipFormState({ serverServiceRef, initialServerId: 'server-2' }),
+  );
+  await waitFor(() => expect(asked.result.current.selectedServerId).toBe('server-2'));
+
+  const unknown = await renderHook(() =>
+    useFriendshipFormState({ serverServiceRef, initialServerId: 'gone' }),
+  );
+  await waitFor(() => expect(unknown.result.current.servers).toHaveLength(2));
+  // With several and none valid, the person chooses: the same tag is another person on each server.
+  expect(unknown.result.current.selectedServerId).toBe('');
+});

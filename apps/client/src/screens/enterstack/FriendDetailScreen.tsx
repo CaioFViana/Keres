@@ -6,6 +6,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -195,15 +196,24 @@ const FriendDetailScreen = () => {
   );
 
   const styles = StyleSheet.create({
-    avatarContainer: { alignItems: 'center', marginBottom: 15 },
-    username: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', color: colors.text },
-    statusBadge: {
-      fontSize: 14,
-      textAlign: 'center',
-      color: colors.textSecondary,
-      marginTop: 4,
-      marginBottom: 20,
+    profile: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    profileTexts: { flex: 1, minWidth: 0 },
+    username: { fontSize: 22, fontWeight: 'bold', color: colors.text },
+    tag: { fontSize: 15, color: colors.textSecondary, marginTop: 2 },
+    meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 8 },
+    serverChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      paddingVertical: 3,
+      paddingHorizontal: 10,
     },
+    serverChipText: { fontSize: 13, color: colors.text },
+    statusBadge: { fontSize: 13, color: colors.textSecondary },
     label: { fontSize: 16, fontWeight: 'bold', marginTop: 15, marginBottom: 5, color: colors.text },
     bio: { fontSize: 15, color: colors.text, lineHeight: 21 },
     serverInfo: {
@@ -212,9 +222,9 @@ const FriendDetailScreen = () => {
       textAlign: 'center',
       marginBottom: 20,
     },
-    // On a wide screen the buttons stay a thumb's width, centered under the person.
-    actionsContainer: { marginTop: 35, width: '100%', maxWidth: 420, alignSelf: 'center' },
-    actionButton: { marginTop: 10 },
+    // Buttons keep their own size and sit side by side, wrapping when the row is full.
+    actionsContainer: { marginTop: 28, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    actionButton: { minWidth: 160 },
   });
 
   if (loading) {
@@ -243,20 +253,30 @@ const FriendDetailScreen = () => {
 
   return (
     <DetailContainer>
-      <View style={styles.avatarContainer}>
+      <View style={styles.profile}>
         <Avatar
           color={friendship.otherUserAvatarColor}
           icon={friendship.otherUserAvatarIcon}
           seed={friendship.otherUserId}
-          size={96}
+          size={80}
         />
+        <View style={styles.profileTexts}>
+          <Text style={styles.username}>{friendship.friendUsername}</Text>
+          {friendship.otherUserTag ? (
+            <Text style={styles.tag}>@{friendship.otherUserTag}</Text>
+          ) : null}
+          {/* The same @tag on another server is another person: the server is part of who this is. */}
+          <View style={styles.meta}>
+            <View style={styles.serverChip} testID="friend-server">
+              <Ionicons name="cloud-outline" size={14} color={colors.textSecondary} />
+              <Text style={styles.serverChipText}>
+                {friendship.serverName || friendship.serverId}
+              </Text>
+            </View>
+            <Text style={styles.statusBadge}>{t(statusLabelKey(friendship.status))}</Text>
+          </View>
+        </View>
       </View>
-      <Text style={styles.username}>{friendship.friendUsername}</Text>
-      <Text style={styles.statusBadge}>{t(statusLabelKey(friendship.status))}</Text>
-      <Text style={styles.serverInfo}>
-        {friendship.otherUserTag && `@${friendship.otherUserTag} · `}
-        {friendship.serverName || friendship.serverId}
-      </Text>
 
       {friendship.otherUserBio && (
         <>
@@ -334,7 +354,7 @@ const FriendDetailScreen = () => {
         )}
 
         {isBlacklisted && !isBlockedByMe && (
-          <Text style={styles.serverInfo}>{t('blocked_by_other_user')}</Text>
+          <Text style={styles.statusBadge}>{t('blocked_by_other_user')}</Text>
         )}
       </View>
     </DetailContainer>

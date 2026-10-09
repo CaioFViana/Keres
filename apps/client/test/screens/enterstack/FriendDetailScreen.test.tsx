@@ -113,7 +113,7 @@ jest.mock('../../../src/state/notificationStore', () => ({
 }));
 
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 import FriendDetailScreen from '../../../src/screens/enterstack/FriendDetailScreen';
 
@@ -198,6 +198,14 @@ describe('FriendDetailScreen', () => {
       await proceed?.onPress?.();
     });
     await waitFor(() => expect(mockBlacklist).toHaveBeenCalledWith('f1', 'me-on-server'));
+  });
+
+  it('says which server this person is on, since the same @tag elsewhere is someone else', async () => {
+    mockGetAllFriendships.mockResolvedValue([friendship({ serverName: 'Backup server' })]);
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    expect(within(view.getByTestId('friend-server')).getByText('Backup server')).toBeTruthy();
   });
 
   it('offers the way to message a friend in the header, and only for a friend', async () => {

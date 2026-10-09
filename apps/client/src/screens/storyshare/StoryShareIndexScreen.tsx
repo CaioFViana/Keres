@@ -36,8 +36,9 @@ const StoryShareIndexScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     content: { padding: 20, paddingBottom: 60 },
-    // On a wide screen the page stays a readable column in the middle instead of stretching across.
-    column: { width: '100%', maxWidth: 720, alignSelf: 'center' },
+    // Where the story can go: cards side by side when there is room, one under the other when there is not.
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 },
+    gridCard: { flexGrow: 1, flexBasis: 320, marginBottom: 0 },
     intro: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginBottom: 8 },
     card: {
       backgroundColor: colors.surface,
@@ -108,13 +109,13 @@ const StoryShareIndexScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.column}>
-        <Text style={styles.intro}>{t('story_share_intro')}</Text>
+      <Text style={styles.intro}>{t('story_share_intro')}</Text>
 
+      <View style={styles.grid}>
         {entries.map((entry) => (
           <TouchableOpacity
             key={entry.id}
-            style={[styles.card, entry.disabled && styles.cardDisabled]}
+            style={[styles.card, styles.gridCard, entry.disabled && styles.cardDisabled]}
             testID={`story-share-${entry.id}`}
             accessibilityRole="button"
             accessibilityState={{ disabled: !!entry.disabled }}
@@ -131,39 +132,39 @@ const StoryShareIndexScreen = () => {
             </View>
           </TouchableOpacity>
         ))}
+      </View>
 
-        <ScreenSection title={t('story_share_backup_title')} />
-        <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <Ionicons name="archive-outline" size={26} color={colors.primary} />
-            <View style={styles.cardBody}>
-              <Text style={styles.cardDescription}>{t('story_share_backup_description')}</Text>
-            </View>
+      <ScreenSection title={t('story_share_backup_title')} />
+      <View style={styles.card}>
+        <View style={styles.cardRow}>
+          <Ionicons name="archive-outline" size={26} color={colors.primary} />
+          <View style={styles.cardBody}>
+            <Text style={styles.cardDescription}>{t('story_share_backup_description')}</Text>
           </View>
-          <View style={styles.options}>
-            <TouchableOpacity
-              style={[styles.option, backup.exporting && styles.optionDisabled]}
-              testID="story-share-backup-json"
-              disabled={backup.exporting}
-              onPress={() => void backup.exportJson()}
-            >
-              <Ionicons name="share-outline" size={18} color={colors.primary} />
-              <Text style={styles.optionLabel}>{t('export_story_choose_json')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.option, backup.exporting && styles.optionDisabled]}
-              testID="story-share-backup-zip"
-              disabled={backup.exporting}
-              onPress={() => void backup.exportZip()}
-            >
-              <Ionicons name="images-outline" size={18} color={colors.primary} />
-              <Text style={styles.optionLabel}>{t('export_story_choose_zip')}</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.note}>
-            {backup.exporting ? t('export_story_in_progress') : t('export_story_choose_message')}
-          </Text>
         </View>
+        <View style={styles.options}>
+          <TouchableOpacity
+            style={[styles.option, backup.exporting && styles.optionDisabled]}
+            testID="story-share-backup-json"
+            disabled={backup.exporting}
+            onPress={() => void backup.exportJson()}
+          >
+            <Ionicons name="share-outline" size={18} color={colors.primary} />
+            <Text style={styles.optionLabel}>{t('export_story_choose_json')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.option, backup.exporting && styles.optionDisabled]}
+            testID="story-share-backup-zip"
+            disabled={backup.exporting}
+            onPress={() => void backup.exportZip()}
+          >
+            <Ionicons name="images-outline" size={18} color={colors.primary} />
+            <Text style={styles.optionLabel}>{t('export_story_choose_zip')}</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.note}>
+          {backup.exporting ? t('export_story_in_progress') : t('export_story_choose_message')}
+        </Text>
       </View>
     </ScrollView>
   );

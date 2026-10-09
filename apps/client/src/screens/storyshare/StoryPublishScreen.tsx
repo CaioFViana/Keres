@@ -16,6 +16,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -42,6 +43,9 @@ const StoryPublishScreen = () => {
   const publishing = useStoryPublishing(storyId);
   const { load } = publishing;
   const { showNotification } = useNotificationStore();
+  // A wide screen puts what goes out beside who sees it, and the link beside the versions, instead of
+  // one long column down a page that is mostly empty.
+  const { isCompact } = useResponsiveLayout();
 
   useFocusEffect(
     useCallback(() => {
@@ -52,8 +56,8 @@ const StoryPublishScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     content: { padding: 20, paddingBottom: 60 },
-    // On a wide screen the page stays a readable column in the middle instead of stretching across.
-    column: { width: '100%', maxWidth: 720, alignSelf: 'center' },
+    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 32 },
+    column: { flex: 1, minWidth: 0 },
     description: { fontSize: 14, color: colors.textSecondary, marginBottom: 16, lineHeight: 20 },
     card: {
       backgroundColor: colors.surface,
@@ -109,7 +113,8 @@ const StoryPublishScreen = () => {
     versionInfo: { flex: 1 },
     versionLabel: { fontSize: 14, color: colors.text },
     versionMeta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    unpublishButton: { marginTop: 24 },
+    unpublishButton: { marginTop: 24, alignItems: 'flex-start' },
+    published: { marginTop: 24 },
     outlineButton: {
       alignItems: 'center',
       alignSelf: 'flex-start',
@@ -130,7 +135,7 @@ const StoryPublishScreen = () => {
     const noServer = publishing.blocker !== 'not-owner';
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={[styles.card, styles.column]}>
+        <View style={styles.card}>
           <View style={styles.statusRow}>
             <Ionicons
               name={noServer ? 'cloud-offline-outline' : 'lock-closed-outline'}
@@ -166,110 +171,120 @@ const StoryPublishScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.column}>
-        <Text style={styles.description}>{t('publish_story_description')}</Text>
+      <Text style={styles.description}>{t('publish_story_description')}</Text>
 
-        <View style={styles.card} testID="story-publish-status">
-          <View style={styles.statusRow}>
-            <Ionicons
-              name={showcase.isPublished ? 'cloud-done-outline' : 'cloud-upload-outline'}
-              size={28}
-              color={showcase.isPublished ? colors.primary : colors.textSecondary}
-            />
-            <View style={styles.statusBody}>
-              <Text style={styles.statusTitle}>
-                {showcase.isPublished
-                  ? t('publish_versions_count', { count: showcase.publications.length })
-                  : t('publish_not_published')}
-              </Text>
-              <Text style={styles.statusMeta}>
-                {[
-                  server.name,
-                  t('publish_synced_version', { version: story.lastServerSyncedLog ?? 0 }),
-                  showcase.visibility === 'password' ? t('publish_password_protected') : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Text>
-            </View>
-          </View>
-          {reason ? <Text style={styles.blocked}>{reason}</Text> : null}
-        </View>
-
-        <ScreenSection title={t('story_publish_step_what')} />
-        <PublishManuscriptSection story={story} manuscript={manuscript} />
-
-        <ScreenSection title={t('story_publish_step_who')} />
-        <Text style={styles.label}>{t('publish_label_style')}</Text>
-        <View style={styles.modeRow}>
-          {LABEL_MODES.map((mode) => (
-            <TouchableOpacity
-              key={mode}
-              style={[styles.modeOption, publishing.labelMode === mode && styles.modeOptionActive]}
-              onPress={() => publishing.setLabelMode(mode)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: publishing.labelMode === mode }}
-            >
-              <Text
-                style={[styles.modeText, publishing.labelMode === mode && styles.modeTextActive]}
-              >
-                {t(`publish_label_style_${mode}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.switchRow}>
-          <Text style={styles.label}>{t('publish_use_password')}</Text>
-          <ThemedSwitch
-            value={publishing.usePassword}
-            onValueChange={publishing.setUsePassword}
-            testID="publish-password-switch"
+      <View style={styles.card} testID="story-publish-status">
+        <View style={styles.statusRow}>
+          <Ionicons
+            name={showcase.isPublished ? 'cloud-done-outline' : 'cloud-upload-outline'}
+            size={28}
+            color={showcase.isPublished ? colors.primary : colors.textSecondary}
           />
+          <View style={styles.statusBody}>
+            <Text style={styles.statusTitle}>
+              {showcase.isPublished
+                ? t('publish_versions_count', { count: showcase.publications.length })
+                : t('publish_not_published')}
+            </Text>
+            <Text style={styles.statusMeta}>
+              {[
+                server.name,
+                t('publish_synced_version', { version: story.lastServerSyncedLog ?? 0 }),
+                showcase.visibility === 'password' ? t('publish_password_protected') : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+          </View>
         </View>
-        {/*
+        {reason ? <Text style={styles.blocked}>{reason}</Text> : null}
+      </View>
+
+      <View style={isCompact ? undefined : styles.columns} testID="story-publish-columns">
+        <View style={isCompact ? undefined : styles.column}>
+          <ScreenSection title={t('story_publish_step_what')} />
+          <PublishManuscriptSection story={story} manuscript={manuscript} />
+        </View>
+        <View style={isCompact ? undefined : styles.column}>
+          <ScreenSection title={t('story_publish_step_who')} />
+          <Text style={styles.label}>{t('publish_label_style')}</Text>
+          <View style={styles.modeRow}>
+            {LABEL_MODES.map((mode) => (
+              <TouchableOpacity
+                key={mode}
+                style={[
+                  styles.modeOption,
+                  publishing.labelMode === mode && styles.modeOptionActive,
+                ]}
+                onPress={() => publishing.setLabelMode(mode)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: publishing.labelMode === mode }}
+              >
+                <Text
+                  style={[styles.modeText, publishing.labelMode === mode && styles.modeTextActive]}
+                >
+                  {t(`publish_label_style_${mode}`)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.switchRow}>
+            <Text style={styles.label}>{t('publish_use_password')}</Text>
+            <ThemedSwitch
+              value={publishing.usePassword}
+              onValueChange={publishing.setUsePassword}
+              testID="publish-password-switch"
+            />
+          </View>
+          {/*
         The protection belongs to the story, not to each version: the site shows one page per story with
         every version inside it. Someone with more than one version out has to know this choice covers all
         of them - the ones already online included.
       */}
-        {showcase.publications.length > 1 && (
-          <Text style={styles.hint}>
-            {t('publish_visibility_applies_to_all', { count: showcase.publications.length })}
-          </Text>
-        )}
-        {publishing.usePassword && (
-          <>
-            <PasswordInput
-              value={publishing.password}
-              onChangeText={publishing.setPassword}
-              placeholder={t('publish_password_placeholder')}
-            />
-            {showcase.hasPassword && (
-              // Publishing again saves the password typed now, so leaving the field blank is not "keep the existing
-              // one" - it is publishing with no password.
-              <Text style={styles.hint}>{t('publish_password_replaces_previous')}</Text>
-            )}
-          </>
-        )}
-
-        <Button
-          onPress={publishing.publish}
-          disabled={cannotPublish}
-          testID="story-publish-submit"
-          style={styles.publishButton}
-          accessibilityLabel={busy ? t('publish_in_progress') : t('publish_create_version')}
-        >
-          <View style={styles.primaryButtonContent}>
-            <Ionicons name="cloud-upload-outline" size={18} color={colors.onPrimary} />
-            <Text style={styles.primaryButtonText}>
-              {busy ? t('publish_in_progress') : t('publish_create_version')}
+          {showcase.publications.length > 1 && (
+            <Text style={styles.hint}>
+              {t('publish_visibility_applies_to_all', { count: showcase.publications.length })}
             </Text>
-          </View>
-        </Button>
+          )}
+          {publishing.usePassword && (
+            <>
+              <PasswordInput
+                value={publishing.password}
+                onChangeText={publishing.setPassword}
+                placeholder={t('publish_password_placeholder')}
+              />
+              {showcase.hasPassword && (
+                // Publishing again saves the password typed now, so leaving the field blank is not "keep the existing
+                // one" - it is publishing with no password.
+                <Text style={styles.hint}>{t('publish_password_replaces_previous')}</Text>
+              )}
+            </>
+          )}
 
-        {showcase.isPublished && (
-          <>
-            <View style={{ height: 24 }} />
+          <Button
+            onPress={publishing.publish}
+            disabled={cannotPublish}
+            testID="story-publish-submit"
+            style={styles.publishButton}
+            accessibilityLabel={busy ? t('publish_in_progress') : t('publish_create_version')}
+          >
+            <View style={styles.primaryButtonContent}>
+              <Ionicons name="cloud-upload-outline" size={18} color={colors.onPrimary} />
+              <Text style={styles.primaryButtonText}>
+                {busy ? t('publish_in_progress') : t('publish_create_version')}
+              </Text>
+            </View>
+          </Button>
+        </View>
+      </View>
+
+      {showcase.isPublished && (
+        <View
+          style={[isCompact ? undefined : styles.columns, styles.published]}
+          testID="story-publish-published-columns"
+        >
+          <View style={isCompact ? undefined : styles.column}>
             <ScreenSection title={t('publish_public_link')} />
             {/*
             The address stays in sight whenever the story is published, not only at the instant it is published:
@@ -302,7 +317,8 @@ const StoryPublishScreen = () => {
                 </TouchableOpacity>
               </View>
             </View>
-
+          </View>
+          <View style={isCompact ? undefined : styles.column}>
             <ScreenSection title={t('story_publish_versions')} />
             {showcase.publications.map((publication) => (
               <View key={publication.id} style={styles.versionRow}>
@@ -331,9 +347,9 @@ const StoryPublishScreen = () => {
                 {t('publish_unpublish_confirm')}
               </Button>
             </View>
-          </>
-        )}
-      </View>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 };

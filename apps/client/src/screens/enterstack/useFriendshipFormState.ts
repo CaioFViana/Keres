@@ -9,10 +9,15 @@ type ServerService = ReturnType<typeof createServerService>;
 
 type UseFriendshipFormStateOptions = {
   serverServiceRef: RefObject<ServerService | null>;
+  /** The server to add the friend on, when the person came from that server's header. */
+  initialServerId?: string;
 };
 
 /** Owns field state and server-list hydration for the Friendship form. */
-export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormStateOptions) {
+export function useFriendshipFormState({
+  serverServiceRef,
+  initialServerId,
+}: UseFriendshipFormStateOptions) {
   const { t } = useTranslation();
   const [friendTag, setFriendTag] = useState('');
   const [resolvedFriendUserId, setResolvedFriendUserId] = useState<string | null>(null);
@@ -34,9 +39,11 @@ export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormSt
       try {
         const fetchedServers = await serverServiceRef.current.getAllServers();
         setServers(fetchedServers);
-        if (fetchedServers.length === 1) {
-          setSelectedServerId(fetchedServers[0].id);
-        }
+        // The server asked for, or the only one there is. With several and none asked for the person
+        // chooses: a tag means a different person on each of them.
+        const asked = fetchedServers.find((server) => server.id === initialServerId);
+        if (asked) setSelectedServerId(asked.id);
+        else if (fetchedServers.length === 1) setSelectedServerId(fetchedServers[0].id);
       } catch (error) {
         console.error('Error fetching servers for friendship form:', error);
         AppAlert.alert(t('error'), t('failed_to_load_form_data'));
@@ -45,7 +52,7 @@ export function useFriendshipFormState({ serverServiceRef }: UseFriendshipFormSt
       }
     };
     void fetchServers();
-  }, [serverServiceRef, t]);
+  }, [initialServerId, serverServiceRef, t]);
 
   const selectedServer = servers.find((s) => s.id === selectedServerId);
 

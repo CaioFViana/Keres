@@ -1,14 +1,13 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { GuidedEmptyState } from '@/src/components/common/lists/GenericFilterSortList/ListEmptyStates';
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import FriendshipRow from '../../components/features/friendship/FriendshipRow';
-import OwnTagCard from '../../components/features/friendship/OwnTagCard';
+import ServerFriendsHeader from '../../components/features/friendship/ServerFriendsHeader';
 import StoryInvitationList from '../../components/features/story/StoryInvitationList/StoryInvitationList';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schemas/servers';
@@ -29,17 +28,12 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { type FriendshipListRow, groupFriendshipsByServer } from '../../utils/friendshipGroups';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
   'FriendshipList'
 >;
-
-type FriendshipSection = {
-  key: string;
-  title: string;
-  data: FriendshipWithServer[];
-};
 
 const FriendshipListScreen = () => {
   const navigation = useNavigation<FriendshipListScreenNavigationProp>();
@@ -118,9 +112,12 @@ const FriendshipListScreen = () => {
 
   // `useCallback` so it can go into the header effect's dependencies below: as a loose function it is
   // born anew on every render and would make the effect run every time.
-  const handleAddFriendship = useCallback(() => {
-    navigation.navigate('FriendshipForm');
-  }, [navigation]);
+  const handleAddFriendship = useCallback(
+    (serverId?: string) => {
+      navigation.navigate('FriendshipForm', serverId ? { serverId } : undefined);
+    },
+    [navigation],
+  );
 
   const handleRegisterServer = useCallback(() => {
     navigation
@@ -137,7 +134,12 @@ const FriendshipListScreen = () => {
     target: 'parent',
     title: t('manage_friendships'),
     actions: [
-      { id: 'action-0', icon: 'add', label: t('add_new_friendship'), onPress: handleAddFriendship },
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('add_new_friendship'),
+        onPress: () => handleAddFriendship(),
+      },
       {
         id: 'inbox',
         // The inbox icon says when something is waiting in it.
@@ -207,97 +209,86 @@ const FriendshipListScreen = () => {
     { confirm: false },
   );
 
-  const sections = useMemo<FriendshipSection[]>(() => {
-    const isReceived = (f: FriendshipWithServer) =>
-      f.status === FriendStatus.PENDING && f.receiverId === serversMap.get(f.serverId)?.idUser;
-    const pending = friendships.filter((f) => f.status === FriendStatus.PENDING);
-    const received = pending.filter(isReceived);
-    const sent = pending.filter((f) => !isReceived(f));
-    const friends = friendships.filter((f) => f.status === FriendStatus.FRIEND);
-    const blocked = friendships.filter((f) => f.status === FriendStatus.BLACKLISTED);
-    return [
-      { key: 'received', title: t('friend_requests_received'), data: received },
-      { key: 'sent', title: t('friend_requests_sent'), data: sent },
-      { key: 'friends', title: t('friends_title'), data: friends },
-      { key: 'blocked', title: t('friends_blocked_title'), data: blocked },
-    ].filter((section) => section.data.length > 0);
-  }, [friendships, serversMap, t]);
-
-  // A server is only worth naming on a row when there is another to tell it from.
-  const showServer = servers.length > 1;
-
-  const renderFriendshipItem = ({ item }: { item: FriendshipWithServer }) => (
-    <FriendshipRow
-      item={item}
-      currentUsersServerId={serversMap.get(item.serverId)?.idUser}
-      showServer={showServer}
-      onOpen={() => navigation.navigate('FriendDetail', { friendshipId: item.id })}
-      onChat={() =>
-        navigation.navigate('Conversation', {
-          serverId: item.serverId,
-          peer: item.otherUserId,
-          peerName: item.friendUsername,
-        })
-      }
-      onAccept={() => handleAcceptFriendRequest(item.id, item.serverId)}
-      onDecline={() => handleDeclineFriendRequest(item.id, item.serverId)}
-      onCancel={() => handleCancelSentFriendRequest(item.id, item.serverId)}
-      onUnfriend={() => handleUnfriendUser(item.id, item.serverId)}
-      onBlock={() => handleBlacklistUser(item.id, item.serverId)}
-      onUnblock={() => handleUnblacklistUser(item.id, item.serverId)}
-    />
+  const rows = useMemo(
+    () => groupFriendshipsByServer(servers, friendships),
+    [servers, friendships],
   );
+
+  const bucketTitle = (bucket: FriendshipListRow & { type: 'label' }) =>
+    ({
+      received: t('friend_requests_received'),
+      sent: t('friend_requests_sent'),
+      friends: t('friends_title'),
+      blocked: t('friends_blocked_title'),
+    })[bucket.bucket];
+
+  const renderRow = ({ item: row }: { item: FriendshipListRow }) => {
+    if (row.type === 'server') {
+      return (
+        <ServerFriendsHeader
+          server={row.server}
+          onAddFriend={() => handleAddFriendship(row.server.id)}
+        />
+      );
+    }
+    if (row.type === 'empty') {
+      return (
+        <Text style={[styles.serverEmpty, { color: colors.textSecondary }]}>
+          {t('friends_server_empty')}
+        </Text>
+      );
+    }
+    if (row.type === 'label') {
+      return (
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>
+          {`${bucketTitle(row)} · ${row.count}`}
+        </Text>
+      );
+    }
+    const item = row.item;
+    return (
+      <FriendshipRow
+        item={item}
+        currentUsersServerId={serversMap.get(item.serverId)?.idUser}
+        onOpen={() => navigation.navigate('FriendDetail', { friendshipId: item.id })}
+        onChat={() =>
+          navigation.navigate('Conversation', {
+            serverId: item.serverId,
+            peer: item.otherUserId,
+            peerName: item.friendUsername,
+          })
+        }
+        onAccept={() => handleAcceptFriendRequest(item.id, item.serverId)}
+        onDecline={() => handleDeclineFriendRequest(item.id, item.serverId)}
+        onCancel={() => handleCancelSentFriendRequest(item.id, item.serverId)}
+        onUnfriend={() => handleUnfriendUser(item.id, item.serverId)}
+        onBlock={() => handleBlacklistUser(item.id, item.serverId)}
+        onUnblock={() => handleUnblacklistUser(item.id, item.serverId)}
+      />
+    );
+  };
 
   return (
     <View style={commonContainerStyles.container}>
-      <SectionList
-        sections={sections}
-        renderItem={renderFriendshipItem}
-        renderSectionHeader={({ section }) => (
-          <Text
-            style={[
-              styles.sectionHeader,
-              { color: colors.textSecondary, backgroundColor: colors.background },
-            ]}
-          >
-            {`${section.title} · ${section.data.length}`}
-          </Text>
-        )}
-        keyExtractor={(item) => item.id}
-        stickySectionHeadersEnabled={false}
-        ListHeaderComponent={
-          <>
-            <OwnTagCard servers={servers} />
-            <StoryInvitationList serverFor={(id) => serversMap.get(id)} />
-          </>
-        }
+      <FlatList
+        data={rows}
+        renderItem={renderRow}
+        keyExtractor={(row) => row.key}
+        ListHeaderComponent={<StoryInvitationList serverFor={(id) => serversMap.get(id)} />}
         ListEmptyComponent={
+          // No server, no friends: the first thing to do is to register one.
           loaded ? (
             <GuidedEmptyState
               icon="people-outline"
               title={t('friends_empty_title')}
-              message={
-                servers.length > 0
-                  ? t('friends_empty_message')
-                  : t('friends_empty_no_server_message')
-              }
-              actions={
-                servers.length > 0
-                  ? [
-                      {
-                        label: t('friends_empty_add'),
-                        onPress: handleAddFriendship,
-                        testID: 'friends-empty-add',
-                      },
-                    ]
-                  : [
-                      {
-                        label: t('friends_empty_register_server'),
-                        onPress: handleRegisterServer,
-                        testID: 'friends-empty-register',
-                      },
-                    ]
-              }
+              message={t('friends_empty_no_server_message')}
+              actions={[
+                {
+                  label: t('friends_empty_register_server'),
+                  onPress: handleRegisterServer,
+                  testID: 'friends-empty-register',
+                },
+              ]}
               fallbackText={t('no_friendships_found')}
             />
           ) : null
@@ -309,12 +300,13 @@ const FriendshipListScreen = () => {
 
 const styles = StyleSheet.create({
   sectionHeader: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    marginTop: 10,
+    marginTop: 6,
     marginBottom: 8,
   },
+  serverEmpty: { fontSize: 14, marginBottom: 10, marginLeft: 4 },
 });
 
 export default FriendshipListScreen;

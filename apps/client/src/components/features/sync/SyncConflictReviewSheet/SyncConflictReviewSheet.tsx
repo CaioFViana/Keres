@@ -7,6 +7,7 @@ import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
+import { type } from '../../../../theme/tokens';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { AppAlert } from '@/src/utils/AppAlert';
 import ConflictDetailSheet from '../ConflictDetailSheet/ConflictDetailSheet';
@@ -128,15 +129,7 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
   );
 
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      maxHeight: '78%',
-    },
+    sheet: { maxHeight: '78%' },
     handle: {
       alignSelf: 'center',
       width: 42,
@@ -146,7 +139,7 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
       marginBottom: 14,
     },
     header: { flexDirection: 'row', alignItems: 'center' },
-    title: { flex: 1, fontSize: 19, fontWeight: 'bold', color: colors.text },
+    title: { ...type.title, flex: 1, color: colors.text },
     closeButton: { padding: 4 },
     sectionTitle: {
       fontSize: 13,
@@ -170,6 +163,8 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
         visible={visible}
         onClose={onClose}
         placement="adaptive"
+        tone="raised"
+        inset="sheet"
         contentStyle={styles.sheet}
         maxHeight="78%"
       >

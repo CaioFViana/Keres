@@ -6,6 +6,7 @@ import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/Co
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { SKETCH_PALETTE } from '../../../state/sketchToolStore';
 import { useTheme } from '../../../theme';
+import { space, type } from '../../../theme/tokens';
 
 interface SketchColorSheetProps {
   color: string;
@@ -25,15 +26,7 @@ const SketchColorSheet: React.FC<SketchColorSheetProps> = ({
   const { colors } = useTheme();
   const [custom, setCustom] = useState(false);
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-    },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', marginBottom: 12 },
+    title: { ...type.title, color: colors.text, marginBottom: space.lg },
     label: {
       color: colors.textSecondary,
       fontSize: 12,
@@ -86,7 +79,7 @@ const SketchColorSheet: React.FC<SketchColorSheetProps> = ({
     );
   }
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
+    <ResponsiveModal visible onClose={onClose} placement="adaptive" tone="raised" inset="sheet">
       <Text style={styles.title}>{t('sketch_color_title')}</Text>
       <View style={styles.grid}>{SKETCH_PALETTE.map(swatch)}</View>
       {recentColors.length > 0 && (

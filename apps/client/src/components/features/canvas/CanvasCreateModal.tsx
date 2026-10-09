@@ -55,11 +55,6 @@ const CanvasCreateModal: React.FC<CanvasCreateModalProps> = ({
   }
 
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      padding: 20,
-    },
     title: {
       fontSize: 20,
       fontWeight: 'bold',
@@ -81,7 +76,8 @@ const CanvasCreateModal: React.FC<CanvasCreateModalProps> = ({
     <ResponsiveModal
       visible={visible}
       onClose={onCancel}
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="roomy"
       maxHeight="86%"
     >
       <Text style={styles.title}>{title}</Text>

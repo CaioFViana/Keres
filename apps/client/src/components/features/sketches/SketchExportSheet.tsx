@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
+import { space, type } from '../../../theme/tokens';
 
 interface SketchExportSheetProps {
   hasCover: boolean;
@@ -30,16 +31,8 @@ const SketchExportSheet: React.FC<SketchExportSheetProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-    },
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', flex: 1 },
+    header: { flexDirection: 'row', alignItems: 'center', marginBottom: space.md },
+    title: { ...type.title, color: colors.text, flex: 1 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -72,7 +65,7 @@ const SketchExportSheet: React.FC<SketchExportSheetProps> = ({
     },
   ];
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
+    <ResponsiveModal visible onClose={onClose} placement="adaptive" tone="raised" inset="sheet">
       <View style={styles.header}>
         <Text style={styles.title}>{t('sketch_export_title')}</Text>
         <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} disabled={busy}>

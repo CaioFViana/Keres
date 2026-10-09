@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
+import { type } from '@/src/theme/tokens';
 
 export type EntityMediaAddKind = 'playable' | 'document' | 'link' | 'existing';
 
@@ -29,9 +30,8 @@ const GalleryAddMediaModal: React.FC<Props> = ({ visible, onClose, onPick }) => 
   const { colors } = useTheme();
   const { t } = useTranslation();
   const styles = StyleSheet.create({
-    sheet: { backgroundColor: colors.surface, borderRadius: 10, padding: 20 },
     header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-    title: { color: colors.text, flex: 1, fontSize: 20, fontWeight: 'bold' },
+    title: { ...type.title, color: colors.text, flex: 1 },
     close: { padding: 4 },
     message: { color: colors.textSecondary, lineHeight: 19, marginTop: 8 },
     options: {
@@ -55,7 +55,8 @@ const GalleryAddMediaModal: React.FC<Props> = ({ visible, onClose, onPick }) => 
     <ResponsiveModal
       visible={visible}
       onClose={onClose}
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="roomy"
       maxHeight="86%"
     >
       <View style={styles.header}>

@@ -172,7 +172,8 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   );
 
   const styles = StyleSheet.create({
-    sheet: { flex: 1, paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
+    // Edge to edge: the keyboard screen and the header below lay out their own padding.
+    sheet: { flex: 1 },
     keyboardContent: { flexGrow: 1 },
     header: {
       flexDirection: 'row',

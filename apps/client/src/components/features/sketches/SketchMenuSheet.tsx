@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
 
@@ -24,19 +24,8 @@ interface SketchMenuSheetProps {
  * compact sketch toolbar. Picking an item runs it and closes the sheet.
  */
 const SketchMenuSheet: React.FC<SketchMenuSheetProps> = ({ title, items, onClose }) => {
-  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 20,
-    },
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', flex: 1 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -54,14 +43,10 @@ const SketchMenuSheet: React.FC<SketchMenuSheetProps> = ({ title, items, onClose
       onClose={onClose}
       placement="bottom"
       keyboardAvoiding={false}
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="sheet"
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader title={title} onClose={onClose} />
       {items.map((item) => (
         <TouchableOpacity
           key={item.id}

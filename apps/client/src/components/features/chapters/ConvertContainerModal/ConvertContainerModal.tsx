@@ -57,7 +57,6 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
   }
 
   const styles = StyleSheet.create({
-    modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },
     modalTitle: {
       fontSize: 20,
       fontWeight: 'bold',
@@ -90,12 +89,7 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
   ];
 
   return (
-    <ResponsiveModal
-      visible={visible}
-      onClose={onCancel}
-      contentStyle={styles.modalContent}
-      maxHeight="86%"
-    >
+    <ResponsiveModal visible={visible} onClose={onCancel} inset="roomy" maxHeight="86%">
       <Text style={styles.modalTitle}>
         {becomingChapter ? chapterCopy.convertTo : eventCopy.convertTo}
       </Text>

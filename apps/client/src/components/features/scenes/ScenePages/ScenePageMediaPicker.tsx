@@ -47,7 +47,8 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
     <ResponsiveModal
       visible={visible}
       onClose={onClose}
-      contentStyle={[styles.sheet, { backgroundColor: colors.surface }]}
+      tone="raised"
+      inset="roomy"
       maxHeight="86%"
     >
       <Text style={[styles.title, { color: colors.text }]}>{t('scene_pages_pick_title')}</Text>
@@ -112,7 +113,6 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
 };
 
 const styles = StyleSheet.create({
-  sheet: { borderRadius: 10, padding: 20 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
   tabs: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   tab: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6 },

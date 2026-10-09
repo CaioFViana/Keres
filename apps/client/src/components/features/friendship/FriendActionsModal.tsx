@@ -41,6 +41,7 @@ const FriendActionsModal: React.FC<FriendActionsModalProps> = ({
       visible={visible}
       onClose={onClose}
       keyboardAvoiding={false}
+      inset="regular"
       contentStyle={styles.content}
     >
       <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
@@ -75,7 +76,7 @@ const FriendActionsModal: React.FC<FriendActionsModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 8 },
+  content: { gap: 8 },
   title: { fontSize: 18, fontWeight: '700' },
   action: {
     flexDirection: 'row',

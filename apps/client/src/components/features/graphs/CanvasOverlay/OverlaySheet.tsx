@@ -13,8 +13,10 @@ import Button from '@/src/components/common/controls/Button/Button';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
+import { space } from '../../../../theme/tokens';
 
 interface OverlaySheetProps {
   overlay: CanvasOverlayType;
@@ -52,22 +54,11 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      maxHeight: '78%',
-    },
+    sheet: { maxHeight: '78%' },
     scroll: { flexShrink: 1 },
     scrollContent: { paddingHorizontal: 22, paddingTop: 2, paddingBottom: 24 },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', flex: 1 },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 16,
-    },
+    // The sheet has no padding of its own: the header and the scroll body lay out their inset.
+    header: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.md },
     label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 14, marginBottom: 6 },
     input: {
       borderWidth: 1,
@@ -93,12 +84,15 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
     remove: { backgroundColor: colors.error, marginTop: 20 },
   });
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
+    <ResponsiveModal
+      visible
+      onClose={onClose}
+      placement="adaptive"
+      tone="raised"
+      contentStyle={styles.sheet}
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>{t(`overlay_kind_${overlay.kind}`)}</Text>
-        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
+        <ModalHeader title={t(`overlay_kind_${overlay.kind}`)} onClose={onClose} />
       </View>
       <ScrollView
         testID="overlay-sheet-scroll"

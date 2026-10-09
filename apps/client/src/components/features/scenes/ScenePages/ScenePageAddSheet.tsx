@@ -81,7 +81,8 @@ const ScenePageAddSheet: React.FC<ScenePageAddSheetProps> = ({
     <ResponsiveModal
       visible={visible}
       onClose={onClose}
-      contentStyle={[styles.sheet, { backgroundColor: colors.surface }]}
+      tone="raised"
+      inset="roomy"
       maxHeight="86%"
     >
       <Text style={[styles.title, { color: colors.text }]}>
@@ -108,7 +109,6 @@ const ScenePageAddSheet: React.FC<ScenePageAddSheetProps> = ({
 };
 
 const styles = StyleSheet.create({
-  sheet: { borderRadius: 10, padding: 20 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
   door: {
     alignItems: 'center',

@@ -3,6 +3,7 @@ import type { ThemeColors } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
@@ -11,16 +12,7 @@ import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 /** Styles shared by the node sheets of the canvases (board pins and map points). */
 export const getCanvasNodeSheetStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      maxHeight: '78%',
-      overflow: 'visible',
-    },
+    sheet: { maxHeight: '78%', overflow: 'visible' },
     scroll: { flexGrow: 1 },
     scrollContent: { paddingHorizontal: 2, paddingVertical: 2 },
     handle: {
@@ -30,17 +22,6 @@ export const getCanvasNodeSheetStyles = (colors: ThemeColors) =>
       borderRadius: 2,
       backgroundColor: colors.border,
       marginBottom: 14,
-    },
-    header: { flexDirection: 'row', alignItems: 'flex-start' },
-    headerText: { flex: 1, marginRight: 12 },
-    headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    title: { fontSize: 19, fontWeight: 'bold', color: colors.text },
-    typeLine: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginTop: 2,
-      textTransform: 'uppercase',
-      fontWeight: '600',
     },
     openRow: {
       flexDirection: 'row',
@@ -99,24 +80,19 @@ export const CanvasNodeSheet: React.FC<CanvasNodeSheetProps> = ({
   children,
 }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
   const styles = useMemo(() => getCanvasNodeSheetStyles(colors), [colors]);
 
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
+    <ResponsiveModal
+      visible
+      onClose={onClose}
+      placement="adaptive"
+      tone="raised"
+      inset="sheet"
+      contentStyle={styles.sheet}
+    >
       <View style={styles.handle} />
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{title}</Text>
-          {typeLine !== undefined && <Text style={styles.typeLine}>{typeLine}</Text>}
-        </View>
-        <View style={styles.headerActions}>
-          {headerActions}
-          <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')}>
-            <Ionicons name="close" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ModalHeader title={title} subtitle={typeLine} actions={headerActions} onClose={onClose} />
       {notice}
       {open && (
         <TouchableOpacity style={styles.openRow} onPress={open.onPress}>

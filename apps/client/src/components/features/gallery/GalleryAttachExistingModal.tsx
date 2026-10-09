@@ -116,7 +116,6 @@ const GalleryAttachExistingModal: React.FC<Props> = ({
     );
   }, [media, search]);
   const styles = StyleSheet.create({
-    sheet: { backgroundColor: colors.surface, borderRadius: 10, padding: 20 },
     title: { color: colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
     hint: { color: colors.textSecondary, lineHeight: 18, marginBottom: 14 },
     search: { marginBottom: 10 },
@@ -146,7 +145,8 @@ const GalleryAttachExistingModal: React.FC<Props> = ({
     <ResponsiveModal
       visible={visible}
       onClose={onClose}
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="roomy"
       maxHeight="86%"
     >
       <Text style={styles.title}>{t('gallery_attach_existing_title')}</Text>

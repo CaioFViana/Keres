@@ -32,11 +32,6 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   const sortedCandidates = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
 
   const styles = StyleSheet.create({
-    modalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      padding: 15,
-    },
     title: {
       fontSize: 18,
       fontWeight: 'bold',
@@ -66,12 +61,7 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   });
 
   return (
-    <ResponsiveModal
-      visible={isVisible}
-      onClose={onClose}
-      contentStyle={styles.modalContent}
-      maxHeight="78%"
-    >
+    <ResponsiveModal visible={isVisible} onClose={onClose} inset="regular" maxHeight="78%">
       <Text style={styles.title}>{title}</Text>
       <FlatList
         data={sortedCandidates}

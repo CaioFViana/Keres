@@ -105,11 +105,6 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   };
 
   const styles = StyleSheet.create({
-    modalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      padding: 20,
-    },
     modalTitle: {
       fontSize: 20,
       fontWeight: 'bold',
@@ -156,11 +151,6 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
       marginTop: 20,
       paddingHorizontal: '3%',
     },
-    characterPickerModalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      padding: 10,
-    },
     characterPickerItem: {
       paddingVertical: 10,
       paddingHorizontal: 15,
@@ -183,12 +173,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   });
 
   return (
-    <ResponsiveModal
-      visible={isVisible}
-      onClose={onClose}
-      contentStyle={styles.modalContent}
-      maxHeight="86%"
-    >
+    <ResponsiveModal visible={isVisible} onClose={onClose} inset="roomy" maxHeight="86%">
       <Text style={styles.modalTitle}>
         {initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
       </Text>
@@ -234,7 +219,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
       <ResponsiveModal
         visible={showCharacterPicker}
         onClose={() => setShowCharacterPicker(false)}
-        contentStyle={styles.characterPickerModalContent}
+        inset="compact"
         maxHeight="78%"
       >
         <FlatList

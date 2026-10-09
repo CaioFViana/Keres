@@ -24,15 +24,7 @@ const ConflictSheetFrame: React.FC<ConflictSheetFrameProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      maxHeight: '85%',
-    },
+    sheet: { maxHeight: '85%' },
     handle: {
       alignSelf: 'center',
       width: 42,
@@ -53,6 +45,8 @@ const ConflictSheetFrame: React.FC<ConflictSheetFrameProps> = ({
       visible={visible}
       onClose={onClose}
       placement="adaptive"
+      tone="raised"
+      inset="sheet"
       contentStyle={styles.sheet}
       maxHeight="85%"
     >

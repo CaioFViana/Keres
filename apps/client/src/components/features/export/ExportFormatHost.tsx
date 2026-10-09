@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useExportFormatPromptStore } from '../../../state/exportFormatPromptStore';
 import { useTheme } from '../../../theme';
@@ -17,16 +18,6 @@ const ExportFormatHost: React.FC = () => {
   const open = useExportFormatPromptStore((state) => state.open);
   const answer = useExportFormatPromptStore((state) => state.answer);
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-    },
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', flex: 1 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -58,14 +49,10 @@ const ExportFormatHost: React.FC = () => {
       visible
       onClose={() => answer(null)}
       placement="adaptive"
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="sheet"
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('export_choose_title')}</Text>
-        <TouchableOpacity onPress={() => answer(null)} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader title={t('export_choose_title')} onClose={() => answer(null)} />
       {options.map(({ format, icon, title, sub }) => (
         <TouchableOpacity
           key={format}

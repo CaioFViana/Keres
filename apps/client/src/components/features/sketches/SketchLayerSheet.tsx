@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
 import { AppAlert } from '../../../utils/AppAlert';
@@ -57,17 +58,7 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
   const [editingName, setEditingName] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      maxHeight: '82%',
-    },
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', flex: 1 },
+    sheet: { maxHeight: '82%' },
     block: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
     row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 },
     active: { backgroundColor: colors.border + '55', borderRadius: 8 },
@@ -99,13 +90,15 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
 
   const topFirst = [...layers].reverse();
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('sketch_layers_title')}</Text>
-        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <ResponsiveModal
+      visible
+      onClose={onClose}
+      placement="adaptive"
+      tone="raised"
+      inset="sheet"
+      contentStyle={styles.sheet}
+    >
+      <ModalHeader title={t('sketch_layers_title')} onClose={onClose} />
       <ScrollView keyboardShouldPersistTaps="handled">
         {topFirst.map((layer, topIndex) => {
           const active = activeLayerId === layer.id;

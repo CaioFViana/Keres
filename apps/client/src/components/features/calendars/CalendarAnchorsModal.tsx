@@ -62,7 +62,7 @@ const CalendarAnchorsModal = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        content: { padding: 18, minHeight: 200 },
+        content: { minHeight: 200 },
         title: { color: colors.text, fontSize: 18, fontWeight: '700' },
         hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
         header: {
@@ -102,6 +102,7 @@ const CalendarAnchorsModal = ({
       visible={visible}
       onClose={onClose}
       placement="adaptive"
+      inset="regular"
       contentStyle={styles.content}
     >
       <Text style={styles.title}>

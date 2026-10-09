@@ -33,12 +33,7 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
 
   const normalized = normalizeGalleryLink(url);
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      padding: 20,
-      overflow: 'visible',
-    },
+    sheet: { overflow: 'visible' },
     title: {
       fontSize: 20,
       fontWeight: 'bold',
@@ -61,6 +56,8 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
     <ResponsiveModal
       visible={visible}
       onClose={onCancel}
+      tone="raised"
+      inset="roomy"
       contentStyle={styles.sheet}
       maxHeight="86%"
     >

@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
@@ -41,10 +42,7 @@ const GraphConnectionModal: React.FC<GraphConnectionModalProps> = ({
   const [direction, setDirection] = useState<GraphConnectionDirection>('forward');
   const [label, setLabel] = useState('');
   const styles = StyleSheet.create({
-    sheet: { padding: 20, gap: 16 },
-    header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-    title: { flex: 1, color: colors.text, fontSize: 20, fontWeight: '700' },
-    close: { padding: 2 },
+    sheet: { gap: 16 },
     description: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
     switchRow: {
       alignItems: 'center',
@@ -86,13 +84,14 @@ const GraphConnectionModal: React.FC<GraphConnectionModalProps> = ({
   const submit = () => onConfirm({ directed, direction, label: label.trim() || null });
 
   return (
-    <ResponsiveModal visible onClose={onClose} placement="center" contentStyle={styles.sheet}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('graph_connection_title')}</Text>
-        <TouchableOpacity onPress={onClose} style={styles.close} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <ResponsiveModal
+      visible
+      onClose={onClose}
+      placement="center"
+      inset="roomy"
+      contentStyle={styles.sheet}
+    >
+      <ModalHeader title={t('graph_connection_title')} onClose={onClose} />
       <Text style={styles.description}>
         {t('graph_connection_description', { source: sourceName, target: targetName })}
       </Text>

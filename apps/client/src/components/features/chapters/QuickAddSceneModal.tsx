@@ -34,7 +34,6 @@ const QuickAddSceneModal: React.FC<Props> = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        content: { padding: 20 },
         title: { color: colors.text, fontSize: 20, fontWeight: '700' },
         row: { marginTop: 16 },
       }),
@@ -42,8 +41,8 @@ const QuickAddSceneModal: React.FC<Props> = ({
   );
 
   return (
-    <ResponsiveModal visible={visible} onClose={onClose}>
-      <View style={styles.content} testID={testID}>
+    <ResponsiveModal visible={visible} onClose={onClose} inset="roomy">
+      <View testID={testID}>
         <Text style={styles.title}>{t('quick_add_scene_title', { group: groupName })}</Text>
         <View style={styles.row}>
           <QuickAddSceneRow

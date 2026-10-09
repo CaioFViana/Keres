@@ -297,7 +297,7 @@ const PresenceMatrixViewerContent: React.FC<{
           maxWidth: 360,
           textAlign: 'center',
         },
-        orderModal: { padding: 18, gap: 10 },
+        orderModal: { gap: 10 },
         orderModalTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 4 },
         orderOption: {
           borderWidth: 1,
@@ -428,6 +428,7 @@ const PresenceMatrixViewerContent: React.FC<{
         visible={bulkOrderVisible}
         onClose={() => setBulkOrderVisible(false)}
         keyboardAvoiding={false}
+        inset="regular"
       >
         <View style={styles.orderModal}>
           <Text style={styles.orderModalTitle}>{t('presence_matrix_add_all')}</Text>

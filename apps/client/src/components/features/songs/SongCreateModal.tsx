@@ -6,6 +6,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
+import { space, type } from '@/src/theme/tokens';
 
 interface SongCreateModalProps {
   visible: boolean;
@@ -25,15 +26,7 @@ const SongCreateModal: React.FC<SongCreateModalProps> = ({ visible, onCancel, on
     if (visible) setTitle('');
   }
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingBottom: 24,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-    },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', marginBottom: 12 },
+    title: { ...type.title, color: colors.text, marginBottom: space.lg },
     label: { color: colors.text, fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
     actions: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end', marginTop: 18 },
   });
@@ -42,7 +35,8 @@ const SongCreateModal: React.FC<SongCreateModalProps> = ({ visible, onCancel, on
       visible={visible}
       onClose={onCancel}
       placement="adaptive"
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="sheet"
     >
       <Text style={styles.title}>{t('song_create_title')}</Text>
       <Text style={styles.label}>{t('song_title')}</Text>

@@ -76,7 +76,6 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
   };
 
   const styles = StyleSheet.create({
-    modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },
     modalTitle: {
       fontSize: 20,
       fontWeight: 'bold',
@@ -93,12 +92,7 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
   });
 
   return (
-    <ResponsiveModal
-      visible={isVisible}
-      onClose={onClose}
-      contentStyle={styles.modalContent}
-      maxHeight="86%"
-    >
+    <ResponsiveModal visible={isVisible} onClose={onClose} inset="roomy" maxHeight="86%">
       <Text style={styles.modalTitle}>
         {initialRelation ? t('edit_plot_scene_relation') : t('add_scene_to_plot')}
       </Text>

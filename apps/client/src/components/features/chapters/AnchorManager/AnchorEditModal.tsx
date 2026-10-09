@@ -156,16 +156,8 @@ const AnchorEditModal: React.FC<Props> = ({
   })();
 
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      // ResponsiveModal clips rounded surfaces; focus borders on inputs need to paint into padding.
-      overflow: 'visible',
-    },
+    // ResponsiveModal clips rounded surfaces; focus borders on inputs need to paint into padding.
+    sheet: { overflow: 'visible' },
     keyboardContent: {
       paddingBottom: 12,
       paddingHorizontal: 2,
@@ -423,6 +415,8 @@ const AnchorEditModal: React.FC<Props> = ({
       visible={visible}
       onClose={onCancel}
       placement="adaptive"
+      tone="raised"
+      inset="sheet"
       contentStyle={styles.sheet}
       maxHeight="86%"
     >

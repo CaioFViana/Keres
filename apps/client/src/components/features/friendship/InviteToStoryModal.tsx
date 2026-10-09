@@ -54,7 +54,12 @@ const InviteToStoryModal: React.FC<InviteToStoryModalProps> = ({
   };
 
   return (
-    <ResponsiveModal visible={visible} onClose={onClose} contentStyle={styles.content}>
+    <ResponsiveModal
+      visible={visible}
+      onClose={onClose}
+      inset="regular"
+      contentStyle={styles.content}
+    >
       <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
         {t('friend_invite_modal_title', { name: friendName })}
       </Text>
@@ -143,7 +148,7 @@ const InviteToStoryModal: React.FC<InviteToStoryModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 10 },
+  content: { gap: 10 },
   title: { fontSize: 18, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: 'bold', marginTop: 6 },
   muted: { fontSize: 14, lineHeight: 20 },

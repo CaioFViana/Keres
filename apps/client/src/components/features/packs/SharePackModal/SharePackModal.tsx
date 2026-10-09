@@ -69,7 +69,6 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
   }
 
   const styles = StyleSheet.create({
-    modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },
     modalTitle: {
       fontSize: 20,
       fontWeight: 'bold',
@@ -95,12 +94,7 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
   });
 
   return (
-    <ResponsiveModal
-      visible={visible}
-      onClose={onCancel}
-      contentStyle={styles.modalContent}
-      maxHeight="86%"
-    >
+    <ResponsiveModal visible={visible} onClose={onCancel} inset="roomy" maxHeight="86%">
       <Text style={styles.modalTitle}>{t('packs_share_title')}</Text>
       <Text style={styles.subtitle}>{t('packs_share_message', { name: packName })}</Text>
 

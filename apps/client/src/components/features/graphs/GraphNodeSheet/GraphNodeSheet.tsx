@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
+import { type } from '@/src/theme/tokens';
 
 export interface GraphNodeSheetBadge {
   label: string;
@@ -51,15 +52,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        sheet: {
-          backgroundColor: colors.surface,
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          paddingHorizontal: 20,
-          paddingTop: 16,
-          paddingBottom: 24,
-          maxHeight: '78%',
-        },
+        sheet: { maxHeight: '78%' },
         handle: {
           alignSelf: 'center',
           width: 42,
@@ -77,8 +70,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           marginRight: 12,
         },
         title: {
-          fontSize: 19,
-          fontWeight: 'bold',
+          ...type.title,
           color: colors.text,
         },
         closeButton: { padding: 4 },
@@ -177,6 +169,8 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
       visible
       onClose={onClose}
       placement="adaptive"
+      tone="raised"
+      inset="sheet"
       contentStyle={styles.sheet}
       maxHeight="78%"
     >

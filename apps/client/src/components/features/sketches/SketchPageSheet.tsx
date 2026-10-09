@@ -11,6 +11,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
 import { getCommonChipStyles } from '../../../theme/commonStyles';
+import { space, type } from '../../../theme/tokens';
 
 interface SketchPageSheetProps {
   page: SketchPageType;
@@ -38,15 +39,7 @@ const SketchPageSheet: React.FC<SketchPageSheetProps> = ({ page, onApply, onClos
   const [background, setBackground] = useState<SketchPageBackground>(page.background);
   const landscape = width >= height;
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-    },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', marginBottom: 12 },
+    title: { ...type.title, color: colors.text, marginBottom: space.lg },
     label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 12, marginBottom: 6 },
     row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
     ...getCommonChipStyles(colors),
@@ -66,7 +59,7 @@ const SketchPageSheet: React.FC<SketchPageSheetProps> = ({ page, onApply, onClos
     onClose();
   };
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
+    <ResponsiveModal visible onClose={onClose} placement="adaptive" tone="raised" inset="sheet">
       <Text style={styles.title}>{t('sketch_page_title')}</Text>
       <Text style={styles.label}>{t('sketch_page_presets')}</Text>
       <View style={styles.row}>

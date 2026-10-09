@@ -94,7 +94,8 @@ const GalleryCoverField: React.FC<GalleryCoverFieldProps> = ({
       <ResponsiveModal
         visible={open}
         onClose={() => setOpen(false)}
-        contentStyle={[styles.sheet, { backgroundColor: colors.surface }]}
+        tone="raised"
+        inset="roomy"
         maxHeight="86%"
       >
         <Text style={[styles.title, { color: colors.text }]}>{t('cover_picker_title')}</Text>
@@ -141,7 +142,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 64,
   },
-  sheet: { borderRadius: 10, padding: 20 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
   hint: { lineHeight: 18, marginBottom: 14 },
   list: { maxHeight: 360 },

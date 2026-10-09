@@ -12,6 +12,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonChipStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useTheme } from '../../../theme';
+import { space, type } from '../../../theme/tokens';
 
 interface Props {
   visible: boolean;
@@ -53,20 +54,7 @@ const SketchCreateModal: React.FC<Props> = ({
     }
   }
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-    },
-    title: {
-      color: colors.text,
-      fontSize: 19,
-      fontWeight: 'bold',
-      marginBottom: 12,
-    },
+    title: { ...type.title, color: colors.text, marginBottom: space.lg },
     label: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
     presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
     ...getCommonChipStyles(colors),
@@ -82,7 +70,8 @@ const SketchCreateModal: React.FC<Props> = ({
       visible={visible}
       onClose={onCancel}
       placement="adaptive"
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="sheet"
     >
       <Text style={styles.title}>{title ?? t('sketch_create_title')}</Text>
       <Text style={styles.label}>{t('sketch_name')}</Text>

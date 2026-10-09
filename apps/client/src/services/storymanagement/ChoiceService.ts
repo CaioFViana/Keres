@@ -15,7 +15,7 @@ import {
   runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
 import { softDeleteRowSync } from './softDelete';
 
@@ -30,7 +30,7 @@ export interface ChoiceService {
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<ChoiceSelect[]>;
   getChoiceCount(storyId?: string): Promise<number>;
   getById(choiceId: string): Promise<ChoiceSelect | undefined>;

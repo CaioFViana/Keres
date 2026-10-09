@@ -13,7 +13,7 @@ import {
   runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
@@ -37,7 +37,7 @@ export interface LocationService {
     favoriteFilterState?: FavoriteFilterState,
     sortBy?: string,
     sortDirection?: 'asc' | 'desc',
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<LocationWithTags[]>;
   getLocationCount(storyId?: string): Promise<number>;
   createLocation(

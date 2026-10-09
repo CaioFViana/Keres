@@ -3,7 +3,7 @@ import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'; // Import asc an
 import type { AppDrizzleClient } from '../../db';
 import type { TagInsert, TagSelect } from '../../db/schema';
 import { tags } from '../../db/schema'; // Import TagInsert and stories
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -34,7 +34,7 @@ export interface TagService {
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<TagSelect[]>;
   getTagCount(storyId?: string): Promise<number>;
   getById(tagId: string): Promise<TagSelect | undefined>;

@@ -4,6 +4,7 @@ import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, or, sql } from 'drizzle-orm'; // Import SQL
 import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table aliasing
 import type { AppDrizzleClient } from '../../db';
+import type { AdvancedSearchCriteria } from '../../types/entityFilters';
 import { characterRelations, characters } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils'; // Import for changed fields in update
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import for event emission
@@ -32,7 +33,7 @@ export interface CharacterRelationServiceInterface {
     searchTerm?: string,
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<CharacterRelationWithNames[]>;
 }
 
@@ -430,7 +431,7 @@ export const createCharacterRelationService = (
       searchTerm?: string,
       sortBy?: string | null,
       sortDirection?: 'asc' | 'desc',
-      advancedSearchCriteria?: { [key: string]: any },
+      advancedSearchCriteria?: AdvancedSearchCriteria,
     ): Promise<CharacterRelationWithNames[]> {
       const char1 = alias(characters, 'char1');
       const char2 = alias(characters, 'char2');

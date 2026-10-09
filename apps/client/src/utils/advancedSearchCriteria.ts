@@ -1,4 +1,6 @@
-export type AdvancedSearchCriteria = { [key: string]: any };
+import type { AdvancedSearchCriteria } from '../types/entityFilters';
+
+export type { AdvancedSearchCriteria };
 
 /** A criterion counts only when it narrows something: `false` does (a "No" answer), an empty text does not. */
 export function isActiveCriterion(value: unknown): boolean {

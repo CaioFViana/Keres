@@ -16,7 +16,7 @@ import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { softDeleteRowSync } from './softDelete';
 import { countActiveStoryEntities } from './storyEntityCount';
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
   decorateFavorite,
@@ -34,7 +34,7 @@ export interface ItemService {
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<ItemSelect[]>;
   getItemCount(storyId?: string): Promise<number>;
   getById(itemId: string): Promise<ItemSelect | undefined>;

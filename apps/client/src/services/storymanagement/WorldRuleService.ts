@@ -17,7 +17,7 @@ import {
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
   decorateFavorite,
@@ -37,7 +37,7 @@ export interface WorldRuleService {
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<WorldRuleWithTags[]>;
   getWorldRuleCount(storyId?: string): Promise<number>;
   getById(worldRuleId: string): Promise<WorldRuleWithTags | undefined>;

@@ -22,7 +22,7 @@ import {
 } from './arrangedWrites';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import { softDeleteRowSync } from './softDelete';
 import {
@@ -41,7 +41,7 @@ export interface SceneService {
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<SceneSelect[]>;
   getSceneCount(storyId?: string): Promise<number>;
   /** The scene written in most recently, for picking the story back up where it was left. */

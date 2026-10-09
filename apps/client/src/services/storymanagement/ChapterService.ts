@@ -18,7 +18,7 @@ import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
 import { createStoryArcService } from './StoryArcService';
 import { planContainerOrderSync, planPlacementSync, writeRankChangesSync } from './arrangedWrites';
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
   decorateFavorite,
@@ -37,7 +37,7 @@ export interface ChapterService {
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
     favoriteFilterState?: FavoriteFilterState,
-    advancedSearchCriteria?: { [key: string]: any },
+    advancedSearchCriteria?: AdvancedSearchCriteria,
     /** Chapters unless asked otherwise; `null` returns both kinds in one list. */
     type?: ChapterType | null,
   ): Promise<ChapterSelect[]>;

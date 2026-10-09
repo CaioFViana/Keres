@@ -505,3 +505,135 @@ describe('extra actions', () => {
     expect((store.getState() as any).count()).toBe(2);
   });
 });
+
+describe('findMatching', () => {
+  it('asks with other field filters while the search, the tags and the favorites view stay', async () => {
+    const { store, fetchEntities } = readyStore();
+    store.setState({ searchTerm: 'ly', activeFilterTags: ['t1'] } as any);
+
+    const rows = await store.getState().findMatching({ name: 'x' });
+
+    expect(fetchEntities).toHaveBeenCalledTimes(1);
+    expect(fetchEntities.mock.calls[0][1]).toMatchObject({
+      searchTerm: 'ly',
+      activeFilterTags: ['t1'],
+      advancedSearchCriteria: { name: 'x' },
+    });
+    expect(rows).toEqual([tag('a'), tag('b')]);
+  });
+
+  it('leaves the list and its filters as they were', async () => {
+    const { store } = readyStore();
+    store.setState({ advancedSearchCriteria: { name: 'applied' } } as any);
+
+    await store.getState().findMatching({ name: 'draft' });
+
+    const state = store.getState() as any;
+    expect(state.advancedSearchCriteria).toEqual({ name: 'applied' });
+    expect(state.tags).toEqual([]);
+    expect(state.loading).toBe(false);
+  });
+
+  it('finds nothing before the store has a service and a story', async () => {
+    const { store, fetchEntities } = buildStore();
+
+    expect(await store.getState().findMatching({})).toEqual([]);
+    expect(fetchEntities).not.toHaveBeenCalled();
+  });
+
+  it('counts the favorites view per person when favorites are individual', async () => {
+    mockFavoriteService.getBehavior.mockResolvedValueOnce('individual');
+    mockFavoriteService.decorateEntities.mockResolvedValueOnce([tag('a', true), tag('b', false)]);
+    const { store } = readyStore();
+    store.setState({ favoriteFilterState: 'favorite' } as any);
+
+    expect(await store.getState().findMatching({})).toEqual([tag('a', true)]);
+  });
+
+  it('lets the error out for the caller to decide', async () => {
+    const { store, fetchEntities } = readyStore();
+    fetchEntities.mockRejectedValueOnce(new Error('db down'));
+
+    await expect(store.getState().findMatching({})).rejects.toThrow('db down');
+    expect((store.getState() as any).error).toBeNull();
+  });
+});
+
+describe('filters belong to a story', () => {
+  const setFilters = (store: ReturnType<typeof buildStore>['store']) =>
+    store.setState({
+      searchTerm: 'ly',
+      activeFilterTags: ['t1'],
+      favoriteFilterState: 'favorite',
+      advancedSearchCriteria: { name: 'x' },
+      activeSort: 'name',
+      sortDirection: 'desc',
+    } as any);
+
+  it('starts over in another story, keeping the sort', () => {
+    const { store } = readyStore();
+    setFilters(store);
+
+    store.getState().setDbAndStoryId(fakeDb, 'story-2');
+
+    expect(store.getState()).toMatchObject({
+      storyId: 'story-2',
+      filtersStoryId: 'story-2',
+      searchTerm: '',
+      activeFilterTags: [],
+      favoriteFilterState: 'all',
+      advancedSearchCriteria: {},
+      activeSort: 'name',
+      sortDirection: 'desc',
+    });
+  });
+
+  it('keeps them when the same story is opened again', () => {
+    const { store } = readyStore();
+    setFilters(store);
+
+    store.getState().setDbAndStoryId(fakeDb, 'story-1');
+
+    expect(store.getState()).toMatchObject({
+      searchTerm: 'ly',
+      advancedSearchCriteria: { name: 'x' },
+    });
+  });
+
+  it('does not wipe filters restored before any story was opened', () => {
+    const { store } = buildStore();
+    store.setState({ advancedSearchCriteria: { name: 'x' }, filtersStoryId: null } as any);
+
+    store.getState().setDbAndStoryId(fakeDb, 'story-1');
+
+    expect(store.getState().advancedSearchCriteria).toEqual({ name: 'x' });
+  });
+});
+
+describe('remembering the selection', () => {
+  it('keeps the sort, the favorites view and the field filters, never the typed words or the rows', async () => {
+    const AsyncStorage = require('@react-native-async-storage/async-storage');
+    await AsyncStorage.clear();
+    const { store } = readyStore({ persistKey: 'tag-test-storage' } as any);
+
+    store.setState({
+      searchTerm: 'ly',
+      activeSort: 'name',
+      sortDirection: 'desc',
+      favoriteFilterState: 'favorite',
+      advancedSearchCriteria: { name: 'x' },
+    } as any);
+    await flush();
+
+    const saved = JSON.parse(await AsyncStorage.getItem('tag-test-storage')).state;
+    expect(saved).toMatchObject({
+      filtersStoryId: 'story-1',
+      activeSort: 'name',
+      sortDirection: 'desc',
+      favoriteFilterState: 'favorite',
+      advancedSearchCriteria: { name: 'x' },
+    });
+    expect(saved).not.toHaveProperty('searchTerm');
+    expect(saved).not.toHaveProperty('tags');
+  });
+});

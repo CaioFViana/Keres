@@ -24,6 +24,7 @@ export const useWorldRuleStore = createEntityStore<
   updateFavorite: (service, userId, id, isFavorite) =>
     service.updateWorldRule(userId, id, { isFavorite }),
   changeEvent: 'worldrule_changed',
+  persistKey: 'worldrule-storage',
   errorMessages: {
     fetch: 'Failed to load world rules.',
     toggleFavorite: 'Failed to update world rule favorite status.',

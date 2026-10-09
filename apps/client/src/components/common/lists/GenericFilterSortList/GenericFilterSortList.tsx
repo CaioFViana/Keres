@@ -67,6 +67,8 @@ interface GenericFilterSortListProps<T> {
   entityName?: string;
   storyId?: string;
   onAdvancedSearch?: (criteria: { [key: string]: any }) => void;
+  /** Rows the list would hold with given field filters; the filters dialog shows it on its apply button. */
+  onPreviewCount?: (criteria: { [key: string]: any }) => Promise<number>;
   currentAdvancedSearchCriteria?: { [key: string]: any };
   advancedSearchScopes?: AdvancedSearchScope[];
   disableTagFilter?: boolean;
@@ -110,6 +112,7 @@ const GenericFilterSortList = <T,>({
   entityName,
   storyId,
   onAdvancedSearch,
+  onPreviewCount,
   currentAdvancedSearchCriteria,
   advancedSearchScopes,
   disableFavoriteFilter = false,
@@ -450,6 +453,7 @@ const GenericFilterSortList = <T,>({
           onSearch={handleAdvancedSearchSubmit}
           initialCriteria={currentAdvancedSearchCriteria}
           scopes={advancedSearchScopes}
+          previewCount={onPreviewCount}
           // The star button already filters favorites (per person when favorites are individual);
           // the field would read the story-wide column instead.
           excludeFields={showFavoriteFilter ? ['isFavorite'] : []}

@@ -68,7 +68,7 @@ const ItemListScreen = () => {
   const navigation = useNavigation<ItemsScreenNavigationProp>();
   const { openItemList } = useOpenPresenceMatrixViewer();
 
-  const { listProps, items, isInitialLoading, error, storyId, toggleFavorite } =
+  const { listProps, items, isInitialLoading, error, storyId, toggleFavorite, findMatching } =
     useEntityListScreen({
       useStore: useItemStore,
       collectionKey: 'items',
@@ -196,6 +196,12 @@ const ItemListScreen = () => {
   const inActiveArc = useCallback(
     (item: ItemSelect) => entityBelongsToActiveArc(arcIdsByItem.get(item.id), activeArcId),
     [arcIdsByItem, activeArcId],
+  );
+  // The filters dialog counts what this list would show: the active arc's rows, like the list itself.
+  const previewCount = useCallback(
+    async (criteria: { [key: string]: any }) =>
+      ((await findMatching(criteria)) as ItemSelect[]).filter(inActiveArc).length,
+    [findMatching, inActiveArc],
   );
   const {
     data: itemsWithTags,
@@ -334,6 +340,7 @@ const ItemListScreen = () => {
       <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
+          onPreviewCount={previewCount}
           data={itemsWithTags}
           resultsNotice={
             <OutsideArcNotice

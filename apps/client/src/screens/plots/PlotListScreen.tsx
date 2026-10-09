@@ -16,6 +16,8 @@ import PlotListItem from '@/src/components/features/list-items/PlotListItem';
 import type { PlotSelect } from '../../db/schema';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
+import type { AdvancedSearchCriteria } from '../../utils/advancedSearchCriteria';
+import { plotMatches } from '../../utils/plotSearch';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -51,6 +53,7 @@ const PlotListScreen = () => {
   const { plots, relationsOf, loading } = useStoryPlots(storyId, selectedStory?.type);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [fieldFilters, setFieldFilters] = useState<AdvancedSearchCriteria>({});
   const [activeSort, setActiveSort] = useState<string | null>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
@@ -106,10 +109,7 @@ const PlotListScreen = () => {
   });
 
   const visiblePlots = useMemo(() => {
-    const term = searchQuery.trim().toLowerCase();
-    const filtered = term
-      ? plots.filter((plot) => `${plot.name} ${plot.details ?? ''}`.toLowerCase().includes(term))
-      : plots;
+    const filtered = plots.filter((plot) => plotMatches(plot, searchQuery, fieldFilters));
     const direction = sortDirection === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
       if (activeSort === 'createdAt')
@@ -120,7 +120,13 @@ const PlotListScreen = () => {
         return direction * (relationsOf(a.id).length - relationsOf(b.id).length);
       return direction * a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
     });
-  }, [activeSort, plots, relationsOf, searchQuery, sortDirection]);
+  }, [activeSort, fieldFilters, plots, relationsOf, searchQuery, sortDirection]);
+
+  const previewCount = useCallback(
+    async (criteria: AdvancedSearchCriteria) =>
+      plots.filter((plot) => plotMatches(plot, searchQuery, criteria)).length,
+    [plots, searchQuery],
+  );
 
   const sortOptions = useMemo(
     () => [
@@ -170,6 +176,10 @@ const PlotListScreen = () => {
           currentSortDirection={sortDirection}
           currentSortValue={activeSort}
           entityName="Plot"
+          storyId={storyId}
+          onAdvancedSearch={setFieldFilters}
+          onPreviewCount={previewCount}
+          currentAdvancedSearchCriteria={fieldFilters}
           emptyStateTitle={t('plots_empty_title')}
           emptyStateMessage={t('plots_empty_message')}
           emptyStateActions={

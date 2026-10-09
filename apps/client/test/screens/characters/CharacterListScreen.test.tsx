@@ -28,6 +28,7 @@ let mockListState = {
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
   toggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn() as jest.Mock,
 };
 let mockListProps: {
   data: ListItem[];
@@ -230,6 +231,7 @@ const freshListState = () => ({
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
   toggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn(async () => [] as unknown[]),
 });
 
 beforeEach(() => {
@@ -374,6 +376,31 @@ describe('CharacterListScreen', () => {
     };
     await render(<CharactersScreen />);
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('counts the rows a filter would leave in the active arc, as the list shows them', async () => {
+    mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) =>
+      selector({ selectedStory: { id: 'story-1', type: 'linear' }, activeArcId: 'arc-1' }),
+    );
+    mockUseEntityArcIds.mockReturnValue(
+      new Map([
+        ['char-1', ['arc-1']],
+        ['char-2', ['arc-2']],
+      ]),
+    );
+    mockListState = {
+      ...freshListState(),
+      items: [],
+      findMatching: jest.fn(async () => [
+        { id: 'char-1', name: 'Aria' },
+        { id: 'char-2', name: 'Bram' },
+        { id: 'char-3', name: 'Cy' },
+      ]),
+    };
+    await render(<CharactersScreen />);
+
+    expect(await (mockListProps as any).onPreviewCount({ name: 'x' })).toBe(2);
+    expect(mockListState.findMatching).toHaveBeenCalledWith({ name: 'x' });
   });
 
   it('hides characters from other arcs but keeps unlinked ones', async () => {

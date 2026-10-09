@@ -26,6 +26,7 @@ export const useGalleryStore = createEntityStore<'galleries', GallerySelect, Gal
   updateFavorite: (service, userId, id, isFavorite) =>
     service.updateGalleryFavoriteStatus(userId, id, isFavorite),
   changeEvent: 'gallery_changed',
+  persistKey: 'gallery-storage',
   defaultSort: 'createdAt',
   defaultSortDirection: 'desc',
   errorMessages: {

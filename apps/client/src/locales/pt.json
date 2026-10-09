@@ -20,6 +20,8 @@
   "add_scene_to_plot": "Adicionar cena à trama",
   "advanced_search_add": "Adicionar filtro",
   "advanced_search_apply": "Ver resultados",
+  "advanced_search_apply_count_one": "Ver {{count}} resultado",
+  "advanced_search_apply_count_other": "Ver {{count}} resultados",
   "advanced_search_contains": "Contém…",
   "advanced_search_custom_section": "Atributos personalizados",
   "advanced_search_empty": "Nenhum filtro por campo ainda. Adicione um para restringir a lista.",

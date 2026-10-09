@@ -56,6 +56,7 @@ const CharactersScreen = () => {
     storyId,
     advancedSearchCriteria: storeAdvancedSearchCriteria,
     setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria,
+    findMatching,
     toggleFavorite,
   } = useEntityListScreen({
     useStore: useCharacterStore,
@@ -69,6 +70,12 @@ const CharactersScreen = () => {
     (character: CharacterWithTags) =>
       entityBelongsToActiveArc(arcIdsByCharacter.get(character.id), activeArcId),
     [arcIdsByCharacter, activeArcId],
+  );
+  // The filters dialog counts what this list would show: the active arc's rows, like the list itself.
+  const previewCount = useCallback(
+    async (criteria: { [key: string]: any }) =>
+      ((await findMatching(criteria)) as CharacterWithTags[]).filter(inActiveArc).length,
+    [findMatching, inActiveArc],
   );
   const {
     data: visibleCharacters,
@@ -253,6 +260,7 @@ const CharactersScreen = () => {
       <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
+          onPreviewCount={previewCount}
           data={visibleCharacters}
           resultsNotice={
             <OutsideArcNotice

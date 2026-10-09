@@ -521,6 +521,9 @@ const NarrativeElementsListScreen = () => {
       <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
+          // The rows here are chapters with their scenes, filtered by three scopes at once; no count of one
+          // store's rows would match what the list shows.
+          onPreviewCount={undefined}
           data={visibleChapters}
           resultsNotice={
             <OutsideArcNotice

@@ -19,6 +19,7 @@ let mockListState = {
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
   toggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn() as jest.Mock,
 };
 let mockListProps: {
   data: { id: string; name: string }[];
@@ -170,6 +171,7 @@ const freshListState = () => ({
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
   toggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn(async () => [] as unknown[]),
 });
 
 beforeEach(() => {
@@ -243,6 +245,31 @@ it('renders locations with tag filters and wires item actions', async () => {
 
   await fireEvent.press(screen.getByTestId('view-loc-1'));
   expect(mockNavigate).toHaveBeenCalledWith('LocationDetail', { locationId: 'loc-1' });
+});
+
+it('counts the rows a filter would leave in the active arc, as the list shows them', async () => {
+  mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) =>
+    selector({ activeArcId: 'arc-1' }),
+  );
+  mockUseLocationArcIds.mockReturnValue(
+    new Map([
+      ['loc-1', ['arc-1']],
+      ['loc-2', ['arc-2']],
+    ]),
+  );
+  mockListState = {
+    ...freshListState(),
+    items: [],
+    findMatching: jest.fn(async () => [
+      { id: 'loc-1', name: 'Keep' },
+      { id: 'loc-2', name: 'Forest' },
+      { id: 'loc-3', name: 'Unlinked' },
+    ]),
+  };
+  await render(<LocationsScreen />);
+
+  expect(await (mockListProps as any).onPreviewCount({ name: 'x' })).toBe(2);
+  expect(mockListState.findMatching).toHaveBeenCalledWith({ name: 'x' });
 });
 
 it('hides locations from other arcs but keeps unlinked ones', async () => {

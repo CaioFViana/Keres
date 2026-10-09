@@ -21,6 +21,7 @@ export const useNoteStore = createEntityStore<'notes', NoteWithTags, NoteService
   updateFavorite: (service, userId, id, isFavorite) =>
     service.updateNote(userId, id, { isFavorite }),
   changeEvent: 'note_changed',
+  persistKey: 'note-storage',
   errorMessages: {
     fetch: 'Failed to load notes.',
     toggleFavorite: 'Failed to update note favorite status.',

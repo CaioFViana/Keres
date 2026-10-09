@@ -20,6 +20,8 @@
   "add_scene_to_plot": "Add scene to plot",
   "advanced_search_add": "Add filter",
   "advanced_search_apply": "Show results",
+  "advanced_search_apply_count_one": "Show {{count}} result",
+  "advanced_search_apply_count_other": "Show {{count}} results",
   "advanced_search_contains": "Contains…",
   "advanced_search_custom_section": "Custom attributes",
   "advanced_search_empty": "No field filters yet. Add one to narrow the list.",

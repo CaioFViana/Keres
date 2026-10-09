@@ -71,12 +71,17 @@ jest.mock('../../../src/components/common/modals/AdvancedSearchModal/AdvancedSea
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
     __esModule: true,
-    default: ({ isVisible, onClose, onSearch, excludeFields }: any) =>
+    default: ({ isVisible, onClose, onSearch, excludeFields, previewCount }: any) =>
       isVisible
         ? react.createElement(
             react.Fragment,
             null,
             react.createElement(native.Text, { testID: 'adv-open' }, 'advanced'),
+            react.createElement(
+              native.Text,
+              { testID: 'adv-preview', onPress: () => previewCount?.({ name: 'x' }) },
+              typeof previewCount,
+            ),
             react.createElement(
               native.Text,
               { testID: 'adv-exclude' },
@@ -644,6 +649,18 @@ describe('GenericFilterSortList', () => {
 
       expect(view.queryByTestId('active-filter-chips')).toBeNull();
       expect(view.queryByTestId('list-filters-count')).toBeNull();
+    });
+
+    it('gives the filters dialog the way to count what they would show', async () => {
+      const onPreviewCount = jest.fn(async () => 4);
+      const view = await render(
+        <GenericFilterSortList {...filtered()} onPreviewCount={onPreviewCount} />,
+      );
+      await fireEvent.press(view.getByTestId('list-filters-button'));
+
+      expect(view.getByTestId('adv-preview').props.children).toBe('function');
+      await fireEvent.press(view.getByTestId('adv-preview'));
+      expect(onPreviewCount).toHaveBeenCalledWith({ name: 'x' });
     });
 
     it('does not offer the favorites field in the filters: the star already does that', async () => {

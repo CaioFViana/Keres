@@ -33,6 +33,7 @@ function buildStore(overrides: Record<string, unknown> = {}) {
     setFilterTags: jest.fn(),
     setFavoriteFilter: jest.fn(),
     setAdvancedSearchCriteria: jest.fn(),
+    findMatching: jest.fn(async (_criteria: unknown) => [{ id: 'a' }, { id: 'b' }, { id: 'c' }]),
     toggleFavorite: jest.fn(),
     ...overrides,
   };
@@ -315,5 +316,45 @@ describe('reacting to changes elsewhere in the app', () => {
     entityEventEmitter.emit(CHANGE_EVENT, STORY_ID);
 
     expect(store.fetchTags).not.toHaveBeenCalled();
+  });
+});
+
+describe('previewing the field filters', () => {
+  it('counts the rows the store finds with other criteria', async () => {
+    const { result } = await render();
+
+    const count = await result.current.listProps.onPreviewCount({ name: 'x' });
+
+    expect(store.findMatching).toHaveBeenCalledWith({ name: 'x' });
+    expect(count).toBe(3);
+  });
+
+  it('hands the rows themselves to a screen that has to narrow the count further', async () => {
+    const { result } = await render();
+
+    expect(await result.current.findMatching({ name: 'x' })).toHaveLength(3);
+  });
+});
+
+describe('another story', () => {
+  it('empties the search box', async () => {
+    const { result, rerender } = await render();
+    await act(async () => result.current.handleSearch('ana'));
+
+    (useStoryStore as unknown as jest.Mock).mockReturnValue({ selectedStory: { id: 'story-2' } });
+    await rerender(undefined as never);
+
+    expect(result.current.searchQuery).toBe('');
+  });
+
+  it('keeps what was typed when the story merely finishes loading', async () => {
+    (useStoryStore as unknown as jest.Mock).mockReturnValue({ selectedStory: null });
+    const { result, rerender } = await render();
+    await act(async () => result.current.handleSearch('ana'));
+
+    (useStoryStore as unknown as jest.Mock).mockReturnValue({ selectedStory: { id: STORY_ID } });
+    await rerender(undefined as never);
+
+    expect(result.current.searchQuery).toBe('ana');
   });
 });

@@ -40,6 +40,8 @@ export type EntityListFilterProps = {
   onFavoriteFilterChange: (state: FavoriteFilterState) => void;
   currentFavoriteFilterState: FavoriteFilterState;
   onAdvancedSearch: (criteria: { [key: string]: any }) => void;
+  /** How many rows the list would hold with these field filters - what the filters dialog shows before it applies. */
+  onPreviewCount: (criteria: { [key: string]: any }) => Promise<number>;
   currentAdvancedSearchCriteria: { [key: string]: any };
   isLoading: boolean;
 };
@@ -86,6 +88,7 @@ export function useEntityListScreen<
     setFilterTags,
     setFavoriteFilter,
     setAdvancedSearchCriteria,
+    findMatching,
     toggleFavorite,
   } = store;
 
@@ -94,6 +97,12 @@ export function useEntityListScreen<
   const fetchItems = store[fetchKey] as () => Promise<void>;
 
   const [searchQuery, setSearchQuery] = useState(storeSearchTerm);
+  // Another story starts with an empty search box (the store drops the committed term the same way).
+  const [searchStoryId, setSearchStoryId] = useState(storyId);
+  if (storyId !== searchStoryId) {
+    setSearchStoryId(storyId);
+    if (searchStoryId) setSearchQuery('');
+  }
   // Keep the list shell mounted after its first response for a story. A filter can quite
   // legitimately return no rows; replacing the whole screen with a loading state at that
   // point would also unmount open filter controls (including MultiSelectPill's modal).
@@ -179,6 +188,11 @@ export function useEntityListScreen<
     [activeSort, setSort],
   );
 
+  const previewCount = useCallback(
+    async (criteria: { [key: string]: any }) => (await findMatching(criteria)).length,
+    [findMatching],
+  );
+
   // Spread into GenericFilterSortList; content, available filters and row rendering stay local.
   const listProps: EntityListFilterProps = useMemo(
     () => ({
@@ -194,6 +208,7 @@ export function useEntityListScreen<
       onFavoriteFilterChange: setFavoriteFilter,
       currentFavoriteFilterState: favoriteFilterState,
       onAdvancedSearch: setAdvancedSearchCriteria,
+      onPreviewCount: previewCount,
       currentAdvancedSearchCriteria: advancedSearchCriteria,
       isLoading: loading,
     }),
@@ -206,6 +221,7 @@ export function useEntityListScreen<
       handleSortChange,
       handleSortDirectionChange,
       loading,
+      previewCount,
       searchQuery,
       setAdvancedSearchCriteria,
       setFavoriteFilter,
@@ -237,6 +253,8 @@ export function useEntityListScreen<
     handleFilterTagsChange: setFilterTags,
     handleFavoriteFilterChange: setFavoriteFilter,
     setAdvancedSearchCriteria,
+    /** The rows the list would hold with other field filters (for a count that has to be narrowed further, as by arc). */
+    findMatching,
     toggleFavorite,
     refetch: fetchItems,
   };

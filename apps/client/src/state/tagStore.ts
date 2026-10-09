@@ -22,6 +22,7 @@ export const useTagStore = createEntityStore<'tags', TagSelect, TagService>({
   updateFavorite: (service, userId, id, isFavorite) =>
     service.updateTag(userId, id, { isFavorite }),
   changeEvent: 'tag_changed',
+  persistKey: 'tag-storage',
   errorMessages: {
     fetch: 'Failed to load tags.',
     toggleFavorite: 'Failed to update tag favorite status.',

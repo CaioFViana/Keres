@@ -26,6 +26,7 @@ export const useCharacterStore = createEntityStore<
   updateFavorite: (service, userId, id, isFavorite) =>
     service.updateCharacter(userId, id, { isFavorite }),
   changeEvent: 'character_changed',
+  persistKey: 'character-storage',
   errorMessages: {
     fetch: 'Failed to fetch characters.',
     toggleFavorite: 'Failed to update favorite status.',

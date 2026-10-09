@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import PlotListScreen from '../../../src/screens/plots/PlotListScreen';
 
 const mockNavigate = jest.fn();
@@ -243,6 +243,28 @@ describe('PlotListScreen', () => {
     ]);
     mockListProps?.emptyStateActions?.[0].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('PlotForm', {});
+  });
+
+  it('filters by field, and says how many plots a filter would leave', async () => {
+    const view = await render(<PlotListScreen />);
+    const props = () => mockListProps as any;
+
+    expect(props().storyId).toBe('story-1');
+    await act(async () => props().onAdvancedSearch({ details: 'first' }));
+
+    expect(props().currentAdvancedSearchCriteria).toEqual({ details: 'first' });
+    expect(view.getByTestId('plot-plot-1')).toBeTruthy();
+    expect(view.queryByTestId('plot-plot-2')).toBeNull();
+    // The count is for the draft, not for what is applied now.
+    expect(await props().onPreviewCount({ name: 'beta' })).toBe(1);
+    expect(await props().onPreviewCount({})).toBe(2);
+  });
+
+  it('counts the typed words together with the draft filters', async () => {
+    const view = await render(<PlotListScreen />);
+    await fireEvent.press(view.getByTestId('gfs-search')); // "north": no plot has it
+
+    expect(await (mockListProps as any).onPreviewCount({ name: 'alpha' })).toBe(0);
   });
 
   it('sorts by scene count and direction', async () => {

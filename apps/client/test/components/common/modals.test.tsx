@@ -1,5 +1,5 @@
 import { AttributeType } from '@keres/shared';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import AdvancedSearchModal from '../../../src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import ReorderModal from '../../../src/components/common/modals/ReorderModal/ReorderModal';
@@ -659,6 +659,70 @@ describe('AdvancedSearchModal', () => {
     );
 
     expect(screen.getByTestId('advanced-field-name').props.value).toBe('');
+  });
+
+  describe('counting before applying', () => {
+    it('shows how many rows the filters would give, and follows them as they change', async () => {
+      const previewCount = jest.fn(async (criteria: Record<string, unknown>) =>
+        criteria.name ? 2 : 9,
+      );
+      const screen = await render(
+        <AdvancedSearchModal {...openProps} previewCount={previewCount} />,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByTestId('advanced-apply')).toHaveTextContent(
+          'advanced_search_apply_count',
+        ),
+      );
+      expect(previewCount).toHaveBeenLastCalledWith({});
+
+      await fireEvent.changeText(screen.getByTestId('advanced-field-name'), 'Lyra');
+      await waitFor(() => expect(previewCount).toHaveBeenLastCalledWith({ name: 'Lyra' }));
+    });
+
+    it('counts only the fields that hold a value', async () => {
+      const previewCount = jest.fn(async () => 1);
+      const screen = await render(
+        <AdvancedSearchModal
+          {...openProps}
+          previewCount={previewCount}
+          initialCriteria={{ name: 'Bo' }}
+        />,
+      );
+
+      await fireEvent.changeText(screen.getByTestId('advanced-field-name'), '');
+      await waitFor(() => expect(previewCount).toHaveBeenLastCalledWith({}));
+    });
+
+    it('keeps the plain label when no count was asked for', async () => {
+      const screen = await render(<AdvancedSearchModal {...openProps} />);
+
+      expect(screen.getByTestId('advanced-apply')).toHaveTextContent('advanced_search_apply');
+      expect(screen.getByTestId('advanced-apply')).not.toHaveTextContent('count');
+    });
+
+    it('goes back to the plain label when counting fails', async () => {
+      const previewCount = jest.fn(async () => {
+        throw new Error('db down');
+      });
+      const screen = await render(
+        <AdvancedSearchModal {...openProps} previewCount={previewCount} />,
+      );
+
+      await waitFor(() => expect(previewCount).toHaveBeenCalled());
+      expect(screen.getByTestId('advanced-apply')).not.toHaveTextContent('count');
+    });
+
+    it('does not count while closed', async () => {
+      const previewCount = jest.fn(async () => 1);
+      await render(
+        <AdvancedSearchModal {...openProps} isVisible={false} previewCount={previewCount} />,
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(previewCount).not.toHaveBeenCalled();
+    });
   });
 
   it('prefixes criteria per scope', async () => {

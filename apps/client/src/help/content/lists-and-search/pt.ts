@@ -25,7 +25,7 @@ const page: HelpPage = {
         'Digite uma palavra no campo de busca para reduzir a lista; o trecho encontrado aparece destacado, e o x esvazia o campo.',
         'Use o filtro de etiquetas e os controles de ordenação quando precisar limitar ou reorganizar os resultados.',
         'Marque itens como favoritos para encontrá-los novamente pela estrela, que alterna entre todos, favoritos e não favoritos.',
-        'Toque em Filtros e depois em Adicionar filtro para escolher os campos e valores que devem ser combinados. O nome já vem aberto; aperte Enter ou Ver resultados para aplicar.',
+        'Toque em Filtros e depois em Adicionar filtro para escolher os campos e valores que devem ser combinados. O nome já vem aberto; o botão mostra quantos resultados os filtros dão, e Enter ou esse botão os aplica.',
         'O que restringe a lista - favoritos e cada filtro por campo - aparece como uma etiqueta sob a busca, com um x para remover e Limpar filtros para remover todos. O número em Filtros conta os filtros por campo.',
         'Quando nada corresponde, a lista avisa e oferece Limpar filtros.',
         'Na Busca Global, aberta dentro de uma história, pesquise em vários tipos de elemento ao mesmo tempo.',
@@ -34,7 +34,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Buscar, filtrar e ordenar não altera a história. Algumas listas lembram os filtros para a próxima visita; as etiquetas os mostram. Favoritar altera apenas a marca do item; o modo como essa marca é compartilhada depende das configurações de favoritos da história.',
+      text: 'Buscar, filtrar e ordenar não altera a história. As listas lembram a ordenação e os filtros para a próxima visita, história por história, e as etiquetas os mostram; abrir outra história começa com os filtros limpos. As palavras digitadas na busca não são lembradas. Favoritar altera apenas a marca do item; o modo como essa marca é compartilhada depende das configurações de favoritos da história.',
     },
     { type: 'seeAlso', pages: ['tags', 'favorites', 'custom-attributes'] },
   ],

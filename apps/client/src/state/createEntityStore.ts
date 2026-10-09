@@ -28,6 +28,12 @@ export interface EntityQueryParams {
 export interface EntityStoreCore<TService> {
   db: AppDrizzleClient | null;
   storyId: string | null;
+  /**
+   * The story the search and filters were set for. Opening another story starts them over: a
+   * filter on one story's custom attribute means nothing in the next, and a restored one would
+   * silently shorten its lists.
+   */
+  filtersStoryId: string | null;
   service: TService | null;
   loading: boolean;
   error: string | null;
@@ -45,6 +51,11 @@ export interface EntityStoreCore<TService> {
   setFavoriteFilter: (state: FavoriteFilterState) => void;
   setSort: (sortBy: string | null, direction: SortDirection) => void;
   setAdvancedSearchCriteria: (criteria: AdvancedSearchCriteria) => void;
+  /**
+   * What the list would hold with these field filters in place of the current ones - the rest of the
+   * search, the tags and the favorites view stay. Reads only; the list itself is untouched.
+   */
+  findMatching: (criteria: AdvancedSearchCriteria) => Promise<unknown[]>;
   toggleFavorite: (id: string, isFavorite: boolean) => Promise<void>;
   resetStore: () => void;
 }
@@ -123,6 +134,7 @@ export function createEntityStore<
     [collectionKey]: [] as TEntity[],
     db: null,
     storyId: null,
+    filtersStoryId: null as string | null,
     service: null,
     loading: false,
     error: null,
@@ -143,6 +155,53 @@ export function createEntityStore<
     const isCurrentFetch = (generation: number, requestedStoryId: string) =>
       generation === fetchGeneration && get().storyId === requestedStoryId;
 
+    /**
+     * Runs the configured query against the current search, tags and favorites view, with the given
+     * field filters, and decorates the rows with the person's own favorites when those are kept
+     * per person. `null` when `isStale` says a newer request has taken over.
+     */
+    const loadEntities = async (
+      state: Store,
+      requestedStoryId: string,
+      criteria: AdvancedSearchCriteria,
+      isStale: () => boolean = () => false,
+    ): Promise<TEntity[] | null> => {
+      const localUserId = useUserSettingsStore.getState().userId;
+      const favoriteService = state.db ? createFavoriteService(state.db) : null;
+      const individualFavorites = !!(
+        config.favoriteEntityType &&
+        localUserId &&
+        favoriteService &&
+        (await favoriteService.getBehavior(requestedStoryId)) !== 'global'
+      );
+      let entities = await config.fetchEntities(state.service as TService, {
+        storyId: requestedStoryId,
+        searchTerm: state.searchTerm,
+        activeFilterTags: state.activeFilterTags,
+        favoriteFilterState: individualFavorites ? 'all' : state.favoriteFilterState,
+        activeSort: state.activeSort,
+        sortDirection: state.sortDirection,
+        advancedSearchCriteria: criteria,
+      });
+      if (isStale()) return null;
+      if (individualFavorites && favoriteService && localUserId && config.favoriteEntityType) {
+        entities = (await favoriteService.decorateEntities(
+          requestedStoryId,
+          config.favoriteEntityType,
+          localUserId,
+          entities as (TEntity & { isFavorite: boolean })[],
+        )) as TEntity[];
+        if (state.favoriteFilterState !== 'all') {
+          const expected = state.favoriteFilterState === 'favorite';
+          entities = entities.filter(
+            (entity) => (entity as TEntity & { isFavorite: boolean }).isFavorite === expected,
+          );
+        }
+      }
+      if (isStale()) return null;
+      return entities;
+    };
+
     const runFetch = async (): Promise<void> => {
       const state = get() as Store;
       const { service, storyId } = state;
@@ -156,43 +215,13 @@ export function createEntityStore<
       const requestedStoryId = storyId;
       setPartial({ loading: true, error: null });
       try {
-        const localUserId = useUserSettingsStore.getState().userId;
-        const favoriteService = state.db ? createFavoriteService(state.db) : null;
-        const individualFavorites = !!(
-          config.favoriteEntityType &&
-          localUserId &&
-          favoriteService &&
-          (await favoriteService.getBehavior(requestedStoryId)) !== 'global'
+        const entities = await loadEntities(
+          state,
+          requestedStoryId,
+          state.advancedSearchCriteria,
+          () => !isCurrentFetch(generation, requestedStoryId),
         );
-        let entities = await config.fetchEntities(service, {
-          storyId: requestedStoryId,
-          searchTerm: state.searchTerm,
-          activeFilterTags: state.activeFilterTags,
-          favoriteFilterState: individualFavorites ? 'all' : state.favoriteFilterState,
-          activeSort: state.activeSort,
-          sortDirection: state.sortDirection,
-          advancedSearchCriteria: state.advancedSearchCriteria,
-        });
-        if (!isCurrentFetch(generation, requestedStoryId)) {
-          return;
-        }
-        if (individualFavorites && favoriteService && localUserId && config.favoriteEntityType) {
-          entities = (await favoriteService.decorateEntities(
-            requestedStoryId,
-            config.favoriteEntityType,
-            localUserId,
-            entities as (TEntity & { isFavorite: boolean })[],
-          )) as TEntity[];
-          if (state.favoriteFilterState !== 'all') {
-            const expected = state.favoriteFilterState === 'favorite';
-            entities = entities.filter(
-              (entity) => (entity as TEntity & { isFavorite: boolean }).isFavorite === expected,
-            );
-          }
-        }
-        if (!isCurrentFetch(generation, requestedStoryId)) {
-          return;
-        }
+        if (entities === null) return;
         setPartial({ [collectionKey]: entities, loading: false });
       } catch (err) {
         if (!isCurrentFetch(generation, requestedStoryId)) {
@@ -204,6 +233,12 @@ export function createEntityStore<
           loading: false,
         });
       }
+    };
+
+    const findMatching = async (criteria: AdvancedSearchCriteria): Promise<TEntity[]> => {
+      const state = get() as Store;
+      if (!state.service || !state.storyId) return [];
+      return (await loadEntities(state, state.storyId, criteria)) ?? [];
     };
 
     /** Applies a change then refetches, the pattern every filter/sort setter follows. */
@@ -267,7 +302,24 @@ export function createEntityStore<
       ...defaultState,
       [fetchKey]: runFetch,
 
-      setDbAndStoryId: (db: AppDrizzleClient, storyId: string) => setPartial({ db, storyId }),
+      setDbAndStoryId: (db: AppDrizzleClient, storyId: string) => {
+        const { filtersStoryId } = get() as Store;
+        // Filters belong to the story they were set in; another story starts clean (sort stays).
+        const otherStory = filtersStoryId !== null && filtersStoryId !== storyId;
+        setPartial({
+          db,
+          storyId,
+          filtersStoryId: storyId,
+          ...(otherStory
+            ? {
+                searchTerm: '',
+                activeFilterTags: [],
+                favoriteFilterState: 'all',
+                advancedSearchCriteria: {},
+              }
+            : {}),
+        });
+      },
 
       initializeService: () => {
         const { db, service } = get() as Store;
@@ -287,6 +339,8 @@ export function createEntityStore<
         setAndRefetch({ activeSort: sortBy, sortDirection: direction }),
       setAdvancedSearchCriteria: (criteria: AdvancedSearchCriteria) =>
         setAndRefetch({ advancedSearchCriteria: criteria }),
+
+      findMatching,
 
       toggleFavorite,
 
@@ -314,10 +368,12 @@ export function createEntityStore<
       name: config.persistKey,
       storage: createJSONStorage(() => AsyncStorage),
       // Only the user's filter/sort selection is worth restoring - never the entity
-      // rows themselves (they belong to the local DB) nor the live service handle.
+      // rows themselves (they belong to the local DB) nor the live service handle. The typed
+      // search words are left out: they live in the screen's own box, and a word restored from
+      // another visit would be filtering a list before anyone typed it.
       partialize: (state) =>
         ({
-          searchTerm: state.searchTerm,
+          filtersStoryId: state.filtersStoryId,
           activeSort: state.activeSort,
           sortDirection: state.sortDirection,
           favoriteFilterState: state.favoriteFilterState,

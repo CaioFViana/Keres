@@ -28,6 +28,7 @@ let mockListState = {
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
   toggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn() as jest.Mock,
 };
 let mockListProps: {
   data: { id: string; name: string }[];
@@ -294,6 +295,7 @@ const freshListState = () => ({
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
   toggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn(async () => [] as unknown[]),
 });
 
 describe('ItemListScreen', () => {
@@ -468,6 +470,32 @@ describe('ItemListScreen', () => {
     const view = await render(<ItemListScreen />);
 
     expect(view.queryByTestId('outside-arc')).toBeNull();
+  });
+
+  it('counts the rows a filter would leave in the active arc, as the list shows them', async () => {
+    mockStoryState = {
+      selectedStory: { id: 'story-1', type: 'linear' },
+      activeArcId: 'arc-1',
+    };
+    mockUseEntityArcIds.mockReturnValue(
+      new Map([
+        ['item-1', ['arc-1']],
+        ['item-2', ['arc-2']],
+      ]),
+    );
+    mockListState = {
+      ...freshListState(),
+      items: [],
+      findMatching: jest.fn(async () => [
+        { id: 'item-1', name: 'Sword' },
+        { id: 'item-2', name: 'Shield' },
+        { id: 'item-3', name: 'Compass' },
+      ]),
+    };
+    await render(<ItemListScreen />);
+
+    expect(await (mockListProps as any).onPreviewCount({ name: 'x' })).toBe(2);
+    expect(mockListState.findMatching).toHaveBeenCalledWith({ name: 'x' });
   });
 
   it('hides items from other arcs but keeps unlinked ones', async () => {

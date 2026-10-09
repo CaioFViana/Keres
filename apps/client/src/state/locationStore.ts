@@ -22,6 +22,7 @@ export const useLocationStore = createEntityStore<'locations', LocationWithTags,
   updateFavorite: (service, userId, id, isFavorite) =>
     service.updateLocation(userId, id, { isFavorite }),
   changeEvent: 'location_changed',
+  persistKey: 'location-storage',
   errorMessages: {
     fetch: 'Failed to fetch locations.',
     toggleFavorite: 'Failed to update favorite status.',

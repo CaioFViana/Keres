@@ -25,7 +25,7 @@ const page: HelpPage = {
         'Type a word in the search field to reduce the list; the part that matched is highlighted, and the x empties the field.',
         'Use the tag filter and the sorting controls when you need to narrow or reorganize results.',
         'Mark items as favorites so you can find them again with the star, which cycles all, favorites and not favorites.',
-        'Tap Filters, then Add filter, to choose the fields and values that must be combined. The name starts open; press Enter or Show results to apply.',
+        'Tap Filters, then Add filter, to choose the fields and values that must be combined. The name starts open; the button shows how many results the filters give, and Enter or that button applies them.',
         'What narrows the list - favorites and each field filter - shows as a chip under the search, with an x to remove it and Clear filters to remove them all. The number on Filters counts the field filters.',
         'When nothing matches, the list says so and offers Clear filters.',
         'In Global Search, opened within a story, search across several element types at once.',
@@ -34,7 +34,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Searching, filtering, and sorting do not change the story. Some lists remember their filters for the next visit; the chips show them. Favoriting only changes an item’s mark; how that mark is shared depends on the story’s favorite settings.',
+      text: 'Searching, filtering, and sorting do not change the story. Lists remember their sort and filters for the next visit, story by story, and the chips show them; opening another story starts the filters clean. The words typed in the search box are not remembered. Favoriting only changes an item’s mark; how that mark is shared depends on the story’s favorite settings.',
     },
     { type: 'seeAlso', pages: ['tags', 'favorites', 'custom-attributes'] },
   ],

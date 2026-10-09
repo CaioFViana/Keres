@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -37,10 +37,16 @@ interface AdvancedSearchModalProps {
    * "Add filter". One that still carries a value from before stays, so it can be removed.
    */
   excludeFields?: string[];
+  /**
+   * How many rows the list would show with these field filters. Given, the dialog shows it on the apply
+   * button while the filters are being set - the answer before pressing, not after.
+   */
+  previewCount?: (criteria: AdvancedSearchCriteria) => Promise<number>;
 }
 
 const NO_CRITERIA: AdvancedSearchCriteria = {};
 const NO_FIELDS: string[] = [];
+const PREVIEW_DELAY_MS = 200;
 
 const FIELD_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   boolean: 'toggle-outline',
@@ -60,6 +66,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   initialCriteria = NO_CRITERIA,
   scopes,
   excludeFields = NO_FIELDS,
+  previewCount,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -74,11 +81,38 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   // each time the modal opens (what was typed and never applied is not kept).
   const [prevInitialCriteria, setPrevInitialCriteria] = useState(initialCriteria);
   const [prevVisible, setPrevVisible] = useState(isVisible);
+  const [matchCount, setMatchCount] = useState<number | null>(null);
   if (initialCriteria !== prevInitialCriteria || (isVisible && !prevVisible)) {
     setPrevInitialCriteria(initialCriteria);
     setSearchCriteria(initialCriteria);
   }
-  if (isVisible !== prevVisible) setPrevVisible(isVisible);
+  if (isVisible !== prevVisible) {
+    setPrevVisible(isVisible);
+    // The number belongs to the last time it was asked; opening again does not show it as current.
+    if (isVisible) setMatchCount(null);
+  }
+
+  // The count follows the draft, a moment after it stops changing. A newer answer replaces an older one;
+  // a failed count is simply not shown - it is a nicety, not part of applying.
+  const draft = useMemo(() => activeCriteria(searchCriteria), [searchCriteria]);
+  useEffect(() => {
+    if (!isVisible || !previewCount) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      previewCount(draft).then(
+        (count) => {
+          if (!cancelled) setMatchCount(count);
+        },
+        () => {
+          if (!cancelled) setMatchCount(null);
+        },
+      );
+    }, PREVIEW_DELAY_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [draft, isVisible, previewCount]);
 
   const handleInputChange = useCallback((fieldName: string, value: any) => {
     setSearchCriteria((prev) => ({
@@ -150,7 +184,9 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             testID="advanced-apply"
             style={{ backgroundColor: colors.primary }}
           >
-            {t('advanced_search_apply')}
+            {matchCount === null
+              ? t('advanced_search_apply')
+              : t('advanced_search_apply_count', { count: matchCount })}
           </Button>
         </View>
       </View>

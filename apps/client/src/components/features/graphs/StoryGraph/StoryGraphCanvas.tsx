@@ -1,16 +1,15 @@
-import { DashPathEffect, Path, RoundedRect, Text as SkiaText } from '@shopify/react-native-skia';
+import { DashPathEffect, Path } from '@shopify/react-native-skia';
 import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import SkiaEdgeCanvas from '../SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaEdgeLabels from '../SkiaEdgeCanvas/SkiaEdgeLabels';
 import SkiaOverlayErrorBoundary from '../SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
-import { measureEdgeLabelWidth } from '../SkiaEdgeCanvas/measureEdgeLabelWidth';
 import { useEdgeFont } from '../SkiaEdgeCanvas/useEdgeFont';
 import { polygonPointsToPath } from '../SkiaEdgeCanvas/polygonPointsToPath';
 import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
-import { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
+import { useGraphCanvasViewport } from '../../../../hooks/useGraphCanvasViewport';
 import { useTheme } from '../../../../theme';
-import { spatialRectIntersects } from '@keres/shared';
 import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 
 /**
@@ -50,22 +49,12 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
       cameraTransform,
       width,
       height,
-      renderWindow,
-    } = useCanvasViewport(ref, layout, { clampMode: 'free' });
+      visibleNodes,
+    } = useGraphCanvasViewport(ref, layout);
     // System font, like the `SvgText` labels before: the app bundles no font files.
     // System font on native, bundled Roboto on web; null while unavailable, where
     // labels are skipped.
     const edgeFont = useEdgeFont(10);
-    const visibleNodes = useMemo(
-      () =>
-        layout.nodes.filter((node) =>
-          spatialRectIntersects(
-            { x: node.x, y: node.y, width: node.width, height: node.height },
-            renderWindow,
-          ),
-        ),
-      [layout.nodes, renderWindow],
-    );
 
     const styles = useMemo(
       () =>
@@ -130,37 +119,15 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
               );
             })}
 
-            {showEdgeLabels &&
-              edgeFont &&
-              layout.edges.map((edge) => {
-                const label = edge.label.trim();
-                if (!label) return null;
-                const clipped = label.length > 26 ? `${label.slice(0, 25)}…` : label;
-                const width = clipped.length * 6.4 + 10;
-                // Skia has no `textAnchor`: center by measured width instead. Both place the
-                // baseline at the same y.
-                const textWidth = measureEdgeLabelWidth(edgeFont, clipped, 10);
-                return (
-                  <React.Fragment key={`label-${edge.id}`}>
-                    <RoundedRect
-                      x={edge.labelPosition.x - width / 2}
-                      y={edge.labelPosition.y - 8}
-                      width={width}
-                      height={16}
-                      r={4}
-                      color={colors.background}
-                      opacity={0.92}
-                    />
-                    <SkiaText
-                      x={edge.labelPosition.x - textWidth / 2}
-                      y={edge.labelPosition.y + 4}
-                      font={edgeFont}
-                      text={clipped}
-                      color={colors.textSecondary}
-                    />
-                  </React.Fragment>
-                );
-              })}
+            {showEdgeLabels && edgeFont && (
+              <SkiaEdgeLabels
+                edges={layout.edges}
+                font={edgeFont}
+                maxChars={26}
+                charWidth={6.4}
+                colors={colors}
+              />
+            )}
           </SkiaEdgeCanvas>
         </SkiaOverlayErrorBoundary>
       ) : null;

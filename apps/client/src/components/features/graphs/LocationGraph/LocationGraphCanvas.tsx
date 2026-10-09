@@ -5,9 +5,8 @@ import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import SkiaEdgeCanvas from '../SkiaEdgeCanvas/SkiaEdgeCanvas';
 import SkiaOverlayErrorBoundary from '../SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
-import { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
+import { useGraphCanvasViewport } from '../../../../hooks/useGraphCanvasViewport';
 import { useTheme } from '../../../../theme';
-import { spatialRectIntersects } from '@keres/shared';
 import type {
   LocationGraphLayout,
   LocationGraphNode,
@@ -44,18 +43,8 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
       cameraTransform,
       width,
       height,
-      renderWindow,
-    } = useCanvasViewport(ref, layout, { clampMode: 'free' });
-    const visibleNodes = useMemo(
-      () =>
-        layout.nodes.filter((node) =>
-          spatialRectIntersects(
-            { x: node.x, y: node.y, width: node.width, height: node.height },
-            renderWindow,
-          ),
-        ),
-      [layout.nodes, renderWindow],
-    );
+      visibleNodes,
+    } = useGraphCanvasViewport(ref, layout);
 
     const styles = useMemo(
       () =>

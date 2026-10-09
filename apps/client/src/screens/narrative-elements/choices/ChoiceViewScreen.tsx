@@ -7,9 +7,9 @@ import type { Effect } from '@keres/shared/entities/Effect';
 import type { GraphEdge, GraphNode } from '@keres/shared/graphs/storyGraphLayout';
 import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../db';
 import type {
@@ -20,6 +20,7 @@ import type {
   SceneSelect,
 } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useGraphStoryReload } from '../../../hooks/useGraphStoryReload';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
@@ -36,7 +37,6 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
 import {
   buildStoryMapFileName,
   deliverMapExport,
@@ -142,22 +142,7 @@ const ChoiceViewScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Reload on focus: scenes and choices may have changed on another screen.
-  useFocusEffect(
-    useCallback(() => {
-      loadGraph();
-    }, [loadGraph]),
-  );
-
-  useEffect(() => {
-    const handleRemoteChange = (change: { storyId?: string }) => {
-      if (change?.storyId === storyId) {
-        loadGraph();
-      }
-    };
-    entityEventEmitter.on('story_data_changed', handleRemoteChange);
-    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
-  }, [storyId, loadGraph]);
+  useGraphStoryReload(storyId, loadGraph);
 
   const isLinearFlow = selectedStory?.type === 'linear';
   const screenTitle = isLinearFlow ? t('story_flow_title') : t('story_map_title');

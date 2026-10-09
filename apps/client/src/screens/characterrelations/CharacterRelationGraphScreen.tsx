@@ -1,16 +1,20 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useGraphStoryReload } from '@/src/hooks/useGraphStoryReload';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
+import GraphFilterSummary from '@/src/components/features/graphs/GraphFilterSummary/GraphFilterSummary';
+import GraphMapControls from '@/src/components/features/graphs/GraphMapControls/GraphMapControls';
+import { graphMapHeaderStyleDefs } from '@/src/components/features/graphs/graphMapHeaderStyles';
 import type { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -34,7 +38,6 @@ import {
   deliverMapExport,
   exportFileLanguage,
 } from '../../utils/storyTransfer';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
@@ -105,22 +108,7 @@ const CharacterRelationGraphScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Reloads on focus: characters and relations may have changed on another screen.
-  useFocusEffect(
-    useCallback(() => {
-      loadGraph();
-    }, [loadGraph]),
-  );
-
-  useEffect(() => {
-    const handleRemoteChange = (change: { storyId?: string }) => {
-      if (change?.storyId === storyId) {
-        loadGraph();
-      }
-    };
-    entityEventEmitter.on('story_data_changed', handleRemoteChange);
-    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
-  }, [storyId, loadGraph]);
+  useGraphStoryReload(storyId, loadGraph);
 
   useScreenHeader({
     target: 'parent',
@@ -261,54 +249,12 @@ const CharacterRelationGraphScreen = () => {
       StyleSheet.create({
         ...commonScreenStyleDefs(colors),
         ...commonDetailStyleDefs(colors),
+        ...graphMapHeaderStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
           paddingVertical: 9,
-        },
-        headerTitle: {
-          fontSize: 14,
-          fontWeight: 'bold',
-          color: colors.text,
-          paddingHorizontal: 12,
-        },
-        headerSubtitle: {
-          fontSize: 11,
-          color: colors.textSecondary,
-          paddingHorizontal: 12,
-          marginTop: 1,
-        },
-        filterActions: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 12,
-          paddingBottom: 8,
-        },
-        filterHint: {
-          color: colors.textSecondary,
-          fontSize: 12,
-          flex: 1,
-        },
-        filterAction: { paddingVertical: 5 },
-        filterActionText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-        controls: {
-          position: 'absolute',
-          right: 14,
-          bottom: 18,
-        },
-        controlButton: {
-          width: 42,
-          height: 42,
-          borderRadius: 21,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: 9,
-          backgroundColor: colors.surface,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
-          outlineWidth: 0,
         },
       }),
     [colors],
@@ -324,12 +270,11 @@ const CharacterRelationGraphScreen = () => {
 
   if (layout.nodes.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="people-outline" size={54} color={colors.textSecondary} />
-          <Text style={styles.emptyText}>{t('character_relation_map_empty')}</Text>
-        </View>
-      </View>
+      <GraphEmptyState
+        colors={colors}
+        icon="people-outline"
+        message={t('character_relation_map_empty')}
+      />
     );
   }
 
@@ -359,12 +304,12 @@ const CharacterRelationGraphScreen = () => {
         triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
       />
       {selectedIds.length > 0 && (
-        <View style={styles.filterActions}>
-          <Text style={styles.filterHint}>{t('character_relation_map_filter_hint')}</Text>
-          <TouchableOpacity style={styles.filterAction} onPress={() => setSelectedIds([])}>
-            <Text style={styles.filterActionText}>{t('character_relation_map_clear_filter')}</Text>
-          </TouchableOpacity>
-        </View>
+        <GraphFilterSummary
+          colors={colors}
+          hint={t('character_relation_map_filter_hint')}
+          clearLabel={t('character_relation_map_clear_filter')}
+          onClear={() => setSelectedIds([])}
+        />
       )}
 
       <CharacterRelationGraphCanvas
@@ -376,52 +321,25 @@ const CharacterRelationGraphScreen = () => {
         onSelectNode={handleSelectNode}
       />
 
-      <View style={styles.controls}>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => canvasRef.current?.zoomBy(1.25)}
-          accessibilityLabel={t('character_relation_map_zoom_in')}
-        >
-          <Ionicons name="add" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => canvasRef.current?.zoomBy(0.8)}
-          accessibilityLabel={t('character_relation_map_zoom_out')}
-        >
-          <Ionicons name="remove" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => canvasRef.current?.fitToScreen()}
-          accessibilityLabel={t('character_relation_map_fit')}
-        >
-          <Ionicons name="scan-outline" size={20} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => setLabelsOverride(!showEdgeLabels)}
-          accessibilityLabel={t('character_relation_map_toggle_labels')}
-        >
-          <Ionicons
-            name={showEdgeLabels ? 'chatbox' : 'chatbox-outline'}
-            size={19}
-            color={showEdgeLabels ? colors.primary : colors.text}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={handleExport}
-          disabled={exporting}
-          accessibilityLabel={t('character_relation_map_export')}
-        >
-          {exporting ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Ionicons name="image-outline" size={20} color={colors.text} />
-          )}
-        </TouchableOpacity>
-      </View>
+      <GraphMapControls
+        colors={colors}
+        labels={{
+          zoomIn: t('character_relation_map_zoom_in'),
+          zoomOut: t('character_relation_map_zoom_out'),
+          fit: t('character_relation_map_fit'),
+          export: t('character_relation_map_export'),
+        }}
+        onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
+        onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
+        onFit={() => canvasRef.current?.fitToScreen()}
+        edgeLabels={{
+          visible: showEdgeLabels,
+          label: t('character_relation_map_toggle_labels'),
+          onToggle: () => setLabelsOverride(!showEdgeLabels),
+        }}
+        exporting={exporting}
+        onExport={handleExport}
+      />
 
       {selectedNode && (
         <GraphNodeSheet

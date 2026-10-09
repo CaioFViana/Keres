@@ -17,15 +17,17 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 import { type ConfirmDeleteOptions, useConfirmDelete } from './useConfirmDelete';
 
 export interface EntityFormActionsConfig<TData, TEntity extends PersistedEntity> {
-  /** The entity type its custom attribute values are stored under, e.g. `'Location'`. */
-  entityType: StorySchemaEntityType;
-  /** Emitted once the entity and everything secondary is saved or deleted, e.g. `'location_changed'`. */
-  changeEvent: string;
+  /** The entity type its custom attribute values are stored under, e.g. `'Location'`; omit for an entity with none. */
+  entityType?: StorySchemaEntityType;
+  /** Emitted once the entity and everything secondary is saved or deleted, e.g. `'location_changed'`; omit to emit none. */
+  changeEvent?: string;
   storyId?: string;
   userId?: string | null;
-  drizzleDb: AppDrizzleClient;
-  customFields: StorySchemaField[];
-  customValues: CustomAttributeValues;
+  /** Needed with `entityType`, to save the attribute values. */
+  drizzleDb?: AppDrizzleClient;
+  /** The custom fields and values of an entity that has them: checked as required, then saved last. */
+  customFields?: StorySchemaField[];
+  customValues?: CustomAttributeValues;
   /** The entity being edited; undefined while creating. */
   currentEntityId?: string;
   /** Whether the entity's service is ready, asked when saving or deleting (its ref may be set after render). */
@@ -76,10 +78,10 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
         AppAlert.alert(t('error'), invalid);
         return;
       }
-      const missingRequiredField = validateRequiredCustomAttributes(
-        config.customFields,
-        config.customValues,
-      );
+      const missingRequiredField =
+        config.customFields && config.customValues
+          ? validateRequiredCustomAttributes(config.customFields, config.customValues)
+          : null;
       if (missingRequiredField) {
         AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
         return;
@@ -108,18 +110,20 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
           clearSecondaryDraft: config.clearSecondaryDraft,
           persistSecondaryData: async (id) => {
             for (const step of config.secondarySteps ?? []) await step(id);
-            await createAttributeValueService(config.drizzleDb).saveValuesForEntity(
-              userId,
-              storyId,
-              config.entityType,
-              id,
-              config.customValues,
-            );
+            if (config.entityType && config.customValues && config.drizzleDb) {
+              await createAttributeValueService(config.drizzleDb).saveValuesForEntity(
+                userId,
+                storyId,
+                config.entityType,
+                id,
+                config.customValues,
+              );
+            }
           },
         });
 
         await config.clearFormDraft();
-        entityEventEmitter.emit(config.changeEvent, storyId, entityId);
+        if (config.changeEvent) entityEventEmitter.emit(config.changeEvent, storyId, entityId);
         AppAlert.alert(t('success'), created ? config.messages.created : config.messages.updated);
         config.afterSave(entityId, created);
       } catch (err) {
@@ -142,7 +146,7 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
       onConfirm: async () => {
         await config.remove(userId, entityId);
         await config.clearFormDraft();
-        entityEventEmitter.emit(config.changeEvent, storyId, entityId);
+        if (config.changeEvent) entityEventEmitter.emit(config.changeEvent, storyId, entityId);
         config.afterDelete();
       },
     });

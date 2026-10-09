@@ -3,6 +3,13 @@ const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
 const mockSaveEntityWithSecondaryData = jest.fn();
 
+// Only the shared hook imports these, and it loads them even for a form with no custom attributes.
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
+  validateRequiredCustomAttributes: () => null,
+}));
+jest.mock('../../../src/services/storymanagement/AttributeValueService', () => ({
+  createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
+}));
 jest.mock('@/src/hooks/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,

@@ -248,7 +248,7 @@ describe('extracted multi-step form responsibilities', () => {
   ] as const;
 
   // Forms whose save/delete flow is configured on the shared useEntityFormActions hook.
-  const sharedActionForms = ['WorldRule', 'Item', 'Chapter'];
+  const sharedActionForms = ['WorldRule', 'Item', 'Chapter', 'Choice', 'ItemJourney', 'Note'];
 
   it.each(forms)(
     '$label keeps service setup and persistence coordination outside the screen',

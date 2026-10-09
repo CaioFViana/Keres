@@ -1,18 +1,12 @@
-import { validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
 import type { Note } from '@keres/shared/entities/Note';
 import type { StorySchemaField } from '@keres/shared';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '../../db';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import type { NotesStackParamList } from '../../navigation/MainSystemStack';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import type { NoteService } from '../../services/storymanagement/NoteService';
-import { AppAlert } from '../../utils/AppAlert';
 import type { NoteFormState } from './useNoteFormState';
 
 type NoteNavigation = NativeStackNavigationProp<NotesStackParamList, 'NoteForm'>;
@@ -30,7 +24,12 @@ type UseNoteFormActionsOptions = {
   clearSecondaryDraft?(noteId: string): Promise<void>;
 };
 
-/** Owns validation, persistence, feedback and navigation for the Note form. */
+type NoteData = Omit<
+  Note,
+  'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+>;
+
+/** What differs for the Note form: its fields, service calls, secondary writes, texts and navigation. */
 export function useNoteFormActions({
   state,
   customFields,
@@ -44,106 +43,46 @@ export function useNoteFormActions({
   clearSecondaryDraft,
 }: UseNoteFormActionsOptions) {
   const { t } = useTranslation();
-  const confirmDelete = useConfirmDelete();
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
+  const service = () => noteServiceRef.current!;
 
-  const handleSave = () =>
-    runSave(async () => {
-      if (!state.title.trim()) {
-        AppAlert.alert(t('error'), t('note_title_required'));
-        return;
-      }
-      const missingRequiredField = validateRequiredCustomAttributes(
-        customFields,
-        state.customValues,
-      );
-      if (missingRequiredField) {
-        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-        return;
-      }
-      if (!userId) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-      if (!storyId) {
-        AppAlert.alert(t('error'), t('no_story_selected'));
-        return;
-      }
-      if (!noteServiceRef.current) {
-        AppAlert.alert(t('error'), t('failed_to_save_note'));
-        return;
-      }
-
-      try {
-        const noteData: Omit<
-          Note,
-          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-        > = {
-          title: state.title.trim(),
-          body: state.body,
-          isFavorite: state.isFavorite,
-          extraNotes: state.extraNotes,
-        };
-
-        const { created } = await saveEntityWithSecondaryData({
-          currentEntityId: state.currentNoteId,
-          createEntity: () =>
-            noteServiceRef.current!.createNote(userId, {
-              ...noteData,
-              storyId,
-            }),
-          updateEntity: (noteId) => noteServiceRef.current!.updateNote(userId, noteId, noteData),
-          onEntityPersisted: state.retainPersistedNoteId,
-          persistSecondaryDraft,
-          clearSecondaryDraft,
-          persistSecondaryData: async (noteId) => {
-            await persistTagRelations(noteId);
-            await createAttributeValueService(drizzleDb).saveValuesForEntity(
-              userId,
-              storyId,
-              'Note',
-              noteId,
-              state.customValues,
-            );
-          },
-        });
-
-        await state.clearFormDraft();
-        AppAlert.alert(
-          t('success'),
-          t(created ? 'note_created_successfully' : 'note_updated_successfully'),
-        );
-        navigation.goBack();
-      } catch (err) {
-        console.error('Failed to save note:', err);
-        AppAlert.alert(t('error'), t('failed_to_save_note'));
-      }
-    });
-
-  const handleDelete = () => {
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!state.currentNoteId || !noteServiceRef.current) {
-      return;
-    }
-
-    const noteId = state.currentNoteId;
-    confirmDelete({
+  return useEntityFormActions<NoteData, { id: string }>({
+    entityType: 'Note',
+    storyId,
+    userId,
+    drizzleDb,
+    customFields,
+    customValues: state.customValues,
+    currentEntityId: state.currentNoteId,
+    isServiceReady: () => !!noteServiceRef.current,
+    clearFormDraft: state.clearFormDraft,
+    retainPersistedId: state.retainPersistedNoteId,
+    validate: () => (state.title.trim() ? null : t('note_title_required')),
+    buildData: () => ({
+      title: state.title.trim(),
+      body: state.body,
+      isFavorite: state.isFavorite,
+      extraNotes: state.extraNotes,
+    }),
+    create: (currentUserId, currentStoryId, data) =>
+      service().createNote(currentUserId, { ...data, storyId: currentStoryId }),
+    update: (currentUserId, noteId, data) => service().updateNote(currentUserId, noteId, data),
+    remove: (currentUserId, noteId) => service().deleteNote(currentUserId, noteId),
+    secondarySteps: [persistTagRelations],
+    persistSecondaryDraft,
+    clearSecondaryDraft,
+    messages: {
+      failedToSave: t('failed_to_save_note'),
+      created: t('note_created_successfully'),
+      updated: t('note_updated_successfully'),
+    },
+    confirmDelete: {
       titleKey: 'delete_note_title',
       messageKey: 'delete_note_message',
       successKey: 'note_deleted_successfully',
       failureKey: 'failed_to_delete_note',
-      onLoadingChange: setDeleting,
-      onConfirm: async () => {
-        await noteServiceRef.current!.deleteNote(userId, noteId);
-        await state.clearFormDraft();
-        navigation.goBack();
-      },
-    });
-  };
-
-  return { deleting, handleDelete, handleSave, saving };
+    },
+    afterSave: () => navigation.goBack(),
+    afterDelete: () => navigation.goBack(),
+    logName: 'note',
+  });
 }

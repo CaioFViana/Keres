@@ -2,8 +2,8 @@ import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/Scre
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
 import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -124,20 +124,15 @@ const NoteFormScreen = () => {
       title={formTitle}
       description={t('note_form_description')}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {t('delete_note_title')}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_note')}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          colors={colors}
+          deleteLabel={t('delete_note_title')}
+          saveLabel={isEditing ? t('save_changes') : t('create_note')}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
       <FormField label={t('title')}>

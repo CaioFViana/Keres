@@ -1,5 +1,5 @@
-import Button from '@/src/components/common/controls/Button/Button';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import CustomAttributeFields, {
@@ -169,20 +169,15 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
       title={formTitle}
       description={formDescription}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {copy.deleteLabel}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          colors={colors}
+          deleteLabel={copy.deleteLabel}
+          saveLabel={copy.saveLabel}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
       <FormField label={t('name')}>

@@ -5,8 +5,8 @@ import {
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
@@ -89,20 +89,15 @@ const TagFormScreen = () => {
       title={isEditing ? t('edit_tag_title') : t('create_tag_title')}
       description={t('tag_form_description')}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {t('delete_tag_title')}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_tag')}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          colors={colors}
+          deleteLabel={t('delete_tag_title')}
+          saveLabel={isEditing ? t('save_changes') : t('create_tag')}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
       <FormField label={t('name')}>

@@ -1,21 +1,15 @@
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
 import type { Chapter } from '@keres/shared/entities/Chapter';
 import type { StorySchemaField } from '@keres/shared';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StackActions } from '@react-navigation/native';
 import type { RefObject } from 'react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '../../../db';
-import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
-import { saveEntityWithSecondaryData } from '../../../services/storymanagement/EntityFormSaveCoordinator';
 import type { ChapterService } from '../../../services/storymanagement/ChapterService';
-import { AppAlert } from '../../../utils/AppAlert';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import type { ChapterFormState } from './useChapterFormState';
 
@@ -35,7 +29,20 @@ type UseChapterFormActionsOptions = {
   clearSecondaryDraft?(chapterId: string): Promise<void>;
 };
 
-/** Owns validation, persistence, feedback, events and navigation for the Chapter form. */
+type ChapterData = Omit<
+  Chapter,
+  | 'id'
+  | 'storyId'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'version'
+  | 'isDeleted'
+  | 'deletedAt'
+  | 'index'
+  | 'rank'
+>;
+
+/** What differs for the Chapter form: its fields, service calls, numbering, secondary writes, texts and navigation. */
 export function useChapterFormActions({
   state,
   customFields,
@@ -51,122 +58,58 @@ export function useChapterFormActions({
 }: UseChapterFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy(state.isEvent ? 'Event' : 'Chapter');
-  const confirmDelete = useConfirmDelete();
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
+  const service = () => chapterServiceRef.current!;
 
-  const handleSave = () =>
-    runSave(async () => {
-      if (!state.name.trim()) {
-        AppAlert.alert(t('error'), t('name_required'));
-        return;
-      }
-      const missingRequiredField = validateRequiredCustomAttributes(
-        customFields,
-        state.customValues,
-      );
-      if (missingRequiredField) {
-        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-        return;
-      }
-      if (!userId) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-      if (!storyId) {
-        AppAlert.alert(t('error'), t('no_story_selected'));
-        return;
-      }
-      if (!chapterServiceRef.current) {
-        AppAlert.alert(t('error'), copy.failedToSave);
-        return;
-      }
-
-      try {
-        const chapterData: Omit<
-          Chapter,
-          | 'id'
-          | 'storyId'
-          | 'createdAt'
-          | 'updatedAt'
-          | 'version'
-          | 'isDeleted'
-          | 'deletedAt'
-          | 'index'
-          | 'rank'
-        > = {
-          name: state.name.trim(),
-          summary: state.summary,
-          isFavorite: state.isFavorite,
-          extraNotes: state.extraNotes,
-          arcId: state.arcId,
-        };
-
-        const { entityId: savedChapterId, created } = await saveEntityWithSecondaryData({
-          currentEntityId: state.currentChapterId,
-          createEntity: async () => {
-            // Chapters and events number independently within their own kind.
-            const containerType = state.isEvent ? 'event' : 'chapter';
-            const siblings = await chapterServiceRef.current!.getAllByStoryId(
-              storyId,
-              containerType,
-            );
-            const nextIndex =
-              siblings.length > 0 ? Math.max(...siblings.map((c) => c.index || 0)) + 1 : 1;
-            return chapterServiceRef.current!.createChapter(userId, {
-              ...chapterData,
-              storyId,
-              index: nextIndex,
-              type: containerType,
-            });
-          },
-          updateEntity: (chapterId) =>
-            chapterServiceRef.current!.updateChapter(userId, chapterId, chapterData),
-          onEntityPersisted: state.retainPersistedChapterId,
-          persistSecondaryDraft,
-          clearSecondaryDraft,
-          persistSecondaryData: async (chapterId) => {
-            await persistTagRelations(chapterId);
-            await persistNoteRelations(chapterId);
-            await seeAlsoManagerRef.current?.persistPending(chapterId);
-            await createAttributeValueService(drizzleDb).saveValuesForEntity(
-              userId,
-              storyId,
-              'Chapter',
-              chapterId,
-              state.customValues,
-            );
-          },
-        });
-
-        await state.clearFormDraft();
-        entityEventEmitter.emit('chapter_changed', storyId, savedChapterId);
-        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
-
-        if (created) {
-          navigation.dispatch(StackActions.replace('ChapterForm', { chapterId: savedChapterId }));
-        } else {
-          navigation.goBack();
-        }
-      } catch (err) {
-        console.error('Failed to save chapter:', err);
-        AppAlert.alert(t('error'), copy.failedToSave);
-      }
-    });
-
-  const handleDelete = () => {
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-
-    if (!state.currentChapterId || !chapterServiceRef.current) {
-      return;
-    }
-
-    const chapterId = state.currentChapterId;
-    confirmDelete({
+  const actions = useEntityFormActions<ChapterData, { id: string }>({
+    entityType: 'Chapter',
+    changeEvent: 'chapter_changed',
+    storyId,
+    userId,
+    drizzleDb,
+    customFields,
+    customValues: state.customValues,
+    currentEntityId: state.currentChapterId,
+    isServiceReady: () => !!chapterServiceRef.current,
+    clearFormDraft: state.clearFormDraft,
+    retainPersistedId: state.retainPersistedChapterId,
+    validate: () => (state.name.trim() ? null : t('name_required')),
+    buildData: () => ({
+      name: state.name.trim(),
+      summary: state.summary,
+      isFavorite: state.isFavorite,
+      extraNotes: state.extraNotes,
+      arcId: state.arcId,
+    }),
+    create: async (currentUserId, currentStoryId, data) => {
+      // Chapters and events number independently within their own kind.
+      const containerType = state.isEvent ? 'event' : 'chapter';
+      const siblings = await service().getAllByStoryId(currentStoryId, containerType);
+      const nextIndex =
+        siblings.length > 0 ? Math.max(...siblings.map((c) => c.index || 0)) + 1 : 1;
+      return service().createChapter(currentUserId, {
+        ...data,
+        storyId: currentStoryId,
+        index: nextIndex,
+        type: containerType,
+      });
+    },
+    update: (currentUserId, chapterId, data) =>
+      service().updateChapter(currentUserId, chapterId, data),
+    remove: (currentUserId, chapterId) => service().deleteChapter(currentUserId, chapterId),
+    secondarySteps: [
+      persistTagRelations,
+      persistNoteRelations,
+      (chapterId) => seeAlsoManagerRef.current?.persistPending(chapterId) ?? Promise.resolve(),
+    ],
+    persistSecondaryDraft,
+    clearSecondaryDraft,
+    messages: {
+      failedToSave: copy.failedToSave,
+      created: copy.created,
+      updated: copy.updated,
+    },
+    confirmDelete: {
       titleKey: 'delete_chapter_title',
       title: copy.deleteLabel,
       messageKey: 'delete_chapter_message',
@@ -174,15 +117,17 @@ export function useChapterFormActions({
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_chapter',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setDeleting,
-      onConfirm: async () => {
-        await chapterServiceRef.current!.deleteChapter(userId, chapterId);
-        await state.clearFormDraft();
-        entityEventEmitter.emit('chapter_changed', storyId, chapterId);
+    },
+    afterSave: (chapterId, created) => {
+      if (created) {
+        navigation.dispatch(StackActions.replace('ChapterForm', { chapterId }));
+      } else {
         navigation.goBack();
-      },
-    });
-  };
+      }
+    },
+    afterDelete: () => navigation.goBack(),
+    logName: 'chapter',
+  });
 
-  return { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef };
+  return { ...actions, seeAlsoManagerRef };
 }

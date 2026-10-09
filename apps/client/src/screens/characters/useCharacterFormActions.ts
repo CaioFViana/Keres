@@ -1,21 +1,15 @@
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
 import type { Character } from '@keres/shared/entities/Character';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StackActions } from '@react-navigation/native';
 import type { StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '../../db';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import type { CharacterService } from '../../services/storymanagement/CharacterService';
-import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { CharacterFormState } from './useCharacterFormState';
 
@@ -36,7 +30,12 @@ type UseCharacterFormActionsOptions = {
   clearSecondaryDraft?(characterId: string): Promise<void>;
 };
 
-/** Owns validation, persistence, feedback, events and navigation for the Character form. */
+type CharacterData = Omit<
+  Character,
+  'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+>;
+
+/** What differs for the Character form: its fields, service calls, secondary writes, texts and navigation. */
 export function useCharacterFormActions({
   state,
   customFields,
@@ -53,117 +52,57 @@ export function useCharacterFormActions({
 }: UseCharacterFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Character');
-  const confirmDelete = useConfirmDelete();
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
+  const service = () => characterServiceRef.current!;
 
-  const handleSave = () =>
-    runSave(async () => {
-      if (!state.name.trim()) {
-        AppAlert.alert(t('error'), t('name_required'));
-        return;
-      }
-      const missingRequiredField = validateRequiredCustomAttributes(
-        customFields,
-        state.customValues,
-      );
-      if (missingRequiredField) {
-        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-        return;
-      }
-      if (!userId) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-      if (!storyId) {
-        AppAlert.alert(t('error'), t('no_story_selected'));
-        return;
-      }
-      if (!characterServiceRef.current) {
-        AppAlert.alert(t('error'), copy.failedToSave);
-        return;
-      }
-
-      try {
-        const characterData: Omit<
-          Character,
-          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-        > = {
-          name: state.name.trim(),
-          title: state.title ? state.title.trim() : null,
-          description: state.description,
-          gender: state.gender,
-          race: state.race,
-          subrace: state.subrace,
-          personality: state.personality,
-          motivation: state.motivation,
-          qualities: state.qualities,
-          weaknesses: state.weaknesses,
-          biography: state.biography,
-          plannedTimeline: state.plannedTimeline,
-          isFavorite: state.isFavorite,
-          extraNotes: state.extraNotes,
-        };
-
-        const { entityId: savedCharacterId, created } = await saveEntityWithSecondaryData({
-          currentEntityId: state.currentCharacterId,
-          createEntity: () =>
-            characterServiceRef.current!.createCharacter(userId, {
-              ...characterData,
-              storyId,
-            }),
-          updateEntity: (characterId) =>
-            characterServiceRef.current!.updateCharacter(userId, characterId, characterData),
-          onEntityPersisted: state.retainPersistedCharacterId,
-          persistSecondaryDraft,
-          clearSecondaryDraft,
-          persistSecondaryData: async (characterId) => {
-            await persistTagRelations(characterId);
-            await persistNoteRelations(characterId);
-            await seeAlsoManagerRef.current?.persistPending(characterId);
-            await persistPendingCharacterRelations(characterId);
-            await createAttributeValueService(drizzleDb).saveValuesForEntity(
-              userId,
-              storyId,
-              'Character',
-              characterId,
-              state.customValues,
-            );
-          },
-        });
-
-        await state.clearFormDraft();
-        entityEventEmitter.emit('character_changed', storyId, savedCharacterId);
-        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
-
-        if (created) {
-          navigation.dispatch(
-            StackActions.replace('CharacterForm', {
-              characterId: savedCharacterId,
-            }),
-          );
-        } else {
-          navigation.goBack();
-        }
-      } catch (err) {
-        console.error('Failed to save character:', err);
-        AppAlert.alert(t('error'), copy.failedToSave);
-      }
-    });
-
-  const handleDelete = () => {
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-
-    if (!state.currentCharacterId || !characterServiceRef.current) {
-      return;
-    }
-
-    const characterId = state.currentCharacterId;
-    confirmDelete({
+  const actions = useEntityFormActions<CharacterData, { id: string }>({
+    entityType: 'Character',
+    changeEvent: 'character_changed',
+    storyId,
+    userId,
+    drizzleDb,
+    customFields,
+    customValues: state.customValues,
+    currentEntityId: state.currentCharacterId,
+    isServiceReady: () => !!characterServiceRef.current,
+    clearFormDraft: state.clearFormDraft,
+    retainPersistedId: state.retainPersistedCharacterId,
+    validate: () => (state.name.trim() ? null : t('name_required')),
+    buildData: () => ({
+      name: state.name.trim(),
+      title: state.title ? state.title.trim() : null,
+      description: state.description,
+      gender: state.gender,
+      race: state.race,
+      subrace: state.subrace,
+      personality: state.personality,
+      motivation: state.motivation,
+      qualities: state.qualities,
+      weaknesses: state.weaknesses,
+      biography: state.biography,
+      plannedTimeline: state.plannedTimeline,
+      isFavorite: state.isFavorite,
+      extraNotes: state.extraNotes,
+    }),
+    create: (currentUserId, currentStoryId, data) =>
+      service().createCharacter(currentUserId, { ...data, storyId: currentStoryId }),
+    update: (currentUserId, characterId, data) =>
+      service().updateCharacter(currentUserId, characterId, data),
+    remove: (currentUserId, characterId) => service().deleteCharacter(currentUserId, characterId),
+    secondarySteps: [
+      persistTagRelations,
+      persistNoteRelations,
+      (characterId) => seeAlsoManagerRef.current?.persistPending(characterId) ?? Promise.resolve(),
+      persistPendingCharacterRelations,
+    ],
+    persistSecondaryDraft,
+    clearSecondaryDraft,
+    messages: {
+      failedToSave: copy.failedToSave,
+      created: copy.created,
+      updated: copy.updated,
+    },
+    confirmDelete: {
       titleKey: 'delete_character_title',
       title: copy.deleteLabel,
       messageKey: 'delete_character_message',
@@ -171,15 +110,17 @@ export function useCharacterFormActions({
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_character',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setDeleting,
-      onConfirm: async () => {
-        await characterServiceRef.current!.deleteCharacter(userId, characterId);
-        await state.clearFormDraft();
-        entityEventEmitter.emit('character_changed', storyId, characterId);
+    },
+    afterSave: (characterId, created) => {
+      if (created) {
+        navigation.dispatch(StackActions.replace('CharacterForm', { characterId }));
+      } else {
         navigation.goBack();
-      },
-    });
-  };
+      }
+    },
+    afterDelete: () => navigation.goBack(),
+    logName: 'character',
+  });
 
-  return { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef };
+  return { ...actions, seeAlsoManagerRef };
 }

@@ -64,7 +64,7 @@ export function useLocationFormActions({
     customFields,
     customValues: state.customValues,
     currentEntityId: state.currentLocationId,
-    serviceReady: !!locationServiceRef.current,
+    isServiceReady: () => !!locationServiceRef.current,
     clearFormDraft: state.clearFormDraft,
     retainPersistedId: state.retainPersistedLocationId,
     validate: () => (state.name.trim() ? null : t('name_required')),

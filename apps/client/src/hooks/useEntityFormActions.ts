@@ -28,8 +28,8 @@ export interface EntityFormActionsConfig<TData, TEntity extends PersistedEntity>
   customValues: CustomAttributeValues;
   /** The entity being edited; undefined while creating. */
   currentEntityId?: string;
-  /** Whether the entity's service is ready; saving and deleting wait for it. */
-  serviceReady: boolean;
+  /** Whether the entity's service is ready, asked when saving or deleting (its ref may be set after render). */
+  isServiceReady(): boolean;
   clearFormDraft(): Promise<void>;
   /** Keeps the id once the row exists, so a retry after a partial save updates instead of duplicating. */
   retainPersistedId(entityId: string): void;
@@ -92,7 +92,7 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
         AppAlert.alert(t('error'), t('no_story_selected'));
         return;
       }
-      if (!config.serviceReady) {
+      if (!config.isServiceReady()) {
         AppAlert.alert(t('error'), config.messages.failedToSave);
         return;
       }
@@ -134,7 +134,7 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
       return;
     }
     const entityId = config.currentEntityId;
-    if (!entityId || !config.serviceReady) return;
+    if (!entityId || !config.isServiceReady()) return;
 
     confirmDelete({
       ...config.confirmDelete,

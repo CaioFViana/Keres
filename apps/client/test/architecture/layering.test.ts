@@ -149,8 +149,9 @@ describe('character form responsibilities', () => {
     expect(state).toContain('initialCharacterId');
     expect(state).toContain('retainPersistedCharacterId');
     expect(state).not.toMatch(/getById\(currentCharacterId/);
-    expect(actions).toContain('saveEntityWithSecondaryData');
+    expect(actions).toContain('useEntityFormActions');
     expect(actions).toContain('retainPersistedCharacterId');
+    expect(actions).not.toMatch(/saveEntityWithSecondaryData|AppAlert|createAttributeValueService/);
     expect(associations).toContain('preserveDraftOnEntityCreation: true');
   });
 });
@@ -246,9 +247,12 @@ describe('extracted multi-step form responsibilities', () => {
     },
   ] as const;
 
+  // Forms whose save/delete flow is configured on the shared useEntityFormActions hook.
+  const sharedActionForms = ['WorldRule', 'Item', 'Chapter'];
+
   it.each(forms)(
     '$label keeps service setup and persistence coordination outside the screen',
-    ({ dir, screen, prefix, idName, createService }) => {
+    ({ label, dir, screen, prefix, idName, createService }) => {
       const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
       const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
       const actions = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`), 'utf8');
@@ -269,7 +273,15 @@ describe('extracted multi-step form responsibilities', () => {
       expect(state).toContain(`initial${idName}`);
       expect(state).toContain(`retainPersisted${idName}`);
       expect(state).not.toMatch(new RegExp(`getById\\(current${idName}`));
-      expect(actions).toContain('saveEntityWithSecondaryData');
+      if (sharedActionForms.includes(label)) {
+        // The save/delete flow lives once in the shared hook; the entity's hook only configures it.
+        expect(actions).toContain('useEntityFormActions');
+        expect(actions).not.toMatch(
+          /saveEntityWithSecondaryData|AppAlert|createAttributeValueService/,
+        );
+      } else {
+        expect(actions).toContain('saveEntityWithSecondaryData');
+      }
       expect(actions).toContain(`retainPersisted${idName}`);
       expect(associations).toContain('preserveDraftOnEntityCreation: true');
     },

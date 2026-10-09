@@ -22,6 +22,8 @@ import { CharacterStatPanel } from '@/src/components/features/stats/CharacterSta
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
@@ -121,16 +123,12 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
     appearingArcs,
     occurrence,
   } = props;
-  return (
-    <DetailContainer
-      title={character.name}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
+  // What the character is: its own fields, then its media, stats and modes.
+  const detailsPanel = (
+    <>
       <TagList tags={characterTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       {character.title && <Text style={styles.subTitle}>{character.title}</Text>}
@@ -178,21 +176,6 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
         label={t('planned_timeline')}
       />
 
-      <CustomAttributeDetailFields
-        storyId={character.storyId}
-        entityType="Character"
-        entityId={characterId}
-      />
-
-      <DetailField
-        label={t('is_favorite')}
-        value={character.isFavorite ? t('common_yes') : t('common_no')}
-      />
-      <CommentableDetailField
-        {...commentField('extraNotes', character.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
       <EntityGalleryManager
         ownerId={characterId}
@@ -227,7 +210,12 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
         onUpdate={noopModeWrite as never}
         onDelete={noopModeWrite as never}
       />
+    </>
+  );
 
+  // What the character is linked to.
+  const relationsPanel = (
+    <>
       <CharacterRelationManager
         characterRelations={characterRelations}
         characters={allCharacters}
@@ -293,6 +281,26 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
         entityId={characterId}
         editable={false}
       />
+    </>
+  );
+
+  // The rest: the story's custom attributes, the flags and notes, and the record of the entity.
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields
+        storyId={character.storyId}
+        entityType="Character"
+        entityId={characterId}
+      />
+
+      <DetailField
+        label={t('is_favorite')}
+        value={character.isFavorite ? t('common_yes') : t('common_no')}
+      />
+      <CommentableDetailField
+        {...commentField('extraNotes', character.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <FavoritedByList storyId={character.storyId} entityId={characterId} entityType="Character" />
 
@@ -302,6 +310,25 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
         updatedAt={character.updatedAt}
         entityType="Character"
         entityId={character.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={character.name}
+      landing={occurrence ?? null}
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

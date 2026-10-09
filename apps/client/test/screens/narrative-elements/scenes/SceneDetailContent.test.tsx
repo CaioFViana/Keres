@@ -22,7 +22,13 @@ jest.mock('../../../../src/theme', () => {
     ...actual,
     useTheme: () => ({
       isDarkMode: false,
-      colors: { primary: '#0000ff', text: '#111111', textSecondary: '#555555' },
+      colors: {
+        primary: '#0000ff',
+        text: '#111111',
+        textSecondary: '#555555',
+        background: '#ffffff',
+        border: '#dddddd',
+      },
     }),
   };
 });
@@ -58,14 +64,20 @@ jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', (
     default: ({
       title,
       footer,
+      tabs,
+      scrollResetKey,
       children,
     }: {
       title: string;
       footer?: ReactNode;
+      tabs?: ReactNode;
+      scrollResetKey?: string;
       children?: ReactNode;
     }) => (
       <>
         <Text testID="detail-title">{title}</Text>
+        <Text testID="detail-scroll-reset">{scrollResetKey}</Text>
+        {tabs}
         {children}
         {footer}
       </>
@@ -404,6 +416,11 @@ function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
 }
 
+const openTab = async (view: unknown, key: 'details' | 'relations' | 'other') =>
+  fireEvent.press(
+    (view as { getByTestId: (id: string) => never }).getByTestId(`detail-tab-${key}`),
+  );
+
 describe('SceneDetailContent', () => {
   afterEach(() => {
     cleanup();
@@ -417,10 +434,14 @@ describe('SceneDetailContent', () => {
     expect(view.getByText('no_tags_found')).toBeTruthy();
     expect(view.getByText(/2\. /)).toBeTruthy();
     expect(view.getByText(/Arrival/)).toBeTruthy();
+
+    await openTab(view, 'other');
     expect(view.getByTestId('custom-attrs').props.children).toBe('scene-1');
     expect(view.getByTestId('entity-metadata')).toBeTruthy();
-    expect(view.getByTestId('seealso-marker')).toBeTruthy();
     expect(view.getByTestId('favorited-marker')).toBeTruthy();
+
+    await openTab(view, 'relations');
+    expect(view.getByTestId('seealso-marker')).toBeTruthy();
   });
 
   it('omits the chapter number for non-linear stories', async () => {
@@ -479,8 +500,10 @@ describe('SceneDetailContent', () => {
         {...baseProps({ scene: makeScene({ summary: null, isFavorite: true }) })}
       />,
     );
-    expect(view.getByText('common_yes')).toBeTruthy();
     expect(view.getByTestId('commentable-summary').props.children).toBe('summary:common_na');
+
+    await openTab(view, 'other');
+    expect(view.getByText('common_yes')).toBeTruthy();
     expect(view.getByTestId('commentable-extra_notes').props.children).toBe(
       'extra_notes:common_na',
     );
@@ -490,6 +513,7 @@ describe('SceneDetailContent', () => {
     const location = { id: 'loc-1', name: 'Harbor', description: null };
     const props = baseProps({ location });
     const view = await render(<SceneDetailContent {...props} />);
+    await openTab(view, 'relations');
     expect(view.getByText('Harbor')).toBeTruthy();
     expect(view.getByText('common_na')).toBeTruthy();
     await fireEvent.press(view.getByText('Harbor'));
@@ -540,6 +564,11 @@ describe('SceneDetailContent', () => {
       canEdit: true,
     });
     const view = await render(<SceneDetailContent {...props} />);
+    expect(view.getByTestId('gallery-marker').props.children).toBe('Scene:scene-1');
+    await fireEvent.press(view.getByTestId('gallery-media'));
+    expect(props.openGalleryMediaViewer).toHaveBeenCalledWith('gallery-9');
+
+    await openTab(view, 'relations');
     expect(jsonOf(view, 'scene-characters')).toMatchObject({
       relations: 1,
       names: ['Lyra'],
@@ -550,9 +579,6 @@ describe('SceneDetailContent', () => {
       items: ['Sword'],
       characters: ['Lyra'],
     });
-    expect(view.getByTestId('gallery-marker').props.children).toBe('Scene:scene-1');
-    await fireEvent.press(view.getByTestId('gallery-media'));
-    expect(props.openGalleryMediaViewer).toHaveBeenCalledWith('gallery-9');
     expect(jsonOf(view, 'nav-controls')).toMatchObject({
       storyType: 'linear',
       prev: 'scene-0',
@@ -570,17 +596,82 @@ describe('SceneDetailContent', () => {
     const view = await render(
       <SceneDetailContent {...baseProps({ selectedStory: { id: 'story-1', type: 'weird' } })} />,
     );
+    await openTab(view, 'relations');
     expect(jsonOf(view, 'nav-controls').storyType).toBeNull();
   });
 
   it('renders effects only for branching stories', async () => {
     const flat = await render(<SceneDetailContent {...baseProps()} />);
+    await openTab(flat, 'relations');
     expect(flat.queryByText('effects_title')).toBeNull();
     const empty = await render(<SceneDetailContent {...baseProps({ isBranching: true })} />);
+    await openTab(empty, 'relations');
     expect(empty.getByText('no_effects')).toBeTruthy();
     const full = await render(
       <SceneDetailContent {...baseProps({ isBranching: true, sceneEffects: [{ id: 'e1' }] })} />,
     );
+    await openTab(full, 'relations');
     expect(full.getByText('• effect')).toBeTruthy();
+  });
+
+  describe('tabs', () => {
+    it('starts on the details and builds the other tabs only when they are opened', async () => {
+      const view = await render(
+        <SceneDetailContent
+          {...baseProps({ location: { id: 'l', name: 'Harbor', description: null } })}
+        />,
+      );
+
+      expect(view.getByTestId('commentable-summary')).toBeTruthy();
+      expect(view.queryByText('Harbor')).toBeNull();
+      expect(view.queryByTestId('scene-characters')).toBeNull();
+      expect(view.queryByTestId('entity-metadata')).toBeNull();
+      expect(view.getByTestId('detail-tab-details').props.accessibilityState).toEqual({
+        selected: true,
+      });
+    });
+
+    it('keeps the fields where they belong: the scene, its links, the rest', async () => {
+      const view = await render(<SceneDetailContent {...baseProps()} />);
+      await openTab(view, 'relations');
+      await openTab(view, 'other');
+
+      const inPanel = (panel: string, testID: string) =>
+        view
+          .getByTestId(`detail-panel-${panel}`, { includeHiddenElements: true })
+          .queryAll((node: { props: { testID?: string } }) => node.props.testID === testID).length;
+
+      expect(inPanel('details', 'commentable-summary')).toBeGreaterThan(0);
+      expect(inPanel('details', 'gallery-marker')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'scene-characters')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'nav-controls')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'seealso-marker')).toBeGreaterThan(0);
+      expect(inPanel('other', 'custom-attrs')).toBeGreaterThan(0);
+      expect(inPanel('other', 'commentable-extra_notes')).toBeGreaterThan(0);
+      expect(inPanel('other', 'entity-metadata')).toBeGreaterThan(0);
+    });
+
+    it('goes back to the top when the tab changes', async () => {
+      const view = await render(<SceneDetailContent {...baseProps()} />);
+      expect(view.getByTestId('detail-scroll-reset').props.children).toBe('details');
+
+      await openTab(view, 'relations');
+
+      expect(view.getByTestId('detail-scroll-reset').props.children).toBe('relations');
+    });
+
+    it('opens the tab that holds the field a landing is for', async () => {
+      const onSummary = await render(
+        <SceneDetailContent {...baseProps({ occurrence: { field: 'summary', needle: 'x' } })} />,
+      );
+      expect(onSummary.getByTestId('commentable-summary')).toBeTruthy();
+
+      cleanup();
+      const onNotes = await render(
+        <SceneDetailContent {...baseProps({ occurrence: { field: 'extraNotes' } })} />,
+      );
+      expect(onNotes.getByTestId('commentable-extra_notes')).toBeTruthy();
+      expect(onNotes.queryByTestId('commentable-summary')).toBeNull();
+    });
   });
 });

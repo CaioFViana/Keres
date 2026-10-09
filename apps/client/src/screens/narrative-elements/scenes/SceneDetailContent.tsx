@@ -17,6 +17,8 @@ import SceneNavigationControls from '@/src/components/features/scenes/SceneNavig
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { Ionicons } from '@expo/vector-icons';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
@@ -143,16 +145,12 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     describeEffect,
     occurrence,
   } = props;
-  return (
-    <DetailContainer
-      title={selectedStory?.type === 'linear' ? `${scene.index}. ${scene.name}` : scene.name}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
+  // What the scene is: where it sits, its summary and prose, pages, music and timing, then its media.
+  const detailsPanel = (
+    <>
       {chapter ? (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}
@@ -206,17 +204,19 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         })}${dateForScene(scene)?.durationEnd ? ` · ${dateForScene(scene)?.durationEnd}` : ''}`}
       />
 
-      <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
-
-      <DetailField
-        label={t('is_favorite')}
-        value={scene.isFavorite ? t('common_yes') : t('common_no')}
+      <ScreenSection title={t('media_section_title')} />
+      <EntityGalleryManager
+        ownerId={sceneId}
+        ownerType="Scene"
+        onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
-      <CommentableDetailField
-        {...commentField('extraNotes', scene.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
+    </>
+  );
 
+  // What the scene is linked to: its place, who and what is in it, and where it leads.
+  const relationsPanel = (
+    <>
       {location && (
         <>
           <ScreenSection title={locationCopy.entity} />
@@ -236,14 +236,6 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
           </TouchableOpacity>
         </>
       )}
-
-      <ScreenSection title={t('media_section_title')} />
-      <EntityGalleryManager
-        ownerId={sceneId}
-        ownerType="Scene"
-        onPressMedia={openGalleryMediaViewer}
-        editable={canEdit}
-      />
 
       <SceneCharacterManager
         characterRelations={characterSceneRelations}
@@ -312,6 +304,22 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         entityId={sceneId}
         editable={false}
       />
+    </>
+  );
+
+  // The rest: the story's custom attributes, the flags and notes, and the record of the entity.
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
+
+      <DetailField
+        label={t('is_favorite')}
+        value={scene.isFavorite ? t('common_yes') : t('common_no')}
+      />
+      <CommentableDetailField
+        {...commentField('extraNotes', scene.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />
 
@@ -321,6 +329,25 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         updatedAt={scene.updatedAt}
         entityType="Scene"
         entityId={scene.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={selectedStory?.type === 'linear' ? `${scene.index}. ${scene.name}` : scene.name}
+      landing={occurrence ?? null}
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

@@ -187,7 +187,20 @@ const blacklistedByOther = friendship({
   blockedById: 'them5',
 });
 
-type AlertButton = { text: string; onPress?: () => void | Promise<void> };
+type AlertButton = { text: string; style?: string; onPress?: () => void | Promise<void> };
+
+/** Presses one of the buttons of the dialog that is open now. */
+async function chooseInDialog(text: string) {
+  const buttons = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
+  const button = buttons.find((candidate) => candidate.text === text);
+  if (!button) throw new Error(`no "${text}" in the dialog: ${buttons.map((b) => b.text)}`);
+  await act(async () => {
+    await button.onPress?.();
+  });
+}
+
+/** Answers "Proceed" to the confirmation that follows. */
+const confirmInDialog = () => chooseInDialog('proceed');
 
 async function focusLast() {
   const cb = mockFocusListeners[mockFocusListeners.length - 1];
@@ -257,11 +270,8 @@ describe('FriendshipListScreen', () => {
 
     // Acting on the second one acts on that server, as the person who is signed in there.
     await fireEvent.press(view.getByTestId('friend-menu-f9'));
-    await fireEvent.press(view.getByTestId('friend-menu-f9-unfriend'));
-    const buttons = mockAlert.mock.calls[0][2] as AlertButton[];
-    await act(async () => {
-      await buttons.find((b) => b.text === 'proceed')?.onPress?.();
-    });
+    await chooseInDialog('friend_unfriend');
+    await confirmInDialog();
     await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f9', 'me-on-srv-2'));
   });
 
@@ -388,31 +398,59 @@ describe('FriendshipListScreen', () => {
     expect(mockAlert).not.toHaveBeenCalled();
   });
 
-  it('asks before removing a friend or blocking, from the row menu', async () => {
+  it('offers remove and block in the system dialog, and asks again before doing either', async () => {
     mockGetAllFriendships.mockResolvedValue([pendingReceived, friend]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await view.findByText('Ana');
 
-    async function confirm(menu: string, item: string, service: jest.Mock, id: string) {
-      const callsBefore = mockAlert.mock.calls.length;
-      await fireEvent.press(view.getByTestId(menu));
-      await fireEvent.press(view.getByTestId(item));
-      expect(mockAlert.mock.calls.length).toBe(callsBefore + 1);
-      const buttons = mockAlert.mock.calls[callsBefore][2] as AlertButton[];
-      const proceed = buttons.find((b) => b.text === 'proceed');
-      await act(async () => {
-        await proceed?.onPress?.();
-      });
-      await waitFor(() => expect(service).toHaveBeenCalledWith(id, 'me-on-server'));
-    }
+    await fireEvent.press(view.getByTestId('friend-menu-f3'));
+    // The choice is the app's own dialog: the friend's name for a title, then the actions, then a way out.
+    expect(mockAlert).toHaveBeenLastCalledWith('Ana', undefined, expect.any(Array));
+    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
+    expect(choices.map((choice) => choice.text)).toEqual([
+      'friend_unfriend',
+      'friend_block',
+      'cancel',
+    ]);
+    expect(choices.map((choice) => choice.style)).toEqual(['destructive', 'destructive', 'cancel']);
+    expect(mockUnfriend).not.toHaveBeenCalled();
 
-    await confirm('friend-menu-f3', 'friend-menu-f3-unfriend', mockUnfriend, 'f3');
-    await confirm('friend-menu-f3', 'friend-menu-f3-block', mockBlacklist, 'f3');
-    // A request can be blocked from its own menu, which has no unfriend.
+    await chooseInDialog('friend_unfriend');
+    await confirmInDialog();
+    await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f3', 'me-on-server'));
+
+    await fireEvent.press(view.getByTestId('friend-menu-f3'));
+    await chooseInDialog('friend_block');
+    await confirmInDialog();
+    await waitFor(() => expect(mockBlacklist).toHaveBeenCalledWith('f3', 'me-on-server'));
+  });
+
+  it('offers only block for a request, which is not a friend yet', async () => {
+    mockGetAllFriendships.mockResolvedValue([pendingReceived, friend]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('Ana');
+
     await fireEvent.press(view.getByTestId('friend-menu-f1'));
-    expect(view.queryByTestId('friend-menu-f1-unfriend')).toBeNull();
-    expect(view.getByTestId('friend-menu-f1-block')).toBeTruthy();
+
+    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
+    expect(choices.map((choice) => choice.text)).toEqual(['friend_block', 'cancel']);
+  });
+
+  it('does nothing when the dialog is cancelled', async () => {
+    mockGetAllFriendships.mockResolvedValue([friend]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('Ana');
+
+    await fireEvent.press(view.getByTestId('friend-menu-f3'));
+    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
+    choices.find((choice) => choice.text === 'cancel')?.onPress?.();
+
+    expect(mockAlert).toHaveBeenCalledTimes(1);
+    expect(mockUnfriend).not.toHaveBeenCalled();
+    expect(mockBlacklist).not.toHaveBeenCalled();
   });
 
   it('reports action failures', async () => {

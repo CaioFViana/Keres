@@ -22,7 +22,6 @@ describe('component barrels', () => {
 
   it('exposes the controls group', () => {
     expect(controls.Button).toBeDefined();
-    expect(controls.ActionMenu).toBeDefined();
     expect(controls.TriStateToggleButton).toBeDefined();
     expect(controls.ThemedSwitch).toBeDefined();
     expect(controls.LanguageInstallRow).toBeDefined();

@@ -204,7 +204,17 @@ function friendship(overrides: Record<string, unknown> = {}) {
   };
 }
 
-type AlertButton = { text: string; onPress?: () => void | Promise<void> };
+type AlertButton = { text: string; style?: string; onPress?: () => void | Promise<void> };
+
+/** Presses one of the buttons of the dialog that is open now. */
+async function chooseInDialog(text: string) {
+  const buttons = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
+  const button = buttons.find((candidate) => candidate.text === text);
+  if (!button) throw new Error(`no "${text}" in the dialog: ${buttons.map((b) => b.text)}`);
+  await act(async () => {
+    await button.onPress?.();
+  });
+}
 
 describe('FriendDetailScreen', () => {
   beforeEach(() => {
@@ -258,17 +268,15 @@ describe('FriendDetailScreen', () => {
     await view.findByText('Zoe');
 
     await fireEvent.press(view.getByTestId('friend-detail-menu'));
-    await fireEvent.press(view.getByTestId('friend-detail-menu-block'));
-    expect(mockAlert).toHaveBeenCalledWith(
+    await chooseInDialog('friend_block');
+    expect(mockAlert).toHaveBeenLastCalledWith(
       'blacklist_confirmation_title',
       'blacklist_confirmation_message',
       expect.any(Array),
       { cancelable: true },
     );
-    const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
-    await act(async () => {
-      await proceed?.onPress?.();
-    });
+    expect(mockBlacklist).not.toHaveBeenCalled();
+    await chooseInDialog('proceed');
     await waitFor(() => expect(mockBlacklist).toHaveBeenCalledWith('f1', 'me-on-server'));
   });
 
@@ -335,13 +343,17 @@ describe('FriendDetailScreen', () => {
     // Removing and blocking end something: they wait behind "More", not next to the message button.
     expect(view.queryByText('friend_unfriend')).toBeNull();
     await fireEvent.press(view.getByTestId('friend-detail-menu'));
-    expect(view.getByTestId('friend-detail-menu-block')).toBeTruthy();
+    // The system's dialog, titled with the friend's name: remove, block, and a way out.
+    expect(mockAlert).toHaveBeenLastCalledWith('Zoe', undefined, expect.any(Array));
+    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
+    expect(choices.map((choice) => choice.text)).toEqual([
+      'friend_unfriend',
+      'friend_block',
+      'cancel',
+    ]);
 
-    await fireEvent.press(view.getByTestId('friend-detail-menu-unfriend'));
-    const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
-    await act(async () => {
-      await proceed?.onPress?.();
-    });
+    await chooseInDialog('friend_unfriend');
+    await chooseInDialog('proceed');
     await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f1', 'me-on-server'));
   });
 

@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import ActionMenu from '../../../src/components/common/controls/ActionMenu/ActionMenu';
 import { StyleSheet, View } from 'react-native';
 import Button from '../../../src/components/common/controls/Button/Button';
 import ThemedSwitch from '../../../src/components/common/controls/ThemedSwitch/ThemedSwitch';
@@ -132,82 +131,6 @@ describe('Button variants', () => {
     // The label takes the outline's color, so it reads on the page behind it.
     expect(StyleSheet.flatten(screen.getByText('Stop').props.style).color).toBe('#ff0000');
     expect(StyleSheet.flatten(screen.getByText('Maybe').props.style).color).toBe('#0000ff');
-  });
-});
-
-describe('ActionMenu', () => {
-  const items = (onUnfriend = jest.fn(), onBlock = jest.fn()) => [
-    {
-      id: 'unfriend',
-      label: 'Remove friend',
-      icon: 'person-remove-outline' as const,
-      destructive: true,
-      onPress: onUnfriend,
-    },
-    { id: 'block', label: 'Block', icon: 'ban-outline' as const, onPress: onBlock },
-  ];
-
-  it('opens a labeled list from its button, runs the chosen action and closes', async () => {
-    const onUnfriend = jest.fn();
-    const screen = await render(
-      <ActionMenu testID="menu" accessibilityLabel="More for Ana" items={items(onUnfriend)} />,
-    );
-    expect(screen.queryByText('Remove friend')).toBeNull();
-
-    await fireEvent.press(screen.getByLabelText('More for Ana'));
-    expect(screen.getByText('Remove friend')).toBeTruthy();
-    expect(screen.getByText('Block')).toBeTruthy();
-
-    await fireEvent.press(screen.getByTestId('menu-unfriend'));
-    expect(onUnfriend).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText('Remove friend')).toBeNull();
-  });
-
-  it('draws a destructive action in the error color and the others in the text color', async () => {
-    const screen = await render(<ActionMenu testID="menu" items={items()} />);
-    await fireEvent.press(screen.getByTestId('menu'));
-
-    expect(StyleSheet.flatten(screen.getByText('Remove friend').props.style).color).toBe('#ff0000');
-    expect(StyleSheet.flatten(screen.getByText('Block').props.style).color).toBe('#111111');
-  });
-
-  it('can be a button with a word, for the last place in a row of buttons', async () => {
-    const onBlock = jest.fn();
-    const screen = await render(
-      <ActionMenu
-        testID="menu"
-        appearance="button"
-        label="More"
-        triggerStyle={{ flexGrow: 1 }}
-        items={items(jest.fn(), onBlock)}
-      />,
-    );
-
-    // The word is on it, and the style the row asked for.
-    expect(screen.getByText('More')).toBeTruthy();
-    expect(StyleSheet.flatten(screen.getByTestId('menu').props.style)).toMatchObject({
-      borderWidth: 1.5,
-      flexGrow: 1,
-    });
-    await fireEvent.press(screen.getByTestId('menu'));
-    await fireEvent.press(screen.getByTestId('menu-block'));
-    expect(onBlock).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows no word on the icon appearance', async () => {
-    const screen = await render(<ActionMenu testID="menu" label="More" items={items()} />);
-
-    expect(screen.queryByText('More')).toBeNull();
-  });
-
-  it('closes on the backdrop without running anything', async () => {
-    const onBlock = jest.fn();
-    const screen = await render(<ActionMenu testID="menu" items={items(jest.fn(), onBlock)} />);
-    await fireEvent.press(screen.getByTestId('menu'));
-    await fireEvent.press(screen.getByTestId('menu-backdrop'));
-
-    expect(screen.queryByText('Block')).toBeNull();
-    expect(onBlock).not.toHaveBeenCalled();
   });
 });
 

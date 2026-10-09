@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import ActionMenu from '@/src/components/common/controls/ActionMenu/ActionMenu';
 import Button from '@/src/components/common/controls/Button/Button';
+import { type FriendAction, promptFriendActions } from './promptFriendActions';
 
 /** What the friendship is right now, as far as the person's own buttons go. */
 export type FriendDetailMode = 'received' | 'sent' | 'friend' | 'blocked-by-me' | 'blocked-by-them';
@@ -51,22 +51,22 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
       ? t('friend_continue_conversation')
       : t('send_message');
 
-  const blockItem = {
-    id: 'block',
+  const blockAction: FriendAction = {
     label: t('friend_block'),
-    icon: 'ban-outline' as const,
     destructive: true,
     onPress: onBlock,
   };
-  const more = (items: Parameters<typeof ActionMenu>[0]['items']) => (
-    <ActionMenu
+  // What ends something is behind one button, chosen in the system's dialog like the rest of the app's choices.
+  const more = (actions: FriendAction[]) => (
+    <Button
+      variant="secondary"
+      onPress={() => promptFriendActions(t, friendName, actions)}
+      style={cell}
       testID="friend-detail-menu"
-      appearance="button"
-      label={t('friend_more')}
       accessibilityLabel={t('friend_more_actions', { name: friendName })}
-      triggerStyle={cell}
-      items={items}
-    />
+    >
+      {t('friend_more')}
+    </Button>
   );
 
   return (
@@ -80,14 +80,8 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
             {compact ? t('friend_invite_short') : t('friend_invite_to_story')}
           </Button>
           {more([
-            {
-              id: 'unfriend',
-              label: t('friend_unfriend'),
-              icon: 'person-remove-outline',
-              destructive: true,
-              onPress: onUnfriend,
-            },
-            blockItem,
+            { label: t('friend_unfriend'), destructive: true, onPress: onUnfriend },
+            blockAction,
           ])}
         </>
       )}
@@ -105,7 +99,7 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
           >
             {t('friend_decline')}
           </Button>
-          {more([blockItem])}
+          {more([blockAction])}
         </>
       )}
 

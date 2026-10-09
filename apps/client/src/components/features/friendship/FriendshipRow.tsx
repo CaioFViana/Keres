@@ -1,8 +1,8 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import ActionMenu from '@/src/components/common/controls/ActionMenu/ActionMenu';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import type { FriendshipWithServer } from '../../../services/FriendshipService';
@@ -10,6 +10,7 @@ import { useTheme } from '../../../theme';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import FriendChatButton from '../messages/FriendChatButton';
+import { promptFriendActions } from './promptFriendActions';
 
 export interface FriendshipRowActions {
   onOpen: () => void;
@@ -71,31 +72,25 @@ const FriendshipRow: React.FC<FriendshipRowProps> = ({
     .filter(Boolean)
     .join(' · ');
 
+  // Remove and block end something: they are behind one button, chosen in the system's dialog.
   const blockMenu = (
-    <ActionMenu
+    <Pressable
       testID={`friend-menu-${item.id}`}
+      accessibilityRole="button"
       accessibilityLabel={t('friend_more_actions', { name: item.friendUsername })}
-      items={[
-        ...(isFriend
-          ? [
-              {
-                id: 'unfriend',
-                label: t('friend_unfriend'),
-                icon: 'person-remove-outline' as const,
-                destructive: true,
-                onPress: onUnfriend,
-              },
-            ]
-          : []),
-        {
-          id: 'block',
-          label: t('friend_block'),
-          icon: 'ban-outline' as const,
-          destructive: true,
-          onPress: onBlock,
-        },
-      ]}
-    />
+      onPress={() =>
+        promptFriendActions(t, item.friendUsername, [
+          ...(isFriend
+            ? [{ label: t('friend_unfriend'), destructive: true, onPress: onUnfriend }]
+            : []),
+          { label: t('friend_block'), destructive: true, onPress: onBlock },
+        ])
+      }
+      hitSlop={6}
+      style={({ pressed }) => [styles.more, { opacity: pressed ? 0.6 : 1 }]}
+    >
+      <Ionicons name="ellipsis-horizontal" size={22} color={colors.textSecondary} />
+    </Pressable>
   );
 
   const answers = isReceived ? (
@@ -178,6 +173,7 @@ const FriendshipRow: React.FC<FriendshipRowProps> = ({
 
 const styles = StyleSheet.create({
   card: { marginBottom: 10, padding: 14 },
+  more: { minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' },
   blocked: { opacity: 0.75 },
   main: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   info: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },

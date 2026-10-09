@@ -222,6 +222,11 @@ jest.mock('../../../src/state/notificationStore', () => ({
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
+const mockSetClipboard = jest.fn(async (..._args: unknown[]) => undefined);
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: (...args: unknown[]) => mockSetClipboard(...args),
+}));
+
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import StoryPublishScreen from '../../../src/screens/storyshare/StoryPublishScreen';
@@ -622,6 +627,50 @@ describe('StoryPublishScreen', () => {
     });
     await waitFor(() => expect(mockUnpublish).toHaveBeenCalledWith(server, 'story-1'));
     expect(mockNotify).toHaveBeenCalledWith('publish_unpublished', 'success');
+  });
+
+  it('copies the public link to the clipboard', async () => {
+    mockGetShowcase.mockResolvedValue({
+      isPublished: true,
+      visibility: 'public',
+      labelMode: 'both',
+      hasPassword: false,
+      publications: [
+        {
+          id: 'p1',
+          storyId: 'story-1',
+          label: 'v1',
+          operationVersion: 5,
+          byteSize: 1024,
+          createdAt: '2026-01-01',
+        },
+      ],
+    });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-copy-link');
+
+    await fireEvent.press(view.getByTestId('story-publish-copy-link'));
+    await waitFor(() =>
+      expect(mockSetClipboard).toHaveBeenCalledWith('https://s.example/showcase/story/story-1'),
+    );
+    expect(mockNotify).toHaveBeenCalledWith('publish_link_copied', 'success');
+  });
+
+  it('offers no way to copy a link before anything is published', async () => {
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    expect(view.queryByTestId('story-publish-copy-link')).toBeNull();
+  });
+
+  it('marks which version name is chosen, as a radio group does', async () => {
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+
+    const chosen = view
+      .getAllByRole('radio')
+      .filter((radio) => radio.props.accessibilityState.selected);
+    expect(view.getAllByRole('radio')).toHaveLength(3);
+    expect(chosen).toHaveLength(1);
   });
 
   it('keeps the local mirror when the server state cannot be read', async () => {

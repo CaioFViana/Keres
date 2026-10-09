@@ -164,6 +164,12 @@ function modal(view: RenderResult) {
   return within(view.getByTestId('modal-visible'));
 }
 
+/** Opens the list picker (compact screens) and chooses a list by its full name. */
+async function chooseList(view: RenderResult, current: string, wanted: string) {
+  await fireEvent.press(view.getByText(current));
+  await fireEvent.press(modal(view).getByText(wanted));
+}
+
 describe('SuggestionsScreen', () => {
   afterEach(() => {
     cleanup();
@@ -204,9 +210,13 @@ describe('SuggestionsScreen', () => {
     const view = await render(<SuggestionsScreen />);
 
     await waitFor(() => expect(mockListNamedLists).toHaveBeenCalledWith('story-1'));
-    expect(view.getByText('standard_suggestions_title')).toBeTruthy();
-    expect(view.getByText('suggestion_named_list · Herbs')).toBeTruthy();
-    expect(view.getByText('suggestion_named_list · Spices')).toBeTruthy();
+    // The header already says "Standard Suggestions": the page does not repeat it as a second title.
+    expect(view.queryByText('standard_suggestions_title')).toBeNull();
+    // The first list is chosen and shown in the picker; the others are in it.
+    await waitFor(() => expect(view.getByText('suggestion_named_list · Herbs')).toBeTruthy());
+    await fireEvent.press(view.getByText('suggestion_named_list · Herbs'));
+    expect(modal(view).getByText('suggestion_named_list · Spices')).toBeTruthy();
+    await fireEvent.press(modal(view).getByText('suggestion_named_list · Herbs'));
 
     await waitFor(() => expect(view.getByText('Sage')).toBeTruthy());
     expect(view.getByTestId('section-suggestion_saved_values')).toBeTruthy();
@@ -219,11 +229,13 @@ describe('SuggestionsScreen', () => {
     const view = await render(<SuggestionsScreen />);
     await waitFor(() => expect(view.getByText('Sage')).toBeTruthy());
 
-    await fireEvent.press(view.getByText('suggestion_named_list · Spices'));
+    await chooseList(view, 'suggestion_named_list · Herbs', 'suggestion_named_list · Spices');
     await waitFor(() => expect(view.getByText('no_suggestions_available')).toBeTruthy());
     expect(mockGetStoredSuggestions).toHaveBeenCalledWith(SPICES, 'story-1');
+    // An empty list says what to do next.
+    expect(view.getByText('suggestion_empty_hint')).toBeTruthy();
 
-    await fireEvent.press(view.getByText('suggestion_named_list · Herbs'));
+    await chooseList(view, 'suggestion_named_list · Spices', 'suggestion_named_list · Herbs');
     await waitFor(() => expect(view.getByText('Sage')).toBeTruthy());
     await fireEvent.press(view.getByText('Sage'));
     expect(mockNavigate).toHaveBeenCalledWith('SuggestionUsage', { type: HERBS, value: 'Sage' });
@@ -336,8 +348,8 @@ describe('SuggestionsScreen', () => {
     );
     const view = await render(<SuggestionsScreen />);
 
-    await waitFor(() => expect(view.getByText(/Skill/)).toBeTruthy());
-    await fireEvent.press(view.getByText(/Skill/));
+    await waitFor(() => expect(view.getByText('suggestion_named_list · Herbs')).toBeTruthy());
+    await chooseList(view, 'suggestion_named_list · Herbs', 'Characters · Skill');
     await waitFor(() =>
       expect(mockGetStoredSuggestions).toHaveBeenCalledWith('custom:field-1', 'story-1'),
     );
@@ -345,12 +357,110 @@ describe('SuggestionsScreen', () => {
     expect(mockHeaderConfig.current?.actions[3].visible).toBe(false);
   });
 
-  it('renders the group column on wide layouts', async () => {
+  it('adds a value when enter is pressed in the field', async () => {
+    const view = await render(<SuggestionsScreen />);
+    await waitFor(() => expect(view.getByText('Sage')).toBeTruthy());
+
+    const field = view.getByPlaceholderText('suggestion_value_placeholder');
+    await fireEvent.changeText(field, 'Mint');
+    await fireEvent(field, 'submitEditing');
+
+    await waitFor(() =>
+      expect(mockCreateSuggestion).toHaveBeenCalledWith('user-1', HERBS, 'Mint', 'story-1'),
+    );
+  });
+
+  it('says what each count counts', async () => {
+    const view = await render(<SuggestionsScreen />);
+    await waitFor(() => expect(view.getByText('Sage')).toBeTruthy());
+
+    // The test's translations return the key; the real ones fill in the count.
+    expect(view.getAllByLabelText('suggestion_usage_count').length).toBe(2);
+  });
+
+  it('renders the lists under their sections on wide layouts', async () => {
     mockCompact.current = false;
     const view = await render(<SuggestionsScreen />);
 
     await waitFor(() => expect(view.getByText('Sage')).toBeTruthy());
-    expect(view.getByText('suggestion_named_list · Herbs')).toBeTruthy();
-    expect(view.getByText('suggestion_named_list · Spices')).toBeTruthy();
+    expect(view.queryByTestId('suggestion-group-picker')).toBeNull();
+    expect(view.getByText('suggestion_your_lists')).toBeTruthy();
+    expect(view.getByLabelText('suggestion_named_list · Herbs')).toBeTruthy();
+    expect(view.getByLabelText('suggestion_named_list · Spices')).toBeTruthy();
+    // A section is named once, not on every list under it.
+    expect(view.getAllByText('suggestion_your_lists')).toHaveLength(1);
+    // Two lists do not need a search field.
+    expect(view.queryByTestId('suggestion-group-search')).toBeNull();
+  });
+
+  it('shows a search field for a long list of lists and narrows by it', async () => {
+    mockCompact.current = false;
+    mockListNamedLists.mockResolvedValue(
+      Array.from({ length: 10 }, (_, index) => ({
+        type: `list_${index}`,
+        name: index === 4 ? 'Mushrooms' : `List ${index}`,
+      })),
+    );
+    mockGetStoredSuggestions.mockResolvedValue([]);
+    mockGetSuggestionUsageCounts.mockResolvedValue([]);
+    const view = await render(<SuggestionsScreen />);
+
+    await waitFor(() => expect(view.getByTestId('suggestion-group-search')).toBeTruthy());
+    expect(view.getAllByLabelText(/suggestion_named_list/).length).toBe(10);
+
+    await fireEvent.changeText(view.getByTestId('suggestion-group-search'), 'mush');
+    expect(view.getAllByLabelText(/suggestion_named_list/).length).toBe(1);
+    expect(view.getByLabelText('suggestion_named_list · Mushrooms')).toBeTruthy();
+  });
+
+  it('offers a read-only person no hint to type a value', async () => {
+    mockCanEdit.current = false;
+    mockCompact.current = false;
+    mockGetStoredSuggestions.mockResolvedValue([]);
+    mockGetSuggestionUsageCounts.mockResolvedValue([]);
+    const view = await render(<SuggestionsScreen />);
+
+    await waitFor(() => expect(view.getByText('no_suggestions_available')).toBeTruthy());
+    expect(view.queryByText('suggestion_empty_hint')).toBeNull();
+  });
+});
+
+describe('SuggestionsScreen: order of the lists', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockCanEdit.current = true;
+    mockCompact.current = false;
+    mockListNamedLists.mockResolvedValue([{ type: HERBS, name: 'Herbs' }]);
+    mockGetStoredSuggestions.mockResolvedValue([]);
+    mockGetSuggestionUsageCounts.mockResolvedValue([]);
+  });
+  afterEach(() => cleanup());
+
+  it('puts the own lists first and keeps each section in one run', async () => {
+    mockGetFieldsByStoryAndEntityType.mockImplementation(
+      async (_storyId: string, entity: string) =>
+        entity === 'Character'
+          ? [
+              { id: 'f-1', key: 'skill', name: 'Skill', type: AttributeType.SUGGESTION },
+              { id: 'f-2', key: 'mood', name: 'Mood', type: AttributeType.SUGGESTION },
+            ]
+          : entity === 'Item'
+            ? [{ id: 'f-3', key: 'tier', name: 'Tier', type: AttributeType.SUGGESTION }]
+            : [],
+    );
+    const view = await render(<SuggestionsScreen />);
+    await waitFor(() => expect(view.getAllByLabelText(/ · /).length).toBe(5));
+
+    const labels = view.getAllByLabelText(/ · /).map((node) => node.props.accessibilityLabel);
+    expect(labels).toEqual([
+      'suggestion_named_list · Herbs',
+      'Characters · Mood',
+      'Characters · Skill',
+      'Items · Tier',
+      // The world's own category list is always there.
+      'world_title · category',
+    ]);
+    // Each section is named once.
+    expect(view.getAllByText('Characters')).toHaveLength(1);
   });
 });

@@ -2,6 +2,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
@@ -10,10 +11,12 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { PublicationLabelMode } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Clipboard from 'expo-clipboard';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
@@ -38,6 +41,7 @@ const StoryPublishScreen = () => {
   const storyId = useStoryStore((state) => state.selectedStory?.id);
   const publishing = useStoryPublishing(storyId);
   const { load } = publishing;
+  const { showNotification } = useNotificationStore();
 
   useFocusEffect(
     useCallback(() => {
@@ -48,6 +52,8 @@ const StoryPublishScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     content: { padding: 20, paddingBottom: 60 },
+    // On a wide screen the page stays a readable column in the middle instead of stretching across.
+    column: { width: '100%', maxWidth: 720, alignSelf: 'center' },
     description: { fontSize: 14, color: colors.textSecondary, marginBottom: 16, lineHeight: 20 },
     card: {
       backgroundColor: colors.surface,
@@ -81,15 +87,8 @@ const StoryPublishScreen = () => {
       marginBottom: 10,
     },
     hint: { fontSize: 12, color: colors.textSecondary, marginTop: -4, marginBottom: 16 },
-    primaryButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 13,
-    },
-    primaryButtonDisabled: { opacity: 0.5 },
+    publishButton: { marginTop: 8 },
+    primaryButtonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
     primaryButtonText: {
       color: colors.onPrimary,
       fontSize: 15,
@@ -97,7 +96,8 @@ const StoryPublishScreen = () => {
       marginLeft: 8,
     },
     linkText: { fontSize: 13, color: colors.text, marginBottom: 8 },
-    linkButton: { flexDirection: 'row', alignItems: 'center' },
+    linkActions: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 20, rowGap: 8 },
+    linkButton: { flexDirection: 'row', alignItems: 'center', minHeight: 32 },
     linkButtonText: { color: colors.primary, fontSize: 13, marginLeft: 6 },
     versionRow: {
       flexDirection: 'row',
@@ -109,8 +109,7 @@ const StoryPublishScreen = () => {
     versionInfo: { flex: 1 },
     versionLabel: { fontSize: 14, color: colors.text },
     versionMeta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    unpublishButton: { marginTop: 14, alignItems: 'center' },
-    unpublishText: { color: colors.error, fontSize: 14 },
+    unpublishButton: { marginTop: 24 },
     outlineButton: {
       alignItems: 'center',
       alignSelf: 'flex-start',
@@ -131,7 +130,7 @@ const StoryPublishScreen = () => {
     const noServer = publishing.blocker !== 'not-owner';
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={styles.card}>
+        <View style={[styles.card, styles.column]}>
           <View style={styles.statusRow}>
             <Ionicons
               name={noServer ? 'cloud-offline-outline' : 'lock-closed-outline'}
@@ -167,150 +166,174 @@ const StoryPublishScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.description}>{t('publish_story_description')}</Text>
+      <View style={styles.column}>
+        <Text style={styles.description}>{t('publish_story_description')}</Text>
 
-      <View style={styles.card} testID="story-publish-status">
-        <View style={styles.statusRow}>
-          <Ionicons
-            name={showcase.isPublished ? 'cloud-done-outline' : 'cloud-upload-outline'}
-            size={28}
-            color={showcase.isPublished ? colors.primary : colors.textSecondary}
-          />
-          <View style={styles.statusBody}>
-            <Text style={styles.statusTitle}>
-              {showcase.isPublished
-                ? t('publish_versions_count', { count: showcase.publications.length })
-                : t('publish_not_published')}
-            </Text>
-            <Text style={styles.statusMeta}>
-              {[
-                server.name,
-                t('publish_synced_version', { version: story.lastServerSyncedLog ?? 0 }),
-                showcase.visibility === 'password' ? t('publish_password_protected') : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </Text>
+        <View style={styles.card} testID="story-publish-status">
+          <View style={styles.statusRow}>
+            <Ionicons
+              name={showcase.isPublished ? 'cloud-done-outline' : 'cloud-upload-outline'}
+              size={28}
+              color={showcase.isPublished ? colors.primary : colors.textSecondary}
+            />
+            <View style={styles.statusBody}>
+              <Text style={styles.statusTitle}>
+                {showcase.isPublished
+                  ? t('publish_versions_count', { count: showcase.publications.length })
+                  : t('publish_not_published')}
+              </Text>
+              <Text style={styles.statusMeta}>
+                {[
+                  server.name,
+                  t('publish_synced_version', { version: story.lastServerSyncedLog ?? 0 }),
+                  showcase.visibility === 'password' ? t('publish_password_protected') : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            </View>
           </View>
+          {reason ? <Text style={styles.blocked}>{reason}</Text> : null}
         </View>
-        {reason ? <Text style={styles.blocked}>{reason}</Text> : null}
-      </View>
 
-      <ScreenSection title={t('story_publish_step_what')} />
-      <PublishManuscriptSection story={story} manuscript={manuscript} />
+        <ScreenSection title={t('story_publish_step_what')} />
+        <PublishManuscriptSection story={story} manuscript={manuscript} />
 
-      <ScreenSection title={t('story_publish_step_who')} />
-      <Text style={styles.label}>{t('publish_label_style')}</Text>
-      <View style={styles.modeRow}>
-        {LABEL_MODES.map((mode) => (
-          <TouchableOpacity
-            key={mode}
-            style={[styles.modeOption, publishing.labelMode === mode && styles.modeOptionActive]}
-            onPress={() => publishing.setLabelMode(mode)}
-          >
-            <Text style={[styles.modeText, publishing.labelMode === mode && styles.modeTextActive]}>
-              {t(`publish_label_style_${mode}`)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        <ScreenSection title={t('story_publish_step_who')} />
+        <Text style={styles.label}>{t('publish_label_style')}</Text>
+        <View style={styles.modeRow}>
+          {LABEL_MODES.map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[styles.modeOption, publishing.labelMode === mode && styles.modeOptionActive]}
+              onPress={() => publishing.setLabelMode(mode)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: publishing.labelMode === mode }}
+            >
+              <Text
+                style={[styles.modeText, publishing.labelMode === mode && styles.modeTextActive]}
+              >
+                {t(`publish_label_style_${mode}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <View style={styles.switchRow}>
-        <Text style={styles.label}>{t('publish_use_password')}</Text>
-        <ThemedSwitch
-          value={publishing.usePassword}
-          onValueChange={publishing.setUsePassword}
-          testID="publish-password-switch"
-        />
-      </View>
-      {/*
+        <View style={styles.switchRow}>
+          <Text style={styles.label}>{t('publish_use_password')}</Text>
+          <ThemedSwitch
+            value={publishing.usePassword}
+            onValueChange={publishing.setUsePassword}
+            testID="publish-password-switch"
+          />
+        </View>
+        {/*
         The protection belongs to the story, not to each version: the site shows one page per story with
         every version inside it. Someone with more than one version out has to know this choice covers all
         of them - the ones already online included.
       */}
-      {showcase.publications.length > 1 && (
-        <Text style={styles.hint}>
-          {t('publish_visibility_applies_to_all', { count: showcase.publications.length })}
-        </Text>
-      )}
-      {publishing.usePassword && (
-        <>
-          <PasswordInput
-            value={publishing.password}
-            onChangeText={publishing.setPassword}
-            placeholder={t('publish_password_placeholder')}
-          />
-          {showcase.hasPassword && (
-            // Publishing again saves the password typed now, so leaving the field blank is not "keep the existing
-            // one" - it is publishing with no password.
-            <Text style={styles.hint}>{t('publish_password_replaces_previous')}</Text>
-          )}
-        </>
-      )}
+        {showcase.publications.length > 1 && (
+          <Text style={styles.hint}>
+            {t('publish_visibility_applies_to_all', { count: showcase.publications.length })}
+          </Text>
+        )}
+        {publishing.usePassword && (
+          <>
+            <PasswordInput
+              value={publishing.password}
+              onChangeText={publishing.setPassword}
+              placeholder={t('publish_password_placeholder')}
+            />
+            {showcase.hasPassword && (
+              // Publishing again saves the password typed now, so leaving the field blank is not "keep the existing
+              // one" - it is publishing with no password.
+              <Text style={styles.hint}>{t('publish_password_replaces_previous')}</Text>
+            )}
+          </>
+        )}
 
-      <TouchableOpacity
-        style={[styles.primaryButton, cannotPublish && styles.primaryButtonDisabled]}
-        onPress={publishing.publish}
-        disabled={cannotPublish}
-        testID="story-publish-submit"
-      >
-        <Ionicons name="cloud-upload-outline" size={18} color={colors.onPrimary} />
-        <Text style={styles.primaryButtonText}>
-          {busy ? t('publish_in_progress') : t('publish_create_version')}
-        </Text>
-      </TouchableOpacity>
+        <Button
+          onPress={publishing.publish}
+          disabled={cannotPublish}
+          testID="story-publish-submit"
+          style={styles.publishButton}
+          accessibilityLabel={busy ? t('publish_in_progress') : t('publish_create_version')}
+        >
+          <View style={styles.primaryButtonContent}>
+            <Ionicons name="cloud-upload-outline" size={18} color={colors.onPrimary} />
+            <Text style={styles.primaryButtonText}>
+              {busy ? t('publish_in_progress') : t('publish_create_version')}
+            </Text>
+          </View>
+        </Button>
 
-      {showcase.isPublished && (
-        <>
-          <View style={{ height: 24 }} />
-          <ScreenSection title={t('publish_public_link')} />
-          {/*
+        {showcase.isPublished && (
+          <>
+            <View style={{ height: 24 }} />
+            <ScreenSection title={t('publish_public_link')} />
+            {/*
             The address stays in sight whenever the story is published, not only at the instant it is published:
             it is what the person needs to copy to send to somebody, and they are not going to republish just to
             see it again.
           */}
-          <View style={styles.card}>
-            <Text style={styles.linkText} selectable>
-              {url}
-            </Text>
-            <TouchableOpacity style={styles.linkButton} onPress={() => void Linking.openURL(url)}>
-              <Ionicons name="open-outline" size={16} color={colors.primary} />
-              <Text style={styles.linkButtonText}>{t('publish_open_link')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScreenSection title={t('story_publish_versions')} />
-          {showcase.publications.map((publication) => (
-            <View key={publication.id} style={styles.versionRow}>
-              <View style={styles.versionInfo}>
-                <Text style={styles.versionLabel}>{publication.label}</Text>
-                <Text style={styles.versionMeta}>
-                  {publication.arcId
-                    ? `${manuscript.manuscriptArcs.find((work) => work.id === publication.arcId)?.title ?? t('publish_removed_work')} · `
-                    : ''}
-                  {new Date(publication.createdAt).toLocaleDateString()} ·{' '}
-                  {Math.max(1, Math.round(publication.byteSize / 1024))} KB
-                </Text>
+            <View style={styles.card}>
+              <Text style={styles.linkText} selectable>
+                {url}
+              </Text>
+              <View style={styles.linkActions}>
+                <TouchableOpacity
+                  style={styles.linkButton}
+                  onPress={() => void Linking.openURL(url)}
+                >
+                  <Ionicons name="open-outline" size={16} color={colors.primary} />
+                  <Text style={styles.linkButtonText}>{t('publish_open_link')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.linkButton}
+                  testID="story-publish-copy-link"
+                  accessibilityRole="button"
+                  onPress={async () => {
+                    await Clipboard.setStringAsync(url);
+                    showNotification(t('publish_link_copied'), 'success');
+                  }}
+                >
+                  <Ionicons name="copy-outline" size={16} color={colors.primary} />
+                  <Text style={styles.linkButtonText}>{t('publish_copy_link')}</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => publishing.deleteVersion(publication)}
-                disabled={busy}
-                accessibilityLabel={t('delete')}
-              >
-                <Ionicons name="trash-outline" size={20} color={colors.error} />
-              </TouchableOpacity>
             </View>
-          ))}
 
-          <TouchableOpacity
-            style={styles.unpublishButton}
-            onPress={publishing.unpublish}
-            disabled={busy}
-          >
-            <Text style={styles.unpublishText}>{t('publish_unpublish_confirm')}</Text>
-          </TouchableOpacity>
-        </>
-      )}
+            <ScreenSection title={t('story_publish_versions')} />
+            {showcase.publications.map((publication) => (
+              <View key={publication.id} style={styles.versionRow}>
+                <View style={styles.versionInfo}>
+                  <Text style={styles.versionLabel}>{publication.label}</Text>
+                  <Text style={styles.versionMeta}>
+                    {publication.arcId
+                      ? `${manuscript.manuscriptArcs.find((work) => work.id === publication.arcId)?.title ?? t('publish_removed_work')} · `
+                      : ''}
+                    {new Date(publication.createdAt).toLocaleDateString()} ·{' '}
+                    {Math.max(1, Math.round(publication.byteSize / 1024))} KB
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => publishing.deleteVersion(publication)}
+                  disabled={busy}
+                  accessibilityLabel={t('delete')}
+                >
+                  <Ionicons name="trash-outline" size={20} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            <View style={styles.unpublishButton}>
+              <Button variant="danger" onPress={publishing.unpublish} disabled={busy}>
+                {t('publish_unpublish_confirm')}
+              </Button>
+            </View>
+          </>
+        )}
+      </View>
     </ScrollView>
   );
 };

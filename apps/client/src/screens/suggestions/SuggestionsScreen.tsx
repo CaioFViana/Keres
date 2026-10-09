@@ -3,6 +3,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { GuidedEmptyState } from '@/src/components/common/lists/GenericFilterSortList/ListEmptyStates';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
@@ -14,6 +15,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
+import SuggestionGroupChooser, { type SuggestionGroup } from './SuggestionGroupChooser';
 import type { SuggestionSelect } from '../../db/schema';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
@@ -37,7 +39,6 @@ import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-type SuggestionGroup = { type: string; label: string; key: string; name?: string };
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
@@ -123,17 +124,23 @@ const SuggestionsScreen = () => {
       type: group.type,
       key: group.key,
       label: `${group.entityLabels.join(' + ')} · ${group.fieldLabels.join(' / ')}`,
+      section: group.entityLabels.join(' + '),
+      short: group.fieldLabels.join(' / '),
     }));
     const worldPiece = [
       ...WORLD_PIECE_SECTIONS.map((section) => ({
         type: `${WORLD_PIECE_TYPE_PREFIX}${section}`,
         key: `world_piece_type_${section}`,
         label: `${t(`world_piece_section_${section}`)} · ${t('world_piece_type')}`,
+        section: t('world_title'),
+        short: `${t(`world_piece_section_${section}`)} · ${t('world_piece_type')}`,
       })),
       {
         type: WORLD_PIECE_CATEGORY_TYPE,
         key: 'world_piece_category',
         label: `${t('world_title')} · ${t('category')}`,
+        section: t('world_title'),
+        short: t('category'),
       },
     ];
     const schemaService = createStorySchemaFieldService(db);
@@ -142,27 +149,35 @@ const SuggestionsScreen = () => {
         schemaService.getFieldsByStoryAndEntityType(storyId, entityType),
       ),
     );
-    const custom = batches.flatMap((fields, index) =>
-      fields
+    const custom = batches.flatMap((fields, index) => {
+      const entitySection = isStoryVocabularyEntityType(STORY_SCHEMA_ENTITY_TYPES[index])
+        ? label(STORY_SCHEMA_ENTITY_TYPES[index], true)
+        : t(SCHEMA_ENTITY_LABELS[STORY_SCHEMA_ENTITY_TYPES[index]]);
+      return fields
         .filter((field) => isSuggestionAttributeType(field.type))
         .map((field) => ({
           type: customAttributeSuggestionType(field.id),
           key: field.key,
-          label: `${
-            isStoryVocabularyEntityType(STORY_SCHEMA_ENTITY_TYPES[index])
-              ? label(STORY_SCHEMA_ENTITY_TYPES[index], true)
-              : t(SCHEMA_ENTITY_LABELS[STORY_SCHEMA_ENTITY_TYPES[index]])
-          } · ${field.name}`,
-        })),
-    );
+          label: `${entitySection} · ${field.name}`,
+          section: entitySection,
+          short: field.name,
+        }));
+    });
     const named = (await suggestionService.listNamedLists(storyId)).map((list) => ({
       type: list.type,
       key: namedListDisplayKey(list.type),
       name: list.name,
       label: `${t('suggestion_named_list')} · ${list.name}`,
+      section: t('suggestion_your_lists'),
+      short: list.name,
     }));
-    const next = [...native, ...worldPiece, ...custom, ...named].sort((a, b) =>
-      a.label.localeCompare(b.label),
+    // The person's own lists first, then by entity and name: a section is one run, not several.
+    const ownFirst = (group: { type: string }) => (isNamedListType(group.type) ? 0 : 1);
+    const next = [...native, ...worldPiece, ...custom, ...named].sort(
+      (a, b) =>
+        ownFirst(a) - ownFirst(b) ||
+        a.section.localeCompare(b.section) ||
+        a.short.localeCompare(b.short),
     );
     setGroups(next);
     setSelectedType((current) =>
@@ -340,36 +355,10 @@ const SuggestionsScreen = () => {
   };
 
   const styles = StyleSheet.create({
-    title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
-    description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
+    description: { color: colors.textSecondary, marginBottom: 16 },
     wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
-    groups: { maxHeight: 160, marginBottom: 16, flexGrow: 0, flexShrink: 0 },
-    groupsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
-    chip: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 18,
-      marginRight: 8,
-      marginBottom: 8,
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-    },
-    chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-    chipText: { color: colors.text },
-    chipTextSelected: { color: colors.onPrimary, fontWeight: '600' },
-    groupsColumn: {
-      width: 300,
-      borderRightWidth: 1,
-      borderRightColor: colors.border,
-      paddingRight: 16,
-    },
-    groupListItem: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 6 },
-    groupListItemSelected: { backgroundColor: colors.primaryContainer },
-    groupListItemText: { color: colors.text },
-    groupListItemTextSelected: { color: colors.text, fontWeight: '700' },
     /** Bounded pane so the values ScrollView can scroll instead of growing past the screen. */
-    contentPane: { flex: 1, minHeight: 0 },
+    contentPane: { flex: 1, minHeight: 0, width: '100%', maxWidth: 720 },
     key: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 },
     inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 },
     input: { flex: 1, marginBottom: 0, width: undefined },
@@ -387,7 +376,6 @@ const SuggestionsScreen = () => {
     storyValue: { flex: 1, color: colors.textSecondary, fontSize: 16 },
     usage: { color: colors.textSecondary, fontSize: 14, marginRight: 4 },
     icon: { padding: 7 },
-    empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
     copyList: { maxHeight: 280, marginBottom: 12 },
     copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
     copyLabel: { flex: 1, color: colors.text },
@@ -395,44 +383,13 @@ const SuggestionsScreen = () => {
     modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
   });
 
-  const groupsList = isCompact ? (
-    <ScrollView style={styles.groups}>
-      <View style={styles.groupsWrap}>
-        {groups.map((group) => (
-          <TouchableOpacity
-            key={group.type}
-            onPress={() => setSelectedType(group.type)}
-            style={[styles.chip, selectedType === group.type && styles.chipSelected]}
-          >
-            <Text style={[styles.chipText, selectedType === group.type && styles.chipTextSelected]}>
-              {group.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
-  ) : (
-    <ScrollView style={styles.groupsColumn}>
-      {groups.map((group) => (
-        <TouchableOpacity
-          key={group.type}
-          onPress={() => setSelectedType(group.type)}
-          style={[
-            styles.groupListItem,
-            selectedType === group.type && styles.groupListItemSelected,
-          ]}
-        >
-          <Text
-            style={[
-              styles.groupListItemText,
-              selectedType === group.type && styles.groupListItemTextSelected,
-            ]}
-          >
-            {group.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+  const groupsList = (
+    <SuggestionGroupChooser
+      groups={groups}
+      selectedType={selectedType}
+      onSelect={setSelectedType}
+      compact={isCompact}
+    />
   );
 
   const contentHeader = (
@@ -449,6 +406,9 @@ const SuggestionsScreen = () => {
             onChangeText={setNewValue}
             placeholder={t('suggestion_value_placeholder')}
             style={styles.input}
+            onSubmitEditing={add}
+            returnKeyType="done"
+            blurOnSubmit={false}
           />
           <Button onPress={add}>{t('add')}</Button>
         </View>
@@ -475,7 +435,14 @@ const SuggestionsScreen = () => {
           }
         >
           <Text style={styles.value}>{suggestion.value}</Text>
-          <Text style={styles.usage}>{usageByValue.get(suggestion.value) ?? 0}</Text>
+          <Text
+            style={styles.usage}
+            accessibilityLabel={t('suggestion_usage_count', {
+              count: usageByValue.get(suggestion.value) ?? 0,
+            })}
+          >
+            {usageByValue.get(suggestion.value) ?? 0}
+          </Text>
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       ))}
@@ -487,7 +454,12 @@ const SuggestionsScreen = () => {
           onPress={() => navigation.navigate('SuggestionUsage', { type: selectedType, value })}
         >
           <Text style={styles.storyValue}>{value}</Text>
-          <Text style={styles.usage}>{usageCount}</Text>
+          <Text
+            style={styles.usage}
+            accessibilityLabel={t('suggestion_usage_count', { count: usageCount })}
+          >
+            {usageCount}
+          </Text>
           <View style={styles.icon}>
             <Ionicons
               name="link-outline"
@@ -499,7 +471,12 @@ const SuggestionsScreen = () => {
         </TouchableOpacity>
       ))}
       {selectedType && stored.length === 0 && storyValues.length === 0 && (
-        <Text style={styles.empty}>{t('no_suggestions_available')}</Text>
+        <GuidedEmptyState
+          icon="list-outline"
+          title={t('no_suggestions_available')}
+          message={canEdit ? t('suggestion_empty_hint') : undefined}
+          fallbackText={t('no_suggestions_available')}
+        />
       )}
     </ScrollView>
   );
@@ -513,7 +490,6 @@ const SuggestionsScreen = () => {
 
   return (
     <View ref={groupsAnchorRef} collapsable={false} style={commonContainerStyles.container}>
-      <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
       <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
       {isCompact ? (
         <>

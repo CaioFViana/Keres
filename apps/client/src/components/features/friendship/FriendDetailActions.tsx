@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import { type FriendAction, promptFriendActions } from './promptFriendActions';
+import FriendActionsModal, { type FriendAction } from './FriendActionsModal';
 
 /** What the friendship is right now, as far as the person's own buttons go. */
 export type FriendDetailMode = 'received' | 'sent' | 'friend' | 'blocked-by-me' | 'blocked-by-them';
@@ -44,6 +44,7 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
   onBlock,
 }) => {
   const { t } = useTranslation();
+  const [moreOpen, setMoreOpen] = useState(false);
   const cell = compact ? styles.cell : styles.natural;
   const messageLabel = compact
     ? t('friend_message_short')
@@ -52,15 +53,26 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
       : t('send_message');
 
   const blockAction: FriendAction = {
+    id: 'block',
     label: t('friend_block'),
+    icon: 'ban-outline',
     destructive: true,
     onPress: onBlock,
   };
-  // What ends something is behind one button, chosen in the system's dialog like the rest of the app's choices.
-  const more = (actions: FriendAction[]) => (
+  const unfriendAction: FriendAction = {
+    id: 'unfriend',
+    label: t('friend_unfriend'),
+    icon: 'person-remove-outline',
+    destructive: true,
+    onPress: onUnfriend,
+  };
+  // What ends something is behind one button, chosen in the app's own modal.
+  const moreActions = mode === 'friend' ? [unfriendAction, blockAction] : [blockAction];
+  const more = (
     <Button
       variant="secondary"
-      onPress={() => promptFriendActions(t, friendName, actions)}
+      icon="ellipsis-horizontal"
+      onPress={() => setMoreOpen(true)}
       style={cell}
       testID="friend-detail-menu"
       accessibilityLabel={t('friend_more_actions', { name: friendName })}
@@ -73,39 +85,49 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
     <View style={styles.row} testID="friend-detail-actions">
       {mode === 'friend' && (
         <>
-          <Button onPress={onMessage} style={cell} testID="friend-detail-message">
+          <Button
+            icon="chatbubble-outline"
+            onPress={onMessage}
+            style={cell}
+            testID="friend-detail-message"
+          >
             {messageLabel}
           </Button>
-          <Button variant="secondary" onPress={onInvite} style={cell} testID="friend-detail-invite">
+          <Button
+            variant="secondary"
+            icon="person-add-outline"
+            onPress={onInvite}
+            style={cell}
+            testID="friend-detail-invite"
+          >
             {compact ? t('friend_invite_short') : t('friend_invite_to_story')}
           </Button>
-          {more([
-            { label: t('friend_unfriend'), destructive: true, onPress: onUnfriend },
-            blockAction,
-          ])}
+          {more}
         </>
       )}
 
       {mode === 'received' && (
         <>
-          <Button onPress={onAccept} style={cell} testID="friend-detail-accept">
+          <Button icon="checkmark" onPress={onAccept} style={cell} testID="friend-detail-accept">
             {t('friend_accept')}
           </Button>
           <Button
             variant="secondary"
+            icon="close"
             onPress={onDecline}
             style={cell}
             testID="friend-detail-decline"
           >
             {t('friend_decline')}
           </Button>
-          {more([blockAction])}
+          {more}
         </>
       )}
 
       {mode === 'sent' && (
         <Button
           variant="secondary"
+          icon="close-circle-outline"
           onPress={onCancel}
           style={compact ? styles.cell : styles.natural}
           testID="friend-detail-cancel"
@@ -117,6 +139,7 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
       {mode === 'blocked-by-me' && (
         <Button
           variant="secondary"
+          icon="lock-open-outline"
           onPress={onUnblock}
           style={compact ? styles.cell : styles.natural}
           testID="friend-detail-unblock"
@@ -124,6 +147,12 @@ const FriendDetailActions: React.FC<FriendDetailActionsProps> = ({
           {t('friend_unblock')}
         </Button>
       )}
+      <FriendActionsModal
+        visible={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        friendName={friendName}
+        actions={moreActions}
+      />
     </View>
   );
 };

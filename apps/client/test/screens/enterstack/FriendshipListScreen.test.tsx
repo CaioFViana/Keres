@@ -270,7 +270,7 @@ describe('FriendshipListScreen', () => {
 
     // Acting on the second one acts on that server, as the person who is signed in there.
     await fireEvent.press(view.getByTestId('friend-menu-f9'));
-    await chooseInDialog('friend_unfriend');
+    await fireEvent.press(view.getByTestId('friend-action-unfriend'));
     await confirmInDialog();
     await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f9', 'me-on-srv-2'));
   });
@@ -398,30 +398,31 @@ describe('FriendshipListScreen', () => {
     expect(mockAlert).not.toHaveBeenCalled();
   });
 
-  it('offers remove and block in the system dialog, and asks again before doing either', async () => {
+  it('offers remove and block in the modal, with an icon and a word each, and asks again before doing either', async () => {
     mockGetAllFriendships.mockResolvedValue([pendingReceived, friend]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await view.findByText('Ana');
+    expect(view.queryByTestId('friend-action-unfriend')).toBeNull();
 
     await fireEvent.press(view.getByTestId('friend-menu-f3'));
-    // The choice is the app's own dialog: the friend's name for a title, then the actions, then a way out.
-    expect(mockAlert).toHaveBeenLastCalledWith('Ana', undefined, expect.any(Array));
-    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
-    expect(choices.map((choice) => choice.text)).toEqual([
-      'friend_unfriend',
-      'friend_block',
-      'cancel',
-    ]);
-    expect(choices.map((choice) => choice.style)).toEqual(['destructive', 'destructive', 'cancel']);
+    // The app's own modal, titled with the friend's name; each choice is an icon and its word.
+    expect(view.getByTestId('friend-action-unfriend')).toBeTruthy();
+    expect(view.getByTestId('friend-action-block')).toBeTruthy();
+    expect(view.getByText('friend_unfriend')).toBeTruthy();
+    expect(view.getByTestId('icon-person-remove-outline-22')).toBeTruthy();
+    expect(view.getByTestId('icon-ban-outline-22')).toBeTruthy();
     expect(mockUnfriend).not.toHaveBeenCalled();
+    expect(mockAlert).not.toHaveBeenCalled();
 
-    await chooseInDialog('friend_unfriend');
+    // Choosing closes the modal and opens the confirmation; only that one acts.
+    await fireEvent.press(view.getByTestId('friend-action-unfriend'));
+    expect(view.queryByTestId('friend-action-unfriend')).toBeNull();
     await confirmInDialog();
     await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f3', 'me-on-server'));
 
     await fireEvent.press(view.getByTestId('friend-menu-f3'));
-    await chooseInDialog('friend_block');
+    await fireEvent.press(view.getByTestId('friend-action-block'));
     await confirmInDialog();
     await waitFor(() => expect(mockBlacklist).toHaveBeenCalledWith('f3', 'me-on-server'));
   });
@@ -434,21 +435,21 @@ describe('FriendshipListScreen', () => {
 
     await fireEvent.press(view.getByTestId('friend-menu-f1'));
 
-    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
-    expect(choices.map((choice) => choice.text)).toEqual(['friend_block', 'cancel']);
+    expect(view.getByTestId('friend-action-block')).toBeTruthy();
+    expect(view.queryByTestId('friend-action-unfriend')).toBeNull();
   });
 
-  it('does nothing when the dialog is cancelled', async () => {
+  it('does nothing when the modal is cancelled', async () => {
     mockGetAllFriendships.mockResolvedValue([friend]);
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await view.findByText('Ana');
 
     await fireEvent.press(view.getByTestId('friend-menu-f3'));
-    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
-    choices.find((choice) => choice.text === 'cancel')?.onPress?.();
+    await fireEvent.press(view.getByTestId('friend-actions-cancel'));
 
-    expect(mockAlert).toHaveBeenCalledTimes(1);
+    expect(view.queryByTestId('friend-action-block')).toBeNull();
+    expect(mockAlert).not.toHaveBeenCalled();
     expect(mockUnfriend).not.toHaveBeenCalled();
     expect(mockBlacklist).not.toHaveBeenCalled();
   });

@@ -134,6 +134,50 @@ describe('Button variants', () => {
   });
 });
 
+const iconsOf = (view: Awaited<ReturnType<typeof render>>) =>
+  view.container.queryAll((node: any) => node.type === 'Icon') as any[];
+
+describe('Button icon', () => {
+  it('draws the icon before a text label, in the label color, and keeps the word', async () => {
+    const onPress = jest.fn();
+    const screen = await render(
+      <Button variant="danger" icon="ban-outline" onPress={onPress}>
+        Block
+      </Button>,
+    );
+
+    const icon = iconsOf(screen)[0];
+    expect(icon.props).toMatchObject({ name: 'ban-outline', size: 18, color: '#ff0000' });
+    expect(StyleSheet.flatten(screen.getByText('Block').props.style).color).toBe('#ff0000');
+    await fireEvent.press(screen.getByText('Block'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the on-fill color for the icon of a filled button', async () => {
+    const screen = await render(
+      <Button icon="checkmark" onPress={jest.fn()}>
+        Accept
+      </Button>,
+    );
+
+    const icon = iconsOf(screen)[0];
+    expect(icon.props.color).toBe(StyleSheet.flatten(screen.getByText('Accept').props.style).color);
+  });
+
+  it('has no icon unless one is given, and leaves node children alone', async () => {
+    const plain = await render(<Button onPress={jest.fn()}>Plain</Button>);
+    expect(iconsOf(plain)).toHaveLength(0);
+
+    const custom = await render(
+      <Button icon="ban-outline" onPress={jest.fn()}>
+        <View testID="custom" />
+      </Button>,
+    );
+    expect(custom.getByTestId('custom')).toBeTruthy();
+    expect(iconsOf(custom)).toHaveLength(0);
+  });
+});
+
 describe('ThemedSwitch', () => {
   it('toggles the value when pressed', async () => {
     const onValueChange = jest.fn();

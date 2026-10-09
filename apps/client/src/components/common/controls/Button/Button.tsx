@@ -1,7 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import { getOnColorForFill } from '@keres/shared';
 import React, { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 
 /**
@@ -12,6 +13,8 @@ export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
 interface ButtonProps {
   variant?: ButtonVariant;
+  /** Drawn before a text label, in the label's color: the icon says it at a glance, the word says it exactly. */
+  icon?: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -23,6 +26,7 @@ interface ButtonProps {
 
 const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
+  icon,
   onPress,
   children,
   style,
@@ -50,17 +54,24 @@ const Button: React.FC<ButtonProps> = ({
     const background =
       typeof flattened?.backgroundColor === 'string' ? flattened.backgroundColor : colors.primary;
 
-    return StyleSheet.create({
-      button: base,
-      disabledButton: {
-        opacity: 0.6,
-      },
-      buttonText: {
-        color: outlined ? outline : getOnColorForFill(colors, background),
-        fontSize: 16,
-        fontWeight: 'bold',
-      },
-    });
+    const textColor = outlined ? outline : getOnColorForFill(colors, background);
+
+    return {
+      textColor,
+      ...StyleSheet.create({
+        button: base,
+        disabledButton: {
+          opacity: 0.6,
+        },
+        buttonText: {
+          color: textColor,
+          fontSize: 16,
+          fontWeight: 'bold',
+        },
+        shrink: { flexShrink: 1 },
+        withIcon: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 8 },
+      }),
+    };
   }, [colors, style, variant]);
 
   return (
@@ -73,7 +84,16 @@ const Button: React.FC<ButtonProps> = ({
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
     >
-      {typeof children === 'string' ? <Text style={styles.buttonText}>{children}</Text> : children}
+      {typeof children !== 'string' ? (
+        children
+      ) : icon ? (
+        <View style={styles.withIcon}>
+          <Ionicons name={icon} size={18} color={styles.textColor} />
+          <Text style={[styles.buttonText, styles.shrink]}>{children}</Text>
+        </View>
+      ) : (
+        <Text style={styles.buttonText}>{children}</Text>
+      )}
     </TouchableOpacity>
   );
 };

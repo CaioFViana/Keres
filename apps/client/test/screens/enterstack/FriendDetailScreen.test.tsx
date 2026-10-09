@@ -268,7 +268,7 @@ describe('FriendDetailScreen', () => {
     await view.findByText('Zoe');
 
     await fireEvent.press(view.getByTestId('friend-detail-menu'));
-    await chooseInDialog('friend_block');
+    await fireEvent.press(view.getByTestId('friend-action-block'));
     expect(mockAlert).toHaveBeenLastCalledWith(
       'blacklist_confirmation_title',
       'blacklist_confirmation_message',
@@ -343,16 +343,13 @@ describe('FriendDetailScreen', () => {
     // Removing and blocking end something: they wait behind "More", not next to the message button.
     expect(view.queryByText('friend_unfriend')).toBeNull();
     await fireEvent.press(view.getByTestId('friend-detail-menu'));
-    // The system's dialog, titled with the friend's name: remove, block, and a way out.
-    expect(mockAlert).toHaveBeenLastCalledWith('Zoe', undefined, expect.any(Array));
-    const choices = mockAlert.mock.calls.at(-1)![2] as AlertButton[];
-    expect(choices.map((choice) => choice.text)).toEqual([
-      'friend_unfriend',
-      'friend_block',
-      'cancel',
-    ]);
+    // The app's own modal, titled with the friend's name: remove and block, each an icon and a word.
+    expect(view.getByTestId('friend-action-unfriend')).toBeTruthy();
+    expect(view.getByTestId('friend-action-block')).toBeTruthy();
+    expect(view.getByText('friend_unfriend')).toBeTruthy();
+    expect(mockAlert).not.toHaveBeenCalled();
 
-    await chooseInDialog('friend_unfriend');
+    await fireEvent.press(view.getByTestId('friend-action-unfriend'));
     await chooseInDialog('proceed');
     await waitFor(() => expect(mockUnfriend).toHaveBeenCalledWith('f1', 'me-on-server'));
   });
@@ -697,6 +694,38 @@ describe('FriendDetailScreen', () => {
   });
 
   describe('the buttons', () => {
+    // The names of the icons drawn inside one element, found by the Icon type the mock stands in with.
+    const iconsIn = (view: Awaited<ReturnType<typeof render>>, testID: string) =>
+      view.container
+        .queryAll((node: any) => node.type === 'Icon')
+        .filter((icon: any) => {
+          for (let parent = icon.parent; parent; parent = parent.parent) {
+            if (parent.props?.testID === testID) return true;
+          }
+          return false;
+        })
+        .map((icon: any) => `${icon.props.name}-${icon.props.size}`);
+
+    it('each carry an icon beside the word', async () => {
+      mockGetAllFriendships.mockResolvedValue([
+        friendship({ status: FriendStatus.FRIEND, senderId: 'me-on-server', receiverId: 'them' }),
+      ]);
+      const view = await render(<FriendDetailScreen />);
+      await view.findByTestId('friend-detail-actions');
+
+      expect(iconsIn(view, 'friend-detail-message')).toEqual(['chatbubble-outline-18']);
+      expect(iconsIn(view, 'friend-detail-invite')).toEqual(['person-add-outline-18']);
+      expect(iconsIn(view, 'friend-detail-menu')).toEqual(['ellipsis-horizontal-18']);
+    });
+
+    it('answer a request with a check and a cross', async () => {
+      const view = await render(<FriendDetailScreen />);
+      await view.findByTestId('friend-detail-actions');
+
+      expect(iconsIn(view, 'friend-detail-accept')).toEqual(['checkmark-18']);
+      expect(iconsIn(view, 'friend-detail-decline')).toEqual(['close-18']);
+    });
+
     const asFriend = () =>
       mockGetAllFriendships.mockResolvedValue([
         friendship({ status: FriendStatus.FRIEND, senderId: 'me-on-server', receiverId: 'them' }),

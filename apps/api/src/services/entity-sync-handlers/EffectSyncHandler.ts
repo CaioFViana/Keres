@@ -1,10 +1,9 @@
 import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateEffectDataSchema, PartialEffectSchema } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
-import { effects, items } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { effects } from '../../db/schema';
+import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class EffectSyncHandler extends BaseSyncEntityHandler<
   typeof CreateEffectDataSchema,
@@ -26,15 +25,7 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     database: CompatibleDb = db,
   ): Promise<void> {
     if (itemId) {
-      const itemExists = await database.query.items.findFirst({
-        where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
-      });
-      if (!itemExists) {
-        throw new SyncConflictError(
-          'referenced_entity_deleted',
-          `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
-        );
-      }
+      await this.assertItemInStory(storyId, itemId, database);
     }
   }
 

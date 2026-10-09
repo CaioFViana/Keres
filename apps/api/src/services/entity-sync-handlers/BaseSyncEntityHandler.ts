@@ -15,6 +15,7 @@ import type { SQL } from 'drizzle-orm';
 import { and, count, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db, type CompatibleDb } from '../../db';
+import { items } from '../../db/schema';
 import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
 import { syncValuesMatch } from './syncValueComparison';
 
@@ -702,6 +703,26 @@ export abstract class BaseSyncEntityHandler<
       throw new SyncConflictError(
         'referenced_entity_deleted',
         `${entityType} ${entityId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
+    }
+  }
+
+  /**
+   * Refuses an item reference that is deleted or belongs to another story. ChoiceCheck and Effect
+   * both link to items by a plain column, so the check lives here instead of in each handler.
+   */
+  protected async assertItemInStory(
+    storyId: string,
+    itemId: string,
+    database: CompatibleDb = db,
+  ): Promise<void> {
+    const itemExists = await database.query.items.findFirst({
+      where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
+    });
+    if (!itemExists) {
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
       );
     }
   }

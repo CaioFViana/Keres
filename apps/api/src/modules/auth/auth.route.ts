@@ -1,6 +1,6 @@
 import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
-import { Elysia, t } from 'elysia';
+import { Cookie, Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { comparePassword, hashPassword } from '../../config/bcrypt';
 import { env } from '../../config/env';
@@ -35,6 +35,34 @@ const AuthSessionResponseSchema = t.Object({
   username: t.String(),
   tag: t.String(),
 });
+
+/**
+ * Sets the hosted web client's session cookies: the access token for one hour, the refresh token for
+ * seven days. Every route that starts a session uses this, so the flags cannot drift between them.
+ */
+function setSessionCookies(
+  cookie: Record<string, Cookie<unknown>>,
+  accessToken: string,
+  refreshToken: string,
+) {
+  cookie['access_token'].set({
+    value: accessToken,
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 3600, // 1 hour
+  });
+
+  cookie['refresh_token'].set({
+    value: refreshToken,
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 3600, // 7 days
+  });
+}
 
 export const authRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -110,23 +138,7 @@ export const authRoutes = new Elysia()
       // admin panel and the public site keep their own token and ask for none, or signing in there
       // would swap the account the web client is using (and signing out there would end its session).
       if (body.session !== 'token') {
-        cookie['access_token'].set({
-          value: accessToken,
-          httpOnly: true,
-          secure: env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 3600, // 1 hour
-        });
-
-        cookie['refresh_token'].set({
-          value: refreshToken,
-          httpOnly: true,
-          secure: env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 7 * 24 * 3600, // 7 days
-        });
+        setSessionCookies(cookie, accessToken, refreshToken);
       }
 
       return { accessToken, refreshToken, userId: user.id, username: user.username, tag: user.tag };
@@ -195,23 +207,7 @@ export const authRoutes = new Elysia()
         username: newUser.username,
       });
 
-      cookie['access_token'].set({
-        value: accessToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 3600, // 1 hour
-      });
-
-      cookie['refresh_token'].set({
-        value: refreshToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 3600, // 7 days
-      });
+      setSessionCookies(cookie, accessToken, refreshToken);
 
       return {
         accessToken,
@@ -271,22 +267,7 @@ export const authRoutes = new Elysia()
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
       const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });
 
-      cookie['access_token'].set({
-        value: accessToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 3600,
-      });
-      cookie['refresh_token'].set({
-        value: refreshToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 3600,
-      });
+      setSessionCookies(cookie, accessToken, refreshToken);
 
       return { accessToken, refreshToken, userId: user.id, username: user.username, tag: user.tag };
     },
@@ -344,23 +325,7 @@ export const authRoutes = new Elysia()
         username: payload.username,
       });
 
-      cookie['access_token'].set({
-        value: newAccessToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 3600, // 1 hour
-      });
-
-      cookie['refresh_token'].set({
-        value: newRefreshToken,
-        httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 3600, // 7 days
-      });
+      setSessionCookies(cookie, newAccessToken, newRefreshToken);
 
       return {
         accessToken: newAccessToken,

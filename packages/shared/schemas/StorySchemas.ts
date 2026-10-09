@@ -32,56 +32,39 @@ export const StoryVocabularySchema: z.ZodType<StoryVocabulary> = z.object({
   }),
 });
 
+/** The story's own attributes, shared by the client-side creation input and the sync create payload. */
+const StoryCreateAttributesShape = {
+  title: z.string().min(1, 'Title cannot be empty'),
+  type: StoryTypeSchema,
+  description: z.string().nullable().optional(),
+  genre: z.string().nullable().optional(),
+  language: z.string().nullable().optional(),
+  author: z.string().nullable().optional(),
+  isFavorite: z.boolean().default(false),
+  favoriteBehavior: FavoriteBehaviorSchema.default('individual'),
+  extraNotes: z.string().nullable().optional(),
+  theme: z.string().nullable().optional(),
+  timelineEpochDay: z.number().int().nullable().default(null),
+  timelineEpochSeconds: z.number().int().nonnegative().nullable().default(null),
+  normalizeSceneTiming: z.boolean().default(false),
+  allowReaderComments: z.boolean().default(false),
+  autoLinkMentions: z.boolean().default(false),
+  completenessChecks: z.boolean().default(false),
+  isNsfw: z.boolean().default(false),
+  statSystem: z.boolean().default(false),
+  statNotation: StatNotationSchema.default('letter'),
+  vocabulary: StoryVocabularySchema.nullable().default(null),
+  coverGalleryId: z.string().min(1).nullable().default(null),
+};
+
 // Schema for client-provided input during story creation
 export const StoryCreateInputSchema = z.object({
   id: UlidSchema, // Client provides ULID
-  title: z.string().min(1, 'Title cannot be empty'),
-  type: StoryTypeSchema,
-  description: z.string().nullable().optional(),
-  genre: z.string().nullable().optional(),
-  language: z.string().nullable().optional(),
-  author: z.string().nullable().optional(),
-  isFavorite: z.boolean().default(false),
-  favoriteBehavior: FavoriteBehaviorSchema.default('individual'),
-  extraNotes: z.string().nullable().optional(),
-  theme: z.string().nullable().optional(),
-  timelineEpochDay: z.number().int().nullable().default(null),
-  timelineEpochSeconds: z.number().int().nonnegative().nullable().default(null),
-  normalizeSceneTiming: z.boolean().default(false),
-  allowReaderComments: z.boolean().default(false),
-  autoLinkMentions: z.boolean().default(false),
-  completenessChecks: z.boolean().default(false),
-  isNsfw: z.boolean().default(false),
-  statSystem: z.boolean().default(false),
-  statNotation: StatNotationSchema.default('letter'),
-  vocabulary: StoryVocabularySchema.nullable().default(null),
-  coverGalleryId: z.string().min(1).nullable().default(null),
+  ...StoryCreateAttributesShape,
 });
 
 // Schema for the 'data' payload when creating a story via sync
-export const CreateStoryDataSchema = z.object({
-  title: z.string().min(1, 'Title cannot be empty'),
-  type: StoryTypeSchema,
-  description: z.string().nullable().optional(),
-  genre: z.string().nullable().optional(),
-  language: z.string().nullable().optional(),
-  author: z.string().nullable().optional(),
-  isFavorite: z.boolean().default(false),
-  favoriteBehavior: FavoriteBehaviorSchema.default('individual'),
-  extraNotes: z.string().nullable().optional(),
-  theme: z.string().nullable().optional(),
-  timelineEpochDay: z.number().int().nullable().default(null),
-  timelineEpochSeconds: z.number().int().nonnegative().nullable().default(null),
-  normalizeSceneTiming: z.boolean().default(false),
-  allowReaderComments: z.boolean().default(false),
-  autoLinkMentions: z.boolean().default(false),
-  completenessChecks: z.boolean().default(false),
-  isNsfw: z.boolean().default(false),
-  statSystem: z.boolean().default(false),
-  statNotation: StatNotationSchema.default('letter'),
-  vocabulary: StoryVocabularySchema.nullable().default(null),
-  coverGalleryId: z.string().min(1).nullable().default(null),
-});
+export const CreateStoryDataSchema = z.object(StoryCreateAttributesShape);
 
 // Full Story Schema, including server-managed fields like userId
 export const StorySchema = StoryCreateInputSchema.extend({

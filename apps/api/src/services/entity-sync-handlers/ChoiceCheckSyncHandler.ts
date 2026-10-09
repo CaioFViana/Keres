@@ -3,7 +3,7 @@ import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@k
 import { CreateChoiceCheckDataSchema, PartialChoiceCheckSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
-import { choiceCheckGroups, choiceChecks, items, scenes } from '../../db/schema';
+import { choiceCheckGroups, choiceChecks, scenes } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
@@ -58,15 +58,7 @@ export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
     }
 
     if (itemId) {
-      const itemExists = await database.query.items.findFirst({
-        where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
-      });
-      if (!itemExists) {
-        throw new SyncConflictError(
-          'referenced_entity_deleted',
-          `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
-        );
-      }
+      await this.assertItemInStory(storyId, itemId, database);
     }
   }
 

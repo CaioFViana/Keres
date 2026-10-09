@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AdminMessage, AdminMessageDetail, AdminMessageListQuery } from '@keres/shared';
@@ -6,6 +6,8 @@ import { MESSAGE_BODY_MAX_LENGTH } from '@keres/shared/metadata/MessageLimits';
 import { parseNsfwReportBody } from '@keres/shared/utils/storyReport';
 import { announceMessagesChanged, MessagesApiService } from '../../api/MessagesApiService';
 import { Modal } from '../../components/Modal';
+import { Pagination } from '../../components/Pagination';
+import { useAdminList } from '../../hooks/useAdminList';
 
 type Source = AdminMessageListQuery['source'];
 type ReadFilter = AdminMessageListQuery['read'];
@@ -65,8 +67,6 @@ function ReportBadge({ body }: { body: string }) {
 
 export function MessagesPage() {
   const { t, i18n } = useTranslation('admin');
-  const [items, setItems] = useState<AdminMessage[]>([]);
-  const [total, setTotal] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [source, setSource] = useState<Source>('all');
@@ -75,9 +75,6 @@ export function MessagesPage() {
   const [sort, setSort] = useState<Sort>('date');
   const [order, setOrder] = useState<Order>('desc');
   const [page, setPage] = useState(1);
-  const [reloadToken, setReloadToken] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminMessageDetail | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
@@ -89,38 +86,31 @@ export function MessagesPage() {
     </Modal>
   );
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    setError(null);
-    MessagesApiService.list({
-      search: search || undefined,
-      source,
-      read,
-      archived,
-      sort,
-      order,
-      page,
-      pageSize: PAGE_SIZE,
-    })
-      .then((result) => {
-        if (ignore) return;
-        setItems(result.items);
-        setTotal(result.total);
-      })
-      .catch((err) => {
-        if (!ignore) setError(err.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [search, source, read, archived, sort, order, page, reloadToken]);
+  const {
+    items,
+    total,
+    loading,
+    error,
+    setItems,
+    setError,
+    reload: reloadList,
+  } = useAdminList(
+    () =>
+      MessagesApiService.list({
+        search: search || undefined,
+        source,
+        read,
+        archived,
+        sort,
+        order,
+        page,
+        pageSize: PAGE_SIZE,
+      }),
+    [search, source, read, archived, sort, order, page],
+  );
 
   const reload = () => {
-    setReloadToken((n) => n + 1);
+    reloadList();
     announceMessagesChanged();
   };
 
@@ -491,25 +481,7 @@ export function MessagesPage() {
         </div>
       )}
 
-      <div className="pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          {t('common.previous')}
-        </button>
-        <span>
-          {t('common.pagination', {
-            page,
-            pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
-            total,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={page * PAGE_SIZE >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {t('common.next')}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
       {noticeModal}
     </div>
   );

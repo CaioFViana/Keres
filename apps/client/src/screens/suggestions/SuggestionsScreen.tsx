@@ -379,7 +379,7 @@ const SuggestionsScreen = () => {
     copyList: { maxHeight: 280, marginBottom: 12 },
     copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
     copyLabel: { flex: 1, color: colors.text },
-    modalContent: { padding: 16, gap: 12 },
+    modalContent: { gap: 12 },
     modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
   });
 
@@ -506,6 +506,7 @@ const SuggestionsScreen = () => {
         visible={creatingList}
         onClose={() => setCreatingList(false)}
         contentStyle={styles.modalContent}
+        inset="regular"
       >
         <Text style={styles.modalTitle}>{t('suggestion_new_list')}</Text>
         <TextInput
@@ -523,6 +524,7 @@ const SuggestionsScreen = () => {
         visible={renamingList}
         onClose={() => setRenamingList(false)}
         contentStyle={styles.modalContent}
+        inset="regular"
       >
         <Text style={styles.modalTitle}>{t('suggestion_rename_list')}</Text>
         <TextInput
@@ -540,6 +542,7 @@ const SuggestionsScreen = () => {
         visible={copying}
         onClose={() => setCopying(false)}
         contentStyle={styles.modalContent}
+        inset="regular"
       >
         <Text style={styles.modalTitle}>{t('suggestion_copy_to')}</Text>
         <ScrollView style={styles.copyList}>

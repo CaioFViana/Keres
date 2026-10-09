@@ -54,9 +54,6 @@ const SuggestionCatalogModal: React.FC<SuggestionCatalogModalProps> = ({
   }, [searchQuery, suggestions]);
 
   const styles = StyleSheet.create({
-    modalContent: {
-      padding: 10,
-    },
     searchInput: {
       width: '100%',
       marginBottom: 10,
@@ -84,7 +81,7 @@ const SuggestionCatalogModal: React.FC<SuggestionCatalogModalProps> = ({
     <ResponsiveModal
       visible={visible}
       onClose={onClose}
-      contentStyle={styles.modalContent}
+      inset="compact"
       maxHeight={Math.min(screenHeight * 0.78, 680)}
     >
       <TextInput

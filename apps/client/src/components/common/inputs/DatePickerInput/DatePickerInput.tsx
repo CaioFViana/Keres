@@ -86,11 +86,6 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
       backgroundColor: 'transparent',
       textTransform: 'capitalize',
     },
-    modalView: {
-      backgroundColor: colors.background,
-      borderRadius: 20,
-      padding: 10,
-    },
   });
 
   return (
@@ -112,7 +107,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
       <ResponsiveModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        contentStyle={styles.modalView}
+        inset="compact"
         maxHeight="92%"
       >
         <DatePickerModal

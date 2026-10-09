@@ -1,13 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { useConflictReviewData } from '../../../../hooks/useConflictReviewData';
 import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
 import { useTheme } from '../../../../theme';
-import { type } from '../../../../theme/tokens';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { AppAlert } from '@/src/utils/AppAlert';
 import ConflictDetailSheet from '../ConflictDetailSheet/ConflictDetailSheet';
@@ -138,9 +137,6 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
       backgroundColor: colors.border,
       marginBottom: 14,
     },
-    header: { flexDirection: 'row', alignItems: 'center' },
-    title: { ...type.title, flex: 1, color: colors.text },
-    closeButton: { padding: 4 },
     sectionTitle: {
       fontSize: 13,
       fontWeight: 'bold',
@@ -169,17 +165,11 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
         maxHeight="78%"
       >
         <View style={styles.handle} />
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('conflict_review_title')}</Text>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.closeButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('conflict_close_review')}
-          >
-            <Ionicons name="close" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
+        <ModalHeader
+          title={t('conflict_review_title')}
+          onClose={onClose}
+          closeLabel={t('conflict_close_review')}
+        />
 
         {sections.length === 0 ? (
           <Text style={styles.emptyText}>{t('conflict_review_empty')}</Text>

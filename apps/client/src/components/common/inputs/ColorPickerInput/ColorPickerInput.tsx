@@ -74,9 +74,6 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
       backgroundColor: 'transparent',
     },
     modalView: {
-      backgroundColor: colors.background, // Use background for modal content
-      borderRadius: 20,
-      padding: 20,
       alignItems: 'center',
     },
   });
@@ -105,6 +102,7 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         contentStyle={styles.modalView}
+        inset="roomy"
         maxHeight="92%"
       >
         <ColorPickerModal

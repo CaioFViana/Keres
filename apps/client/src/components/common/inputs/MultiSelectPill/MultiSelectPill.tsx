@@ -298,11 +298,6 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       fontSize: 14,
       fontWeight: '600',
     },
-    modalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      overflow: 'hidden',
-    },
     modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -480,7 +475,6 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
       <ResponsiveModal
         visible={modalVisible}
         onClose={closeModal}
-        contentStyle={styles.modalContent}
         maxHeight={Math.min(screenHeight * 0.75, 720)}
       >
         <View style={{ flexShrink: 1 }}>

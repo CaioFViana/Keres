@@ -10,6 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
 import type { ManuscriptSection } from '@keres/shared';
@@ -148,9 +149,6 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-        title: { color: colors.text, fontSize: 20, fontWeight: '700', flexShrink: 1 },
-        closeButton: { padding: 5 },
         searchInput: {
           marginTop: 12,
           paddingHorizontal: 12,
@@ -254,18 +252,11 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
       inset="roomy"
     >
       <View testID="manuscript-index-modal">
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('manuscript_index_title')}</Text>
-          <TouchableOpacity
-            testID="manuscript-index-close"
-            onPress={onClose}
-            style={styles.closeButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('close')}
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        <ModalHeader
+          title={t('manuscript_index_title')}
+          onClose={onClose}
+          closeTestID="manuscript-index-close"
+        />
         <TextInput
           testID="manuscript-index-search"
           style={styles.searchInput}

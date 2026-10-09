@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
-import { type } from '@/src/theme/tokens';
 
 export type EntityMediaAddKind = 'playable' | 'document' | 'link' | 'existing';
 
@@ -30,10 +30,7 @@ const GalleryAddMediaModal: React.FC<Props> = ({ visible, onClose, onPick }) => 
   const { colors } = useTheme();
   const { t } = useTranslation();
   const styles = StyleSheet.create({
-    header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-    title: { ...type.title, color: colors.text, flex: 1 },
-    close: { padding: 4 },
-    message: { color: colors.textSecondary, lineHeight: 19, marginTop: 8 },
+    message: { color: colors.textSecondary, lineHeight: 19 },
     options: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -59,17 +56,7 @@ const GalleryAddMediaModal: React.FC<Props> = ({ visible, onClose, onPick }) => 
       inset="roomy"
       maxHeight="86%"
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('gallery_add_title')}</Text>
-        <TouchableOpacity
-          accessibilityLabel={t('cancel')}
-          accessibilityRole="button"
-          onPress={onClose}
-          style={styles.close}
-        >
-          <Ionicons name="close" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader title={t('gallery_add_title')} onClose={onClose} closeLabel={t('cancel')} />
       <Text style={styles.message}>{t('gallery_add_message')}</Text>
       <View style={styles.options}>
         {addKinds.map((option) => (

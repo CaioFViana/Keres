@@ -20,9 +20,7 @@ import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearch
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
-import type {
-  MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import type { StorySettingsStackParamList } from '../../navigation/StorySettingsStack';
 import type { SuggestionUsage } from '../../services/storymanagement/SuggestionService';
 import {
@@ -279,6 +277,7 @@ const SuggestionUsageScreen = () => {
         visible={renaming}
         onClose={() => setRenaming(false)}
         contentStyle={stylesForScreen.modal}
+        inset="regular"
       >
         <Text style={stylesForScreen.modalTitle}>{t('suggestion_rename_value')}</Text>
         <TextInput value={newValue} onChangeText={setNewValue} style={commonInputStyles.input} />
@@ -344,7 +343,7 @@ const styles = (colors: any) =>
     empty: { color: colors.textSecondary, padding: 24, textAlign: 'center' },
     relationLinks: { flexDirection: 'row', gap: 10, marginTop: 6 },
     relationLink: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-    modal: { gap: 12, padding: 16 },
+    modal: { gap: 12 },
     modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
     checkbox: { alignItems: 'center', flexDirection: 'row', gap: 8 },
     checkboxText: { color: colors.text, flex: 1 },

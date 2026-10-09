@@ -4,6 +4,7 @@ import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import Button from '@/src/components/common/controls/Button/Button';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
@@ -132,24 +133,12 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
     <ResponsiveModal
       visible={isVisible}
       onClose={onClose}
-      contentStyle={[
-        styles.modalContent,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+      contentStyle={[styles.modalContent, { borderColor: colors.border }]}
+      tone="raised"
+      inset="roomy"
       maxHeight="86%"
     >
-      <View style={styles.modalHeader}>
-        <Text style={[styles.modalTitle, { color: colors.text }]}>
-          {t('advanced_search_title')}
-        </Text>
-        <TouchableOpacity
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel={t('close')}
-        >
-          <Ionicons name="close" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader title={t('advanced_search_title')} onClose={onClose} />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -340,23 +329,11 @@ const AdvancedSearchScopeFields: React.FC<AdvancedSearchScopeFieldsProps> = ({
 
 const styles = StyleSheet.create({
   modalContent: {
-    borderRadius: 10,
     borderWidth: 1,
-    padding: 20,
     // ResponsiveModal normally clips to preserve rounded media/modal surfaces.
     // Advanced-search controls draw their focus treatment at the edge, so this
     // particular form must let that treatment extend into its own padding.
     overflow: 'visible',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   scrollView: {
     flexGrow: 1,

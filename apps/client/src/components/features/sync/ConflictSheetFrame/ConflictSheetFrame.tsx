@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
 interface ConflictSheetFrameProps {
@@ -33,11 +33,6 @@ const ConflictSheetFrame: React.FC<ConflictSheetFrameProps> = ({
       backgroundColor: colors.border,
       marginBottom: 14,
     },
-    header: { flexDirection: 'row', alignItems: 'center' },
-    headerText: { flex: 1, marginRight: 12 },
-    title: { fontSize: 18, fontWeight: 'bold', color: colors.text },
-    subtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-    closeButton: { padding: 4 },
   });
 
   return (
@@ -51,20 +46,12 @@ const ConflictSheetFrame: React.FC<ConflictSheetFrameProps> = ({
       maxHeight="85%"
     >
       <View style={styles.handle} />
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
-        </View>
-        <TouchableOpacity
-          onPress={onClose}
-          style={styles.closeButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('conflict_close_details')}
-        >
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        title={title}
+        subtitle={subtitle}
+        onClose={onClose}
+        closeLabel={t('conflict_close_details')}
+      />
 
       <ScrollView>{children}</ScrollView>
     </ResponsiveModal>

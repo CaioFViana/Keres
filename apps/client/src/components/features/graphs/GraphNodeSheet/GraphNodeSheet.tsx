@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
-import { type } from '@/src/theme/tokens';
 
 export interface GraphNodeSheetBadge {
   label: string;
@@ -60,23 +60,6 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           borderRadius: 2,
           backgroundColor: colors.border,
           marginBottom: 14,
-        },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        },
-        headerText: {
-          flex: 1,
-          marginRight: 12,
-        },
-        title: {
-          ...type.title,
-          color: colors.text,
-        },
-        closeButton: { padding: 4 },
-        subtitle: {
-          fontSize: 13,
-          marginTop: 2,
         },
         badgeRow: {
           flexDirection: 'row',
@@ -175,19 +158,12 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
       maxHeight="78%"
     >
       <View style={styles.handle} />
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && (
-            <Text style={[styles.subtitle, { color: subtitle.color || colors.textSecondary }]}>
-              {subtitle.text}
-            </Text>
-          )}
-        </View>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        title={title}
+        subtitle={subtitle?.text}
+        subtitleColor={subtitle?.color}
+        onClose={onClose}
+      />
       {!!badges?.length && (
         <View style={styles.badgeRow}>
           {badges.map((badge) => (

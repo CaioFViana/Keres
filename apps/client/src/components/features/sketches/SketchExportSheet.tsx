@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
-import { space, type } from '../../../theme/tokens';
 
 interface SketchExportSheetProps {
   hasCover: boolean;
@@ -31,8 +31,6 @@ const SketchExportSheet: React.FC<SketchExportSheetProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = StyleSheet.create({
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: space.md },
-    title: { ...type.title, color: colors.text, flex: 1 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -66,12 +64,7 @@ const SketchExportSheet: React.FC<SketchExportSheetProps> = ({
   ];
   return (
     <ResponsiveModal visible onClose={onClose} placement="adaptive" tone="raised" inset="sheet">
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('sketch_export_title')}</Text>
-        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} disabled={busy}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader title={t('sketch_export_title')} onClose={onClose} closeDisabled={busy} />
       {options.map(({ icon, title, sub, onPress }) => (
         <TouchableOpacity
           key={title}

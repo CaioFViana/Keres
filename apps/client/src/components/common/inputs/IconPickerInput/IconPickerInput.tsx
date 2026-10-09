@@ -68,9 +68,6 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
       color: currentIcon ? colors.text : colors.textSecondary,
     },
     modalView: {
-      backgroundColor: colors.background,
-      borderRadius: 20,
-      padding: 20,
       alignItems: 'center',
     },
   });
@@ -88,6 +85,7 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         contentStyle={styles.modalView}
+        inset="roomy"
         maxHeight="92%"
       >
         <IconPickerModal

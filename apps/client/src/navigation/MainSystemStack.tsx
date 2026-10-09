@@ -2,27 +2,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
-import {
-  CommonActions,
-  getFocusedRouteNameFromRoute,
-  useNavigation,
-} from '@react-navigation/native';
+import type { NavigatorScreenParams } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
-import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import MainDrawerMenu from '../components/common/navigation/MainDrawerMenu/MainDrawerMenu';
-import ResizableDrawerContent, {
-  DRAWER_MIN_WIDTH,
-  useResizableDrawerWidth,
-} from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
+import ResizableDrawerContent from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import ArcPickerModal from '../components/features/arcs/ArcPickerModal';
-import { screenHelpPage } from '../help/contextualHelp';
-import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { useStoryArcs } from '../hooks/useStoryArcs';
 import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
 import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
@@ -33,13 +22,9 @@ import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
 import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
-import {
-  DRAWER_SWIPE_EDGE_WIDTH,
-  DRAWER_SWIPE_MIN_DISTANCE,
-  drawerItemListeners,
-} from './drawerInteraction';
+import { drawerItemListeners } from './drawerInteraction';
+import { drawerScreenOptions, readDrawerHeaderRoute, useDrawerChrome } from './drawerHeaderOptions';
 import type { ArcsStackParamList } from './ArcsStack';
 import ArcsStackNavigator from './ArcsStack';
 import type { CalendarsStackParamList } from './CalendarsStack';
@@ -58,9 +43,7 @@ import {
   ArcContextDrawerScreen,
   drawerIcon,
   drawerStoredIcon,
-  DrawerToggleButton,
   headerBackAction,
-  type MainDashboardScreenNavigationProp,
   mainSystemStackRootScreens,
 } from './MainSystemDrawerHelpers';
 
@@ -152,20 +135,15 @@ export type MainSystemDrawerParamList = {
 const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
 
 const MainSystemNavigator = () => {
-  const { colors } = useTheme();
+  const chrome = useDrawerChrome();
+  const { t, isCompact, isWide, drawerWidth, setDrawerWidth, maximumWidth } = chrome;
   const { selectedStory } = useStoryStore();
   const rootNavigation = useNavigation();
-  const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { arcs, activeArc, activeArcId, setActiveArcId, showSelector } = useStoryArcs();
   const [arcPickerOpen, setArcPickerOpen] = React.useState(false);
-  const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
   const suggestLiteraryDevices = useUserSettingsStore((state) => state.suggestLiteraryDevices);
-  const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const crossStackReturnScreen = useHeaderBackActionStore((state) => state.crossStackReturnScreen);
-  const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
-  const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
-  const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
 
   // The story on screen was taken away (the owner removed this person, say): its local copy is gone, so
   // leave it rather than keep showing - and saving to - a story that no longer exists here.
@@ -221,94 +199,30 @@ const MainSystemNavigator = () => {
           </ResizableDrawerContent>
         )}
         screenOptions={({ navigation, route }) => {
-          const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
-          const helpPageId = screenHelpPage[activeRouteName];
-          const nestedState = (route as typeof route & { state?: NavigationState }).state;
-          const focusedNestedRoute = nestedState?.routes[nestedState.index ?? 0];
-          const isHelpPage =
-            activeRouteName === 'HelpPage' || focusedNestedRoute?.name === 'HelpPage';
-          const nestedStackKey = nestedState?.key;
+          const header = readDrawerHeaderRoute(route);
           const isNestedDestination =
-            activeRouteName !== route.name && !mainSystemStackRootScreens.has(activeRouteName);
+            header.activeRouteName !== route.name &&
+            !mainSystemStackRootScreens.has(header.activeRouteName);
           // A root screen has no arrow - nothing is behind it - unless a shortcut elsewhere opened it and left
           // the way back: the dashboard's Read, Analysis and History cards open roots of other stacks.
           const isRootWithWayBack =
-            activeRouteName !== route.name && crossStackReturnScreen === activeRouteName;
-          const showNestedBackButton =
-            isNestedDestination ||
-            isRootWithWayBack ||
-            (nestedState?.type === 'stack' && (nestedState.index ?? 0) > 0 && nestedStackKey);
-          const goBackFromHeader = headerBackAction({
-            navigation,
-            routeKey: route.key,
-            fallbackStackKey: nestedStackKey,
-            screen: activeRouteName,
-          });
+            header.activeRouteName !== route.name &&
+            crossStackReturnScreen === header.activeRouteName;
 
-          return {
-            headerShown: true,
-            headerStatusBarHeight: 0,
-            headerStyle: {
-              backgroundColor: colors.surface,
-            },
-            headerTintColor: colors.text,
-            headerTitleContainerStyle:
-              !isHelpPage && !showNestedBackButton && isWide && !showContextualHelp
-                ? { marginLeft: 15 }
-                : undefined,
-            // The nested screens use headerRight for actions such as create and edit. The help shortcut stays on
-            // the left so it remains visible when those actions take over the right-hand side of the drawer's
-            // header.
-            headerLeft: isHelpPage
-              ? () => (
-                  <NavigationBackButton
-                    onPress={
-                      nestedBackAction ??
-                      (() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }))
-                    }
-                  />
-                )
-              : showNestedBackButton || !isWide || (showContextualHelp && helpPageId)
-                ? () => (
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      {showNestedBackButton ? (
-                        <NavigationBackButton onPress={nestedBackAction ?? goBackFromHeader} />
-                      ) : null}
-                      {!isWide ? (
-                        <DrawerToggleButton
-                          navigation={navigation as MainDashboardScreenNavigationProp}
-                        />
-                      ) : null}
-                      {showContextualHelp && helpPageId ? (
-                        <TouchableOpacity
-                          onPress={() =>
-                            navigation.navigate('HelpDrawer', {
-                              screen: 'HelpPage',
-                              params: { pageId: helpPageId, returnDrawerRoute: route.name },
-                            })
-                          }
-                          style={{ marginLeft: showNestedBackButton || !isWide ? 8 : 15 }}
-                          accessibilityLabel={t('help_title')}
-                        >
-                          <Ionicons name="help-circle-outline" size={26} color={colors.text} />
-                        </TouchableOpacity>
-                      ) : null}
-                    </View>
-                  )
-                : () => null,
-            headerRight: undefined,
-            drawerActiveTintColor: colors.primary,
-            drawerInactiveTintColor: colors.text,
-            drawerType: isWide ? 'permanent' : 'front',
-            swipeEnabled: !isWide,
-            swipeEdgeWidth: isWide ? 0 : DRAWER_SWIPE_EDGE_WIDTH,
-            swipeMinDistance: DRAWER_SWIPE_MIN_DISTANCE,
-            drawerStyle: {
-              backgroundColor: colors.surface,
-              minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
-              width: isCompact ? compactDrawerWidth : drawerWidth,
-            },
-          };
+          return drawerScreenOptions({
+            chrome,
+            navigation,
+            route,
+            header,
+            showNestedBackButton:
+              isNestedDestination || isRootWithWayBack || header.nestedStackHasBack,
+            goBack: headerBackAction({
+              navigation,
+              routeKey: route.key,
+              fallbackStackKey: header.nestedStackKey,
+              screen: header.activeRouteName,
+            }),
+          });
         }}
       >
         <Drawer.Screen

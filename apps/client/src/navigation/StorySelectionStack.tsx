@@ -1,28 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import type { NavigationState, NavigatorScreenParams } from '@react-navigation/native';
-import {
-  DrawerActions,
-  getFocusedRouteNameFromRoute,
-  StackActions,
-} from '@react-navigation/native';
+import { StackActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import FriendshipDrawerIcon from '../components/features/messages/FriendshipDrawerIcon';
 import ServerDrawerIcon from '../components/features/messages/ServerDrawerIcon';
-import { TouchableOpacity, View } from 'react-native';
-import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
-import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
 import SelectionDrawerMenu from '../components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
-import ResizableDrawerContent, {
-  DRAWER_MIN_WIDTH,
-  useResizableDrawerWidth,
-} from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
+import ResizableDrawerContent from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
-import { screenHelpPage } from '../help/contextualHelp';
 import { isServerless } from '../utils/clientFlavor';
-import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
 import CreditsScreen from '../screens/enterstack/CreditsScreen';
@@ -45,16 +32,10 @@ import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationSc
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
 import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
-import {
-  DRAWER_SWIPE_EDGE_WIDTH,
-  DRAWER_SWIPE_MIN_DISTANCE,
-  drawerItemListeners,
-} from './drawerInteraction';
+import { drawerScreenOptions, readDrawerHeaderRoute, useDrawerChrome } from './drawerHeaderOptions';
+import { drawerItemListeners } from './drawerInteraction';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -137,14 +118,6 @@ const storySelectionStackRootScreens = new Set([
   // The settings stack's own root: the drawer entry it sits behind is called `Settings`.
   'SettingsHome',
 ]);
-
-type StorySelectionMainDrawerNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList>;
-
-const DrawerToggleButton = ({
-  navigation,
-}: {
-  navigation: StorySelectionMainDrawerNavigationProp;
-}) => <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />;
 
 const StorySelectionMainStackNavigator = () => {
   const { t } = useTranslation();
@@ -322,13 +295,8 @@ const SettingsStackNavigator = () => {
 };
 
 const StorySelectionNavigator = () => {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
-  const showContextualHelp = useUserSettingsStore((state) => state.showContextualHelp);
-  const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
-  const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
-  const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
-  const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
+  const chrome = useDrawerChrome();
+  const { t, isCompact, isWide, drawerWidth, setDrawerWidth, maximumWidth } = chrome;
   const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
     function DrawerMenuIcon({ color, size }: { color: string; size: number }) {
       return <Ionicons name={name} color={color} size={size} />;
@@ -355,18 +323,11 @@ const StorySelectionNavigator = () => {
           </ResizableDrawerContent>
         )}
         screenOptions={({ navigation, route }) => {
-          const activeRouteName = getFocusedRouteNameFromRoute(route) ?? route.name;
-          const helpPageId = screenHelpPage[activeRouteName];
-          const nestedState = (route as typeof route & { state?: NavigationState }).state;
-          const focusedNestedRoute = nestedState?.routes[nestedState.index ?? 0];
-          const isHelpPage =
-            activeRouteName === 'HelpPage' || focusedNestedRoute?.name === 'HelpPage';
-          const nestedStackKey = nestedState?.key;
-          const isNestedDestination =
-            activeRouteName !== route.name && !storySelectionStackRootScreens.has(activeRouteName);
+          const header = readDrawerHeaderRoute(route);
           const showNestedBackButton =
-            isNestedDestination ||
-            (nestedState?.type === 'stack' && (nestedState.index ?? 0) > 0 && nestedStackKey);
+            (header.activeRouteName !== route.name &&
+              !storySelectionStackRootScreens.has(header.activeRouteName)) ||
+            header.nestedStackHasBack;
           // Same lazy resolution as the main drawer's back button: the route object captured
           // while the header mounts can hold a partial state, so the live target is read
           // from the drawer navigation at press time.
@@ -376,7 +337,7 @@ const StorySelectionNavigator = () => {
               .routes.find((drawerRoute) => drawerRoute.key === route.key) as
               | (typeof route & { state?: NavigationState })
               | undefined;
-            const target = liveDrawerRoute?.state?.key ?? nestedStackKey;
+            const target = liveDrawerRoute?.state?.key ?? header.nestedStackKey;
 
             if (target) {
               navigation.dispatch({ ...StackActions.pop(), target });
@@ -385,65 +346,14 @@ const StorySelectionNavigator = () => {
             }
           };
 
-          return {
-            headerShown: true,
-            headerStatusBarHeight: 0,
-            headerStyle: {
-              backgroundColor: colors.surface,
-            },
-            headerTintColor: colors.text,
-            headerTitleContainerStyle:
-              !isHelpPage && !showNestedBackButton && isWide && !showContextualHelp
-                ? { marginLeft: 15 }
-                : undefined,
-            // Sub-screens may take over headerRight with their own actions; keeping the help on the left
-            // guarantees the contextual shortcut does not disappear in forms and details.
-            headerLeft: isHelpPage
-              ? () => (
-                  <NavigationBackButton
-                    onPress={
-                      nestedBackAction ??
-                      (() => navigation.navigate('HelpDrawer', { screen: 'HelpIndex' }))
-                    }
-                  />
-                )
-              : showNestedBackButton || !isWide || (showContextualHelp && helpPageId)
-                ? () => (
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      {showNestedBackButton ? (
-                        <NavigationBackButton onPress={nestedBackAction ?? goBackInNestedStack} />
-                      ) : null}
-                      {!isWide ? <DrawerToggleButton navigation={navigation} /> : null}
-                      {showContextualHelp && helpPageId ? (
-                        <TouchableOpacity
-                          onPress={() =>
-                            navigation.navigate('HelpDrawer', {
-                              screen: 'HelpPage',
-                              params: { pageId: helpPageId, returnDrawerRoute: route.name },
-                            })
-                          }
-                          style={{ marginLeft: showNestedBackButton || !isWide ? 8 : 15 }}
-                          accessibilityLabel={t('help_title')}
-                        >
-                          <Ionicons name="help-circle-outline" size={26} color={colors.text} />
-                        </TouchableOpacity>
-                      ) : null}
-                    </View>
-                  )
-                : () => null,
-            headerRight: undefined,
-            drawerActiveTintColor: colors.primary,
-            drawerInactiveTintColor: colors.text,
-            drawerType: isWide ? 'permanent' : 'front',
-            swipeEnabled: !isWide,
-            swipeEdgeWidth: isWide ? 0 : DRAWER_SWIPE_EDGE_WIDTH,
-            swipeMinDistance: DRAWER_SWIPE_MIN_DISTANCE,
-            drawerStyle: {
-              backgroundColor: colors.surface,
-              minWidth: isCompact ? compactDrawerWidth : DRAWER_MIN_WIDTH,
-              width: isCompact ? compactDrawerWidth : drawerWidth,
-            },
-          };
+          return drawerScreenOptions({
+            chrome,
+            navigation,
+            route,
+            header,
+            showNestedBackButton,
+            goBack: goBackInNestedStack,
+          });
         }}
       >
         <Drawer.Screen

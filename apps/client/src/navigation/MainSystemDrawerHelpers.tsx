@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import type { NavigationState } from '@react-navigation/native';
+import type { NavigationState, ParamListBase } from '@react-navigation/native';
 import { DrawerActions, StackActions, useNavigation } from '@react-navigation/native';
 import React from 'react';
 import MapIcon from '../components/common/display/MapIcon/MapIcon';
@@ -57,10 +57,11 @@ export const drawerStoredIcon = (name: string | null | undefined, fallback: stri
     return <MapIcon name={name || fallback} size={size} color={color} />;
   };
 
+/** The menu button both drawers show on a narrow screen: it opens and closes the drawer it belongs to. */
 export const DrawerToggleButton = ({
   navigation,
 }: {
-  navigation: MainDashboardScreenNavigationProp;
+  navigation: DrawerNavigationProp<ParamListBase>;
 }) => <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />;
 
 /**

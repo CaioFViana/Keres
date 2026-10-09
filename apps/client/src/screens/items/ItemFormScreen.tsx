@@ -3,15 +3,15 @@ import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormS
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/seealso/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -168,30 +168,21 @@ const ItemFormScreen = () => {
         />
       }
     >
-      <FormField label={copy.entity}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={copy.entity}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={copy.entity}
+        placeholder={copy.entity}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
-      <FormField label={t('description')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('description')}
+        placeholder={t('description_placeholder')}
+        value={description}
+        onChangeText={setDescription}
+        style={commonInputStyles.multiline}
+      />
 
       <FormField label={t('category')}>
         <SuggestionTextInput
@@ -213,18 +204,13 @@ const ItemFormScreen = () => {
         />
       </FormField>
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
       <FormField
         label={t('item_character_owner_label', {
@@ -246,52 +232,51 @@ const ItemFormScreen = () => {
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <MultiSelectPill
-            options={availableTags.map((tag) => ({
-              label: tag.name,
-              value: tag.id,
-              color: tag.color || colors.primaryContainer,
-            }))}
-            selectedValues={selectedTagIds}
+          <EntityTagPicker
+            tags={availableTags}
+            selectedTagIds={selectedTagIds}
             onSelectionChange={handleTagSelectionChange}
             placeholder={t('select_tags_for_item')}
             label={t('item_tags')}
+            defaultColor={colors.primaryContainer}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={itemNoteRelations}
             availableNotes={allNotes}
             onSave={saveNoteRelation}
             onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentItemId ?? ''}
-            currentEntityType="Item"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Item',
+              entityId: currentItemId ?? '',
+            }}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Item"
-            entityId={currentItemId ?? ''}
-            editable={true}
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Item',
+              entityId: currentItemId ?? '',
+            }}
           />
         </View>
       )}

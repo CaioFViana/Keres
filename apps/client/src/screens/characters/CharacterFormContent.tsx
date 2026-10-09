@@ -1,20 +1,19 @@
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/seealso/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import CustomAttributeFields, {
-  type CustomAttributeValues,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
-import SeeAlsoManager, {
-  type SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { TFunction } from 'i18next';
@@ -180,42 +179,29 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
         />
       }
     >
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('name')}
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
-      <FormField label={t('title')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('character_title_placeholder')}
-            value={title || ''}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('title')}
+        placeholder={t('character_title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
 
-      <FormField label={t('description')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('description')}
+        placeholder={t('description_placeholder')}
+        value={description}
+        onChangeText={setDescription}
+        style={commonInputStyles.multiline}
+      />
 
       <FormField label={t('gender')}>
         <SuggestionTextInput
@@ -247,117 +233,79 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
         />
       </FormField>
 
-      <FormField label={t('personality')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('personality_placeholder')}
-            value={personality || ''}
-            onChangeText={setPersonality}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('personality')}
+        placeholder={t('personality_placeholder')}
+        value={personality}
+        onChangeText={setPersonality}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('motivation')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('motivation_placeholder')}
-            value={motivation || ''}
-            onChangeText={setMotivation}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('motivation')}
+        placeholder={t('motivation_placeholder')}
+        value={motivation}
+        onChangeText={setMotivation}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('qualities')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('qualities_placeholder')}
-            value={qualities || ''}
-            onChangeText={setQualities}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('qualities')}
+        placeholder={t('qualities_placeholder')}
+        value={qualities}
+        onChangeText={setQualities}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('weaknesses')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('weaknesses_placeholder')}
-            value={weaknesses || ''}
-            onChangeText={setWeaknesses}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('weaknesses')}
+        placeholder={t('weaknesses_placeholder')}
+        value={weaknesses}
+        onChangeText={setWeaknesses}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('biography')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('biography_placeholder')}
-            value={biography || ''}
-            onChangeText={setBiography}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('biography')}
+        placeholder={t('biography_placeholder')}
+        value={biography}
+        onChangeText={setBiography}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('planned_timeline')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('planned_timeline_placeholder')}
-            value={plannedTimeline || ''}
-            onChangeText={setPlannedTimeline}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('planned_timeline')}
+        placeholder={t('planned_timeline_placeholder')}
+        value={plannedTimeline}
+        onChangeText={setPlannedTimeline}
+        style={commonInputStyles.multiline}
+      />
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       <View style={styles.tagSection}>
-        <MultiSelectPill
-          options={availableTags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-            color: tag.color || colors.primaryContainer,
-          }))}
-          selectedValues={selectedTagIds}
+        <EntityTagPicker
+          tags={availableTags}
+          selectedTagIds={selectedTagIds}
           onSelectionChange={handleTagSelectionChange}
           placeholder={t('select_tags_for_character')}
           label={t('character_tags')}
+          defaultColor={colors.primaryContainer}
         />
       </View>
 
@@ -424,7 +372,7 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={characterNoteRelations}
             availableNotes={allNotes}
             onSave={async (relation) => {
@@ -433,22 +381,24 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
             onDelete={async (relationId) => {
               await deleteNoteRelation(relationId);
             }}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentCharacterId ?? ''}
-            currentEntityType="Character"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Character',
+              entityId: currentCharacterId ?? '',
+            }}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Character"
-            entityId={currentCharacterId ?? ''}
-            editable={true}
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Character',
+              entityId: currentCharacterId ?? '',
+            }}
           />
         </View>
       )}

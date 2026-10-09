@@ -1,12 +1,12 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -135,64 +135,47 @@ const NoteFormScreen = () => {
         />
       }
     >
-      <FormField label={t('title')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('title_placeholder')}
-            value={title}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('title')}
+        placeholder={t('title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('body')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('body_placeholder')}
-            value={body || ''}
-            onChangeText={setBody}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('body')}
+        placeholder={t('body_placeholder')}
+        value={body}
+        onChangeText={setBody}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       <View style={styles.tagSection}>
-        <MultiSelectPill
-          options={availableTags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-            color: tag.color || colors.primaryContainer,
-          }))}
-          selectedValues={selectedTagIds}
+        <EntityTagPicker
+          tags={availableTags}
+          selectedTagIds={selectedTagIds}
           onSelectionChange={handleTagSelectionChange}
           placeholder={t('select_tags_for_note')}
           label={t('note_tags')}
+          defaultColor={colors.primaryContainer}
         />
       </View>
     </EntityFormContainer>

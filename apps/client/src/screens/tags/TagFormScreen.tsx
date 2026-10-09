@@ -6,9 +6,10 @@ import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormS
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -100,17 +101,13 @@ const TagFormScreen = () => {
         />
       }
     >
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('name')}
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
       <FormField label={t('color')}>
         <ColorPickerInput
@@ -122,18 +119,13 @@ const TagFormScreen = () => {
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
     </EntityFormContainer>
   );
 };

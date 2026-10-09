@@ -1,19 +1,17 @@
-import CustomAttributeFields, {
-  type CustomAttributeValues,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/seealso/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
-import SeeAlsoManager, {
-  type SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { LOCATION_INT_EXT, type LocationIntExt } from '@keres/shared';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { TFunction } from 'i18next';
@@ -150,29 +148,20 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
         />
       }
     >
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-      <FormField label={t('description')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('name')}
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
+      <FormTextAreaField
+        label={t('description')}
+        placeholder={t('description_placeholder')}
+        value={description}
+        onChangeText={setDescription}
+        style={commonInputStyles.multiline}
+      />
       <FormField label={t('field_intExt')}>
         <SingleSelectPill
           options={LOCATION_INT_EXT.map((value) => ({
@@ -186,76 +175,54 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
         />
         <Text style={{ color: props.colors.textSecondary }}>{t('int_ext_hint')}</Text>
       </FormField>
-      <FormField label={t('field_climate')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('climate_placeholder')}
-            value={climate || ''}
-            onChangeText={setClimate}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-      <FormField label={t('field_culture')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('culture_placeholder')}
-            value={culture || ''}
-            onChangeText={setCulture}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
-      <FormField label={t('field_politics')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('politics_placeholder')}
-            value={politics || ''}
-            onChangeText={setPolitics}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('field_climate')}
+        placeholder={t('climate_placeholder')}
+        value={climate}
+        onChangeText={setClimate}
+        style={commonInputStyles.input}
+      />
+      <FormTextField
+        label={t('field_culture')}
+        placeholder={t('culture_placeholder')}
+        value={culture}
+        onChangeText={setCulture}
+        style={commonInputStyles.input}
+      />
+      <FormTextField
+        label={t('field_politics')}
+        placeholder={t('politics_placeholder')}
+        value={politics}
+        onChangeText={setPolitics}
+        style={commonInputStyles.input}
+      />
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
-      <CustomAttributeFields
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) =>
-          setCustomValues((previous) => ({ ...previous, [fieldId]: value }))
-        }
+        setValues={setCustomValues}
       />
       <View style={styles.tagSection}>
-        <MultiSelectPill
-          options={availableTags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-            color: tag.color || colors.primaryContainer,
-          }))}
-          selectedValues={selectedTagIds}
+        <EntityTagPicker
+          tags={availableTags}
+          selectedTagIds={selectedTagIds}
           onSelectionChange={handleTagSelectionChange}
           placeholder={t('select_tags_for_location')}
           label={t('location_tags')}
+          defaultColor={colors.primaryContainer}
         />
       </View>
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={locationNoteRelations}
             availableNotes={allNotes}
             onSave={async (relation) => {
@@ -264,10 +231,11 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
             onDelete={async (relationId) => {
               await deleteNoteRelation(relationId);
             }}
-            editable
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentLocationId ?? ''}
-            currentEntityType="Location"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Location',
+              entityId: currentLocationId ?? '',
+            }}
           />
         </View>
       )}
@@ -287,12 +255,13 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
       )}
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Location"
-            entityId={currentLocationId ?? ''}
-            editable
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Location',
+              entityId: currentLocationId ?? '',
+            }}
           />
         </View>
       )}

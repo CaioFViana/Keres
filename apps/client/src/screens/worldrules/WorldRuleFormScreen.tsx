@@ -3,15 +3,15 @@ import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormS
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/seealso/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -176,17 +176,13 @@ const WorldRuleFormScreen = () => {
         />
       }
     >
-      <FormField label={t('title')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('world_rule_title_placeholder')}
-            value={title}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('title')}
+        placeholder={t('world_rule_title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
 
       <FormField label={t('world_piece_section')}>
         <SingleSelectPill
@@ -217,18 +213,13 @@ const WorldRuleFormScreen = () => {
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('description')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('world_rule_description_placeholder')}
-            value={description || ''}
-            onChangeText={setDescription}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('description')}
+        placeholder={t('world_rule_description_placeholder')}
+        value={description}
+        onChangeText={setDescription}
+        style={commonInputStyles.multiline}
+      />
 
       <FormField label={t('category')}>
         <SuggestionTextInput
@@ -240,102 +231,81 @@ const WorldRuleFormScreen = () => {
         />
       </FormField>
 
-      <FormField label={t('world_piece_behavior')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('world_piece_behavior_placeholder')}
-            value={behavior || ''}
-            onChangeText={setBehavior}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('world_piece_behavior')}
+        placeholder={t('world_piece_behavior_placeholder')}
+        value={behavior}
+        onChangeText={setBehavior}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('world_piece_usability')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('world_piece_usability_placeholder')}
-            value={usability || ''}
-            onChangeText={setUsability}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('world_piece_usability')}
+        placeholder={t('world_piece_usability_placeholder')}
+        value={usability}
+        onChangeText={setUsability}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('world_piece_danger')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('world_piece_danger_placeholder')}
-            value={danger || ''}
-            onChangeText={setDanger}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('world_piece_danger')}
+        placeholder={t('world_piece_danger_placeholder')}
+        value={danger}
+        onChangeText={setDanger}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('world_rule_extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('world_rule_extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       <View style={styles.tagSection}>
-        <MultiSelectPill
-          options={availableTags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-            color: tag.color || colors.primaryContainer,
-          }))}
-          selectedValues={selectedTagIds}
+        <EntityTagPicker
+          tags={availableTags}
+          selectedTagIds={selectedTagIds}
           onSelectionChange={handleTagSelectionChange}
           placeholder={t('select_tags_for_world_rule')}
           label={t('world_rule_tags')}
+          defaultColor={colors.primaryContainer}
         />
       </View>
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={worldRuleNoteRelations}
             availableNotes={allNotes}
             onSave={saveNoteRelation}
             onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentWorldRuleId ?? ''}
-            currentEntityType="WorldRule"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'WorldRule',
+              entityId: currentWorldRuleId ?? '',
+            }}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="WorldRule"
-            entityId={currentWorldRuleId ?? ''}
-            editable={true}
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'WorldRule',
+              entityId: currentWorldRuleId ?? '',
+            }}
           />
         </View>
       )}

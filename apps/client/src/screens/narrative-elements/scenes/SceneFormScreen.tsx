@@ -3,17 +3,17 @@ import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormS
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/seealso/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
 import SceneTimingFields from '@/src/components/features/scenes/SceneTimingFields';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -251,45 +251,31 @@ const SceneFormScreen = () => {
         />
       </FormField>
 
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('name')}
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
-      <FormField label={t('summary')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('summary_placeholder')}
-            value={summary || ''}
-            onChangeText={setSummary}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('summary')}
+        placeholder={t('summary_placeholder')}
+        value={summary}
+        onChangeText={setSummary}
+        style={commonInputStyles.multiline}
+      />
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
       <SceneTimingFields
         gapInput={gapInput}
@@ -311,25 +297,22 @@ const SceneFormScreen = () => {
       <FormSwitchField label={t('is_start_scene')} value={isStart} onValueChange={setIsStart} />
 
       <FormSwitchField label={t('is_finish_scene')} value={isFinish} onValueChange={setIsFinish} />
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <MultiSelectPill
-            options={availableTags.map((tag) => ({
-              label: tag.name,
-              value: tag.id,
-              color: tag.color || colors.primaryContainer,
-            }))}
-            selectedValues={selectedTagIds}
+          <EntityTagPicker
+            tags={availableTags}
+            selectedTagIds={selectedTagIds}
             onSelectionChange={setSelectedTagIds}
             placeholder={t('select_tags_for_scene')}
             label={t('scene_tags')}
+            defaultColor={colors.primaryContainer}
           />
         </View>
       )}
@@ -352,27 +335,29 @@ const SceneFormScreen = () => {
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={sceneNoteRelations}
             availableNotes={allNotes}
             onSave={saveNoteRelation}
             onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentSceneId ?? ''}
-            currentEntityType="Scene"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Scene',
+              entityId: currentSceneId ?? '',
+            }}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Scene"
-            entityId={currentSceneId ?? ''}
-            editable={true}
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Scene',
+              entityId: currentSceneId ?? '',
+            }}
           />
         </View>
       )}

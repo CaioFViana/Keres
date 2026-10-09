@@ -1,19 +1,11 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { Ionicons } from '@expo/vector-icons';
-import { getOnColorForFill } from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  SectionList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
+import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilterButton/FavoriteFilterButton';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import { useDrizzle } from '../../db';
@@ -183,20 +175,6 @@ const GlobalSearchScreen = () => {
     );
   }, []);
 
-  const favoriteFilterIcon: keyof typeof Ionicons.glyphMap =
-    favoriteFilterState === 'favorite'
-      ? 'star'
-      : favoriteFilterState === 'not-favorite'
-        ? 'ban-outline'
-        : 'star-outline';
-  const favoriteFilterColor =
-    favoriteFilterState === 'favorite'
-      ? colors.accent
-      : favoriteFilterState === 'not-favorite'
-        ? colors.notification
-        : colors.primary;
-  const favoriteFilterIconColor = getOnColorForFill(colors, favoriteFilterColor);
-
   const handleResultPress = useCallback(
     (result: GlobalSearchResult) => {
       if (result.occurrence) {
@@ -225,12 +203,11 @@ const GlobalSearchScreen = () => {
             autoFocus
             style={styles(colors).searchInput}
           />
-          <TouchableOpacity
+          <FavoriteFilterButton
+            state={favoriteFilterState}
             onPress={handleFavoriteFilterToggle}
-            style={[styles(colors).favoriteFilterButton, { backgroundColor: favoriteFilterColor }]}
-          >
-            <Ionicons name={favoriteFilterIcon} size={24} color={favoriteFilterIconColor} />
-          </TouchableOpacity>
+            style={styles(colors).favoriteFilterButton}
+          />
         </View>
       </View>
 
@@ -290,12 +267,7 @@ const styles = (colors: any) =>
       flex: 1,
     },
     favoriteFilterButton: {
-      alignItems: 'center',
-      borderRadius: 5,
-      justifyContent: 'center',
       marginLeft: 10,
-      height: 50,
-      width: 50,
     },
     loadingIndicator: {
       marginVertical: 8,

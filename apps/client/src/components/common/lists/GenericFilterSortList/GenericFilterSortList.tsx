@@ -16,7 +16,8 @@ import ActiveFilterChips from './ActiveFilterChips';
 import { GuidedEmptyState, NoResultsState } from './ListEmptyStates';
 import type { GuidedEmptyStateAction } from './ListEmptyStates';
 import ListSearchField from './ListSearchField';
-import { FavoriteFilterButton, FiltersButton, SortDirectionButton } from './ListToolbarButtons';
+import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilterButton/FavoriteFilterButton';
+import { FiltersButton, SortDirectionButton } from './ListToolbarButtons';
 import { SearchHighlightContext } from '../SearchHighlight/SearchHighlight';
 
 export type { GuidedEmptyStateAction } from './ListEmptyStates';

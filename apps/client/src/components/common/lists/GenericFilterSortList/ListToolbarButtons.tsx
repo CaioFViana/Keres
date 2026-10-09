@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getOnColorForFill } from '@keres/shared';
 import { useTheme } from '../../../../theme';
-import type { FavoriteFilterState } from '../../../../types/entityFilters';
 
 /** Opens the field filters. It says what it is and how many fields are narrowing the list. */
 export const FiltersButton: React.FC<{ count: number; onPress: () => void }> = ({
@@ -34,44 +33,6 @@ export const FiltersButton: React.FC<{ count: number; onPress: () => void }> = (
           </Text>
         </View>
       ) : null}
-    </TouchableOpacity>
-  );
-};
-
-const FAVORITE_ICON: Record<FavoriteFilterState, keyof typeof Ionicons.glyphMap> = {
-  all: 'star-outline',
-  favorite: 'star',
-  'not-favorite': 'ban-outline',
-};
-
-/** Cycles all → favorites → not favorites. */
-export const FavoriteFilterButton: React.FC<{
-  state: FavoriteFilterState;
-  onPress: () => void;
-}> = ({ state, onPress }) => {
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-  const fill =
-    state === 'favorite'
-      ? colors.accent
-      : state === 'not-favorite'
-        ? colors.notification
-        : colors.primary;
-  const label =
-    state === 'favorite'
-      ? t('list_favorites_only')
-      : state === 'not-favorite'
-        ? t('list_favorites_not')
-        : t('list_favorites_filter');
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[styles.square, { backgroundColor: fill }]}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      testID="list-favorite-filter"
-    >
-      <Ionicons name={FAVORITE_ICON[state]} size={24} color={getOnColorForFill(colors, fill)} />
     </TouchableOpacity>
   );
 };

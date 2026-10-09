@@ -7,7 +7,7 @@ import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
@@ -26,6 +26,11 @@ import type {
   GalleryStackParamList,
   MainSystemDrawerParamList,
 } from '../../navigation/MainSystemStack';
+import {
+  GALLERY_ROW_PADDING,
+  galleryGridLayout,
+  WEB_SCROLLBAR_ALLOWANCE,
+} from '../../utils/galleryGridLayout';
 import { createGalleryLink } from '../../services/galleryLink';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
 import { mediaFileService } from '../../services/MediaFileService';
@@ -56,6 +61,7 @@ const GalleryListScreen = () => {
   /** Importing media is file I/O, not instantaneous; without this the screen would look frozen. */
   const [importing, setImporting] = useState(false);
   const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [listWidth, setListWidth] = useState(0);
 
   const {
     listProps,
@@ -221,15 +227,25 @@ const GalleryListScreen = () => {
     [toggleFavorite],
   );
 
+  // Before the list has been measured the window's breakpoint stands in for its width.
+  const grid =
+    listWidth > 0
+      ? galleryGridLayout(listWidth, Platform.OS === 'web' ? WEB_SCROLLBAR_ALLOWANCE : 0)
+      : null;
+  const numColumns =
+    grid?.numColumns ?? (breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2);
+  const cardWidth = grid?.cardWidth;
+
   const renderGalleryItem = useCallback(
     ({ item }: { item: GallerySelect }) => (
       <GalleryGridItem
         media={item}
+        width={cardWidth}
         onPress={handleViewDetails}
         onToggleFavorite={handleToggleFavorite}
       />
     ),
-    [handleViewDetails, handleToggleFavorite],
+    [cardWidth, handleViewDetails, handleToggleFavorite],
   );
 
   const mediaTypeOptions = useMemo(
@@ -248,12 +264,10 @@ const GalleryListScreen = () => {
     [t],
   );
 
-  const numColumns = breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2;
-
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     columnWrapper: {
-      paddingHorizontal: 5,
+      paddingHorizontal: GALLERY_ROW_PADDING,
     },
   });
 
@@ -271,7 +285,13 @@ const GalleryListScreen = () => {
           void handleAddLink(url, title);
         }}
       />
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <View
+        ref={listAnchorRef}
+        testID="gallery-list-area"
+        collapsable={false}
+        style={{ flex: 1 }}
+        onLayout={(event) => setListWidth(Math.round(event.nativeEvent.layout.width))}
+      >
         <GenericFilterSortList
           {...listProps}
           key={`gallery-columns-${numColumns}`}

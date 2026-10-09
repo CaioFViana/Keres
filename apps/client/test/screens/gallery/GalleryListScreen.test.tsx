@@ -120,10 +120,12 @@ jest.mock('@/src/components/features/list-items/GalleryGridItem', () => ({
   __esModule: true,
   default: ({
     media,
+    width,
     onPress,
     onToggleFavorite,
   }: {
     media: { id: string; isFavorite?: boolean };
+    width?: number;
     onPress: (id: string) => void;
     onToggleFavorite: (id: string, isFavorite: boolean) => void;
   }) => {
@@ -145,6 +147,7 @@ jest.mock('@/src/components/features/list-items/GalleryGridItem', () => ({
         },
         `fav ${media.id}`,
       ),
+      react.createElement(native.Text, { testID: `width-${media.id}` }, String(width)),
     );
   },
 }));
@@ -281,6 +284,21 @@ describe('GalleryListScreen', () => {
     );
     expect(view.getByTestId('gallery-list-stub')).toBeTruthy();
     expect(mockListProps?.numColumns).toBe(5);
+  });
+
+  it('sizes the grid by the measured width of the list, with one width for every card', async () => {
+    mockListState = { ...freshListState(), items: [{ id: 'g1' }] };
+    const view = await render(<GalleryListScreen />);
+
+    // Not measured yet: the breakpoint stands in, and the card takes its share of the row.
+    expect(view.getByTestId('width-g1').props.children).toBe('undefined');
+
+    await fireEvent(view.getByTestId('gallery-list-area'), 'layout', {
+      nativeEvent: { layout: { width: 1600, height: 900 } },
+    });
+
+    expect(mockListProps?.numColumns).toBe(7);
+    expect(view.getByTestId('width-g1').props.children).toBe('214');
   });
 
   it('shows the error state from the list hook', async () => {

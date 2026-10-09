@@ -1,4 +1,5 @@
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType } from '@keres/shared';
 import CommentListItem from '../../src/components/features/list-items/CommentListItem';
@@ -265,6 +266,35 @@ describe('GalleryGridItem', () => {
     expect(view.getByText('map.png')).toBeTruthy();
     const icons = view.container.queryAll((node: any) => node.type === Ionicons);
     expect(icons.some((icon) => icon.props.name === 'musical-notes-outline')).toBe(true);
+  });
+
+  it('keeps a fixed width when given one, so a short last row does not stretch', async () => {
+    const styleOf = (view: RenderResult) => {
+      const root = view.toJSON() as unknown as { props: { style: unknown } };
+      return StyleSheet.flatten(root.props.style as object) as Record<string, unknown>;
+    };
+
+    const sized = await render(
+      <GalleryGridItem media={gallery()} width={180} onPress={jest.fn()} />,
+    );
+    expect(styleOf(sized)).toEqual(
+      expect.objectContaining({ width: 180, flexGrow: 0, flexShrink: 0 }),
+    );
+
+    const shared = await render(<GalleryGridItem media={gallery()} onPress={jest.fn()} />);
+    expect(styleOf(shared)).toEqual(expect.objectContaining({ flex: 1 }));
+  });
+
+  it('labels its favorite button and marks the state', async () => {
+    const view = await render(
+      <GalleryGridItem
+        media={gallery({ isFavorite: true })}
+        onPress={jest.fn()}
+        onToggleFavorite={jest.fn()}
+      />,
+    );
+
+    expect(view.getByLabelText('favorite').props.accessibilityState).toEqual({ selected: true });
   });
 
   it('reports transfer states', async () => {

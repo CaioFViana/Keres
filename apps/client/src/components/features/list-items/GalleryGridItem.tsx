@@ -4,12 +4,15 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import HighlightedText from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
 import type { GallerySelect } from '../../../db/schemas/galleries';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
 import { useTheme } from '../../../theme';
 
 interface GalleryGridItemProps {
   media: GallerySelect;
+  /** The card's width; without it the card takes an equal share of its row. */
+  width?: number;
   onPress: (galleryId: string) => void;
   onToggleFavorite?: (galleryId: string, isFavorite: boolean) => void;
 }
@@ -64,7 +67,12 @@ function formatSize(bytes: number): string {
  * time would stall the scrolling of a whole grid. Audio has no frame to show and is left with the
  * type's icon alone.
  */
-const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onToggleFavorite }) => {
+const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
+  media,
+  width,
+  onPress,
+  onToggleFavorite,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -82,7 +90,8 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
 
   const styles = StyleSheet.create({
     container: {
-      flex: 1,
+      // A fixed width keeps a short last row from stretching its tiles across the whole list.
+      ...(width ? { width, flexGrow: 0, flexShrink: 0 } : { flex: 1 }),
       margin: 5,
       borderRadius: 8,
       overflow: 'hidden',
@@ -181,6 +190,10 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
           {onToggleFavorite && (
             <TouchableOpacity
               style={styles.badge}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={t('favorite')}
+              accessibilityState={{ selected: !!media.isFavorite }}
               onPress={() => onToggleFavorite(media.id, !media.isFavorite)}
             >
               <Ionicons
@@ -195,7 +208,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
 
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-          {media.title || media.fileName}
+          <HighlightedText text={media.title || media.fileName} />
         </Text>
         <Text style={styles.subtitle} numberOfLines={1}>
           {t(`media_type_${mediaType}`)}

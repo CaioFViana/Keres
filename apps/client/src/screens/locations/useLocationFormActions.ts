@@ -1,21 +1,15 @@
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
 import type { Location } from '@keres/shared/entities/Location';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StackActions } from '@react-navigation/native';
 import type { StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '../../db';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
 import type { LocationService } from '../../services/storymanagement/LocationService';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import type { LocationFormState } from './useLocationFormState';
 
@@ -36,7 +30,12 @@ type UseLocationFormActionsOptions = {
   clearSecondaryDraft?(locationId: string): Promise<void>;
 };
 
-/** Owns validation, persistence, feedback, events and navigation for the Location form. */
+type LocationData = Omit<
+  Location,
+  'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+>;
+
+/** What differs for the Location form: its fields, service calls, secondary writes, texts and navigation. */
 export function useLocationFormActions({
   state,
   customFields,
@@ -53,109 +52,51 @@ export function useLocationFormActions({
 }: UseLocationFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Location');
-  const confirmDelete = useConfirmDelete();
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
+  const service = () => locationServiceRef.current!;
 
-  const handleSave = () =>
-    runSave(async () => {
-      if (!state.name.trim()) {
-        AppAlert.alert(t('error'), t('name_required'));
-        return;
-      }
-      const missingRequiredField = validateRequiredCustomAttributes(
-        customFields,
-        state.customValues,
-      );
-      if (missingRequiredField) {
-        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-        return;
-      }
-      if (!userId) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-      if (!storyId) {
-        AppAlert.alert(t('error'), t('no_story_selected'));
-        return;
-      }
-      if (!locationServiceRef.current) {
-        AppAlert.alert(t('error'), copy.failedToSave);
-        return;
-      }
-
-      try {
-        const locationData: Omit<
-          Location,
-          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-        > = {
-          name: state.name.trim(),
-          description: state.description,
-          intExt: state.intExt,
-          climate: state.climate,
-          culture: state.culture,
-          politics: state.politics,
-          isFavorite: state.isFavorite,
-          extraNotes: state.extraNotes,
-        };
-
-        const { entityId: savedLocationId, created } = await saveEntityWithSecondaryData({
-          currentEntityId: state.currentLocationId,
-          createEntity: () =>
-            locationServiceRef.current!.createLocation(userId, {
-              ...locationData,
-              storyId,
-            }),
-          updateEntity: (locationId) =>
-            locationServiceRef.current!.updateLocation(userId, locationId, locationData),
-          onEntityPersisted: state.retainPersistedLocationId,
-          persistSecondaryDraft,
-          clearSecondaryDraft,
-          persistSecondaryData: async (locationId) => {
-            await persistTagRelations(locationId);
-            await persistNoteRelations(locationId);
-            await seeAlsoManagerRef.current?.persistPending(locationId);
-            await persistPendingLocationRelations(locationId);
-            await createAttributeValueService(drizzleDb).saveValuesForEntity(
-              userId,
-              storyId,
-              'Location',
-              locationId,
-              state.customValues,
-            );
-          },
-        });
-
-        await state.clearFormDraft();
-        entityEventEmitter.emit('location_changed', storyId, savedLocationId);
-        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
-
-        if (created) {
-          navigation.dispatch(
-            StackActions.replace('LocationForm', { locationId: savedLocationId }),
-          );
-        } else {
-          navigation.goBack();
-        }
-      } catch (err) {
-        console.error('Failed to save location:', err);
-        AppAlert.alert(t('error'), copy.failedToSave);
-      }
-    });
-
-  const handleDelete = () => {
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-
-    if (!state.currentLocationId || !locationServiceRef.current) {
-      return;
-    }
-
-    const locationId = state.currentLocationId;
-    confirmDelete({
+  const actions = useEntityFormActions<LocationData, { id: string }>({
+    entityType: 'Location',
+    changeEvent: 'location_changed',
+    storyId,
+    userId,
+    drizzleDb,
+    customFields,
+    customValues: state.customValues,
+    currentEntityId: state.currentLocationId,
+    serviceReady: !!locationServiceRef.current,
+    clearFormDraft: state.clearFormDraft,
+    retainPersistedId: state.retainPersistedLocationId,
+    validate: () => (state.name.trim() ? null : t('name_required')),
+    buildData: () => ({
+      name: state.name.trim(),
+      description: state.description,
+      intExt: state.intExt,
+      climate: state.climate,
+      culture: state.culture,
+      politics: state.politics,
+      isFavorite: state.isFavorite,
+      extraNotes: state.extraNotes,
+    }),
+    create: (currentUserId, currentStoryId, data) =>
+      service().createLocation(currentUserId, { ...data, storyId: currentStoryId }),
+    update: (currentUserId, locationId, data) =>
+      service().updateLocation(currentUserId, locationId, data),
+    remove: (currentUserId, locationId) => service().deleteLocation(currentUserId, locationId),
+    secondarySteps: [
+      persistTagRelations,
+      persistNoteRelations,
+      (locationId) => seeAlsoManagerRef.current?.persistPending(locationId) ?? Promise.resolve(),
+      persistPendingLocationRelations,
+    ],
+    persistSecondaryDraft,
+    clearSecondaryDraft,
+    messages: {
+      failedToSave: copy.failedToSave,
+      created: copy.created,
+      updated: copy.updated,
+    },
+    confirmDelete: {
       titleKey: 'delete_location_title',
       title: copy.deleteLabel,
       messageKey: 'delete_location_message',
@@ -163,15 +104,17 @@ export function useLocationFormActions({
       successMessage: copy.deleted,
       failureKey: 'failed_to_delete_location',
       failureMessage: copy.failedToDelete,
-      onLoadingChange: setDeleting,
-      onConfirm: async () => {
-        await locationServiceRef.current!.deleteLocation(userId, locationId);
-        await state.clearFormDraft();
-        entityEventEmitter.emit('location_changed', storyId, locationId);
+    },
+    afterSave: (locationId, created) => {
+      if (created) {
+        navigation.dispatch(StackActions.replace('LocationForm', { locationId }));
+      } else {
         navigation.goBack();
-      },
-    });
-  };
+      }
+    },
+    afterDelete: () => navigation.goBack(),
+    logName: 'location',
+  });
 
-  return { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef };
+  return { ...actions, seeAlsoManagerRef };
 }

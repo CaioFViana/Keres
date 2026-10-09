@@ -186,8 +186,10 @@ describe('location form responsibilities', () => {
     expect(state).toContain('initialLocationId');
     expect(state).toContain('retainPersistedLocationId');
     expect(state).not.toMatch(/getById\(currentLocationId/);
-    expect(actions).toContain('saveEntityWithSecondaryData');
+    // The save/delete flow lives once in the shared hook; the entity's hook only configures it.
+    expect(actions).toContain('useEntityFormActions');
     expect(actions).toContain('retainPersistedLocationId');
+    expect(actions).not.toMatch(/saveEntityWithSecondaryData|AppAlert|createAttributeValueService/);
     expect(associations).toContain('preserveDraftOnEntityCreation: true');
   });
 });
@@ -435,5 +437,16 @@ describe('file size', () => {
       .sort();
 
     expect(oversized).toEqual([...FILES_OVER_THE_LIMIT].sort());
+  });
+});
+
+describe('shared entity form actions', () => {
+  it('owns the save flow every entity form configures: secondary data, attributes, event, feedback', () => {
+    const shared = readFileSync(resolve(SOURCE_ROOT, 'hooks/useEntityFormActions.ts'), 'utf8');
+
+    expect(shared).toContain('saveEntityWithSecondaryData');
+    expect(shared).toContain('createAttributeValueService');
+    expect(shared).toContain('entityEventEmitter.emit(config.changeEvent');
+    expect(shared).toContain('useConfirmDelete');
   });
 });

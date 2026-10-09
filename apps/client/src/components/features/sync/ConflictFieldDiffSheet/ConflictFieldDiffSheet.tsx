@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
 import type { PendingConflict } from '../../../../services/SyncConflictService';
 import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { AppAlert } from '@/src/utils/AppAlert';
+import ConflictSheetFrame from '../ConflictSheetFrame/ConflictSheetFrame';
 
 /** De qual lado vem o valor escolhido para um campo em disputa. */
 type FieldChoice = 'local' | 'server';
@@ -91,28 +91,6 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
   }, [handleKeepServer, t]);
 
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      maxHeight: '85%',
-    },
-    handle: {
-      alignSelf: 'center',
-      width: 42,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: colors.border,
-      marginBottom: 14,
-    },
-    header: { flexDirection: 'row', alignItems: 'center' },
-    headerText: { flex: 1, marginRight: 12 },
-    title: { fontSize: 18, fontWeight: 'bold', color: colors.text },
-    subtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-    closeButton: { padding: 4 },
     fieldBlock: {
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
@@ -148,96 +126,77 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
   });
 
   return (
-    <ResponsiveModal
+    <ConflictSheetFrame
       visible={visible}
+      title={t('conflict_choose_per_field')}
+      subtitle={`${summary.entityLabel} — ${summary.title}`}
       onClose={onClose}
-      placement="adaptive"
-      contentStyle={styles.sheet}
-      maxHeight="85%"
     >
-      <View style={styles.handle} />
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{t('conflict_choose_per_field')}</Text>
-          <Text style={styles.subtitle}>{`${summary.entityLabel} — ${summary.title}`}</Text>
-        </View>
-        <TouchableOpacity
-          onPress={onClose}
-          style={styles.closeButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('conflict_close_details')}
+      {summary.diffFields.map((field) => {
+        const choice = fieldChoices[field.field] || 'local';
+        return (
+          <View key={field.field} style={styles.fieldBlock}>
+            <Text style={styles.fieldName}>{field.label}</Text>
+
+            <TouchableOpacity
+              style={[styles.option, choice === 'local' && styles.optionSelected]}
+              onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'local' }))}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: choice === 'local' }}
+              accessibilityLabel={`${field.label}: ${t('conflict_side_mine')}. ${field.localDisplay}`}
+            >
+              <Ionicons
+                name={choice === 'local' ? 'radio-button-on' : 'radio-button-off'}
+                size={20}
+                color={choice === 'local' ? colors.primary : colors.textSecondary}
+              />
+              <View style={styles.optionTextWrapper}>
+                <Text style={styles.optionLabel}>{t('conflict_side_mine')}</Text>
+                <Text style={styles.optionValue}>{field.localDisplay}</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.option, choice === 'server' && styles.optionSelected]}
+              onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'server' }))}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: choice === 'server' }}
+              accessibilityLabel={`${field.label}: ${t('conflict_side_server')}. ${field.serverDisplay}`}
+            >
+              <Ionicons
+                name={choice === 'server' ? 'radio-button-on' : 'radio-button-off'}
+                size={20}
+                color={choice === 'server' ? colors.primary : colors.textSecondary}
+              />
+              <View style={styles.optionTextWrapper}>
+                <Text style={styles.optionLabel}>{t('conflict_side_server')}</Text>
+                <Text style={styles.optionValue}>{field.serverDisplay}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+
+      <FormActions stackOnCompact style={styles.footer}>
+        <Button
+          onPress={confirmKeepMine}
+          disabled={isResolving}
+          accessibilityLabel={keepMineLabel}
+          accessibilityHint={t('conflict_keep_mine_description')}
         >
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView>
-        {summary.diffFields.map((field) => {
-          const choice = fieldChoices[field.field] || 'local';
-          return (
-            <View key={field.field} style={styles.fieldBlock}>
-              <Text style={styles.fieldName}>{field.label}</Text>
-
-              <TouchableOpacity
-                style={[styles.option, choice === 'local' && styles.optionSelected]}
-                onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'local' }))}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: choice === 'local' }}
-                accessibilityLabel={`${field.label}: ${t('conflict_side_mine')}. ${field.localDisplay}`}
-              >
-                <Ionicons
-                  name={choice === 'local' ? 'radio-button-on' : 'radio-button-off'}
-                  size={20}
-                  color={choice === 'local' ? colors.primary : colors.textSecondary}
-                />
-                <View style={styles.optionTextWrapper}>
-                  <Text style={styles.optionLabel}>{t('conflict_side_mine')}</Text>
-                  <Text style={styles.optionValue}>{field.localDisplay}</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.option, choice === 'server' && styles.optionSelected]}
-                onPress={() => setFieldChoices((prev) => ({ ...prev, [field.field]: 'server' }))}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: choice === 'server' }}
-                accessibilityLabel={`${field.label}: ${t('conflict_side_server')}. ${field.serverDisplay}`}
-              >
-                <Ionicons
-                  name={choice === 'server' ? 'radio-button-on' : 'radio-button-off'}
-                  size={20}
-                  color={choice === 'server' ? colors.primary : colors.textSecondary}
-                />
-                <View style={styles.optionTextWrapper}>
-                  <Text style={styles.optionLabel}>{t('conflict_side_server')}</Text>
-                  <Text style={styles.optionValue}>{field.serverDisplay}</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-
-        <FormActions stackOnCompact style={styles.footer}>
-          <Button
-            onPress={confirmKeepMine}
-            disabled={isResolving}
-            accessibilityLabel={keepMineLabel}
-            accessibilityHint={t('conflict_keep_mine_description')}
-          >
-            {keepMineLabel}
-          </Button>
-          <Button
-            onPress={confirmKeepServer}
-            disabled={isResolving}
-            style={styles.secondaryButton}
-            accessibilityLabel={t('conflict_keep_server')}
-            accessibilityHint={t('conflict_keep_server_description')}
-          >
-            <Text style={styles.secondaryButtonText}>{t('conflict_keep_server')}</Text>
-          </Button>
-        </FormActions>
-      </ScrollView>
-    </ResponsiveModal>
+          {keepMineLabel}
+        </Button>
+        <Button
+          onPress={confirmKeepServer}
+          disabled={isResolving}
+          style={styles.secondaryButton}
+          accessibilityLabel={t('conflict_keep_server')}
+          accessibilityHint={t('conflict_keep_server_description')}
+        >
+          <Text style={styles.secondaryButtonText}>{t('conflict_keep_server')}</Text>
+        </Button>
+      </FormActions>
+    </ConflictSheetFrame>
   );
 };
 

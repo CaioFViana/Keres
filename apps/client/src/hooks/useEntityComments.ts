@@ -1,13 +1,14 @@
 import type { CommentEntityType } from '@keres/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { CommentSelect } from '../db/schema';
-import type { CommentTarget, CreateCommentInput } from '../services/storymanagement/CommentService';
-import { createCommentService } from '../services/storymanagement/CommentService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
+import type {
+  CommentService,
+  CommentTarget,
+  CreateCommentInput,
+} from '../services/storymanagement/CommentService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useCommentSurface } from './useCommentSurface';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
-import { useStoryRole } from './useStoryRole';
 
 /**
  * An entity's comments, fetched once per screen (not per field) and grouped by
@@ -23,40 +24,27 @@ export function useEntityComments(
   entityType: CommentEntityType,
   entityId: string | undefined,
 ) {
-  const drizzleDb = useDrizzle();
-  const { userId } = useUserSettingsStore();
-  const { role } = useStoryRole(storyId);
-
-  const service = useMemo(() => (drizzleDb ? createCommentService(drizzleDb) : null), [drizzleDb]);
-
-  const [comments, setComments] = useState<CommentSelect[]>([]);
-  const [allowReaderComments, setAllowReaderComments] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
-    if (!service || !drizzleDb || !storyId || !entityId) {
-      setComments([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const [rows, story] = await Promise.all([
-        service.getCommentsForEntity(storyId, entityType, entityId),
-        drizzleDb.query.stories.findFirst({
-          where: (stories, { eq }) => eq(stories.id, storyId),
-          columns: { allowReaderComments: true },
-        }),
-      ]);
-      setComments(rows);
-      setAllowReaderComments(!!story?.allowReaderComments);
-    } catch (error) {
-      console.error(`Failed to load comments for ${entityType} ${entityId}:`, error);
-      setComments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [service, drizzleDb, storyId, entityType, entityId]);
+  const fetchRows = useCallback(
+    (service: CommentService, forStoryId: string, forEntityId: string) =>
+      service.getCommentsForEntity(forStoryId, entityType, forEntityId),
+    [entityType],
+  );
+  const {
+    service,
+    userId,
+    comments,
+    loading,
+    refresh,
+    isStoryOwner,
+    canComment,
+    updateComment,
+    deleteComment,
+  } = useCommentSurface(
+    storyId,
+    entityId,
+    fetchRows,
+    `Failed to load comments for ${entityType} ${entityId}:`,
+  );
 
   useEntityInitialLoad(refresh);
 
@@ -88,35 +76,12 @@ export function useEntityComments(
     return map;
   }, [comments]);
 
-  const isStoryOwner = role === 'owner';
-  const canComment =
-    role === 'owner' || role === 'writer' || (role === 'reader' && allowReaderComments);
-
   const addComment = useCallback(
     async (target: CommentTarget, input: CreateCommentInput) => {
       if (!service || !storyId || !userId || !entityId) return;
       await service.createComment(userId, storyId, entityType, entityId, target, input);
     },
     [service, storyId, userId, entityType, entityId],
-  );
-
-  const updateComment = useCallback(
-    async (
-      commentId: string,
-      changes: { commentText?: string; excerptText?: string | null; criticality?: number },
-    ) => {
-      if (!service || !userId) return;
-      await service.updateComment(userId, commentId, changes);
-    },
-    [service, userId],
-  );
-
-  const deleteComment = useCallback(
-    async (commentId: string) => {
-      if (!service || !userId) return;
-      await service.deleteComment(userId, commentId, isStoryOwner);
-    },
-    [service, userId, isStoryOwner],
   );
 
   return {

@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { CommentSelect } from '../db/schema';
 import { SCENE_BODY_DRAFT_FIELD } from '../services/EditorDraftService';
-import type { CreateCommentInput } from '../services/storymanagement/CommentService';
-import { createCommentService } from '../services/storymanagement/CommentService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
+import type {
+  CommentService,
+  CreateCommentInput,
+} from '../services/storymanagement/CommentService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { useCommentSurface } from './useCommentSurface';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
-import { useStoryRole } from './useStoryRole';
 
 /**
  * Body comments for every scene on a reading surface (the manuscript), fetched with
@@ -20,40 +20,29 @@ import { useStoryRole } from './useStoryRole';
  * identity refetches.
  */
 export function useSceneBodyComments(storyId: string | undefined, sceneIds: string[]) {
-  const drizzleDb = useDrizzle();
-  const { userId } = useUserSettingsStore();
-  const { role } = useStoryRole(storyId);
-
-  const service = useMemo(() => (drizzleDb ? createCommentService(drizzleDb) : null), [drizzleDb]);
-
-  const [comments, setComments] = useState<CommentSelect[]>([]);
-  const [allowReaderComments, setAllowReaderComments] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
-    if (!service || !drizzleDb || !storyId || sceneIds.length === 0) {
-      setComments([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const [rows, story] = await Promise.all([
-        service.getCommentsForEntities(storyId, 'Scene', sceneIds),
-        drizzleDb.query.stories.findFirst({
-          where: (stories, { eq }) => eq(stories.id, storyId),
-          columns: { allowReaderComments: true },
-        }),
-      ]);
-      setComments(rows.filter((row) => row.fieldKey === SCENE_BODY_DRAFT_FIELD));
-      setAllowReaderComments(!!story?.allowReaderComments);
-    } catch (error) {
-      console.error(`Failed to load scene body comments for story ${storyId}:`, error);
-      setComments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [service, drizzleDb, storyId, sceneIds]);
+  const fetchRows = useCallback(
+    async (service: CommentService, forStoryId: string, ids: string[]) =>
+      (await service.getCommentsForEntities(forStoryId, 'Scene', ids)).filter(
+        (row) => row.fieldKey === SCENE_BODY_DRAFT_FIELD,
+      ),
+    [],
+  );
+  const {
+    service,
+    userId,
+    comments,
+    loading,
+    refresh,
+    isStoryOwner,
+    canComment,
+    updateComment,
+    deleteComment,
+  } = useCommentSurface(
+    storyId,
+    sceneIds.length > 0 ? sceneIds : null,
+    fetchRows,
+    `Failed to load scene body comments for story ${storyId}:`,
+  );
 
   useEntityInitialLoad(refresh);
 
@@ -75,10 +64,6 @@ export function useSceneBodyComments(storyId: string | undefined, sceneIds: stri
     return map;
   }, [comments]);
 
-  const isStoryOwner = role === 'owner';
-  const canComment =
-    role === 'owner' || role === 'writer' || (role === 'reader' && allowReaderComments);
-
   const addComment = useCallback(
     async (sceneId: string, input: CreateCommentInput) => {
       if (!service || !storyId || !userId) return;
@@ -92,25 +77,6 @@ export function useSceneBodyComments(storyId: string | undefined, sceneIds: stri
       );
     },
     [service, storyId, userId],
-  );
-
-  const updateComment = useCallback(
-    async (
-      commentId: string,
-      changes: { commentText?: string; excerptText?: string | null; criticality?: number },
-    ) => {
-      if (!service || !userId) return;
-      await service.updateComment(userId, commentId, changes);
-    },
-    [service, userId],
-  );
-
-  const deleteComment = useCallback(
-    async (commentId: string) => {
-      if (!service || !userId) return;
-      await service.deleteComment(userId, commentId, isStoryOwner);
-    },
-    [service, userId, isStoryOwner],
   );
 
   return {

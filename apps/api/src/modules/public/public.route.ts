@@ -18,6 +18,7 @@ import {
   VersionSchema,
 } from './publicShapes';
 import { DOWNLOAD_URL_TTL_SECONDS, verifyNsfwToken, verifyShowcaseToken } from './showcaseAccess';
+import { assertShowcaseOpen } from './showcaseGate';
 
 /**
  * The public site. No route here requires authentication, and none of them returns anything a
@@ -293,34 +294,16 @@ export const publicRoutes = new Elysia()
           if (!entry) {
             throw new AppError(404, 'Not found.');
           }
-          if (entry.visibility === 'password') {
-            // An `<a download>` carries no header, so the page asks for the link at `POST .../download-url` and
-            // gets the token back as a parameter, valid for 60 seconds. It is the only place where it appears in
-            // a URL.
-            const authorized =
-              (await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-              (await verifyShowcaseToken(
-                showcaseJwt,
-                query.access ? `Showcase ${query.access}` : undefined,
-                params.storyId,
-              ));
-            if (!authorized) {
-              throw new AppError(404, 'Not found.');
-            }
-          }
-          // Shadowbanned and NSFW-to-unverified answer like unpublished. The session (header or
-          // cookie) covers fetches; the `?access=` token covers header-less browser downloads.
-          const includeNsfw =
-            (await showcaseService.viewerIncludesNsfw(user)) ||
-            (await verifyNsfwToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-            (await verifyNsfwToken(
-              showcaseJwt,
+          await assertShowcaseOpen({
+            entry,
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [
+              headers['authorization'],
               query.access ? `Showcase ${query.access}` : undefined,
-              params.storyId,
-            ));
-          if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
-            throw new AppError(404, 'Not found.');
-          }
+            ],
+          });
 
           const publication = await showcaseService.getPublication(
             params.storyId,
@@ -382,22 +365,13 @@ export const publicRoutes = new Elysia()
           if (!entry) {
             throw new AppError(404, 'Not found.');
           }
-          if (
-            entry.visibility === 'password' &&
-            !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
-          ) {
-            throw new AppError(404, 'Not found.');
-          }
-          // The link is minted per viewer: shadowbanned and NSFW-to-unverified get no link at all.
-          const includeNsfw = await maySeeNsfw(
+          const includeNsfw = await assertShowcaseOpen({
+            entry,
+            storyId: params.storyId,
             user,
             showcaseJwt,
-            headers['authorization'],
-            params.storyId,
-          );
-          if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
-            throw new AppError(404, 'Not found.');
-          }
+            credentials: [headers['authorization']],
+          });
 
           const publication = await showcaseService.getPublication(
             params.storyId,
@@ -440,31 +414,16 @@ export const publicRoutes = new Elysia()
           if (!entry) {
             throw new AppError(404, 'Not found.');
           }
-          if (entry.visibility === 'password') {
-            // Same arrangement as the package download: the token arrives as a query parameter
-            // because `<a download>` carries no header.
-            const authorized =
-              (await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-              (await verifyShowcaseToken(
-                showcaseJwt,
-                query.access ? `Showcase ${query.access}` : undefined,
-                params.storyId,
-              ));
-            if (!authorized) {
-              throw new AppError(404, 'Not found.');
-            }
-          }
-          const includeNsfw =
-            (await showcaseService.viewerIncludesNsfw(user)) ||
-            (await verifyNsfwToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-            (await verifyNsfwToken(
-              showcaseJwt,
+          await assertShowcaseOpen({
+            entry,
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [
+              headers['authorization'],
               query.access ? `Showcase ${query.access}` : undefined,
-              params.storyId,
-            ));
-          if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
-            throw new AppError(404, 'Not found.');
-          }
+            ],
+          });
 
           const publication = await showcaseService.getPublication(
             params.storyId,
@@ -529,21 +488,13 @@ export const publicRoutes = new Elysia()
           if (!entry) {
             throw new AppError(404, 'Not found.');
           }
-          if (
-            entry.visibility === 'password' &&
-            !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
-          ) {
-            throw new AppError(404, 'Not found.');
-          }
-          const includeNsfw = await maySeeNsfw(
+          const includeNsfw = await assertShowcaseOpen({
+            entry,
+            storyId: params.storyId,
             user,
             showcaseJwt,
-            headers['authorization'],
-            params.storyId,
-          );
-          if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
-            throw new AppError(404, 'Not found.');
-          }
+            credentials: [headers['authorization']],
+          });
 
           const publication = await showcaseService.getPublication(
             params.storyId,

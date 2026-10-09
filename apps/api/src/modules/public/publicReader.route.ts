@@ -5,7 +5,8 @@ import { publicationStorageService } from '../../services/PublicationStorageServ
 import { showcaseService } from '../../services/ShowcaseService';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { AppError } from '../../utils/errors';
-import { DOWNLOAD_URL_TTL_SECONDS, verifyNsfwToken, verifyShowcaseToken } from './showcaseAccess';
+import { DOWNLOAD_URL_TTL_SECONDS } from './showcaseAccess';
+import { assertShowcaseOpen } from './showcaseGate';
 
 /**
  * The online reader of a published version: its page, and the address that opens it. Its own
@@ -45,30 +46,16 @@ export const publicReaderRoutes = new Elysia()
       if (!entry) {
         throw new AppError(404, 'Not found.');
       }
-      if (entry.visibility === 'password') {
-        // The reader loads in a frame, which carries no Authorization header either.
-        const authorized =
-          (await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-          (await verifyShowcaseToken(
-            showcaseJwt,
-            query.access ? `Showcase ${query.access}` : undefined,
-            params.storyId,
-          ));
-        if (!authorized) {
-          throw new AppError(404, 'Not found.');
-        }
-      }
-      const includeNsfw =
-        (await showcaseService.viewerIncludesNsfw(user)) ||
-        (await verifyNsfwToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-        (await verifyNsfwToken(
-          showcaseJwt,
+      await assertShowcaseOpen({
+        entry,
+        storyId: params.storyId,
+        user,
+        showcaseJwt,
+        credentials: [
+          headers['authorization'],
           query.access ? `Showcase ${query.access}` : undefined,
-          params.storyId,
-        ));
-      if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
-        throw new AppError(404, 'Not found.');
-      }
+        ],
+      });
 
       const publication = await showcaseService.getPublication(
         params.storyId,
@@ -114,18 +101,13 @@ export const publicReaderRoutes = new Elysia()
       if (!entry) {
         throw new AppError(404, 'Not found.');
       }
-      if (
-        entry.visibility === 'password' &&
-        !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
-      ) {
-        throw new AppError(404, 'Not found.');
-      }
-      const includeNsfw =
-        (await showcaseService.viewerIncludesNsfw(user)) ||
-        (await verifyNsfwToken(showcaseJwt, headers['authorization'], params.storyId));
-      if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
-        throw new AppError(404, 'Not found.');
-      }
+      const includeNsfw = await assertShowcaseOpen({
+        entry,
+        storyId: params.storyId,
+        user,
+        showcaseJwt,
+        credentials: [headers['authorization']],
+      });
 
       const publication = await showcaseService.getPublication(
         params.storyId,

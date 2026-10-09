@@ -13,6 +13,7 @@ import {
   runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { softDeleteRowSync } from './softDelete';
 
 /** The one image of a page: a Sketch of the story, or a medium of its Gallery. */
 export type ScenePageMedia = { sketchId: string } | { galleryId: string };
@@ -173,28 +174,7 @@ export const createScenePageService = (db: AppDrizzleClient): ScenePageService =
       await assertStoryIsWritable(db, original.storyId);
       const userIdToLog = await userIdFor(currentUserId, original.storyId);
       const deleted = await runLocalWrite(db, original.storyId, () => {
-        const row = db
-          .update(scenePages)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${scenePages.version} + 1`,
-          })
-          .where(eq(scenePages.id, pageId))
-          .returning({
-            id: scenePages.id,
-            storyId: scenePages.storyId,
-            isDeleted: scenePages.isDeleted,
-            version: scenePages.version,
-          })
-          .get();
-        if (!row) throw new Error(`Failed to delete scene page ${pageId}.`);
-        recordLocalOperationSync(db, row.storyId, userIdToLog, 'delete', 'ScenePage', pageId, {
-          id: row.id,
-          isDeleted: row.isDeleted,
-          version: row.version,
-        });
+        const row = softDeleteRowSync(db, scenePages, 'ScenePage', pageId, userIdToLog);
         return row;
       });
       entityEventEmitter.emit('scene_page_changed', deleted.storyId, pageId);

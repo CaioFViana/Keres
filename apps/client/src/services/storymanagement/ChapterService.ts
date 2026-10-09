@@ -26,6 +26,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
+import { softDeleteRowSync } from './softDelete';
 
 export type { FavoriteFilterState };
 
@@ -365,30 +366,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       );
 
       const updatedChapter = await runLocalWrite(db, chapterToDelete.storyId, () => {
-        const deleted = db
-          .update(chapters)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${chapters.version} + 1`,
-          })
-          .where(eq(chapters.id, chapterId))
-          .returning({
-            id: chapters.id,
-            storyId: chapters.storyId,
-            isDeleted: chapters.isDeleted,
-            version: chapters.version,
-          })
-          .get();
-        if (!deleted) {
-          throw new Error(`Failed to delete chapter ${chapterId} or chapter not found.`);
-        }
-        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Chapter', chapterId, {
-          id: deleted.id,
-          isDeleted: deleted.isDeleted,
-          version: deleted.version,
-        });
+        const deleted = softDeleteRowSync(db, chapters, 'Chapter', chapterId, userIdToLog);
         return deleted;
       });
       entityEventEmitter.emit('chapter_changed', updatedChapter.storyId, updatedChapter.id);

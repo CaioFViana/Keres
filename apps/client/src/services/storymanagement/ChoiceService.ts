@@ -17,6 +17,7 @@ import {
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
+import { softDeleteRowSync } from './softDelete';
 
 // Choices have no favourite flag; the parameter is accepted for signature parity with
 // the other entity services and ignored by the implementation.
@@ -230,28 +231,7 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
         currentUserId,
       );
       const updatedChoice = await runLocalWrite(db, choiceToDelete.storyId, () => {
-        const deleted = db
-          .update(choices)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${choices.version} + 1`,
-          })
-          .where(eq(choices.id, choiceId))
-          .returning({
-            id: choices.id,
-            storyId: choices.storyId,
-            isDeleted: choices.isDeleted,
-            version: choices.version,
-          })
-          .get();
-        if (!deleted) throw new Error(`Failed to delete choice ${choiceId} or choice not found.`);
-        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Choice', choiceId, {
-          id: deleted.id,
-          isDeleted: deleted.isDeleted,
-          version: deleted.version,
-        });
+        const deleted = softDeleteRowSync(db, choices, 'Choice', choiceId, userIdToLog);
         return deleted;
       });
       entityEventEmitter.emit('choice_changed', updatedChoice.storyId, updatedChoice.id);

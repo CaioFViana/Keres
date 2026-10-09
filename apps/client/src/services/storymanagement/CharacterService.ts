@@ -23,6 +23,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
+import { softDeleteRowSync } from './softDelete';
 
 export type CharacterWithTags = CharacterSelect & { tags: TagSelect[] };
 
@@ -331,38 +332,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       );
 
       const updatedCharacter = await runLocalWrite(db, characterToDelete.storyId, () => {
-        const deleted = db
-          .update(characters)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${characters.version} + 1`,
-          })
-          .where(eq(characters.id, characterId))
-          .returning({
-            id: characters.id,
-            storyId: characters.storyId,
-            isDeleted: characters.isDeleted,
-            version: characters.version,
-          })
-          .get();
-        if (!deleted) {
-          throw new Error(`Failed to delete character ${characterId} or character not found.`);
-        }
-        recordLocalOperationSync(
-          db,
-          deleted.storyId,
-          userIdToLog,
-          'delete',
-          'Character',
-          characterId,
-          {
-            id: deleted.id,
-            isDeleted: deleted.isDeleted,
-            version: deleted.version,
-          },
-        );
+        const deleted = softDeleteRowSync(db, characters, 'Character', characterId, userIdToLog);
         return deleted;
       });
       entityEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after delete

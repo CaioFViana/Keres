@@ -24,6 +24,7 @@ import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import { softDeleteRowSync } from './softDelete';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -453,31 +454,8 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       );
 
       const updatedScene = await runLocalWrite(db, sceneToDelete.storyId, () => {
-        const deleted = db
-          .update(scenes)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${scenes.version} + 1`,
-          })
-          .where(eq(scenes.id, sceneId))
-          .returning({
-            id: scenes.id,
-            storyId: scenes.storyId,
-            isDeleted: scenes.isDeleted,
-            version: scenes.version,
-          })
-          .get();
-        if (!deleted) {
-          throw new Error(`Failed to delete scene ${sceneId} or scene not found.`);
-        }
         // The chapter closes the gap by itself: its numbers derive from the live scenes' ranks.
-        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Scene', sceneId, {
-          id: deleted.id,
-          isDeleted: deleted.isDeleted,
-          version: deleted.version,
-        });
+        const deleted = softDeleteRowSync(db, scenes, 'Scene', sceneId, userIdToLog);
         return deleted;
       });
       entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);

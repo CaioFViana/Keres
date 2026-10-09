@@ -23,6 +23,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
+import { softDeleteRowSync } from './softDelete';
 
 export type LocationWithTags = LocationSelect & { tags: TagSelect[] };
 
@@ -314,40 +315,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         db,
         locationToDelete.storyId,
         () => {
-          const deleted = db
-            .update(locations)
-            .set({
-              isDeleted: true,
-              deletedAt: new Date(),
-              updatedAt: new Date(),
-              version: sql`${locations.version} + 1`,
-            })
-            .where(eq(locations.id, locationId))
-            .returning({
-              id: locations.id,
-              storyId: locations.storyId,
-              isDeleted: locations.isDeleted,
-              version: locations.version,
-            })
-            .get();
-
-          if (!deleted) {
-            throw new Error(`Failed to delete location ${locationId} or location not found.`);
-          }
-
-          recordLocalOperationSync(
-            db,
-            deleted.storyId,
-            userIdToLog,
-            'delete',
-            'Location',
-            locationId,
-            {
-              id: deleted.id,
-              isDeleted: deleted.isDeleted,
-              version: deleted.version,
-            },
-          );
+          const deleted = softDeleteRowSync(db, locations, 'Location', locationId, userIdToLog);
 
           // A cascade: a LocationRelation pointing at a deleted Location has nowhere to
           // navigate - unlike the other reverse relations in this file (LocationCharacterManager

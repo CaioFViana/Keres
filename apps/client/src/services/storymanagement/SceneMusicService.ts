@@ -13,6 +13,7 @@ import {
   runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { softDeleteRowSync } from './softDelete';
 
 /** What a link points at: a Song of the story, or a medium of its Gallery (an audio file, a link). */
 export type SceneMusicTarget = { songId: string } | { galleryId: string };
@@ -204,28 +205,7 @@ export const createSceneMusicService = (db: AppDrizzleClient): SceneMusicService
       await assertStoryIsWritable(db, original.storyId);
       const userIdToLog = await userIdFor(currentUserId, original.storyId);
       const deleted = await runLocalWrite(db, original.storyId, () => {
-        const row = db
-          .update(sceneMusic)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${sceneMusic.version} + 1`,
-          })
-          .where(eq(sceneMusic.id, musicId))
-          .returning({
-            id: sceneMusic.id,
-            storyId: sceneMusic.storyId,
-            isDeleted: sceneMusic.isDeleted,
-            version: sceneMusic.version,
-          })
-          .get();
-        if (!row) throw new Error(`Failed to delete scene music ${musicId}.`);
-        recordLocalOperationSync(db, row.storyId, userIdToLog, 'delete', 'SceneMusic', musicId, {
-          id: row.id,
-          isDeleted: row.isDeleted,
-          version: row.version,
-        });
+        const row = softDeleteRowSync(db, sceneMusic, 'SceneMusic', musicId, userIdToLog);
         return row;
       });
       entityEventEmitter.emit('scene_music_changed', deleted.storyId, musicId);

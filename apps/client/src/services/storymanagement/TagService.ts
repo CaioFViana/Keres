@@ -22,6 +22,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
+import { softDeleteRowSync } from './softDelete';
 
 export type { FavoriteFilterState };
 
@@ -243,32 +244,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         currentUserId,
       );
       const updatedTag = await runLocalWrite(db, tagToDelete.storyId, () => {
-        const deleted = db
-          .update(tags)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${tags.version} + 1`,
-          })
-          .where(eq(tags.id, tagId))
-          .returning({
-            id: tags.id,
-            storyId: tags.storyId,
-            isDeleted: tags.isDeleted,
-            version: tags.version,
-          })
-          .get();
-
-        if (!deleted) {
-          throw new Error(`Failed to delete tag ${tagId} or tag not found.`);
-        }
-
-        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Tag', tagId, {
-          id: deleted.id,
-          isDeleted: deleted.isDeleted,
-          version: deleted.version,
-        });
+        const deleted = softDeleteRowSync(db, tags, 'Tag', tagId, userIdToLog);
         return deleted;
       });
       entityEventEmitter.emit('tag_changed', updatedTag.storyId, updatedTag.id); // Emit event after delete

@@ -13,6 +13,7 @@ import {
   runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { softDeleteRowSync } from './softDelete';
 
 /**
  * When a container happens, said against the story's own timeline.
@@ -193,31 +194,12 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
         currentUserId,
       );
       const updated = await runLocalWrite(db, anchor.storyId, () => {
-        const deleted = db
-          .update(chapterAnchors)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${chapterAnchors.version} + 1`,
-          })
-          .where(eq(chapterAnchors.id, anchorId))
-          .returning({
-            id: chapterAnchors.id,
-            storyId: chapterAnchors.storyId,
-            isDeleted: chapterAnchors.isDeleted,
-            version: chapterAnchors.version,
-          })
-          .get();
-        if (!deleted) throw new Error(`Failed to delete ChapterAnchor ${anchorId}.`);
-        recordLocalOperationSync(
+        const deleted = softDeleteRowSync(
           db,
-          deleted.storyId,
-          userIdToLog,
-          'delete',
+          chapterAnchors,
           'ChapterAnchor',
           anchorId,
-          { id: deleted.id, isDeleted: deleted.isDeleted, version: deleted.version },
+          userIdToLog,
         );
         return deleted;
       });

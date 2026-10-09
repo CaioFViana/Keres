@@ -25,6 +25,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
+import { softDeleteRowSync } from './softDelete';
 
 export type { FavoriteFilterState };
 
@@ -360,40 +361,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         currentUserId,
       );
       const updatedWorldRule = await runLocalWrite(db, worldRuleToDelete.storyId, () => {
-        const deleted = db
-          .update(worldRules)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${worldRules.version} + 1`,
-          })
-          .where(eq(worldRules.id, worldRuleId))
-          .returning({
-            id: worldRules.id,
-            storyId: worldRules.storyId,
-            isDeleted: worldRules.isDeleted,
-            version: worldRules.version,
-          })
-          .get();
-
-        if (!deleted) {
-          throw new Error(`Failed to delete world rule ${worldRuleId} or world rule not found.`);
-        }
-
-        recordLocalOperationSync(
-          db,
-          deleted.storyId,
-          userIdToLog,
-          'delete',
-          'WorldRule',
-          worldRuleId,
-          {
-            id: deleted.id,
-            isDeleted: deleted.isDeleted,
-            version: deleted.version,
-          },
-        );
+        const deleted = softDeleteRowSync(db, worldRules, 'WorldRule', worldRuleId, userIdToLog);
         return deleted;
       });
       entityEventEmitter.emit('worldrule_changed', updatedWorldRule.storyId, updatedWorldRule.id);

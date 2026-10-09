@@ -12,6 +12,7 @@ import {
   runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { softDeleteRowSync } from './softDelete';
 
 /** What a person can write of a song; every field is optional on a change. */
 export interface SongFields {
@@ -161,28 +162,7 @@ export const createSongService = (db: AppDrizzleClient): SongService => {
       await assertStoryIsWritable(db, original.storyId);
       const userIdToLog = await userIdFor(currentUserId, original.storyId);
       const deleted = await runLocalWrite(db, original.storyId, () => {
-        const row = db
-          .update(songs)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${songs.version} + 1`,
-          })
-          .where(eq(songs.id, songId))
-          .returning({
-            id: songs.id,
-            storyId: songs.storyId,
-            isDeleted: songs.isDeleted,
-            version: songs.version,
-          })
-          .get();
-        if (!row) throw new Error(`Failed to delete song ${songId}.`);
-        recordLocalOperationSync(db, row.storyId, userIdToLog, 'delete', 'Song', songId, {
-          id: row.id,
-          isDeleted: row.isDeleted,
-          version: row.version,
-        });
+        const row = softDeleteRowSync(db, songs, 'Song', songId, userIdToLog);
         return row;
       });
       entityEventEmitter.emit('song_changed', deleted.storyId, songId);

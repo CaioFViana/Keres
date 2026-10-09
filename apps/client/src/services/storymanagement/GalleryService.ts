@@ -23,6 +23,7 @@ import {
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { softDeleteRowSync } from './softDelete';
 
 export type { FavoriteFilterState };
 
@@ -367,32 +368,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         currentUserId,
       );
       const updated = await runLocalWrite(db, toDelete.storyId, () => {
-        const row = db
-          .update(galleries)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${galleries.version} + 1`,
-          })
-          .where(eq(galleries.id, galleryId))
-          .returning({
-            id: galleries.id,
-            storyId: galleries.storyId,
-            isDeleted: galleries.isDeleted,
-            version: galleries.version,
-          })
-          .get();
-
-        if (!row) {
-          throw new Error(`Failed to delete gallery ${galleryId} or gallery not found.`);
-        }
-
-        recordLocalOperationSync(db, row.storyId, userIdToLog, 'delete', 'Gallery', galleryId, {
-          id: row.id,
-          isDeleted: row.isDeleted,
-          version: row.version,
-        });
+        const row = softDeleteRowSync(db, galleries, 'Gallery', galleryId, userIdToLog);
         return row;
       });
       entityEventEmitter.emit('gallery_changed', updated.storyId, galleryId);

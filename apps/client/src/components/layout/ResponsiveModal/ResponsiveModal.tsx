@@ -5,12 +5,32 @@ import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPa
 import { KeyboardHandledContext, useKeyboardOverlap } from '../../../hooks/useKeyboardOverlap';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';
+import { radius, space } from '../../../theme/tokens';
+
+/** The padding of the surface: one of a few steps, instead of a number chosen by each modal. */
+export type ModalInset = 'none' | 'compact' | 'regular' | 'roomy' | 'sheet';
+
+const INSETS: Record<ModalInset, ViewStyle> = {
+  none: {},
+  compact: { padding: space.lg },
+  regular: { padding: space.xl },
+  roomy: { padding: space.xxl },
+  sheet: {
+    paddingHorizontal: space.xxl,
+    paddingTop: space.xl,
+    paddingBottom: space.xxl,
+  },
+};
 
 interface ResponsiveModalProps {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  /** Padding of the surface; leave it out when the content lays itself out edge to edge. */
+  inset?: ModalInset;
+  /** `raised` paints the surface one step above the screen (`colors.surface`), as a sheet over the content. */
+  tone?: 'default' | 'raised';
   maxHeight?: number | `${number}%`;
   /**
    * The surface lifts itself clear of the keyboard (see `useKeyboardOverlap`). Turn it off for a
@@ -27,6 +47,8 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   onClose,
   children,
   contentStyle,
+  inset = 'none',
+  tone = 'default',
   maxHeight = '80%',
   placement = 'center',
   keyboardAvoiding = true,
@@ -48,6 +70,8 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
       ? {
           width: '100%',
           maxWidth: 1100,
+          borderTopLeftRadius: radius.sheet,
+          borderTopRightRadius: radius.sheet,
           borderBottomLeftRadius: 0,
           borderBottomRightRadius: 0,
         }
@@ -85,9 +109,10 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
           style={[
             styles.content,
             {
-              backgroundColor: colors.background,
+              backgroundColor: tone === 'raised' ? colors.surface : colors.background,
               maxHeight,
               ...placementStyle,
+              ...INSETS[inset],
             },
             contentStyle,
           ]}
@@ -120,7 +145,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   content: {
-    borderRadius: 12,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     // The space left above the keyboard is what the surface gets, not what its content asks for.
     flexShrink: 1,

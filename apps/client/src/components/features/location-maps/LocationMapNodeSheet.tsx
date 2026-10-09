@@ -4,12 +4,16 @@ import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/Icon
 import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import {
+  CanvasEntitySummaryCard,
+  CanvasNodeSheet,
+  getCanvasNodeSheetStyles,
+} from '@/src/components/features/canvas/CanvasNodeSheet';
 import { Ionicons } from '@expo/vector-icons';
 import { MAP_ICON_OPTIONS } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
@@ -103,60 +107,8 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   const cardStyles = useMemo(() => getCommonCardStyles(colors), [colors]);
 
   const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      maxHeight: '78%',
-      overflow: 'visible',
-    },
-    scroll: { flexGrow: 1 },
-    scrollContent: { paddingHorizontal: 2, paddingVertical: 2 },
-    handle: {
-      alignSelf: 'center',
-      width: 42,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: colors.border,
-      marginBottom: 14,
-    },
-    header: { flexDirection: 'row', alignItems: 'flex-start' },
-    headerText: { flex: 1, marginRight: 12 },
-    title: { fontSize: 19, fontWeight: 'bold', color: colors.text },
-    openRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 12,
-      paddingVertical: 8,
-    },
-    openText: { color: colors.primary, fontSize: 15, fontWeight: '600', marginLeft: 6 },
-    section: {
-      fontSize: 13,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 18,
-      marginBottom: 8,
-      textTransform: 'uppercase',
-    },
-    cardTitle: { marginBottom: 10 },
-    item: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderRadius: 8,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      padding: 10,
-      marginBottom: 6,
-      backgroundColor: colors.surface,
-    },
-    itemText: { flex: 1, color: colors.text, fontSize: 13 },
-    hint: { color: colors.textSecondary, fontSize: 13, marginBottom: 10 },
-    summaryText: { color: colors.text, fontSize: 13, lineHeight: 19 },
+    ...getCanvasNodeSheetStyles(colors),
     destinationAction: { marginTop: 12 },
-    removeButton: { marginTop: 16, backgroundColor: colors.error },
     colorMarging: { marginBottom: 20 },
   });
 
@@ -172,180 +124,153 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   );
 
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
-      <View style={styles.handle} />
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{name}</Text>
-        </View>
-        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity style={styles.openRow} onPress={onOpenLocation}>
-        <Ionicons name="open-outline" size={18} color={colors.primary} />
-        <Text style={styles.openText}>{t('location_map_open_location')}</Text>
-      </TouchableOpacity>
+    <CanvasNodeSheet
+      title={name}
+      open={{ label: t('location_map_open_location'), onPress: onOpenLocation }}
+      onClose={onClose}
+    >
+      {summary && (
+        <CanvasEntitySummaryCard title={t('location_map_location_summary')} summary={summary} />
+      )}
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        {summary && (
-          <View style={cardStyles.cardContainer}>
-            <Text style={[cardStyles.cardText, styles.cardTitle]}>
-              {t('location_map_location_summary')}
-            </Text>
-            {summary.details ? (
-              <Text style={styles.summaryText}>{summary.details}</Text>
-            ) : (
-              <Text style={styles.hint}>{t('common_na')}</Text>
-            )}
-          </View>
-        )}
+      {canEdit && (
+        <>
+          <Text style={styles.section}>{t('location_map_node_icon')}</Text>
+          <IconPickerInput
+            currentIcon={icon}
+            onSelectIcon={onChangeIcon}
+            placeholder={t('location_map_node_icon')}
+            iconOptions={MAP_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[]}
+          />
+          <Text style={styles.section}>{t('location_map_node_color')}</Text>
+          <ColorPickerInput
+            currentColor={color}
+            onSelectColor={onChangeColor}
+            placeholder={t('location_map_node_color')}
+            style={styles.colorMarging}
+          />
+        </>
+      )}
 
+      <View style={cardStyles.cardContainer}>
+        <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('location_map_destination')}</Text>
         {canEdit && (
-          <>
-            <Text style={styles.section}>{t('location_map_node_icon')}</Text>
-            <IconPickerInput
-              currentIcon={icon}
-              onSelectIcon={onChangeIcon}
-              placeholder={t('location_map_node_icon')}
-              iconOptions={MAP_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[]}
-            />
-            <Text style={styles.section}>{t('location_map_node_color')}</Text>
-            <ColorPickerInput
-              currentColor={color}
-              onSelectColor={onChangeColor}
-              placeholder={t('location_map_node_color')}
-              style={styles.colorMarging}
-            />
-          </>
+          <SingleSelectPill
+            options={destinationOptions}
+            value={destinationMapId ?? ''}
+            onValueChange={(value) => onChangeDestination(value || null)}
+            placeholder={t('location_map_destination_none')}
+            multiple={false}
+            allowDeselect
+          />
         )}
-
-        <View style={cardStyles.cardContainer}>
-          <Text style={[cardStyles.cardText, styles.cardTitle]}>
-            {t('location_map_destination')}
-          </Text>
-          {canEdit && (
-            <SingleSelectPill
-              options={destinationOptions}
-              value={destinationMapId ?? ''}
-              onValueChange={(value) => onChangeDestination(value || null)}
-              placeholder={t('location_map_destination_none')}
-              multiple={false}
-              allowDeselect
-            />
-          )}
-          {destinationMapId ? (
-            destinationUnavailable ? (
-              <Text style={styles.hint}>{t('location_map_destination_unavailable')}</Text>
-            ) : (
-              <Button style={styles.destinationAction} onPress={onOpenDestination}>
-                {t('location_map_open_destination')}
-              </Button>
-            )
-          ) : canEdit ? (
-            <Button style={styles.destinationAction} onPress={onCreateDestination}>
-              {t('location_map_create_destination')}
+        {destinationMapId ? (
+          destinationUnavailable ? (
+            <Text style={styles.hint}>{t('location_map_destination_unavailable')}</Text>
+          ) : (
+            <Button style={styles.destinationAction} onPress={onOpenDestination}>
+              {t('location_map_open_destination')}
             </Button>
-          ) : (
-            <Text style={styles.hint}>{t('location_map_destination_none')}</Text>
-          )}
-        </View>
-
-        <View style={cardStyles.cardContainer}>
-          <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('parent_location')}</Text>
-          {parent ? (
-            relationRow(parent.relationId, parent.name, canEdit ? onRemoveParent : undefined)
-          ) : (
-            <Text style={styles.hint}>{t('no_parent_location')}</Text>
-          )}
-          {canEdit && parentCandidates.length > 0 && (
-            <MultiSelectPill
-              options={parentCandidates.map((candidate) => ({
-                label: candidate.name,
-                value: candidate.id,
-              }))}
-              selectedValues={[]}
-              onSelectionChange={(values) => {
-                const next = values[0];
-                if (next) onSetParent(next);
-              }}
-              singleSelect
-              placeholder={t('set_parent')}
-            />
-          )}
-        </View>
-
-        <View style={cardStyles.cardContainer}>
-          <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('child_locations')}</Text>
-          {childLocations.length === 0 ? (
-            <Text style={styles.hint}>{t('no_child_locations')}</Text>
-          ) : (
-            childLocations.map((child) =>
-              relationRow(
-                child.relationId,
-                child.name,
-                canEdit ? () => onRemoveRelation(child.relationId) : undefined,
-              ),
-            )
-          )}
-          {canEdit && childCandidates.length > 0 && (
-            <MultiSelectPill
-              options={childCandidates.map((candidate) => ({
-                label: candidate.name,
-                value: candidate.id,
-              }))}
-              selectedValues={[]}
-              onSelectionChange={(values) => {
-                const next = values[0];
-                if (next) onAddChild(next);
-              }}
-              singleSelect
-              placeholder={t('add_child_location')}
-            />
-          )}
-        </View>
-
-        <View style={cardStyles.cardContainer}>
-          <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('connected_locations')}</Text>
-          {connections.length === 0 ? (
-            <Text style={styles.hint}>{t('no_connected_locations')}</Text>
-          ) : (
-            connections.map((connection) =>
-              relationRow(
-                connection.relationId,
-                connection.otherName,
-                canEdit ? () => onRemoveConnection(connection.relationId) : undefined,
-              ),
-            )
-          )}
-          {canEdit && connectCandidates.length > 0 && (
-            <MultiSelectPill
-              options={connectCandidates.map((candidate) => ({
-                label: candidate.name,
-                value: candidate.id,
-              }))}
-              selectedValues={[]}
-              onSelectionChange={(values) => {
-                const next = values[0];
-                if (next) onAddConnection(next);
-              }}
-              singleSelect
-              placeholder={t('add_connection')}
-            />
-          )}
-        </View>
-
-        {canEdit && (
-          <Button onPress={onRemoveNode} style={styles.removeButton}>
-            {t('location_map_remove_node')}
+          )
+        ) : canEdit ? (
+          <Button style={styles.destinationAction} onPress={onCreateDestination}>
+            {t('location_map_create_destination')}
           </Button>
+        ) : (
+          <Text style={styles.hint}>{t('location_map_destination_none')}</Text>
         )}
-      </ScrollView>
-    </ResponsiveModal>
+      </View>
+
+      <View style={cardStyles.cardContainer}>
+        <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('parent_location')}</Text>
+        {parent ? (
+          relationRow(parent.relationId, parent.name, canEdit ? onRemoveParent : undefined)
+        ) : (
+          <Text style={styles.hint}>{t('no_parent_location')}</Text>
+        )}
+        {canEdit && parentCandidates.length > 0 && (
+          <MultiSelectPill
+            options={parentCandidates.map((candidate) => ({
+              label: candidate.name,
+              value: candidate.id,
+            }))}
+            selectedValues={[]}
+            onSelectionChange={(values) => {
+              const next = values[0];
+              if (next) onSetParent(next);
+            }}
+            singleSelect
+            placeholder={t('set_parent')}
+          />
+        )}
+      </View>
+
+      <View style={cardStyles.cardContainer}>
+        <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('child_locations')}</Text>
+        {childLocations.length === 0 ? (
+          <Text style={styles.hint}>{t('no_child_locations')}</Text>
+        ) : (
+          childLocations.map((child) =>
+            relationRow(
+              child.relationId,
+              child.name,
+              canEdit ? () => onRemoveRelation(child.relationId) : undefined,
+            ),
+          )
+        )}
+        {canEdit && childCandidates.length > 0 && (
+          <MultiSelectPill
+            options={childCandidates.map((candidate) => ({
+              label: candidate.name,
+              value: candidate.id,
+            }))}
+            selectedValues={[]}
+            onSelectionChange={(values) => {
+              const next = values[0];
+              if (next) onAddChild(next);
+            }}
+            singleSelect
+            placeholder={t('add_child_location')}
+          />
+        )}
+      </View>
+
+      <View style={cardStyles.cardContainer}>
+        <Text style={[cardStyles.cardText, styles.cardTitle]}>{t('connected_locations')}</Text>
+        {connections.length === 0 ? (
+          <Text style={styles.hint}>{t('no_connected_locations')}</Text>
+        ) : (
+          connections.map((connection) =>
+            relationRow(
+              connection.relationId,
+              connection.otherName,
+              canEdit ? () => onRemoveConnection(connection.relationId) : undefined,
+            ),
+          )
+        )}
+        {canEdit && connectCandidates.length > 0 && (
+          <MultiSelectPill
+            options={connectCandidates.map((candidate) => ({
+              label: candidate.name,
+              value: candidate.id,
+            }))}
+            selectedValues={[]}
+            onSelectionChange={(values) => {
+              const next = values[0];
+              if (next) onAddConnection(next);
+            }}
+            singleSelect
+            placeholder={t('add_connection')}
+          />
+        )}
+      </View>
+
+      {canEdit && (
+        <Button onPress={onRemoveNode} style={styles.removeButton}>
+          {t('location_map_remove_node')}
+        </Button>
+      )}
+    </CanvasNodeSheet>
   );
 };
 

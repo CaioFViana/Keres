@@ -1,22 +1,19 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
 import MultiSelectPill, {
   type MultiSelectGroup,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import CanvasToolsBar from '@/src/components/features/canvas/CanvasToolsBar';
 import {
   CanvasActionBar,
   CanvasActionBarButton,
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 import AddObjectsPill from '@/src/components/features/graphs/CanvasOverlay/AddObjectsPill';
-import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
 import type {
   AddObjectsAction,
   OverlayDrawTool,
 } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../theme';
 
 interface BoardCanvasToolsProps {
   groupedOptions: MultiSelectGroup[];
@@ -55,43 +52,8 @@ const BoardCanvasTools: React.FC<BoardCanvasToolsProps> = ({
   onToggleOverlayEdit,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const { isCompact } = useResponsiveLayout();
   const addAnchorRef = useScreenAnchor('BoardCanvas', 'add');
   const modesAnchorRef = useScreenAnchor('BoardCanvas', 'modes');
-  const styles = StyleSheet.create({
-    tools: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    wideRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    rowDivider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors.border,
-      marginVertical: 8,
-    },
-    columnDivider: {
-      width: StyleSheet.hairlineWidth,
-      alignSelf: 'stretch',
-      backgroundColor: colors.border,
-      marginHorizontal: 4,
-    },
-    modesRow: { flexDirection: 'row', alignItems: 'center' },
-  });
-
-  if (drawTool) {
-    return (
-      <OverlayDrawBar
-        tool={drawTool}
-        canFinish={canFinish}
-        onFinish={onFinishDraw}
-        onCancel={onCancelDraw}
-      />
-    );
-  }
   const addActions = (
     <CanvasActionBar testID="board-add-actions" anchorRef={addAnchorRef}>
       <MultiSelectPill
@@ -155,25 +117,16 @@ const BoardCanvasTools: React.FC<BoardCanvasToolsProps> = ({
       />
     </CanvasActionBar>
   );
-  if (isCompact) {
-    return (
-      <View style={styles.tools} testID="board-tools">
-        {modeActions}
-        <View style={styles.rowDivider} />
-        {addActions}
-      </View>
-    );
-  }
   return (
-    <View style={styles.tools} testID="board-tools">
-      <View style={styles.wideRow}>
-        {addActions}
-        <View style={styles.modesRow}>
-          <View style={styles.columnDivider} />
-          {modeActions}
-        </View>
-      </View>
-    </View>
+    <CanvasToolsBar
+      testID="board-tools"
+      drawTool={drawTool}
+      canFinish={canFinish}
+      onFinishDraw={onFinishDraw}
+      onCancelDraw={onCancelDraw}
+      addActions={addActions}
+      modeActions={modeActions}
+    />
   );
 };
 

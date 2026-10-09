@@ -159,6 +159,21 @@ export const getCommonContainerStyles = (colors: ThemeColors) =>
     },
   });
 
+/** A selectable chip: an outlined box that fills with the primary colour when it is active. */
+export const getCommonChipStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+    },
+    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    chipText: { color: colors.text, fontSize: 14, fontWeight: '600' },
+    chipTextActive: { color: colors.onPrimary },
+  });
+
 export const getCommonInputStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     input: {

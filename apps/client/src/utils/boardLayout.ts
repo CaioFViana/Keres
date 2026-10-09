@@ -167,6 +167,22 @@ export function boardNodeSize(
   return { width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT };
 }
 
+/** The box that holds every node's frame; all four edges are infinite when there are no nodes. */
+function boardNodesExtent(nodes: BoardNodeType[], galleryMediaById?: BoardGalleryMediaById) {
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  for (const node of nodes) {
+    const size = boardNodeSize(node, galleryMediaForNode(node, galleryMediaById));
+    minX = Math.min(minX, node.x);
+    minY = Math.min(minY, node.y);
+    maxX = Math.max(maxX, node.x + size.width);
+    maxY = Math.max(maxY, node.y + size.height);
+  }
+  return { minX, minY, maxX, maxY };
+}
+
 export function boardCanvasSize(
   nodes: BoardNodeType[],
   minWidth = BOARD_CANVAS_MIN,
@@ -190,17 +206,16 @@ export function boardCanvasBounds(
   if (nodes.length === 0) {
     return { width: minWidth, height: minHeight, originX: 0, originY: 0 };
   }
-  let minX = Number.POSITIVE_INFINITY;
-  let minY = Number.POSITIVE_INFINITY;
-  let maxX = 0;
-  let maxY = 0;
-  for (const node of nodes) {
-    const size = boardNodeSize(node, galleryMediaForNode(node, galleryMediaById));
-    minX = Math.min(minX, node.x);
-    minY = Math.min(minY, node.y);
-    maxX = Math.max(maxX, node.x + size.width);
-    maxY = Math.max(maxY, node.y + size.height);
-  }
+  const {
+    minX,
+    minY,
+    maxX: nodesMaxX,
+    maxY: nodesMaxY,
+  } = boardNodesExtent(nodes, galleryMediaById);
+  // The plane always reaches the origin, so a board that lies entirely right of or below it
+  // still measures from zero.
+  const maxX = Math.max(0, nodesMaxX);
+  const maxY = Math.max(0, nodesMaxY);
   // Keep the existing zero-based plane until a pin actually crosses its top/left edge. At that
   // point reserve a full margin on the newly exposed side, so it remains usable after the drag.
   const originX = minX < 0 ? minX - BOARD_CANVAS_PADDING : 0;
@@ -233,17 +248,7 @@ export function normalizeBoardCanvas(
   if (nodes.length === 0 && (extraRects?.length ?? 0) === 0) {
     return { offsetX: 0, offsetY: 0, width: minWidth, height: minHeight };
   }
-  let minX = Number.POSITIVE_INFINITY;
-  let minY = Number.POSITIVE_INFINITY;
-  let maxX = Number.NEGATIVE_INFINITY;
-  let maxY = Number.NEGATIVE_INFINITY;
-  for (const node of nodes) {
-    const size = boardNodeSize(node, galleryMediaForNode(node, galleryMediaById));
-    minX = Math.min(minX, node.x);
-    minY = Math.min(minY, node.y);
-    maxX = Math.max(maxX, node.x + size.width);
-    maxY = Math.max(maxY, node.y + size.height);
-  }
+  let { minX, minY, maxX, maxY } = boardNodesExtent(nodes, galleryMediaById);
   for (const rect of extraRects ?? []) {
     minX = Math.min(minX, rect.x);
     minY = Math.min(minY, rect.y);

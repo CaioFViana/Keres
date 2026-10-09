@@ -10,6 +10,7 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
+import { getCommonChipStyles } from '../../../theme/commonStyles';
 
 interface SketchPageSheetProps {
   page: SketchPageType;
@@ -48,16 +49,7 @@ const SketchPageSheet: React.FC<SketchPageSheetProps> = ({ page, onApply, onClos
     title: { color: colors.text, fontSize: 19, fontWeight: 'bold', marginBottom: 12 },
     label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 12, marginBottom: 6 },
     row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-    chip: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-    },
-    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    chipText: { color: colors.text, fontSize: 14, fontWeight: '600' },
-    chipTextActive: { color: colors.onPrimary },
+    ...getCommonChipStyles(colors),
     input: {
       borderWidth: 1,
       borderColor: colors.border,

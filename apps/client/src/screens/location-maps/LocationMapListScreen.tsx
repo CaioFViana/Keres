@@ -7,15 +7,17 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import LocationMapCreateModal from '@/src/components/features/location-maps/LocationMapCreateModal';
 import { useDrizzle } from '../../db';
 import type { LocationMapSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { filterByNameAndDescription } from '../../utils/filterByNameAndDescription';
 import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
@@ -99,19 +101,6 @@ const LocationMapListScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     searchContainer: { padding: 10 },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    rowText: { flex: 1 },
-    entityIcon: { marginRight: 12 },
-    actionButton: { padding: 8, marginLeft: 4 },
-    name: { fontSize: 16, fontWeight: '600', color: colors.text },
-    description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
     empty: {
       color: colors.textSecondary,
       textAlign: 'center',
@@ -120,13 +109,10 @@ const LocationMapListScreen = () => {
     },
   });
 
-  const filteredMaps = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase();
-    if (!query) return maps;
-    return maps.filter(({ name, description }) =>
-      `${name} ${description ?? ''}`.toLocaleLowerCase().includes(query),
-    );
-  }, [maps, searchQuery]);
+  const filteredMaps = useMemo(
+    () => filterByNameAndDescription(maps, searchQuery),
+    [maps, searchQuery],
+  );
 
   if (error) {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
@@ -199,48 +185,23 @@ const LocationMapListScreen = () => {
           </Text>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.row}
+          <CanvasListRow
+            leading={
+              <Ionicons
+                name={mapAppearance.icon as keyof typeof Ionicons.glyphMap}
+                size={24}
+                color={mapAppearance.color}
+                style={{ marginRight: 12 }}
+              />
+            }
+            name={item.name}
+            description={item.description}
+            canEdit={!!canEdit}
             onPress={() => navigation.navigate('LocationMap', { mapId: item.id })}
-          >
-            <Ionicons
-              name={mapAppearance.icon as keyof typeof Ionicons.glyphMap}
-              size={24}
-              color={mapAppearance.color}
-              style={styles.entityIcon}
-            />
-            <View style={styles.rowText}>
-              <Text style={styles.name}>{item.name}</Text>
-              {!!item.description && <Text style={styles.description}>{item.description}</Text>}
-            </View>
-            {canEdit && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => setEditingMap(item)}
-                accessibilityLabel={t('edit')}
-              >
-                <Ionicons name="pencil-outline" size={21} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-            {canEdit && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => confirmDuplicateMap(item)}
-                accessibilityLabel={t('duplicate')}
-              >
-                <Ionicons name="copy-outline" size={21} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-            {canEdit && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => confirmMapDelete(item)}
-                accessibilityLabel={t('delete')}
-              >
-                <Ionicons name="trash-outline" size={21} color={colors.error} />
-              </TouchableOpacity>
-            )}
-          </TouchableOpacity>
+            onEdit={() => setEditingMap(item)}
+            onDuplicate={() => confirmDuplicateMap(item)}
+            onDelete={() => confirmMapDelete(item)}
+          />
         )}
       />
       <LocationMapCreateModal

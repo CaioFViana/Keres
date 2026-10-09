@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
+import { capturePointer, releasePointer } from '../../../utils/pointerCapture';
 import { getBoardPinAppearance, type BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import {
   boardNodeSize,
@@ -158,11 +159,7 @@ const BoardNodeView: React.FC<Props> = ({
           origin.current = { x: position.current.x, y: position.current.y };
           if (connectionModeRef.current) handlers.current.onConnectionStart(nodeRef.current);
           else handlers.current.onDragStart(nodeId.current);
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            setPointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.setPointerCapture?.(pointerId);
+          capturePointer(event);
         },
         onPanResponderMove: (_event, gesture) => {
           const zoom = Math.max(scaleRef.current, 0.01);
@@ -179,11 +176,7 @@ const BoardNodeView: React.FC<Props> = ({
           );
         },
         onPanResponderRelease: (event, gesture) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (connectionModeRef.current) {
             const zoom = Math.max(scaleRef.current, 0.01);
             handlers.current.onConnectionEnd(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
@@ -195,11 +188,7 @@ const BoardNodeView: React.FC<Props> = ({
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (connectionModeRef.current) handlers.current.onConnectionCancel();
           else handlers.current.onDragEnd(nodeId.current);
           dragging.current = false;

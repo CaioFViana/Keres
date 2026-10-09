@@ -7,10 +7,11 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import BoardCreateModal from '@/src/components/features/boards/BoardCreateModal';
+import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
@@ -18,6 +19,7 @@ import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { filterByNameAndDescription } from '../../utils/filterByNameAndDescription';
 import type {
   BoardStackParamList,
   MainSystemDrawerParamList,
@@ -100,19 +102,6 @@ const BoardListScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     searchContainer: { padding: 10 },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    rowText: { flex: 1 },
-    entityIcon: { marginRight: 12 },
-    actionButton: { padding: 8, marginLeft: 4 },
-    name: { fontSize: 16, fontWeight: '600', color: colors.text },
-    description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
     empty: {
       color: colors.textSecondary,
       textAlign: 'center',
@@ -121,13 +110,10 @@ const BoardListScreen = () => {
     },
   });
 
-  const filteredBoards = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase();
-    if (!query) return boards;
-    return boards.filter(({ name, description }) =>
-      `${name} ${description ?? ''}`.toLocaleLowerCase().includes(query),
-    );
-  }, [boards, searchQuery]);
+  const filteredBoards = useMemo(
+    () => filterByNameAndDescription(boards, searchQuery),
+    [boards, searchQuery],
+  );
 
   if (error) {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
@@ -199,48 +185,23 @@ const BoardListScreen = () => {
             </Text>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.row}
+            <CanvasListRow
+              leading={
+                <Ionicons
+                  name={boardAppearance.icon as keyof typeof Ionicons.glyphMap}
+                  size={24}
+                  color={boardAppearance.color}
+                  style={{ marginRight: 12 }}
+                />
+              }
+              name={item.name}
+              description={item.description}
+              canEdit={!!canEdit}
               onPress={() => navigation.navigate('BoardCanvas', { boardId: item.id })}
-            >
-              <Ionicons
-                name={boardAppearance.icon as keyof typeof Ionicons.glyphMap}
-                size={24}
-                color={boardAppearance.color}
-                style={styles.entityIcon}
-              />
-              <View style={styles.rowText}>
-                <Text style={styles.name}>{item.name}</Text>
-                {!!item.description && <Text style={styles.description}>{item.description}</Text>}
-              </View>
-              {canEdit && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => setEditingBoard(item)}
-                  accessibilityLabel={t('edit')}
-                >
-                  <Ionicons name="pencil-outline" size={21} color={colors.textSecondary} />
-                </TouchableOpacity>
-              )}
-              {canEdit && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => confirmDuplicateBoard(item)}
-                  accessibilityLabel={t('duplicate')}
-                >
-                  <Ionicons name="copy-outline" size={21} color={colors.textSecondary} />
-                </TouchableOpacity>
-              )}
-              {canEdit && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => confirmBoardDelete(item)}
-                  accessibilityLabel={t('delete')}
-                >
-                  <Ionicons name="trash-outline" size={21} color={colors.error} />
-                </TouchableOpacity>
-              )}
-            </TouchableOpacity>
+              onEdit={() => setEditingBoard(item)}
+              onDuplicate={() => confirmDuplicateBoard(item)}
+              onDelete={() => confirmBoardDelete(item)}
+            />
           )}
         />
       </View>

@@ -90,17 +90,22 @@ export function removeLocationMapPoint(
   };
 }
 
+/** The ids of every image, point and marker already on the map, so a new id cannot collide. */
+function existingLocalIds(current: LocationMapContentType): Set<string> {
+  return new Set([
+    ...current.images.map((image) => image.id),
+    ...current.nodes.map((node) => node.id),
+    ...(current.markers ?? []).map((marker) => marker.id),
+  ]);
+}
+
 /** Adds image bases to the map, each at a staggered position, returning the new content. */
 export function appendImagesToMap(
   current: LocationMapContentType,
   entries: LocationMapImageEntry[],
   origin = DEFAULT_PLACEMENT,
 ): LocationMapContentType {
-  const existing = new Set([
-    ...current.images.map((image) => image.id),
-    ...current.nodes.map((node) => node.id),
-    ...(current.markers ?? []).map((marker) => marker.id),
-  ]);
+  const existing = existingLocalIds(current);
   let next = current;
   for (const entry of entries) {
     const index = next.images.length + next.nodes.length;
@@ -129,11 +134,7 @@ export function appendLocationsToMap(
   locationIds: string[],
   origin = DEFAULT_PLACEMENT,
 ): LocationMapContentType {
-  const existing = new Set([
-    ...current.images.map((image) => image.id),
-    ...current.nodes.map((node) => node.id),
-    ...(current.markers ?? []).map((marker) => marker.id),
-  ]);
+  const existing = existingLocalIds(current);
   let next = current;
   for (const locationId of locationIds) {
     const index = next.images.length + next.nodes.length;
@@ -162,11 +163,7 @@ export function appendMarkersToMap(
   entries: LocationMapMarkerEntry[],
   origin = DEFAULT_PLACEMENT,
 ): LocationMapContentType {
-  const existing = new Set([
-    ...current.images.map((image) => image.id),
-    ...current.nodes.map((node) => node.id),
-    ...(current.markers ?? []).map((marker) => marker.id),
-  ]);
+  const existing = existingLocalIds(current);
   let next = current;
   for (const entry of entries) {
     const index = next.images.length + next.nodes.length + (next.markers?.length ?? 0);

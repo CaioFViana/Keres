@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import type { LocationMapImageType } from '@keres/shared';
 import { useTheme } from '../../../theme';
+import { capturePointer, releasePointer } from '../../../utils/pointerCapture';
 
 const DRAG_THRESHOLD = 5;
 
@@ -123,11 +124,7 @@ const LocationMapImageView: React.FC<Props> = ({
           dragging.current = false;
           origin.current = { x: position.current.x, y: position.current.y };
           if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            setPointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.setPointerCapture?.(pointerId);
+          capturePointer(event);
         },
         onPanResponderMove: (_event, gesture) => {
           if (lockedRef.current) return;
@@ -141,21 +138,13 @@ const LocationMapImageView: React.FC<Props> = ({
           );
         },
         onPanResponderRelease: (event) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
           if (!dragging.current) handlers.current.onSelect(imageId.current);
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (!lockedRef.current) handlers.current.onDragEnd(imageId.current);
           dragging.current = false;
         },

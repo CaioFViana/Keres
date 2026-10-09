@@ -1,7 +1,4 @@
 import {
-  canvasOverlayBounds,
-  spatialRectIntersects,
-  type CanvasOverlayType,
   type SketchDocument,
   type SketchItem,
   type SketchMatrix,
@@ -26,6 +23,7 @@ import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCan
 import type { SketchTool } from '@/src/state/sketchToolStore';
 import { useTheme } from '@/src/theme';
 import type { ErasePreview } from '@/src/hooks/useSketchDrawing';
+import { visibleCanvasStamps } from '@/src/utils/canvasOverlayStamps';
 import SketchInputLayer, {
   SKETCH_HANDLE_SCREEN,
   SKETCH_KNOB_SCREEN,
@@ -166,19 +164,7 @@ const SketchCanvas = forwardRef<SketchCanvasHandle, SketchCanvasProps>((props, r
   const edgeFont = useEdgeFont(11, true);
   const overlays = doc.overlays;
   const visibleStamps = useMemo(
-    () =>
-      overlays
-        .filter(
-          (overlay): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
-            overlay.kind === 'stamp',
-        )
-        .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))
-        .map((stamp, order) => ({ stamp, order }))
-        .sort(
-          (left, right) =>
-            (left.stamp.zIndex ?? 0) - (right.stamp.zIndex ?? 0) || left.order - right.order,
-        )
-        .map(({ stamp }) => stamp),
+    () => visibleCanvasStamps(overlays, renderWindow),
     [overlays, renderWindow],
   );
   const selectedOverlay = selectedOverlayId

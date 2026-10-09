@@ -4,6 +4,7 @@ import type { View } from 'react-native';
 import { Animated, PanResponder } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+import { capturePointer, releasePointer } from '../utils/pointerCapture';
 import {
   spatialNativeSurface,
   spatialOverlayNeedsSync,
@@ -560,11 +561,7 @@ export function useCanvasViewport(
             pinchAngleSet: false,
           };
           tapping.current = (event?.nativeEvent?.touches?.length ?? 1) <= 1;
-          const pointerId = (event?.nativeEvent as { pointerId?: number } | undefined)?.pointerId;
-          const target = event?.currentTarget as unknown as {
-            setPointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.setPointerCapture?.(pointerId);
+          capturePointer(event);
         },
 
         onPanResponderMove: (event, gestureState) => {
@@ -631,11 +628,7 @@ export function useCanvasViewport(
 
         onPanResponderTerminationRequest: () => false,
         onPanResponderRelease: (event, gestureState) => {
-          const pointerId = (event?.nativeEvent as { pointerId?: number } | undefined)?.pointerId;
-          const target = event?.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           gesture.current.pinchDistance = 0;
           gesture.current.pinchAngleSet = false;
           setScaleState(transform.current.scale);

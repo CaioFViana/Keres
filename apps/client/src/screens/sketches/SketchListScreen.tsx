@@ -10,9 +10,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import SketchCreateModal from '@/src/components/features/sketches/SketchCreateModal';
 import { useDrizzle } from '../../db';
 import type { GallerySelect, SketchSelect } from '../../db/schema';
@@ -24,6 +25,7 @@ import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SketchStackParamList } from '../../navigation/MainSystemStack';
+import { filterByNameAndDescription } from '../../utils/filterByNameAndDescription';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { createSketchService } from '../../services/storymanagement/SketchService';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -152,18 +154,6 @@ const SketchListScreen = () => {
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
     searchContainer: { padding: 10 },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    rowText: { flex: 1 },
-    actionButton: { padding: 8, marginLeft: 4 },
-    name: { fontSize: 16, fontWeight: '600', color: colors.text },
-    description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
     empty: {
       color: colors.textSecondary,
       textAlign: 'center',
@@ -172,13 +162,10 @@ const SketchListScreen = () => {
     },
   });
 
-  const filteredSketches = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase();
-    if (!query) return sketches;
-    return sketches.filter(({ name, description }) =>
-      `${name} ${description ?? ''}`.toLocaleLowerCase().includes(query),
-    );
-  }, [sketches, searchQuery]);
+  const filteredSketches = useMemo(
+    () => filterByNameAndDescription(sketches, searchQuery),
+    [sketches, searchQuery],
+  );
 
   if (error) {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
@@ -250,43 +237,16 @@ const SketchListScreen = () => {
             </Text>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.row}
+            <CanvasListRow
+              leading={storyId ? <SketchCover storyId={storyId} sketch={item} /> : null}
+              name={item.name}
+              description={item.description}
+              canEdit={!!canEdit}
               onPress={() => navigation.navigate('SketchCanvas', { sketchId: item.id })}
-            >
-              {storyId && <SketchCover storyId={storyId} sketch={item} />}
-              <View style={styles.rowText}>
-                <Text style={styles.name}>{item.name}</Text>
-                {!!item.description && <Text style={styles.description}>{item.description}</Text>}
-              </View>
-              {canEdit && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => setEditingSketch(item)}
-                  accessibilityLabel={t('edit')}
-                >
-                  <Ionicons name="pencil-outline" size={21} color={colors.textSecondary} />
-                </TouchableOpacity>
-              )}
-              {canEdit && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => confirmDuplicateSketch(item)}
-                  accessibilityLabel={t('duplicate')}
-                >
-                  <Ionicons name="copy-outline" size={21} color={colors.textSecondary} />
-                </TouchableOpacity>
-              )}
-              {canEdit && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => confirmSketchDelete(item)}
-                  accessibilityLabel={t('delete')}
-                >
-                  <Ionicons name="trash-outline" size={21} color={colors.error} />
-                </TouchableOpacity>
-              )}
-            </TouchableOpacity>
+              onEdit={() => setEditingSketch(item)}
+              onDuplicate={() => confirmDuplicateSketch(item)}
+              onDelete={() => confirmSketchDelete(item)}
+            />
           )}
         />
       </View>

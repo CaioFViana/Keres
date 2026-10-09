@@ -1,10 +1,8 @@
 import {
-  canvasOverlayBounds,
   clipSpatialSegment,
   spatialRectIntersects,
   type BoardContentType,
   type BoardNodeType,
-  type CanvasOverlayType,
 } from '@keres/shared';
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-skia';
@@ -26,9 +24,11 @@ import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCa
 import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
 import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
 import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
+import { useDraggedItemFrame } from '@/src/hooks/useDraggedItemFrame';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
 import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
+import { visibleCanvasStamps } from '../../../utils/canvasOverlayStamps';
 import {
   boardCanvasBounds,
   boardNodeSize,
@@ -139,43 +139,15 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
     ref,
   ) => {
     const { colors } = useTheme();
-    const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+    const { activeDrag, queueDrag, adjustForAutoPan, endDrag, autoPanOffsetRef } =
+      useDraggedItemFrame<ActiveDrag>();
     const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
     const [rectPreview, setRectPreview] = useState<{
       start: { x: number; y: number };
       end: { x: number; y: number };
     } | null>(null);
-    const activeDragRef = useRef<ActiveDrag | null>(null);
-    const pendingDragRef = useRef<ActiveDrag | null>(null);
-    const dragFrameRef = useRef<number | null>(null);
-    const dragAutoPanOffsetRef = useRef({ x: 0, y: 0 });
     const edgeCacheRef = useRef(new Map<string, BoardEdgeGeometry>());
 
-    const publishPendingDrag = useCallback(() => {
-      dragFrameRef.current = null;
-      const next = pendingDragRef.current;
-      pendingDragRef.current = null;
-      if (!next) return;
-      activeDragRef.current = next;
-      setActiveDrag(next);
-    }, []);
-    const scheduleDrag = useCallback(() => {
-      if (dragFrameRef.current === null)
-        dragFrameRef.current = requestAnimationFrame(publishPendingDrag);
-    }, [publishPendingDrag]);
-    const adjustDraggedNodeForAutoPan = useCallback(
-      (delta: { x: number; y: number }) => {
-        const current = pendingDragRef.current ?? activeDragRef.current;
-        if (!current) return;
-        dragAutoPanOffsetRef.current = {
-          x: dragAutoPanOffsetRef.current.x + delta.x,
-          y: dragAutoPanOffsetRef.current.y + delta.y,
-        };
-        pendingDragRef.current = { ...current, x: current.x + delta.x, y: current.y + delta.y };
-        scheduleDrag();
-      },
-      [scheduleDrag],
-    );
     const layoutNodes = useMemo(
       () =>
         activeDrag
@@ -194,7 +166,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         width: worldBounds.width,
         height: worldBounds.height,
       },
-      { clampMode: 'none', onAutoPan: adjustDraggedNodeForAutoPan },
+      { clampMode: 'none', onAutoPan: adjustForAutoPan },
     );
     // System font on native, bundled Roboto on web; null while unavailable, where the
     // label below is skipped.
@@ -236,10 +208,9 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         const node = content.nodes.find((candidate) => candidate.id === nodeId);
         if (!node) return;
         const position = {
-          x: clampCanvasWorldCoordinate(x + dragAutoPanOffsetRef.current.x),
-          y: clampCanvasWorldCoordinate(y + dragAutoPanOffsetRef.current.y),
+          x: clampCanvasWorldCoordinate(x + autoPanOffsetRef.current.x),
+          y: clampCanvasWorldCoordinate(y + autoPanOffsetRef.current.y),
         };
-        pendingDragRef.current = { id: nodeId, ...position };
         const size = boardNodeSize(
           node,
           node.kind === 'entity' ? galleryMediaById?.[node.entityId] : undefined,
@@ -247,37 +218,22 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         updateAutoPan(
           worldToScreen({ x: position.x + size.width / 2, y: position.y + size.height / 2 }),
         );
-        scheduleDrag();
+        queueDrag({ id: nodeId, ...position });
       },
-      [content.nodes, galleryMediaById, scheduleDrag, updateAutoPan, worldToScreen],
-    );
-    const consumeNodeDrag = useCallback((nodeId: string) => {
-      if (dragFrameRef.current !== null) cancelAnimationFrame(dragFrameRef.current);
-      dragFrameRef.current = null;
-      const next = pendingDragRef.current ?? activeDragRef.current;
-      pendingDragRef.current = null;
-      activeDragRef.current = null;
-      setActiveDrag(null);
-      return next?.id === nodeId ? next : null;
-    }, []);
-    useEffect(
-      () => () => {
-        if (dragFrameRef.current !== null) cancelAnimationFrame(dragFrameRef.current);
-      },
-      [],
+      [autoPanOffsetRef, content.nodes, galleryMediaById, queueDrag, updateAutoPan, worldToScreen],
     );
     const handleNodeDragStart = useCallback(() => {
-      dragAutoPanOffsetRef.current = { x: 0, y: 0 };
+      autoPanOffsetRef.current = { x: 0, y: 0 };
       setChildDragging(true);
-    }, [setChildDragging]);
+    }, [autoPanOffsetRef, setChildDragging]);
     const handleNodeDragEnd = useCallback(
       (nodeId: string) => {
         stopAutoPan();
         setChildDragging(false);
-        const position = consumeNodeDrag(nodeId);
-        if (position) onMoveNode(nodeId, position.x, position.y);
+        const position = endDrag();
+        if (position?.id === nodeId) onMoveNode(nodeId, position.x, position.y);
       },
-      [consumeNodeDrag, onMoveNode, setChildDragging, stopAutoPan],
+      [endDrag, onMoveNode, setChildDragging, stopAutoPan],
     );
     const handleConnectionStart = useCallback(
       (node: BoardNodeType) => setConnectionDrag({ fromNodeId: node.id, ...nodeCenter(node) }),
@@ -390,19 +346,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       [visibleNodes],
     );
     const visibleStamps = useMemo(
-      () =>
-        (content.overlays ?? [])
-          .filter(
-            (overlay): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
-              overlay.kind === 'stamp',
-          )
-          .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))
-          .map((stamp, order) => ({ stamp, order }))
-          .sort(
-            (left, right) =>
-              (left.stamp.zIndex ?? 0) - (right.stamp.zIndex ?? 0) || left.order - right.order,
-          )
-          .map(({ stamp }) => stamp),
+      () => visibleCanvasStamps(content.overlays, renderWindow),
       [content.overlays, renderWindow],
     );
     const snapTargets = useMemo(

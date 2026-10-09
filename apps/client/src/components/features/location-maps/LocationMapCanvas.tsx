@@ -1,10 +1,9 @@
 import {
-  canvasOverlayBounds,
   spatialRectIntersects,
   type CanvasOverlayType,
   type LocationMapContentType,
 } from '@keres/shared';
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import CanvasStampView from '@/src/components/features/graphs/CanvasOverlay/CanvasStampView';
 import OverlayInteractionLayer from '@/src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
@@ -18,12 +17,14 @@ import GraphCanvasFrame, {
   graphCanvasPlaneStyle,
 } from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
+import { useDraggedItemFrame } from '@/src/hooks/useDraggedItemFrame';
 import {
   locationMapCanvasBounds,
   LOCATION_MAP_NODE_SIZE,
 } from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '../../../theme';
 import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
+import { visibleCanvasStamps } from '../../../utils/canvasOverlayStamps';
 import SkiaOverlayErrorBoundary from '../graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import LocationMapConnectionLayer, {
   type LocationMapConnection,
@@ -121,42 +122,14 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     ref,
   ) => {
     const { colors } = useTheme();
-    const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+    const { activeDrag, queueDrag, adjustForAutoPan, endDrag, autoPanOffsetRef } =
+      useDraggedItemFrame<ActiveDrag>();
     const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
     const [rectPreview, setRectPreview] = useState<{
       start: { x: number; y: number };
       end: { x: number; y: number };
     } | null>(null);
-    const activeDragRef = useRef<ActiveDrag | null>(null);
-    const pendingDragRef = useRef<ActiveDrag | null>(null);
-    const dragFrameRef = useRef<number | null>(null);
-    const dragAutoPanOffsetRef = useRef({ x: 0, y: 0 });
 
-    const publishPendingDrag = useCallback(() => {
-      dragFrameRef.current = null;
-      const next = pendingDragRef.current;
-      pendingDragRef.current = null;
-      if (!next) return;
-      activeDragRef.current = next;
-      setActiveDrag(next);
-    }, []);
-    const scheduleDrag = useCallback(() => {
-      if (dragFrameRef.current === null)
-        dragFrameRef.current = requestAnimationFrame(publishPendingDrag);
-    }, [publishPendingDrag]);
-    const adjustDraggedItemForAutoPan = useCallback(
-      (delta: { x: number; y: number }) => {
-        const current = pendingDragRef.current ?? activeDragRef.current;
-        if (!current) return;
-        dragAutoPanOffsetRef.current = {
-          x: dragAutoPanOffsetRef.current.x + delta.x,
-          y: dragAutoPanOffsetRef.current.y + delta.y,
-        };
-        pendingDragRef.current = { ...current, x: current.x + delta.x, y: current.y + delta.y };
-        scheduleDrag();
-      },
-      [scheduleDrag],
-    );
     const layoutContent = useMemo(() => {
       if (!activeDrag) return content;
       if (activeDrag.kind === 'image') {
@@ -191,7 +164,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         width: worldBounds.width,
         height: worldBounds.height,
       },
-      { clampMode: 'none', onAutoPan: adjustDraggedItemForAutoPan },
+      { clampMode: 'none', onAutoPan: adjustForAutoPan },
     );
     const {
       setChildDragging,
@@ -227,10 +200,9 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               );
         if (!point) return;
         const position = {
-          x: clampCanvasWorldCoordinate(x + dragAutoPanOffsetRef.current.x),
-          y: clampCanvasWorldCoordinate(y + dragAutoPanOffsetRef.current.y),
+          x: clampCanvasWorldCoordinate(x + autoPanOffsetRef.current.x),
+          y: clampCanvasWorldCoordinate(y + autoPanOffsetRef.current.y),
         };
-        pendingDragRef.current = { kind, id, ...position };
         updateAutoPan(
           worldToScreen(
             image
@@ -238,40 +210,33 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               : position,
           ),
         );
-        scheduleDrag();
+        queueDrag({ kind, id, ...position });
       },
-      [content.images, content.markers, content.nodes, scheduleDrag, updateAutoPan, worldToScreen],
-    );
-    const consumeDrag = useCallback((kind: ActiveDrag['kind'], id: string) => {
-      if (dragFrameRef.current !== null) cancelAnimationFrame(dragFrameRef.current);
-      dragFrameRef.current = null;
-      const next = pendingDragRef.current ?? activeDragRef.current;
-      pendingDragRef.current = null;
-      activeDragRef.current = null;
-      setActiveDrag(null);
-      return next?.kind === kind && next.id === id ? next : null;
-    }, []);
-    useEffect(
-      () => () => {
-        if (dragFrameRef.current !== null) cancelAnimationFrame(dragFrameRef.current);
-      },
-      [],
+      [
+        autoPanOffsetRef,
+        content.images,
+        content.markers,
+        content.nodes,
+        queueDrag,
+        updateAutoPan,
+        worldToScreen,
+      ],
     );
     const handleDragStart = useCallback(() => {
-      dragAutoPanOffsetRef.current = { x: 0, y: 0 };
+      autoPanOffsetRef.current = { x: 0, y: 0 };
       setChildDragging(true);
-    }, [setChildDragging]);
+    }, [autoPanOffsetRef, setChildDragging]);
     const handleDragEnd = useCallback(
       (kind: ActiveDrag['kind'], id: string) => {
         stopAutoPan();
         setChildDragging(false);
-        const position = consumeDrag(kind, id);
-        if (!position) return;
+        const position = endDrag();
+        if (position?.kind !== kind || position.id !== id) return;
         if (kind === 'image') onMoveImage(id, position.x, position.y);
         else if (kind === 'node') onMoveNode(id, position.x, position.y);
         else onMoveMarker(id, position.x, position.y);
       },
-      [consumeDrag, onMoveImage, onMoveMarker, onMoveNode, setChildDragging, stopAutoPan],
+      [endDrag, onMoveImage, onMoveMarker, onMoveNode, setChildDragging, stopAutoPan],
     );
     const handleConnectionStart = useCallback(
       (nodeId: string) => {
@@ -350,19 +315,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       [activeDrag?.id, layoutContent.markers, layoutContent.nodes, renderWindow],
     );
     const visibleStamps = useMemo(
-      () =>
-        (layoutContent.overlays ?? [])
-          .filter(
-            (overlay): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
-              overlay.kind === 'stamp',
-          )
-          .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))
-          .map((stamp, order) => ({ stamp, order }))
-          .sort(
-            (left, right) =>
-              (left.stamp.zIndex ?? 0) - (right.stamp.zIndex ?? 0) || left.order - right.order,
-          )
-          .map(({ stamp }) => stamp),
+      () => visibleCanvasStamps(layoutContent.overlays, renderWindow),
       [layoutContent.overlays, renderWindow],
     );
     const snapTargets = useMemo(

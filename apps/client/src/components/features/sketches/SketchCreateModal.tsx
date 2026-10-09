@@ -10,7 +10,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { getCommonChipStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useTheme } from '../../../theme';
 
 interface Props {
@@ -69,16 +69,7 @@ const SketchCreateModal: React.FC<Props> = ({
     },
     label: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
     presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-    chip: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-    },
-    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    chipText: { color: colors.text, fontSize: 14, fontWeight: '600' },
-    chipTextActive: { color: colors.onPrimary },
+    ...getCommonChipStyles(colors),
     actions: {
       flexDirection: 'row',
       justifyContent: 'flex-end',

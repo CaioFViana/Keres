@@ -1,28 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { HelpFieldRow } from '@/src/help/types';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export function HelpFieldTable({ rows }: { rows: HelpFieldRow[] }) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    box: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-    },
-    row: {
-      flexDirection: 'row',
-      borderBottomColor: colors.border,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      paddingVertical: 8,
-    },
-    cell: { flex: 1, color: colors.text, fontSize: 13, paddingRight: 6 },
-  });
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.box}>
       <View style={styles.row}>
@@ -40,3 +24,22 @@ export function HelpFieldTable({ rows }: { rows: HelpFieldRow[] }) {
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    box: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+    },
+    row: {
+      flexDirection: 'row',
+      borderBottomColor: colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      paddingVertical: 8,
+    },
+    cell: { flex: 1, color: colors.text, fontSize: 13, paddingRight: 6 },
+  });

@@ -6,7 +6,9 @@ import { findFirstExcerptMatch } from '@keres/shared';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import { useWebSelectionClip } from '../../../../hooks/useWebSelectionClip';
 import type { CommentSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import CommentThreadModal from '../CommentThreadModal/CommentThreadModal';
 
 export interface CommentableDetailFieldProps {
@@ -72,6 +74,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
     }
     return ranges;
   }, [comments, value]);
+  const styles = useThemedStyles(createStyles);
 
   if (!hasComments && !canComment) {
     return (
@@ -84,20 +87,6 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
       />
     );
   }
-
-  const styles = StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'flex-start' },
-    field: { flex: 1 },
-    button: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginLeft: 8,
-      marginTop: 18,
-      paddingHorizontal: 4,
-      paddingVertical: 2,
-    },
-    count: { fontSize: 12, color: colors.textSecondary, marginLeft: 3 },
-  });
 
   return (
     <View style={styles.row}>
@@ -141,5 +130,20 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'flex-start' },
+    field: { flex: 1 },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
+      marginTop: 18,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+    },
+    count: { ...typography.caption, color: colors.textSecondary, marginLeft: 3 },
+  });
 
 export default CommentableDetailField;

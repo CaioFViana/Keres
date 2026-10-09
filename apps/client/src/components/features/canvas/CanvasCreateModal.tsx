@@ -5,7 +5,9 @@ import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { typography } from '../../../theme/tokens';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 
 export interface CanvasCreateModalProps {
   visible: boolean;
@@ -54,23 +56,7 @@ const CanvasCreateModal: React.FC<CanvasCreateModalProps> = ({
     }
   }
 
-  const styles = StyleSheet.create({
-    title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 16,
-      textAlign: 'center',
-    },
-    label: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
-    field: { marginBottom: 12 },
-    buttons: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 8,
-    },
-    buttonWrapper: { width: '47%' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal
@@ -115,5 +101,23 @@ const CanvasCreateModal: React.FC<CanvasCreateModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: {
+      ...typography.heading,
+      color: colors.text,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    label: { ...typography.sectionTitle, color: colors.text, marginBottom: 5 },
+    field: { marginBottom: 12 },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 8,
+    },
+    buttonWrapper: { width: '47%' },
+  });
 
 export default CanvasCreateModal;

@@ -7,7 +7,9 @@ import { normalizeGalleryLink } from '@keres/shared';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface Props {
   visible: boolean;
@@ -32,25 +34,7 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
   }
 
   const normalized = normalizeGalleryLink(url);
-  const styles = StyleSheet.create({
-    sheet: { overflow: 'visible' },
-    title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 8,
-      textAlign: 'center',
-    },
-    hint: { fontSize: 13, color: colors.textSecondary, marginBottom: 16, lineHeight: 18 },
-    label: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
-    field: { marginBottom: 12, paddingHorizontal: 2, paddingVertical: 2 },
-    buttons: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 8,
-      paddingHorizontal: '3%',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal
@@ -96,5 +80,25 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { overflow: 'visible' },
+    title: {
+      ...typography.heading,
+      color: colors.text,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    hint: { ...typography.hint, color: colors.textSecondary, marginBottom: 16 },
+    label: { ...typography.sectionTitle, color: colors.text, marginBottom: 5 },
+    field: { marginBottom: 12, paddingHorizontal: 2, paddingVertical: 2 },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 8,
+      paddingHorizontal: '3%',
+    },
+  });
 
 export default GalleryAddLinkModal;

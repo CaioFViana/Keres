@@ -6,7 +6,9 @@ import type { ChapterType } from '@keres/shared';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
 /**
@@ -37,7 +39,6 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
   onCancel,
   onConfirm,
 }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const chapterCopy = useVocabularyEntityCopy('Chapter');
   const eventCopy = useVocabularyEntityCopy('Event');
@@ -56,25 +57,7 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
     setPosition(String(lastSlot));
   }
 
-  const styles = StyleSheet.create({
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 6,
-      textAlign: 'center',
-    },
-    subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, textAlign: 'center' },
-    formGroup: { marginBottom: 15 },
-    label: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 20,
-      paddingHorizontal: '3%',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   /**
    * One slot per gap in the spine, described by what it would sit before. "At the end" is the last
@@ -129,5 +112,25 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    modalTitle: {
+      ...typography.heading,
+      color: colors.text,
+      marginBottom: 6,
+      textAlign: 'center',
+    },
+    subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, textAlign: 'center' },
+    formGroup: { marginBottom: 15 },
+    label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },
+    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      paddingHorizontal: '3%',
+    },
+  });
 
 export default ConvertContainerModal;

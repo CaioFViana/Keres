@@ -22,11 +22,6 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
   if (!isPublic && !loading) return null;
   if (!isPublic) return null;
 
-  const styles = StyleSheet.create({
-    loading: { paddingVertical: 8 },
-    avatar: { marginRight: 10 },
-  });
-
   return (
     <CollapsibleCard title={`${t('favorited_by')} (${profiles.length})`} initialExpanded={false}>
       {loading ? (
@@ -55,5 +50,10 @@ const FavoritedByList: React.FC<FavoritedByListProps> = ({ storyId, entityId, en
     </CollapsibleCard>
   );
 };
+
+const styles = StyleSheet.create({
+  loading: { paddingVertical: 8 },
+  avatar: { marginRight: 10 },
+});
 
 export default FavoritedByList;

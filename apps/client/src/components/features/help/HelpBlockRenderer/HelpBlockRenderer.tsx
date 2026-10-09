@@ -1,6 +1,8 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { HelpBlock } from '@/src/help/types';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { HelpFieldTable } from '../HelpFieldTable/HelpFieldTable';
 
 export function HelpBlockRenderer({
@@ -13,42 +15,7 @@ export function HelpBlockRenderer({
   pageTitle: (id: string) => string;
 }) {
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    text: { color: colors.text, fontSize: 15, lineHeight: 22, marginBottom: 12 },
-    heading2: {
-      color: colors.text,
-      fontSize: 20,
-      fontWeight: '700',
-      marginTop: 14,
-      marginBottom: 8,
-    },
-    heading3: {
-      color: colors.text,
-      fontSize: 17,
-      fontWeight: '700',
-      marginTop: 12,
-      marginBottom: 6,
-    },
-    box: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-    },
-    muted: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-    infoCallout: { backgroundColor: colors.primaryContainer, borderColor: colors.primary },
-    warningCallout: { borderColor: colors.error, borderWidth: 1 },
-    tableRow: {
-      flexDirection: 'row',
-      borderBottomColor: colors.border,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      paddingVertical: 8,
-    },
-    tableCell: { color: colors.text, flex: 1, fontSize: 13, paddingRight: 8 },
-    tableHeader: { fontWeight: '700' },
-  });
+  const styles = useThemedStyles(createStyles);
   if (block.type === 'paragraph') return <Text style={styles.text}>{block.text}</Text>;
   if (block.type === 'heading')
     return <Text style={block.level === 2 ? styles.heading2 : styles.heading3}>{block.text}</Text>;
@@ -122,3 +89,40 @@ export function HelpBlockRenderer({
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    text: { color: colors.text, fontSize: 15, lineHeight: 22, marginBottom: 12 },
+    heading2: {
+      ...typography.heading,
+      color: colors.text,
+      marginTop: 14,
+      marginBottom: 8,
+    },
+    heading3: {
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: '700',
+      marginTop: 12,
+      marginBottom: 6,
+    },
+    box: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+    },
+    muted: { ...typography.body, color: colors.textSecondary },
+    infoCallout: { backgroundColor: colors.primaryContainer, borderColor: colors.primary },
+    warningCallout: { borderColor: colors.error, borderWidth: 1 },
+    tableRow: {
+      flexDirection: 'row',
+      borderBottomColor: colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      paddingVertical: 8,
+    },
+    tableCell: { color: colors.text, flex: 1, fontSize: 13, paddingRight: 8 },
+    tableHeader: { fontWeight: '700' },
+  });

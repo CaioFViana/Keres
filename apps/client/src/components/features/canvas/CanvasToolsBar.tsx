@@ -3,7 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
 import type { OverlayDrawTool } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../theme';
+import type { ThemeColors } from '../../../theme';
+import { layout } from '../../../theme/layout';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 
 export interface CanvasToolsBarProps {
   testID: string;
@@ -28,30 +30,8 @@ const CanvasToolsBar: React.FC<CanvasToolsBarProps> = ({
   addActions,
   modeActions,
 }) => {
-  const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
-  const styles = StyleSheet.create({
-    tools: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    wideRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    rowDivider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors.border,
-      marginVertical: 8,
-    },
-    columnDivider: {
-      width: StyleSheet.hairlineWidth,
-      alignSelf: 'stretch',
-      backgroundColor: colors.border,
-      marginHorizontal: 4,
-    },
-    modesRow: { flexDirection: 'row', alignItems: 'center' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (drawTool) {
     return (
@@ -74,9 +54,9 @@ const CanvasToolsBar: React.FC<CanvasToolsBarProps> = ({
   }
   return (
     <View style={styles.tools} testID={testID}>
-      <View style={styles.wideRow}>
+      <View style={layout.rowBetween}>
         {addActions}
-        <View style={styles.modesRow}>
+        <View style={layout.row}>
           <View style={styles.columnDivider} />
           {modeActions}
         </View>
@@ -84,5 +64,27 @@ const CanvasToolsBar: React.FC<CanvasToolsBarProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    tools: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginVertical: 8,
+    },
+    columnDivider: {
+      width: StyleSheet.hairlineWidth,
+      alignSelf: 'stretch',
+      backgroundColor: colors.border,
+      marginHorizontal: 4,
+    },
+  });
 
 export default CanvasToolsBar;

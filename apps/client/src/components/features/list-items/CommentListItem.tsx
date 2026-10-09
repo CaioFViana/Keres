@@ -7,7 +7,9 @@ import type { CommentSelect } from '../../../db/schema';
 import { useAuthorProfiles } from '../../../hooks/useAuthorProfiles';
 import { useCommentFieldLabel } from '../../../hooks/useCommentFieldLabel';
 import { useEntityName } from '../../../hooks/useEntityName';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { typography } from '../../../theme/tokens';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import type { CommentCriticality } from '../../../utils/commentCriticality';
 import { CRITICALITY_ICONS } from '../../../utils/commentCriticality';
 
@@ -27,35 +29,7 @@ const CommentListItem: React.FC<CommentListItemProps> = ({ comment, onPress }) =
   const profiles = useAuthorProfiles(comment.storyId, [comment.authorUserId]);
   const author = profiles[comment.authorUserId] ?? null;
 
-  const styles = StyleSheet.create({
-    cardContainer: {
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      padding: 15,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    headerRow: { flexDirection: 'row', alignItems: 'center' },
-    entityName: {
-      fontSize: 15,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginLeft: 6,
-      flexShrink: 1,
-    },
-    fieldLabel: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    commentText: { fontSize: 14, color: colors.text, marginTop: 6 },
-    footerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 8,
-    },
-    authorRow: { flexDirection: 'row', alignItems: 'center' },
-    authorName: { fontSize: 12, color: colors.textSecondary, marginLeft: 6 },
-    timestamp: { fontSize: 12, color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <TouchableOpacity
@@ -96,5 +70,36 @@ const CommentListItem: React.FC<CommentListItemProps> = ({ comment, onPress }) =
     </TouchableOpacity>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    cardContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    headerRow: { flexDirection: 'row', alignItems: 'center' },
+    entityName: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginLeft: 6,
+      flexShrink: 1,
+    },
+    fieldLabel: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+    commentText: { fontSize: 14, color: colors.text, marginTop: 6 },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 8,
+    },
+    authorRow: { flexDirection: 'row', alignItems: 'center' },
+    authorName: { ...typography.caption, color: colors.textSecondary, marginLeft: 6 },
+    timestamp: { ...typography.caption, color: colors.textSecondary },
+  });
 
 export default CommentListItem;

@@ -17,7 +17,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { CommentSelect } from '../../../../db/schema';
 import { useAuthorProfiles } from '../../../../hooks/useAuthorProfiles';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { layout } from '../../../../theme/layout';
+import { typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { AppAlert } from '../../../../utils/AppAlert';
 import type { CommentCriticality } from '../../../../utils/commentCriticality';
 import {
@@ -171,70 +174,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     [onDelete, t],
   );
 
-  const styles = StyleSheet.create({
-    // Edge to edge: the keyboard screen and the header below lay out their own padding.
-    sheet: { flex: 1 },
-    keyboardContent: { flexGrow: 1 },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 15,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    headerTitle: { fontSize: 17, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
-    list: { paddingHorizontal: 15, flexGrow: 1 },
-    commentRow: { flexDirection: 'row', marginVertical: 10 },
-    commentBody: { flex: 1, marginLeft: 10 },
-    commentHeaderRow: { flexDirection: 'row', alignItems: 'center' },
-    authorName: { color: colors.text, fontWeight: '600', fontSize: 14 },
-    timestamp: { color: colors.textSecondary, fontSize: 11, marginLeft: 8 },
-    excerptBlock: {
-      borderLeftWidth: 2,
-      borderLeftColor: colors.primary,
-      backgroundColor: colors.primaryContainer,
-      paddingLeft: 8,
-      marginTop: 4,
-      marginBottom: 2,
-    },
-    excerptText: { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 },
-    commentText: { color: colors.text, fontSize: 14, marginTop: 2 },
-    deleteButton: { marginTop: 4 },
-    deleteText: { color: colors.error, fontSize: 12 },
-    emptyText: {
-      color: colors.textSecondary,
-      fontStyle: 'italic',
-      paddingVertical: 12,
-      paddingHorizontal: 15,
-    },
-    footer: {
-      padding: 15,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
-    },
-    snapshotBlock: {
-      backgroundColor: colors.surface,
-      borderRadius: 6,
-      padding: 8,
-      marginBottom: 8,
-    },
-    snapshotLabel: { color: colors.textSecondary, fontSize: 11, marginBottom: 2 },
-    snapshotText: { color: colors.text, fontSize: 13 },
-    input: { width: '100%', marginBottom: 8 },
-    excerptInput: { minHeight: 40, textAlignVertical: 'top' },
-    commentInput: { minHeight: 70, textAlignVertical: 'top' },
-    warningText: { color: colors.notification, fontSize: 12, marginBottom: 8 },
-    noticeText: { color: colors.textSecondary, fontSize: 12, marginBottom: 8 },
-    // Criticality icons and the post button share the same row, instead of each one
-    // taking the full width on separate rows - that left a fair amount of horizontal
-    // space idle on wide screens.
-    actionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    criticalityRow: { flexDirection: 'row' },
-    criticalityButton: { padding: 8, borderRadius: 8, marginRight: 6 },
-    criticalityButtonActive: { backgroundColor: colors.primaryContainer },
-    postButton: { paddingHorizontal: 20 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   // Pinned composer: rides the footer's slot below the thread scroll view, so
   // scrolling the thread never pushes the inputs and the post button away.
@@ -282,7 +222,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
         multiline
       />
 
-      <View style={styles.actionRow}>
+      <View style={layout.rowBetween}>
         <View style={styles.criticalityRow}>
           {CRITICALITY_LEVELS.map((level) => (
             <TouchableOpacity
@@ -352,7 +292,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
                     size={32}
                   />
                   <View style={styles.commentBody}>
-                    <View style={styles.commentHeaderRow}>
+                    <View style={layout.row}>
                       <Ionicons
                         name={
                           CRITICALITY_ICONS[comment.criticality as CommentCriticality] ??
@@ -391,5 +331,66 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    // Edge to edge: the keyboard screen and the header below lay out their own padding.
+    sheet: { flex: 1 },
+    keyboardContent: { flexGrow: 1 },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 15,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    headerTitle: { fontSize: 17, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
+    list: { paddingHorizontal: 15, flexGrow: 1 },
+    commentRow: { flexDirection: 'row', marginVertical: 10 },
+    commentBody: { flex: 1, marginLeft: 10 },
+    authorName: { ...typography.label, color: colors.text },
+    timestamp: { color: colors.textSecondary, fontSize: 11, marginLeft: 8 },
+    excerptBlock: {
+      borderLeftWidth: 2,
+      borderLeftColor: colors.primary,
+      backgroundColor: colors.primaryContainer,
+      paddingLeft: 8,
+      marginTop: 4,
+      marginBottom: 2,
+    },
+    excerptText: { color: colors.textSecondary, fontStyle: 'italic', fontSize: 13 },
+    commentText: { color: colors.text, fontSize: 14, marginTop: 2 },
+    deleteButton: { marginTop: 4 },
+    deleteText: { ...typography.caption, color: colors.error },
+    emptyText: {
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      paddingVertical: 12,
+      paddingHorizontal: 15,
+    },
+    footer: {
+      padding: 15,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    snapshotBlock: {
+      backgroundColor: colors.surface,
+      borderRadius: 6,
+      padding: 8,
+      marginBottom: 8,
+    },
+    snapshotLabel: { color: colors.textSecondary, fontSize: 11, marginBottom: 2 },
+    snapshotText: { color: colors.text, fontSize: 13 },
+    input: { width: '100%', marginBottom: 8 },
+    excerptInput: { minHeight: 40, textAlignVertical: 'top' },
+    commentInput: { minHeight: 70, textAlignVertical: 'top' },
+    warningText: { ...typography.caption, color: colors.notification, marginBottom: 8 },
+    noticeText: { ...typography.caption, color: colors.textSecondary, marginBottom: 8 },
+    criticalityRow: { flexDirection: 'row' },
+    criticalityButton: { padding: 8, borderRadius: 8, marginRight: 6 },
+    criticalityButtonActive: { backgroundColor: colors.primaryContainer },
+    postButton: { paddingHorizontal: 20 },
+  });
 
 export default CommentThreadModal;

@@ -15,8 +15,9 @@ import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/Co
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../../theme';
-import { space } from '../../../../theme/tokens';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { space, typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface OverlaySheetProps {
   overlay: CanvasOverlayType;
@@ -53,36 +54,7 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    sheet: { maxHeight: '78%' },
-    scroll: { flexShrink: 1 },
-    scrollContent: { paddingHorizontal: 22, paddingTop: 2, paddingBottom: 24 },
-    // The sheet has no padding of its own: the header and the scroll body lay out their inset.
-    header: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.md },
-    label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 14, marginBottom: 6 },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      color: colors.text,
-      borderRadius: 8,
-      padding: 10,
-    },
-    multiline: { minHeight: 88, textAlignVertical: 'top' },
-    row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-    chip: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    chipText: { color: colors.text, fontSize: 14, fontWeight: '600' },
-    chipTextActive: { color: colors.onPrimary },
-    remove: { backgroundColor: colors.error, marginTop: 20 },
-  });
+  const styles = useThemedStyles(createStyles);
   return (
     <ResponsiveModal
       visible
@@ -260,5 +232,37 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { maxHeight: '78%' },
+    scroll: { flexShrink: 1 },
+    scrollContent: { paddingHorizontal: 22, paddingTop: 2, paddingBottom: 24 },
+    // The sheet has no padding of its own: the header and the scroll body lay out their inset.
+    header: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.md },
+    label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 14, marginBottom: 6 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      color: colors.text,
+      borderRadius: 8,
+      padding: 10,
+    },
+    multiline: { minHeight: 88, textAlignVertical: 'top' },
+    row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    chipText: { ...typography.label, color: colors.text },
+    chipTextActive: { color: colors.onPrimary },
+    remove: { backgroundColor: colors.error, marginTop: 20 },
+  });
 
 export default OverlaySheet;

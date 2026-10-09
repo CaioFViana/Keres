@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 
 export interface CanvasListRowProps {
   /** The leading icon or cover of the entity. */
@@ -29,20 +30,7 @@ const CanvasListRow: React.FC<CanvasListRowProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    rowText: { flex: 1 },
-    actionButton: { padding: 8, marginLeft: 4 },
-    name: { fontSize: 16, fontWeight: '600', color: colors.text },
-    description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <TouchableOpacity style={styles.row} onPress={onPress}>
@@ -81,5 +69,21 @@ const CanvasListRow: React.FC<CanvasListRowProps> = ({
     </TouchableOpacity>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    rowText: { flex: 1 },
+    actionButton: { padding: 8, marginLeft: 4 },
+    name: { fontSize: 16, fontWeight: '600', color: colors.text },
+    description: { fontSize: 13, color: colors.textSecondary, marginTop: 4 },
+  });
 
 export default CanvasListRow;

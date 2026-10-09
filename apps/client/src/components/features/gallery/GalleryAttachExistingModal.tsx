@@ -17,7 +17,9 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import type { GallerySelect } from '@/src/db/schema';
 import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 
 interface Props {
@@ -35,28 +37,7 @@ const GalleryAttachmentPreview: React.FC<{ item: GallerySelect }> = ({ item }) =
   const uri = useResolvedMediaUri(mediaType === 'video' ? item.thumbnailPath : item.localPath);
   const [failedToLoad, setFailedToLoad] = useState(false);
   const isPreviewable = (mediaType === 'image' || mediaType === 'video') && !!uri && !failedToLoad;
-  const styles = StyleSheet.create({
-    wrapper: {
-      alignItems: 'center',
-      backgroundColor: colors.primaryContainer,
-      borderRadius: 18,
-      height: 36,
-      justifyContent: 'center',
-      overflow: 'hidden',
-      width: 36,
-    },
-    preview: { height: '100%', width: '100%' },
-    videoOverlay: {
-      alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.38)',
-      bottom: 0,
-      justifyContent: 'center',
-      left: 0,
-      position: 'absolute',
-      right: 0,
-      top: 0,
-    },
-  });
+  const styles = useThemedStyles(createPreviewStyles);
 
   return (
     <View style={styles.wrapper}>
@@ -115,24 +96,7 @@ const GalleryAttachExistingModal: React.FC<Props> = ({
       `${item.title ?? ''} ${item.fileName}`.toLocaleLowerCase().includes(normalizedSearch),
     );
   }, [media, search]);
-  const styles = StyleSheet.create({
-    title: { color: colors.text, fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
-    hint: { color: colors.textSecondary, lineHeight: 18, marginBottom: 14 },
-    search: { marginBottom: 10 },
-    list: { maxHeight: 310 },
-    row: {
-      alignItems: 'center',
-      borderBottomColor: colors.border,
-      borderBottomWidth: 1,
-      flexDirection: 'row',
-      gap: 10,
-      paddingVertical: 11,
-    },
-    name: { color: colors.text, flex: 1, fontWeight: '600' },
-    fileName: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
-    empty: { color: colors.textSecondary, paddingVertical: 18, textAlign: 'center' },
-    actions: { marginTop: 16 },
-  });
+  const styles = useThemedStyles(createStyles);
   const toggle = (galleryId: string) => {
     setSelectedIds((current) =>
       current.includes(galleryId)
@@ -202,5 +166,49 @@ const GalleryAttachExistingModal: React.FC<Props> = ({
     </ResponsiveModal>
   );
 };
+
+const createPreviewStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrapper: {
+      alignItems: 'center',
+      backgroundColor: colors.primaryContainer,
+      borderRadius: 18,
+      height: 36,
+      justifyContent: 'center',
+      overflow: 'hidden',
+      width: 36,
+    },
+    preview: { height: '100%', width: '100%' },
+    videoOverlay: {
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.38)',
+      bottom: 0,
+      justifyContent: 'center',
+      left: 0,
+      position: 'absolute',
+      right: 0,
+      top: 0,
+    },
+  });
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: { ...typography.heading, color: colors.text, marginBottom: 8 },
+    hint: { color: colors.textSecondary, lineHeight: 18, marginBottom: 14 },
+    search: { marginBottom: 10 },
+    list: { maxHeight: 310 },
+    row: {
+      alignItems: 'center',
+      borderBottomColor: colors.border,
+      borderBottomWidth: 1,
+      flexDirection: 'row',
+      gap: 10,
+      paddingVertical: 11,
+    },
+    name: { color: colors.text, flex: 1, fontWeight: '600' },
+    fileName: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+    empty: { color: colors.textSecondary, paddingVertical: 18, textAlign: 'center' },
+    actions: { marginTop: 16 },
+  });
 
 export default GalleryAttachExistingModal;

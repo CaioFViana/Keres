@@ -15,7 +15,8 @@ import type { GallerySelect } from '../../../../db/schema';
 import { useEntityGalleryMedia } from '../../../../hooks/useEntityGalleryMedia';
 import { useResolvedMediaUri } from '../../../../hooks/useResolvedMediaUri';
 import { useNotificationStore } from '../../../../state/notificationStore';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import GalleryAddMediaModal, {
   type EntityMediaAddKind,
 } from '@/src/components/features/gallery/GalleryAddMediaModal';
@@ -220,7 +221,73 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
     [removeMedia, showNotification, t],
   );
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles);
+
+  const renderThumb = (item: GallerySelect) => (
+    <GalleryThumbnail
+      key={item.id}
+      item={item}
+      styles={styles}
+      errorColor={colors.error}
+      textSecondaryColor={colors.textSecondary}
+      onPress={onPressMedia}
+      onRemove={handleRemove}
+      editable={editable}
+    />
+  );
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+      >
+        {editable && (
+          <TouchableOpacity
+            style={styles.addTile}
+            onPress={() => setAddModalVisible(true)}
+            disabled={importing || !ownerId}
+          >
+            {importing ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="add" size={28} color={colors.primary} />
+                <Text style={styles.addLabel}>{t('media_add_button')}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+        {media.map(renderThumb)}
+      </ScrollView>
+      {media.length === 0 && <Text style={styles.emptyText}>{t('no_media_linked')}</Text>}
+      <GalleryAddLinkModal
+        visible={linkModalVisible}
+        onCancel={() => setLinkModalVisible(false)}
+        onConfirm={(url, title) => {
+          setLinkModalVisible(false);
+          void notifyImport(() => addLink(url, title));
+        }}
+      />
+      <GalleryAddMediaModal
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        onPick={handleAddKind}
+      />
+      <GalleryAttachExistingModal
+        visible={existingMediaVisible}
+        media={unlinkedMedia}
+        loading={existingMediaLoading}
+        onClose={() => setExistingMediaVisible(false)}
+        onConfirm={(galleryIds) => void handleAttachExistingMedia(galleryIds)}
+      />
+    </View>
+  );
+};
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     container: {
       marginBottom: 5,
     },
@@ -286,68 +353,5 @@ const EntityGalleryManager: React.FC<EntityGalleryManagerProps> = ({
       marginTop: 2,
     },
   });
-
-  const renderThumb = (item: GallerySelect) => (
-    <GalleryThumbnail
-      key={item.id}
-      item={item}
-      styles={styles}
-      errorColor={colors.error}
-      textSecondaryColor={colors.textSecondary}
-      onPress={onPressMedia}
-      onRemove={handleRemove}
-      editable={editable}
-    />
-  );
-
-  return (
-    <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}
-      >
-        {editable && (
-          <TouchableOpacity
-            style={styles.addTile}
-            onPress={() => setAddModalVisible(true)}
-            disabled={importing || !ownerId}
-          >
-            {importing ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <>
-                <Ionicons name="add" size={28} color={colors.primary} />
-                <Text style={styles.addLabel}>{t('media_add_button')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
-        {media.map(renderThumb)}
-      </ScrollView>
-      {media.length === 0 && <Text style={styles.emptyText}>{t('no_media_linked')}</Text>}
-      <GalleryAddLinkModal
-        visible={linkModalVisible}
-        onCancel={() => setLinkModalVisible(false)}
-        onConfirm={(url, title) => {
-          setLinkModalVisible(false);
-          void notifyImport(() => addLink(url, title));
-        }}
-      />
-      <GalleryAddMediaModal
-        visible={addModalVisible}
-        onClose={() => setAddModalVisible(false)}
-        onPick={handleAddKind}
-      />
-      <GalleryAttachExistingModal
-        visible={existingMediaVisible}
-        media={unlinkedMedia}
-        loading={existingMediaLoading}
-        onClose={() => setExistingMediaVisible(false)}
-        onConfirm={(galleryIds) => void handleAttachExistingMedia(galleryIds)}
-      />
-    </View>
-  );
-};
 
 export default EntityGalleryManager;

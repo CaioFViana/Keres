@@ -20,11 +20,6 @@ const AppearsInArcsSection: React.FC<Props> = ({ arcs }) => {
 
   if (arcs.length === 0) return null;
 
-  const styles = StyleSheet.create({
-    // The same gap the list gives its own glyphs, kept here since `leading` replaces them.
-    icon: { marginRight: 10 },
-  });
-
   return (
     <CollapsibleCard
       title={t('appears_in_arcs', { arcs: vocab.term('Arc', true), count: arcs.length })}
@@ -49,5 +44,10 @@ const AppearsInArcsSection: React.FC<Props> = ({ arcs }) => {
     </CollapsibleCard>
   );
 };
+
+const styles = StyleSheet.create({
+  // The same gap the list gives its own glyphs, kept here since `leading` replaces them.
+  icon: { marginRight: 10 },
+});
 
 export default AppearsInArcsSection;

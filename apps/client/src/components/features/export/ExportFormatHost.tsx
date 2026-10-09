@@ -5,7 +5,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useExportFormatPromptStore } from '../../../state/exportFormatPromptStore';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { typography } from '../../../theme/tokens';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 
 /**
  * The export chooser every canvas shares: an .svg (the vector drawing, to continue elsewhere) or a
@@ -17,18 +19,7 @@ const ExportFormatHost: React.FC = () => {
   const { colors } = useTheme();
   const open = useExportFormatPromptStore((state) => state.open);
   const answer = useExportFormatPromptStore((state) => state.answer);
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      paddingVertical: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    rowText: { color: colors.text, fontSize: 15, fontWeight: '600' },
-    rowSub: { color: colors.textSecondary, fontSize: 12 },
-  });
+  const styles = useThemedStyles(createStyles);
   if (!open) return null;
   const options = [
     {
@@ -72,5 +63,19 @@ const ExportFormatHost: React.FC = () => {
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    rowText: { color: colors.text, fontSize: 15, fontWeight: '600' },
+    rowSub: { ...typography.caption, color: colors.textSecondary },
+  });
 
 export default ExportFormatHost;

@@ -6,7 +6,8 @@ import {
   CanvasActionBarButton,
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import type { OverlayDrawTool } from './overlayTools';
 
 interface OverlayDrawBarProps {
@@ -42,27 +43,8 @@ const HINT_KEYS: Record<OverlayDrawTool, string> = {
  */
 const OverlayDrawBar: React.FC<OverlayDrawBarProps> = ({ tool, canFinish, onFinish, onCancel }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
-  const styles = StyleSheet.create({
-    bar: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    compactRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    rowDivider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors.border,
-      marginVertical: 8,
-    },
-    hint: { flex: 1, color: colors.textSecondary },
-    compactHintRow: { minHeight: CANVAS_ACTION_ROW_HEIGHT, justifyContent: 'center' },
-    compactHint: { color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
   const showFinish = tool === 'line' || tool === 'polygon';
   const cancel = (
     <CanvasActionBarButton
@@ -109,5 +91,26 @@ const OverlayDrawBar: React.FC<OverlayDrawBarProps> = ({ tool, canFinish, onFini
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    bar: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    compactRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginVertical: 8,
+    },
+    hint: { flex: 1, color: colors.textSecondary },
+    compactHintRow: { minHeight: CANVAS_ACTION_ROW_HEIGHT, justifyContent: 'center' },
+    compactHint: { color: colors.textSecondary },
+  });
 
 export default OverlayDrawBar;

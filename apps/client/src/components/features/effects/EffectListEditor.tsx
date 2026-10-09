@@ -11,7 +11,8 @@ import {
   type StyleProp,
   type TextStyle,
 } from 'react-native';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 type EffectDraft = Pick<Effect, 'id' | 'effectType' | 'itemId' | 'triggerName'>;
 
@@ -42,31 +43,13 @@ export default function EffectListEditor({
   onAdd,
 }: EffectListEditorProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const resolvedTypeOptions = effectTypeOptions ?? [
     { label: t('effect_type_item_grant'), value: 'itemGrant' },
     { label: t('effect_type_item_take'), value: 'itemTake' },
     { label: t('effect_type_trigger_set'), value: 'triggerSet' },
     { label: t('effect_type_trigger_unset'), value: 'triggerUnset' },
   ];
-  const styles = StyleSheet.create({
-    section: { marginTop: 20, marginBottom: 20 },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: colors.surface,
-    },
-    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-    cardRowLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
-    fieldFlex: { flex: 1 },
-    removeLink: { color: colors.error, fontWeight: '600' },
-    addLink: { color: colors.primary, fontWeight: '600', marginTop: 4 },
-    empty: { color: colors.textSecondary, marginBottom: 10 },
-  });
-
   return (
     <View style={styles.section}>
       <ScreenSection title={t('effects_title')} />
@@ -125,3 +108,22 @@ export default function EffectListEditor({
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    section: { marginTop: 20, marginBottom: 20 },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+    cardRowLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
+    fieldFlex: { flex: 1 },
+    removeLink: { color: colors.error, fontWeight: '600' },
+    addLink: { color: colors.primary, fontWeight: '600', marginTop: 4 },
+    empty: { color: colors.textSecondary, marginBottom: 10 },
+  });

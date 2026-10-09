@@ -10,7 +10,9 @@ import { useItemJourneyTimelineData } from '../../../../hooks/useItemJourneyTime
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useSceneCalendarDates } from '../../../../hooks/useSceneCalendarDates';
 import type { ItemStackParamList } from '../../../../navigation/MainSystemStack';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { typography } from '../../../../theme/tokens';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
@@ -66,44 +68,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
 
   const originOwner = item.characterOwnerId ? characterById.get(item.characterOwnerId) : undefined;
 
-  const styles = StyleSheet.create({
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 15,
-      marginBottom: 10,
-    },
-    scrollContent: { paddingBottom: 8, paddingRight: 8, alignItems: 'flex-start' },
-    row: { flexDirection: 'row', alignItems: 'center' },
-    card: {
-      width: 150,
-      minHeight: 88,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      padding: 10,
-      justifyContent: 'center',
-    },
-    originCard: {
-      borderStyle: 'dashed',
-    },
-    addCard: {
-      borderStyle: 'dashed',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    chapterAccent: {
-      height: 3,
-      borderRadius: 2,
-      marginBottom: 8,
-    },
-    cardLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 2 },
-    cardTitle: { fontSize: 14, fontWeight: '600', color: colors.text },
-    cardSubtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
-    connector: { marginHorizontal: 4 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderChapterAccent = (chapterId: string | undefined) => (
     <View
@@ -208,5 +173,44 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sectionTitle: {
+      ...typography.title,
+      color: colors.text,
+      marginTop: 15,
+      marginBottom: 10,
+    },
+    scrollContent: { paddingBottom: 8, paddingRight: 8, alignItems: 'flex-start' },
+    row: { flexDirection: 'row', alignItems: 'center' },
+    card: {
+      width: 150,
+      minHeight: 88,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      padding: 10,
+      justifyContent: 'center',
+    },
+    originCard: {
+      borderStyle: 'dashed',
+    },
+    addCard: {
+      borderStyle: 'dashed',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chapterAccent: {
+      height: 3,
+      borderRadius: 2,
+      marginBottom: 8,
+    },
+    cardLabel: { fontSize: 11, color: colors.textSecondary, marginBottom: 2 },
+    cardTitle: { ...typography.label, color: colors.text },
+    cardSubtitle: { ...typography.caption, color: colors.textSecondary, marginTop: 4 },
+    connector: { marginHorizontal: 4 },
+  });
 
 export default ItemJourneyTimeline;

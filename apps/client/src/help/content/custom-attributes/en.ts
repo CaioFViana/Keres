@@ -84,7 +84,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The field appears in forms, details, Advanced Search, and Global Search. Its identity remains the same even if its visible name changes.',
+      text: 'The field appears in forms, details, the list filters (Filters), and Global Search. Its identity remains the same even if its visible name changes.',
     },
     { type: 'seeAlso', pages: ['suggestions', 'lists-and-search', 'characters'] },
   ],

@@ -53,17 +53,35 @@ jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
 
+const mockSchemaFields = jest.fn((..._args: unknown[]) => [] as unknown[]);
+jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+  useStorySchemaFields: (...args: unknown[]) => mockSchemaFields(...args),
+}));
+
+jest.mock('../../../src/hooks/useEntityPickerOptions', () => ({
+  useEntityPickerOptions: () => ({
+    options: [{ id: 'e1', name: 'Ent One' }],
+    loading: false,
+    reload: jest.fn(),
+  }),
+}));
+
 jest.mock('../../../src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
     __esModule: true,
-    default: ({ isVisible, onClose, onSearch }: any) =>
+    default: ({ isVisible, onClose, onSearch, excludeFields }: any) =>
       isVisible
         ? react.createElement(
             react.Fragment,
             null,
             react.createElement(native.Text, { testID: 'adv-open' }, 'advanced'),
+            react.createElement(
+              native.Text,
+              { testID: 'adv-exclude' },
+              JSON.stringify(excludeFields ?? null),
+            ),
             react.createElement(
               native.Text,
               { testID: 'adv-go', onPress: () => onSearch({ name: 'x' }) },
@@ -330,7 +348,8 @@ describe('GenericFilterSortList', () => {
       <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
     );
 
-    await fireEvent.press(screen.getAllByTestId('multiselect-trigger')[1]);
+    // No tags in this story, so the sort picker is the only pill.
+    await fireEvent.press(screen.getAllByTestId('multiselect-trigger')[0]);
     await fireEvent.press(screen.getByTestId('multiselect-option-name'));
     expect(props.onSortChange).toHaveBeenCalledWith('name');
 
@@ -397,10 +416,8 @@ describe('GenericFilterSortList', () => {
     const props = baseProps();
     const screen = await render(<GenericFilterSortList {...props} />);
 
-    const advanced = screen.container.queryAll(
-      (node) => node.type === 'Icon' && node.props.name === 'search-outline',
-    )[0];
-    await fireEvent.press(advanced);
+    // Without an entity and a story there is nothing to filter by field, so there is no button.
+    expect(screen.queryByTestId('list-filters-button')).toBeNull();
     expect(screen.queryByTestId('adv-open')).toBeNull();
   });
 
@@ -416,10 +433,7 @@ describe('GenericFilterSortList', () => {
       />,
     );
 
-    const advanced = screen.container.queryAll(
-      (node) => node.type === 'Icon' && node.props.name === 'search-outline',
-    )[0];
-    await fireEvent.press(advanced);
+    await fireEvent.press(screen.getByTestId('list-filters-button'));
     expect(screen.getByTestId('adv-open')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('adv-go'));
     expect(onAdvancedSearch).toHaveBeenCalledWith({ name: 'x' });
@@ -516,5 +530,169 @@ describe('GenericFilterSortList', () => {
 
     expect(screen.getByText('custom empty')).toBeTruthy();
     expect(screen.queryByTestId('guided-empty-state')).toBeNull();
+  });
+
+  describe('feedback on what narrows the list', () => {
+    const empty = [] as { id: string; name: string }[];
+    const filtered = (extra: Record<string, unknown> = {}) => ({
+      ...baseProps(),
+      entityName: 'Character',
+      storyId: 's1',
+      onAdvancedSearch: jest.fn(),
+      onFavoriteFilterChange: jest.fn(),
+      onSearchSubmit: jest.fn(),
+      filterOptions: [{ label: 'Tag A', value: 'a' }],
+      ...extra,
+    });
+
+    it('offers to empty the search box only once there is text', async () => {
+      const props = filtered();
+      const view = await render(<GenericFilterSortList {...props} currentSearchTerm="" />);
+      expect(view.queryByTestId('list-search-clear')).toBeNull();
+
+      await view.rerender(<GenericFilterSortList {...props} currentSearchTerm="Ly" />);
+      await fireEvent.press(view.getByTestId('list-search-clear'));
+      expect(props.onSearch).toHaveBeenCalledWith('');
+      expect(props.onSearchSubmit).toHaveBeenCalledWith('');
+    });
+
+    it('says "no results" - not "nothing yet" - while a search leaves no rows', async () => {
+      const props = filtered({ emptyStateTitle: 'Nothing yet', data: empty });
+      const view = await render(<GenericFilterSortList {...props} currentSearchTerm="zzz" />);
+
+      expect(view.getByTestId('no-results-state')).toBeTruthy();
+      expect(view.queryByTestId('guided-empty-state')).toBeNull();
+      expect(view.queryByText('Nothing yet')).toBeNull();
+    });
+
+    it('keeps the "nothing yet" guide while nothing narrows the list', async () => {
+      const props = filtered({ emptyStateTitle: 'Nothing yet', data: empty });
+      const view = await render(<GenericFilterSortList {...props} />);
+
+      expect(view.getByText('Nothing yet')).toBeTruthy();
+      expect(view.queryByTestId('no-results-state')).toBeNull();
+    });
+
+    it('clears the search, tags, favorites and field filters from the empty state', async () => {
+      const props = filtered({ data: empty });
+      const view = await render(
+        <GenericFilterSortList
+          {...props}
+          currentSearchTerm="zzz"
+          selectedFilterValues={['a']}
+          currentFavoriteFilterState="favorite"
+          currentAdvancedSearchCriteria={{ name: 'Lyra' }}
+        />,
+      );
+
+      await fireEvent.press(view.getByTestId('no-results-clear'));
+
+      expect(props.onSearch).toHaveBeenCalledWith('');
+      expect(props.onSearchSubmit).toHaveBeenCalledWith('');
+      expect(props.onFilterChange).toHaveBeenCalledWith([]);
+      expect(props.onFavoriteFilterChange).toHaveBeenCalledWith('all');
+      expect(props.onAdvancedSearch).toHaveBeenCalledWith({});
+    });
+
+    it('lets an explicit empty component win even with a filter on', async () => {
+      const props = filtered({ data: empty });
+      const view = await render(
+        <GenericFilterSortList
+          {...props}
+          currentSearchTerm="zzz"
+          emptyListComponent={<Text>custom empty</Text>}
+        />,
+      );
+
+      expect(view.getByText('custom empty')).toBeTruthy();
+      expect(view.queryByTestId('no-results-state')).toBeNull();
+    });
+
+    it('shows each field filter as a chip, counts them on the button, and removes one at a time', async () => {
+      const props = filtered();
+      const view = await render(
+        <GenericFilterSortList
+          {...props}
+          currentAdvancedSearchCriteria={{ name: 'Lyra', race: 'Elf', gender: '' }}
+        />,
+      );
+
+      expect(view.getByTestId('filter-chip-name')).toBeTruthy();
+      expect(view.getByTestId('filter-chip-race')).toBeTruthy();
+      // An emptied field is not a filter: no chip, and it is not counted.
+      expect(view.queryByTestId('filter-chip-gender')).toBeNull();
+      expect(view.getByTestId('list-filters-count').props.children).toBeTruthy();
+      expect(view.getByText('2')).toBeTruthy();
+
+      await fireEvent.press(view.getByTestId('filter-chip-name-remove'));
+      expect(props.onAdvancedSearch).toHaveBeenCalledWith({ race: 'Elf' });
+    });
+
+    it('shows the favorites view as a chip and leaves it through the chip', async () => {
+      const props = filtered();
+      const view = await render(
+        <GenericFilterSortList {...props} currentFavoriteFilterState="favorite" />,
+      );
+
+      expect(view.getByTestId('filter-chip-favorite')).toBeTruthy();
+      await fireEvent.press(view.getByTestId('filter-chip-favorite-remove'));
+      expect(props.onFavoriteFilterChange).toHaveBeenCalledWith('all');
+    });
+
+    it('shows no chips and no count when nothing is filtered', async () => {
+      const view = await render(<GenericFilterSortList {...filtered()} />);
+
+      expect(view.queryByTestId('active-filter-chips')).toBeNull();
+      expect(view.queryByTestId('list-filters-count')).toBeNull();
+    });
+
+    it('does not offer the favorites field in the filters: the star already does that', async () => {
+      const view = await render(<GenericFilterSortList {...filtered()} />);
+      await fireEvent.press(view.getByTestId('list-filters-button'));
+      expect(view.getByTestId('adv-exclude').props.children).toBe('["isFavorite"]');
+
+      const withoutStar = await render(
+        <GenericFilterSortList {...filtered()} disableFavoriteFilter />,
+      );
+      await fireEvent.press(withoutStar.getByTestId('list-filters-button'));
+      expect(withoutStar.getByTestId('adv-exclude').props.children).toBe('[]');
+    });
+  });
+
+  describe('the tag filter', () => {
+    it('says what it filters by when that is not tags', async () => {
+      const view = await render(
+        <GenericFilterSortList
+          {...baseProps()}
+          filterOptions={[{ label: 'Image', value: 'image' }]}
+          filterPlaceholder="Filter by type"
+        />,
+      );
+      expect(view.getByText('Filter by type')).toBeTruthy();
+      expect(view.queryByText('filter_by_tags')).toBeNull();
+    });
+
+    it('is left out when the story has no tags to filter by', async () => {
+      const view = await render(<GenericFilterSortList {...baseProps()} />);
+      expect(view.queryByText('filter_by_tags')).toBeNull();
+    });
+
+    it('is left out where a screen turns it off', async () => {
+      const view = await render(
+        <GenericFilterSortList
+          {...baseProps()}
+          filterOptions={[{ label: 'Tag A', value: 'a' }]}
+          disableTagFilter
+        />,
+      );
+      expect(view.queryByText('filter_by_tags')).toBeNull();
+    });
+
+    it('stays while one is selected, so it can be taken off', async () => {
+      const view = await render(
+        <GenericFilterSortList {...baseProps()} selectedFilterValues={['a']} />,
+      );
+      expect(view.getAllByTestId('multiselect-trigger')).toHaveLength(2);
+    });
   });
 });

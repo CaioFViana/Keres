@@ -362,9 +362,28 @@ describe('AdvancedSearchModal', () => {
     initialCriteria: EMPTY_CRITERIA,
   };
 
+  /** "Add filter", then the field - how every field past the first one is brought in. */
+  const addField = async (screen: Awaited<ReturnType<typeof render>>, key: string, suffix = '') => {
+    await fireEvent.press(screen.getByTestId(`advanced-add-filter${suffix}`));
+    await fireEvent.press(screen.getByTestId(`advanced-add-option-${key}`));
+  };
+
   it('renders nothing while closed', async () => {
     const screen = await render(<AdvancedSearchModal {...openProps} isVisible={false} />);
     expect(screen.queryByText('advanced_search_title')).toBeNull();
+  });
+
+  it('starts with the name only, the other fields one tap away', async () => {
+    const screen = await render(<AdvancedSearchModal {...openProps} />);
+
+    expect(screen.getByTestId('advanced-row-name')).toBeTruthy();
+    expect(screen.queryByTestId('advanced-row-race')).toBeNull();
+    expect(screen.queryByTestId('advanced-row-biography')).toBeNull();
+    await fireEvent.press(screen.getByTestId('advanced-add-filter'));
+    expect(screen.getByTestId('advanced-add-option-race')).toBeTruthy();
+    expect(screen.getByTestId('advanced-add-option-biography')).toBeTruthy();
+    // What is already on screen is not offered again.
+    expect(screen.queryByTestId('advanced-add-option-name')).toBeNull();
   });
 
   it('searches native string fields and closes', async () => {
@@ -375,23 +394,68 @@ describe('AdvancedSearchModal', () => {
     );
 
     expect(screen.getByText('advanced_search_title')).toBeTruthy();
-    await fireEvent.changeText(screen.getByPlaceholderText('field_name'), 'Lyra');
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.changeText(screen.getByTestId('advanced-field-name'), 'Lyra');
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ name: 'Lyra' });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('clears every criterion at once', async () => {
+  it('applies on Enter', async () => {
     const onSearch = jest.fn();
     const onClose = jest.fn();
     const screen = await render(
       <AdvancedSearchModal {...openProps} onSearch={onSearch} onClose={onClose} />,
     );
 
-    await fireEvent.changeText(screen.getByPlaceholderText('field_name'), 'Lyra');
-    await fireEvent.press(screen.getByText('common_clear'));
-    expect(onSearch).toHaveBeenCalledWith({});
+    await fireEvent.changeText(screen.getByTestId('advanced-field-name'), 'Lyra');
+    await fireEvent(screen.getByTestId('advanced-field-name'), 'submitEditing');
+    expect(onSearch).toHaveBeenCalledWith({ name: 'Lyra' });
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies only the fields that hold a value', async () => {
+    const onSearch = jest.fn();
+    const screen = await render(
+      <AdvancedSearchModal {...openProps} onSearch={onSearch} initialCriteria={{ name: 'Bo' }} />,
+    );
+
+    await fireEvent.changeText(screen.getByTestId('advanced-field-name'), '');
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
+    expect(onSearch).toHaveBeenCalledWith({});
+  });
+
+  it('resets every field without applying until asked', async () => {
+    const onSearch = jest.fn();
+    const onClose = jest.fn();
+    const screen = await render(
+      <AdvancedSearchModal {...openProps} onSearch={onSearch} onClose={onClose} />,
+    );
+
+    await fireEvent.changeText(screen.getByTestId('advanced-field-name'), 'Lyra');
+    await fireEvent.press(screen.getByTestId('advanced-reset'));
+    expect(screen.getByTestId('advanced-field-name').props.value).toBe('');
+    expect(onSearch).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
+    expect(onSearch).toHaveBeenCalledWith({});
+  });
+
+  it('takes a field off with its remove button, dropping its value', async () => {
+    const onSearch = jest.fn();
+    const screen = await render(
+      <AdvancedSearchModal
+        {...openProps}
+        onSearch={onSearch}
+        initialCriteria={{ name: 'Bo', race: 'Elf' }}
+      />,
+    );
+
+    expect(screen.getByTestId('advanced-row-race')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('advanced-remove-race'));
+    expect(screen.queryByTestId('advanced-row-race')).toBeNull();
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
+    expect(onSearch).toHaveBeenCalledWith({ name: 'Bo' });
   });
 
   it('closes through the header button', async () => {
@@ -409,8 +473,9 @@ describe('AdvancedSearchModal', () => {
     const onSearch = jest.fn();
     const screen = await render(<AdvancedSearchModal {...openProps} onSearch={onSearch} />);
 
+    await addField(screen, 'gender');
     await fireEvent.press(screen.getByTestId('sugg-pick-character_gender'));
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ gender: 'picked' });
   });
 
@@ -420,6 +485,7 @@ describe('AdvancedSearchModal', () => {
       <AdvancedSearchModal {...openProps} entityName="Chapter" onSearch={onSearch} />,
     );
 
+    await addField(screen, 'isFavorite');
     const toggle = () =>
       screen.container.queryAll(
         (node) =>
@@ -428,12 +494,44 @@ describe('AdvancedSearchModal', () => {
       )[0];
     expect(toggle().props.name).toBe('square-outline');
     await fireEvent.press(toggle());
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ isFavorite: true });
 
     await fireEvent.press(toggle());
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenLastCalledWith({ isFavorite: false });
+  });
+
+  it('leaves out the fields the list already filters another way', async () => {
+    const screen = await render(
+      <AdvancedSearchModal {...openProps} entityName="Chapter" excludeFields={['isFavorite']} />,
+    );
+
+    await fireEvent.press(screen.getByTestId('advanced-add-filter'));
+    expect(screen.queryByTestId('advanced-add-option-isFavorite')).toBeNull();
+    expect(screen.getByTestId('advanced-add-option-summary')).toBeTruthy();
+  });
+
+  it('still shows an excluded field that carries a value, so it can be removed', async () => {
+    const screen = await render(
+      <AdvancedSearchModal
+        {...openProps}
+        entityName="Chapter"
+        excludeFields={['isFavorite']}
+        initialCriteria={{ isFavorite: true }}
+      />,
+    );
+
+    expect(screen.getByTestId('advanced-row-isFavorite')).toBeTruthy();
+  });
+
+  it('opens the row of a field restored from earlier criteria', async () => {
+    const screen = await render(
+      <AdvancedSearchModal {...openProps} initialCriteria={{ gender: 'F' }} />,
+    );
+
+    expect(screen.getByTestId('advanced-row-gender')).toBeTruthy();
+    expect(screen.getByTestId('sugg-character_gender').props.children).toBe('character_gender=F');
   });
 
   it('searches custom number fields by id', async () => {
@@ -441,9 +539,30 @@ describe('AdvancedSearchModal', () => {
     const onSearch = jest.fn();
     const screen = await render(<AdvancedSearchModal {...openProps} onSearch={onSearch} />);
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Power'), '42');
-    await fireEvent.press(screen.getByText('common_search'));
+    await addField(screen, 'custom:cf1');
+    await fireEvent.changeText(screen.getByTestId('advanced-field-custom:cf1'), '42');
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ 'custom:cf1': 42 });
+  });
+
+  it('does not take letters in a number field as a filter', async () => {
+    mockSchemaFields.mockReturnValue([customField('cf1', 'Power', AttributeType.NUMBER)]);
+    const onSearch = jest.fn();
+    const screen = await render(<AdvancedSearchModal {...openProps} onSearch={onSearch} />);
+
+    await addField(screen, 'custom:cf1');
+    await fireEvent.changeText(screen.getByTestId('advanced-field-custom:cf1'), 'abc');
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
+    expect(onSearch).toHaveBeenCalledWith({});
+  });
+
+  it('separates the custom attributes in the list of fields to add', async () => {
+    mockSchemaFields.mockReturnValue([customField('cf1', 'Power', AttributeType.NUMBER)]);
+    const screen = await render(<AdvancedSearchModal {...openProps} />);
+
+    await fireEvent.press(screen.getByTestId('advanced-add-filter'));
+    expect(screen.getByText('advanced_search_custom_section')).toBeTruthy();
+    expect(screen.getByText('Power')).toBeTruthy();
   });
 
   it('searches custom date and story-date fields', async () => {
@@ -454,9 +573,11 @@ describe('AdvancedSearchModal', () => {
     const onSearch = jest.fn();
     const screen = await render(<AdvancedSearchModal {...openProps} onSearch={onSearch} />);
 
+    await addField(screen, 'custom:cf2');
+    await addField(screen, 'custom:cf3');
     await fireEvent.press(screen.getByTestId('dpick-pick-When'));
     await fireEvent.press(screen.getByTestId('sdpick-pick'));
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({
       'custom:cf2': '2024-03-04',
       'custom:cf3': '7',
@@ -469,8 +590,9 @@ describe('AdvancedSearchModal', () => {
       <AdvancedSearchModal {...openProps} entityName="Tag" onSearch={onSearch} />,
     );
 
+    await addField(screen, 'color');
     await fireEvent.press(screen.getByTestId('cpick-pick-field_color'));
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ color: '#aabbcc' });
   });
 
@@ -479,8 +601,9 @@ describe('AdvancedSearchModal', () => {
     const onSearch = jest.fn();
     const screen = await render(<AdvancedSearchModal {...openProps} onSearch={onSearch} />);
 
+    await addField(screen, 'custom:cf6');
     await fireEvent.press(screen.getByTestId('sugg-pick-custom:cf6'));
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ 'custom:cf6': 'picked' });
   });
 
@@ -492,21 +615,50 @@ describe('AdvancedSearchModal', () => {
     const onSearch = jest.fn();
     const screen = await render(<AdvancedSearchModal {...openProps} onSearch={onSearch} />);
 
-    expect(screen.queryByText('NoTarget')).toBeNull();
+    await fireEvent.press(screen.getByTestId('advanced-add-filter'));
+    expect(screen.queryByTestId('advanced-add-option-custom:cf8')).toBeNull();
+    await fireEvent.press(screen.getByTestId('advanced-add-option-custom:cf7'));
     await fireEvent.press(screen.getByTestId('multiselect-trigger'));
     await fireEvent.press(screen.getByTestId('multiselect-option-e1'));
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ 'custom:cf7': 'e1' });
   });
 
   it('prefills from initial criteria and follows replacements', async () => {
     const first = { name: 'Bo' };
     const screen = await render(<AdvancedSearchModal {...openProps} initialCriteria={first} />);
-    expect(screen.getByPlaceholderText('field_name').props.value).toBe('Bo');
+    expect(screen.getByTestId('advanced-field-name').props.value).toBe('Bo');
 
     const second = { name: 'Bo2' };
     await screen.rerender(<AdvancedSearchModal {...openProps} initialCriteria={second} />);
-    expect(screen.getByPlaceholderText('field_name').props.value).toBe('Bo2');
+    expect(screen.getByTestId('advanced-field-name').props.value).toBe('Bo2');
+  });
+
+  it('starts over from what is applied each time it opens', async () => {
+    const applied = { name: 'Bo' };
+    const screen = await render(<AdvancedSearchModal {...openProps} initialCriteria={applied} />);
+    await fireEvent.changeText(screen.getByTestId('advanced-field-name'), 'typed, never applied');
+
+    await screen.rerender(
+      <AdvancedSearchModal {...openProps} initialCriteria={applied} isVisible={false} />,
+    );
+    await screen.rerender(<AdvancedSearchModal {...openProps} initialCriteria={applied} />);
+
+    expect(screen.getByTestId('advanced-field-name').props.value).toBe('Bo');
+  });
+
+  it('works without criteria at all', async () => {
+    const screen = await render(
+      <AdvancedSearchModal
+        entityName="Character"
+        storyId="s1"
+        isVisible
+        onClose={() => {}}
+        onSearch={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId('advanced-field-name').props.value).toBe('');
   });
 
   it('prefixes criteria per scope', async () => {
@@ -524,8 +676,24 @@ describe('AdvancedSearchModal', () => {
 
     expect(screen.getByText('Side A')).toBeTruthy();
     expect(screen.getByText('Side B')).toBeTruthy();
-    await fireEvent.changeText(screen.getAllByPlaceholderText('field_name')[0], 'X');
-    await fireEvent.press(screen.getByText('common_search'));
+    await fireEvent.changeText(screen.getByTestId('advanced-field-a:name'), 'X');
+    await fireEvent.press(screen.getByTestId('advanced-apply'));
     expect(onSearch).toHaveBeenCalledWith({ 'a:name': 'X' });
+  });
+
+  it('adds fields to the scope whose button was pressed', async () => {
+    const screen = await render(
+      <AdvancedSearchModal
+        {...openProps}
+        scopes={[
+          { entityName: 'Character', prefix: 'a', label: 'Side A' },
+          { entityName: 'Chapter', prefix: 'b', label: 'Side B' },
+        ]}
+      />,
+    );
+
+    await addField(screen, 'b:summary', '-b');
+    expect(screen.getByTestId('advanced-row-b:summary')).toBeTruthy();
+    expect(screen.queryByTestId('advanced-row-a:summary')).toBeNull();
   });
 });

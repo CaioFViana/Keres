@@ -22,14 +22,14 @@ export interface UseEntityListScreenOptions<
   collectionKey: TKey;
   /** Emitted when the entity changes anywhere in the app; triggers a refetch. */
   changeEvent: string;
-  /** How long to wait after typing stops before querying. */
+  /** How long to wait after typing stops before querying; a local query, so short enough to feel live. */
   searchDebounceMs?: number;
 }
 
 /** Filter/search/sort props that `GenericFilterSortList` receives via `{...listProps}`. */
 export type EntityListFilterProps = {
   onSearch: (searchText: string) => void;
-  onSearchSubmit: () => void;
+  onSearchSubmit: (term?: string) => void;
   currentSearchTerm: string;
   onFilterChange: (filterValues: string[]) => void;
   selectedFilterValues: string[];
@@ -63,7 +63,7 @@ export function useEntityListScreen<
   useStore,
   collectionKey,
   changeEvent,
-  searchDebounceMs = 1000,
+  searchDebounceMs = 250,
 }: UseEntityListScreenOptions<TStore, TKey>) {
   const store = useStore();
   const drizzleDb = useDrizzle();
@@ -111,11 +111,18 @@ export function useEntityListScreen<
     };
   }, [searchQuery, debouncedSetStoreSearchTerm]);
 
-  /** Commits the pending search immediately, skipping the debounce wait - for Enter/submit. */
-  const handleSearchSubmit = useCallback(() => {
-    debouncedSetStoreSearchTerm.cancel?.();
-    setStoreSearchTerm(searchQuery);
-  }, [debouncedSetStoreSearchTerm, setStoreSearchTerm, searchQuery]);
+  /**
+   * Commits the pending search immediately, skipping the debounce wait - for Enter/submit. Given a
+   * term, commits that one (the clear button empties the box in the same tick, before `searchQuery`
+   * has caught up).
+   */
+  const handleSearchSubmit = useCallback(
+    (term?: string) => {
+      debouncedSetStoreSearchTerm.cancel?.();
+      setStoreSearchTerm(term ?? searchQuery);
+    },
+    [debouncedSetStoreSearchTerm, setStoreSearchTerm, searchQuery],
+  );
 
   useEffect(() => {
     if (drizzleDb && storyId) {

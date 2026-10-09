@@ -61,7 +61,7 @@ const page: HelpPage = {
           label: 'Texto ou anotações da escolha',
           whatToWrite:
             'Este é um campo apenas de busca. Digite uma palavra para encontrá-la no texto ou nas anotações da escolha.',
-          note: 'Ele aparece na busca avançada e não adiciona um novo valor à escolha.',
+          note: 'Ele aparece nos filtros e não adiciona um novo valor à escolha.',
         },
       ],
     },

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Text, View } from 'react-native';
+import HighlightedText from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
 
 interface ListItemTitleProps {
   text: string;
@@ -17,7 +18,7 @@ interface ListItemTitleProps {
 const ListItemTitle: React.FC<ListItemTitleProps> = ({ text, headerLeftStyle, nameStyle }) => (
   <View style={headerLeftStyle}>
     <Text style={nameStyle} numberOfLines={1} ellipsizeMode="tail">
-      {text}
+      <HighlightedText text={text} />
     </Text>
   </View>
 );

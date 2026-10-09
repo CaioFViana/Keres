@@ -172,6 +172,31 @@ describe('search', () => {
     expect(store.setSearchTerm).toHaveBeenCalledWith('ana');
   });
 
+  it('commits the term it is given, not the one the box held a moment ago', async () => {
+    const { result } = await render();
+    await act(async () => result.current.handleSearch('ana'));
+
+    await act(async () => result.current.handleSearchSubmit(''));
+
+    expect(store.setSearchTerm).toHaveBeenLastCalledWith('');
+  });
+
+  it('waits a quarter of a second by default: a local query should feel live', async () => {
+    const { result } = await render();
+    store.setSearchTerm.mockClear();
+
+    await act(async () => result.current.handleSearch('ana'));
+    await act(async () => {
+      jest.advanceTimersByTime(249);
+    });
+    expect(store.setSearchTerm).not.toHaveBeenCalledWith('ana');
+
+    await act(async () => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(store.setSearchTerm).toHaveBeenCalledWith('ana');
+  });
+
   it('does not commit again after a submit', async () => {
     const { result } = await render();
     await act(async () => result.current.handleSearch('ana'));

@@ -35,7 +35,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'The advanced search separates Chapter, Scene, and Choice fields. Choice fields are shown only in branching stories. Scene timing also feeds the timeline in linear stories.',
+      text: 'The filters separate Chapter, Scene, and Choice fields. Choice fields are shown only in branching stories. Scene timing also feeds the timeline in linear stories.',
     },
     { type: 'seeAlso', pages: ['chapters', 'scenes', 'choices', 'story-map', 'lists-and-search'] },
   ],

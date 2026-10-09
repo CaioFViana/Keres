@@ -1,39 +1,28 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { StyleProp, ViewStyle } from 'react-native';
-import {
-  ActivityIndicator,
-  FlatList,
-  Keyboard,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
+import { ActivityIndicator, FlatList, Keyboard, StyleSheet, Text, View } from 'react-native';
+import { entityFieldMetadata, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 import { useScreenAnchor } from '../../../../guides/useGuideAnchor';
 import { useTheme } from '../../../../theme';
-import Button from '@/src/components/common/controls/Button/Button';
+import { countActiveCriteria, withoutCriterion } from '../../../../utils/advancedSearchCriteria';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import {
-  entityFieldMetadata,
-  getEntityAppearance,
-  getOnColorForFill,
-  STORY_SCHEMA_ENTITY_TYPES,
-} from '@keres/shared';
-
 import type { FavoriteFilterState } from '../../../../types/entityFilters';
+import ActiveFilterChips from './ActiveFilterChips';
+import { GuidedEmptyState, NoResultsState } from './ListEmptyStates';
+import type { GuidedEmptyStateAction } from './ListEmptyStates';
+import ListSearchField from './ListSearchField';
+import { FavoriteFilterButton, FiltersButton, SortDirectionButton } from './ListToolbarButtons';
+import { SearchHighlightContext } from '../SearchHighlight/SearchHighlight';
 
-export interface GuidedEmptyStateAction {
-  label: string;
-  onPress: () => void;
-  testID?: string;
-}
+export type { GuidedEmptyStateAction } from './ListEmptyStates';
+
+/** Wide enough for search, tags, sort and the buttons to share one row. */
+const WIDE_TOOLBAR_MIN_WIDTH = 760;
 
 interface GenericFilterSortListProps<T> {
   data: T[];
@@ -41,13 +30,18 @@ interface GenericFilterSortListProps<T> {
   keyExtractor: (item: T) => string;
   // Search Props
   onSearch: (searchText: string) => void;
-  /** Enter (web) / the mobile keyboard's return key: commits the search immediately and blurs. */
-  onSearchSubmit?: () => void;
+  /**
+   * Enter (web) / the mobile keyboard's return key: commits the search immediately and blurs.
+   * Receives the term to commit when it differs from what the list last heard (clearing the box).
+   */
+  onSearchSubmit?: (term?: string) => void;
   searchPlaceholder?: string;
   currentSearchTerm?: string;
   // Filter Props
   filterComponent?: React.ReactNode;
   filterOptions?: { label: string; value: string; color?: string | null }[];
+  /** What the filter is by, when it is not tags (the gallery filters by media type). */
+  filterPlaceholder?: string;
   onFilterChange: (filterValues: string[]) => void;
   selectedFilterValues: string[];
   // Sort Props
@@ -59,7 +53,8 @@ interface GenericFilterSortListProps<T> {
   emptyListComponent?: React.ReactElement;
   /**
    * Guided empty state: a title, a hint and up to two actions ("Create X", ...). An explicit
-   * `emptyListComponent` still wins; without either, the legacy plain text shows.
+   * `emptyListComponent` still wins; without either, the legacy plain text shows. While a search
+   * or a filter is narrowing the list, "no results" with a way to clear them shows instead.
    */
   emptyStateTitle?: string;
   emptyStateMessage?: string;
@@ -98,6 +93,7 @@ const GenericFilterSortList = <T,>({
   currentSearchTerm,
   filterComponent,
   filterOptions,
+  filterPlaceholder,
   onFilterChange,
   selectedFilterValues,
   sortOptions,
@@ -133,6 +129,8 @@ const GenericFilterSortList = <T,>({
   const [internalFavoriteFilterState, setInternalFavoriteFilterState] =
     useState<FavoriteFilterState>(currentFavoriteFilterState || 'all');
   const [isAdvancedSearchModalVisible, setIsAdvancedSearchModalVisible] = useState(false);
+  const [toolbarWidth, setToolbarWidth] = useState(0);
+  const isWide = toolbarWidth >= WIDE_TOOLBAR_MIN_WIDTH;
 
   // Calculate if there are any searchable fields for the current entity - either native
   // (static registry) or, for entity types that support Story Schema custom attributes, the
@@ -149,6 +147,7 @@ const GenericFilterSortList = <T,>({
     );
     return hasNativeSearchableFields || supportsCustomAttributes;
   }, [advancedSearchScopes, entityName]);
+  const canFilterByField = !!(storyId && entityName && onAdvancedSearch && hasAdvancedSearchFields);
 
   // Controlled from the parent, mirrored locally for the pill controls: when the parent's
   // props change (a filter cleared elsewhere, a deep link), the render-time comparisons
@@ -173,10 +172,6 @@ const GenericFilterSortList = <T,>({
     setSelectedSort(currentSortValue || null);
   }
 
-  const handleSearchTextChange = (text: string) => {
-    onSearch(text);
-  };
-
   /**
    * The search input still updates on every keystroke (kept live via `onSearch`), but the
    * committed search that drives the fetch is debounced upstream so a paused fetch doesn't
@@ -188,14 +183,15 @@ const GenericFilterSortList = <T,>({
     onSearchSubmit?.();
   }, [onSearchSubmit]);
 
+  const handleSearchClear = useCallback(() => {
+    onSearch('');
+    onSearchSubmit?.('');
+  }, [onSearch, onSearchSubmit]);
+
   const handleFilterSelection = (values: string | string[] | null) => {
     const newValues = Array.isArray(values) ? values : values ? [values] : [];
     setSelectedFilter(newValues);
     onFilterChange(newValues);
-  };
-
-  const handleSortSelection = (value: string | null) => {
-    onSortChange(value);
   };
 
   const handleSortDirectionToggle = () => {
@@ -204,47 +200,28 @@ const GenericFilterSortList = <T,>({
     onSortDirectionChange(newDirection);
   };
 
+  const handleFavoriteFilterChange = useCallback(
+    (state: FavoriteFilterState) => {
+      setInternalFavoriteFilterState(state);
+      onFavoriteFilterChange?.(state);
+    },
+    [onFavoriteFilterChange],
+  );
+
   const handleFavoriteFilterToggle = () => {
     if (disableFavoriteFilter) return;
-    let newState: FavoriteFilterState;
-    if (internalFavoriteFilterState === 'all') {
-      newState = 'favorite';
-    } else if (internalFavoriteFilterState === 'favorite') {
-      newState = 'not-favorite';
-    } else {
-      newState = 'all';
-    }
-    setInternalFavoriteFilterState(newState);
-    onFavoriteFilterChange && onFavoriteFilterChange(newState);
+    handleFavoriteFilterChange(
+      internalFavoriteFilterState === 'all'
+        ? 'favorite'
+        : internalFavoriteFilterState === 'favorite'
+          ? 'not-favorite'
+          : 'all',
+    );
   };
-
-  const getFavoriteButtonIcon = (): keyof typeof Ionicons.glyphMap => {
-    if (internalFavoriteFilterState === 'favorite') {
-      return 'star';
-    } else if (internalFavoriteFilterState === 'not-favorite') {
-      return 'ban-outline';
-    }
-    return 'star-outline';
-  };
-
-  const getFavoriteButtonColor = () => {
-    if (internalFavoriteFilterState === 'favorite') {
-      return colors.accent;
-    } else if (internalFavoriteFilterState === 'not-favorite') {
-      return colors.notification;
-    }
-    return colors.primary;
-  };
-
-  const favoriteFilterFill = getFavoriteButtonColor();
-  const onPrimaryFill = getOnColorForFill(colors, colors.primary);
-  const favoriteFilterIconColor = getOnColorForFill(colors, favoriteFilterFill);
 
   const handleOpenAdvancedSearchModal = useCallback(() => {
-    if (hasAdvancedSearchFields) {
-      setIsAdvancedSearchModalVisible(true);
-    }
-  }, [hasAdvancedSearchFields]);
+    if (canFilterByField) setIsAdvancedSearchModalVisible(true);
+  }, [canFilterByField]);
   const handleCloseAdvancedSearchModal = useCallback(
     () => setIsAdvancedSearchModalVisible(false),
     [],
@@ -257,149 +234,214 @@ const GenericFilterSortList = <T,>({
     [onAdvancedSearch],
   );
 
+  const activeCriteriaCount = countActiveCriteria(currentAdvancedSearchCriteria);
+  const hasActiveFilters =
+    !!currentSearchTerm?.trim() ||
+    selectedFilter.length > 0 ||
+    internalFavoriteFilterState !== 'all' ||
+    activeCriteriaCount > 0;
+
+  const handleRemoveCriterion = useCallback(
+    (key: string) => onAdvancedSearch?.(withoutCriterion(currentAdvancedSearchCriteria, key)),
+    [currentAdvancedSearchCriteria, onAdvancedSearch],
+  );
+
+  /** Search words, tags, favorites and field filters - everything that narrows the list. */
+  const handleClearAll = useCallback(() => {
+    onSearch('');
+    onSearchSubmit?.('');
+    if (selectedFilter.length > 0) {
+      setSelectedFilter([]);
+      onFilterChange([]);
+    }
+    if (internalFavoriteFilterState !== 'all') handleFavoriteFilterChange('all');
+    if (activeCriteriaCount > 0) onAdvancedSearch?.({});
+  }, [
+    activeCriteriaCount,
+    handleFavoriteFilterChange,
+    internalFavoriteFilterState,
+    onAdvancedSearch,
+    onFilterChange,
+    onSearch,
+    onSearchSubmit,
+    selectedFilter.length,
+  ]);
+
   // The search and the filter and sort controls are tour targets, named by the kind of list.
   const searchAnchorRef = useScreenAnchor(entityName ?? 'List', 'search');
   const controlsAnchorRef = useScreenAnchor(entityName ?? 'List', 'controls');
 
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const usesColoredFilterOptions = !!filterOptions?.some((option) => !!option.color);
+  // A story without tags has nothing to filter by; the pill would only open an empty list.
+  const showTagFilter =
+    !disableTagFilter && ((filterOptions?.length ?? 0) > 0 || selectedFilter.length > 0);
+  const showFavoriteFilter = !disableFavoriteFilter;
+  // With a tag pill the star sits beside it; without one it joins the sort row.
+  const favoriteInTagRow = showTagFilter && showFavoriteFilter;
+
+  const tagFilter = usesColoredFilterOptions ? (
+    <MultiSelectPill
+      options={(filterOptions || []).map((option) => ({
+        ...option,
+        color: option.color || undefined,
+      }))}
+      selectedValues={selectedFilter}
+      onSelectionChange={handleFilterSelection}
+      placeholder={filterPlaceholder ?? t('filter_by_tags')}
+      style={{ marginBottom: 0 }}
+      triggerStyle={{
+        borderColor: colors.primary,
+        borderRadius: 5,
+        height: 50,
+        minHeight: 50,
+        paddingVertical: 6,
+        flexWrap: 'nowrap',
+        overflow: 'hidden',
+        justifyContent: 'center',
+      }}
+    />
+  ) : (
+    <MultiSelectPill
+      options={(filterOptions || []).map((option) => ({
+        ...option,
+        color: option.color ?? undefined,
+      }))}
+      selectedValues={selectedFilter}
+      onSelectionChange={handleFilterSelection}
+      placeholder={filterPlaceholder ?? t('filter_by_tags')}
+      disabled={disableTagFilter}
+      style={styles.compactSelect}
+    />
+  );
+
+  const sortPicker = (
+    <SingleSelectPill
+      options={sortOptions || []}
+      value={selectedSort}
+      onValueChange={onSortChange}
+      placeholder={t('sort_by')}
+      style={styles.compactSelect}
+    />
+  );
+
+  const favoriteButton = (
+    <FavoriteFilterButton
+      state={internalFavoriteFilterState}
+      onPress={handleFavoriteFilterToggle}
+    />
+  );
+  const directionButton = (
+    <SortDirectionButton direction={sortDirection} onPress={handleSortDirectionToggle} />
+  );
+  const filtersButton = canFilterByField ? (
+    <FiltersButton count={activeCriteriaCount} onPress={handleOpenAdvancedSearchModal} />
+  ) : null;
+
+  const searchField = (
+    <ListSearchField
+      value={currentSearchTerm || ''}
+      placeholder={searchPlaceholder || t('search')}
+      onChangeText={onSearch}
+      onSubmitEditing={handleSearchSubmitEditing}
+      onClear={handleSearchClear}
+    />
+  );
+
+  const handleToolbarLayout = (event: LayoutChangeEvent) => {
+    const width = Math.round(event.nativeEvent.layout.width);
+    if (width !== toolbarWidth) setToolbarWidth(width);
+  };
 
   return (
-    <View style={styles(colors).container}>
-      <View ref={searchAnchorRef} collapsable={false} style={styles(colors).searchContainer}>
-        <TextInput
-          placeholder={searchPlaceholder || t('search')}
-          value={currentSearchTerm || ''}
-          onChangeText={handleSearchTextChange}
-          onSubmitEditing={handleSearchSubmitEditing}
-          returnKeyType="search"
-          style={styles(colors).searchBar}
-        />
-      </View>
+    <View style={styles.container} onLayout={handleToolbarLayout}>
+      {isWide ? (
+        <View style={styles.row}>
+          <View ref={searchAnchorRef} collapsable={false} style={styles.grow3}>
+            {searchField}
+          </View>
+          <View ref={controlsAnchorRef} collapsable={false} style={[styles.row, styles.grow4]}>
+            {showTagFilter ? <View style={styles.grow}>{tagFilter}</View> : null}
+            <View style={styles.grow}>{sortPicker}</View>
+            {showFavoriteFilter ? favoriteButton : null}
+            {directionButton}
+          </View>
+          {filtersButton}
+        </View>
+      ) : (
+        <>
+          <View style={styles.row}>
+            <View ref={searchAnchorRef} collapsable={false} style={styles.grow}>
+              {searchField}
+            </View>
+            {filtersButton}
+          </View>
+          <View ref={controlsAnchorRef} collapsable={false} style={styles.controls}>
+            {showTagFilter ? (
+              <View style={styles.row}>
+                <View style={styles.grow}>{tagFilter}</View>
+                {favoriteInTagRow ? favoriteButton : null}
+              </View>
+            ) : null}
+            <View style={styles.row}>
+              <View style={styles.grow}>{sortPicker}</View>
+              {showFavoriteFilter && !favoriteInTagRow ? favoriteButton : null}
+              {directionButton}
+            </View>
+          </View>
+        </>
+      )}
 
       {filterComponent}
 
-      <View
-        ref={controlsAnchorRef}
-        collapsable={false}
-        style={styles(colors).filterSortControlsWrapper}
-      >
-        <View style={styles(colors).filterSortRow}>
-          <View style={[styles(colors).selectContainer, { flex: 1 }]}>
-            {usesColoredFilterOptions ? (
-              <MultiSelectPill
-                options={(filterOptions || []).map((option) => ({
-                  ...option,
-                  color: option.color || undefined,
-                }))}
-                selectedValues={selectedFilter}
-                onSelectionChange={handleFilterSelection}
-                placeholder={t('filter_by_tags')}
-                style={{ marginBottom: 0 }}
-                triggerStyle={{
-                  borderColor: colors.primary,
-                  borderRadius: 5,
-                  height: 50,
-                  minHeight: 50,
-                  paddingVertical: 6,
-                  flexWrap: 'nowrap',
-                  overflow: 'hidden',
-                  justifyContent: 'center',
-                }}
-              />
-            ) : (
-              <MultiSelectPill
-                options={(filterOptions || []).map((option) => ({
-                  ...option,
-                  color: option.color ?? undefined,
-                }))}
-                selectedValues={selectedFilter}
-                onSelectionChange={handleFilterSelection}
-                placeholder={t('filter_by_tags')}
-                disabled={disableTagFilter}
-                style={styles(colors).compactSelect}
-              />
-            )}
-          </View>
-          <TouchableOpacity
-            onPress={handleOpenAdvancedSearchModal}
-            style={styles(colors).advancedSearchButton}
-            disabled={!hasAdvancedSearchFields}
-          >
-            <Ionicons
-              name="search-outline"
-              size={24}
-              color={hasAdvancedSearchFields ? onPrimaryFill : colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={styles(colors).filterSortRow}>
-          <View style={styles(colors).selectContainerSort}>
-            <SingleSelectPill
-              options={sortOptions || []}
-              value={selectedSort}
-              onValueChange={handleSortSelection}
-              placeholder={t('sort_by')}
-              style={styles(colors).compactSelect}
-            />
-          </View>
-          {!disableFavoriteFilter && (
-            <TouchableOpacity
-              onPress={handleFavoriteFilterToggle}
-              style={[
-                styles(colors).favoriteFilterButton,
-                { backgroundColor: favoriteFilterFill },
-                { marginRight: 10 },
-              ]}
-            >
-              <Ionicons name={getFavoriteButtonIcon()} size={24} color={favoriteFilterIconColor} />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            onPress={handleSortDirectionToggle}
-            style={styles(colors).sortDirectionButton}
-          >
-            <Ionicons
-              name={sortDirection === 'asc' ? 'arrow-up' : 'arrow-down'}
-              size={24}
-              color={onPrimaryFill}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View style={styles(colors).resultsRow}>
+      <ActiveFilterChips
+        storyId={storyId}
+        entityName={entityName}
+        scopes={advancedSearchScopes}
+        criteria={currentAdvancedSearchCriteria}
+        favoriteState={internalFavoriteFilterState}
+        onClearFavorite={() => handleFavoriteFilterChange('all')}
+        onRemoveCriterion={handleRemoveCriterion}
+        onClearAll={handleClearAll}
+      />
+
+      <View style={styles.resultsRow}>
         {isLoading && (
-          <ActivityIndicator
-            size="small"
-            color={colors.primary}
-            style={styles(colors).resultsLoadingIndicator}
-          />
+          <ActivityIndicator size="small" color={colors.primary} style={styles.resultsLoading} />
         )}
-        <Text style={styles(colors).resultsCountText}>
+        <Text style={styles.resultsCountText}>
           {t('total_results_found', { count: data.length })}
           {resultsMeta ? ` (${resultsMeta})` : ''}
         </Text>
       </View>
       {resultsNotice}
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        numColumns={numColumns}
-        columnWrapperStyle={numColumns > 1 ? columnWrapperStyle : undefined}
-        ListEmptyComponent={
-          emptyListComponent || (
-            <GuidedEmptyState
-              title={emptyStateTitle}
-              message={emptyStateMessage}
-              actions={emptyStateActions}
-              entityName={entityName}
-              fallbackText={t('no_items_found')}
-            />
-          )
-        }
-        style={styles(colors).list}
-      />
-      {storyId && entityName && onAdvancedSearch && hasAdvancedSearchFields && (
+      <SearchHighlightContext.Provider value={currentSearchTerm ?? ''}>
+        <FlatList
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={numColumns}
+          columnWrapperStyle={numColumns > 1 ? columnWrapperStyle : undefined}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            emptyListComponent ||
+            (hasActiveFilters ? (
+              <NoResultsState onClear={handleClearAll} />
+            ) : (
+              <GuidedEmptyState
+                title={emptyStateTitle}
+                message={emptyStateMessage}
+                actions={emptyStateActions}
+                entityName={entityName}
+                fallbackText={t('no_items_found')}
+              />
+            ))
+          }
+          style={styles.list}
+        />
+      </SearchHighlightContext.Provider>
+      {canFilterByField && storyId && entityName && (
         <AdvancedSearchModal
           entityName={entityName}
           storyId={storyId}
@@ -408,145 +450,49 @@ const GenericFilterSortList = <T,>({
           onSearch={handleAdvancedSearchSubmit}
           initialCriteria={currentAdvancedSearchCriteria}
           scopes={advancedSearchScopes}
+          // The star button already filters favorites (per person when favorites are individual);
+          // the field would read the story-wide column instead.
+          excludeFields={showFavoriteFilter ? ['isFavorite'] : []}
         />
       )}
     </View>
   );
 };
 
-const GuidedEmptyState: React.FC<{
-  title?: string;
-  message?: string;
-  actions?: GuidedEmptyStateAction[];
-  entityName?: string;
-  fallbackText: string;
-}> = ({ title, message, actions, entityName, fallbackText }) => {
-  const { colors } = useTheme();
-  const entityIcon = entityName
-    ? (getEntityAppearance(entityName).icon as keyof typeof Ionicons.glyphMap)
-    : null;
-  const visibleActions = (actions ?? []).slice(0, 2);
-  if (!title && !message && visibleActions.length === 0) {
-    return <Text style={styles(colors).emptyText}>{fallbackText}</Text>;
-  }
-  return (
-    <View style={styles(colors).guidedEmpty} testID="guided-empty-state">
-      {entityIcon ? (
-        <View style={styles(colors).guidedEmptyIconWrap} testID="guided-empty-icon">
-          <Ionicons name={entityIcon} size={28} color={colors.onPrimaryContainer} />
-        </View>
-      ) : null}
-      {title ? <Text style={styles(colors).guidedEmptyTitle}>{title}</Text> : null}
-      {message ? <Text style={styles(colors).guidedEmptyMessage}>{message}</Text> : null}
-      {visibleActions.map((action, index) => (
-        <Button
-          key={action.testID ?? `guided-empty-action-${index}`}
-          onPress={action.onPress}
-          testID={action.testID ?? `guided-empty-action-${index}`}
-          style={styles(colors).guidedEmptyButton}
-        >
-          {action.label}
-        </Button>
-      ))}
-    </View>
-  );
-};
-
-const styles = (colors: any) =>
+const createStyles = (colors: { background: string; textSecondary: string }) =>
   StyleSheet.create({
     container: {
       flex: 1,
       padding: 10,
       backgroundColor: colors.background,
     },
-    searchContainer: {
-      marginBottom: 0,
-      paddingTop: 5,
-      paddingBottom: 0,
-    },
-    searchBar: {
-      width: '100%',
-      marginBottom: 10,
-    },
-    filterSortControlsWrapper: {
-      flexDirection: 'column',
-      marginBottom: 5,
-      zIndex: 1, // Add zIndex to create a stacking context
-    },
-    filterSortRow: {
+    row: {
       flexDirection: 'row',
-      marginBottom: 10,
       alignItems: 'center',
+      gap: 10,
+      marginBottom: 10,
     },
-    selectContainer: {
+    grow: {
       flex: 1,
     },
-    selectContainerSort: {
-      flex: 1,
-      paddingRight: 10,
+    grow3: {
+      flex: 3,
+    },
+    grow4: {
+      flex: 4,
+      marginBottom: 0,
+    },
+    controls: {
+      flexDirection: 'column',
+      zIndex: 1, // Add zIndex to create a stacking context
     },
     // A regular field keeps space below itself for a following form control. In this toolbar that
     // margin becomes part of the row's height and shifts the icon buttons down from their select.
     compactSelect: {
       marginBottom: 0,
     },
-    sortDirectionButton: {
-      padding: 12,
-      borderRadius: 5,
-      backgroundColor: colors.primary,
-    },
-    favoriteFilterButton: {
-      padding: 12,
-      borderRadius: 5,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     list: {
       flex: 1,
-    },
-    emptyText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 20,
-    },
-    guidedEmpty: {
-      alignItems: 'center',
-      paddingVertical: 32,
-      paddingHorizontal: 24,
-      gap: 12,
-    },
-    guidedEmptyIconWrap: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primaryContainer,
-      marginBottom: 2,
-    },
-    guidedEmptyTitle: {
-      color: colors.text,
-      fontSize: 17,
-      fontWeight: 'bold',
-      textAlign: 'center',
-    },
-    guidedEmptyMessage: {
-      color: colors.textSecondary,
-      fontSize: 14,
-      lineHeight: 20,
-      textAlign: 'center',
-    },
-    guidedEmptyButton: {
-      marginTop: 4,
-      minWidth: 200,
-    },
-    advancedSearchButton: {
-      padding: 12,
-      borderRadius: 5,
-      backgroundColor: colors.primary,
-      marginLeft: 10,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
     resultsRow: {
       flexDirection: 'row',
@@ -554,7 +500,7 @@ const styles = (colors: any) =>
       marginBottom: 10,
       paddingLeft: 10,
     },
-    resultsLoadingIndicator: {
+    resultsLoading: {
       marginRight: 8,
     },
     resultsCountText: {

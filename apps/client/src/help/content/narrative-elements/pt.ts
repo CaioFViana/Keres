@@ -35,7 +35,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A busca avançada separa os campos de Capítulo, Cena e Escolha. Campos de Escolha aparecem somente em histórias branching. Em histórias lineares, a duração e o intervalo das cenas também alimentam a timeline.',
+      text: 'Os filtros separam os campos de Capítulo, Cena e Escolha. Campos de Escolha aparecem somente em histórias branching. Em histórias lineares, a duração e o intervalo das cenas também alimentam a timeline.',
     },
     { type: 'seeAlso', pages: ['chapters', 'scenes', 'choices', 'story-map', 'lists-and-search'] },
   ],

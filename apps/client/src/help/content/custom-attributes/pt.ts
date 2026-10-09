@@ -87,7 +87,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'O campo aparece no formulário, detalhe, Busca Avançada e Busca Global. Sua identificação permanece a mesma mesmo que o nome visível mude.',
+      text: 'O campo aparece no formulário, detalhe, os Filtros das listas e a Busca Global. Sua identificação permanece a mesma mesmo que o nome visível mude.',
     },
     { type: 'seeAlso', pages: ['suggestions', 'lists-and-search', 'characters'] },
   ],

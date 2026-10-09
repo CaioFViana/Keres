@@ -282,6 +282,7 @@ const GalleryListScreen = () => {
           columnWrapperStyle={styles.columnWrapper}
           searchPlaceholder={t('search_media')}
           filterOptions={mediaTypeOptions}
+          filterPlaceholder={t('filter_by_media_type')}
           sortOptions={sortOptions}
           entityName="Gallery"
           storyId={storyId || ''}

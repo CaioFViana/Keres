@@ -61,7 +61,7 @@ const page: HelpPage = {
           label: 'Choice text or notes',
           whatToWrite:
             'This is a search-only field. Enter a word to find it in either the choice text or its notes.',
-          note: 'It appears in Advanced search and does not add a new value to the choice.',
+          note: 'It appears in the filters and does not add a new value to the choice.',
         },
       ],
     },

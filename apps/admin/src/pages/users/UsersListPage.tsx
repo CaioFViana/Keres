@@ -5,20 +5,17 @@ import type { AdminUserInfo, Tier } from '@keres/shared';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
 import { Modal } from '../../components/Modal';
+import { Pagination } from '../../components/Pagination';
+import { useAdminList } from '../../hooks/useAdminList';
 
 export function UsersListPage() {
   const { t, i18n } = useTranslation('admin');
-  const [users, setUsers] = useState<AdminUserInfo[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
-  const [total, setTotal] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [page, setPage] = useState(1);
-  const [reloadToken, setReloadToken] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const pageSize = 25;
 
@@ -30,34 +27,24 @@ export function UsersListPage() {
       });
   }, []);
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    setError(null);
-    AdminUserApiService.list({
-      search: appliedSearch || undefined,
-      // Off means active only; on means everyone, deleted included.
-      isDeleted: showDeleted ? undefined : false,
-      adultVerified: verifiedOnly ? true : undefined,
-      page,
-      pageSize,
-    })
-      .then((res) => {
-        if (ignore) return;
-        setUsers(res.items);
-        setTotal(res.total);
-      })
-      .catch((err) => {
-        if (ignore) return;
-        setError(err.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [page, showDeleted, verifiedOnly, appliedSearch, reloadToken]);
+  const {
+    items: users,
+    total,
+    loading,
+    error,
+    reload,
+  } = useAdminList(
+    () =>
+      AdminUserApiService.list({
+        search: appliedSearch || undefined,
+        // Off means active only; on means everyone, deleted included.
+        isDeleted: showDeleted ? undefined : false,
+        adultVerified: verifiedOnly ? true : undefined,
+        page,
+        pageSize,
+      }),
+    [page, showDeleted, verifiedOnly, appliedSearch],
+  );
 
   const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +68,7 @@ export function UsersListPage() {
         if (!confirm(message)) return;
         await AdminUserApiService.softDelete(user.id);
       }
-      setReloadToken((n) => n + 1);
+      reload();
     } catch (err) {
       setNotice(err instanceof Error ? err.message : t('common.actionFailed'));
     }
@@ -220,25 +207,7 @@ export function UsersListPage() {
         </div>
       )}
 
-      <div className="pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          {t('common.previous')}
-        </button>
-        <span>
-          {t('common.pagination', {
-            page,
-            pages: Math.max(1, Math.ceil(total / pageSize)),
-            total,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={page * pageSize >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {t('common.next')}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
 
       {notice && (
         <Modal title={t('common.notice')} onClose={() => setNotice(null)}>

@@ -15,6 +15,7 @@ import {
   SUBSCRIPTION_STATUSES,
 } from '@keres/shared/metadata/Payments';
 import { PaymentsApiService } from '../../api/PaymentsApiService';
+import { Pagination } from '../../components/Pagination';
 
 const PAGE_SIZE = 25;
 /** A payment can happen at any moment, away from this page: it looks again by itself while it is in view. */
@@ -487,25 +488,7 @@ export function PaymentsPage() {
         </div>
       )}
 
-      <div className="pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          {t('common.previous')}
-        </button>
-        <span>
-          {t('common.pagination', {
-            page,
-            pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
-            total,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={page * PAGE_SIZE >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {t('common.next')}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
     </div>
   );
 }

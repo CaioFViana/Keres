@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -6,6 +6,8 @@ import {
   type AdminStoryCollaborator,
   type AdminStoryItem,
 } from '../../api/AdminStoryApiService';
+import { Pagination } from '../../components/Pagination';
+import { useAdminList } from '../../hooks/useAdminList';
 import { StoryContent } from './StoryContent';
 
 type NsfwFilter = 'all' | 'nsfw' | 'safe';
@@ -70,43 +72,23 @@ function Collaborators({ story }: { story: AdminStoryItem }) {
 
 export function StoriesPage() {
   const { t, i18n } = useTranslation('admin');
-  const [items, setItems] = useState<AdminStoryItem[]>([]);
-  const [total, setTotal] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [nsfwFilter, setNsfwFilter] = useState<NsfwFilter>('all');
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [contentOpenId, setContentOpenId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    setError(null);
-    AdminStoryApiService.list({
-      search: appliedSearch || undefined,
-      nsfw: nsfwFilter === 'all' ? undefined : nsfwFilter === 'nsfw',
-      page,
-      pageSize: PAGE_SIZE,
-    })
-      .then((res) => {
-        if (ignore) return;
-        setItems(res.items);
-        setTotal(res.total);
-      })
-      .catch((err) => {
-        if (ignore) return;
-        setError(err.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [page, nsfwFilter, appliedSearch]);
+  const { items, total, loading, error, setItems, setError } = useAdminList(
+    () =>
+      AdminStoryApiService.list({
+        search: appliedSearch || undefined,
+        nsfw: nsfwFilter === 'all' ? undefined : nsfwFilter === 'nsfw',
+        page,
+        pageSize: PAGE_SIZE,
+      }),
+    [page, nsfwFilter, appliedSearch],
+  );
 
   const toggleNsfw = async (story: AdminStoryItem) => {
     if (!story.isNsfw && !confirm(t('stories.confirmNsfw', { title: story.title }))) {
@@ -251,25 +233,7 @@ export function StoriesPage() {
         </div>
       )}
 
-      <div className="pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          {t('common.previous')}
-        </button>
-        <span>
-          {t('common.pagination', {
-            page,
-            pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
-            total,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={page * PAGE_SIZE >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {t('common.next')}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
     </div>
   );
 }

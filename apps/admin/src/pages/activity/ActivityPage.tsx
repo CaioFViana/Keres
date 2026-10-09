@@ -6,6 +6,8 @@ import type { AuditEvent, AuditSummary, AuditUserRef } from '@keres/shared';
 import { AUDIT_CATEGORIES, AUDIT_OUTCOMES } from '@keres/shared/metadata/AuditEvents';
 import { ActivityApiService, type ActivityFilters } from '../../api/ActivityApiService';
 import { Modal } from '../../components/Modal';
+import { Pagination } from '../../components/Pagination';
+import { useAdminList } from '../../hooks/useAdminList';
 
 const PAGE_SIZE = 50;
 const WINDOWS = [1, 24, 168, 720] as const;
@@ -116,11 +118,7 @@ export function ActivityPage() {
   const [form, setForm] = useState<Applied>({ ...EMPTY, userId: initialUser });
   const [applied, setApplied] = useState<Applied>({ ...EMPTY, userId: initialUser });
   const [page, setPage] = useState(1);
-  const [events, setEvents] = useState<AuditEvent[]>([]);
-  const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<AuditEvent | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [hours, setHours] = useState<number>(24);
   const [summary, setSummary] = useState<AuditSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -142,26 +140,15 @@ export function ActivityPage() {
     };
   }, [hours]);
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    setError(null);
-    ActivityApiService.list({ ...filtersOf(applied), page, pageSize: PAGE_SIZE })
-      .then((result) => {
-        if (ignore) return;
-        setEvents(result.items);
-        setTotal(result.total);
-      })
-      .catch((err) => {
-        if (!ignore) setError(err.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [applied, page]);
+  const {
+    items: events,
+    total,
+    loading,
+    error,
+  } = useAdminList(
+    () => ActivityApiService.list({ ...filtersOf(applied), page, pageSize: PAGE_SIZE }),
+    [applied, page],
+  );
 
   const apply = (next: Applied) => {
     setPage(1);
@@ -512,25 +499,7 @@ export function ActivityPage() {
         </div>
       )}
 
-      <div className="pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          {t('common.previous')}
-        </button>
-        <span>
-          {t('common.pagination', {
-            page,
-            pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
-            total,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={page * PAGE_SIZE >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {t('common.next')}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
 
       {notice && (
         <Modal title={t('common.notice')} onClose={() => setNotice(null)}>

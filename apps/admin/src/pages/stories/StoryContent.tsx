@@ -10,6 +10,7 @@ import {
   type AdminStoryMediaItem,
   type AdminStorySketchSummary,
 } from '../../api/AdminStoryApiService';
+import { Pagination } from '../../components/Pagination';
 
 type ContentTab = 'media' | 'boards' | 'sketches' | 'maps' | 'entities';
 
@@ -294,25 +295,12 @@ function Entities({ storyId }: { storyId: string }) {
       {loadingRows && <p className="loading-text">{t('common.loading')}</p>}
       {rows !== null && (
         <>
-          <div className="pagination">
-            <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              {t('common.previous')}
-            </button>
-            <span>
-              {t('common.pagination', {
-                page: rows.page,
-                pages: Math.max(1, Math.ceil(rows.total / rows.pageSize)),
-                total: rows.total,
-              })}
-            </span>
-            <button
-              type="button"
-              disabled={page * rows.pageSize >= rows.total}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              {t('common.next')}
-            </button>
-          </div>
+          <Pagination
+            page={page}
+            pageSize={rows.pageSize}
+            total={rows.total}
+            onPageChange={setPage}
+          />
           {rows.items.length === 0 && <p className="hint">{t('stories.content.emptyEntities')}</p>}
           {rows.items.map((row, index) => (
             <details key={typeof row.id === 'string' ? row.id : index}>

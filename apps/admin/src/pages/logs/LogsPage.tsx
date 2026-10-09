@@ -1,8 +1,10 @@
 import type { KeyboardEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ApiLogEntry, ApiLogFilters } from '../../api/LogsApiService';
 import { LogsApiService } from '../../api/LogsApiService';
+import { Pagination } from '../../components/Pagination';
+import { useAdminList } from '../../hooks/useAdminList';
 
 const LEVEL_CLASS: Record<ApiLogEntry['level'], string> = {
   info: 'level-info',
@@ -30,18 +32,16 @@ export function LogsPage() {
     to: '',
   });
 
-  const [entries, setEntries] = useState<ApiLogEntry[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [selectedEntry, setSelectedEntry] = useState<ApiLogEntry | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const pageSize = 50;
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    setError(null);
+  const {
+    items: entries,
+    total,
+    loading,
+    error,
+  } = useAdminList(() => {
     const filters: ApiLogFilters = {
       level: (LEVELS.includes(applied.level as (typeof LEVELS)[number])
         ? applied.level
@@ -54,22 +54,7 @@ export function LogsPage() {
       page,
       pageSize,
     };
-    LogsApiService.list(filters)
-      .then((res) => {
-        if (ignore) return;
-        setEntries(res.items);
-        setTotal(res.total);
-      })
-      .catch((err) => {
-        if (ignore) return;
-        setError(err.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
+    return LogsApiService.list(filters);
   }, [page, applied]);
 
   const onSearchSubmit = (e: React.FormEvent) => {
@@ -223,25 +208,7 @@ export function LogsPage() {
         </div>
       )}
 
-      <div className="pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          {t('common.previous')}
-        </button>
-        <span>
-          {t('common.pagination', {
-            page,
-            pages: Math.max(1, Math.ceil(total / pageSize)),
-            total,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={page * pageSize >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {t('common.next')}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
     </div>
   );
 }

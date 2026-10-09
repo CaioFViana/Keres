@@ -68,6 +68,9 @@ jest.mock('@/src/hooks/useScreenHeader', () => ({
     mockHeaderConfig.current = config as never;
   },
 }));
+jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
+  require('@/test/helpers/detailTabsMock'),
+);
 jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {

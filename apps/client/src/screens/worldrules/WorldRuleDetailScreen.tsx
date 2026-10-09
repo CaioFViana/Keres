@@ -1,3 +1,5 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
@@ -170,6 +172,9 @@ const WorldRuleDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -193,16 +198,8 @@ const WorldRuleDetailScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer
-      title={worldRule.title}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={worldRule.tags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
@@ -223,25 +220,19 @@ const WorldRuleDetailScreen = () => {
         label={t('description')}
       />
 
-      <CustomAttributeDetailFields
-        storyId={worldRule.storyId}
-        entityType="WorldRule"
-        entityId={worldRuleId}
-      />
-
-      <CommentableDetailField
-        {...commentField('extraNotes', worldRule.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
+
       <EntityGalleryManager
         ownerId={worldRuleId}
         ownerType="WorldRule"
         onPressMedia={openGalleryMediaViewer}
         editable={canEdit}
       />
+    </>
+  );
 
+  const relationsPanel = (
+    <>
       <NoteManager
         noteRelations={worldRuleNoteRelations}
         availableNotes={allNotes}
@@ -259,6 +250,21 @@ const WorldRuleDetailScreen = () => {
         entityId={worldRuleId}
         editable={false}
       />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields
+        storyId={worldRule.storyId}
+        entityType="WorldRule"
+        entityId={worldRuleId}
+      />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', worldRule.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <EntityMetadata
         version={worldRule.version}
@@ -267,7 +273,27 @@ const WorldRuleDetailScreen = () => {
         entityType="WorldRule"
         entityId={worldRule.id}
       />
+
       <FavoritedByList storyId={worldRule.storyId} entityId={worldRuleId} entityType="WorldRule" />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={worldRule.title}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
+      />
     </DetailContainer>
   );
 };

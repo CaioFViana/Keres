@@ -37,6 +37,9 @@ jest.mock('@/src/components/common/controls/Button/Button', () => ({
     return react.createElement(native.Text, { testID: 'go-back-btn', onPress }, children);
   },
 }));
+jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
+  require('@/test/helpers/detailTabsMock'),
+);
 jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => ({
   __esModule: true,
   default: ({

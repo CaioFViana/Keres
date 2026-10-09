@@ -1,3 +1,5 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
@@ -273,6 +275,9 @@ const ChoiceDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -294,18 +299,24 @@ const ChoiceDetailScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer
-      title={choice.text}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={choiceTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
+      <CommentableDetailField
+        {...commentField('text', choice.text || t('common_na'))}
+        label={t('text')}
+      />
+
+      <CommentableDetailField
+        {...commentField('notes', choice.notes || t('common_na'))}
+        label={t('choice_notes')}
+      />
+    </>
+  );
+
+  const relationsPanel = (
+    <>
       <TouchableOpacity
         onPress={() => handleScenePress(choice.sceneId)}
         style={styles.sceneLink}
@@ -333,16 +344,6 @@ const ChoiceDetailScreen = () => {
         </View>
         <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
       </TouchableOpacity>
-
-      <CommentableDetailField
-        {...commentField('text', choice.text || t('common_na'))}
-        label={t('text')}
-      />
-
-      <CommentableDetailField
-        {...commentField('notes', choice.notes || t('common_na'))}
-        label={t('choice_notes')}
-      />
 
       {isBranching && (
         <View style={styles.choiceEffectContainer}>
@@ -407,11 +408,34 @@ const ChoiceDetailScreen = () => {
         entityId={choiceId}
         editable={false}
       />
+    </>
+  );
 
+  const otherPanel = (
+    <>
       <EntityMetadata
         version={choice.version}
         createdAt={choice.createdAt}
         updatedAt={choice.updatedAt}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={choice.text}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

@@ -227,6 +227,9 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
+jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
+  require('@/test/helpers/detailTabsMock'),
+);
 jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {

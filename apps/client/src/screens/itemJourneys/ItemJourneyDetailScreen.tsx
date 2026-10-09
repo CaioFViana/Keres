@@ -1,3 +1,5 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
@@ -251,6 +253,9 @@ const ItemJourneyDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return (
       <ScreenLoading
@@ -283,18 +288,19 @@ const ItemJourneyDetailScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer
-      title={headerTitle}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={itemJourneyTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
+      <CommentableDetailField
+        {...commentField('newState', itemJourney.newState || t('common_na'))}
+        label={t('item_state')}
+      />
+    </>
+  );
+
+  const relationsPanel = (
+    <>
       {relatedItem && (
         <TouchableOpacity onPress={handleItemPress} style={styles.relationLink} activeOpacity={0.7}>
           <View style={{ flex: 1 }}>
@@ -303,14 +309,7 @@ const ItemJourneyDetailScreen = () => {
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       )}
-      <CommentableDetailField
-        {...commentField('newState', itemJourney.newState || t('common_na'))}
-        label={t('item_state')}
-      />
-      <CommentableDetailField
-        {...commentField('extraNotes', itemJourney.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
+
       {relatedScene && (
         <TouchableOpacity
           onPress={handleScenePress}
@@ -323,6 +322,7 @@ const ItemJourneyDetailScreen = () => {
           <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       )}
+
       {newCharacterOwner && (
         <TouchableOpacity
           onPress={handleNewOwnerPress}
@@ -360,11 +360,39 @@ const ItemJourneyDetailScreen = () => {
         entityId={itemJourneyId}
         editable={false}
       />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CommentableDetailField
+        {...commentField('extraNotes', itemJourney.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <EntityMetadata
         version={itemJourney.version}
         createdAt={itemJourney.createdAt}
         updatedAt={itemJourney.updatedAt}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={headerTitle}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

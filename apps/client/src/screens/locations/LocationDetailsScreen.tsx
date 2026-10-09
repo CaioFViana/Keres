@@ -1,3 +1,6 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
+import { useLocationRelationActions } from './useLocationRelationActions';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
@@ -58,7 +61,6 @@ import { createSceneService } from '../../services/storymanagement/SceneService'
 import { useStoryStore } from '../../state/storyStore';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { AppAlert } from '../../utils/AppAlert';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {
@@ -359,80 +361,14 @@ const LocationDetailsScreen = () => {
     [selectedStory?.id, fetchAllItemJourneysInStory],
   );
 
-  const handleSetParent = useCallback(
-    async (newParentId: string | null) => {
-      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-      try {
-        await locationRelationServiceRef.current.setParent(
-          userId,
-          selectedStory.id,
-          locationId,
-          newParentId,
-        );
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_save_relation'),
-        );
-      }
-    },
-    [selectedStory?.id, userId, locationId, t],
-  );
-
-  const handleAddChild = useCallback(
-    async (childId: string) => {
-      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-      try {
-        await locationRelationServiceRef.current.setParent(
-          userId,
-          selectedStory.id,
-          childId,
-          locationId,
-        );
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_save_relation'),
-        );
-      }
-    },
-    [selectedStory?.id, userId, locationId, t],
-  );
-
-  const handleAddConnection = useCallback(
-    async (otherLocationId: string) => {
-      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-      try {
-        await locationRelationServiceRef.current.addConnection(
-          userId,
-          selectedStory.id,
-          locationId,
-          otherLocationId,
-        );
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_save_relation'),
-        );
-      }
-    },
-    [selectedStory?.id, userId, locationId, t],
-  );
-
-  const handleRemoveLocationRelation = useCallback(
-    async (relationId: string) => {
-      if (!locationRelationServiceRef.current || !userId) return;
-      try {
-        await locationRelationServiceRef.current.removeRelation(userId, relationId);
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_remove_relation'),
-        );
-      }
-    },
-    [userId, t],
-  );
+  const { handleSetParent, handleAddChild, handleAddConnection, handleRemoveLocationRelation } =
+    useLocationRelationActions({
+      relationServiceRef: locationRelationServiceRef,
+      storyId: selectedStory?.id,
+      userId,
+      locationId,
+      t,
+    });
 
   useEntityInitialLoad(fetchLocationDetails);
 
@@ -498,6 +434,9 @@ const LocationDetailsScreen = () => {
     return groupScenePresenceEntries(pairs);
   }, [allCharacters, allScenes, characterSceneRelations, locationId]);
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -522,50 +461,48 @@ const LocationDetailsScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer title={location.name} landing={occurrence ?? null}>
+  const detailsPanel = (
+    <>
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
         {...commentField('description', location.description || t('common_na'))}
         label={t('description')}
       />
+
       <DetailField
         label={t('field_intExt')}
         value={location.intExt ? t(`int_ext_${location.intExt}`) : t('common_na')}
       />
+
       <CommentableDetailField
         {...commentField('climate', location.climate || t('common_na'))}
         label={t('field_climate')}
       />
+
       <CommentableDetailField
         {...commentField('culture', location.culture || t('common_na'))}
         label={t('field_culture')}
       />
+
       <CommentableDetailField
         {...commentField('politics', location.politics || t('common_na'))}
         label={t('field_politics')}
       />
 
-      <CustomAttributeDetailFields
-        storyId={location.storyId}
-        entityType="Location"
-        entityId={locationId}
-      />
-
-      <CommentableDetailField
-        {...commentField('extraNotes', location.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
+
       <EntityGalleryManager
         ownerId={locationId}
         ownerType="Location"
         onPressMedia={openGalleryMediaViewer}
         editable={canEdit}
       />
+    </>
+  );
 
+  const relationsPanel = (
+    <>
       <LocationRelationManager
         currentLocationId={locationId}
         allLocations={allLocations}
@@ -622,6 +559,21 @@ const LocationDetailsScreen = () => {
         entityId={locationId}
         editable={false}
       />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields
+        storyId={location.storyId}
+        entityType="Location"
+        entityId={locationId}
+      />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', location.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />
 
@@ -631,6 +583,20 @@ const LocationDetailsScreen = () => {
         updatedAt={location.updatedAt}
         entityType="Location"
         entityId={location.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={location.name}
+      landing={occurrence ?? null}
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

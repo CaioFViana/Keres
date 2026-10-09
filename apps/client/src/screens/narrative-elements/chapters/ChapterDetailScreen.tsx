@@ -1,3 +1,5 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
@@ -272,6 +274,9 @@ const ChapterDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -295,13 +300,15 @@ const ChapterDetailScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer title={chapter.name} landing={occurrence ?? null}>
+  const detailsPanel = (
+    <>
       <TagList tags={chapterTags} variant="chip" emptyMessage={t('no_tags_found')} />
+
       <CommentableDetailField
         {...commentField('summary', chapter.summary || t('common_na'))}
         label={t('summary')}
       />
+
       {selectedStory?.type === 'linear' && (
         <>
           {allScenes
@@ -336,22 +343,11 @@ const ChapterDetailScreen = () => {
           value={arcs.find((arc) => arc.id === chapter.arcId)?.title || t('common_na')}
         />
       ) : null}
+    </>
+  );
 
-      <CustomAttributeDetailFields
-        storyId={chapter.storyId}
-        entityType="Chapter"
-        entityId={chapterId}
-      />
-
-      <DetailField
-        label={t('is_favorite')}
-        value={chapter.isFavorite ? t('common_yes') : t('common_no')}
-      />
-      <CommentableDetailField
-        {...commentField('extraNotes', chapter.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
+  const relationsPanel = (
+    <>
       <AnchorManager
         storyId={chapter.storyId}
         chapterId={chapterId}
@@ -405,6 +401,26 @@ const ChapterDetailScreen = () => {
         entityId={chapterId}
         editable={false}
       />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields
+        storyId={chapter.storyId}
+        entityType="Chapter"
+        entityId={chapterId}
+      />
+
+      <DetailField
+        label={t('is_favorite')}
+        value={chapter.isFavorite ? t('common_yes') : t('common_no')}
+      />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', chapter.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />
 
@@ -414,6 +430,20 @@ const ChapterDetailScreen = () => {
         updatedAt={chapter.updatedAt}
         entityType="Chapter"
         entityId={chapter.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={chapter.name}
+      landing={occurrence ?? null}
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
 
       <View style={styles.buttonContainer}>

@@ -1,3 +1,5 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
@@ -292,6 +294,9 @@ const NoteDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={t('loading_note_details')} />;
   }
@@ -317,16 +322,8 @@ const NoteDetailScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer
-      title={note.title}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={noteTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
@@ -334,25 +331,34 @@ const NoteDetailScreen = () => {
         label={t('body')}
       />
 
-      <CustomAttributeDetailFields storyId={note.storyId} entityType="Note" entityId={noteId} />
-
-      <CommentableDetailField
-        {...commentField('extraNotes', note.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
+
       <EntityGalleryManager
         ownerId={noteId}
         ownerType="Note"
         onPressMedia={openGalleryMediaViewer}
         editable={canEdit}
       />
+    </>
+  );
 
+  const relationsPanel = (
+    <>
       <RelatedEntitiesList
         title={t('related_entities_title')}
         noItemsMessage={t('no_entities_related')}
         groupedEntities={groupedEntities}
+      />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields storyId={note.storyId} entityType="Note" entityId={noteId} />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', note.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
       />
 
       <FavoritedByList storyId={note.storyId} entityId={noteId} entityType="Note" />
@@ -363,6 +369,25 @@ const NoteDetailScreen = () => {
         updatedAt={note.updatedAt}
         entityType="Note"
         entityId={note.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={note.title}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

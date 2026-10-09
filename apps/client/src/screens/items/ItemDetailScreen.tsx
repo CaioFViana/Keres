@@ -1,3 +1,5 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
@@ -191,6 +193,9 @@ const ItemDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -217,29 +222,25 @@ const ItemDetailScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer
-      title={item.name}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={itemTags} variant="chip" emptyMessage={t('no_tags_found')} />
+
       <CommentableDetailField
         {...commentField('description', item.description || t('common_na'))}
         label={t('description')}
       />
+
       <CommentableDetailField
         {...commentField('category', item.category || t('common_na'))}
         label={t('category')}
       />
+
       <CommentableDetailField
         {...commentField('initialState', item.initialState || t('common_na'))}
         label={t('initial_state')}
       />
+
       <DetailField
         label={t('item_character_owner_label', {
           character: term('Character'),
@@ -248,25 +249,19 @@ const ItemDetailScreen = () => {
         value={owner?.name || t('common_na')}
       />
 
-      <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
-
-      <CommentableDetailField
-        {...commentField('extraNotes', item.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-      <DetailField
-        label={t('is_favorite')}
-        value={item.isFavorite ? t('common_yes') : t('common_no')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
+
       <EntityGalleryManager
         ownerId={itemId}
         ownerType="Item"
         onPressMedia={openGalleryMediaViewer}
         editable={canEdit}
       />
+    </>
+  );
 
+  const relationsPanel = (
+    <>
       {selectedStory && (
         <>
           <ItemJourneyTimeline
@@ -291,6 +286,22 @@ const ItemDetailScreen = () => {
       <AppearsInArcsSection arcs={appearingArcs} />
 
       <SeeAlsoManager storyId={item.storyId} entityType="Item" entityId={itemId} editable={false} />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', item.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
+
+      <DetailField
+        label={t('is_favorite')}
+        value={item.isFavorite ? t('common_yes') : t('common_no')}
+      />
 
       <FavoritedByList storyId={item.storyId} entityId={itemId} entityType="Item" />
 
@@ -300,6 +311,25 @@ const ItemDetailScreen = () => {
         updatedAt={item.updatedAt}
         entityType="Item"
         entityId={item.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={item.name}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

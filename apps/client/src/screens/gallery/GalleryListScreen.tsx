@@ -5,9 +5,9 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, StyleSheet, View } from 'react-native';
+import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
@@ -29,7 +29,7 @@ import type {
 import {
   GALLERY_ROW_PADDING,
   galleryGridLayout,
-  WEB_SCROLLBAR_ALLOWANCE,
+  galleryScrollbarWidth,
 } from '../../utils/galleryGridLayout';
 import { createGalleryLink } from '../../services/galleryLink';
 import { importPickedMediaAssets } from '../../services/galleryMediaImport';
@@ -62,6 +62,23 @@ const GalleryListScreen = () => {
   const [importing, setImporting] = useState(false);
   const [linkModalVisible, setLinkModalVisible] = useState(false);
   const [listWidth, setListWidth] = useState(0);
+  const listWidthRef = useRef(0);
+  // The room a scrollbar takes from the list, for the list width and number of tiles it was measured
+  // with. Kept while those hold: reserving it makes the tiles shorter, which could remove the scrollbar
+  // and bring it back in turn. A different width or number of tiles (a search, say) measures anew.
+  const [scrollbar, setScrollbar] = useState({ forKey: '', width: 0 });
+  const scrollbarKeyRef = useRef('');
+
+  const handleListLayout = useCallback((event: LayoutChangeEvent) => {
+    const width = Math.round(event.nativeEvent.layout.width);
+    listWidthRef.current = width;
+    setListWidth(width);
+  }, []);
+
+  const handleContentWidth = useCallback((contentWidth: number) => {
+    const measured = galleryScrollbarWidth(listWidthRef.current, contentWidth);
+    if (measured > 0) setScrollbar({ forKey: scrollbarKeyRef.current, width: measured });
+  }, []);
 
   const {
     listProps,
@@ -228,9 +245,11 @@ const GalleryListScreen = () => {
   );
 
   // Before the list has been measured the window's breakpoint stands in for its width.
+  const scrollbarKey = `${listWidth}:${galleries.length}`;
+  scrollbarKeyRef.current = scrollbarKey;
   const grid =
     listWidth > 0
-      ? galleryGridLayout(listWidth, Platform.OS === 'web' ? WEB_SCROLLBAR_ALLOWANCE : 0)
+      ? galleryGridLayout(listWidth, scrollbar.forKey === scrollbarKey ? scrollbar.width : 0)
       : null;
   const numColumns =
     grid?.numColumns ?? (breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2);
@@ -290,7 +309,7 @@ const GalleryListScreen = () => {
         testID="gallery-list-area"
         collapsable={false}
         style={{ flex: 1 }}
-        onLayout={(event) => setListWidth(Math.round(event.nativeEvent.layout.width))}
+        onLayout={handleListLayout}
       >
         <GenericFilterSortList
           {...listProps}
@@ -299,6 +318,7 @@ const GalleryListScreen = () => {
           renderItem={renderGalleryItem}
           keyExtractor={(item) => item.id}
           numColumns={numColumns}
+          onContentWidthChange={handleContentWidth}
           columnWrapperStyle={styles.columnWrapper}
           searchPlaceholder={t('search_media')}
           filterOptions={mediaTypeOptions}

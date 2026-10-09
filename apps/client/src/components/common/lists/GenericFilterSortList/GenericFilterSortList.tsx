@@ -84,6 +84,11 @@ interface GenericFilterSortListProps<T> {
    */
   numColumns?: number;
   columnWrapperStyle?: StyleProp<ViewStyle>;
+  /**
+   * The width of the list's content, which is the list's own width less a scrollbar that takes room
+   * from it. The gallery sizes its tiles with it.
+   */
+  onContentWidthChange?: (width: number) => void;
 }
 
 const GenericFilterSortList = <T,>({
@@ -123,6 +128,7 @@ const GenericFilterSortList = <T,>({
   resultsNotice,
   numColumns = 1,
   columnWrapperStyle,
+  onContentWidthChange,
 }: GenericFilterSortListProps<T>) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -428,6 +434,9 @@ const GenericFilterSortList = <T,>({
           numColumns={numColumns}
           columnWrapperStyle={numColumns > 1 ? columnWrapperStyle : undefined}
           keyboardShouldPersistTaps="handled"
+          onContentSizeChange={
+            onContentWidthChange ? (width) => onContentWidthChange(width) : undefined
+          }
           ListEmptyComponent={
             emptyListComponent ||
             (hasActiveFilters ? (

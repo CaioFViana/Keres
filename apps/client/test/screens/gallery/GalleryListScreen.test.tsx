@@ -29,6 +29,7 @@ let mockListProps: {
   data: { id: string }[];
   renderItem: (info: { item: { id: string } }) => React.ReactNode;
   numColumns?: number;
+  onContentWidthChange?: (width: number) => void;
   emptyStateTitle?: string;
   emptyStateMessage?: string;
   emptyStateActions?: { label: string; onPress: () => void }[];
@@ -298,6 +299,27 @@ describe('GalleryListScreen', () => {
     });
 
     expect(mockListProps?.numColumns).toBe(7);
+    expect(view.getByTestId('width-g1').props.children).toBe('214');
+  });
+
+  it('leaves room for a scrollbar once the list reports a narrower content than its own width', async () => {
+    mockListState = { ...freshListState(), items: [{ id: 'g1' }] };
+    const view = await render(<GalleryListScreen />);
+    await fireEvent(view.getByTestId('gallery-list-area'), 'layout', {
+      nativeEvent: { layout: { width: 1600, height: 900 } },
+    });
+
+    // the list is 1580 wide inside its padding; 1564 of it is content, so a scrollbar takes 16
+    await act(async () => mockListProps?.onContentWidthChange?.(1564));
+    expect(view.getByTestId('width-g1').props.children).toBe('212');
+
+    // it stays reserved when the content widens again, so the tiles do not flip back and forth
+    await act(async () => mockListProps?.onContentWidthChange?.(1580));
+    expect(view.getByTestId('width-g1').props.children).toBe('212');
+
+    // a search that changes how many tiles there are measures the scrollbar anew
+    mockListState = { ...freshListState(), items: [{ id: 'g1' }, { id: 'g2' }] };
+    await view.rerender(<GalleryListScreen />);
     expect(view.getByTestId('width-g1').props.children).toBe('214');
   });
 

@@ -460,6 +460,25 @@ describe('GenericFilterSortList', () => {
     expect(screen.getByText('row-Two')).toBeTruthy();
   });
 
+  it('reports the width of its content, only to a screen that asks', async () => {
+    const onContentWidthChange = jest.fn();
+    const props = baseProps();
+    const asking = await render(
+      <GenericFilterSortList {...props} onContentWidthChange={onContentWidthChange} />,
+    );
+    const listOf = (view: typeof asking) =>
+      view.container.queryAll(
+        (node: any) => node.props?.keyboardShouldPersistTaps === 'handled' && !!node.props?.data,
+      )[0] as any;
+    listOf(asking).props.onContentSizeChange(320, 900);
+    expect(onContentWidthChange).toHaveBeenCalledWith(320);
+
+    const silent = await render(<GenericFilterSortList {...props} />);
+    // the list measures itself either way; a screen that did not ask is simply not told
+    expect(() => listOf(silent).props.onContentSizeChange(320, 900)).not.toThrow();
+    expect(onContentWidthChange).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to plain text without a guided empty state', async () => {
     const props = baseProps();
     const screen = await render(

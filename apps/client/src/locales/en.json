@@ -1987,7 +1987,7 @@
   "payment_no_methods_device": "No payment method is available for this device right now.",
   "payment_no_methods_plan": "No payment method sells this plan right now.",
   "payment_no_plans": "No plans are on sale right now.",
-  "payment_not_renewing": "It will not renew: it ends on {{date}}.",
+  "payment_not_renewing": "It will not renew: it ends on {{date}}. To keep it after that date, choose a plan below and pay again.",
   "payment_not_sold": "This server does not sell plans.",
   "payment_open_provider": "Open the payment page",
   "payment_paid_message": "Your {{plan}} plan is active.",

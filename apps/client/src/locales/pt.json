@@ -1987,7 +1987,7 @@
   "payment_no_methods_device": "Nenhum método de pagamento está disponível para este aparelho no momento.",
   "payment_no_methods_plan": "Nenhum método de pagamento vende este plano no momento.",
   "payment_no_plans": "Nenhum plano está à venda agora.",
-  "payment_not_renewing": "Não vai renovar: termina em {{date}}.",
+  "payment_not_renewing": "Não vai renovar: termina em {{date}}. Para mantê-lo depois dessa data, escolha um plano abaixo e pague de novo.",
   "payment_not_sold": "Este servidor não vende planos.",
   "payment_open_provider": "Abrir a página de pagamento",
   "payment_paid_message": "Seu plano {{plan}} está ativo.",

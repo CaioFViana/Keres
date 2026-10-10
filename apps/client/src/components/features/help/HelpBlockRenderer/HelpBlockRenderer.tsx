@@ -101,7 +101,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     heading3: {
       color: colors.text,
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
       marginTop: 12,
       marginBottom: 6,

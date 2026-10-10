@@ -186,7 +186,7 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      marginRight: 9,
+      marginRight: 10,
     },
     entityIcon: { marginRight: 6 },
     operationTypeText: {

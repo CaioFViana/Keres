@@ -141,7 +141,7 @@ const createActionStyles = (colors: ThemeColors) =>
       padding: 12,
       marginTop: 10,
     },
-    icon: { marginTop: 1, marginRight: 11 },
+    icon: { marginTop: 1, marginRight: 12 },
     text: { flex: 1 },
     actionTitle: { fontSize: 15, fontWeight: 'bold', color: colors.text },
     actionDescription: { fontSize: 13, lineHeight: 19, color: colors.textSecondary, marginTop: 3 },

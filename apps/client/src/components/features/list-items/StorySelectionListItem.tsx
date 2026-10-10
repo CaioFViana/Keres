@@ -131,7 +131,7 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: 'center',
     },
     title: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
       color: theme.text,
     },

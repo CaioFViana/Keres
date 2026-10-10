@@ -100,7 +100,7 @@ const StoryTimelineScreen = () => {
           borderRadius: 8,
           overflow: 'hidden',
         },
-        scaleModeButton: { paddingHorizontal: 10, paddingVertical: 7 },
+        scaleModeButton: { paddingHorizontal: 10, paddingVertical: 8 },
         scaleModeText: { fontSize: 12, fontWeight: '700' },
         warning: {
           marginHorizontal: 14,

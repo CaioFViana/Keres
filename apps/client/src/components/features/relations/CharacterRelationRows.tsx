@@ -56,7 +56,7 @@ const CharacterRelationRows: React.FC<Props> = ({
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                paddingVertical: 7,
+                paddingVertical: 8,
                 borderTopWidth: 1,
                 borderTopColor: colors.border,
               }}

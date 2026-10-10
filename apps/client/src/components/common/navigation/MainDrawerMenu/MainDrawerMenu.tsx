@@ -52,7 +52,7 @@ export const MainDrawerMenu: React.FC<MainDrawerMenuProps> = ({
     () =>
       StyleSheet.create({
         header: { paddingHorizontal: 16, paddingBottom: 10, paddingTop: 4 },
-        title: { color: colors.text, fontSize: 17, fontWeight: '700' },
+        title: { color: colors.text, fontSize: 16, fontWeight: '700' },
         subtitle: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
         arcRow: {
           alignItems: 'center',

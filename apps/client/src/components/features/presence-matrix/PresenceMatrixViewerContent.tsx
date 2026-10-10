@@ -244,7 +244,7 @@ const PresenceMatrixViewerContent: React.FC<{
           borderBottomWidth: 1,
           borderColor: colors.border,
         },
-        title: { flex: 1, color: colors.text, fontSize: 17, fontWeight: '700' },
+        title: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '700' },
         chips: {
           flexDirection: 'row',
           gap: 6,
@@ -257,7 +257,7 @@ const PresenceMatrixViewerContent: React.FC<{
           alignItems: 'center',
           gap: 5,
           borderRadius: 14,
-          paddingHorizontal: 9,
+          paddingHorizontal: 10,
           paddingVertical: 5,
         },
         controls: { position: 'absolute', right: 14, bottom: 18, gap: 8 },
@@ -288,7 +288,7 @@ const PresenceMatrixViewerContent: React.FC<{
           justifyContent: 'center',
           padding: 32,
         },
-        emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 12 },
+        emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 },
         emptyDescription: {
           color: colors.textSecondary,
           fontSize: 14,

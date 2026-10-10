@@ -100,7 +100,7 @@ const VocabularyTermCard = memo(
           column: { flex: 1, minWidth: 0 },
           gender: { width: 136 },
           label: { color: colors.textSecondary, fontSize: 12, marginBottom: 5 },
-          empty: { color: colors.textSecondary, fontSize: 12, marginTop: 7 },
+          empty: { color: colors.textSecondary, fontSize: 12, marginTop: 8 },
         }),
       [colors],
     );
@@ -212,7 +212,7 @@ const VocabularyScreen = () => {
         medium: { marginBottom: 18 },
         scope: { color: colors.text, fontWeight: '700', lineHeight: 20, marginBottom: 18 },
         languageLabel: { color: colors.text, fontWeight: '700', marginBottom: 6 },
-        languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 7 },
+        languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 8 },
         // flexGrow only — `flex: 1` on the scroll content (via common.container) pins height to the
         // viewport and prevents scrolling past the first few vocabulary cards.
         content: { flexGrow: 1, paddingBottom: 40 },

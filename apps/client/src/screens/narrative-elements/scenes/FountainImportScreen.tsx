@@ -188,7 +188,7 @@ const FountainImportScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  heading: { fontSize: 17, fontWeight: '700', marginVertical: 12 },
+  heading: { fontSize: 16, fontWeight: '700', marginVertical: 12 },
   hint: { fontSize: 13, lineHeight: 18, marginBottom: 8 },
   block: { marginBottom: 12 },
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, paddingVertical: 6 },

@@ -98,7 +98,7 @@ const createStyles = (colors: ThemeColors) =>
       padding: 20,
     },
     title: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: 'bold',
       color: colors.text,
       marginBottom: 8,

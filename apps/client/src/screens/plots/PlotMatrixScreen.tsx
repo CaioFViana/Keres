@@ -181,7 +181,7 @@ const PlotMatrixScreen = () => {
           justifyContent: 'center',
           padding: 32,
         },
-        emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 12 },
+        emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 },
         emptyDescription: {
           color: colors.textSecondary,
           fontSize: 14,

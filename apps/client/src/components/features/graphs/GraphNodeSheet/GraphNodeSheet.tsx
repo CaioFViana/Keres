@@ -105,9 +105,9 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           borderRadius: 8,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
-          paddingVertical: 9,
-          paddingHorizontal: 11,
-          marginBottom: 7,
+          paddingVertical: 10,
+          paddingHorizontal: 12,
+          marginBottom: 8,
         },
         itemText: {
           flex: 1,
@@ -124,7 +124,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           marginTop: 2,
         },
         itemExtra: {
-          fontSize: 11.5,
+          fontSize: 12,
           color: colors.primary,
           marginTop: 3,
         },
@@ -134,7 +134,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           justifyContent: 'center',
           backgroundColor: colors.primary,
           borderRadius: 8,
-          paddingVertical: 13,
+          paddingVertical: 12,
           marginTop: 22,
         },
         actionText: {
@@ -188,7 +188,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
                       name={item.icon}
                       size={16}
                       color={colors.textSecondary}
-                      style={{ marginRight: 9 }}
+                      style={{ marginRight: 10 }}
                     />
                     <View style={styles.itemText}>
                       <Text

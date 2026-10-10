@@ -260,7 +260,7 @@ const createStyles = (colors: ThemeColors) =>
     chip: {
       borderRadius: 12,
       paddingVertical: 3,
-      paddingHorizontal: 9,
+      paddingHorizontal: 10,
       backgroundColor: colors.background,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,

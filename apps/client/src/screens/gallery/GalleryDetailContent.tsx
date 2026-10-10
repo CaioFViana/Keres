@@ -400,7 +400,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
             <FavoritedByList storyId={media.storyId} entityId={galleryId} entityType="Gallery" />
 
             {canEdit && (
-              <FormActions stackOnCompact style={{ marginTop: 25 }}>
+              <FormActions stackOnCompact style={{ marginTop: 24 }}>
                 <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
                   {t('delete')}
                 </Button>

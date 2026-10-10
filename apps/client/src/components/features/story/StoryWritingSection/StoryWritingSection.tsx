@@ -192,7 +192,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       gap: 6,
       paddingHorizontal: 10,
-      paddingVertical: 7,
+      paddingVertical: 8,
     },
     chipLabel: { color: colors.text, fontSize: 13 },
     manuscript: { marginTop: 10 },

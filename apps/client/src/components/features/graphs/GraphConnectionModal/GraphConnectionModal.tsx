@@ -136,7 +136,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       gap: 8,
       paddingHorizontal: 12,
-      paddingVertical: 11,
+      paddingVertical: 12,
     },
     directionButtonSelected: {
       borderColor: colors.primary,

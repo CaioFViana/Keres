@@ -168,7 +168,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       gap: 6,
       paddingHorizontal: 12,
-      paddingVertical: 9,
+      paddingVertical: 10,
     },
     optionDisabled: { opacity: 0.5 },
     optionLabel: { ...typography.label, color: colors.primary },

@@ -286,7 +286,7 @@ const createStyles = (colors: ThemeColors) =>
       elevation: 3,
     },
     headerTitle: {
-      fontSize: 19,
+      fontSize: 18,
       fontWeight: 'bold',
       color: colors.text,
       marginLeft: 8,

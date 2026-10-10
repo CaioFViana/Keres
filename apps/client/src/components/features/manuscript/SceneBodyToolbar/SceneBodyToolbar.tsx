@@ -51,7 +51,7 @@ export function SceneBodyToolbar({
           borderBottomColor: colors.border,
         },
         button: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-        glyph: { color: colors.text, fontSize: 17 },
+        glyph: { color: colors.text, fontSize: 16 },
         glyphList: { fontWeight: '700', fontSize: 15 },
         glyphBold: { fontWeight: '700' },
         glyphItalic: { fontStyle: 'italic' },

@@ -73,7 +73,7 @@ export default function RouteTimelineScreen() {
           borderRadius: 8,
           overflow: 'hidden',
         },
-        scaleButton: { paddingHorizontal: 11, paddingVertical: 7 },
+        scaleButton: { paddingHorizontal: 12, paddingVertical: 8 },
         scaleText: { fontSize: 12, fontWeight: '700' },
       }),
     [colors],

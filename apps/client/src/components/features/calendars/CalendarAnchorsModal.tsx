@@ -69,7 +69,7 @@ const CalendarAnchorsModal = ({
           flexDirection: 'row',
           gap: 10,
           marginTop: 18,
-          paddingBottom: 7,
+          paddingBottom: 8,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
         },
@@ -77,7 +77,7 @@ const CalendarAnchorsModal = ({
         row: {
           flexDirection: 'row',
           gap: 10,
-          paddingVertical: 11,
+          paddingVertical: 12,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
           alignItems: 'center',

@@ -39,7 +39,7 @@ export default function RouteListScreen() {
           borderRadius: 10,
           backgroundColor: colors.surface,
         },
-        name: { color: colors.text, fontSize: 17, fontWeight: '700' },
+        name: { color: colors.text, fontSize: 16, fontWeight: '700' },
         meta: { color: colors.textSecondary, marginTop: 5 },
         empty: {
           color: colors.textSecondary,

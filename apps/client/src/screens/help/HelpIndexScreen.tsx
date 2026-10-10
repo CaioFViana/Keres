@@ -186,7 +186,7 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.surface,
     },
     sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    title: { fontSize: 17, fontWeight: '700', color: colors.text },
+    title: { fontSize: 16, fontWeight: '700', color: colors.text },
     card: { padding: 14, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
     summary: { color: colors.textSecondary, marginTop: 4, lineHeight: 19 },
     label: { ...typography.caption, color: colors.textSecondary, marginBottom: 3 },

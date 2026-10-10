@@ -78,13 +78,13 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
             backgroundColor: colors.surface,
           },
           nodeLabel: {
-            fontSize: 12.5,
+            fontSize: 13,
             fontWeight: '600',
             color: colors.text,
             textAlign: 'center',
           },
           nodeChapter: {
-            fontSize: 9.5,
+            fontSize: 10,
             marginTop: 3,
             textAlign: 'center',
           },

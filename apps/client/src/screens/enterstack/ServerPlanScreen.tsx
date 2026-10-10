@@ -434,7 +434,7 @@ const createStyles = (colors: ThemeColors) =>
       gap: 4,
     },
     offerSelected: { borderColor: colors.primary, borderWidth: 2 },
-    offerName: { fontSize: 17, fontWeight: 'bold', color: colors.text },
+    offerName: { fontSize: 16, fontWeight: 'bold', color: colors.text },
     offerLine: { fontSize: 13, color: colors.textSecondary },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
     chip: {

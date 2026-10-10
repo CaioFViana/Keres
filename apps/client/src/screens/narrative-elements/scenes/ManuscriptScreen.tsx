@@ -286,7 +286,7 @@ const ManuscriptScreen = () => {
         },
         containerTitle: { color: colors.text, fontSize: 24, fontWeight: '700' },
         containerEvent: { fontStyle: 'italic' },
-        looseTitle: { color: colors.textSecondary, fontSize: 17, fontStyle: 'italic' },
+        looseTitle: { color: colors.textSecondary, fontSize: 16, fontStyle: 'italic' },
         sceneHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
         sceneTitle: {
           flex: 1,

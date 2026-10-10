@@ -174,7 +174,7 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
           flexDirection: 'row',
           alignItems: 'center',
           gap: 8,
-          paddingVertical: 9,
+          paddingVertical: 10,
           paddingHorizontal: 12,
           marginLeft: 24,
           borderRadius: 8,

@@ -203,7 +203,7 @@ const createStyles = (colors: ThemeColors) =>
       borderBottomWidth: 1,
       flexDirection: 'row',
       gap: 10,
-      paddingVertical: 11,
+      paddingVertical: 12,
     },
     name: { color: colors.text, flex: 1, fontWeight: '600' },
     fileName: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },

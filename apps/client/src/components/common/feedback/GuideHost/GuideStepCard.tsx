@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   dots: { alignItems: 'center', flexDirection: 'row', gap: 5 },
   dot: { borderRadius: 4, height: 8, width: 8 },
   count: { fontSize: 12, fontWeight: '600' },
-  title: { fontSize: 17, fontWeight: 'bold', marginBottom: 8 },
+  title: { fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
   message: { fontSize: 14, lineHeight: 20, marginBottom: 16 },
   buttonRow: {
     alignItems: 'center',

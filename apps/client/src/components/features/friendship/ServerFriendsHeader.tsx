@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   texts: { flex: 1, minWidth: 160 },
-  name: { fontSize: 17, fontWeight: 'bold' },
+  name: { fontSize: 16, fontWeight: 'bold' },
   tagLine: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   tag: { fontSize: 14 },
   copy: { minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' },

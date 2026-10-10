@@ -60,7 +60,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       alignSelf: 'flex-start',
       gap: 8,
-      paddingVertical: 9,
+      paddingVertical: 10,
       paddingHorizontal: 14,
       borderRadius: 999,
       backgroundColor: colors.surface,

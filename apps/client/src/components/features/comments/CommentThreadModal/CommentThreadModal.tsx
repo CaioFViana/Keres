@@ -345,7 +345,7 @@ const createStyles = (colors: ThemeColors) =>
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    headerTitle: { fontSize: 17, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
+    headerTitle: { fontSize: 16, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
     list: { paddingHorizontal: 15, flexGrow: 1 },
     commentRow: { flexDirection: 'row', marginVertical: 10 },
     commentBody: { flex: 1, marginLeft: 10 },

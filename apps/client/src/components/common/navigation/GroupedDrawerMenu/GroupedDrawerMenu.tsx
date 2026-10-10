@@ -109,7 +109,7 @@ export const GroupedDrawerMenu: React.FC<GroupedDrawerMenuProps> = ({
         leaves: {
           borderLeftColor: colors.border,
           borderLeftWidth: StyleSheet.hairlineWidth,
-          marginLeft: 26,
+          marginLeft: 24,
         },
         divider: {
           backgroundColor: colors.border,

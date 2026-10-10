@@ -42,7 +42,7 @@ function useRowStyles() {
           borderRadius: 16,
           borderWidth: 1,
           paddingHorizontal: 14,
-          paddingVertical: 7,
+          paddingVertical: 8,
           backgroundColor: colors.surface,
         },
         pillSelected: { borderColor: colors.primary, backgroundColor: colors.primary },

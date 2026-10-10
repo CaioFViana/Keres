@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, marginBottom: 6, marginTop: 10 },
   hint: { fontSize: 12, marginTop: 4 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pill: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 7 },
+  pill: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
 });
 
 export default SongFactsFields;

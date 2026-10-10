@@ -73,7 +73,7 @@ const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
           marginBottom: 8,
           minHeight: 54,
           paddingHorizontal: 12,
-          paddingVertical: 9,
+          paddingVertical: 10,
         },
         optionSelected: { borderColor: colors.primary, borderWidth: 2 },
         swatch: { borderRadius: 16, height: 32, width: 32 },

@@ -337,7 +337,7 @@ const createStyles = (colors: ThemeColors) =>
     versionRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 9,
+      paddingVertical: 10,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
     },
@@ -354,7 +354,7 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       marginTop: 12,
       paddingHorizontal: 14,
-      paddingVertical: 9,
+      paddingVertical: 10,
     },
     outlineButtonText: { ...typography.label, color: colors.primary },
   });

@@ -267,7 +267,7 @@ const createStyles = (colors: ThemeColors) =>
       letterSpacing: 0.6,
     },
     headerTextActive: { color: colors.primary },
-    row: { paddingVertical: 7 },
+    row: { paddingVertical: 8 },
     rowTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     rowIcon: {
       width: 28,

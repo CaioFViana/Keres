@@ -32,6 +32,7 @@ import {
   playProductForOffer,
   type PlanOffer,
 } from '../../utils/paymentPlans';
+import { planLimitLines } from '../../utils/planLimitLines';
 import { playDriver } from '../../utils/playPurchase';
 import {
   devicePaymentCapabilities,
@@ -43,38 +44,6 @@ type ServerPlanNavigationProp = NativeStackNavigationProp<
   ServerManagementStackParamList,
   'ServerPlan'
 >;
-
-/** One plan's ceilings as short lines; a ceiling the plan does not have reads "unlimited". */
-function limitLines(
-  offer: PlanOffer,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string[] {
-  const { tier } = offer;
-  const stories = tier.maxStories;
-  const entities = tier.maxEntitiesTotal;
-  const publications = tier.maxPublicationsPerDay;
-  const works = tier.maxPublishedArcs;
-  return [
-    stories === null
-      ? t('plan_limit_stories_unlimited')
-      : t(stories === 1 ? 'plan_limit_stories_one' : 'plan_limit_stories_other', {
-          count: stories,
-        }),
-    entities === null
-      ? t('plan_limit_entities_unlimited')
-      : t(entities === 1 ? 'plan_limit_entities_one' : 'plan_limit_entities_other', {
-          count: entities,
-        }),
-    publications === null
-      ? t('plan_limit_publications_unlimited')
-      : t(publications === 1 ? 'plan_limit_publications_one' : 'plan_limit_publications_other', {
-          count: publications,
-        }),
-    works === null
-      ? t('plan_limit_works_unlimited')
-      : t(works === 1 ? 'plan_limit_works_one' : 'plan_limit_works_other', { count: works }),
-  ];
-}
 
 /**
  * A server's plans and the way to pay for one. It only exists for a server that sells plans (the entry in the
@@ -350,7 +319,7 @@ const ServerPlanScreen = () => {
                   {t(`payment_per_${entry.interval}`)}
                 </Text>
               ))}
-              {limitLines(offer, t).map((text) => (
+              {planLimitLines(offer.tier, t).map((text) => (
                 <Text key={text} style={styles.offerLine}>
                   {text}
                 </Text>

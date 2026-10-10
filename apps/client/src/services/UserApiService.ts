@@ -1,4 +1,4 @@
-import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
+import type { AccountPlan, UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
 import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -53,6 +53,17 @@ export class UserApiService {
   async regenerateRecoveryCodes(server: ServerSelect, currentPassword: string): Promise<string[]> {
     const response = await this.clientFor(server).put('/user/recovery-codes', { currentPassword });
     return response.data.recoveryCodes;
+  }
+
+  /** The plan the current user has on `server`, or `undefined` from a server older than this route. */
+  async getOwnPlan(server: ServerSelect): Promise<AccountPlan | null> {
+    try {
+      const response = await this.clientFor(server).get<AccountPlan>('/user/plan');
+      return response.data;
+    } catch (error: unknown) {
+      if ((error as { response?: { status?: number } })?.response?.status === 404) return null;
+      throw error;
+    }
   }
 
   /** The current user's own profile on `server`, including avatar/bio - `server.idUser` is

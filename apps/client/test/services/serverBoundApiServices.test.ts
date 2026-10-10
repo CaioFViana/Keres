@@ -204,6 +204,20 @@ describe('server-bound API services', () => {
     await expect(service.getOwnProfile(server)).rejects.toThrow('boom');
   });
 
+  it('reads the own plan, treats a server without the route as having none, and rethrows other failures', async () => {
+    const service = new UserApiService();
+    mockClient.get.mockResolvedValueOnce({ data: { tierName: 'Free' } });
+
+    await expect(service.getOwnPlan(server)).resolves.toEqual({ tierName: 'Free' });
+    expect(mockClient.get).toHaveBeenCalledWith('/user/plan');
+
+    mockClient.get.mockRejectedValueOnce({ response: { status: 404 } });
+    await expect(service.getOwnPlan(server)).resolves.toBeNull();
+
+    mockClient.get.mockRejectedValueOnce(new Error('boom'));
+    await expect(service.getOwnPlan(server)).rejects.toThrow('boom');
+  });
+
   it('maps every PublicationApiService route to its endpoint', async () => {
     mockClient.get.mockResolvedValue({ data: [{ id: 'pub-1' }] });
     mockClient.post.mockResolvedValue({ data: { id: 'pub-2' } });

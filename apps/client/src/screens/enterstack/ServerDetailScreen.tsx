@@ -14,11 +14,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import PlanLimitsCard from '../../components/features/servers/PlanLimitsCard';
 import PlanStatusCard from '../../components/features/servers/PlanStatusCard';
 import ServerActionRow from '../../components/features/servers/ServerActionRow';
 import { serverCardStyleDefs } from '../../components/features/servers/serverCardStyleDefs';
 import ServerStatusPill from '../../components/features/servers/ServerStatusPill';
 import { useDrizzle } from '../../db';
+import { useAccountPlan } from '../../hooks/useAccountPlan';
 import { usePaymentOverview } from '../../hooks/usePaymentOverview';
 import { useServerDeletion } from '../../hooks/useServerDeletion';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
@@ -86,6 +88,8 @@ const ServerDetailScreen = () => {
   // Plans and payment appear only while the server answers and only if it sells plans: a user working offline,
   // or on a server with no payment plugin, is never shown (or asked for) anything about payment.
   const { overview: payments } = usePaymentOverview(server, online);
+  // The plan the person has - the free one included - and what it comes with, whether or not the server sells any.
+  const { plan } = useAccountPlan(server, online);
 
   const hasUnseenAdminMessage = useIsConversationUnseen(adminConversationKey(serverId));
 
@@ -188,10 +192,13 @@ const ServerDetailScreen = () => {
         )}
       </View>
 
-      {payments?.info.subscription ? (
+      {plan || payments?.info.subscription ? (
         <>
           <Text style={styles.sectionTitle}>{t('server_plan_section')}</Text>
-          <PlanStatusCard subscription={payments.info.subscription} />
+          {plan ? <PlanLimitsCard plan={plan} /> : null}
+          {payments?.info.subscription ? (
+            <PlanStatusCard subscription={payments.info.subscription} />
+          ) : null}
         </>
       ) : null}
 

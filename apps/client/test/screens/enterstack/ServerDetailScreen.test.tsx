@@ -19,6 +19,7 @@ const mockUpdateOwnTag = jest.fn();
 const mockGetOwnProfile = jest.fn();
 const mockApiGet = jest.fn();
 const mockPaymentOverview = jest.fn();
+const mockAccountPlan = jest.fn();
 const mockColors = {
   primary: '#0000ff',
   onPrimary: '#ffffff',
@@ -78,6 +79,9 @@ jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
 jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDrizzle }));
 jest.mock('../../../src/hooks/usePaymentOverview', () => ({
   usePaymentOverview: (...args: unknown[]) => mockPaymentOverview(...args),
+}));
+jest.mock('../../../src/hooks/useAccountPlan', () => ({
+  useAccountPlan: (...args: unknown[]) => mockAccountPlan(...args),
 }));
 jest.mock('../../../src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
@@ -149,6 +153,7 @@ describe('ServerDetailScreen', () => {
     jest.clearAllMocks();
     mockRoute.params = { serverId: 'srv-1' };
     mockPaymentOverview.mockReturnValue({ overview: null, loading: false, reload: jest.fn() });
+    mockAccountPlan.mockReturnValue({ plan: null, reload: jest.fn() });
     mockGetAllServers.mockResolvedValue([server, { ...server, id: 'srv-2', name: 'Other' }]);
     mockApiGet.mockResolvedValue({ status: 200, data: { version: '1.2.3' } });
     mockGetOwnedStories.mockResolvedValue([]);
@@ -318,6 +323,60 @@ describe('ServerDetailScreen', () => {
       expect(view.queryByTestId('plan-status-card')).toBeNull();
       expect(view.queryByText('server_plan_section')).toBeNull();
       expect(view.getByTestId('server-action-plan')).toBeTruthy();
+    });
+
+    it('says what the plan comes with, the free one included, with no need to open a story', async () => {
+      mockAccountPlan.mockReturnValue({
+        plan: {
+          tierName: 'Free',
+          isDefault: true,
+          maxStories: 3,
+          maxEntitiesPerStory: 200,
+          maxEntitiesTotal: 500,
+          maxPublicationsPerDay: null,
+          maxPublishedArcs: 1,
+          storiesUsed: 1,
+          entitiesUsedTotal: 120,
+        },
+        reload: jest.fn(),
+      });
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.getByText('server_plan_section')).toBeTruthy();
+      expect(view.getByTestId('plan-limits-card')).toBeTruthy();
+      expect(view.getByText('Free')).toBeTruthy();
+      expect(view.getByText('plan_card_default_hint')).toBeTruthy();
+      expect(view.getByText('plan_limit_stories_other:{"count":3}')).toBeTruthy();
+      expect(view.getByText('plan_card_stories_used:{"used":1,"limit":3}')).toBeTruthy();
+      expect(view.getByText('plan_card_entities_used:{"used":120,"limit":500}')).toBeTruthy();
+      // No subscription behind it: no card of dates.
+      expect(view.queryByTestId('plan-status-card')).toBeNull();
+    });
+
+    it('puts what a paid plan comes with above where it stands', async () => {
+      mockPaymentOverview.mockReturnValue(overview(subscription));
+      mockAccountPlan.mockReturnValue({
+        plan: {
+          tierName: 'Pro',
+          isDefault: false,
+          maxStories: null,
+          maxEntitiesPerStory: null,
+          maxEntitiesTotal: null,
+          maxPublicationsPerDay: null,
+          maxPublishedArcs: null,
+          storiesUsed: 4,
+          entitiesUsedTotal: 0,
+        },
+        reload: jest.fn(),
+      });
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.getByTestId('plan-limits-card')).toBeTruthy();
+      expect(view.getByTestId('plan-status-card')).toBeTruthy();
+      expect(view.getByText('plan_limit_stories_unlimited')).toBeTruthy();
+      expect(view.queryByText(/plan_card_stories_used/)).toBeNull();
     });
 
     it('opens the payment history of this server, next to the plans', async () => {

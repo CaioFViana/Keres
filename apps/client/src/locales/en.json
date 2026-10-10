@@ -1944,6 +1944,7 @@
   "payment_choose_another": "Choose another plan or method",
   "payment_choose_interval": "How often",
   "payment_choose_method": "Payment method",
+  "payment_choose_method_hint": "Choose a payment method to pay.",
   "payment_choose_plan": "Choose a plan",
   "payment_copied": "Copied",
   "payment_copy": "Copy",

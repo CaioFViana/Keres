@@ -107,7 +107,14 @@ const ServerPlanScreen = () => {
     selected && interval
       ? methods.filter((method) => isMethodSoldForOffer(method, selected.tier, interval))
       : methods;
-  const usableMethodId = offerMethods.some((method) => method.id === methodId) ? methodId : null;
+  // The only method there is needs no choosing: it is the one, and Pay is ready. With several, none is picked for the
+  // person - how they pay is theirs to say.
+  const usableMethodId =
+    offerMethods.length === 1
+      ? offerMethods[0].id
+      : offerMethods.some((method) => method.id === methodId)
+        ? methodId
+        : null;
   const methodHintKey =
     serverMethods.length === 0
       ? 'payment_no_methods'
@@ -356,6 +363,11 @@ const ServerPlanScreen = () => {
               </View>
               {offerMethods.length === 0 ? (
                 <Text style={styles.hint}>{t(methodHintKey)}</Text>
+              ) : null}
+              {offerMethods.length > 1 && !usableMethodId ? (
+                <Text style={styles.hint} testID="plan-choose-method-hint">
+                  {t('payment_choose_method_hint')}
+                </Text>
               ) : null}
               {switchQuote ? (
                 <Text style={styles.hint} testID="plan-switch-quote">

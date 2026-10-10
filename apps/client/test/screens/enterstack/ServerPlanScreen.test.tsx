@@ -283,6 +283,32 @@ describe('ServerPlanScreen: the plans', () => {
     });
   });
 
+  it('takes the only method there is as chosen, so Pay is ready with nothing more to pick', async () => {
+    setup({ overviewValue: overview({ methods: [{ id: 'card', label: 'Card' }] }) });
+    const view = await render(<ServerPlanScreen />);
+    await fireEvent.press(view.getByTestId('plan-offer-tier-pro'));
+
+    expect(view.queryByTestId('plan-choose-method-hint')).toBeNull();
+    await fireEvent.press(view.getByTestId('plan-pay'));
+
+    expect(mockStart).toHaveBeenCalledWith({
+      tierId: 'tier-pro',
+      interval: 'monthly',
+      methodId: 'card',
+    });
+  });
+
+  it('says why Pay waits while there are several methods and none is chosen', async () => {
+    const view = await render(<ServerPlanScreen />);
+    await fireEvent.press(view.getByTestId('plan-offer-tier-pro'));
+
+    expect(view.getByTestId('plan-choose-method-hint')).toBeTruthy();
+    expect(view.getByText('payment_choose_method_hint')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('plan-method-pix'));
+    expect(view.queryByTestId('plan-choose-method-hint')).toBeNull();
+  });
+
   it('says the methods are unavailable on a device that cannot run any of them', async () => {
     mockDeviceCaps.mockReturnValue({ flavor: 'native', platform: 'android', nativePay: false });
     const view = await render(<ServerPlanScreen />);

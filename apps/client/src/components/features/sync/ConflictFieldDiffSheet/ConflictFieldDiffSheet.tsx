@@ -5,7 +5,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
 import type { PendingConflict } from '../../../../services/SyncConflictService';
 import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { AppAlert } from '@/src/utils/AppAlert';
@@ -90,40 +92,7 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
     ]);
   }, [handleKeepServer, t]);
 
-  const styles = StyleSheet.create({
-    fieldBlock: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 10,
-      marginTop: 14,
-    },
-    fieldName: {
-      fontSize: 13,
-      fontWeight: 'bold',
-      color: colors.textSecondary,
-      marginBottom: 8,
-    },
-    option: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      paddingVertical: 8,
-      paddingHorizontal: 8,
-      borderRadius: 6,
-      marginBottom: 4,
-    },
-    optionSelected: { backgroundColor: colors.primaryContainer },
-    optionLabel: { fontSize: 12, fontWeight: 'bold', color: colors.textSecondary, marginBottom: 2 },
-    optionValue: { fontSize: 14, color: colors.text },
-    optionTextWrapper: { flex: 1, marginLeft: 8 },
-    footer: { marginTop: 18 },
-    secondaryButton: {
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    secondaryButtonText: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ConflictSheetFrame
@@ -199,5 +168,41 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
     </ConflictSheetFrame>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    fieldBlock: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginTop: 14,
+    },
+    fieldName: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    option: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      borderRadius: 6,
+      marginBottom: 4,
+    },
+    optionSelected: { backgroundColor: colors.primaryContainer },
+    optionLabel: { fontSize: 12, fontWeight: 'bold', color: colors.textSecondary, marginBottom: 2 },
+    optionValue: { fontSize: 14, color: colors.text },
+    optionTextWrapper: { flex: 1, marginLeft: 8 },
+    footer: { marginTop: 18 },
+    secondaryButton: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    secondaryButtonText: { ...typography.sectionTitle, color: colors.text },
+  });
 
 export default ConflictFieldDiffSheet;

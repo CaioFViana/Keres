@@ -5,7 +5,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import type { ResumeScene } from '@/src/hooks/useResumeScene';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 import { formatEditedAgo } from '@/src/utils/editedAgo';
 
 interface StoryWritingSectionProps {
@@ -51,33 +53,7 @@ const StoryWritingSection: React.FC<StoryWritingSectionProps> = ({
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
 
-  const styles = StyleSheet.create({
-    card: {
-      backgroundColor: colors.card,
-      borderColor: colors.border,
-      borderRadius: 10,
-      borderWidth: 1,
-      padding: 14,
-    },
-    row: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-    body: { flexGrow: 1, flexShrink: 1, minWidth: 160 },
-    title: { color: colors.text, fontSize: 16, fontWeight: '700' },
-    detail: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-    chip: {
-      alignItems: 'center',
-      borderColor: colors.border,
-      borderRadius: 8,
-      borderWidth: 1,
-      flexDirection: 'row',
-      gap: 6,
-      paddingHorizontal: 10,
-      paddingVertical: 7,
-    },
-    chipLabel: { color: colors.text, fontSize: 13 },
-    manuscript: { marginTop: 10 },
-    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const hasManuscript = (sceneCount ?? 0) > 0;
   // Chapters are left out when there are none: a story can be all loose scenes.
@@ -193,5 +169,34 @@ const StoryWritingSection: React.FC<StoryWritingSectionProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderRadius: 10,
+      borderWidth: 1,
+      padding: 14,
+    },
+    row: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    body: { flexGrow: 1, flexShrink: 1, minWidth: 160 },
+    title: { ...typography.sectionTitle, color: colors.text },
+    detail: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
+    chip: {
+      alignItems: 'center',
+      borderColor: colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      flexDirection: 'row',
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+    },
+    chipLabel: { color: colors.text, fontSize: 13 },
+    manuscript: { marginTop: 10 },
+    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  });
 
 export default StoryWritingSection;

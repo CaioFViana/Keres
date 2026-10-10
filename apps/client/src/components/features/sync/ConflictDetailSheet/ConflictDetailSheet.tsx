@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
 import type { PendingConflict } from '../../../../services/SyncConflictService';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import ConflictSheetFrame from '../ConflictSheetFrame/ConflictSheetFrame';
 
 interface ConflictDetailSheetProps {
@@ -30,21 +32,7 @@ interface ActionProps {
 
 const ConflictAction: React.FC<ActionProps> = ({ icon, title, description, onPress, disabled }) => {
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    action: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      borderRadius: 10,
-      padding: 12,
-      marginTop: 10,
-    },
-    icon: { marginTop: 1, marginRight: 11 },
-    text: { flex: 1 },
-    actionTitle: { fontSize: 15, fontWeight: 'bold', color: colors.text },
-    actionDescription: { fontSize: 13, lineHeight: 19, color: colors.textSecondary, marginTop: 3 },
-  });
+  const styles = useThemedStyles(createActionStyles);
 
   return (
     <TouchableOpacity
@@ -78,15 +66,11 @@ const ConflictDetailSheet: React.FC<ConflictDetailSheetProps> = ({
   onCompareFields,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const reason = t(`conflict_reason_${conflict.reason}`, {
     defaultValue: t('conflict_reason_unknown'),
     entity: summary.entityLabel,
   });
-  const styles = StyleSheet.create({
-    sectionTitle: { fontSize: 13, fontWeight: 'bold', color: colors.text, marginTop: 20 },
-    reason: { fontSize: 14, lineHeight: 20, color: colors.textSecondary, marginTop: 6 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ConflictSheetFrame
@@ -145,5 +129,28 @@ const ConflictDetailSheet: React.FC<ConflictDetailSheetProps> = ({
     </ConflictSheetFrame>
   );
 };
+
+const createActionStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    action: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 10,
+      padding: 12,
+      marginTop: 10,
+    },
+    icon: { marginTop: 1, marginRight: 11 },
+    text: { flex: 1 },
+    actionTitle: { fontSize: 15, fontWeight: 'bold', color: colors.text },
+    actionDescription: { fontSize: 13, lineHeight: 19, color: colors.textSecondary, marginTop: 3 },
+  });
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sectionTitle: { fontSize: 13, fontWeight: 'bold', color: colors.text, marginTop: 20 },
+    reason: { ...typography.body, color: colors.textSecondary, marginTop: 6 },
+  });
 
 export default ConflictDetailSheet;

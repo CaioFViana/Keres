@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { SceneSelect } from '../../../../db/schema';
 import { useBindChapterStore } from '../../../../hooks/useBindChapterStore';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { buildReorderItems } from '@keres/shared';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
@@ -29,7 +30,6 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
   initialChapterId = null,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const { chapters } = useBindChapterStore(storyId, isVisible);
 
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(initialChapterId);
@@ -66,17 +66,7 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
     [selectedChapterId, onReorderConfirm],
   );
 
-  const styles = StyleSheet.create({
-    chapterSelectContainer: {
-      marginBottom: 20,
-      zIndex: 2000, // Ensure dropdown is above other elements
-    },
-    emptyListText: {
-      textAlign: 'center',
-      color: colors.textSecondary,
-      marginTop: 20,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ReorderModal<SceneSelect>
@@ -109,5 +99,18 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    chapterSelectContainer: {
+      marginBottom: 20,
+      zIndex: 2000, // Ensure dropdown is above other elements
+    },
+    emptyListText: {
+      textAlign: 'center',
+      color: colors.textSecondary,
+      marginTop: 20,
+    },
+  });
 
 export default SceneReorderModal;

@@ -10,7 +10,8 @@ import {
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useSketchCompact } from '../../../hooks/useSketchCompact';
 import type { SketchTool } from '../../../state/sketchToolStore';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import SketchMenuSheet, { type SketchMenuItem } from './SketchMenuSheet';
 import {
   activeEntry,
@@ -86,23 +87,7 @@ const SketchCanvasTools: React.FC<SketchCanvasToolsProps> = (props) => {
   const toolsAnchorRef = useScreenAnchor('SketchCanvas', 'tools');
   const [menu, setMenu] = useState<OpenMenu>(null);
   const [lastByGroup, setLastByGroup] = useState<Record<string, string>>({});
-  const styles = StyleSheet.create({
-    divider: {
-      width: StyleSheet.hairlineWidth,
-      alignSelf: 'stretch',
-      backgroundColor: colors.border,
-      marginHorizontal: 4,
-    },
-    groupButton: {
-      paddingHorizontal: 8,
-      paddingVertical: 8,
-      borderRadius: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 2,
-    },
-    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const pick = (entry: SketchToolEntry, group: SketchToolGroup) => {
     setLastByGroup((current) => ({ ...current, [group.id]: entry.id }));
@@ -278,5 +263,23 @@ const SketchCanvasTools: React.FC<SketchCanvasToolsProps> = (props) => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    divider: {
+      width: StyleSheet.hairlineWidth,
+      alignSelf: 'stretch',
+      backgroundColor: colors.border,
+      marginHorizontal: 4,
+    },
+    groupButton: {
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      borderRadius: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+  });
 
 export default SketchCanvasTools;

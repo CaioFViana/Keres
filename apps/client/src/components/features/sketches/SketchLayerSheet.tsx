@@ -10,7 +10,9 @@ import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 
 import Button from '@/src/components/common/controls/Button/Button';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { typography } from '../../../theme/tokens';
 import { AppAlert } from '../../../utils/AppAlert';
 import SketchSlider from './SketchSlider';
 
@@ -57,26 +59,7 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const styles = StyleSheet.create({
-    sheet: { maxHeight: '82%' },
-    block: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 },
-    active: { backgroundColor: colors.border + '55', borderRadius: 8 },
-    name: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
-    sub: { color: colors.textSecondary, fontSize: 12 },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      color: colors.text,
-      borderRadius: 8,
-      padding: 8,
-      flex: 1,
-    },
-    iconButton: { padding: 6 },
-    more: { paddingBottom: 10, paddingLeft: 30, gap: 8 },
-    moreRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-    footer: { marginTop: 14 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const commitRename = () => {
     if (editingId && editingName.trim()) onPatch(editingId, { name: editingName.trim() });
@@ -290,5 +273,27 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { maxHeight: '82%' },
+    block: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 },
+    active: { backgroundColor: colors.border + '55', borderRadius: 8 },
+    name: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
+    sub: { ...typography.caption, color: colors.textSecondary },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      color: colors.text,
+      borderRadius: 8,
+      padding: 8,
+      flex: 1,
+    },
+    iconButton: { padding: 6 },
+    more: { paddingBottom: 10, paddingLeft: 30, gap: 8 },
+    moreRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+    footer: { marginTop: 14 },
+  });
 
 export default SketchLayerSheet;

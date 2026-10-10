@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface SyncConflictBannerProps {
   count: number;
@@ -18,11 +19,22 @@ const SyncConflictBanner: React.FC<SyncConflictBannerProps> = ({ count, onPress 
   const { colors } = useTheme();
   const { t } = useTranslation();
 
+  const styles = useThemedStyles(createStyles);
   if (count === 0) {
     return null;
   }
 
-  const styles = StyleSheet.create({
+  return (
+    <TouchableOpacity style={styles.banner} onPress={onPress} activeOpacity={0.8}>
+      <Ionicons name="git-compare-outline" size={22} color={colors.onPrimary} />
+      <Text style={styles.text}>{t('sync_conflicts_banner', { count })}</Text>
+      <Ionicons name="chevron-forward" size={20} color={colors.onPrimary} />
+    </TouchableOpacity>
+  );
+};
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     banner: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -39,14 +51,5 @@ const SyncConflictBanner: React.FC<SyncConflictBannerProps> = ({ count, onPress 
       color: colors.onPrimary,
     },
   });
-
-  return (
-    <TouchableOpacity style={styles.banner} onPress={onPress} activeOpacity={0.8}>
-      <Ionicons name="git-compare-outline" size={22} color={colors.onPrimary} />
-      <Text style={styles.text}>{t('sync_conflicts_banner', { count })}</Text>
-      <Ionicons name="chevron-forward" size={20} color={colors.onPrimary} />
-    </TouchableOpacity>
-  );
-};
 
 export default SyncConflictBanner;

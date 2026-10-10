@@ -7,7 +7,9 @@ import type { Route } from '@keres/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { typography } from '../../../theme/tokens';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
 
 export type NavigatorRoutePersistenceMode = 'new' | 'replace';
@@ -78,19 +80,7 @@ export default function NavigatorRoutePersistenceModal({
     }
     onConfirm(mode === 'new' ? { name: name.trim() } : { routeId: routeId! });
   };
-  const styles = StyleSheet.create({
-    title: {
-      color: colors.text,
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginBottom: 8,
-      textAlign: 'center',
-    },
-    description: { color: colors.textSecondary, lineHeight: 20, marginBottom: 16 },
-    field: { marginBottom: 14, paddingHorizontal: 2, paddingVertical: 2 },
-    label: { color: colors.text, fontSize: 16, marginBottom: 5 },
-    error: { color: colors.error, fontSize: 13, marginTop: 5 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal visible={visible} onClose={onClose} inset="roomy" maxHeight="86%">
@@ -136,3 +126,17 @@ export default function NavigatorRoutePersistenceModal({
     </ResponsiveModal>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: {
+      ...typography.heading,
+      color: colors.text,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    description: { color: colors.textSecondary, lineHeight: 20, marginBottom: 16 },
+    field: { marginBottom: 14, paddingHorizontal: 2, paddingVertical: 2 },
+    label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },
+    error: { color: colors.error, fontSize: 13, marginTop: 5 },
+  });

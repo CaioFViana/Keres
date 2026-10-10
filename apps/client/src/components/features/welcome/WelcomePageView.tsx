@@ -9,7 +9,8 @@ import Animated, {
   useAnimatedStyle,
   type SharedValue,
 } from 'react-native-reanimated';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import type { ClientFlavor } from '../../../utils/clientFlavor';
 import WelcomeHero from './WelcomeHero';
 import {
@@ -61,37 +62,7 @@ const WelcomePageView: React.FC<WelcomePageViewProps> = ({
   const { colors } = useTheme();
   const split = layout === 'split';
   const pictureWidth = split ? Math.round(pageWidth * SPLIT_PICTURE_SHARE) : pageWidth;
-  const styles = StyleSheet.create({
-    page: { width: pageWidth, flexDirection: split ? 'row' : 'column', alignItems: 'center' },
-    body: split
-      ? { flex: 1, marginLeft: SPLIT_GAP, paddingRight: 8 }
-      : { width: '100%', paddingTop: 22, paddingHorizontal: 4 },
-    eyebrow: {
-      fontSize: 13,
-      fontWeight: '700',
-      letterSpacing: 1,
-      textTransform: 'uppercase',
-      color: colors.primary,
-      marginBottom: 6,
-    },
-    title: {
-      fontSize: split ? 36 : 28,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: split ? 24 : 18,
-    },
-    row: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: split ? 20 : 16 },
-    badge: {
-      width: split ? 44 : 38,
-      height: split ? 44 : 38,
-      borderRadius: split ? 22 : 19,
-      marginRight: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primaryContainer,
-    },
-    text: { flex: 1, fontSize: split ? 18 : 16, lineHeight: split ? 28 : 24, color: colors.text },
-  });
+  const styles = useThemedStyles(createStyles, [split, pageWidth]);
 
   const bodyStyle = useAnimatedStyle(() => {
     const distance = (scrollX.value - index * pageWidth) / pageWidth;
@@ -137,5 +108,38 @@ const WelcomePageView: React.FC<WelcomePageViewProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors, [split, pageWidth]: [boolean, number]) =>
+  StyleSheet.create({
+    page: { width: pageWidth, flexDirection: split ? 'row' : 'column', alignItems: 'center' },
+    body: split
+      ? { flex: 1, marginLeft: SPLIT_GAP, paddingRight: 8 }
+      : { width: '100%', paddingTop: 22, paddingHorizontal: 4 },
+    eyebrow: {
+      fontSize: 13,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: colors.primary,
+      marginBottom: 6,
+    },
+    title: {
+      fontSize: split ? 36 : 28,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: split ? 24 : 18,
+    },
+    row: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: split ? 20 : 16 },
+    badge: {
+      width: split ? 44 : 38,
+      height: split ? 44 : 38,
+      borderRadius: split ? 22 : 19,
+      marginRight: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+    },
+    text: { flex: 1, fontSize: split ? 18 : 16, lineHeight: split ? 28 : 24, color: colors.text },
+  });
 
 export default WelcomePageView;

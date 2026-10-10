@@ -5,7 +5,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { SKETCH_PALETTE } from '../../../state/sketchToolStore';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { space, typography } from '../../../theme/tokens';
 
 interface SketchColorSheetProps {
@@ -25,29 +26,7 @@ const SketchColorSheet: React.FC<SketchColorSheetProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [custom, setCustom] = useState(false);
-  const styles = StyleSheet.create({
-    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
-    label: {
-      color: colors.textSecondary,
-      fontSize: 12,
-      fontWeight: '700',
-      marginTop: 12,
-      marginBottom: 8,
-    },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    swatch: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    selected: { borderWidth: 3, borderColor: colors.primary },
-    custom: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
-    customText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
-  });
+  const styles = useThemedStyles(createStyles);
   const swatch = (value: string) => (
     <TouchableOpacity
       key={value}
@@ -99,5 +78,30 @@ const SketchColorSheet: React.FC<SketchColorSheetProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
+    label: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      fontWeight: '700',
+      marginTop: 12,
+      marginBottom: 8,
+    },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    swatch: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    selected: { borderWidth: 3, borderColor: colors.primary },
+    custom: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
+    customText: { color: colors.primary, fontSize: 15, fontWeight: '700' },
+  });
 
 export default SketchColorSheet;

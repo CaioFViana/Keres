@@ -2,7 +2,8 @@ import { SingleSelectPill } from '@/src/components/common';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 
 interface WelcomeLanguagePickerProps {
   options: { label: string; value: string }[];
@@ -25,19 +26,7 @@ const WelcomeLanguagePicker: React.FC<WelcomeLanguagePickerProps> = ({
 }) => {
   const { colors } = useTheme();
   const label = options.find((option) => option.value === value)?.label ?? placeholder;
-  const styles = StyleSheet.create({
-    chip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-      gap: 8,
-      paddingVertical: 9,
-      paddingHorizontal: 14,
-      borderRadius: 999,
-      backgroundColor: colors.surface,
-    },
-    label: { fontSize: 15, fontWeight: '600', color: colors.text },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <SingleSelectPill
@@ -63,5 +52,20 @@ const WelcomeLanguagePicker: React.FC<WelcomeLanguagePickerProps> = ({
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 8,
+      paddingVertical: 9,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      backgroundColor: colors.surface,
+    },
+    label: { fontSize: 15, fontWeight: '600', color: colors.text },
+  });
 
 export default WelcomeLanguagePicker;

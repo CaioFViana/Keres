@@ -7,7 +7,8 @@ import EntityRelationList from '@/src/components/common/display/EntityRelationLi
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useCharacterTrajectoryData } from '@/src/hooks/useCharacterTrajectoryData';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface CharacterTrajectorySectionProps {
   characterId: string;
@@ -65,21 +66,7 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
     [locations],
   );
 
-  const styles = StyleSheet.create({
-    order: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
-      marginRight: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primaryContainer,
-    },
-    orderText: { color: colors.primary, fontWeight: '700' },
-    scene: { color: colors.textSecondary },
-    hint: { color: colors.textSecondary, marginTop: 8 },
-    routePicker: { marginTop: 8 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <CollapsibleCard
@@ -123,5 +110,22 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
     </CollapsibleCard>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    order: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      marginRight: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+    },
+    orderText: { color: colors.primary, fontWeight: '700' },
+    scene: { color: colors.textSecondary },
+    hint: { color: colors.textSecondary, marginTop: 8 },
+    routePicker: { marginTop: 8 },
+  });
 
 export default CharacterTrajectorySection;

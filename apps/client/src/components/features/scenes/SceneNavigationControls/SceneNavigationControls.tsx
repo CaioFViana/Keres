@@ -8,7 +8,10 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { SceneSelect } from '../../../../db/schema';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import type { NarrativeElementsStackParamList } from '../../../../navigation/MainSystemStack';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { layout } from '../../../../theme/layout';
+import { typography } from '../../../../theme/tokens';
 
 interface SceneNavigationControlsProps {
   storyType: 'linear' | 'branching' | undefined;
@@ -40,98 +43,7 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneDetail'>>();
   const navigateToDetail = useNavigateToEntityDetail();
 
-  const styles = StyleSheet.create({
-    container: {
-      marginTop: 20,
-      paddingTop: 15,
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-    },
-    navigationTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-    },
-    choiceSectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    addChoice: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6 },
-    addChoiceText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 10,
-    },
-    navButton: {
-      backgroundColor: colors.primary,
-      padding: 10,
-      borderRadius: 5,
-      alignItems: 'center',
-      flex: 1,
-      marginHorizontal: 5,
-      flexDirection: 'row', // To align icon and text
-      justifyContent: 'center', // Center content horizontally
-    },
-    navButtonText: {
-      color: colors.onPrimary,
-      fontWeight: 'bold',
-      marginLeft: 5, // Space between icon and text
-    },
-    choiceCard: {
-      backgroundColor: colors.card,
-      borderRadius: 5,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-      overflow: 'hidden',
-    },
-    choiceMain: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 10,
-    },
-    choiceButtonText: {
-      color: colors.text,
-    },
-    choiceTargetRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 4,
-    },
-    choiceTargetText: {
-      color: colors.textSecondary,
-      fontSize: 13,
-      marginLeft: 4,
-    },
-    choiceDetailButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 8,
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-    },
-    choiceDetailButtonText: {
-      color: colors.primary,
-      fontSize: 13,
-      marginLeft: 4,
-    },
-    disabledButton: {
-      backgroundColor: colors.card,
-    },
-    disabledButtonText: {
-      color: colors.textSecondary,
-    },
-    navIcon: {
-      color: colors.onPrimary,
-    },
-    disabledNavIcon: {
-      color: colors.textSecondary,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const handleSceneNavigation = (sceneId: string) => {
     navigation.navigate('SceneDetail', { sceneId });
@@ -240,7 +152,7 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
         )}
         {choicesForScene.length > 0 && (
           <>
-            <View style={styles.choiceSectionHeader}>
+            <View style={layout.rowBetween}>
               <Text style={styles.navigationTitle}>{t('story_map_outgoing_choices')}</Text>
               {canEdit && onAddChoice && (
                 <TouchableOpacity style={styles.addChoice} onPress={onAddChoice}>
@@ -277,5 +189,93 @@ const SceneNavigationControls: React.FC<SceneNavigationControlsProps> = ({
 
   return null;
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginTop: 20,
+      paddingTop: 15,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    navigationTitle: {
+      ...typography.title,
+      color: colors.text,
+      marginBottom: 10,
+    },
+    addChoice: { flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6 },
+    addChoiceText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    navButton: {
+      backgroundColor: colors.primary,
+      padding: 10,
+      borderRadius: 5,
+      alignItems: 'center',
+      flex: 1,
+      marginHorizontal: 5,
+      flexDirection: 'row', // To align icon and text
+      justifyContent: 'center', // Center content horizontally
+    },
+    navButtonText: {
+      color: colors.onPrimary,
+      fontWeight: 'bold',
+      marginLeft: 5, // Space between icon and text
+    },
+    choiceCard: {
+      backgroundColor: colors.card,
+      borderRadius: 5,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    choiceMain: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+    },
+    choiceButtonText: {
+      color: colors.text,
+    },
+    choiceTargetRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    choiceTargetText: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      marginLeft: 4,
+    },
+    choiceDetailButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 8,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    choiceDetailButtonText: {
+      color: colors.primary,
+      fontSize: 13,
+      marginLeft: 4,
+    },
+    disabledButton: {
+      backgroundColor: colors.card,
+    },
+    disabledButtonText: {
+      color: colors.textSecondary,
+    },
+    navIcon: {
+      color: colors.onPrimary,
+    },
+    disabledNavIcon: {
+      color: colors.textSecondary,
+    },
+  });
 
 export default SceneNavigationControls;

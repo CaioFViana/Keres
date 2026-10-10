@@ -9,7 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
+import type { ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { getCommonChipStyles } from '../../../theme/commonStyles';
 import { space, typography } from '../../../theme/tokens';
 
@@ -31,29 +32,13 @@ interface SketchPageSheetProps {
  */
 const SketchPageSheet: React.FC<SketchPageSheetProps> = ({ page, onApply, onClose }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const [widthText, setWidthText] = useState(String(Math.round(page.width)));
   const [heightText, setHeightText] = useState(String(Math.round(page.height)));
   const width = Math.max(96, Math.min(8000, Math.round(Number(widthText) || 0)));
   const height = Math.max(96, Math.min(8000, Math.round(Number(heightText) || 0)));
   const [background, setBackground] = useState<SketchPageBackground>(page.background);
   const landscape = width >= height;
-  const styles = StyleSheet.create({
-    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
-    label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 12, marginBottom: 6 },
-    row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-    ...getCommonChipStyles(colors),
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      color: colors.text,
-      borderRadius: 8,
-      padding: 10,
-      flex: 1,
-    },
-    note: { color: colors.textSecondary, fontSize: 12, marginTop: 10 },
-    actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 18 },
-  });
+  const styles = useThemedStyles(createStyles);
   const apply = (nextWidth: number, nextHeight: number, preset: string | null) => {
     onApply({ width: nextWidth, height: nextHeight, preset, background });
     onClose();
@@ -157,5 +142,23 @@ const SketchPageSheet: React.FC<SketchPageSheetProps> = ({ page, onApply, onClos
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
+    label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 12, marginBottom: 6 },
+    row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+    ...getCommonChipStyles(colors),
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      color: colors.text,
+      borderRadius: 8,
+      padding: 10,
+      flex: 1,
+    },
+    note: { ...typography.caption, color: colors.textSecondary, marginTop: 10 },
+    actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 18 },
+  });
 
 export default SketchPageSheet;

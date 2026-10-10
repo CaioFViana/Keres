@@ -13,7 +13,9 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 import LeadSheetView from './LeadSheetView';
 
 interface SongLyricsEditorProps {
@@ -83,33 +85,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
   };
 
   const overLimit = value.length > MAX_SONG_LYRICS_LENGTH * 0.9;
-  const styles = StyleSheet.create({
-    bar: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
-    button: {
-      alignItems: 'center',
-      borderColor: colors.border,
-      borderRadius: 14,
-      borderWidth: 1,
-      flexDirection: 'row',
-      gap: 4,
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-    },
-    active: { backgroundColor: colors.primary, borderColor: colors.primary },
-    input: {
-      fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
-      fontSize: 14,
-      minHeight: 220,
-    },
-    warning: {
-      borderColor: colors.error,
-      borderRadius: 8,
-      borderWidth: 1,
-      marginBottom: 8,
-      padding: 8,
-    },
-    count: { color: overLimit ? colors.error : colors.textSecondary, fontSize: 12, marginTop: 4 },
-  });
+  const styles = useThemedStyles(createStyles, [overLimit]);
 
   return (
     <View>
@@ -249,5 +225,38 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors, [overLimit]: [boolean]) =>
+  StyleSheet.create({
+    bar: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+    button: {
+      alignItems: 'center',
+      borderColor: colors.border,
+      borderRadius: 14,
+      borderWidth: 1,
+      flexDirection: 'row',
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    active: { backgroundColor: colors.primary, borderColor: colors.primary },
+    input: {
+      fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+      fontSize: 14,
+      minHeight: 220,
+    },
+    warning: {
+      borderColor: colors.error,
+      borderRadius: 8,
+      borderWidth: 1,
+      marginBottom: 8,
+      padding: 8,
+    },
+    count: {
+      ...typography.caption,
+      color: overLimit ? colors.error : colors.textSecondary,
+      marginTop: 4,
+    },
+  });
 
 export default SongLyricsEditor;

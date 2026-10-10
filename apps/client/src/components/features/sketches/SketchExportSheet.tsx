@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { typography } from '../../../theme/tokens';
 
 interface SketchExportSheetProps {
   hasCover: boolean;
@@ -30,18 +32,7 @@ const SketchExportSheet: React.FC<SketchExportSheetProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      paddingVertical: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    rowText: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
-    rowSub: { color: colors.textSecondary, fontSize: 12 },
-  });
+  const styles = useThemedStyles(createStyles);
   const options = [
     {
       icon: 'document-outline' as const,
@@ -84,5 +75,19 @@ const SketchExportSheet: React.FC<SketchExportSheetProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    rowText: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
+    rowSub: { ...typography.caption, color: colors.textSecondary },
+  });
 
 export default SketchExportSheet;

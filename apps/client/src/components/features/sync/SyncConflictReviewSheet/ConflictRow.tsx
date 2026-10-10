@@ -3,7 +3,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 
 interface ConflictRowProps {
   summary: ConflictSummary;
@@ -31,24 +33,7 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderRadius: 8,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      paddingVertical: 9,
-      paddingHorizontal: 11,
-      marginBottom: 7,
-    },
-    icon: { marginRight: 9 },
-    textWrapper: { flex: 1, marginRight: 8, paddingVertical: 2 },
-    title: { fontSize: 13, fontWeight: '600', color: colors.text },
-    detail: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    actions: { flexDirection: 'row' },
-    actionButton: { padding: 8 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const icon = summary.kind === 'relation' ? 'git-network-outline' : 'document-text-outline';
 
@@ -134,5 +119,25 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      paddingVertical: 9,
+      paddingHorizontal: 11,
+      marginBottom: 7,
+    },
+    icon: { marginRight: 9 },
+    textWrapper: { flex: 1, marginRight: 8, paddingVertical: 2 },
+    title: { fontSize: 13, fontWeight: '600', color: colors.text },
+    detail: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+    actions: { flexDirection: 'row' },
+    actionButton: { padding: 8 },
+  });
 
 export default ConflictRow;

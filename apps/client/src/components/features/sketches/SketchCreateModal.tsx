@@ -11,7 +11,8 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonChipStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { space, typography } from '../../../theme/tokens';
 
 interface Props {
@@ -53,18 +54,7 @@ const SketchCreateModal: React.FC<Props> = ({
       setDescription(initialDescription);
     }
   }
-  const styles = StyleSheet.create({
-    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
-    label: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginBottom: 5 },
-    presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-    ...getCommonChipStyles(colors),
-    actions: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      gap: 12,
-      marginTop: 18,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
   return (
     <ResponsiveModal
       visible={visible}
@@ -126,5 +116,19 @@ const SketchCreateModal: React.FC<Props> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
+    label: { ...typography.sectionTitle, color: colors.text, marginBottom: 5 },
+    presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+    ...getCommonChipStyles(colors),
+    actions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+      marginTop: 18,
+    },
+  });
 
 export default SketchCreateModal;

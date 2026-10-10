@@ -17,7 +17,8 @@ import Animated, {
   ZoomIn,
   type SharedValue,
 } from 'react-native-reanimated';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import type { WelcomeHeroIcon } from './welcomeContent';
 
 /**
@@ -120,40 +121,7 @@ const WelcomeHero: React.FC<WelcomeHeroProps> = ({
     getReadableInk(colors.secondary, colors.background, 3),
   ] as const;
 
-  const styles = StyleSheet.create({
-    panel: {
-      width: '100%',
-      height: dimensions.panel,
-      borderRadius: 28,
-      overflow: 'hidden',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    ring: {
-      position: 'absolute',
-      width: dimensions.badge,
-      height: dimensions.badge,
-      borderRadius: dimensions.badge / 2,
-      borderWidth: 2,
-      borderColor: colors.background,
-    },
-    badge: {
-      width: dimensions.badge,
-      height: dimensions.badge,
-      borderRadius: dimensions.badge / 2,
-      backgroundColor: colors.background,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      shadowColor: colors.shadow,
-      shadowOpacity: 0.25,
-      shadowRadius: 18,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 8,
-    },
-    fill: StyleSheet.absoluteFill,
-    emblem: { width: dimensions.badge, height: dimensions.badge },
-  });
+  const styles = useThemedStyles(createStyles, [size]);
 
   return (
     <View style={{ width }} testID={`welcome-hero-${index}`}>
@@ -189,6 +157,44 @@ const WelcomeHero: React.FC<WelcomeHeroProps> = ({
       </Animated.View>
     </View>
   );
+};
+
+const createStyles = (colors: ThemeColors, [size]: [WelcomeHeroSize]) => {
+  const dimensions = DIMENSIONS[size];
+  return StyleSheet.create({
+    panel: {
+      width: '100%',
+      height: dimensions.panel,
+      borderRadius: 28,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ring: {
+      position: 'absolute',
+      width: dimensions.badge,
+      height: dimensions.badge,
+      borderRadius: dimensions.badge / 2,
+      borderWidth: 2,
+      borderColor: colors.background,
+    },
+    badge: {
+      width: dimensions.badge,
+      height: dimensions.badge,
+      borderRadius: dimensions.badge / 2,
+      backgroundColor: colors.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      shadowColor: colors.shadow,
+      shadowOpacity: 0.25,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 8,
+    },
+    fill: StyleSheet.absoluteFill,
+    emblem: { width: dimensions.badge, height: dimensions.badge },
+  });
 };
 
 export default WelcomeHero;

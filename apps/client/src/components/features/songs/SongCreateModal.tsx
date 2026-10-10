@@ -5,7 +5,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { space, typography } from '@/src/theme/tokens';
 
 interface SongCreateModalProps {
@@ -17,7 +18,6 @@ interface SongCreateModalProps {
 /** A new song starts from its title alone: everything else is written in the editor it opens. */
 const SongCreateModal: React.FC<SongCreateModalProps> = ({ visible, onCancel, onConfirm }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const [title, setTitle] = useState('');
   // The field starts empty each time the modal opens; typing is left alone while it stays open.
   const [prevVisible, setPrevVisible] = useState<boolean | null>(null);
@@ -25,11 +25,7 @@ const SongCreateModal: React.FC<SongCreateModalProps> = ({ visible, onCancel, on
     setPrevVisible(visible);
     if (visible) setTitle('');
   }
-  const styles = StyleSheet.create({
-    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
-    label: { color: colors.text, fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
-    actions: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end', marginTop: 18 },
-  });
+  const styles = useThemedStyles(createStyles);
   return (
     <ResponsiveModal
       visible={visible}
@@ -57,5 +53,12 @@ const SongCreateModal: React.FC<SongCreateModalProps> = ({ visible, onCancel, on
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: { ...typography.title, color: colors.text, marginBottom: space.lg },
+    label: { ...typography.sectionTitle, color: colors.text, marginBottom: 5 },
+    actions: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end', marginTop: 18 },
+  });
 
 export default SongCreateModal;

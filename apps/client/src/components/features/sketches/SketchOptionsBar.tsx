@@ -13,7 +13,9 @@ import {
 import { CanvasActionBarButton } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 import { useSketchCompact } from '../../../hooks/useSketchCompact';
 import { isStrokeTool, useSketchToolStore, type SketchTool } from '../../../state/sketchToolStore';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { layout } from '../../../theme/layout';
 import SketchSlider from './SketchSlider';
 
 const BRUSH_ICONS: Record<SketchBrushId, keyof typeof Ionicons.glyphMap> = {
@@ -89,71 +91,7 @@ const SketchOptionsBar: React.FC<SketchOptionsBarProps> = ({
   // the sliders share the row instead of keeping a fixed width.
   const compact = useSketchCompact();
   const { width: windowWidth } = useWindowDimensions();
-  const styles = StyleSheet.create({
-    bar: {
-      height: SKETCH_OPTIONS_BAR_HEIGHT,
-      justifyContent: 'center',
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: compact ? 10 : 14,
-      paddingHorizontal: compact ? 10 : 12,
-      paddingVertical: 6,
-      flexGrow: 1,
-    },
-    chips: { flexDirection: 'row', gap: 6 },
-    chip: {
-      width: 40,
-      height: 36,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    textChip: {
-      paddingHorizontal: 10,
-      height: 36,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    textChipLabel: { color: colors.text, fontSize: 13, fontWeight: '600' },
-    textChipLabelActive: { color: colors.onPrimary },
-    swatch: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      borderWidth: 2,
-      borderColor: colors.border,
-    },
-    iconChip: {
-      width: 36,
-      height: 36,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    hint: {
-      color: colors.textSecondary,
-      fontSize: compact ? 12 : 13,
-      paddingVertical: 8,
-      // Room for the control beside it; two lines instead of a scroll on a phone.
-      maxWidth: compact ? windowWidth - 110 : undefined,
-    },
-    scroll: { flexGrow: 0 },
-    slider: compact ? { flex: 1, minWidth: 96 } : { width: 150 },
-    selectionRow: { flexDirection: 'row', alignItems: 'center' },
-  });
+  const styles = useThemedStyles(createStyles, [compact, windowWidth]);
 
   const strokeLike = isStrokeTool(tool);
   const brushSize = store.sizeByBrush[store.brush];
@@ -344,7 +282,7 @@ const SketchOptionsBar: React.FC<SketchOptionsBarProps> = ({
       </TouchableOpacity>
     );
     content = selection ? (
-      <View style={styles.selectionRow}>
+      <View style={layout.row}>
         <CanvasActionBarButton
           icon="close-outline"
           label={t('overlay_deselect')}
@@ -425,5 +363,71 @@ const SketchOptionsBar: React.FC<SketchOptionsBarProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors, [compact, windowWidth]: [boolean, number]) =>
+  StyleSheet.create({
+    bar: {
+      height: SKETCH_OPTIONS_BAR_HEIGHT,
+      justifyContent: 'center',
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: compact ? 10 : 14,
+      paddingHorizontal: compact ? 10 : 12,
+      paddingVertical: 6,
+      flexGrow: 1,
+    },
+    chips: { flexDirection: 'row', gap: 6 },
+    chip: {
+      width: 40,
+      height: 36,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    textChip: {
+      paddingHorizontal: 10,
+      height: 36,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    textChipLabel: { color: colors.text, fontSize: 13, fontWeight: '600' },
+    textChipLabelActive: { color: colors.onPrimary },
+    swatch: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 2,
+      borderColor: colors.border,
+    },
+    iconChip: {
+      width: 36,
+      height: 36,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    hint: {
+      color: colors.textSecondary,
+      fontSize: compact ? 12 : 13,
+      paddingVertical: 8,
+      // Room for the control beside it; two lines instead of a scroll on a phone.
+      maxWidth: compact ? windowWidth - 110 : undefined,
+    },
+    scroll: { flexGrow: 0 },
+    slider: compact ? { flex: 1, minWidth: 96 } : { width: 150 },
+  });
 
 export default SketchOptionsBar;

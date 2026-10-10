@@ -5,7 +5,8 @@ import { useConflictReviewData } from '../../../../hooks/useConflictReviewData';
 import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
 import { useSyncConflictStore } from '../../../../state/syncConflictStore';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { AppAlert } from '@/src/utils/AppAlert';
@@ -26,7 +27,6 @@ interface SyncConflictReviewSheetProps {
  * comparison when there really are multiple genuinely disputed fields.
  */
 const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visible, onClose }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const conflicts = useSyncConflictStore((state) => state.conflicts);
   const { isResolving, keepLocal, keepServer, keepServerAndCloneBoard, keepServerAndCloneSketch } =
@@ -127,31 +127,7 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
     [keepServerAndCloneSketch, t, userId],
   );
 
-  const styles = StyleSheet.create({
-    sheet: { maxHeight: '78%' },
-    handle: {
-      alignSelf: 'center',
-      width: 42,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: colors.border,
-      marginBottom: 14,
-    },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 18,
-      marginBottom: 6,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-    },
-    emptyText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 12,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <>
@@ -240,5 +216,32 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
     </>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { maxHeight: '78%' },
+    handle: {
+      alignSelf: 'center',
+      width: 42,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginBottom: 14,
+    },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 18,
+      marginBottom: 6,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 12,
+    },
+  });
 
 export default SyncConflictReviewSheet;

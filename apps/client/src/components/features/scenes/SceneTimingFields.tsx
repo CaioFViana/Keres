@@ -5,7 +5,8 @@ import { isTimingInput, parseTimingInput } from '@/src/utils/sceneTimingInput';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface CalendarOption {
   id: string;
@@ -46,7 +47,6 @@ export default function SceneTimingFields({
   inputStyle,
 }: SceneTimingFieldsProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const unitOptions = useMemo(
     () => [
       { label: t('seconds'), value: 'seconds' },
@@ -61,24 +61,7 @@ export default function SceneTimingFields({
     ],
     [t],
   );
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 10,
-      marginBottom: 10,
-    },
-    amountColumn: { width: '30%' },
-    typeColumn: { flex: 1, minWidth: 0 },
-    typeSelect: { marginBottom: 0 },
-    timingHint: {
-      color: colors.textSecondary,
-      fontSize: 12,
-      lineHeight: 17,
-      marginTop: -4,
-      marginBottom: 10,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <>
@@ -165,3 +148,23 @@ export default function SceneTimingFields({
     </>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+      marginBottom: 10,
+    },
+    amountColumn: { width: '30%' },
+    typeColumn: { flex: 1, minWidth: 0 },
+    typeSelect: { marginBottom: 0 },
+    timingHint: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+      marginTop: -4,
+      marginBottom: 10,
+    },
+  });

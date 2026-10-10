@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { edgeLabelRect } from '../../graphs/edgeLabelPlacement';
 import {
   buildCharacterRelationGraphLayout,
   GRAPH_PADDING,
@@ -238,16 +239,20 @@ describe('buildCharacterRelationGraphLayout', () => {
     const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
-    it('puts the most connected character in the middle and the others at one distance around it', () => {
+    it('puts the most connected character in the middle and the others on a ring, wider than tall, around it', () => {
       const layout = star(7);
       const hub = centre(layout.nodes.find((n) => n.id === 'hub')!);
+      // On an ellipse 1.4 times wider than tall, undoing the stretch gives one distance for all.
       const distances = layout.nodes
         .filter((n) => n.id !== 'hub')
-        .map((n) => distance(centre(n), hub));
+        .map((n) => {
+          const c = centre(n);
+          return Math.hypot((c.x - hub.x) / 1.4, c.y - hub.y);
+        });
 
       expect(distances).toHaveLength(7);
       for (const d of distances) expect(d).toBeCloseTo(distances[0], 6);
-      expect(distances[0]).toBeGreaterThan(NODE_WIDTH);
+      expect(distances[0] * 1.4).toBeGreaterThan(NODE_WIDTH);
     });
 
     it('does not overlap, however many spokes there are', () => {
@@ -275,6 +280,106 @@ describe('buildCharacterRelationGraphLayout', () => {
         .sort((a, b) => centre(a).y - centre(b).y)[0];
 
       expect(top.id).toBe('s0');
+    });
+  });
+
+  describe('the labels of the relations', () => {
+    type Box = { x: number; y: number; width: number; height: number };
+    const plateOf = (edge: { label: string; labelPosition: { x: number; y: number } }): Box => {
+      const rect = edgeLabelRect(edge.labelPosition, edge.label);
+      return rect;
+    };
+    const touches = (a: Box, b: Box) =>
+      a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    const long = 'Followed him because';
+
+    /** The labels a reader cannot read: a plate under a node, or two plates on one another. */
+    function hiddenLabels(layout: ReturnType<typeof buildCharacterRelationGraphLayout>) {
+      const hidden: string[] = [];
+      for (const edge of layout.edges) {
+        const plate = plateOf(edge);
+        if (layout.nodes.some((node) => touches(plate, node)))
+          hidden.push(`${edge.id} under a node`);
+      }
+      for (let i = 0; i < layout.edges.length; i++) {
+        for (let j = i + 1; j < layout.edges.length; j++) {
+          if (touches(plateOf(layout.edges[i]), plateOf(layout.edges[j]))) {
+            hidden.push(`${layout.edges[i].id}/${layout.edges[j].id} on each other`);
+          }
+        }
+      }
+      return hidden;
+    }
+
+    it('leaves room for the label of every spoke around a hub, however long it is', () => {
+      const layout = buildCharacterRelationGraphLayout(
+        [character('hub'), ...Array.from({ length: 5 }, (_, i) => character(`s${i}`))],
+        Array.from({ length: 5 }, (_, i) => relation(`r${i}`, 'hub', `s${i}`, long)),
+      );
+
+      expect(hiddenLabels(layout)).toEqual([]);
+    });
+
+    it('leaves room for the label of a group of two and of three', () => {
+      const two = buildCharacterRelationGraphLayout(
+        [character('a'), character('b')],
+        [relation('r1', 'a', 'b', long)],
+      );
+      const three = buildCharacterRelationGraphLayout(
+        [character('a'), character('b'), character('c')],
+        [
+          relation('r1', 'a', 'b', long),
+          relation('r2', 'b', 'c', long),
+          relation('r3', 'a', 'c', long),
+        ],
+      );
+
+      expect(hiddenLabels(two)).toEqual([]);
+      expect(hiddenLabels(three)).toEqual([]);
+    });
+
+    it('keeps the labels of lines that cross apart', () => {
+      // A hub with a ring where the ring nodes are also related: some lines cross near the middle.
+      const ids = ['a', 'b', 'c', 'd', 'e'];
+      const layout = buildCharacterRelationGraphLayout(
+        [character('hub'), ...ids.map((id) => character(id))],
+        [
+          ...ids.map((id) => relation(`h${id}`, 'hub', id, 'Defied her')),
+          relation('ac', 'a', 'c', 'Accuser'),
+          relation('bd', 'b', 'd', 'Uninvited guest'),
+          relation('ce', 'c', 'e', 'Introduced by her'),
+        ],
+      );
+
+      expect(hiddenLabels(layout)).toEqual([]);
+    });
+
+    it('puts characters related to one another side by side on the ring', () => {
+      const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+      const layout = buildCharacterRelationGraphLayout(
+        [character('hub'), ...ids.map((id) => character(id))],
+        [
+          ...ids.map((id) => relation(`h${id}`, 'hub', id)),
+          relation('ad', 'a', 'd'),
+          relation('be', 'b', 'e'),
+        ],
+      );
+      const hub = layout.nodes.find((n) => n.id === 'hub')!;
+      const angleOf = (id: string) => {
+        const n = layout.nodes.find((node) => node.id === id)!;
+        return Math.atan2(
+          n.y + n.height / 2 - (hub.y + hub.height / 2),
+          (n.x + n.width / 2 - (hub.x + hub.width / 2)) / 1.4,
+        );
+      };
+      const ringGap = (x: string, y: string) => {
+        const diff = Math.abs(angleOf(x) - angleOf(y));
+        return Math.min(diff, Math.PI * 2 - diff);
+      };
+
+      // Adjacent on a ring of six is 60 degrees; a line to the far side would be 180.
+      expect(ringGap('a', 'd')).toBeLessThan((Math.PI * 2) / 6 + 0.01);
+      expect(ringGap('b', 'e')).toBeLessThan((Math.PI * 2) / 6 + 0.01);
     });
   });
 });

@@ -1,6 +1,7 @@
 import type { GraphPoint } from './storyGraphLayout';
 import { wrapLabel } from './storyGraphLayout';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
+import { labelFitsBetween, placeEdgeLabels, type LabelledSegment } from './edgeLabelPlacement';
 import {
   findConnectedComponents,
   maxOf,
@@ -59,6 +60,11 @@ const MIN_CLUSTER_RADIUS = NODE_HEIGHT * 1.6;
 const HUB_IN_MIDDLE_FROM = 4;
 /** Far enough from a hub in the middle that its box and a ring node's box do not touch. */
 const MIN_HUB_RING_RADIUS = NODE_WIDTH + NODE_GAP;
+/** How much wider than tall the ring around a hub is. */
+const RING_STRETCH = 1.4;
+/** Each time a label does not fit between its nodes the ring grows by this much, up to the limit. */
+const RADIUS_GROWTH = 1.12;
+const MAX_RADIUS_GROWTHS = 8;
 const LABEL_MAX_CHARS = 14;
 const LABEL_MAX_LINES = 2;
 
@@ -85,6 +91,9 @@ export interface RelationGraphEdge {
   path: string;
   labelPosition: GraphPoint;
 }
+
+/** An edge with the segment its label slides along, until the labels are placed. */
+type BuiltEdge = RelationGraphEdge & { segment: { start: GraphPoint; end: GraphPoint } };
 
 export interface CharacterRelationGraphLayout {
   nodes: RelationGraphNode[];
@@ -172,17 +181,25 @@ export function buildCharacterRelationGraphLayout(
   const { width, height } = normalizeToPadding(nodes, GRAPH_PADDING);
 
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
-  const edges: RelationGraphEdge[] = [];
+  const edges: BuiltEdge[] = [];
+  const segments: LabelledSegment[] = [];
   for (const workEdge of workEdges) {
     const source = nodesById.get(workEdge.a.character.id);
     const target = nodesById.get(workEdge.b.character.id);
     if (!source || !target) continue;
-    edges.push(buildEdge(workEdge, source, target));
+    const edge = buildEdge(workEdge, source, target);
+    edges.push(edge);
+    segments.push({ id: edge.id, label: edge.label, ...edge.segment });
   }
+  const labelPositions = placeEdgeLabels(segments, nodes);
+  const placedEdges = edges.map(({ segment: _segment, ...edge }) => ({
+    ...edge,
+    labelPosition: labelPositions.get(edge.id) ?? edge.labelPosition,
+  }));
 
   return {
     nodes,
-    edges,
+    edges: placedEdges,
     width,
     height,
     clusterCount: clusterComponents.length,
@@ -229,6 +246,63 @@ function orderByBreadthFromHub(members: WorkNode[]): WorkNode[] {
   return order;
 }
 
+/**
+ * Orders the characters around a hub so that those related to one another stand side by side on the
+ * ring: their line then runs along the ring instead of across it, through the hub. Starts from the
+ * one with most relations inside the ring and keeps walking to a related one not yet placed; when
+ * none is left it goes on with the next in the order it was given.
+ */
+function orderRingByRelations(ring: WorkNode[]): WorkNode[] {
+  const inRing = new Set(ring);
+  const related = (node: WorkNode) =>
+    node.neighbors.map((edge) => (edge.a === node ? edge.b : edge.a)).filter((n) => inRing.has(n));
+  const ringDegree = new Map(ring.map((node) => [node, related(node).length]));
+
+  const remaining = new Set(ring);
+  const ordered: WorkNode[] = [];
+  let current: WorkNode | undefined = [...ring].sort(
+    (a, b) => ringDegree.get(b)! - ringDegree.get(a)!,
+  )[0];
+  let fallback = 0;
+
+  while (current) {
+    remaining.delete(current);
+    ordered.push(current);
+    const next: WorkNode | undefined = related(current)
+      .filter((node) => remaining.has(node))
+      .sort((a, b) => ringDegree.get(b)! - ringDegree.get(a)!)[0];
+    if (next) {
+      current = next;
+      continue;
+    }
+    while (fallback < ring.length && !remaining.has(ring[fallback])) fallback++;
+    current = ring[fallback];
+  }
+
+  return ordered;
+}
+
+/** Whether every relation among the members has room for its label between the two boxes it joins. */
+function labelsClear(nodes: RelationGraphNode[], members: WorkNode[]): boolean {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const seen = new Set<string>();
+  for (const member of members) {
+    for (const edge of member.neighbors) {
+      if (seen.has(edge.relation.id)) continue;
+      seen.add(edge.relation.id);
+      const source = byId.get(edge.a.character.id);
+      const target = byId.get(edge.b.character.id);
+      if (!source || !target) continue;
+      const { start, end } = straightEdgeBetween(source, target);
+      const label = edge.relation.relationType ?? '';
+      if (!labelFitsBetween({ id: edge.relation.id, label, start, end }, source, target)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 interface ClusterBox {
   nodes: RelationGraphNode[];
   width: number;
@@ -245,21 +319,36 @@ function layoutComponentCircular(members: WorkNode[]): ClusterBox {
   const ordered = orderByBreadthFromHub(members);
   const count = ordered.length;
   const hubInMiddle = count >= HUB_IN_MIDDLE_FROM;
-  const ring = hubInMiddle ? ordered.slice(1) : ordered;
+  const ring = hubInMiddle ? orderRingByRelations(ordered.slice(1)) : ordered;
 
   const circumferenceNeeded = ring.length * (NODE_WIDTH + NODE_GAP);
-  const radius = Math.max(
+  const baseRadius = Math.max(
     hubInMiddle ? MIN_HUB_RING_RADIUS : MIN_CLUSTER_RADIUS,
     circumferenceNeeded / (2 * Math.PI),
   );
+  // The nodes are wider than tall, so around a hub the ring is wider than tall too: a spoke that
+  // runs sideways has the same room for its label as one that runs up.
+  const stretch = hubInMiddle ? RING_STRETCH : 1;
 
-  const nodes = ring.map((work, index) => {
-    const angle = (index / ring.length) * Math.PI * 2 - Math.PI / 2; // first node at the top of the circle
-    const centerX = Math.cos(angle) * radius;
-    const centerY = Math.sin(angle) * radius;
-    return buildNode(work, centerX - NODE_WIDTH / 2, centerY - NODE_HEIGHT / 2);
-  });
-  if (hubInMiddle) nodes.unshift(buildNode(ordered[0], -NODE_WIDTH / 2, -NODE_HEIGHT / 2));
+  const place = (radius: number): RelationGraphNode[] => {
+    const placed = ring.map((work, index) => {
+      const angle = (index / ring.length) * Math.PI * 2 - Math.PI / 2; // first node at the top of the circle
+      const centerX = Math.cos(angle) * radius * stretch;
+      const centerY = Math.sin(angle) * radius;
+      return buildNode(work, centerX - NODE_WIDTH / 2, centerY - NODE_HEIGHT / 2);
+    });
+    if (hubInMiddle) placed.unshift(buildNode(ordered[0], -NODE_WIDTH / 2, -NODE_HEIGHT / 2));
+    return placed;
+  };
+
+  // A relation's label sits on its line, under the two nodes it joins: widen the ring until no
+  // label is half hidden behind one of them (a few steps at most, so a crowded group stays bounded).
+  let radius = baseRadius;
+  let nodes = place(radius);
+  for (let step = 0; step < MAX_RADIUS_GROWTHS && !labelsClear(nodes, members); step++) {
+    radius *= RADIUS_GROWTH;
+    nodes = place(radius);
+  }
 
   const minX = minOf(nodes.map((node) => node.x));
   const minY = minOf(nodes.map((node) => node.y));
@@ -388,7 +477,7 @@ function buildEdge(
   work: WorkEdge,
   source: RelationGraphNode,
   target: RelationGraphNode,
-): RelationGraphEdge {
+): BuiltEdge {
   const { start, end, path } = straightEdgeBetween(source, target);
 
   return {
@@ -399,5 +488,6 @@ function buildEdge(
     label: work.relation.relationType ?? '',
     path,
     labelPosition: { x: round((start.x + end.x) / 2), y: round((start.y + end.y) / 2) },
+    segment: { start, end },
   };
 }

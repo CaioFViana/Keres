@@ -9,6 +9,7 @@ import { useEdgeFont } from '../SkiaEdgeCanvas/useEdgeFont';
 import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
 import { useGraphCanvasViewport } from '../../../../hooks/useGraphCanvasViewport';
 import { useTheme } from '../../../../theme';
+import { EDGE_LABEL_MAX_CHARS } from '@keres/shared/graphs/edgeLabelPlacement';
 import { foldRelationType } from '@keres/shared/graphs/relationTypeColors';
 import type {
   CharacterRelationGraphLayout,
@@ -109,7 +110,12 @@ const CharacterRelationGraphCanvas = forwardRef<
             })}
 
             {showEdgeLabels && edgeFont && (
-              <SkiaEdgeLabels edges={labelledEdges} font={edgeFont} maxChars={22} colors={colors} />
+              <SkiaEdgeLabels
+                edges={labelledEdges}
+                font={edgeFont}
+                maxChars={EDGE_LABEL_MAX_CHARS}
+                colors={colors}
+              />
             )}
           </SkiaEdgeCanvas>
         </SkiaOverlayErrorBoundary>

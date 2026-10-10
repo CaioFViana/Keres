@@ -40,6 +40,7 @@ import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { isServerless } from '../../utils/clientFlavor';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 import { normalizeLocalUsername } from '../../utils/localUsername';
 
@@ -406,14 +407,20 @@ const SettingsScreen = () => {
                   <ThemedSwitch value={showTutorials} onValueChange={handleShowTutorialsToggle} />
                 }
               />
-              <SettingsRow
-                icon="card-outline"
-                label={t('warn_payment_due')}
-                hint={warnPaymentDue ? t('warn_payment_due_on') : t('warn_payment_due_off')}
-                control={
-                  <ThemedSwitch value={warnPaymentDue} onValueChange={handleWarnPaymentDueToggle} />
-                }
-              />
+              {/* A payment is due to a server: a build with no servers has none to warn about. */}
+              {isServerless() ? null : (
+                <SettingsRow
+                  icon="card-outline"
+                  label={t('warn_payment_due')}
+                  hint={warnPaymentDue ? t('warn_payment_due_on') : t('warn_payment_due_off')}
+                  control={
+                    <ThemedSwitch
+                      value={warnPaymentDue}
+                      onValueChange={handleWarnPaymentDueToggle}
+                    />
+                  }
+                />
+              )}
             </SettingsGroup>
 
             <SettingsGroup title={t('settings_section_exports')}>

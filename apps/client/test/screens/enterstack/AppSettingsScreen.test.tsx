@@ -122,6 +122,12 @@ jest.mock('../../../src/db', () => ({
   resetDatabase: (...args: unknown[]) => mockResetDatabase(...args),
 }));
 
+let mockServerless = false;
+jest.mock('../../../src/utils/clientFlavor', () => ({
+  ...jest.requireActual('../../../src/utils/clientFlavor'),
+  isServerless: () => mockServerless,
+}));
+
 jest.mock('../../../src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -220,6 +226,7 @@ type AlertButton = { text: string; onPress?: () => void | Promise<void> };
 describe('AppSettingsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockServerless = false;
     jest.spyOn(console, 'log').mockImplementation((() => undefined) as never);
     mockSelectAll.mockResolvedValue([{ id: 'srv-1' }]);
     mockResetDatabase.mockResolvedValue(undefined);
@@ -349,6 +356,14 @@ describe('AppSettingsScreen', () => {
     await view.findByText('warn_payment_due');
 
     expect(view.getByText('warn_payment_due_on')).toBeTruthy();
+  });
+
+  it('leaves the payment reminder out of a build that has no servers to owe anything to', async () => {
+    mockServerless = true;
+    const view = await render(<SettingsScreen />);
+    await view.findByText('show_tutorials');
+
+    expect(view.queryByText('warn_payment_due')).toBeNull();
   });
 
   it('resets the seen tutorials and confirms', async () => {

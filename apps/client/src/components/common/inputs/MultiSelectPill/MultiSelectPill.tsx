@@ -180,12 +180,9 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     setModalVisible(true);
   }, [effectiveGroups]);
 
-  const closeModal = useCallback(() => {
-    setModalVisible(false);
-    // It resets to the type list on the next opening, instead of reopening inside the last visited group.
-    setActiveGroupKey(null);
-    setSearch('');
-  }, []);
+  // The group and the search stay as they were until the next opening resets them (`openModal`): clearing
+  // them here would empty the list while the modal is still fading out, and flash "no tags" over it.
+  const closeModal = useCallback(() => setModalVisible(false), []);
 
   const toggleOption = useCallback(
     (value: string) => {

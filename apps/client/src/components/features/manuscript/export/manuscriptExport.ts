@@ -78,16 +78,6 @@ export type ManuscriptExportLabels = {
   tocHeading: string;
 };
 
-/** TEMP-DIAG: FNV-1a for the corrupted-PDF investigation (removed after). */
-function fnv1a(bytes: Uint8Array): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < bytes.length; i += 1) {
-    hash ^= bytes[i] ?? 0;
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16);
-}
-
 /**
  * Presents the manuscript as the style asks, draws it in the requested format and hands it to
  * the share sheet (or a browser download on web). The same presentation and renderers the
@@ -131,13 +121,6 @@ export async function exportManuscript({
   const base = format === 'pdf' ? await pdfFontMatrices() : null;
   const fonts =
     format === 'pdf' && base ? { ...base, ...(cjkMatrix ? { cjk: cjkMatrix } : {}) } : undefined;
-  // TEMP-DIAG (corrupted-PDF investigation): fingerprint the exact bytes the
-  // writer will subset, so a wrong-bit asset shows up in the console.
-  if (format === 'pdf') {
-    console.info(
-      `[manuscript] pdf fonts: base=${base ? `${base.regular.length}/${fnv1a(base.regular)}+${base.italic.length}/${fnv1a(base.italic)}` : 'null'} cjk=${cjkMatrix ? `${cjkMatrix.length}/${fnv1a(cjkMatrix)}` : 'null'}`,
-    );
-  }
   const rendered = await renderManuscript(
     presented,
     format,

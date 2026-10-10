@@ -297,32 +297,6 @@ export async function buildManuscriptPdfAsync(
   const faces = await pack.finish();
   const laid = layoutPass(manuscript, labels, anchors, options, geometry, measure, pack, true);
   const { streams, annots, imageOrder, pageImages } = laid;
-  // TEMP-DIAG (corrupted-PDF investigation): structural dump of what the
-  // writer is about to embed. Removed after diagnosis; never breaks export.
-  try {
-    const fingerprint = (bytes: Uint8Array): string => {
-      let hash = 0x811c9dc5;
-      for (let i = 0; i < bytes.length; i += 1) {
-        hash ^= bytes[i] ?? 0;
-        hash = Math.imul(hash, 0x01000193);
-      }
-      return (hash >>> 0).toString(16);
-    };
-    const stats = faces
-      .map(
-        (face) =>
-          `${face.font}/${face.cjk ? 'cjk' : 'base'}:${face.subsetBytes.length}B` +
-          `/${fingerprint(face.subsetBytes)}` +
-          `/${face.widthRuns.length}runs/${face.widthRuns[0]?.first ?? '-'}` +
-          `:[${face.widthRuns[0]?.advances.slice(0, 4).join(',') ?? ''}]`,
-      )
-      .join(' ');
-    console.info(`[manuscript] pdf faces: ${stats}`);
-    const head = Array.from(streams[0].slice(0, 900), (byte) => String.fromCharCode(byte)).join('');
-    console.info(`[manuscript] pdf page0: ${head}`);
-  } catch {
-    // Diagnostics never break export.
-  }
   const pageCount = streams.length;
   const compressed: Uint8Array[] = new Array(pageCount);
   for (let index = 0; index < pageCount; index += 1) {

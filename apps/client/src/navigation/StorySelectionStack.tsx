@@ -6,7 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import FriendshipDrawerIcon from '../components/features/messages/FriendshipDrawerIcon';
 import ServerDrawerIcon from '../components/features/messages/ServerDrawerIcon';
-import SelectionDrawerMenu from '../components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
+import StorySelectionMenu from '../components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
 import ResizableDrawerContent from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
 import { isServerless } from '../utils/clientFlavor';
@@ -315,7 +315,7 @@ const StorySelectionNavigator = () => {
             onDrawerWidthChange={setDrawerWidth}
             resizable={!isCompact}
           >
-            <SelectionDrawerMenu
+            <StorySelectionMenu
               state={props.state}
               navigation={props.navigation}
               drawerId="story-selection"

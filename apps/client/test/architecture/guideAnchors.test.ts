@@ -19,7 +19,9 @@ function listSourceFiles(directory: string): string[] {
 const source = listSourceFiles(SOURCE_ROOT)
   .filter((path) => !relative(SOURCE_ROOT, path).replace(/\\/g, '/').startsWith('guides/'))
   .map((path) => readFileSync(path, 'utf8'))
-  .join('\n');
+  .join('\n')
+  // JSX may break its attributes over lines; the test reads them as one run.
+  .replace(/\s+/g, ' ');
 
 /** Every anchor a tour points at, with the step that points at it. */
 const references = Object.values(screenGuides).flatMap((guide) =>
@@ -47,10 +49,11 @@ describe('guide anchors', () => {
       return;
     }
     const [, screen, part] = anchor.split(':');
-    const direct = `'${screen}', '${part}'`;
+    // Placed by the hook, or by the GuideAnchor component that wraps it.
+    const direct = [`'${screen}', '${part}'`, `screen="${screen}" part="${part}"`];
     // The shared list names its search and controls by the entity it lists.
     const sharedList =
       (part === 'search' || part === 'controls') && source.includes(`entityName="${screen}"`);
-    expect(source.includes(direct) || sharedList).toBe(true);
+    expect(direct.some((form) => source.includes(form)) || sharedList).toBe(true);
   });
 });

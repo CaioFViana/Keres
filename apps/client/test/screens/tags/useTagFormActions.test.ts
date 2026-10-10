@@ -1,6 +1,13 @@
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 
+// Only the shared hook imports these, and it loads them even for a form with no custom attributes.
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
+  validateRequiredCustomAttributes: () => null,
+}));
+jest.mock('../../../src/services/storymanagement/AttributeValueService', () => ({
+  createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
+}));
 jest.mock('@/src/hooks/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
@@ -50,14 +57,20 @@ const navigation = {
   goBack: jest.fn(),
 };
 
-const renderActions = (state = createState()) =>
+type RenderOptions = {
+  userId?: string | null;
+  storyId?: string;
+  service?: TagService | null;
+};
+
+const renderActions = (state = createState(), options: RenderOptions = {}) =>
   renderHook(() =>
     useTagFormActions({
       state,
-      tagServiceRef: { current: tagService },
+      tagServiceRef: { current: 'service' in options ? options.service! : tagService },
       navigation: navigation as never,
-      storyId: 'story-1',
-      userId: 'user-1',
+      storyId: 'storyId' in options ? options.storyId : 'story-1',
+      userId: 'userId' in options ? options.userId : 'user-1',
     }),
   );
 
@@ -144,4 +157,88 @@ it('does not show success after a create failure, then recovers on retry', async
   expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
   log.mockRestore();
+});
+
+describe('what stops a save before it reaches the service', () => {
+  it.each([
+    ['no user', { userId: null }, 'user_not_identified'],
+    ['no story', { storyId: undefined }, 'no_story_selected'],
+    ['no service', { service: null }, 'failed_to_save_tag'],
+  ])('says so and writes nothing with %s', async (_label, options, message) => {
+    const state = createState();
+    const view = await renderActions(state, options);
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', message);
+    expect(tagService.createTag).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    expect(navigation.goBack).not.toHaveBeenCalled();
+  });
+});
+
+it('keeps the form and the draft when an update fails', async () => {
+  (tagService.updateTag as jest.Mock).mockRejectedValueOnce(new Error('failed'));
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const state = createState({ tagId: 'tag-1', isEditing: true });
+  const view = await renderActions(state);
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledTimes(1);
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_tag');
+  expect(state.clearFormDraft).not.toHaveBeenCalled();
+  expect(navigation.goBack).not.toHaveBeenCalled();
+  log.mockRestore();
+});
+
+describe('deleting', () => {
+  it('says the user is unknown and asks for no confirmation', async () => {
+    const view = await renderActions(createState({ tagId: 'tag-1', isEditing: true }), {
+      userId: null,
+    });
+
+    await act(async () => view.result.current.handleDelete());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'user_not_identified');
+    expect(mockConfirmDelete).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a tag that was never saved', createState(), {}],
+    ['no service', createState({ tagId: 'tag-1', isEditing: true }), { service: null }],
+  ])('does nothing for %s', async (_label, state, options) => {
+    const view = await renderActions(state, options);
+
+    await act(async () => view.result.current.handleDelete());
+
+    expect(mockConfirmDelete).not.toHaveBeenCalled();
+    expect(mockAlert).not.toHaveBeenCalled();
+  });
+
+  it('leaves the draft and the screen alone when the delete fails', async () => {
+    (tagService.deleteTag as jest.Mock).mockRejectedValueOnce(new Error('failed'));
+    const state = createState({ tagId: 'tag-1', isEditing: true });
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleDelete());
+    const request = mockConfirmDelete.mock.calls[0][0];
+    await expect(request.onConfirm()).rejects.toThrow('failed');
+
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    expect(navigation.goBack).not.toHaveBeenCalled();
+  });
+
+  it('passes the texts of the tag to the confirmation', async () => {
+    const view = await renderActions(createState({ tagId: 'tag-1', isEditing: true }));
+
+    await act(async () => view.result.current.handleDelete());
+
+    expect(mockConfirmDelete.mock.calls[0][0]).toMatchObject({
+      titleKey: 'delete_tag_title',
+      messageKey: 'delete_tag_message',
+      successKey: 'tag_deleted_successfully',
+      failureKey: 'failed_to_delete_tag',
+    });
+  });
 });

@@ -45,8 +45,11 @@ export interface EntityFormActionsConfig<TData, TEntity extends PersistedEntity>
   secondarySteps?: readonly ((entityId: string) => Promise<void>)[];
   persistSecondaryDraft?(entityId: string): Promise<void>;
   clearSecondaryDraft?(entityId: string): Promise<void>;
-  /** What the screen says: the failure to save, and the success after a create or an update. */
-  messages: { failedToSave: string; created: string; updated: string };
+  /**
+   * What the screen says: the failure to save, and the success after a create or an update. Leave a
+   * success out for a form that leaves the screen without saying so.
+   */
+  messages: { failedToSave: string; created?: string; updated?: string };
   /** The delete confirmation, minus the parts this hook supplies. */
   confirmDelete: Omit<ConfirmDeleteOptions, 'onConfirm' | 'onLoadingChange'>;
   /** Where to go after a save: usually back, or into the form of the entity just created. */
@@ -124,7 +127,8 @@ export function useEntityFormActions<TData, TEntity extends PersistedEntity>(
 
         await config.clearFormDraft();
         if (config.changeEvent) entityEventEmitter.emit(config.changeEvent, storyId, entityId);
-        AppAlert.alert(t('success'), created ? config.messages.created : config.messages.updated);
+        const success = created ? config.messages.created : config.messages.updated;
+        if (success) AppAlert.alert(t('success'), success);
         config.afterSave(entityId, created);
       } catch (err) {
         console.error(`Failed to save ${config.logName}:`, err);

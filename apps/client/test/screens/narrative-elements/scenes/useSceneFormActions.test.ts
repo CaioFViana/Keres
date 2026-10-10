@@ -1,7 +1,6 @@
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
-const mockSaveSceneWithRelations = jest.fn();
 const mockSaveValuesForEntity = jest.fn();
 const mockValidateRequired = jest.fn();
 
@@ -19,9 +18,6 @@ jest.mock('../../../../src/hooks/useConfirmDelete', () => ({
 }));
 jest.mock('../../../../src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
-}));
-jest.mock('../../../../src/services/storymanagement/SceneSaveCoordinator', () => ({
-  saveSceneWithRelations: (...args: unknown[]) => mockSaveSceneWithRelations(...args),
 }));
 jest.mock('../../../../src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
@@ -95,8 +91,11 @@ const createState = (overrides: Partial<SceneFormState> = {}): SceneFormState =>
   }) as SceneFormState;
 
 const sceneService = {
+  getById: jest.fn(),
+  createScene: jest.fn(),
+  updateScene: jest.fn(),
   deleteScene: jest.fn(),
-} as unknown as SceneService;
+};
 const navigation = {
   dispatch: jest.fn(),
   goBack: jest.fn(),
@@ -104,18 +103,27 @@ const navigation = {
 const persistTagRelations = jest.fn();
 const persistNoteRelations = jest.fn();
 const persistCharacterRelations = jest.fn();
+const persistSecondaryDraft = jest.fn();
+const clearSecondaryDraft = jest.fn();
+const persistPending = jest.fn();
 
-const renderActions = (
-  state = createState(),
-  overrides: { storyId?: string; userId?: string | null; service?: SceneService | null } = {},
-) =>
-  renderHook(() =>
+type RenderOptions = {
+  storyId?: string;
+  userId?: string | null;
+  service?: SceneService | null;
+};
+
+const renderActions = (state = createState(), overrides: RenderOptions = {}) => {
+  const view = renderHook(() =>
     useSceneFormActions({
       state,
       customFields: [],
       drizzleDb: {} as never,
       sceneServiceRef: {
-        current: overrides.service === undefined ? sceneService : overrides.service,
+        current:
+          overrides.service === undefined
+            ? (sceneService as unknown as SceneService)
+            : overrides.service,
       },
       navigation: navigation as never,
       storyId: 'storyId' in overrides ? overrides.storyId : 'story-1',
@@ -123,24 +131,60 @@ const renderActions = (
       persistTagRelations,
       persistNoteRelations,
       persistCharacterRelations,
+      persistSecondaryDraft,
+      clearSecondaryDraft,
     }),
   );
+  return view;
+};
+
+/** The order in which everything that reaches storage or the outside world happens. */
+let calls: string[] = [];
 
 beforeEach(() => {
   jest.clearAllMocks();
+  calls = [];
   mockValidateRequired.mockReturnValue(undefined);
-  mockSaveValuesForEntity.mockResolvedValue(undefined);
-  persistTagRelations.mockResolvedValue(undefined);
-  persistNoteRelations.mockResolvedValue(undefined);
-  persistCharacterRelations.mockResolvedValue(undefined);
-  (sceneService.deleteScene as jest.Mock).mockResolvedValue(undefined);
-  mockSaveSceneWithRelations.mockImplementation(async (options) => {
-    options.onScenePersisted('scene-1');
-    await options.persistRelations('scene-1');
-    await options.persistCustomAttributes('scene-1');
-    return { sceneId: 'scene-1', created: true };
+  mockSaveValuesForEntity.mockImplementation(async () => {
+    calls.push('attributes');
   });
+  persistTagRelations.mockImplementation(async () => {
+    calls.push('tags');
+  });
+  persistNoteRelations.mockImplementation(async () => {
+    calls.push('notes');
+  });
+  persistCharacterRelations.mockImplementation(async () => {
+    calls.push('characters');
+  });
+  persistSecondaryDraft.mockImplementation(async () => {
+    calls.push('draft saved');
+  });
+  clearSecondaryDraft.mockImplementation(async () => {
+    calls.push('draft cleared');
+  });
+  persistPending.mockImplementation(async () => {
+    calls.push('see also');
+  });
+  mockEmit.mockImplementation(() => {
+    calls.push('event');
+  });
+  sceneService.createScene.mockImplementation(async () => {
+    calls.push('created');
+    return { id: 'scene-1' };
+  });
+  sceneService.updateScene.mockImplementation(async () => {
+    calls.push('updated');
+    return { id: 'scene-1' };
+  });
+  sceneService.getById.mockResolvedValue({ id: 'scene-1' });
+  sceneService.deleteScene.mockResolvedValue(undefined);
 });
+
+const retained = (state: SceneFormState) =>
+  (state.retainPersistedSceneId as jest.Mock).mockImplementation(() => {
+    calls.push('retained');
+  });
 
 it('rejects an unnamed scene before persistence', async () => {
   const view = await renderActions(createState({ name: '  ' }));
@@ -148,42 +192,170 @@ it('rejects an unnamed scene before persistence', async () => {
   await act(async () => view.result.current.handleSave());
 
   expect(mockAlert).toHaveBeenCalledWith('error', 'name_required');
-  expect(mockSaveSceneWithRelations).not.toHaveBeenCalled();
+  expect(sceneService.createScene).not.toHaveBeenCalled();
 });
 
-it('coordinates persistence, notification and replacement after creation', async () => {
-  const state = createState({ customValues: { field: 'value' } });
-  const view = await renderActions(state);
+describe('a new scene', () => {
+  it('is written first, then its relations in order, then the attributes, and only then announced', async () => {
+    const state = createState({ customValues: { field: 'value' } });
+    retained(state);
+    const view = await renderActions(state);
+    view.result.current.seeAlsoManagerRef.current = { persistPending } as never;
 
-  await act(async () => view.result.current.handleSave());
+    await act(async () => view.result.current.handleSave());
 
-  expect(state.retainPersistedSceneId).toHaveBeenCalledWith('scene-1');
-  expect(persistTagRelations).toHaveBeenCalledWith('scene-1');
-  expect(persistNoteRelations).toHaveBeenCalledWith('scene-1');
-  expect(persistCharacterRelations).toHaveBeenCalledWith('scene-1');
-  expect(mockSaveValuesForEntity).toHaveBeenCalledWith('user-1', 'story-1', 'Scene', 'scene-1', {
-    field: 'value',
+    expect(calls).toEqual([
+      'created',
+      'retained',
+      'draft saved',
+      'tags',
+      'notes',
+      'see also',
+      'characters',
+      'attributes',
+      'draft cleared',
+      'event',
+    ]);
+    expect(persistTagRelations).toHaveBeenCalledWith('scene-1');
+    expect(persistNoteRelations).toHaveBeenCalledWith('scene-1');
+    expect(persistPending).toHaveBeenCalledWith('scene-1');
+    expect(persistCharacterRelations).toHaveBeenCalledWith('scene-1');
+    expect(mockSaveValuesForEntity).toHaveBeenCalledWith('user-1', 'story-1', 'Scene', 'scene-1', {
+      field: 'value',
+    });
+    expect(mockEmit).toHaveBeenCalledWith('scene_changed', 'story-1', 'scene-1');
+    expect(state.retainPersistedSceneId).toHaveBeenCalledWith('scene-1');
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   });
-  expect(mockEmit).toHaveBeenCalledWith('scene_changed', 'story-1', 'scene-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', 'created');
-  expect(navigation.dispatch).toHaveBeenCalledWith(
-    expect.objectContaining({ payload: expect.objectContaining({ name: 'SceneForm' }) }),
-  );
-  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
+
+  it('says it was created and replaces the form with the one of the new scene', async () => {
+    const view = await renderActions();
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('success', 'created');
+    expect(navigation.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ name: 'SceneForm', params: { sceneId: 'scene-1' } }),
+      }),
+    );
+    expect(navigation.goBack).not.toHaveBeenCalled();
+  });
+
+  it('is created in its story with the name trimmed and without a manuscript body', async () => {
+    const view = await renderActions(createState({ name: '  Arrival  ', isFavorite: true }));
+
+    await act(async () => view.result.current.handleSave());
+
+    const [user, data] = sceneService.createScene.mock.calls[0];
+    expect(user).toBe('user-1');
+    expect(data).toMatchObject({ storyId: 'story-1', name: 'Arrival', isFavorite: true });
+    expect(data).not.toHaveProperty('body');
+  });
+
+  it('keeps the draft and says nothing when a relation cannot be written', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    persistTagRelations.mockRejectedValueOnce(new Error('tags down'));
+    const state = createState();
+    retained(state);
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(mockAlert).not.toHaveBeenCalledWith('success', expect.anything());
+    expect(calls).toEqual(['created', 'retained', 'draft saved']);
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(mockSaveValuesForEntity).not.toHaveBeenCalled();
+    expect(clearSecondaryDraft).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    expect(navigation.dispatch).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it('keeps the draft when the attributes cannot be written', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockSaveValuesForEntity.mockRejectedValueOnce(new Error('attributes down'));
+    const state = createState();
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(clearSecondaryDraft).not.toHaveBeenCalled();
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it('writes nothing when the scene itself cannot be created', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    sceneService.createScene.mockRejectedValueOnce(new Error('db down'));
+    const state = createState();
+    retained(state);
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(state.retainPersistedSceneId).not.toHaveBeenCalled();
+    expect(persistTagRelations).not.toHaveBeenCalled();
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
 });
 
-it('delegates deletion and completes it with an event and back navigation', async () => {
-  const state = createState({ currentSceneId: 'scene-1', isEditing: true });
-  const view = await renderActions(state);
+describe('an existing scene', () => {
+  const editing = () => createState({ currentSceneId: 'scene-1', isEditing: true });
 
-  await act(async () => view.result.current.handleDelete());
-  const request = mockConfirmDelete.mock.calls[0][0];
-  await act(async () => request.onConfirm());
+  it('is read, updated without its story and left by going back', async () => {
+    const view = await renderActions(editing());
 
-  expect(sceneService.deleteScene).toHaveBeenCalledWith('user-1', 'scene-1');
-  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
-  expect(mockEmit).toHaveBeenCalledWith('scene_changed', 'story-1', 'scene-1');
-  expect(navigation.goBack).toHaveBeenCalled();
+    await act(async () => view.result.current.handleSave());
+
+    expect(sceneService.getById).toHaveBeenCalledWith('scene-1');
+    expect(sceneService.updateScene).toHaveBeenCalledWith(
+      'user-1',
+      'scene-1',
+      expect.not.objectContaining({ storyId: expect.anything() }),
+    );
+    expect(sceneService.createScene).not.toHaveBeenCalled();
+    expect(mockAlert).toHaveBeenCalledWith('success', 'updated');
+    expect(navigation.goBack).toHaveBeenCalledTimes(1);
+    expect(navigation.dispatch).not.toHaveBeenCalled();
+    expect(mockEmit).toHaveBeenCalledWith('scene_changed', 'story-1', 'scene-1');
+  });
+
+  it('is not written to when it no longer exists', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    sceneService.getById.mockResolvedValueOnce(null);
+    const state = editing();
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(sceneService.updateScene).not.toHaveBeenCalled();
+    expect(persistTagRelations).not.toHaveBeenCalled();
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it('keeps the form when the update fails', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    sceneService.updateScene.mockRejectedValueOnce(new Error('db down'));
+    const state = editing();
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(navigation.goBack).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
 });
 
 it('rejects a save missing a required custom attribute', async () => {
@@ -193,22 +365,21 @@ it('rejects a save missing a required custom attribute', async () => {
   await act(async () => view.result.current.handleSave());
 
   expect(mockAlert).toHaveBeenCalledWith('error', 'custom_attribute_required');
-  expect(mockSaveSceneWithRelations).not.toHaveBeenCalled();
+  expect(sceneService.createScene).not.toHaveBeenCalled();
 });
 
-it('rejects a save without a user, story, or service', async () => {
-  const noUser = await renderActions(createState(), { userId: undefined });
-  await act(async () => noUser.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'user_not_identified');
+it.each([
+  ['no user', { userId: undefined }, 'user_not_identified'],
+  ['no story', { storyId: undefined }, 'no_story_selected'],
+  ['no service', { service: null }, 'save failed'],
+])('says so and writes nothing with %s', async (_label, options, message) => {
+  const view = await renderActions(createState(), options as RenderOptions);
 
-  const noStory = await renderActions(createState(), { storyId: undefined });
-  await act(async () => noStory.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'no_story_selected');
+  await act(async () => view.result.current.handleSave());
 
-  const noService = await renderActions(createState(), { service: null });
-  await act(async () => noService.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockSaveSceneWithRelations).not.toHaveBeenCalled();
+  expect(mockAlert).toHaveBeenCalledWith('error', message);
+  expect(sceneService.createScene).not.toHaveBeenCalled();
+  expect(sceneService.updateScene).not.toHaveBeenCalled();
 });
 
 it('rejects invalid timing input', async () => {
@@ -219,7 +390,7 @@ it('rejects invalid timing input', async () => {
   const badDuration = await renderActions(createState({ durationInput: '1.5' }));
   await act(async () => badDuration.result.current.handleSave());
   expect(mockAlert).toHaveBeenCalledWith('error', 'scene_timing_invalid');
-  expect(mockSaveSceneWithRelations).not.toHaveBeenCalled();
+  expect(sceneService.createScene).not.toHaveBeenCalled();
 });
 
 it('rejects an unparseable fixed date', async () => {
@@ -232,7 +403,7 @@ it('rejects an unparseable fixed date', async () => {
   await act(async () => view.result.current.handleSave());
 
   expect(mockAlert).toHaveBeenCalledWith('error', 'scene_fixed_date_invalid');
-  expect(mockSaveSceneWithRelations).not.toHaveBeenCalled();
+  expect(sceneService.createScene).not.toHaveBeenCalled();
 });
 
 it('persists timing and fixed-date data on save', async () => {
@@ -249,8 +420,7 @@ it('persists timing and fixed-date data on save', async () => {
 
   await act(async () => view.result.current.handleSave());
 
-  const options = mockSaveSceneWithRelations.mock.calls[0][0];
-  expect(options.sceneData).toMatchObject({
+  expect(sceneService.createScene.mock.calls[0][1]).toMatchObject({
     gap: 2,
     gapType: 'days',
     duration: 3,
@@ -260,48 +430,75 @@ it('persists timing and fixed-date data on save', async () => {
   });
 });
 
-it('navigates back after updating instead of replacing', async () => {
-  mockSaveSceneWithRelations.mockImplementation(async (options) => {
-    options.onScenePersisted('scene-1');
-    await options.persistRelations('scene-1');
-    await options.persistCustomAttributes('scene-1');
-    return { sceneId: 'scene-1', created: false };
-  });
-  const view = await renderActions(createState({ currentSceneId: 'scene-1', isEditing: true }));
+it('drops the calendar of a fixed date that was cleared', async () => {
+  const view = await renderActions(createState({ calendarDateOverrideCalendarId: 'cal-1' }));
 
   await act(async () => view.result.current.handleSave());
 
-  expect(mockAlert).toHaveBeenCalledWith('success', 'updated');
-  expect(navigation.goBack).toHaveBeenCalledTimes(1);
-  expect(navigation.dispatch).not.toHaveBeenCalled();
+  expect(sceneService.createScene.mock.calls[0][1]).toMatchObject({
+    calendarDateOverride: null,
+    calendarDateOverrideCalendarId: null,
+  });
 });
 
-it('alerts when persistence fails', async () => {
-  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
-  mockSaveSceneWithRelations.mockRejectedValue(new Error('db down'));
-  const state = createState();
-  const view = await renderActions(state);
+describe('deleting', () => {
+  it('deletes after confirmation, announces it and goes back', async () => {
+    const state = createState({ currentSceneId: 'scene-1', isEditing: true });
+    const view = await renderActions(state);
 
-  await act(async () => view.result.current.handleSave());
+    await act(async () => view.result.current.handleDelete());
+    const request = mockConfirmDelete.mock.calls[0][0];
+    await act(async () => request.onConfirm());
 
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockEmit).not.toHaveBeenCalled();
-  expect(state.clearFormDraft).not.toHaveBeenCalled();
-  log.mockRestore();
-});
-
-it('rejects deletion without a user, id, or service', async () => {
-  const noUser = await renderActions(createState({ currentSceneId: 'scene-1' }), {
-    userId: undefined,
+    expect(sceneService.deleteScene).toHaveBeenCalledWith('user-1', 'scene-1');
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
+    expect(mockEmit).toHaveBeenCalledWith('scene_changed', 'story-1', 'scene-1');
+    expect(navigation.goBack).toHaveBeenCalled();
   });
-  await act(async () => noUser.result.current.handleDelete());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'user_not_identified');
 
-  const noId = await renderActions(createState());
-  await act(async () => noId.result.current.handleDelete());
-  const noService = await renderActions(createState({ currentSceneId: 'scene-1' }), {
-    service: null,
+  it('asks in the words of the story', async () => {
+    const view = await renderActions(createState({ currentSceneId: 'scene-1', isEditing: true }));
+
+    await act(async () => view.result.current.handleDelete());
+
+    expect(mockConfirmDelete.mock.calls[0][0]).toMatchObject({
+      titleKey: 'delete_scene_title',
+      title: 'delete',
+      messageKey: 'delete_scene_message',
+      message: 'delete message',
+      successMessage: 'deleted',
+      failureKey: 'failed_to_delete_scene',
+      failureMessage: 'delete failed',
+    });
   });
-  await act(async () => noService.result.current.handleDelete());
-  expect(mockConfirmDelete).not.toHaveBeenCalled();
+
+  it('leaves the draft, the event and the screen alone when the delete fails', async () => {
+    sceneService.deleteScene.mockRejectedValueOnce(new Error('db down'));
+    const state = createState({ currentSceneId: 'scene-1', isEditing: true });
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleDelete());
+    const request = mockConfirmDelete.mock.calls[0][0];
+    await expect(request.onConfirm()).rejects.toThrow('db down');
+
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(navigation.goBack).not.toHaveBeenCalled();
+  });
+
+  it('rejects deletion without a user, id, or service', async () => {
+    const noUser = await renderActions(createState({ currentSceneId: 'scene-1' }), {
+      userId: undefined,
+    });
+    await act(async () => noUser.result.current.handleDelete());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'user_not_identified');
+
+    const noId = await renderActions(createState());
+    await act(async () => noId.result.current.handleDelete());
+    const noService = await renderActions(createState({ currentSceneId: 'scene-1' }), {
+      service: null,
+    });
+    await act(async () => noService.result.current.handleDelete());
+    expect(mockConfirmDelete).not.toHaveBeenCalled();
+  });
 });

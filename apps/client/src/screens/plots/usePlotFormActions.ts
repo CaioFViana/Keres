@@ -1,8 +1,6 @@
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import type { RefObject } from 'react';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
+import { useEntityFormActions } from '../../hooks/useEntityFormActions';
 import type {
   createPlotSceneService,
   SavePlotScene,
@@ -14,6 +12,7 @@ import type { PlotFormState } from './usePlotFormState';
 
 type PlotService = ReturnType<typeof createPlotService>;
 type PlotSceneService = ReturnType<typeof createPlotSceneService>;
+type PlotData = { name: string; details: string | null };
 
 type UsePlotFormActionsOptions = {
   state: PlotFormState;
@@ -36,64 +35,40 @@ export function usePlotFormActions({
   reloadPlotData,
 }: UsePlotFormActionsOptions) {
   const { t } = useTranslation();
-  const confirmDelete = useConfirmDelete();
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
 
-  const handleSave = () =>
-    runSave(async () => {
-      if (!storyId || !userId) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-      if (!state.name.trim()) {
-        AppAlert.alert(t('error'), t('plot_name_required'));
-        return;
-      }
-      if (!plotServiceRef.current) {
-        AppAlert.alert(t('error'), t('failed_to_save_plot'));
-        return;
-      }
-
-      try {
-        const saved = await plotServiceRef.current.save(userId, {
-          id: state.plotId,
-          storyId,
-          name: state.name,
-          details: state.details.trim() || null,
-        });
-        await state.clearFormDraft();
-        if (state.isEditing) navigation.goBack();
-        // A new plot has no relations yet. Keep the author in its form so scenes can be added right
-        // away, rather than sending them to the read-only detail screen.
-        else navigation.replace('PlotForm', { plotId: saved.id });
-      } catch (error) {
-        console.error('Failed to save plot:', error);
-        AppAlert.alert(t('error'), t('failed_to_save_plot'));
-      }
-    });
-
-  const handleDelete = () => {
-    if (!userId || !state.plotId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!plotServiceRef.current) return;
-
-    const plotId = state.plotId;
-    confirmDelete({
+  const { deleting, handleDelete, handleSave, saving } = useEntityFormActions<
+    PlotData,
+    { id: string }
+  >({
+    storyId,
+    userId,
+    currentEntityId: state.plotId,
+    isServiceReady: () => !!plotServiceRef.current,
+    clearFormDraft: state.clearFormDraft,
+    retainPersistedId: () => {},
+    validate: () => (state.name.trim() ? null : t('plot_name_required')),
+    buildData: () => ({ name: state.name, details: state.details.trim() || null }),
+    create: (user, story, data) =>
+      plotServiceRef.current!.save(user, { id: undefined, storyId: story, ...data }),
+    update: (user, plotId, data) =>
+      plotServiceRef.current!.save(user, { id: plotId, storyId: storyId!, ...data }),
+    remove: (user, plotId) => plotServiceRef.current!.delete(user, plotId),
+    messages: { failedToSave: t('failed_to_save_plot') },
+    confirmDelete: {
       titleKey: 'delete_plot_title',
       messageKey: 'delete_plot_message',
       successKey: 'plot_deleted_successfully',
       failureKey: 'failed_to_delete_plot',
-      onLoadingChange: setDeleting,
-      onConfirm: async () => {
-        await plotServiceRef.current!.delete(userId, plotId);
-        await state.clearFormDraft();
-        navigation.navigate('Plots');
-      },
-    });
-  };
+    },
+    // A new plot has no relations yet. Keep the author in its form so scenes can be added right
+    // away, rather than sending them to the read-only detail screen.
+    afterSave: (plotId, created) => {
+      if (created) navigation.replace('PlotForm', { plotId });
+      else navigation.goBack();
+    },
+    afterDelete: () => navigation.navigate('Plots'),
+    logName: 'plot',
+  });
 
   const handleSavePlotScene = async (relation: SavePlotScene) => {
     if (!userId) {

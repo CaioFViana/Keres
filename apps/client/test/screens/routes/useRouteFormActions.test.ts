@@ -1,6 +1,13 @@
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 
+// Only the shared hook imports these, and it loads them even for a form with no custom attributes.
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
+  validateRequiredCustomAttributes: () => null,
+}));
+jest.mock('../../../src/services/storymanagement/AttributeValueService', () => ({
+  createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
+}));
 jest.mock('@/src/hooks/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
@@ -45,17 +52,16 @@ const navigation = {
   navigate: jest.fn(),
 };
 
-const renderActions = (
-  state = createState(),
-  options: { storyId?: string; userId?: string | null } = {},
-) =>
+type RenderOptions = { storyId?: string; userId?: string | null; service?: null };
+
+const renderActions = (state = createState(), options: RenderOptions = {}) =>
   renderHook(() =>
     useRouteFormActions({
       state,
-      routeServiceRef: { current: routeService as never },
+      routeServiceRef: { current: 'service' in options ? null : (routeService as never) },
       navigation: navigation as never,
-      storyId: options.storyId ?? 'story-1',
-      userId: options.userId === undefined ? 'user-1' : options.userId,
+      storyId: 'storyId' in options ? options.storyId : 'story-1',
+      userId: 'userId' in options ? options.userId : 'user-1',
     }),
   );
 
@@ -126,4 +132,98 @@ it('delegates deletion and navigates to the routes list', async () => {
   expect(routeService.delete).toHaveBeenCalledWith('user-1', 'route-1');
   expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.navigate).toHaveBeenCalledWith('Routes');
+});
+
+it.each([
+  ['no story', { storyId: undefined }],
+  ['no service', { service: null }],
+])('alerts and writes nothing with %s', async (_label, options) => {
+  const state = createState();
+  const view = await renderActions(state, options as RenderOptions);
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledWith('error', expect.any(String));
+  expect(routeService.save).not.toHaveBeenCalled();
+  expect(state.clearFormDraft).not.toHaveBeenCalled();
+  expect(navigation.replace).not.toHaveBeenCalled();
+});
+
+it('names the failure to save when there is no service', async () => {
+  const view = await renderActions(createState(), { service: null });
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_route');
+});
+
+it('saves without a success alert', async () => {
+  const view = await renderActions();
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(mockAlert).not.toHaveBeenCalled();
+});
+
+it('keeps the form and the draft when saving fails', async () => {
+  routeService.save.mockRejectedValueOnce(new Error('failed'));
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const state = createState({ routeId: 'route-1', isEditing: true });
+  const view = await renderActions(state);
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_route');
+  expect(state.clearFormDraft).not.toHaveBeenCalled();
+  expect(navigation.goBack).not.toHaveBeenCalled();
+  log.mockRestore();
+});
+
+describe('deleting', () => {
+  it('asks for no confirmation without a user', async () => {
+    const view = await renderActions(createState({ routeId: 'route-1', isEditing: true }), {
+      userId: null,
+    });
+
+    await act(async () => view.result.current.handleDelete());
+
+    expect(mockConfirmDelete).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a route that was never saved', createState(), {}],
+    ['no service', createState({ routeId: 'route-1', isEditing: true }), { service: null }],
+  ])('asks for no confirmation for %s', async (_label, state, options) => {
+    const view = await renderActions(state, options as RenderOptions);
+
+    await act(async () => view.result.current.handleDelete());
+
+    expect(mockConfirmDelete).not.toHaveBeenCalled();
+  });
+
+  it('leaves the draft and the screen alone when the delete fails', async () => {
+    routeService.delete.mockRejectedValueOnce(new Error('failed'));
+    const state = createState({ routeId: 'route-1', isEditing: true });
+    const view = await renderActions(state);
+
+    await act(async () => view.result.current.handleDelete());
+    const request = mockConfirmDelete.mock.calls[0][0];
+    await expect(request.onConfirm()).rejects.toThrow('failed');
+
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+    expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  it('passes the texts of the route to the confirmation', async () => {
+    const view = await renderActions(createState({ routeId: 'route-1', isEditing: true }));
+
+    await act(async () => view.result.current.handleDelete());
+
+    expect(mockConfirmDelete.mock.calls[0][0]).toMatchObject({
+      titleKey: 'delete_route_title',
+      messageKey: 'delete_route_message',
+      successKey: 'route_deleted_successfully',
+      failureKey: 'failed_to_delete_route',
+    });
+  });
 });

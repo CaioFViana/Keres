@@ -34,7 +34,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Buscar, filtrar e ordenar não altera a história. As listas lembram a ordenação e os filtros para a próxima visita, história por história, e as etiquetas os mostram; abrir outra história começa com os filtros limpos. As palavras digitadas na busca não são lembradas. Favoritar altera apenas a marca do item; o modo como essa marca é compartilhada depende das configurações de favoritos da história.',
+      text: 'Buscar, filtrar e ordenar não altera a história. Cada lista lembra a sua própria ordenação para a próxima visita, em qualquer história, e os filtros história por história; as etiquetas mostram os filtros, e abrir outra história os começa limpos. As palavras digitadas na busca não são lembradas. Favoritar altera apenas a marca do item; o modo como essa marca é compartilhada depende das configurações de favoritos da história.',
     },
     { type: 'seeAlso', pages: ['tags', 'favorites', 'custom-attributes'] },
   ],

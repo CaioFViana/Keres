@@ -34,7 +34,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Searching, filtering, and sorting do not change the story. Lists remember their sort and filters for the next visit, story by story, and the chips show them; opening another story starts the filters clean. The words typed in the search box are not remembered. Favoriting only changes an item’s mark; how that mark is shared depends on the story’s favorite settings.',
+      text: 'Searching, filtering, and sorting do not change the story. Each list remembers its own sort for the next visit, in every story, and its filters story by story; the chips show the filters, and opening another story starts them clean. The words typed in the search box are not remembered. Favoriting only changes an item’s mark; how that mark is shared depends on the story’s favorite settings.',
     },
     { type: 'seeAlso', pages: ['tags', 'favorites', 'custom-attributes'] },
   ],

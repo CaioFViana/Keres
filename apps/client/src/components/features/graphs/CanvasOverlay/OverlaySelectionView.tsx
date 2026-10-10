@@ -3,7 +3,8 @@ import { canvasOverlayBounds, type CanvasOverlayType, type SpatialPoint } from '
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PanResponder, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 
 interface OverlaySelectionViewProps {
   overlay: CanvasOverlayType;
@@ -25,6 +26,20 @@ const HANDLE_SCREEN = 18;
 const MIN_RECT_WORLD = 8;
 
 type Corner = 0 | 1 | 2 | 3;
+
+/** The values the styles read: the overlay's bounds and the box drawn inside them, and the handle size. */
+type Metrics = {
+  boundsX: number;
+  boundsY: number;
+  boundsWidth: number;
+  boundsHeight: number;
+  pad: number;
+  boxX: number;
+  boxY: number;
+  boxWidth: number;
+  boxHeight: number;
+  handle: number;
+};
 
 /**
  * Native editing chrome for the selected overlay: a dashed bounds box, a move badge, vertex
@@ -100,52 +115,33 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
   // the dashed box hugs the ellipse alone: that is what the four corner handles resize.
   const box = rect ?? bounds;
   const handle = HANDLE_SCREEN / scale;
-  const styles = StyleSheet.create({
-    wrapper: {
-      position: 'absolute',
-      left: bounds.x - pad,
-      top: bounds.y - pad,
-      width: bounds.width + pad * 2,
-      height: bounds.height + pad * 2,
-      // The offset is in world units and this wrapper lives in the scaled plane, which turns them
-      // into screen pixels: scaling them again (as this once did) made the box trail the finger by
-      // the zoom factor, then jump to it on release.
-      transform: [{ translateX: moveOffset.x }, { translateY: moveOffset.y }],
-    },
-    box: {
-      position: 'absolute',
-      left: box.x - bounds.x + pad,
-      top: box.y - bounds.y + pad,
-      width: box.width,
-      height: box.height,
-      borderWidth: 1.5,
-      borderStyle: 'dashed',
-      borderColor: colors.primary,
-    },
-    moveBadge: {
-      position: 'absolute',
-      left: -handle / 2,
-      top: -handle / 2,
-      width: handle + 8,
-      height: handle + 8,
-      borderRadius: (handle + 8) / 2,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primary,
-    },
-    chromeButton: {
-      position: 'absolute',
-      right: -handle / 2,
-      width: handle + 8,
-      height: handle + 8,
-      borderRadius: (handle + 8) / 2,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-    },
-  });
+  const metrics = useMemo<Metrics>(
+    () => ({
+      boundsX: bounds.x,
+      boundsY: bounds.y,
+      boundsWidth: bounds.width,
+      boundsHeight: bounds.height,
+      pad,
+      boxX: box.x,
+      boxY: box.y,
+      boxWidth: box.width,
+      boxHeight: box.height,
+      handle,
+    }),
+    [
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      pad,
+      box.x,
+      box.y,
+      box.width,
+      box.height,
+      handle,
+    ],
+  );
+  const styles = useThemedStyles(createStyles, [metrics]);
 
   const chromeButtons = (
     [
@@ -195,7 +191,17 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
 
   const draggable = !overlay.locked;
   return (
-    <View testID="overlay-selection" style={styles.wrapper} pointerEvents="box-none">
+    <View
+      testID="overlay-selection"
+      // The offset is in world units and this wrapper lives in the scaled plane, which turns them
+      // into screen pixels: scaling them again (as this once did) made the box trail the finger by
+      // the zoom factor, then jump to it on release. It is per-frame state, so it stays out of the sheet.
+      style={[
+        styles.wrapper,
+        { transform: [{ translateX: moveOffset.x }, { translateY: moveOffset.y }] },
+      ]}
+      pointerEvents="box-none"
+    >
       <View style={styles.box} pointerEvents="none" />
       {draggable && (
         <View testID="overlay-move" style={styles.moveBadge} {...moveResponder.panHandlers}>
@@ -269,6 +275,50 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors, [m]: [Metrics]) =>
+  StyleSheet.create({
+    wrapper: {
+      position: 'absolute',
+      left: m.boundsX - m.pad,
+      top: m.boundsY - m.pad,
+      width: m.boundsWidth + m.pad * 2,
+      height: m.boundsHeight + m.pad * 2,
+    },
+    box: {
+      position: 'absolute',
+      left: m.boxX - m.boundsX + m.pad,
+      top: m.boxY - m.boundsY + m.pad,
+      width: m.boxWidth,
+      height: m.boxHeight,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: colors.primary,
+    },
+    moveBadge: {
+      position: 'absolute',
+      left: -m.handle / 2,
+      top: -m.handle / 2,
+      width: m.handle + 8,
+      height: m.handle + 8,
+      borderRadius: (m.handle + 8) / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primary,
+    },
+    chromeButton: {
+      position: 'absolute',
+      right: -m.handle / 2,
+      width: m.handle + 8,
+      height: m.handle + 8,
+      borderRadius: (m.handle + 8) / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+    },
+  });
 
 export default OverlaySelectionView;
 

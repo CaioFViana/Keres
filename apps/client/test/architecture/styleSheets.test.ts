@@ -17,16 +17,10 @@ const relative = (path: string) => path.slice(SRC.length + 1).replace(/\\/g, '/'
  * Styles that depend on the theme are built by a module-level factory and read through `useThemedStyles`, so
  * they are made once per palette. A `StyleSheet.create` inside a function body is rebuilt on every render.
  *
- * These four read too many values for the hook's `deps` (four or five sizes and insets): they build their
- * styles in the body and are listed so that this stays a decision, not a habit. Do not add to it: move the
- * styles to a factory, or fold the values into fewer.
+ * There are no exceptions left: the values a factory reads travel as one `metrics` object in the hook's
+ * `deps`. This list stays empty. A new entry means a factory is still missing, not that the rule gives way.
  */
-const BUILT_IN_THE_BODY = [
-  'components/common/inputs/ColorPickerInput/ColorPickerModal.tsx',
-  'components/common/inputs/IconPickerInput/IconPickerModal.tsx',
-  'components/features/graphs/CanvasOverlay/OverlaySelectionView.tsx',
-  'screens/enterstack/ColdInstallScreen.tsx',
-];
+const BUILT_IN_THE_BODY: string[] = [];
 
 /** An indented `const x = StyleSheet.create({`: made inside something, not at module level. */
 const INDENTED_CREATE = /^[ \t]+(?:export )?const \w+ = StyleSheet\.create\(/m;

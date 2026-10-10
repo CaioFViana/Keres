@@ -7,7 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BackHandler,
@@ -34,8 +34,9 @@ import { syncEngine } from '../../services/sync/appSyncEngine';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { getCommonInputStyles } from '../../theme/commonStyles';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { getClientFlavor } from '../../utils/clientFlavor';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
@@ -52,6 +53,14 @@ const STACKED_MAX_WIDTH = 560;
 const SPLIT_MAX_WIDTH = 1040;
 
 type ColdInstallScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ColdInstall'>;
+
+/** The values the styles read: the top inset, the welcome's width, the footer's bottom padding, the compact flag. */
+type Metrics = {
+  insetTop: number;
+  pageWidth: number;
+  footerBottom: number;
+  isCompact: boolean;
+};
 
 /**
  * The first thing anyone sees: a short welcome - what Keres is, where what they make lives (which
@@ -189,42 +198,11 @@ const ColdInstallScreen = () => {
 
   const isProceedDisabled = trimmedUsername.length === 0;
 
-  const styles = StyleSheet.create({
-    screen: { flex: 1, backgroundColor: colors.background },
-    errorText: { color: colors.error, marginTop: 6 },
-    bar: { width: '100%', alignItems: 'center', paddingTop: insets.top + 12, paddingBottom: 8 },
-    barInner: {
-      width: pageWidth,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    barActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    skip: { color: colors.textSecondary, fontSize: 15, fontWeight: '600', padding: 8 },
-    scrollContent: {
-      flexGrow: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-    },
-    footer: { width: '100%', alignItems: 'center', paddingTop: 12, paddingBottom: footerBottom },
-    footerInner: isCompact
-      ? { width: pageWidth, alignItems: 'center' as const }
-      : {
-          width: pageWidth,
-          flexDirection: 'row' as const,
-          alignItems: 'center' as const,
-          justifyContent: 'space-between' as const,
-        },
-    footerSide: { width: 180, alignItems: 'flex-start' as const },
-    primaryAction: isCompact
-      ? { width: '100%' as const, paddingVertical: 15, borderRadius: 14 }
-      : { minWidth: 200, paddingVertical: 14, borderRadius: 14 },
-    back: { color: colors.primary, fontSize: 16, fontWeight: '600', padding: 10 },
-    appLinkRow: { width: pageWidth, alignItems: 'flex-end', paddingTop: 10 },
-    appLink: { color: colors.textSecondary, fontSize: 13, textDecorationLine: 'underline' },
-  });
+  const metrics = useMemo<Metrics>(
+    () => ({ insetTop: insets.top, pageWidth, footerBottom, isCompact }),
+    [insets.top, pageWidth, footerBottom, isCompact],
+  );
+  const styles = useThemedStyles(createStyles, [metrics]);
 
   const languageOptions = getLanguageOptions(t);
 
@@ -365,5 +343,48 @@ const ColdInstallScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors, [m]: [Metrics]) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.background },
+    errorText: { color: colors.error, marginTop: 6 },
+    bar: { width: '100%', alignItems: 'center', paddingTop: m.insetTop + 12, paddingBottom: 8 },
+    barInner: {
+      width: m.pageWidth,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    barActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    skip: { color: colors.textSecondary, fontSize: 15, fontWeight: '600', padding: 8 },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+    },
+    footer: {
+      width: '100%',
+      alignItems: 'center',
+      paddingTop: 12,
+      paddingBottom: m.footerBottom,
+    },
+    footerInner: m.isCompact
+      ? { width: m.pageWidth, alignItems: 'center' as const }
+      : {
+          width: m.pageWidth,
+          flexDirection: 'row' as const,
+          alignItems: 'center' as const,
+          justifyContent: 'space-between' as const,
+        },
+    footerSide: { width: 180, alignItems: 'flex-start' as const },
+    primaryAction: m.isCompact
+      ? { width: '100%' as const, paddingVertical: 15, borderRadius: 14 }
+      : { minWidth: 200, paddingVertical: 14, borderRadius: 14 },
+    back: { color: colors.primary, fontSize: 16, fontWeight: '600', padding: 10 },
+    appLinkRow: { width: m.pageWidth, alignItems: 'flex-end', paddingTop: 10 },
+    appLink: { color: colors.textSecondary, fontSize: 13, textDecorationLine: 'underline' },
+  });
 
 export default ColdInstallScreen;

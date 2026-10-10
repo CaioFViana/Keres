@@ -1,7 +1,7 @@
 import { getContrastTextColor } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   PanResponder,
@@ -13,7 +13,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '../../../../utils/colorMath';
 
 const SLIDER_HEIGHT = 20;
@@ -71,6 +72,15 @@ const STANDARD_COLORS = [
 const TRANSPOSED_STANDARD_COLORS = Array.from({ length: 8 }, (_, rowIndex) =>
   Array.from({ length: 4 }, (_, columnIndex) => STANDARD_COLORS[columnIndex * 8 + rowIndex]),
 ).flat();
+
+/** The values the styles read: the picker's sizes and whether the palette sits beside it. */
+type Metrics = {
+  colorPickerSize: number;
+  colorPickerContentWidth: number;
+  sideBySideLayout: boolean;
+  standardColorsWidth: number;
+  colorCircleSize: number;
+};
 
 interface ColorPickerModalProps {
   currentColor: string;
@@ -230,122 +240,23 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     setValue(v);
   }, []);
 
-  const styles = StyleSheet.create({
-    colorPickerContainer: {
-      width: colorPickerContentWidth + 40, // Add some padding
-      backgroundColor: colors.background, // Use background color
-      flexShrink: 1,
-    },
-    scrollContent: {
-      alignItems: 'center',
-      padding: 20,
-    },
-    // Close and confirm live in the header, like the icon picker: no bottom action
-    // row wasting vertical room on short windows. The confirm button doubles as the
-    // live color preview, and the hex rides under the title - nothing below the
-    // sliders needs the room.
-    header: {
-      width: '100%',
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    titleWrap: {
-      flex: 1,
-      alignItems: 'center',
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      textAlign: 'center',
-    },
-    hexCaption: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      textAlign: 'center',
-    },
-    headerButton: {
-      padding: 5,
-    },
-    confirmButton: {
-      padding: 5,
-      borderRadius: 17,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    saturationValuePicker: {
-      width: colorPickerSize,
-      height: colorPickerSize,
-      borderRadius: 5,
-      overflow: 'hidden',
-      marginBottom: 20,
-    },
-    pickerHandle: {
-      position: 'absolute',
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 2,
-      borderColor: colors.text, // Use text color for handle border
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.3,
-      shadowRadius: 1,
-    },
-    hueSlider: {
-      width: colorPickerSize,
-      height: SLIDER_HEIGHT,
-      borderRadius: SLIDER_HEIGHT / 2,
-      overflow: 'hidden',
-      marginBottom: 20,
-    },
-    pickerWorkspace: {
-      width: colorPickerContentWidth,
-      flexDirection: sideBySideLayout ? 'row' : 'column',
-      alignItems: sideBySideLayout ? 'flex-start' : 'center',
-    },
-    pickerControls: {
-      width: colorPickerSize,
-      alignItems: 'center',
-    },
-    sliderHandle: {
-      position: 'absolute',
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 2,
-      borderColor: colors.text, // Use text color for handle border
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.3,
-      shadowRadius: 1,
-      top: (SLIDER_HEIGHT - 20) / 2, // Center vertically
-    },
-    standardColorsContainer: {
-      width: standardColorsWidth,
-      marginTop: sideBySideLayout ? 0 : 10,
-      marginBottom: 20,
-      marginLeft: sideBySideLayout ? 16 : 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    colorGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between', // Distribute items evenly
-    },
-    colorCircle: {
-      width: colorCircleSize,
-      height: colorCircleSize,
-      borderRadius: colorCircleSize / 2,
-      margin: 2.5, // Small margin between circles
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-  });
+  const metrics = useMemo<Metrics>(
+    () => ({
+      colorPickerSize,
+      colorPickerContentWidth,
+      sideBySideLayout,
+      standardColorsWidth,
+      colorCircleSize,
+    }),
+    [
+      colorPickerSize,
+      colorPickerContentWidth,
+      sideBySideLayout,
+      standardColorsWidth,
+      colorCircleSize,
+    ],
+  );
+  const styles = useThemedStyles(createStyles, [metrics]);
 
   return (
     <ScrollView
@@ -446,5 +357,123 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors, [m]: [Metrics]) =>
+  StyleSheet.create({
+    colorPickerContainer: {
+      width: m.colorPickerContentWidth + 40, // Add some padding
+      backgroundColor: colors.background, // Use background color
+      flexShrink: 1,
+    },
+    scrollContent: {
+      alignItems: 'center',
+      padding: 20,
+    },
+    // Close and confirm live in the header, like the icon picker: no bottom action
+    // row wasting vertical room on short windows. The confirm button doubles as the
+    // live color preview, and the hex rides under the title - nothing below the
+    // sliders needs the room.
+    header: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    titleWrap: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: colors.text,
+      textAlign: 'center',
+    },
+    hexCaption: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    headerButton: {
+      padding: 5,
+    },
+    confirmButton: {
+      padding: 5,
+      borderRadius: 17,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    saturationValuePicker: {
+      width: m.colorPickerSize,
+      height: m.colorPickerSize,
+      borderRadius: 5,
+      overflow: 'hidden',
+      marginBottom: 20,
+    },
+    pickerHandle: {
+      position: 'absolute',
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: colors.text, // Use text color for handle border
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.3,
+      shadowRadius: 1,
+    },
+    hueSlider: {
+      width: m.colorPickerSize,
+      height: SLIDER_HEIGHT,
+      borderRadius: SLIDER_HEIGHT / 2,
+      overflow: 'hidden',
+      marginBottom: 20,
+    },
+    pickerWorkspace: {
+      width: m.colorPickerContentWidth,
+      flexDirection: m.sideBySideLayout ? 'row' : 'column',
+      alignItems: m.sideBySideLayout ? 'flex-start' : 'center',
+    },
+    pickerControls: {
+      width: m.colorPickerSize,
+      alignItems: 'center',
+    },
+    sliderHandle: {
+      position: 'absolute',
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: colors.text, // Use text color for handle border
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.3,
+      shadowRadius: 1,
+      top: (SLIDER_HEIGHT - 20) / 2, // Center vertically
+    },
+    standardColorsContainer: {
+      width: m.standardColorsWidth,
+      marginTop: m.sideBySideLayout ? 0 : 10,
+      marginBottom: 20,
+      marginLeft: m.sideBySideLayout ? 16 : 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    colorGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between', // Distribute items evenly
+    },
+    colorCircle: {
+      width: m.colorCircleSize,
+      height: m.colorCircleSize,
+      borderRadius: m.colorCircleSize / 2,
+      margin: 2.5, // Small margin between circles
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+  });
 
 export default ColorPickerModal;

@@ -13,8 +13,10 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { getCommonInputStyles } from '../../theme/commonStyles';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { usePackFormActions } from './usePackFormActions';
 import { usePackFormResources } from './usePackFormResources';
 import { usePackFormState } from './usePackFormState';
@@ -74,19 +76,7 @@ const PackFormScreen = () => {
     navigation,
   });
 
-  const styles = StyleSheet.create({
-    switchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 14,
-    },
-    switchLabels: { flex: 1, marginRight: 12 },
-    label: { fontSize: 16, fontWeight: 'bold', color: colors.text },
-    switchHint: { color: colors.textSecondary, fontSize: 13 },
-    nested: { marginLeft: 18 },
-    cancelButton: { backgroundColor: colors.secondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (storiesLoading || loading) {
     return <ScreenLoading />;
@@ -202,5 +192,20 @@ const PackFormScreen = () => {
     </EntityFormContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 14,
+    },
+    switchLabels: { flex: 1, marginRight: 12 },
+    label: { ...typography.sectionTitle, color: colors.text },
+    switchHint: { color: colors.textSecondary, fontSize: 13 },
+    nested: { marginLeft: 18 },
+    cancelButton: { backgroundColor: colors.secondary },
+  });
 
 export default PackFormScreen;

@@ -19,8 +19,10 @@ import type { StorySettingsStackParamList } from '../../navigation/StorySettings
 import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
@@ -83,68 +85,7 @@ const StorySchemaListScreen = () => {
 
   const commonContainerStyles = getCommonContainerStyles(colors);
 
-  const styles = StyleSheet.create({
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-      height: 42,
-    },
-    description: {
-      color: colors.textSecondary,
-      marginBottom: 20,
-    },
-    tabsContainer: {
-      flexGrow: 0,
-      marginBottom: 10,
-    },
-    tab: {
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 20,
-      marginRight: 8,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    tabActive: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    tabText: {
-      color: colors.text,
-      fontSize: 14,
-    },
-    tabTextActive: {
-      color: colors.onPrimary,
-      fontWeight: 'bold',
-    },
-    fieldRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 8,
-    },
-    fieldName: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    fieldMeta: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-    actionButton: { padding: 8, marginLeft: 4 },
-    emptyText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 30,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const handleDelete = useCallback(
     (field: StorySchemaFieldSelect) => {
@@ -282,5 +223,68 @@ const StorySchemaListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 5,
+      height: 42,
+    },
+    description: {
+      color: colors.textSecondary,
+      marginBottom: 20,
+    },
+    tabsContainer: {
+      flexGrow: 0,
+      marginBottom: 10,
+    },
+    tab: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      marginRight: 8,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    tabActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    tabText: {
+      color: colors.text,
+      fontSize: 14,
+    },
+    tabTextActive: {
+      color: colors.onPrimary,
+      fontWeight: 'bold',
+    },
+    fieldRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 8,
+    },
+    fieldName: {
+      ...typography.sectionTitle,
+      color: colors.text,
+    },
+    fieldMeta: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    actionButton: { padding: 8, marginLeft: 4 },
+    emptyText: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 30,
+    },
+  });
 
 export default StorySchemaListScreen;

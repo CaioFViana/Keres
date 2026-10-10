@@ -11,8 +11,10 @@ import type { StoryShareStackParamList } from '../../navigation/StoryShareStack'
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useHeaderBackActionStore } from '../../state/headerBackActionStore';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { isServerless } from '../../utils/clientFlavor';
 
 /**
@@ -33,41 +35,7 @@ const StoryShareIndexScreen = () => {
 
   useScreenHeader({ target: 'parent', title: t('story_share_title') });
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    content: { padding: 20, paddingBottom: 60 },
-    // Where the story can go: cards side by side when there is room, one under the other when there is not.
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 },
-    gridCard: { flexGrow: 1, flexBasis: 320, marginBottom: 0 },
-    intro: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginBottom: 8 },
-    card: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: 10,
-      borderWidth: StyleSheet.hairlineWidth,
-      marginBottom: 12,
-      padding: 14,
-    },
-    cardDisabled: { opacity: 0.6 },
-    cardRow: { alignItems: 'center', flexDirection: 'row', gap: 12 },
-    cardBody: { flex: 1 },
-    cardTitle: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
-    cardDescription: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginTop: 2 },
-    options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-    option: {
-      alignItems: 'center',
-      borderColor: colors.primary,
-      borderRadius: 8,
-      borderWidth: 1,
-      flexDirection: 'row',
-      gap: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 9,
-    },
-    optionDisabled: { opacity: 0.5 },
-    optionLabel: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-    note: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 8 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   // Both screens are opened from the dashboard too, which leaves a way back to the dashboard for them. Opened from
   // here, back must come back here.
@@ -169,5 +137,42 @@ const StoryShareIndexScreen = () => {
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    content: { padding: 20, paddingBottom: 60 },
+    // Where the story can go: cards side by side when there is room, one under the other when there is not.
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 },
+    gridCard: { flexGrow: 1, flexBasis: 320, marginBottom: 0 },
+    intro: { ...typography.body, color: colors.textSecondary, marginBottom: 8 },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: 10,
+      borderWidth: StyleSheet.hairlineWidth,
+      marginBottom: 12,
+      padding: 14,
+    },
+    cardDisabled: { opacity: 0.6 },
+    cardRow: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+    cardBody: { flex: 1 },
+    cardTitle: { ...typography.sectionTitle, color: colors.text },
+    cardDescription: { ...typography.hint, color: colors.textSecondary, marginTop: 2 },
+    options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+    option: {
+      alignItems: 'center',
+      borderColor: colors.primary,
+      borderRadius: 8,
+      borderWidth: 1,
+      flexDirection: 'row',
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 9,
+    },
+    optionDisabled: { opacity: 0.5 },
+    optionLabel: { ...typography.label, color: colors.primary },
+    note: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 8 },
+  });
 
 export default StoryShareIndexScreen;

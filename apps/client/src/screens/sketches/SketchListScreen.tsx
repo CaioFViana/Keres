@@ -30,9 +30,10 @@ import { createGalleryService } from '../../services/storymanagement/GalleryServ
 import { createSketchService } from '../../services/storymanagement/SketchService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -96,7 +97,6 @@ const SketchListScreen = () => {
   useScreenTour('SketchStack');
   const listAnchorRef = useScreenAnchor('Sketches', 'list');
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const navigation = useNavigation<Navigation>();
   const db = useDrizzle();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
@@ -151,16 +151,7 @@ const SketchListScreen = () => {
     ],
   });
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    searchContainer: { padding: 10 },
-    empty: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 32,
-      paddingHorizontal: 24,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const filteredSketches = useMemo(
     () => filterByNameAndDescription(sketches, searchQuery),
@@ -291,5 +282,17 @@ const SketchListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    searchContainer: { padding: 10 },
+    empty: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 32,
+      paddingHorizontal: 24,
+    },
+  });
 
 export default SketchListScreen;

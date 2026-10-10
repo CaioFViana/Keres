@@ -18,8 +18,11 @@ import { packApiService, type RemotePack } from '../../services/PackApiService';
 import { createServerService } from '../../services/ServerService';
 import { createPackService } from '../../services/storymanagement/PackService';
 import { useNotificationStore } from '../../state/notificationStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
+import { layout } from '../../theme/layout';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 /**
  * Packs shared on a server.
@@ -106,39 +109,11 @@ const PackBrowseScreen = () => {
     [server, drizzleDb, showNotification, t],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    ...commonDetailStyleDefs(colors),
-    content: { padding: 20, paddingBottom: 60 },
-    description: { fontSize: 14, color: colors.textSecondary, marginBottom: 14, lineHeight: 20 },
-    card: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      marginBottom: 10,
-      backgroundColor: colors.surface,
-    },
-    cardHeader: { flexDirection: 'row', alignItems: 'center' },
-    cardTitle: { fontSize: 16, fontWeight: 'bold', color: colors.text, marginLeft: 8, flex: 1 },
-    cardMeta: { fontSize: 12, color: colors.textSecondary, fontStyle: 'italic', marginTop: 2 },
-    cardDescription: { fontSize: 13, color: colors.textSecondary, marginTop: 6 },
-    downloadRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
-    downloadButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderRadius: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 14,
-      backgroundColor: colors.primary,
-    },
-    downloadText: { color: colors.onPrimary, fontWeight: 'bold', marginLeft: 6 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderPack = ({ item }: { item: RemotePack }) => (
     <View style={styles.card}>
-      <View style={styles.cardHeader}>
+      <View style={layout.row}>
         <Ionicons name="cloud-download-outline" size={20} color={colors.primary} />
         <Text style={styles.cardTitle} numberOfLines={1}>
           {item.name}
@@ -202,5 +177,49 @@ const PackBrowseScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
+    content: { padding: 20, paddingBottom: 60 },
+    description: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 14,
+    },
+    card: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      marginBottom: 10,
+      backgroundColor: colors.surface,
+    },
+    cardTitle: {
+      ...typography.sectionTitle,
+      color: colors.text,
+      marginLeft: 8,
+      flex: 1,
+    },
+    cardMeta: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      marginTop: 2,
+    },
+    cardDescription: { fontSize: 13, color: colors.textSecondary, marginTop: 6 },
+    downloadRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
+    downloadButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      backgroundColor: colors.primary,
+    },
+    downloadText: { color: colors.onPrimary, fontWeight: 'bold', marginLeft: 6 },
+  });
 
 export default PackBrowseScreen;

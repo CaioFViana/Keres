@@ -19,8 +19,10 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { PublishManuscriptSection } from './PublishManuscriptSection';
 import { buildStoryPublicUrl, useStoryPublishing } from './useStoryPublishing';
 
@@ -53,80 +55,7 @@ const StoryPublishScreen = () => {
     }, [load]),
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    content: { padding: 20, paddingBottom: 60 },
-    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 32 },
-    column: { flex: 1, minWidth: 0 },
-    description: { fontSize: 14, color: colors.textSecondary, marginBottom: 16, lineHeight: 20 },
-    card: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: 10,
-      borderWidth: StyleSheet.hairlineWidth,
-      marginBottom: 20,
-      padding: 14,
-    },
-    statusRow: { alignItems: 'center', flexDirection: 'row', gap: 12 },
-    statusBody: { flex: 1 },
-    statusTitle: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
-    statusMeta: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
-    blocked: { color: colors.error, fontSize: 13, lineHeight: 18, marginTop: 10 },
-    label: { fontSize: 13, fontWeight: 'bold', color: colors.text, marginBottom: 8 },
-    modeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-    modeOption: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      borderRadius: 6,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-    },
-    modeOptionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-    modeText: { fontSize: 13, color: colors.text },
-    modeTextActive: { color: colors.onPrimary, fontWeight: 'bold' },
-    switchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 10,
-    },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: -4, marginBottom: 16 },
-    publishButton: { marginTop: 8 },
-    primaryButtonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-    primaryButtonText: {
-      color: colors.onPrimary,
-      fontSize: 15,
-      fontWeight: 'bold',
-      marginLeft: 8,
-    },
-    linkText: { fontSize: 13, color: colors.text, marginBottom: 8 },
-    linkActions: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 20, rowGap: 8 },
-    linkButton: { flexDirection: 'row', alignItems: 'center', minHeight: 32 },
-    linkButtonText: { color: colors.primary, fontSize: 13, marginLeft: 6 },
-    versionRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 9,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.border,
-    },
-    versionInfo: { flex: 1 },
-    versionLabel: { fontSize: 14, color: colors.text },
-    versionMeta: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    unpublishButton: { marginTop: 24, alignItems: 'flex-start' },
-    published: { marginTop: 24 },
-    outlineButton: {
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-      borderColor: colors.primary,
-      borderRadius: 8,
-      borderWidth: 1,
-      marginTop: 12,
-      paddingHorizontal: 14,
-      paddingVertical: 9,
-    },
-    outlineButtonText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (publishing.loading) return <ScreenLoading />;
   if (publishing.error) return <ScreenError message={publishing.error} padded />;
@@ -353,5 +282,81 @@ const StoryPublishScreen = () => {
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    content: { padding: 20, paddingBottom: 60 },
+    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 32 },
+    column: { flex: 1, minWidth: 0 },
+    description: { ...typography.body, color: colors.textSecondary, marginBottom: 16 },
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: 10,
+      borderWidth: StyleSheet.hairlineWidth,
+      marginBottom: 20,
+      padding: 14,
+    },
+    statusRow: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+    statusBody: { flex: 1 },
+    statusTitle: { ...typography.sectionTitle, color: colors.text },
+    statusMeta: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
+    blocked: { ...typography.hint, color: colors.error, marginTop: 10 },
+    label: { fontSize: 13, fontWeight: 'bold', color: colors.text, marginBottom: 8 },
+    modeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+    modeOption: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    modeOptionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    modeText: { fontSize: 13, color: colors.text },
+    modeTextActive: { color: colors.onPrimary, fontWeight: 'bold' },
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    hint: { ...typography.caption, color: colors.textSecondary, marginTop: -4, marginBottom: 16 },
+    publishButton: { marginTop: 8 },
+    primaryButtonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+    primaryButtonText: {
+      color: colors.onPrimary,
+      fontSize: 15,
+      fontWeight: 'bold',
+      marginLeft: 8,
+    },
+    linkText: { fontSize: 13, color: colors.text, marginBottom: 8 },
+    linkActions: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 20, rowGap: 8 },
+    linkButton: { flexDirection: 'row', alignItems: 'center', minHeight: 32 },
+    linkButtonText: { color: colors.primary, fontSize: 13, marginLeft: 6 },
+    versionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 9,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    versionInfo: { flex: 1 },
+    versionLabel: { fontSize: 14, color: colors.text },
+    versionMeta: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+    unpublishButton: { marginTop: 24, alignItems: 'flex-start' },
+    published: { marginTop: 24 },
+    outlineButton: {
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      borderColor: colors.primary,
+      borderRadius: 8,
+      borderWidth: 1,
+      marginTop: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+    },
+    outlineButtonText: { ...typography.label, color: colors.primary },
+  });
 
 export default StoryPublishScreen;

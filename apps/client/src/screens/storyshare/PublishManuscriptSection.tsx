@@ -7,7 +7,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import ManuscriptExportOptions from '../../components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import { SCREENPLAY_EXPORT_FORMATS } from '../../components/features/manuscript/export/manuscriptExport';
 import { SERVER_MANUSCRIPT_FORMATS } from '../../services/PublicationApiService';
-import { useTheme } from '../../theme';
+import type { ThemeColors } from '../../theme';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import type { PublishManuscriptState } from './usePublishManuscript';
 
 /**
@@ -26,21 +28,7 @@ export function PublishManuscriptSection({
   const storyType = story.type;
   const { term } = useStoryVocabulary();
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    switchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 10,
-    },
-    label: { fontSize: 13, fontWeight: 'bold', color: colors.text, marginBottom: 8 },
-    selectOne: { fontSize: 13, fontWeight: 'bold', color: colors.textSecondary, marginBottom: 10 },
-    selectOneMissing: { color: colors.error },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: -4, marginBottom: 12 },
-    options: { marginBottom: 16 },
-    release: { marginBottom: 14 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const branching = storyType === 'branching';
   const works = manuscript.manuscriptArcs;
@@ -135,3 +123,19 @@ export function PublishManuscriptSection({
     </>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    label: { fontSize: 13, fontWeight: 'bold', color: colors.text, marginBottom: 8 },
+    selectOne: { fontSize: 13, fontWeight: 'bold', color: colors.textSecondary, marginBottom: 10 },
+    selectOneMissing: { color: colors.error },
+    hint: { ...typography.caption, color: colors.textSecondary, marginTop: -4, marginBottom: 12 },
+    options: { marginBottom: 16 },
+    release: { marginBottom: 14 },
+  });

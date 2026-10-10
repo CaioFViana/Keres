@@ -29,7 +29,9 @@ import { createSongService } from '../../services/storymanagement/SongService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { deliverFile, pickTextFile } from '../../utils/storyTransfer';
 
 type Navigation = NativeStackNavigationProp<SongStackParamList, 'SongList'>;
@@ -206,25 +208,9 @@ const SongListScreen = () => {
     ],
   });
 
-  if (loading) return <ScreenLoading padded message={t('loading')} />;
+  const styles = useThemedStyles(createStyles);
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16 },
-    row: {
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: 10,
-      borderWidth: 1,
-      flexDirection: 'row',
-      gap: 12,
-      marginBottom: 10,
-      padding: 12,
-    },
-    name: { color: colors.text, flexShrink: 1, fontSize: 16, fontWeight: '700' },
-    facts: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
-    empty: { color: colors.textSecondary, marginVertical: 32, textAlign: 'center' },
-  });
+  if (loading) return <ScreenLoading padded message={t('loading')} />;
 
   return (
     <View style={styles.container} ref={listAnchorRef} collapsable={false}>
@@ -280,5 +266,24 @@ const SongListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, padding: 16 },
+    row: {
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: 10,
+      borderWidth: 1,
+      flexDirection: 'row',
+      gap: 12,
+      marginBottom: 10,
+      padding: 12,
+    },
+    name: { ...typography.sectionTitle, color: colors.text, flexShrink: 1 },
+    facts: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
+    empty: { color: colors.textSecondary, marginVertical: 32, textAlign: 'center' },
+  });
 
 export default SongListScreen;

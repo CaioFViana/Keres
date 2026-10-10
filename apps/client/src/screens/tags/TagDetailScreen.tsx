@@ -30,7 +30,9 @@ import { EntityService } from '../../services/EntityService'; // Import EntitySe
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import createTagRelationService
 import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
 import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
-import { useTheme } from '../../theme';
+import type { ThemeColors } from '../../theme';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 import type { TagsScreenNavigationProp } from './TagListScreen';
 
@@ -43,7 +45,6 @@ type TagDetailScreenRouteProp = RouteProp<TagDetailScreenParamList, 'TagDetail'>
 
 const TagDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
   const navigation = useNavigation<TagsScreenNavigationProp>();
   const route = useRoute<TagDetailScreenRouteProp>();
   const { tagId, occurrence } = route.params;
@@ -102,26 +103,7 @@ const TagDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
-  const styles = StyleSheet.create({
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    colorDisplayContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 10,
-    },
-    colorCircle: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.textSecondary,
-      marginRight: 10,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchTag = useCallback(async () => {
     if (!tagServiceRef.current) {
@@ -334,5 +316,27 @@ const TagDetailScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    detailText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      marginBottom: 5,
+    },
+    colorDisplayContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    colorCircle: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.textSecondary,
+      marginRight: 10,
+    },
+  });
 
 export default TagDetailScreen;

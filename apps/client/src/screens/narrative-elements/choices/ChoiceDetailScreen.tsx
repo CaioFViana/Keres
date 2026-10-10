@@ -45,7 +45,9 @@ import { createEffectService } from '../../../services/storymanagement/EffectSer
 import { createItemService } from '../../../services/storymanagement/ItemService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useStoryStore } from '../../../state/storyStore';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { layout } from '../../../theme/layout';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
@@ -130,21 +132,7 @@ const ChoiceDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const styles = StyleSheet.create({
-    sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: colors.surface,
-    },
-    choiceEffectContainer: { marginBottom: 20 },
-    checkRow: { color: colors.text, marginTop: 4 },
-    groupLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
-    sceneLink: { flexDirection: 'row', alignItems: 'center' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchChoice = useCallback(async () => {
     if (!choiceServiceRef.current) {
@@ -319,7 +307,7 @@ const ChoiceDetailScreen = () => {
     <>
       <TouchableOpacity
         onPress={() => handleScenePress(choice.sceneId)}
-        style={styles.sceneLink}
+        style={layout.row}
         activeOpacity={0.7}
       >
         <View style={{ flex: 1 }}>
@@ -333,7 +321,7 @@ const ChoiceDetailScreen = () => {
 
       <TouchableOpacity
         onPress={() => handleScenePress(choice.nextSceneId)}
-        style={styles.sceneLink}
+        style={layout.row}
         activeOpacity={0.7}
       >
         <View style={{ flex: 1 }}>
@@ -440,5 +428,21 @@ const ChoiceDetailScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
+    choiceEffectContainer: { marginBottom: 20 },
+    checkRow: { color: colors.text, marginTop: 4 },
+    groupLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
+  });
 
 export default ChoiceDetailScreen;

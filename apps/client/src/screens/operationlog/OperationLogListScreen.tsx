@@ -16,7 +16,8 @@ import type {
   OperationLogStackParamList,
 } from '../../navigation/MainSystemStack'; // Use MainSystemDrawerParamList
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+import type { ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import entityEventEmitter
 
 // Redefine OperationLogScreenNavigationProp as CompositeNavigationProp
@@ -29,7 +30,6 @@ const OperationLogScreen: React.FC = () => {
   useBackButtonHandler();
   useScreenTour('OperationLogStack');
   const listAnchorRef = useScreenAnchor('OperationLog', 'list');
-  const { colors } = useTheme();
   const { t } = useTranslation();
 
   const navigateAcross = useNavigateAcrossStacks();
@@ -67,18 +67,7 @@ const OperationLogScreen: React.FC = () => {
     };
   }, [selectedStory?.id]);
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    noStoryContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    noStoryText: {
-      fontSize: 18,
-      color: colors.textSecondary,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (!selectedStory?.id) {
     return (
@@ -101,5 +90,19 @@ const OperationLogScreen: React.FC = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    noStoryContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    noStoryText: {
+      fontSize: 18,
+      color: colors.textSecondary,
+    },
+  });
 
 export default OperationLogScreen;

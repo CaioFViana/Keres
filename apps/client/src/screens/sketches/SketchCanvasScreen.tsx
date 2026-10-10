@@ -57,7 +57,8 @@ import { isObjectTool, useSketchToolStore, type SketchTool } from '../../state/s
 import { useHeaderBackActionStore } from '../../state/headerBackActionStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 /** Placeholder until the row loads; never rendered or saved. */
 const EMPTY_DOC: SketchDocument = {
@@ -392,7 +393,7 @@ const SketchCanvasScreen = () => {
     [alphaByBrush, brush, color, sizeByBrush],
   );
 
-  const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: colors.background } });
+  const styles = useThemedStyles(createStyles);
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !sketch) {
@@ -548,5 +549,10 @@ const SketchCanvasScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+  });
 
 export default SketchCanvasScreen;

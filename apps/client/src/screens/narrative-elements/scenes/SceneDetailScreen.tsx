@@ -32,7 +32,8 @@ import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
 } from '../../../hooks/useEntityRefreshLifecycle';
-import { useTheme } from '../../../theme';
+import { type ThemeColors, useTheme } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import type { NarrativeElementsScreenNavigationProp } from '../chapters/NarrativeElementsListScreen';
 import { describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
@@ -114,27 +115,7 @@ const SceneDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
   const [hasBodyDraft, setHasBodyDraft] = useState(false);
 
-  const styles = StyleSheet.create({
-    subTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      marginBottom: 15,
-    },
-    locationLink: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: colors.surface,
-    },
-    checkRow: { color: colors.text, marginTop: 4 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchScene = useCallback(async () => {
     if (!sceneServiceRef.current) {
@@ -632,4 +613,28 @@ const SceneDetailScreen = () => {
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    subTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 15,
+    },
+    locationLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
+    checkRow: { color: colors.text, marginTop: 4 },
+  });
+
 export default SceneDetailScreen;

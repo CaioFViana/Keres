@@ -35,7 +35,8 @@ import { useChapterStore } from '../../../state/chapterStore';
 import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { useTheme } from '../../../theme';
+import type { ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
 import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
@@ -62,7 +63,6 @@ const NarrativeElementsListScreen = () => {
   const listAnchorRef = useScreenAnchor('NarrativeElements', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const activeArcId = useStoryStore((state) => state.activeArcId);
@@ -432,7 +432,7 @@ const NarrativeElementsListScreen = () => {
     [outlineChapters, reorderingType],
   );
 
-  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -593,5 +593,8 @@ const NarrativeElementsListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
 export default NarrativeElementsListScreen;

@@ -26,7 +26,8 @@ import type {
   PlotsStackParamList,
 } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+import type { ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export type PlotsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'PlotsStack'>,
@@ -45,7 +46,6 @@ const PlotListScreen = () => {
   useScreenTour('PlotsStack');
   const listAnchorRef = useScreenAnchor('Plots', 'list');
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
@@ -57,9 +57,7 @@ const PlotListScreen = () => {
   const [activeSort, setActiveSort] = useState<string | null>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-  });
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -201,5 +199,10 @@ const PlotListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+  });
 
 export default PlotListScreen;

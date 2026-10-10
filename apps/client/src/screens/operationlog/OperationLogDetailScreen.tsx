@@ -23,7 +23,10 @@ import type { OperationLogStackParamList } from '../../navigation/MainSystemStac
 import { EntityService } from '../../services/EntityService';
 import { createOperationLogService } from '../../services/OperationLogService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { layout } from '../../theme/layout';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
@@ -125,101 +128,7 @@ const OperationLogDetailScreen: React.FC = () => {
     operationLog?.storyId || '',
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    scrollViewContent: {
-      padding: 15,
-      paddingBottom: 30,
-    },
-    headerCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      padding: 16,
-      marginBottom: 20,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    headerTopRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    headerTitle: {
-      fontSize: 19,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginLeft: 8,
-      flexShrink: 1,
-    },
-    headerSubtitle: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginTop: 2,
-      marginLeft: 30,
-      textTransform: 'uppercase',
-      letterSpacing: 0.3,
-    },
-    metaRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 10,
-    },
-    metaIcon: {
-      marginRight: 8,
-    },
-    metaText: {
-      fontSize: 14,
-      color: colors.text,
-    },
-    changeCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: 12,
-      marginBottom: 8,
-    },
-    changeLabel: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: colors.textSecondary,
-      textTransform: 'uppercase',
-      letterSpacing: 0.3,
-      marginBottom: 4,
-    },
-    changeValueRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    changeValue: {
-      fontSize: 16,
-      color: colors.text,
-      flexShrink: 1,
-    },
-    emptyValue: {
-      fontSize: 16,
-      color: colors.textSecondary,
-      fontStyle: 'italic',
-    },
-    jsonValue: {
-      fontSize: 13,
-      color: colors.text,
-      fontFamily: 'monospace',
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-    },
-    errorText: {
-      color: colors.error,
-      textAlign: 'center',
-      marginTop: 20,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (loading || mainEntityLoading) {
     return (
@@ -250,7 +159,7 @@ const OperationLogDetailScreen: React.FC = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.headerCard}>
-          <View style={styles.headerTopRow}>
+          <View style={layout.row}>
             <Ionicons
               name={getOperationIcon(operationLog.operationType)}
               size={22}
@@ -313,7 +222,7 @@ const OperationLogDetailScreen: React.FC = () => {
                 return (
                   <View key={key} style={styles.changeCard}>
                     <Text style={styles.changeLabel}>{label}</Text>
-                    <View style={styles.changeValueRow}>
+                    <View style={layout.row}>
                       {value === null || value === undefined ? (
                         <Text style={styles.emptyValue}>{t('conflict_empty_value')}</Text>
                       ) : typeof value === 'boolean' ? (
@@ -357,6 +266,95 @@ const OperationLogDetailScreen: React.FC = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    scrollViewContent: {
+      padding: 15,
+      paddingBottom: 30,
+    },
+    headerCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 10,
+      padding: 16,
+      marginBottom: 20,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    headerTitle: {
+      fontSize: 19,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginLeft: 8,
+      flexShrink: 1,
+    },
+    headerSubtitle: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+      marginLeft: 30,
+      textTransform: 'uppercase',
+      letterSpacing: 0.3,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    metaIcon: {
+      marginRight: 8,
+    },
+    metaText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    changeCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 12,
+      marginBottom: 8,
+    },
+    changeLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.3,
+      marginBottom: 4,
+    },
+    changeValue: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    emptyValue: {
+      ...typography.bodyLarge,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+    },
+    jsonValue: {
+      fontSize: 13,
+      color: colors.text,
+      fontFamily: 'monospace',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    errorText: {
+      color: colors.error,
+      textAlign: 'center',
+      marginTop: 20,
+    },
+  });
 
 /**
  * Resolves a reference ID inside the payload into the name of the entity it points at, through

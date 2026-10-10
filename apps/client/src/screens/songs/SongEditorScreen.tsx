@@ -52,8 +52,10 @@ import type { SongStackParamList } from '../../navigation/MainSystemStacks';
 import { createSongService } from '../../services/storymanagement/SongService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { deliverFile } from '../../utils/storyTransfer';
 
 type RouteProps = RouteProp<SongStackParamList, 'SongEditor'>;
@@ -257,6 +259,8 @@ const SongEditorScreen = () => {
     ],
   });
 
+  const styles = useThemedStyles(createStyles);
+
   if (song === undefined) return <ScreenLoading padded message={t('loading')} />;
   if (song === null) {
     return (
@@ -266,18 +270,6 @@ const SongEditorScreen = () => {
 
   const container = getCommonContainerStyles(colors).container;
   const editable = !!canEdit;
-  const styles = StyleSheet.create({
-    label: { color: colors.text, fontSize: 15, marginBottom: 6, marginTop: 14 },
-    hint: { color: colors.textSecondary, fontSize: 12, marginBottom: 6 },
-    error: { color: colors.error, marginTop: 8 },
-    use: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      minHeight: 44,
-    },
-    useName: { color: colors.primary, fontSize: 15 },
-  });
 
   const openScene = (sceneId: string) =>
     navigateAcross('NarrativeElementsStack', 'SceneDetail', { sceneId });
@@ -431,5 +423,19 @@ const SongEditorScreen = () => {
     </KeyboardAwareScreen>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    label: { color: colors.text, fontSize: 15, marginBottom: 6, marginTop: 14 },
+    hint: { ...typography.caption, color: colors.textSecondary, marginBottom: 6 },
+    error: { color: colors.error, marginTop: 8 },
+    use: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      minHeight: 44,
+    },
+    useName: { color: colors.primary, fontSize: 15 },
+  });
 
 export default SongEditorScreen;

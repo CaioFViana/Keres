@@ -33,8 +33,10 @@ import {
 } from '../../services/storymanagement/SuggestionService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+import { typography } from '../../theme/tokens';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
@@ -354,34 +356,7 @@ const SuggestionsScreen = () => {
     );
   };
 
-  const styles = StyleSheet.create({
-    description: { color: colors.textSecondary, marginBottom: 16 },
-    wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
-    /** Bounded pane so the values ScrollView can scroll instead of growing past the screen. */
-    contentPane: { flex: 1, minHeight: 0 },
-    key: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 },
-    inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 },
-    input: { flex: 1, marginBottom: 0, width: undefined },
-    valuesScroll: { flex: 1 },
-    valuesContent: { paddingBottom: 24 },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      height: 58,
-      paddingVertical: 11,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    value: { flex: 1, color: colors.text, fontSize: 16 },
-    storyValue: { flex: 1, color: colors.textSecondary, fontSize: 16 },
-    usage: { color: colors.textSecondary, fontSize: 14, marginRight: 4 },
-    icon: { padding: 7 },
-    copyList: { maxHeight: 280, marginBottom: 12 },
-    copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
-    copyLabel: { flex: 1, color: colors.text },
-    modalContent: { gap: 12 },
-    modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const groupsList = (
     <SuggestionGroupChooser
@@ -569,5 +544,35 @@ const SuggestionsScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    description: { color: colors.textSecondary, marginBottom: 16 },
+    wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
+    /** Bounded pane so the values ScrollView can scroll instead of growing past the screen. */
+    contentPane: { flex: 1, minHeight: 0 },
+    key: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 },
+    inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 },
+    input: { flex: 1, marginBottom: 0, width: undefined },
+    valuesScroll: { flex: 1 },
+    valuesContent: { paddingBottom: 24 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 58,
+      paddingVertical: 11,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    value: { ...typography.bodyLarge, flex: 1, color: colors.text },
+    storyValue: { ...typography.bodyLarge, flex: 1, color: colors.textSecondary },
+    usage: { color: colors.textSecondary, fontSize: 14, marginRight: 4 },
+    icon: { padding: 7 },
+    copyList: { maxHeight: 280, marginBottom: 12 },
+    copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
+    copyLabel: { flex: 1, color: colors.text },
+    modalContent: { gap: 12 },
+    modalTitle: { ...typography.title, color: colors.text },
+  });
 
 export default SuggestionsScreen;

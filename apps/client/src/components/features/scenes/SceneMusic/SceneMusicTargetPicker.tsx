@@ -14,6 +14,7 @@ import { useGalleryMedia } from '@/src/hooks/useGalleryMedia';
 import { useSongs } from '@/src/hooks/useSongs';
 import type { SceneMusicTarget } from '@/src/services/storymanagement/SceneMusicService';
 import { useTheme } from '@/src/theme';
+import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
 
 interface SceneMusicTargetPickerProps {
   visible: boolean;
@@ -158,10 +159,7 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
 };
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
-  tabs: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  tab: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6 },
-  list: { maxHeight: 380 },
+  ...scenePickerStyleDefs,
   row: {
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,

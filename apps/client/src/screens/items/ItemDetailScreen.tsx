@@ -1,7 +1,7 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -85,15 +85,7 @@ const ItemDetailScreen = () => {
 
   const [item, setItem] = useState<ItemSelect | null>(null);
   const { canEdit } = useStoryRole(item?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(item?.storyId, 'Item', itemId);
+  const comments = useEntityComments(item?.storyId, 'Item', itemId);
 
   const {
     selectedTags: itemTags,
@@ -210,17 +202,7 @@ const ItemDetailScreen = () => {
     ? allCharacters.find((c) => c.id === item.characterOwnerId)
     : undefined;
 
-  const commentField = createCommentFieldBindings({
-    storyId: item.storyId,
-    mentionSourceId: item.id,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(item.storyId, comments, item.id);
 
   const detailsPanel = (
     <>

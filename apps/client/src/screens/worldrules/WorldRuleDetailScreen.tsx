@@ -1,7 +1,7 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -71,15 +71,7 @@ const WorldRuleDetailScreen = () => {
 
   const [worldRule, setWorldRule] = useState<WorldRuleWithTags | null>(null);
   const { canEdit } = useStoryRole(worldRule?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(worldRule?.storyId, 'WorldRule', worldRuleId);
+  const comments = useEntityComments(worldRule?.storyId, 'WorldRule', worldRuleId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -187,16 +179,7 @@ const WorldRuleDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: worldRule.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(worldRule.storyId, comments);
 
   const detailsPanel = (
     <>

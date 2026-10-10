@@ -1,7 +1,7 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -103,15 +103,7 @@ const ChapterDetailScreen = () => {
   const { canEdit } = useStoryRole(chapter?.storyId);
   const { definition: calendar } = useStoryCalendar();
   const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(chapter?.storyId, 'Chapter', chapterId);
+  const comments = useEntityComments(chapter?.storyId, 'Chapter', chapterId);
 
   const {
     selectedTags: chapterTags,
@@ -289,16 +281,7 @@ const ChapterDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: chapter.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(chapter.storyId, comments);
 
   const detailsPanel = (
     <>
@@ -351,7 +334,7 @@ const ChapterDetailScreen = () => {
       <AnchorManager
         storyId={chapter.storyId}
         chapterId={chapterId}
-        currentUserId={currentUserId}
+        currentUserId={comments.currentUserId}
         editable={false}
       />
 

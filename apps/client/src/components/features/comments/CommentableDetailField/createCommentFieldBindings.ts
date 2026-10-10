@@ -25,3 +25,24 @@ export function createCommentFieldBindings({ commentsByField, addComment, ...com
     onAddComment: (input) => addComment({ fieldKey }, { ...input, contentSnapshot: value }),
   });
 }
+
+type EntityComments = ReturnType<typeof useEntityComments>;
+
+/** The bindings of a detail screen's fields, from what `useEntityComments` returned for the entity. */
+export function createEntityCommentFieldBindings(
+  storyId: string,
+  comments: EntityComments,
+  mentionSourceId?: string,
+) {
+  return createCommentFieldBindings({
+    storyId,
+    mentionSourceId,
+    canComment: comments.canComment,
+    isStoryOwner: comments.isStoryOwner,
+    currentUserId: comments.currentUserId,
+    onDeleteComment: comments.deleteComment,
+    onUpdateComment: comments.updateComment,
+    commentsByField: comments.commentsByField,
+    addComment: comments.addComment,
+  });
+}

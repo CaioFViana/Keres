@@ -1,7 +1,7 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -88,15 +88,7 @@ const NoteDetailScreen = () => {
 
   const [note, setNote] = useState<NoteSelect | null>(null);
   const { canEdit } = useStoryRole(note?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(note?.storyId, 'Note', noteId);
+  const comments = useEntityComments(note?.storyId, 'Note', noteId);
   const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
   const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
   const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
@@ -311,16 +303,7 @@ const NoteDetailScreen = () => {
     );
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: note.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(note.storyId, comments);
 
   const detailsPanel = (
     <>

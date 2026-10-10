@@ -1,7 +1,7 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -136,15 +136,7 @@ const ItemJourneyDetailScreen = () => {
 
   const [itemJourney, setItemJourney] = useState<ItemJourneySelect | null>(null);
   const { canEdit } = useStoryRole(itemJourney?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(itemJourney?.storyId, 'ItemJourney', itemJourneyId);
+  const comments = useEntityComments(itemJourney?.storyId, 'ItemJourney', itemJourneyId);
 
   const {
     selectedTags: itemJourneyTags,
@@ -274,16 +266,7 @@ const ItemJourneyDetailScreen = () => {
     );
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: itemJourney.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(itemJourney.storyId, comments);
 
   const detailsPanel = (
     <>

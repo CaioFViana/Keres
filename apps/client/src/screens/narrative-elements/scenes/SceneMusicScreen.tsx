@@ -2,7 +2,7 @@ import { DEFAULT_SECTION_WORDS, parseMelody, type SceneMusicRole } from '@keres/
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -14,7 +14,6 @@ import SceneMusicCard from '@/src/components/features/scenes/SceneMusic/SceneMus
 import SceneMusicTargetPicker from '@/src/components/features/scenes/SceneMusic/SceneMusicTargetPicker';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
-import type { SceneSelect } from '@/src/db/schema';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
@@ -22,8 +21,10 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
-import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
 import { useSceneMusic } from '@/src/hooks/useSceneMusic';
+import { useSceneRecord } from '@/src/hooks/useSceneRecord';
+import { useSaveAttempt } from '@/src/hooks/useSaveAttempt';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
 import { useSongPlayback } from '@/src/hooks/useSongPlayback';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
@@ -32,7 +33,6 @@ import {
   createSceneMusicService,
   type SceneMusicTarget,
 } from '@/src/services/storymanagement/SceneMusicService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { createSongService } from '@/src/services/storymanagement/SongService';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
@@ -61,7 +61,7 @@ const SceneMusicScreen = () => {
   const { showNotification } = useNotificationStore();
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
-  const [scene, setScene] = useState<SceneSelect | null | undefined>(undefined);
+  const scene = useSceneRecord(sceneId);
   const { canEdit } = useStoryRole(scene?.storyId);
   const medium = useSceneArcMedium(scene ?? { chapterId: null });
   const { views, loading } = useSceneMusic(sceneId, scene?.storyId);
@@ -69,33 +69,8 @@ const SceneMusicScreen = () => {
   const playback = useSongPlayback();
   const openMedia = useOpenGalleryMediaViewer();
 
-  useEffect(() => {
-    let alive = true;
-    void createSceneService(db)
-      .getById(sceneId)
-      .then((row) => {
-        if (alive) setScene(row && !row.isDeleted ? row : null);
-      })
-      .catch(() => {
-        if (alive) setScene(null);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [db, sceneId]);
-
   const service = createSceneMusicService(db);
-  const attempt = useCallback(
-    async (work: () => Promise<unknown>, logLabel: string) => {
-      try {
-        await work();
-      } catch (error) {
-        console.log(`SceneMusicScreen: failed to ${logLabel}.`, error);
-        showNotification(t('scene_music_save_failed'), 'error');
-      }
-    },
-    [showNotification, t],
-  );
+  const attempt = useSaveAttempt('SceneMusicScreen', 'scene_music_save_failed');
 
   // Hears a song the way this scene sings it: the parts it names, hummed, or on a piano when the
   // song has chords and no tune yet.

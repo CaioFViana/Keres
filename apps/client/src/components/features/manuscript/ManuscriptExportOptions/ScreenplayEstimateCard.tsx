@@ -3,8 +3,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ThemeColors } from '@/src/theme';
-import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { estimateCardStyleDefs } from './estimateCardStyles';
 
 interface ScreenplayEstimateCardProps {
   estimate: ScreenplayEstimate;
@@ -65,19 +65,6 @@ const ScreenplayEstimateCard: React.FC<ScreenplayEstimateCardProps> = ({ estimat
 };
 
 const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    card: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: 8,
-      borderWidth: 1,
-      gap: 4,
-      marginTop: 12,
-      padding: 12,
-    },
-    headline: { ...typography.title, color: colors.text },
-    sub: { color: colors.textSecondary, lineHeight: 19 },
-    heading: { color: colors.text, fontWeight: '700', marginTop: 8 },
-  });
+  StyleSheet.create({ ...estimateCardStyleDefs(colors) });
 
 export default ScreenplayEstimateCard;

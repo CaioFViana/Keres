@@ -366,6 +366,24 @@ const StoryCalendarListScreen = () => {
       week: calendar.definition.daysPerWeek,
     });
 
+  /** Saves an epoch, and clears the one that is set; the save waits while `saveDisabled`. */
+  const renderEpochActions = (onSave: () => void, saveDisabled: boolean) => (
+    <View style={styles.actions}>
+      <TouchableOpacity style={styles.action} onPress={onSave} disabled={saveDisabled}>
+        <Ionicons name="save-outline" size={17} color={colors.primary} />
+        <Text style={styles.actionText}>{t('save')}</Text>
+      </TouchableOpacity>
+      {story?.timelineEpochDay !== null && story?.timelineEpochDay !== undefined && (
+        <TouchableOpacity style={styles.action} onPress={() => saveEpoch(null)} disabled={busy}>
+          <Ionicons name="backspace-outline" size={17} color={colors.textSecondary} />
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>
+            {t('calendar_epoch_clear')}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
   return (
     <View ref={listAnchorRef} collapsable={false} style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -513,30 +531,7 @@ const StoryCalendarListScreen = () => {
                 ).padStart(2, '0')}
               </Text>
             )}
-            {canEdit && (
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.action}
-                  onPress={() => saveEpoch(epochDay)}
-                  disabled={busy}
-                >
-                  <Ionicons name="save-outline" size={17} color={colors.primary} />
-                  <Text style={styles.actionText}>{t('save')}</Text>
-                </TouchableOpacity>
-                {story?.timelineEpochDay !== null && story?.timelineEpochDay !== undefined && (
-                  <TouchableOpacity
-                    style={styles.action}
-                    onPress={() => saveEpoch(null)}
-                    disabled={busy}
-                  >
-                    <Ionicons name="backspace-outline" size={17} color={colors.textSecondary} />
-                    <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-                      {t('calendar_epoch_clear')}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
+            {canEdit && renderEpochActions(() => saveEpoch(epochDay), busy)}
           </View>
         )}
 
@@ -556,32 +551,11 @@ const StoryCalendarListScreen = () => {
                 style={{ marginTop: 10, marginBottom: 0 }}
               />
             )}
-            {canEdit && (
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.action}
-                  onPress={() => saveEpoch(gregorianEpochDay, gregorianEpochSeconds)}
-                  disabled={
-                    busy || gregorianEpochDay === null || gregorianEpochIsOutsidePickerRange
-                  }
-                >
-                  <Ionicons name="save-outline" size={17} color={colors.primary} />
-                  <Text style={styles.actionText}>{t('save')}</Text>
-                </TouchableOpacity>
-                {story?.timelineEpochDay !== null && story?.timelineEpochDay !== undefined && (
-                  <TouchableOpacity
-                    style={styles.action}
-                    onPress={() => saveEpoch(null)}
-                    disabled={busy}
-                  >
-                    <Ionicons name="backspace-outline" size={17} color={colors.textSecondary} />
-                    <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-                      {t('calendar_epoch_clear')}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
+            {canEdit &&
+              renderEpochActions(
+                () => saveEpoch(gregorianEpochDay, gregorianEpochSeconds),
+                busy || gregorianEpochDay === null || gregorianEpochIsOutsidePickerRange,
+              )}
           </View>
         )}
       </ScrollView>

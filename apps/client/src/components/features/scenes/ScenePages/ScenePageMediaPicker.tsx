@@ -13,6 +13,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import { useScenePageChoices } from '@/src/hooks/useGalleryMedia';
 import type { ScenePageMedia } from '@/src/services/storymanagement/ScenePageService';
 import { useTheme } from '@/src/theme';
+import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
 import ScenePageThumb from './ScenePageThumb';
 
 interface ScenePageMediaPickerProps {
@@ -113,10 +114,7 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
 };
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
-  tabs: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  tab: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6 },
-  list: { maxHeight: 380 },
+  ...scenePickerStyleDefs,
   row: {
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,

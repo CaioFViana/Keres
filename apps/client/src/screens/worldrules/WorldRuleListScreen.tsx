@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
@@ -18,6 +18,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStoryTagFilterOptions } from '../../hooks/useStoryTagFilterOptions';
+import { useTitleDateSortOptions } from '../../hooks/useTitleDateSortOptions';
 import type {
   MainSystemDrawerParamList,
   WorldRulesStackParamList,
@@ -87,13 +88,7 @@ const WorldRulesScreen = () => {
     [handleViewDetails, handleToggleFavorite],
   );
 
-  const memoizedSortOptions = useMemo(() => {
-    return [
-      { label: t('sort_by_title'), value: 'title' },
-      { label: t('sort_by_created_at'), value: 'createdAt' },
-      { label: t('sort_by_updated_at'), value: 'updatedAt' },
-    ];
-  }, [t]);
+  const memoizedSortOptions = useTitleDateSortOptions();
 
   if (isInitialLoading) {
     return (

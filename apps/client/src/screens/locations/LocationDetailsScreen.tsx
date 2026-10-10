@@ -1,7 +1,7 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
 import { useLocationRelationActions } from './useLocationRelationActions';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -93,15 +93,7 @@ const LocationDetailsScreen = () => {
 
   const [location, setLocation] = useState<LocationSelect | null>(null);
   const { canEdit } = useStoryRole(location?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(location?.storyId, 'Location', locationId);
+  const comments = useEntityComments(location?.storyId, 'Location', locationId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -449,17 +441,7 @@ const LocationDetailsScreen = () => {
     return <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />;
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: location.storyId,
-    mentionSourceId: location.id,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(location.storyId, comments, location.id);
 
   const detailsPanel = (
     <>

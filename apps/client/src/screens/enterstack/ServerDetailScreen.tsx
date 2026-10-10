@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PlanStatusCard from '../../components/features/servers/PlanStatusCard';
 import ServerActionRow from '../../components/features/servers/ServerActionRow';
+import { serverCardStyleDefs } from '../../components/features/servers/serverCardStyleDefs';
 import ServerStatusPill from '../../components/features/servers/ServerStatusPill';
 import { useDrizzle } from '../../db';
 import { usePaymentOverview } from '../../hooks/usePaymentOverview';
@@ -260,26 +261,7 @@ const createStyles = (colors: ThemeColors) =>
     header: { alignItems: 'center', marginBottom: 20, gap: 8 },
     name: { fontSize: 22, fontWeight: 'bold', color: colors.text, textAlign: 'center' },
     url: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      backgroundColor: colors.card,
-      paddingHorizontal: 14,
-      marginBottom: 20,
-    },
-    row: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: 12,
-      paddingVertical: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    lastRow: { borderBottomWidth: 0 },
-    label: { fontSize: 14, color: colors.textSecondary },
-    value: { flexShrink: 1, fontSize: 14, color: colors.text, textAlign: 'right' },
+    ...serverCardStyleDefs(colors),
     tagEditRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     tagAt: { fontSize: 14, color: colors.textSecondary },
     tagInput: {

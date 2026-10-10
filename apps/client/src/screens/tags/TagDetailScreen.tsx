@@ -1,5 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -68,15 +68,7 @@ const TagDetailScreen = () => {
   }, [drizzleDb]);
 
   const [tag, setTag] = useState<TagSelect | null>(null);
-  const {
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    commentsByField,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(selectedStory?.id, 'Tag', tagId);
+  const comments = useEntityComments(selectedStory?.id, 'Tag', tagId);
   const [allTagRelations, setAllTagRelations] = useState<TagRelation[]>([]);
   const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
     chapter: [],
@@ -270,16 +262,7 @@ const TagDetailScreen = () => {
     );
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: tag.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(tag.storyId, comments);
 
   return (
     <DetailContainer

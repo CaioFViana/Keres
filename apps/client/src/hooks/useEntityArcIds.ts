@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useDrizzle } from '@/src/db';
+import { useArcChangeReload } from '@/src/hooks/useArcChangeReload';
 import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 import {
   createStoryArcService,
   type ArcMembershipKind,
 } from '@/src/services/storymanagement/StoryArcService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /** Bulk arc membership for every linked entity of one kind; unlinked entities are absent. */
 export function useEntityArcIds(storyId: string, kind: ArcMembershipKind) {
@@ -21,19 +21,7 @@ export function useEntityArcIds(storyId: string, kind: ArcMembershipKind) {
   }, [db, kind, storyId]);
 
   useEntityInitialLoad(reload);
-
-  useEffect(() => {
-    const events = ['story_arc_changed', 'chapter_changed', 'scene_changed'];
-    if (kind === 'character') events.push('character_scene_changed');
-    if (kind === 'item') events.push('item_journey_changed');
-    const handler = (changedStoryId: string) => {
-      if (changedStoryId === storyId) void reload();
-    };
-    for (const event of events) entityEventEmitter.on(event, handler);
-    return () => {
-      for (const event of events) entityEventEmitter.off(event, handler);
-    };
-  }, [kind, reload, storyId]);
+  useArcChangeReload(storyId, kind, reload);
 
   return arcIds;
 }

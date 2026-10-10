@@ -1,7 +1,7 @@
 import type { ScenePageFit } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -14,7 +14,6 @@ import ScenePageCard from '@/src/components/features/scenes/ScenePages/ScenePage
 import ScenePageMediaPicker from '@/src/components/features/scenes/ScenePages/ScenePageMediaPicker';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
-import type { SceneSelect } from '@/src/db/schema';
 import { useAddScenePages } from '@/src/hooks/useAddScenePages';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
@@ -22,11 +21,12 @@ import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPaddi
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
 import { useSceneArcPageFormat } from '@/src/hooks/useSceneArcPageFormat';
+import { useSaveAttempt } from '@/src/hooks/useSaveAttempt';
+import { useSceneRecord } from '@/src/hooks/useSceneRecord';
 import { useScenePages } from '@/src/hooks/useScenePages';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import {
   createScenePageService,
   type ScenePageMedia,
@@ -57,7 +57,7 @@ const ScenePagesScreen = () => {
   const { showNotification } = useNotificationStore();
   const confirmDelete = useConfirmDelete();
   const scrollBottomPadding = useFormScrollBottomPadding();
-  const [scene, setScene] = useState<SceneSelect | null | undefined>(undefined);
+  const scene = useSceneRecord(sceneId);
   const { canEdit } = useStoryRole(scene?.storyId);
   const medium = useSceneArcMedium(scene ?? { chapterId: null });
   const kind = scenePageKind(medium);
@@ -80,33 +80,8 @@ const ScenePagesScreen = () => {
     ),
   );
 
-  useEffect(() => {
-    let alive = true;
-    void createSceneService(db)
-      .getById(sceneId)
-      .then((row) => {
-        if (alive) setScene(row && !row.isDeleted ? row : null);
-      })
-      .catch(() => {
-        if (alive) setScene(null);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [db, sceneId]);
-
   const service = createScenePageService(db);
-  const attempt = useCallback(
-    async (work: () => Promise<unknown>, logLabel: string) => {
-      try {
-        await work();
-      } catch (error) {
-        console.log(`ScenePagesScreen: failed to ${logLabel}.`, error);
-        showNotification(t('scene_pages_save_failed'), 'error');
-      }
-    },
-    [showNotification, t],
-  );
+  const attempt = useSaveAttempt('ScenePagesScreen', 'scene_pages_save_failed');
 
   const addLabel = t(`scene_pages_add_${kind}`);
   useScreenHeader({

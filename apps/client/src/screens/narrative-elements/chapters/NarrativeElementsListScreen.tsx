@@ -27,6 +27,7 @@ import { chapterBelongsToArc } from '../../../utils/storyArcFilter';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../../hooks/useStoryRole';
+import { useTagChangeReload } from '../../../hooks/useTagChangeReload';
 import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,
@@ -166,17 +167,7 @@ const NarrativeElementsListScreen = () => {
     loadTags();
   }, [loadTags]);
 
-  useEffect(() => {
-    const refreshTags = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadTags();
-    };
-    entityEventEmitter.on('tag_changed', refreshTags);
-    entityEventEmitter.on('tag_relation_changed', refreshTags);
-    return () => {
-      entityEventEmitter.off('tag_changed', refreshTags);
-      entityEventEmitter.off('tag_relation_changed', refreshTags);
-    };
-  }, [loadTags, storyId]);
+  useTagChangeReload(storyId, loadTags);
   useEffect(() => {
     if (storyId) {
       setSceneDbAndStoryId(db, storyId);

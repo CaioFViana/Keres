@@ -7,6 +7,13 @@ let mockTagId: string | undefined;
 const mockCreate = jest.fn();
 const mockGet = jest.fn();
 const mockAlert = jest.fn();
+// Only the shared form-actions hook imports these, and it loads them even for a form with no custom attributes.
+jest.mock('../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
+  validateRequiredCustomAttributes: () => null,
+}));
+jest.mock('../../src/services/storymanagement/AttributeValueService', () => ({
+  createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
+}));
 jest.mock('../../src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
 jest.mock('../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
 jest.mock('../../src/hooks/useResponsiveLayout', () => ({

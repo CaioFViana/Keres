@@ -66,7 +66,6 @@ const GraphNodeFinder: React.FC<GraphNodeFinderProps> = ({ options, placeholder,
   return (
     <View style={styles.root}>
       <View style={styles.field}>
-        <Ionicons name="search" size={16} color={colors.textSecondary} />
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -74,11 +73,13 @@ const GraphNodeFinder: React.FC<GraphNodeFinderProps> = ({ options, placeholder,
           accessibilityLabel={placeholder}
           placeholderTextColor={colors.textSecondary}
           style={styles.input}
-          suppressInteractionBorder
           returnKeyType="search"
           onSubmitEditing={() => matches[0] && pick(matches[0].id)}
           testID="graph-node-finder-input"
         />
+        <View style={styles.icon} pointerEvents="none">
+          <Ionicons name="search" size={16} color={colors.textSecondary} />
+        </View>
       </View>
       {matches.length > 0 && (
         <View style={styles.list}>
@@ -102,24 +103,21 @@ const GraphNodeFinder: React.FC<GraphNodeFinderProps> = ({ options, placeholder,
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     root: { marginHorizontal: space.md, marginTop: space.md, zIndex: 20 },
-    field: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space.md,
-      paddingHorizontal: space.lg,
-      borderRadius: radius.md,
+    // The input is the one framed element, so its focus ring (the app's own, on the web) hugs the
+    // whole field; the icon sits inside it, over the padding left for it.
+    field: { justifyContent: 'center' },
+    icon: { position: 'absolute', left: space.lg },
+    input: {
+      height: 38,
+      width: '100%',
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
+      borderRadius: radius.md,
       backgroundColor: colors.surface,
-    },
-    input: {
-      flex: 1,
-      height: 38,
-      borderWidth: 0,
-      backgroundColor: 'transparent',
       fontSize: fontSize.base,
       color: colors.text,
-      paddingHorizontal: 0,
+      paddingLeft: space.lg + 16 + space.md,
+      paddingRight: space.lg,
     },
     list: {
       position: 'absolute',

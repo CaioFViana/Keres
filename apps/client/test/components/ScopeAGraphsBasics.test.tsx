@@ -317,6 +317,90 @@ describe('GraphNodeSheet', () => {
   });
 });
 
+describe('GraphNodeSheet editing', () => {
+  const baseProps = {
+    title: 'Aria',
+    actionLabel: 'Open',
+    onAction: jest.fn(),
+    onClose: jest.fn(),
+  };
+
+  it('puts small actions at the end of a row, each acting only on its own', async () => {
+    const open = jest.fn();
+    const edit = jest.fn();
+    const remove = jest.fn();
+    const view = await render(
+      <GraphNodeSheet
+        {...baseProps}
+        sections={[
+          {
+            title: 'Relations',
+            items: [
+              {
+                id: 'r1',
+                icon: 'people-outline',
+                label: 'Bram',
+                detail: 'friend',
+                onPress: open,
+                trailing: [
+                  { icon: 'pencil', label: 'Edit Bram', onPress: edit },
+                  {
+                    icon: 'trash-outline',
+                    label: 'Remove Bram',
+                    onPress: remove,
+                    destructive: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    await fireEvent.press(view.getByLabelText('Edit Bram'));
+    await fireEvent.press(view.getByLabelText('Remove Bram'));
+    expect(edit).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(open).not.toHaveBeenCalled();
+
+    await fireEvent.press(view.getByText('Bram'));
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds a button under the rows of a section, with or without rows', async () => {
+    const add = jest.fn();
+    const view = await render(
+      <GraphNodeSheet
+        {...baseProps}
+        sections={[
+          {
+            title: 'Relations',
+            emptyMessage: 'None yet',
+            items: [],
+            action: { label: 'Add relation', onPress: add },
+          },
+        ]}
+      />,
+    );
+
+    expect(view.getByText('None yet')).toBeTruthy();
+    await fireEvent.press(view.getByText('Add relation'));
+    expect(add).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no add button for a section that has none', async () => {
+    const view = await render(
+      <GraphNodeSheet
+        {...baseProps}
+        sections={[{ title: 'Relations', emptyMessage: 'None yet', items: [] }]}
+      />,
+    );
+
+    expect(view.queryByText('Add relation')).toBeNull();
+  });
+});
+
 describe('GraphConnectionModal', () => {
   const baseProps = {
     sourceName: 'Alpha',

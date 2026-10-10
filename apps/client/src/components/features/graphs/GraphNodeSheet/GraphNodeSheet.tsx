@@ -10,6 +10,15 @@ export interface GraphNodeSheetBadge {
   color: string;
 }
 
+/** A small button at the end of a row (edit, remove): it acts on the row, not on opening it. */
+export interface GraphNodeSheetRowAction {
+  icon: keyof typeof Ionicons.glyphMap;
+  /** Spoken label; the row is named in it by the caller (`Remove Friend`). */
+  label: string;
+  onPress: () => void;
+  destructive?: boolean;
+}
+
 export interface GraphNodeSheetItem {
   id: string;
   icon: keyof typeof Ionicons.glyphMap;
@@ -19,6 +28,7 @@ export interface GraphNodeSheetItem {
   extra?: string;
   italicLabel?: boolean;
   onPress: () => void;
+  trailing?: GraphNodeSheetRowAction[];
 }
 
 export interface GraphNodeSheetSection {
@@ -26,6 +36,8 @@ export interface GraphNodeSheetSection {
   description?: string;
   emptyMessage?: string;
   items?: GraphNodeSheetItem[];
+  /** A button under the section's rows: add one more (a relation, a child). */
+  action?: { label: string; icon?: keyof typeof Ionicons.glyphMap; onPress: () => void };
 }
 
 interface GraphNodeSheetProps {
@@ -113,6 +125,19 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           flex: 1,
           marginRight: 8,
         },
+        rowAction: { padding: 6, marginRight: 2 },
+        sectionAction: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: colors.primary,
+          paddingVertical: 10,
+          marginTop: 4,
+        },
+        sectionActionText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
         itemLabel: {
           fontSize: 13,
           fontWeight: '600',
@@ -211,10 +236,36 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
                         </Text>
                       )}
                     </View>
+                    {item.trailing?.map((action) => (
+                      <TouchableOpacity
+                        key={action.label}
+                        style={styles.rowAction}
+                        onPress={action.onPress}
+                        accessibilityRole="button"
+                        accessibilityLabel={action.label}
+                        hitSlop={6}
+                      >
+                        <Ionicons
+                          name={action.icon}
+                          size={18}
+                          color={action.destructive ? colors.error : colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                    ))}
                     <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
                   </TouchableOpacity>
                 ))
               ))}
+            {section.action && (
+              <TouchableOpacity
+                style={styles.sectionAction}
+                onPress={section.action.onPress}
+                accessibilityRole="button"
+              >
+                <Ionicons name={section.action.icon ?? 'add'} size={18} color={colors.primary} />
+                <Text style={styles.sectionActionText}>{section.action.label}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ))}
         <TouchableOpacity style={styles.actionButton} onPress={onAction}>

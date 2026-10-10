@@ -57,4 +57,51 @@ describe('GraphLegend', () => {
       borderStyle: 'dashed',
     });
   });
+
+  describe('rows that switch a kind of line', () => {
+    it('are switches, reporting whether the kind is shown', async () => {
+      const onToggle = jest.fn();
+      const view = await render(
+        <GraphLegend
+          title="Legend"
+          items={[
+            { id: 'a', label: 'Friends', color: '#f00', onToggle },
+            { id: 'b', label: 'Rivals', color: '#0f0', onToggle: jest.fn(), hidden: true },
+          ]}
+        />,
+      );
+      await fireEvent.press(view.getByRole('button', { name: 'Legend' }));
+
+      expect(view.getByRole('checkbox', { name: 'Friends' }).props.accessibilityState).toEqual({
+        checked: true,
+      });
+      expect(view.getByRole('checkbox', { name: 'Rivals' }).props.accessibilityState).toEqual({
+        checked: false,
+      });
+
+      await fireEvent.press(view.getByRole('checkbox', { name: 'Friends' }));
+      expect(onToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('strike out the name of a kind that is hidden', async () => {
+      const view = await render(
+        <GraphLegend
+          title="Legend"
+          items={[{ id: 'b', label: 'Rivals', color: '#0f0', onToggle: jest.fn(), hidden: true }]}
+        />,
+      );
+      await fireEvent.press(view.getByRole('button', { name: 'Legend' }));
+
+      expect(StyleSheet.flatten(view.getByText('Rivals').props.style).textDecorationLine).toBe(
+        'line-through',
+      );
+    });
+
+    it('leave a row without a handler as plain text', async () => {
+      const view = await render(<GraphLegend title="Legend" items={ITEMS} />);
+      await fireEvent.press(view.getByRole('button', { name: 'Legend' }));
+
+      expect(view.queryByRole('checkbox')).toBeNull();
+    });
+  });
 });

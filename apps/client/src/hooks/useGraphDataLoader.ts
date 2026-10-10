@@ -7,6 +7,8 @@ interface GraphDataLoader<T> {
   /** True only while the first load of a story is running: a refresh keeps the drawing on screen. */
   loading: boolean;
   error: string | null;
+  /** Loads again, silently: for after the screen itself changed something. */
+  reload: () => Promise<void>;
 }
 
 /**
@@ -56,5 +58,5 @@ export function useGraphDataLoader<T>({
 
   useGraphStoryReload(storyId, reload);
 
-  return { data, loading, error };
+  return { data, loading, error, reload };
 }

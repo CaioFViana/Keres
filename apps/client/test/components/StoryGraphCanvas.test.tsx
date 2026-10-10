@@ -247,9 +247,9 @@ describe('story graph skia overlay', () => {
       text: 'go',
       color: '#aaa',
     });
-    const plate = plates.find((candidate) => candidate.props.width === 2 * 6.4 + 10)!;
+    const plate = plates.find((candidate) => candidate.props.width === 2 * 6 + 12)!;
     expect(plate.props).toMatchObject({
-      x: 400 - (2 * 6.4 + 10) / 2,
+      x: 400 - (2 * 6 + 12) / 2,
       y: 260 - 8,
       height: 16,
       r: 4,

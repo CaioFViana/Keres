@@ -120,13 +120,7 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
             })}
 
             {showEdgeLabels && edgeFont && (
-              <SkiaEdgeLabels
-                edges={layout.edges}
-                font={edgeFont}
-                maxChars={26}
-                charWidth={6.4}
-                colors={colors}
-              />
+              <SkiaEdgeLabels edges={layout.edges} font={edgeFont} maxChars={26} colors={colors} />
             )}
           </SkiaEdgeCanvas>
         </SkiaOverlayErrorBoundary>

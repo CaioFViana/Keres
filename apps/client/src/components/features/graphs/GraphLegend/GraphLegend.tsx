@@ -12,6 +12,10 @@ export interface GraphLegendItem {
   color: string;
   /** A dashed line, for the kind of edge that is told apart by its stroke rather than its colour. */
   dashed?: boolean;
+  /** With a handler the row is a switch: pressing it shows or hides that kind of line on the map. */
+  onToggle?: () => void;
+  /** The kind is switched off: its row is struck out and its lines are not drawn. */
+  hidden?: boolean;
 }
 
 interface GraphLegendProps {
@@ -35,21 +39,42 @@ const GraphLegend: React.FC<GraphLegendProps> = ({ title, items }) => {
       {open && (
         <View style={styles.card} accessibilityLabel={title}>
           <ScrollView style={styles.list}>
-            {items.map((item) => (
-              <View key={item.id} style={styles.row}>
-                <View
-                  testID={`graph-legend-swatch-${item.id}`}
-                  style={[
-                    styles.swatch,
-                    { borderTopColor: item.color },
-                    item.dashed && styles.swatchDashed,
-                  ]}
-                />
-                <ThemedText style={styles.label} numberOfLines={1}>
-                  {item.label}
-                </ThemedText>
-              </View>
-            ))}
+            {items.map((item) => {
+              const content = (
+                <>
+                  <View
+                    testID={`graph-legend-swatch-${item.id}`}
+                    style={[
+                      styles.swatch,
+                      { borderTopColor: item.color },
+                      item.dashed && styles.swatchDashed,
+                    ]}
+                  />
+                  <ThemedText
+                    style={[styles.label, item.hidden && styles.labelHidden]}
+                    numberOfLines={1}
+                  >
+                    {item.label}
+                  </ThemedText>
+                </>
+              );
+              return item.onToggle ? (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.row, item.hidden && styles.rowHidden]}
+                  onPress={item.onToggle}
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={item.label}
+                  accessibilityState={{ checked: !item.hidden }}
+                >
+                  {content}
+                </TouchableOpacity>
+              ) : (
+                <View key={item.id} style={styles.row}>
+                  {content}
+                </View>
+              );
+            })}
           </ScrollView>
         </View>
       )}
@@ -97,6 +122,8 @@ const createStyles = (colors: ThemeColors) =>
     swatch: { width: 26, height: 0, borderTopWidth: 3 },
     swatchDashed: { borderStyle: 'dashed' },
     label: { flexShrink: 1, fontSize: fontSize.md },
+    labelHidden: { textDecorationLine: 'line-through', color: colors.textSecondary },
+    rowHidden: { opacity: 0.55 },
   });
 
 export default GraphLegend;

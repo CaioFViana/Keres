@@ -9,8 +9,6 @@ interface SkiaEdgeLabelsProps {
   font: SkFont;
   /** Labels longer than this are cut with an ellipsis. */
   maxChars: number;
-  /** Average width of a character at 10px - only to size each label's background. */
-  charWidth: number;
   colors: Pick<ThemeColors, 'background' | 'textSecondary'>;
 }
 
@@ -18,16 +16,17 @@ interface SkiaEdgeLabelsProps {
  * The edge labels of a graph canvas, drawn as Skia chips inside the edges overlay (a child of
  * `SkiaEdgeCanvas`, so the camera applies to them). The caller decides whether they show at all.
  */
-const SkiaEdgeLabels = ({ edges, font, maxChars, charWidth, colors }: SkiaEdgeLabelsProps) => (
+const SkiaEdgeLabels = ({ edges, font, maxChars, colors }: SkiaEdgeLabelsProps) => (
   <>
     {edges.map((edge) => {
       const label = edge.label.trim();
       if (!label) return null;
       const clipped = label.length > maxChars ? `${label.slice(0, maxChars - 1)}…` : label;
-      const width = clipped.length * charWidth + 10;
       // Skia has no `textAnchor`: center by measured width instead. Both place the
-      // baseline at the same y.
+      // baseline at the same y. The plate is the measured text plus some air, so it never
+      // cuts a wide word nor leaves a gap after a narrow one.
       const textWidth = measureEdgeLabelWidth(font, clipped, 10);
+      const width = textWidth + 12;
       return (
         <React.Fragment key={`label-${edge.id}`}>
           <RoundedRect

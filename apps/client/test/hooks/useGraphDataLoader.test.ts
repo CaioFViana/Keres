@@ -105,6 +105,18 @@ describe('useGraphDataLoader', () => {
       expect(result.current.loading).toBe(false);
     });
 
+    it('reloads on demand, for after the screen changed something itself', async () => {
+      const { load, result } = await loaded();
+      load.mockResolvedValue('after my edit');
+
+      await act(async () => {
+        await result.current.reload();
+      });
+
+      expect(result.current.data).toBe('after my edit');
+      expect(result.current.loading).toBe(false);
+    });
+
     it('ignores the changes of another story', async () => {
       const { load } = await loaded();
       const calls = load.mock.calls.length;

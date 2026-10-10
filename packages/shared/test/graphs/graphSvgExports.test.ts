@@ -276,5 +276,21 @@ describe('location map specifics', () => {
 
       expect(svg).not.toContain('<polygon');
     });
+
+    it('dashes the contains line and the legend swatch, and leaves connected_to solid, as on the map', () => {
+      const contains = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('contains')),
+        locationOptions(),
+      );
+      const connected = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('connected_to')),
+        locationOptions(),
+      );
+
+      expect(contains).toMatch(/<path d="[^"]+" fill="none"[^>]*stroke-dasharray="6 4"/);
+      expect(contains).toMatch(/<line [^>]*stroke-width="1.8" stroke-dasharray="4 3"/);
+      expect(connected).not.toMatch(/<path d="[^"]+" fill="none"[^>]*stroke-dasharray/);
+      expect(connected).toMatch(/<line [^>]*stroke-width="1.4"\/>/);
+    });
   });
 });

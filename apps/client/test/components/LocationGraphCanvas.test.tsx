@@ -219,15 +219,15 @@ describe('location graph skia overlay', () => {
       strokeWidth: 1.4,
       opacity: 0.65,
     });
-    // The dash rhythm matches the old `strokeDasharray="6,4"`; the solid edge carries no effect.
+    // As on the location map, `contains` is the dashed line and `connected_to` the solid one.
     const dashes = root.queryAll((node) => node.type === 'SkiaDashPathEffect');
     expect(dashes).toHaveLength(1);
     expect(dashes[0].props.intervals).toEqual([6, 4]);
     const dashKids = (path: any) => React.Children.toArray(path.props.children).filter(Boolean);
-    expect(dashKids(contains)).toHaveLength(0);
-    const connectedDashes = dashKids(connected);
-    expect(connectedDashes).toHaveLength(1);
-    expect((connectedDashes[0] as any).props.intervals).toEqual([6, 4]);
+    expect(dashKids(connected)).toHaveLength(0);
+    const containsDashes = dashKids(contains);
+    expect(containsDashes).toHaveLength(1);
+    expect((containsDashes[0] as any).props.intervals).toEqual([6, 4]);
   });
 
   it('mirrors the live camera into the overlay group on every publish', async () => {

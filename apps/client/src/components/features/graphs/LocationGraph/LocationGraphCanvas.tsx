@@ -19,8 +19,8 @@ import type {
  * absolutely positioned native Views, edges as Skia paths in the shared viewport-sized overlay.
  *
  * The two edges have different styles so they can be told apart visually without a label on each one:
- * `contains` is a solid line (a hierarchy relation, parent->child), `connected_to` is dashed (a loose
- * spatial relation, with no direction). With a node selected, the lines that touch it are drawn
+ * `contains` is a dashed arrow (a hierarchy relation, parent->child), `connected_to` is solid (a loose
+ * spatial relation, with no direction), the same as on the location map. With a node selected, the lines that touch it are drawn
  * stronger and the rest fade back, like the nodes outside its neighbourhood.
  */
 
@@ -91,7 +91,7 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
                     strokeWidth={(contains ? 1.8 : 1.4) + (strong ? 0.8 : 0)}
                     opacity={opacity}
                   >
-                    {!contains && <DashPathEffect intervals={[6, 4]} />}
+                    {contains && <DashPathEffect intervals={[6, 4]} />}
                   </Path>
                   {edge.arrow && (
                     <Path path={polygonPointsToPath(edge.arrow)} color={color} opacity={opacity} />

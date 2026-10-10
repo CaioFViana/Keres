@@ -656,8 +656,8 @@ describe('LocationGraphScreen', () => {
     await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
 
     expect(jsonOf(view, 'legend-items')).toEqual([
-      ['contains', false],
-      ['connected_to', true],
+      ['contains', true],
+      ['connected_to', false],
     ]);
   });
 
@@ -668,7 +668,7 @@ describe('LocationGraphScreen', () => {
     const view = await render(<LocationGraphScreen />);
     await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
 
-    expect(jsonOf(view, 'legend-items')).toEqual([['connected_to', true]]);
+    expect(jsonOf(view, 'legend-items')).toEqual([['connected_to', false]]);
   });
 
   it('says how to start when there are places but no relations', async () => {

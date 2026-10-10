@@ -192,6 +192,7 @@ const LocationGraphScreen = () => {
               id: 'contains',
               label: t('location_relation_type_contains'),
               color: colors.primary,
+              dashed: true,
             },
           ]
         : []),
@@ -201,7 +202,6 @@ const LocationGraphScreen = () => {
               id: 'connected_to',
               label: t('location_relation_type_connected_to'),
               color: colors.textSecondary,
-              dashed: true,
             },
           ]
         : []),

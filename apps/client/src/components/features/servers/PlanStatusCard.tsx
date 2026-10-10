@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ThemeColors } from '../../../theme';
 import { useTheme } from '../../../theme';
-import { formatMoney, isRenewalBeingConfirmed } from '../../../utils/paymentPlans';
+import { formatMoney, formatPlanDate, isRenewalBeingConfirmed } from '../../../utils/paymentPlans';
 import { serverCardStyleDefs } from './serverCardStyleDefs';
 
 export interface PlanStatusCardProps {
@@ -21,7 +21,7 @@ const PlanStatusCard: React.FC<PlanStatusCardProps> = ({ subscription, showAmoun
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const paidUntil = new Date(subscription.paidUntil).toLocaleDateString(i18n.language);
+  const paidUntil = formatPlanDate(subscription.paidUntil, i18n.language);
   // A plan the administrators gave is not "paid up" and has no amount: it is a gift until its date.
   const gift = subscription.complimentary === true && subscription.status === 'active';
   const statusKey =

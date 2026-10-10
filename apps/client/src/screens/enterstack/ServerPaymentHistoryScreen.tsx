@@ -15,7 +15,7 @@ import { useServerStatuses } from '../../hooks/useServerStatuses';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import type { ThemeColors } from '../../theme';
 import { useTheme } from '../../theme';
-import { formatMoney } from '../../utils/paymentPlans';
+import { formatMoney, formatPlanDate } from '../../utils/paymentPlans';
 
 type RouteProps = RouteProp<ServerManagementStackParamList, 'ServerPaymentHistory'>;
 
@@ -47,7 +47,7 @@ const ServerPaymentHistoryScreen = () => {
 
   const kindLabel = (kind: string) => t(`payment_history_kind_${kind}`);
   const when = (date: Date) =>
-    `${date.toLocaleDateString(i18n.language)} ${date.toLocaleTimeString(i18n.language, {
+    `${formatPlanDate(date, i18n.language)} ${date.toLocaleTimeString(i18n.language, {
       hour: '2-digit',
       minute: '2-digit',
     })}`;

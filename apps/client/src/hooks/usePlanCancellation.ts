@@ -4,6 +4,7 @@ import type { ServerSelect } from '../db/schema';
 import { isOfflineError } from '../services/apiClient';
 import { cancelSubscription } from '../services/PaymentService';
 import { AppAlert } from '../utils/AppAlert';
+import { formatPlanDate } from '../utils/paymentPlans';
 
 /**
  * Stopping a subscription renewing, after the user confirms: what is paid stays in force until its date, and
@@ -22,7 +23,7 @@ export function usePlanCancellation(server: ServerSelect | undefined, onDone: ()
       AppAlert.alert(
         t(autoRenews ? 'payment_cancel_title' : 'payment_cancel_no_renewal_title'),
         t(autoRenews ? 'payment_cancel_message' : 'payment_cancel_no_renewal_message', {
-          date: new Date(paidUntil).toLocaleDateString(i18n.language),
+          date: formatPlanDate(paidUntil, i18n.language),
         }),
         [
           { text: t('cancel'), style: 'cancel' },

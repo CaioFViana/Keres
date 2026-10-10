@@ -125,3 +125,11 @@ export function evaluatePaymentNotice(
   const daysLeft = daysUntil(new Date(subscription.paidUntil), now);
   return daysLeft <= PAYMENT_WARNING_DAYS ? { kind: 'soon', daysLeft } : { kind: 'none' };
 }
+
+/**
+ * A date of a plan the way the person reads it unmistakably: the month by name (`10 Nov 2026`), not `11/10/2026`,
+ * which is the 10th of November in one country and the 11th of October in another.
+ */
+export function formatPlanDate(value: string | number | Date, language?: string): string {
+  return new Date(value).toLocaleDateString(language, { dateStyle: 'medium' });
+}

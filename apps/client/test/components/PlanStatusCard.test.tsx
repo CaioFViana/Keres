@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react-native';
 import PlanStatusCard from '../../src/components/features/servers/PlanStatusCard';
+import { formatPlanDate } from '../../src/utils/paymentPlans';
 
 jest.mock('../../src/theme', () => ({
   useTheme: () => ({
@@ -43,7 +44,7 @@ describe('PlanStatusCard', () => {
     expect(view.getByText('Pro · payment_interval_monthly')).toBeTruthy();
     expect(view.getByText('payment_status_active')).toBeTruthy();
     expect(view.getByText('payment_paid_until')).toBeTruthy();
-    expect(view.getByText(new Date(PAID_UNTIL).toLocaleDateString('en'))).toBeTruthy();
+    expect(view.getByText(formatPlanDate(PAID_UNTIL, 'en'))).toBeTruthy();
     // The server's own screen keeps to the dates.
     expect(view.queryByText('payment_last_amount')).toBeNull();
   });

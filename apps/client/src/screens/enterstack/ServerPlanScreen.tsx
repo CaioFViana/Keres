@@ -26,6 +26,7 @@ import { type ThemeColors } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import {
   formatMoney,
+  formatPlanDate,
   isMethodSoldForOffer,
   offerForPlayProduct,
   offersFrom,
@@ -248,7 +249,7 @@ const ServerPlanScreen = () => {
           {subscription.complimentary && subscription.status === 'active' ? (
             <Text style={styles.hint} testID="plan-gift">
               {t('payment_gift_until', {
-                date: new Date(subscription.paidUntil).toLocaleDateString(i18n.language),
+                date: formatPlanDate(subscription.paidUntil, i18n.language),
               })}
             </Text>
           ) : null}
@@ -257,7 +258,7 @@ const ServerPlanScreen = () => {
           !subscription.complimentary ? (
             <Text style={styles.hint} testID="plan-not-renewing">
               {t('payment_not_renewing', {
-                date: new Date(subscription.paidUntil).toLocaleDateString(i18n.language),
+                date: formatPlanDate(subscription.paidUntil, i18n.language),
               })}
             </Text>
           ) : null}
@@ -273,7 +274,7 @@ const ServerPlanScreen = () => {
           {running && !renewsItself ? (
             <Text style={styles.hint} testID="plan-manual-renewal">
               {t('payment_manual_renewal', {
-                date: new Date(subscription.paidUntil).toLocaleDateString(i18n.language),
+                date: formatPlanDate(subscription.paidUntil, i18n.language),
               })}
             </Text>
           ) : null}

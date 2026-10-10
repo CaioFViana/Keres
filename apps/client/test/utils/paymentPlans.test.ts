@@ -5,6 +5,7 @@ import { PAYMENT_WARNING_DAYS } from '@keres/shared/metadata/Payments';
 import {
   evaluatePaymentNotice,
   formatMoney,
+  formatPlanDate,
   isRenewalBeingConfirmed,
   isMethodSoldForOffer,
   offerForPlayProduct,
@@ -193,5 +194,12 @@ describe('isRenewalBeingConfirmed', () => {
     expect(isRenewalBeingConfirmed({ ...base, status: 'due' }, now)).toBe(false);
     expect(isRenewalBeingConfirmed({ ...base, cancelAtPeriodEnd: true }, now)).toBe(false);
     expect(isRenewalBeingConfirmed({ ...base, complimentary: true }, now)).toBe(false);
+  });
+});
+
+describe('formatPlanDate', () => {
+  it('writes the month by name, so no reader takes the day for the month', () => {
+    expect(formatPlanDate('2026-11-10T12:00:00.000Z', 'en')).toBe('Nov 10, 2026');
+    expect(formatPlanDate('2026-11-10T12:00:00.000Z', 'pt-BR')).toBe('10 de nov. de 2026');
   });
 });

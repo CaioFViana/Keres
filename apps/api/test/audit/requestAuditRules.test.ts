@@ -144,6 +144,26 @@ describe('decideAudit', () => {
     expect(JSON.stringify(decision)).not.toContain('hunter2');
   });
 
+  it("records a login by the name typed, even when the browser still carries another account's session", () => {
+    const decision = decideAudit(
+      finished({
+        method: 'POST',
+        path: '/api/auth/login',
+        status: 200,
+        user: ana,
+        body: { username: 'bia', password: 'secret' },
+      }),
+    );
+
+    expect(decision?.lookupUsername).toBe('bia');
+    expect(decision?.input).toMatchObject({
+      action: 'auth.login',
+      outcome: 'success',
+      actorUserId: null,
+      actorUsername: 'bia',
+    });
+  });
+
   it('takes the actor from the session when there is one, and asks for no lookup', () => {
     const decision = decideAudit(
       finished({ method: 'PUT', path: '/api/user/password', user: ana, body: { password: 'x' } }),

@@ -100,9 +100,11 @@ export function decideAudit(request: FinishedRequest): AuditDecision | null {
   if (rule.onlyFailures && outcome === 'success') return null;
 
   const typedName = rule.usernameFromBody ? bodyUsername(request.body) : null;
+  // Whoever the body names is who signs in (or up), not an account whose session the browser still carries.
+  const typedActor = typedName ? { actorUserId: null, actorUsername: typedName } : {};
   const input: AuditInput = {
     ...base,
-    actorUsername: base.actorUsername ?? typedName,
+    ...typedActor,
     category: rule.category,
     action: rule.action,
     outcome,

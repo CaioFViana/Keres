@@ -152,3 +152,29 @@ export function insertBlockAt(text: string, index: number, insert: string): stri
   const tail = after === '' || after.startsWith('\n') ? '' : '\n';
   return `${before}${lead}${insert}${tail}${after}`;
 }
+
+const END_NAMES = new Set(['end_of_verse', 'eov', 'end_of_chorus', 'eoc', 'end_of_bridge', 'eob']);
+
+/**
+ * Where a new section may go when the cursor is at `index`: the cursor's own place, unless it stands
+ * inside a section (after its start directive, before its end), where a second block would nest in
+ * the first. Then it is the line after that section's end - or the end of the text, for one left open.
+ */
+export function sectionInsertionPoint(text: string, index: number): number {
+  const at = Math.min(Math.max(index, 0), text.length);
+  let offset = 0;
+  let openedAt: number | null = null;
+  for (const line of text.split('\n')) {
+    const lineStart = offset;
+    const lineEnd = lineStart + line.length;
+    offset = lineEnd + 1;
+    const name = readDirective(line)?.name;
+    if (name && START_NAMES.has(name)) openedAt = openedAt ?? lineStart;
+    else if (name && END_NAMES.has(name) && openedAt !== null) {
+      if (openedAt < at && at < lineEnd) return Math.min(text.length, lineEnd + 1);
+      openedAt = null;
+    }
+  }
+  // A section left open runs to the end of the text.
+  return openedAt !== null && openedAt < at ? text.length : at;
+}

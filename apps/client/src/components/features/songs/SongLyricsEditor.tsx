@@ -7,6 +7,7 @@ import {
   numberDuplicateSections,
   type SectionWords,
   sectionBlock,
+  sectionInsertionPoint,
   type SyllableLanguage,
 } from '@keres/shared';
 import React, { useMemo, useRef, useState } from 'react';
@@ -76,7 +77,8 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
     const label = nextSectionLabel(kind, value, newSectionWords);
     // A heading anyone can read, unless the person works with ChordPro: then the directive block it is.
     const block = musicTools ? sectionBlock(kind, label) : `[${label}]\n`;
-    const at = selection.current.start;
+    // Never inside another section: a block put in the middle of a verse would nest in it.
+    const at = sectionInsertionPoint(value, selection.current.start);
     const next = insertBlockAt(value, at, block);
     onChange(next);
     // Inside the new section, on its empty line, ready to write.

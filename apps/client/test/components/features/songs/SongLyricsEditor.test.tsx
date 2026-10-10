@@ -80,6 +80,21 @@ describe('SongLyricsEditor', () => {
     expect(onChange.mock.calls[1][0]).toContain('{start_of_chorus: Chorus}');
   });
 
+  it('puts a section added from inside a verse after that verse, never nested in it', async () => {
+    const text = '{start_of_verse: Verse 1}\nOne\nTwo\n{end_of_verse}\n';
+    const view = await renderEditor(text);
+    const cursor = text.indexOf('One') + 1;
+
+    await fireEvent(view.getByTestId('song-lyrics'), 'selectionChange', {
+      nativeEvent: { selection: { start: cursor, end: cursor } },
+    });
+    await fireEvent.press(view.getByTestId('song-add-chorus'));
+
+    const next: string = onChange.mock.calls[0][0];
+    expect(next.indexOf('{start_of_chorus')).toBeGreaterThan(next.indexOf('{end_of_verse}'));
+    expect(next.startsWith(text.trimEnd())).toBe(true);
+  });
+
   it('moves the chords a semitone up or down through the screen, which owns the key', async () => {
     const view = await renderEditor('[G]Night');
 

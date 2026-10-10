@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 
 interface RelationAttributeLineProps {
@@ -17,8 +18,7 @@ interface RelationAttributeLineProps {
  * as a label (bold, full-contrast) instead of blending into the value next to it.
  */
 const RelationAttributeLine: React.FC<RelationAttributeLineProps> = ({ label, value }) => {
-  const { colors } = useTheme();
-  const styles = StyleSheet.create(relationSectionStyleDefs(colors));
+  const styles = useThemedStyles(createStyles);
 
   return (
     <Text style={styles.attributeLine}>
@@ -27,5 +27,7 @@ const RelationAttributeLine: React.FC<RelationAttributeLineProps> = ({ label, va
     </Text>
   );
 };
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create(relationSectionStyleDefs(colors));
 
 export default RelationAttributeLine;

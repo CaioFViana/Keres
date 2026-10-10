@@ -13,7 +13,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../../theme';
+import { useTheme } from '../../../../theme';
+import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '../../../../utils/colorMath';
 
 const SLIDER_HEIGHT = 20;
 

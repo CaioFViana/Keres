@@ -5,7 +5,8 @@ import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import { createULID } from '../../../../utils/entityUtils';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
@@ -37,10 +38,9 @@ const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const characterCopy = useVocabularyEntityCopy('Character');
-  const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
 
-  const styles = StyleSheet.create(relationSectionStyleDefs(colors));
+  const styles = useThemedStyles(createStyles);
 
   const handleCharacterPress = useCallback(
     (character: Character) => {
@@ -122,5 +122,7 @@ const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create(relationSectionStyleDefs(colors));
 
 export default SceneCharacterManager;

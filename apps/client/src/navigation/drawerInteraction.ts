@@ -5,6 +5,19 @@
 export const DRAWER_SWIPE_EDGE_WIDTH = 28;
 export const DRAWER_SWIPE_MIN_DISTANCE = 24;
 
+/** The narrowest a menu drawer is on a compact window: its entries are names like "Chapters and scenes". */
+const COMPACT_DRAWER_MIN_WIDTH = 300;
+
+/**
+ * The width of the menu drawer on a compact window: three fifths of it, as it was, but never so narrow
+ * that the entries are cut short (a phone's 60% is 225 px) - nor wider than four fifths of a small one.
+ */
+export function compactDrawerWidthFor(viewportWidth: number): number {
+  return Math.ceil(
+    Math.max(viewportWidth * 0.6, Math.min(viewportWidth * 0.8, COMPACT_DRAWER_MIN_WIDTH)),
+  );
+}
+
 interface DrawerItemPressEvent {
   preventDefault: () => void;
 }

@@ -15,7 +15,11 @@ import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { DrawerToggleButton } from './MainSystemDrawerHelpers';
-import { DRAWER_SWIPE_EDGE_WIDTH, DRAWER_SWIPE_MIN_DISTANCE } from './drawerInteraction';
+import {
+  compactDrawerWidthFor,
+  DRAWER_SWIPE_EDGE_WIDTH,
+  DRAWER_SWIPE_MIN_DISTANCE,
+} from './drawerInteraction';
 
 /**
  * The layout and header state both drawers (the main one and the story-selection one) read. Each
@@ -28,7 +32,7 @@ export function useDrawerChrome() {
   const nestedBackAction = useHeaderBackActionStore((state) => state.backAction);
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
-  const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
+  const compactDrawerWidth = compactDrawerWidthFor(viewportWidth);
 
   return {
     t,

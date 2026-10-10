@@ -66,6 +66,8 @@ export function useStoryPublishing(storyId: string | undefined) {
   const [showcase, setShowcase] = useState<StoryShowcaseState | null>(null);
   /** The story's current version on its server, when the server answered. */
   const [serverVersion, setServerVersion] = useState<number | undefined>(undefined);
+  /** Whether the server's public pages are on, when it said; publishing is refused where they are off. */
+  const [showcaseEnabled, setShowcaseEnabled] = useState<boolean | undefined>(undefined);
   const [labelMode, setLabelMode] = useState<PublicationLabelMode>('both');
   const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState('');
@@ -119,6 +121,8 @@ export function useStoryPublishing(storyId: string | undefined) {
       setServerVersion(
         previews.find((preview) => preview.storyId === found.id)?.lastOperationVersion,
       );
+
+      setShowcaseEnabled(await publicationApiService.isShowcaseEnabled(linked));
 
       // The local mirror is enough to show the versions; the server is what brings the current visibility.
       const localVersions = await createPublicationService(drizzleDb).getPublicationsForStory(
@@ -175,6 +179,8 @@ export function useStoryPublishing(storyId: string | undefined) {
   const reason = (() => {
     if (!story || !server) return null;
     if (isOffline(server.id)) return t('publish_blocked_offline');
+    // Said before the button is pressed, not as the server's refusal after it.
+    if (showcaseEnabled === false) return t('publish_blocked_showcase_off');
     if (pendingOperations > 0) {
       return t('publish_blocked_pending_operations', { count: pendingOperations });
     }

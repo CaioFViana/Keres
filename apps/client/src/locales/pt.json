@@ -2123,6 +2123,7 @@
   "publish_blocked_not_synced": "Sincronize esta história com o servidor antes de publicar.",
   "publish_blocked_offline": "É preciso estar conectado ao servidor para publicar.",
   "publish_blocked_pending_operations": "{{count}} alteração ainda não chegou ao servidor.",
+  "publish_blocked_showcase_off": "Este servidor está com as páginas públicas desligadas, então nada pode ser publicado nele. Peça a quem administra o servidor para ligá-las.",
   "publish_copy_link": "Copiar link",
   "publish_create_version": "Criar nova versão pública",
   "publish_delete_version_message": "Remover a versão {{label}} da página pública? Quem tiver o link não conseguirá mais baixá-la.",

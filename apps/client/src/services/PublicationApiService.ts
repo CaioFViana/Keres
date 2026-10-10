@@ -73,6 +73,23 @@ export class PublicationApiService {
     return client;
   }
 
+  /**
+   * Whether the server has its public pages turned on - without them it refuses every publication. `undefined`
+   * when it cannot say: unreachable, or older than the route. The route is public: it needs no sign-in.
+   */
+  async isShowcaseEnabled(server: ServerSelect): Promise<boolean | undefined> {
+    try {
+      const response = await this.clientFor(server).get<{ showcaseEnabled?: boolean }>(
+        '/public/config',
+      );
+      return typeof response.data?.showcaseEnabled === 'boolean'
+        ? response.data.showcaseEnabled
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   /** Every story publication this account can read on this server - its own or shared with it. */
   async listVisible(server: ServerSelect): Promise<StoryPublication[]> {
     const response = await this.clientFor(server).get('/stories/publications/mine');

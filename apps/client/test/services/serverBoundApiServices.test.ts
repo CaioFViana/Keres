@@ -218,6 +218,22 @@ describe('server-bound API services', () => {
     await expect(service.getOwnPlan(server)).rejects.toThrow('boom');
   });
 
+  it('asks the server whether its public pages are on, and says nothing when it cannot tell', async () => {
+    const service = new PublicationApiService();
+    mockClient.get.mockResolvedValueOnce({ data: { showcaseEnabled: false } });
+    await expect(service.isShowcaseEnabled(server)).resolves.toBe(false);
+    expect(mockClient.get).toHaveBeenCalledWith('/public/config');
+
+    mockClient.get.mockResolvedValueOnce({ data: { showcaseEnabled: true } });
+    await expect(service.isShowcaseEnabled(server)).resolves.toBe(true);
+
+    mockClient.get.mockResolvedValueOnce({ data: {} });
+    await expect(service.isShowcaseEnabled(server)).resolves.toBeUndefined();
+
+    mockClient.get.mockRejectedValueOnce(new Error('offline'));
+    await expect(service.isShowcaseEnabled(server)).resolves.toBeUndefined();
+  });
+
   it('maps every PublicationApiService route to its endpoint', async () => {
     mockClient.get.mockResolvedValue({ data: [{ id: 'pub-1' }] });
     mockClient.post.mockResolvedValue({ data: { id: 'pub-2' } });

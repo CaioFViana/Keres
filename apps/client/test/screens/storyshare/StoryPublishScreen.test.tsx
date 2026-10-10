@@ -21,6 +21,7 @@ const mockGetAllServers = jest.fn();
 const mockGetPubs = jest.fn();
 const mockSyncPubs = jest.fn();
 const mockGetShowcase = jest.fn();
+const mockShowcaseEnabled = jest.fn();
 const mockPublish = jest.fn();
 const mockDeletePublication = jest.fn();
 const mockUnpublish = jest.fn();
@@ -142,6 +143,7 @@ jest.mock('../../../src/services/PublicationService', () => ({
 jest.mock('../../../src/services/PublicationApiService', () => ({
   publicationApiService: {
     getStoryShowcase: (...args: unknown[]) => mockGetShowcase(...args),
+    isShowcaseEnabled: (...args: unknown[]) => mockShowcaseEnabled(...args),
     publish: (...args: unknown[]) => mockPublish(...args),
     deletePublication: (...args: unknown[]) => mockDeletePublication(...args),
     unpublish: (...args: unknown[]) => mockUnpublish(...args),
@@ -312,6 +314,7 @@ describe('StoryPublishScreen', () => {
     mockFindLogs.mockResolvedValue([]);
     mockGetPubs.mockResolvedValue([]);
     mockGetShowcase.mockResolvedValue(remoteUnpublished);
+    mockShowcaseEnabled.mockResolvedValue(true);
     mockPublish.mockResolvedValue({ label: 'v1' });
     mockDeletePublication.mockResolvedValue(undefined);
     mockUnpublish.mockResolvedValue(undefined);
@@ -372,6 +375,22 @@ describe('StoryPublishScreen', () => {
     mockIsOffline.mockReturnValue(true);
     const offline = await render(<StoryPublishScreen />);
     await offline.findByText('publish_blocked_offline');
+  });
+
+  it('says before the button is pressed that the server has its public pages turned off', async () => {
+    mockShowcaseEnabled.mockResolvedValue(false);
+    const view = await render(<StoryPublishScreen />);
+
+    await view.findByText('publish_blocked_showcase_off');
+    expect(view.getByTestId('story-publish-submit').props.accessibilityState?.disabled).toBe(true);
+  });
+
+  it('leaves the refusal to the server when it cannot say whether its public pages are on', async () => {
+    mockShowcaseEnabled.mockResolvedValue(undefined);
+    const view = await render(<StoryPublishScreen />);
+
+    await view.findByTestId('story-publish-submit');
+    expect(view.queryByText('publish_blocked_showcase_off')).toBeNull();
   });
 
   it('blocks publishing with pending operations or missing sync', async () => {

@@ -2123,6 +2123,7 @@
   "publish_blocked_not_synced": "Sync this story with the server before publishing.",
   "publish_blocked_offline": "You need to be connected to the server to publish.",
   "publish_blocked_pending_operations": "{{count}} change has not reached the server yet.",
+  "publish_blocked_showcase_off": "This server has its public pages turned off, so nothing can be published on it. Ask whoever runs the server to turn them on.",
   "publish_copy_link": "Copy link",
   "publish_create_version": "Create new public version",
   "publish_delete_version_message": "Remove version {{label}} from the public page? Anyone with the link will no longer be able to download it.",

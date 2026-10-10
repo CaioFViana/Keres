@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  boundsOfNodes,
+  degreeById,
   filterByNeighborhood,
   focusNeighborhood,
   limitFocusSelection,
@@ -111,5 +113,55 @@ describe('limitFocusSelection', () => {
     const exact = Array.from({ length: MAX_FOCUS_SELECTION }, (_, i) => `n${i}`);
 
     expect(limitFocusSelection(exact).truncated).toBe(false);
+  });
+});
+
+describe('degreeById', () => {
+  it('counts the edges at each node, whichever end it is on', () => {
+    const degrees = degreeById(EDGES, ends);
+
+    expect(degrees.get('a')).toBe(1);
+    expect(degrees.get('b')).toBe(2);
+    expect(degrees.get('c')).toBe(2);
+    expect(degrees.get('d')).toBe(1);
+  });
+
+  it('leaves out a node with no edges', () => {
+    expect(degreeById(EDGES, ends).has('e')).toBe(false);
+  });
+
+  it('counts a self-edge once', () => {
+    expect(degreeById([edge('aa', 'a', 'a')], ends).get('a')).toBe(1);
+  });
+});
+
+describe('boundsOfNodes', () => {
+  const placed = [
+    { id: 'a', x: 0, y: 0, width: 100, height: 40 },
+    { id: 'b', x: 300, y: 200, width: 100, height: 40 },
+    { id: 'c', x: 1000, y: 1000, width: 100, height: 40 },
+  ];
+
+  it('holds exactly the nodes asked for, with air around them', () => {
+    expect(boundsOfNodes(placed, new Set(['a', 'b']), 10)).toEqual({
+      x: -10,
+      y: -10,
+      width: 420,
+      height: 260,
+    });
+  });
+
+  it('frames a single node on its own', () => {
+    expect(boundsOfNodes(placed, new Set(['b']), 0)).toEqual({
+      x: 300,
+      y: 200,
+      width: 100,
+      height: 40,
+    });
+  });
+
+  it('is null when none of the ids is among the nodes', () => {
+    expect(boundsOfNodes(placed, new Set(['zzz']))).toBeNull();
+    expect(boundsOfNodes([], new Set(['a']))).toBeNull();
   });
 });

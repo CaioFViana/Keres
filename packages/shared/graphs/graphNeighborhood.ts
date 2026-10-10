@@ -86,3 +86,51 @@ export function limitFocusSelection(selectedIds: readonly string[]): {
     truncated: selectedIds.length > MAX_FOCUS_SELECTION,
   };
 }
+
+/** How many edges each node has. A node with none is absent from the map. */
+export function degreeById<E>(edges: readonly E[], ends: EdgeEnds<E>): Map<string, number> {
+  const degrees = new Map<string, number>();
+  for (const edge of edges) {
+    const [a, b] = ends(edge);
+    degrees.set(a, (degrees.get(a) ?? 0) + 1);
+    if (b !== a) degrees.set(b, (degrees.get(b) ?? 0) + 1);
+  }
+  return degrees;
+}
+
+export interface PositionedGraphNode {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * The rectangle that holds the nodes with these ids, with some air around it, or null when none of
+ * them is in `nodes`. It is what a screen frames to show a node together with the ones around it.
+ */
+export function boundsOfNodes(
+  nodes: readonly PositionedGraphNode[],
+  ids: ReadonlySet<string>,
+  padding = 24,
+): { x: number; y: number; width: number; height: number } | null {
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const node of nodes) {
+    if (!ids.has(node.id)) continue;
+    left = Math.min(left, node.x);
+    top = Math.min(top, node.y);
+    right = Math.max(right, node.x + node.width);
+    bottom = Math.max(bottom, node.y + node.height);
+  }
+  if (left === Infinity) return null;
+  return {
+    x: left - padding,
+    y: top - padding,
+    width: right - left + padding * 2,
+    height: bottom - top + padding * 2,
+  };
+}

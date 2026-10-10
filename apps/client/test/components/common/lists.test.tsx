@@ -368,6 +368,30 @@ describe('GenericFilterSortList', () => {
     expect(arrow().props.name).toBe('arrow-down');
   });
 
+  it('follows the direction its parent gives it, such as a remembered one that arrives late', async () => {
+    const props = baseProps();
+    const screen = await render(
+      <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
+    );
+    const arrow = () =>
+      screen.container.queryAll(
+        (node) => node.type === 'Icon' && ['arrow-up', 'arrow-down'].includes(node.props.name),
+      )[0];
+    expect(arrow().props.name).toBe('arrow-up');
+
+    await screen.rerender(
+      <GenericFilterSortList
+        {...props}
+        sortOptions={[{ label: 'Name', value: 'name' }]}
+        currentSortDirection="desc"
+      />,
+    );
+
+    expect(arrow().props.name).toBe('arrow-down');
+    await fireEvent.press(arrow());
+    expect(props.onSortDirectionChange).toHaveBeenCalledWith('asc');
+  });
+
   it('cycles the favorite filter', async () => {
     const onFavoriteFilterChange = jest.fn();
     const props = baseProps();

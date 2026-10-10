@@ -176,6 +176,13 @@ const GenericFilterSortList = <T,>({
     setInternalFavoriteFilterState(currentFavoriteFilterState || 'all');
   }
 
+  // The direction too: a remembered one arrives after the list has drawn, and a story change resets it.
+  const [prevCurrentSortDirection, setPrevCurrentSortDirection] = useState(currentSortDirection);
+  if (currentSortDirection !== prevCurrentSortDirection) {
+    setPrevCurrentSortDirection(currentSortDirection);
+    setSortDirection(currentSortDirection);
+  }
+
   const [prevCurrentSortValue, setPrevCurrentSortValue] = useState(currentSortValue);
   if (currentSortValue !== prevCurrentSortValue) {
     setPrevCurrentSortValue(currentSortValue);

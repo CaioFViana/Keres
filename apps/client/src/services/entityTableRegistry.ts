@@ -1,4 +1,5 @@
 import { getTableColumns } from 'drizzle-orm';
+import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import * as schema from '../db/schema';
 
 /**
@@ -62,6 +63,15 @@ export function getEntityTable(entityType: string) {
   return (ENTITY_TABLES as Record<string, (typeof ENTITY_TABLES)[SyncableEntityName] | undefined>)[
     entityType
   ];
+}
+
+/**
+ * A table's columns by name, for code that names the column at runtime (a sort key, a search field,
+ * the id of a registry entity). A name the table does not have reads as undefined at runtime, so a
+ * caller that takes the name from outside must check the column it gets back.
+ */
+export function columnsOf(table: SQLiteTable): Record<string, SQLiteColumn> {
+  return table as unknown as Record<string, SQLiteColumn>;
 }
 
 /** Date fields: they arrive as strings in JSON while the local tables expect `Date`. */

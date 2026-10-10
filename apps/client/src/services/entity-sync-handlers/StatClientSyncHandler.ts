@@ -8,9 +8,16 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
+import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
+
+/** What the base class needs from each table: the key it addresses rows by, and the soft-delete flag. */
+type SimpleSyncTable = SQLiteTable & { id: SQLiteColumn; isDeleted: SQLiteColumn };
+
+/** A timestamp as a sync payload carries it: an ISO string or epoch millis, read by the Date constructor. */
+const wireDate = (value: unknown): Date => new Date(value as string | number);
 
 /**
  * The four entities of the stats system (and the modes) only carry columns of their own, with no
@@ -18,11 +25,15 @@ import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
  * is the same for all of them, and all that changes is the table. A base class avoids four copies of the
  * same body.
  */
-abstract class SimpleTableClientSyncHandler<TTable extends { id: any; isDeleted: any }>
+abstract class SimpleTableClientSyncHandler<TTable extends SimpleSyncTable>
   implements ClientSyncEntityHandler
 {
   abstract entityName: string;
   protected abstract get table(): TTable;
+  /** The table as the drizzle builders see it; the methods below do not depend on which of the four it is. */
+  private get syncTable(): SimpleSyncTable {
+    return this.table;
+  }
   private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
   setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
@@ -43,9 +54,9 @@ abstract class SimpleTableClientSyncHandler<TTable extends { id: any; isDeleted:
       return;
     }
 
-    const data = update.data as Record<string, any>;
+    const data = update.data;
     await this.db
-      .insert(this.table as any)
+      .insert(this.syncTable)
       .values({
         ...data,
         id: update.id,
@@ -64,14 +75,14 @@ abstract class SimpleTableClientSyncHandler<TTable extends { id: any; isDeleted:
       return;
     }
 
-    const changes = { ...(update.changes as Record<string, any>) };
+    const changes = { ...update.changes };
     await this.db
-      .update(this.table as any)
+      .update(this.syncTable)
       .set({
         ...changes,
         updatedAt: new Date(),
-        createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
-        deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
+        createdAt: changes.createdAt ? wireDate(changes.createdAt) : undefined,
+        deletedAt: changes.deletedAt ? wireDate(changes.deletedAt) : undefined,
       })
       .where(eq(this.table.id, update.id));
   }
@@ -84,17 +95,14 @@ abstract class SimpleTableClientSyncHandler<TTable extends { id: any; isDeleted:
     }
 
     await this.db
-      .update(this.table as any)
+      .update(this.syncTable)
       .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
       .where(eq(this.table.id, update.id));
   }
 
-  async getById(id: string): Promise<any | undefined> {
-    const rows = await this.db
-      .select()
-      .from(this.table as any)
-      .where(eq(this.table.id, id))
-      .all();
+  /** The row as the table holds it; each subclass narrows it to its entity type. */
+  async getById(id: string): Promise<unknown> {
+    const rows = await this.db.select().from(this.syncTable).where(eq(this.table.id, id)).all();
     return rows[0];
   }
 }

@@ -22,6 +22,7 @@ import {
 } from './arrangedWrites';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { applyKeyedListSort, storyEntityConditions } from './storyEntityListQuery';
 import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import { softDeleteRowSync } from './softDelete';
@@ -211,22 +212,11 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       favoriteFilterState,
       advancedSearchCriteria,
     ): Promise<SceneSelect[]> {
-      const conditions: (SQL<boolean> | undefined)[] = [
-        eq(scenes.storyId, storyId) as SQL<boolean>,
-        eq(scenes.isDeleted, false) as SQL<boolean>,
-      ];
-
-      if (searchTerm) {
-        conditions.push(
-          sql`${scenes.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
-        );
-      }
-
-      if (favoriteFilterState === 'favorite') {
-        conditions.push(eq(scenes.isFavorite, true) as SQL<boolean>);
-      } else if (favoriteFilterState === 'not-favorite') {
-        conditions.push(eq(scenes.isFavorite, false) as SQL<boolean>);
-      }
+      const conditions: SQL<boolean>[] = storyEntityConditions(scenes, storyId, {
+        searchColumn: scenes.name,
+        searchTerm,
+        favoriteFilterState,
+      });
 
       conditions.push(
         ...(await buildAdvancedSearchConditions(
@@ -237,38 +227,26 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         )),
       );
 
-      const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
-
-      let query = db
+      const query = db
         .select()
         .from(scenes)
-        .where(and(...finalConditions))
+        .where(and(...conditions))
         .$dynamic();
 
-      if (sortBy) {
-        const orderBy = sortDirection === 'desc' ? desc : asc;
-        switch (sortBy) {
-          case 'name':
-            query = query.orderBy(orderBy(scenes.name));
-            break;
-          case 'index':
-            query = query.orderBy(orderBy(scenes.index));
-            break;
-          case 'createdAt':
-            query = query.orderBy(orderBy(scenes.createdAt));
-            break;
-          case 'updatedAt':
-            query = query.orderBy(orderBy(scenes.updatedAt));
-            break;
-          default:
-            console.warn(`Unknown sortBy field: ${sortBy}`);
-            break;
-        }
-      } else {
-        query = query.orderBy(asc(scenes.index)); // Default sort by index
-      }
+      const sorted = applyKeyedListSort(
+        query,
+        sortBy,
+        sortDirection,
+        {
+          name: scenes.name,
+          index: scenes.index,
+          createdAt: scenes.createdAt,
+          updatedAt: scenes.updatedAt,
+        },
+        scenes.index, // Default sort by index
+      );
 
-      return withLiveChapters(await query.all());
+      return withLiveChapters(await sorted.all());
     },
 
     async getById(sceneId: string): Promise<SceneSelect | undefined> {

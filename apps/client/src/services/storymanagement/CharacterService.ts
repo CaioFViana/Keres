@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { CharacterInsert, CharacterSelect, TagSelect } from '../../db/schema';
 import { characters, characterRelations, tagRelations, tags } from '../../db/schema'; // Import CharacterInsert and stories
@@ -17,6 +17,7 @@ import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/en
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { storyEntityConditions } from './storyEntityListQuery';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -66,17 +67,12 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
       sortDirection,
       advancedSearchCriteria,
     ): Promise<CharacterWithTags[]> {
-      const whereConditions = [eq(characters.storyId, storyId), eq(characters.isDeleted, false)];
+      const whereConditions: SQL[] = storyEntityConditions(characters, storyId, {
+        searchColumn: [characters.name, characters.title],
+        searchTerm,
+        favoriteFilterState,
+      });
       const orderByConditions: any[] = [];
-
-      if (searchTerm) {
-        whereConditions.push(
-          or(
-            sql`${characters.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE`,
-            sql`${characters.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE`,
-          ) as SQL<boolean>,
-        );
-      }
 
       if (tagFilterIds && tagFilterIds.length > 0) {
         const taggedCharacters = db
@@ -89,12 +85,6 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
             ),
           );
         whereConditions.push(inArray(characters.id, taggedCharacters));
-      }
-
-      if (favoriteFilterState === 'favorite') {
-        whereConditions.push(eq(characters.isFavorite, true));
-      } else if (favoriteFilterState === 'not-favorite') {
-        whereConditions.push(eq(characters.isFavorite, false));
       }
 
       if (advancedSearchCriteria) {

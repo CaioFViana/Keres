@@ -13,7 +13,7 @@ import type { OperationLogSelect } from '../../db/schema';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { withOpLogLock } from '../../utils/opLogMutex';
 import { trimSyncedOperationLogs } from '../../utils/syncUtils';
-import { getEntityTable, toEntityColumns } from '../entityTableRegistry';
+import { columnsOf, getEntityTable, toEntityColumns } from '../entityTableRegistry';
 import { raiseConflictsServerVersion, withoutDerivedPosition } from './syncConflictHelpers';
 import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflictService';
 import type { SyncContext } from './SyncContext';
@@ -26,6 +26,11 @@ import {
   waitingOperationIds,
 } from './pushRefusals';
 import { deriveBaseVersion, onlyMoves, syncEntityKey } from './syncPure';
+
+/** What a failure is logged as: its message when it has one, otherwise the thrown value itself. */
+const detailOf = (error: unknown): unknown =>
+  (typeof error === 'object' && error !== null && 'message' in error ? error.message : undefined) ||
+  error;
 
 /** Rounds of push batches per cycle; a larger backlog continues on the next cycle. */
 export const PUSH_MAX_ROUNDS = 50;
@@ -63,13 +68,13 @@ export class SyncPush {
           // as progress, so the loop below keeps draining the remaining valid ops.
           try {
             await this.quarantineUnpushableOperation(op, built.reason);
-          } catch (quarantineError: any) {
+          } catch (quarantineError) {
             // The conflicted mark may already have committed while the conflict row did not: the
             // op would sit out of every future queue with no conflict to resolve it, so release
             // it back and retry the quarantine on the next push instead of aborting this one.
             console.log(
               `Quarantine failed for operation ${op.id}, retrying on the next push:`,
-              quarantineError?.message || quarantineError,
+              detailOf(quarantineError),
             );
             await this.context
               .db()!
@@ -133,10 +138,10 @@ export class SyncPush {
     // a trim failure must never fail the push that just succeeded.
     try {
       await trimSyncedOperationLogs(this.context.db()!, this.context.storyId()!);
-    } catch (trimError: any) {
+    } catch (trimError) {
       console.log(
         `Error trimming synchronized operations for story ${this.context.storyId()}:`,
-        trimError?.message || trimError,
+        detailOf(trimError),
       );
     }
     return { offline: false };
@@ -168,10 +173,10 @@ export class SyncPush {
   private buildStoryUpdateFromLocalOp(
     op: OperationLogSelect,
   ): { update: StoryUpdate; reason: null } | { update: null; reason: string } {
-    let payloadData: Record<string, any> | null = null;
+    let payloadData: Record<string, unknown> | null = null;
     try {
       const parsed: unknown = JSON.parse(op.payload);
-      if (parsed && typeof parsed === 'object') payloadData = parsed as Record<string, any>;
+      if (parsed && typeof parsed === 'object') payloadData = parsed as Record<string, unknown>;
     } catch {
       payloadData = null;
     }
@@ -208,7 +213,7 @@ export class SyncPush {
       clientOperationId: op.id,
     };
 
-    const filteredPayloadData: Record<string, any> = { ...payloadData };
+    const filteredPayloadData: Record<string, unknown> = { ...payloadData };
     delete filteredPayloadData.createdAt;
     delete filteredPayloadData.updatedAt;
     delete filteredPayloadData.deletedAt;
@@ -262,12 +267,12 @@ export class SyncPush {
     op: OperationLogSelect,
     reason: string,
   ): Promise<void> {
-    let localValues: Record<string, any> = {};
+    let localValues: Record<string, unknown> = {};
     let unparseable = false;
     try {
       const parsed: unknown = JSON.parse(op.payload);
       if (parsed && typeof parsed === 'object') {
-        localValues = { ...(parsed as Record<string, any>) };
+        localValues = { ...(parsed as Record<string, unknown>) };
       } else {
         unparseable = true;
       }
@@ -361,10 +366,10 @@ export class SyncPush {
     let base = newEntityVersion;
     let rebased = 0;
     for (const op of pendingLocalOps) {
-      let payload: Record<string, any> | null = null;
+      let payload: Record<string, unknown> | null = null;
       try {
         const parsed: unknown = JSON.parse(op.payload);
-        if (parsed && typeof parsed === 'object') payload = parsed as Record<string, any>;
+        if (parsed && typeof parsed === 'object') payload = parsed as Record<string, unknown>;
       } catch {
         payload = null;
       }
@@ -400,7 +405,7 @@ export class SyncPush {
           .db()!
           .update(table)
           .set({ version: newEntityVersion + rebased })
-          .where(eq((table as any).id, first.entityId));
+          .where(eq(columnsOf(table).id, first.entityId));
       }
     }
   }
@@ -634,7 +639,7 @@ export class SyncPush {
             isDeleted: true,
             ...(typeof first.serverVersion === 'number' ? { version: first.serverVersion } : {}),
           } as never)
-          .where(eq((table as any).id, entityId));
+          .where(eq(columnsOf(table).id, entityId));
       }
       return true;
     }
@@ -701,7 +706,7 @@ export class SyncPush {
               .db()!
               .update(table)
               .set(columns)
-              .where(eq((table as any).id, entityId));
+              .where(eq(columnsOf(table).id, entityId));
           }
         }
         await this.rebasePendingOperations(relatedOps, first.serverVersion);

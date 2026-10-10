@@ -11,7 +11,7 @@ import type { SQL } from 'drizzle-orm';
 import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import { attributeValues, chapters, scenes, storySchemaFields } from '../../db/schema';
-import { getEntityTable } from '../entityTableRegistry';
+import { columnsOf, getEntityTable } from '../entityTableRegistry';
 import type { OccurrenceTarget } from '../../utils/occurrenceTarget';
 import { truncate } from '../../utils/stringUtils';
 import { createFavoriteService } from './FavoriteService';
@@ -89,10 +89,10 @@ function buildSnippet(fieldLabel: string, displayValue: string, term: string): s
 
 /** First configured search field whose value actually contains `term` (case-insensitive) - used to pick which field to show in the snippet. */
 function findMatchingField(
-  row: Record<string, any>,
+  row: Record<string, unknown>,
   searchFields: string[],
   term: string,
-): { field: string; value: any } | null {
+): { field: string; value: string } | null {
   const lowerTerm = term.toLowerCase();
   for (const field of searchFields) {
     const value = row[field];
@@ -190,12 +190,12 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
           .from(table)
           .where(
             and(
-              eq((table as any).storyId, storyId),
-              eq((table as any).isDeleted, false),
+              eq(columnsOf(table).storyId, storyId),
+              eq(columnsOf(table).isDeleted, false),
               or(
                 ...searchFields.map(
                   (field) =>
-                    sql`${(table as any)[field]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+                    sql`${columnsOf(table)[field]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
                 ),
               ),
             ),
@@ -203,11 +203,12 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
           .limit(NATIVE_RESULT_LIMIT_PER_ENTITY)
           .all();
 
-        for (const row of rows as Record<string, any>[]) {
+        for (const row of rows as Record<string, unknown>[]) {
           const match = findMatchingField(row, searchFields, trimmedTerm);
           // A Mode has no screen of its own: the result carries the owning character's id, which is where
           // `navigateToEntityDetail` goes (see ENTITY_ROUTES.Mode in entityNavigation).
-          const resultId = entityType === 'Mode' ? row.characterId : row.id;
+          // Both id columns are NOT NULL, so the String is only the type narrowing.
+          const resultId = String(entityType === 'Mode' ? row.characterId : row.id);
           const key = `${entityType}:${row.id}`;
           // Title matches land on top (the header); Modes land on the owner's list.
           const occurrence =
@@ -257,12 +258,12 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
             if (!table) return;
             const { titleField } = globalSearchFieldConfig[entityType];
             const titleRows = await db
-              .select({ id: (table as any).id, title: (table as any)[titleField] })
+              .select({ id: columnsOf(table).id, title: columnsOf(table)[titleField] })
               .from(table)
               .where(
                 and(
-                  inArray((table as any).id, Array.from(idSet)),
-                  eq((table as any).isDeleted, false),
+                  inArray(columnsOf(table).id, Array.from(idSet)),
+                  eq(columnsOf(table).isDeleted, false),
                 ),
               )
               .all();
@@ -330,11 +331,11 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
                 entityId: attributeValues.entityId,
                 fieldId: storySchemaFields.id,
                 fieldName: storySchemaFields.name,
-                displayValue: (table as any)[titleField],
+                displayValue: columnsOf(table)[titleField],
               })
               .from(attributeValues)
               .innerJoin(storySchemaFields, eq(attributeValues.fieldId, storySchemaFields.id))
-              .innerJoin(table, eq(attributeValues.value, (table as any).id))
+              .innerJoin(table, eq(attributeValues.value, columnsOf(table).id))
               .where(
                 and(
                   eq(attributeValues.storyId, storyId),
@@ -343,8 +344,8 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
                     attributeValues.fieldId,
                     fields.map((field) => field.id),
                   ),
-                  eq((table as any).isDeleted, false),
-                  sql`${(table as any)[titleField]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
+                  eq(columnsOf(table).isDeleted, false),
+                  sql`${columnsOf(table)[titleField]} LIKE ${`%${trimmedTerm}%`} COLLATE NOCASE` as SQL<boolean>,
                 ),
               )
               .limit(ATTRIBUTE_RESULT_LIMIT)
@@ -371,14 +372,14 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
                 const ownerTitleField = globalSearchFieldConfig[ownerType].titleField;
                 const ownerRows = (await db
                   .select({
-                    id: (ownerTable as any).id,
-                    title: (ownerTable as any)[ownerTitleField],
+                    id: columnsOf(ownerTable).id,
+                    title: columnsOf(ownerTable)[ownerTitleField],
                   })
                   .from(ownerTable)
                   .where(
                     and(
-                      inArray((ownerTable as any).id, Array.from(ids)),
-                      eq((ownerTable as any).isDeleted, false),
+                      inArray(columnsOf(ownerTable).id, Array.from(ids)),
+                      eq(columnsOf(ownerTable).isDeleted, false),
                     ),
                   )
                   .all()) as { id: string; title: unknown }[];
@@ -446,16 +447,16 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
           if (matchingResults.length === 0) return;
 
           const table = getEntityTable(entityType);
-          if (!table || !(table as any).isFavorite) return;
+          if (!table || !columnsOf(table).isFavorite) return;
           const rows = (await db
             .select({
-              id: (table as any).id,
-              isFavorite: (table as any).isFavorite,
+              id: columnsOf(table).id,
+              isFavorite: columnsOf(table).isFavorite,
             })
             .from(table)
             .where(
               inArray(
-                (table as any).id,
+                columnsOf(table).id,
                 matchingResults.map((result) => result.id),
               ),
             )

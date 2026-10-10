@@ -1,8 +1,9 @@
 import type { OperationLogEntityType } from '@keres/shared';
 import { getEntityDomainHandler } from '@keres/shared';
 import { and, eq, inArray } from 'drizzle-orm';
+import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { AppDrizzleClient } from '../db';
-import { getEntityTable } from './entityTableRegistry';
+import { columnsOf, getEntityTable } from './entityTableRegistry';
 
 export interface EntityRef {
   entityType: string;
@@ -54,14 +55,15 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
         )?.displayName;
         if (!displayName) continue;
 
-        const selection: Record<string, any> = { id: (table as any).id };
+        const columns = columnsOf(table);
+        const selection: Record<string, SQLiteColumn> = { id: columns.id };
         for (const field of displayName.fields) {
-          selection[field] = (table as any)[field];
+          selection[field] = columns[field];
         }
 
-        const conditions = [inArray((table as any).id, idList)];
+        const conditions = [inArray(columns.id, idList)];
         if (options.includeDeleted === false && 'isDeleted' in table) {
-          conditions.push(eq((table as any).isDeleted, false));
+          conditions.push(eq(columns.isDeleted, false));
         }
         const rows = await db
           .select(selection)
@@ -87,12 +89,12 @@ export interface EntitySnapshotResolver {
    * IDs). The same grouping by type and one `inArray` query per table that
    * `resolveMany` already uses.
    */
-  resolveMany(refs: EntityRef[]): Promise<Map<string, Record<string, any>>>;
+  resolveMany(refs: EntityRef[]): Promise<Map<string, Record<string, unknown>>>;
 }
 
 export function createEntitySnapshotResolver(db: AppDrizzleClient): EntitySnapshotResolver {
   return {
-    async resolveMany(refs: EntityRef[]): Promise<Map<string, Record<string, any>>> {
+    async resolveMany(refs: EntityRef[]): Promise<Map<string, Record<string, unknown>>> {
       const idsByType = new Map<string, Set<string>>();
       for (const ref of refs) {
         if (!ref.entityType || !ref.entityId) continue;
@@ -101,7 +103,7 @@ export function createEntitySnapshotResolver(db: AppDrizzleClient): EntitySnapsh
         idsByType.set(ref.entityType, set);
       }
 
-      const result = new Map<string, Record<string, any>>();
+      const result = new Map<string, Record<string, unknown>>();
 
       for (const [entityType, ids] of idsByType) {
         const table = getEntityTable(entityType);
@@ -111,9 +113,9 @@ export function createEntitySnapshotResolver(db: AppDrizzleClient): EntitySnapsh
         const rows = (await db
           .select()
           .from(table)
-          .where(inArray((table as any).id, idList))) as Record<string, any>[];
+          .where(inArray(columnsOf(table).id, idList))) as Record<string, unknown>[];
         for (const row of rows) {
-          result.set(nameKey(entityType, row.id), row);
+          result.set(nameKey(entityType, row.id as string), row);
         }
       }
 

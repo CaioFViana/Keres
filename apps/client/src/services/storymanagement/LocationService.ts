@@ -17,6 +17,7 @@ import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/en
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { storyEntityConditions } from './storyEntityListQuery';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -66,17 +67,12 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
       sortDirection,
       advancedSearchCriteria,
     ): Promise<LocationWithTags[]> {
-      const whereConditions = [eq(locations.storyId, storyId), eq(locations.isDeleted, false)];
+      const whereConditions: SQL[] = storyEntityConditions(locations, storyId, {
+        searchColumn: [locations.name, locations.description],
+        searchTerm,
+        favoriteFilterState,
+      });
       const orderByConditions: any[] = [];
-
-      if (searchTerm) {
-        whereConditions.push(
-          or(
-            sql`${locations.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE`,
-            sql`${locations.description} LIKE ${`%${searchTerm}%`} COLLATE NOCASE`,
-          ) as SQL<boolean>,
-        );
-      }
 
       if (tagFilterIds && tagFilterIds.length > 0) {
         const taggedLocations = db
@@ -89,12 +85,6 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
             ),
           );
         whereConditions.push(inArray(locations.id, taggedLocations));
-      }
-
-      if (favoriteFilterState === 'favorite') {
-        whereConditions.push(eq(locations.isFavorite, true));
-      } else if (favoriteFilterState === 'not-favorite') {
-        whereConditions.push(eq(locations.isFavorite, false));
       }
 
       if (advancedSearchCriteria) {

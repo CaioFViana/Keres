@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { NoteInsert, NoteSelect } from '../../db/schemas/notes';
 import { notes } from '../../db/schemas/notes';
@@ -19,6 +19,7 @@ import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { softDeleteRowSync } from './softDelete';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { applyKeyedListSort, storyEntityConditions } from './storyEntityListQuery';
 import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -76,16 +77,11 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       favoriteFilterState,
       advancedSearchCriteria,
     ): Promise<NoteWithTags[]> {
-      const conditions: (SQL<boolean> | undefined)[] = [
-        eq(notes.storyId, storyId) as SQL<boolean>,
-        eq(notes.isDeleted, false) as SQL<boolean>,
-      ];
-
-      if (searchTerm) {
-        conditions.push(
-          sql`${notes.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
-        );
-      }
+      const conditions: SQL<boolean>[] = storyEntityConditions(notes, storyId, {
+        searchColumn: notes.title,
+        searchTerm,
+        favoriteFilterState,
+      });
 
       if (activeFilterTags && activeFilterTags.length > 0) {
         // Filter notes by tags
@@ -110,12 +106,6 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         }
       }
 
-      if (favoriteFilterState === 'favorite') {
-        conditions.push(eq(notes.isFavorite, true) as SQL<boolean>);
-      } else if (favoriteFilterState === 'not-favorite') {
-        conditions.push(eq(notes.isFavorite, false) as SQL<boolean>);
-      }
-
       conditions.push(
         ...(await buildAdvancedSearchConditions(
           'Note',
@@ -124,8 +114,6 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
           (field, value) => buildCustomAttributeSearchCondition(db, notes.id, field, value),
         )),
       );
-
-      const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
       const query = db
         .select({
@@ -142,30 +130,16 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
           ),
         )
         .leftJoin(tags, and(eq(tags.id, tagRelations.tagId), eq(tags.isDeleted, false)))
-        .where(and(...finalConditions))
+        .where(and(...conditions))
         .$dynamic();
 
-      let resultQuery = query;
-
-      if (sortBy) {
-        const orderBy = sortDirection === 'desc' ? desc : asc;
-        switch (sortBy) {
-          case 'title':
-            resultQuery = resultQuery.orderBy(orderBy(notes.title));
-            break;
-          case 'createdAt':
-            resultQuery = resultQuery.orderBy(orderBy(notes.createdAt));
-            break;
-          case 'updatedAt':
-            resultQuery = resultQuery.orderBy(orderBy(notes.updatedAt));
-            break;
-          default:
-            console.warn(`Unknown sortBy field: ${sortBy}`);
-            break;
-        }
-      } else {
-        resultQuery = resultQuery.orderBy(asc(notes.title));
-      }
+      const resultQuery = applyKeyedListSort(
+        query,
+        sortBy,
+        sortDirection,
+        { title: notes.title, createdAt: notes.createdAt, updatedAt: notes.updatedAt },
+        notes.title,
+      );
 
       const rawResults = await resultQuery.all();
 

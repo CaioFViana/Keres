@@ -1,6 +1,6 @@
 import type { ChapterType } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ChapterInsert, ChapterSelect } from '../../db/schema';
 import { chapters } from '../../db/schema';
@@ -16,6 +16,7 @@ import {
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { applyKeyedListSort, storyEntityConditions } from './storyEntityListQuery';
 import { createStoryArcService } from './StoryArcService';
 import { planContainerOrderSync, planPlacementSync, writeRankChangesSync } from './arrangedWrites';
 import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
@@ -101,27 +102,16 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       advancedSearchCriteria,
       type = 'chapter',
     ): Promise<ChapterSelect[]> {
-      const conditions: (SQL<boolean> | undefined)[] = [
-        eq(chapters.storyId, storyId) as SQL<boolean>,
-        eq(chapters.isDeleted, false) as SQL<boolean>,
-      ];
+      const conditions: SQL<boolean>[] = storyEntityConditions(chapters, storyId, {
+        searchColumn: chapters.name,
+        searchTerm,
+        favoriteFilterState,
+      });
 
       // `null` is an explicit "both kinds", which the drawer's combined list asks for. The default
       // is chapters, so every existing caller keeps meaning the narrative spine.
       if (type !== null) {
         conditions.push(eq(chapters.type, type) as SQL<boolean>);
-      }
-
-      if (searchTerm) {
-        conditions.push(
-          sql`${chapters.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
-        );
-      }
-
-      if (favoriteFilterState === 'favorite') {
-        conditions.push(eq(chapters.isFavorite, true) as SQL<boolean>);
-      } else if (favoriteFilterState === 'not-favorite') {
-        conditions.push(eq(chapters.isFavorite, false) as SQL<boolean>);
       }
 
       conditions.push(
@@ -133,12 +123,10 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         )),
       );
 
-      const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
-
-      let query = db
+      const query = db
         .select()
         .from(chapters)
-        .where(and(...finalConditions))
+        .where(and(...conditions))
         .$dynamic();
 
       /**
@@ -151,30 +139,21 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       const groupByKind =
         type === null ? [sql`CASE WHEN ${chapters.type} = 'event' THEN 0 ELSE 1 END`] : [];
 
-      if (sortBy) {
-        const orderBy = sortDirection === 'desc' ? desc : asc;
-        switch (sortBy) {
-          case 'name':
-            query = query.orderBy(...groupByKind, orderBy(chapters.name));
-            break;
-          case 'index':
-            query = query.orderBy(...groupByKind, orderBy(chapters.index));
-            break;
-          case 'createdAt':
-            query = query.orderBy(...groupByKind, orderBy(chapters.createdAt));
-            break;
-          case 'updatedAt':
-            query = query.orderBy(...groupByKind, orderBy(chapters.updatedAt));
-            break;
-          default:
-            console.warn(`Unknown sortBy field: ${sortBy}`);
-            break;
-        }
-      } else {
-        query = query.orderBy(...groupByKind, asc(chapters.index)); // Default sort by index
-      }
+      const sorted = applyKeyedListSort(
+        query,
+        sortBy,
+        sortDirection,
+        {
+          name: chapters.name,
+          index: chapters.index,
+          createdAt: chapters.createdAt,
+          updatedAt: chapters.updatedAt,
+        },
+        chapters.index, // Default sort by index
+        groupByKind,
+      );
 
-      return query.all();
+      return sorted.all();
     },
 
     async getById(chapterId: string): Promise<ChapterSelect | undefined> {

@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'; // Import asc and desc
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { TagInsert, TagSelect } from '../../db/schema';
 import { tags } from '../../db/schema'; // Import TagInsert and stories
@@ -16,6 +16,7 @@ import {
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { applyKeyedListSort, storyEntityConditions } from './storyEntityListQuery';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -68,59 +69,33 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       favoriteFilterState,
       advancedSearchCriteria,
     ): Promise<TagSelect[]> {
-      const conditions: (SQL<boolean> | undefined)[] = [
-        eq(tags.storyId, storyId) as SQL<boolean>, // Explicit cast to SQL<boolean>
-        eq(tags.isDeleted, false) as SQL<boolean>,
-      ];
-
-      if (searchTerm) {
-        conditions.push(sql`${tags.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>);
-      }
+      const conditions: SQL<boolean>[] = storyEntityConditions(tags, storyId, {
+        searchColumn: tags.name,
+        searchTerm,
+        favoriteFilterState,
+      });
 
       if (activeFilterTags && activeFilterTags.length > 0) {
         conditions.push(inArray(tags.id, activeFilterTags) as SQL<boolean>);
       }
 
-      if (favoriteFilterState === 'favorite') {
-        conditions.push(eq(tags.isFavorite, true) as SQL<boolean>); // Explicit cast
-      } else if (favoriteFilterState === 'not-favorite') {
-        conditions.push(eq(tags.isFavorite, false) as SQL<boolean>); // Explicit cast
-      }
-
       conditions.push(...buildNativeAdvancedSearchConditions('Tag', tags, advancedSearchCriteria));
 
-      // Filter out undefined conditions and use 'and' to combine them
-      const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
-
-      let query = db
+      const query = db
         .select()
         .from(tags)
-        .where(and(...finalConditions))
+        .where(and(...conditions))
         .$dynamic();
 
-      if (sortBy) {
-        const orderBy = sortDirection === 'desc' ? desc : asc;
-        switch (sortBy) {
-          case 'name':
-            query = query.orderBy(orderBy(tags.name));
-            break;
-          case 'createdAt':
-            query = query.orderBy(orderBy(tags.createdAt));
-            break;
-          case 'updatedAt':
-            query = query.orderBy(orderBy(tags.updatedAt));
-            break;
-          default:
-            // Fallback or error if sortBy is unknown
-            console.warn(`Unknown sortBy field: ${sortBy}`);
-            break;
-        }
-      } else {
-        // Default sort if no sortBy is provided
-        query = query.orderBy(asc(tags.name));
-      }
+      const sorted = applyKeyedListSort(
+        query,
+        sortBy,
+        sortDirection,
+        { name: tags.name, createdAt: tags.createdAt, updatedAt: tags.updatedAt },
+        tags.name,
+      );
 
-      const result = await query.all();
+      const result = await sorted.all();
       return result;
     },
 

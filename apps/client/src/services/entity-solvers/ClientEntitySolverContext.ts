@@ -2,10 +2,11 @@ import type { EntitySolverContext, EntitySolverRow } from '@keres/shared';
 import { OperationLogEntityType } from '@keres/shared';
 import type { StoryVocabularyEntityType } from '@keres/shared/entities/Story';
 import { and, eq } from 'drizzle-orm';
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
-import { getEntityTable } from '../entityTableRegistry';
+import { columnsOf, getEntityTable } from '../entityTableRegistry';
 import {
   loadStoryVocabulary,
   fromStoryNoun,
@@ -50,7 +51,7 @@ const translationKey: Partial<Record<OperationLogEntityType, string>> = {
 };
 
 /** Local records referenced by operation logs that are not story-sync entities. */
-const SOLVER_ONLY_TABLES: Partial<Record<OperationLogEntityType, unknown>> = {
+const SOLVER_ONLY_TABLES: Partial<Record<OperationLogEntityType, SQLiteTable>> = {
   [OperationLogEntityType.OperationLog]: schema.operationLogs,
   [OperationLogEntityType.User]: schema.users,
 };
@@ -69,20 +70,20 @@ export function createClientEntitySolverContext(
     async read(type, id): Promise<EntitySolverRow | undefined> {
       const table = getEntityTable(type) ?? SOLVER_ONLY_TABLES[type];
       if (!table || !id) return undefined;
-      const idColumn =
-        type === OperationLogEntityType.User ? (table as any).idUser : (table as any).id;
+      const columns = columnsOf(table);
+      const idColumn = type === OperationLogEntityType.User ? columns.idUser : columns.id;
       const conditions = [eq(idColumn, id)];
       if (type === OperationLogEntityType.Story) {
-        conditions.push(eq((table as any).id, storyId));
+        conditions.push(eq(columns.id, storyId));
       } else if (type !== OperationLogEntityType.User) {
-        conditions.push(eq((table as any).storyId, storyId));
+        conditions.push(eq(columns.storyId, storyId));
       }
       if (type !== OperationLogEntityType.OperationLog) {
-        conditions.push(eq((table as any).isDeleted, false));
+        conditions.push(eq(columns.isDeleted, false));
       }
       return (await db
         .select()
-        .from(table as any)
+        .from(table)
         .where(and(...conditions))
         .get()) as EntitySolverRow | undefined;
     },
@@ -91,19 +92,19 @@ export function createClientEntitySolverContext(
     },
     async noun(type, plural = false) {
       if (VOCABULARY_TYPES.has(type)) {
-        return translateStoryNoun(t, await vocabulary(), vocabularyType(type) as any, plural);
+        return translateStoryNoun(t, await vocabulary(), vocabularyType(type), plural);
       }
       return t(translationKey[type as OperationLogEntityType] ?? 'unknown_entity_type');
     },
     async fromNoun(type) {
       if (VOCABULARY_TYPES.has(type)) {
-        return fromStoryNoun(t, await vocabulary(), vocabularyType(type) as any);
+        return fromStoryNoun(t, await vocabulary(), vocabularyType(type));
       }
       return t(translationKey[type as OperationLogEntityType] ?? 'unknown_entity_type');
     },
     async unknownNoun(type) {
       if (VOCABULARY_TYPES.has(type)) {
-        return unknownStoryNoun(t, await vocabulary(), vocabularyType(type) as any);
+        return unknownStoryNoun(t, await vocabulary(), vocabularyType(type));
       }
       return t('unknown_entity');
     },

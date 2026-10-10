@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ItemInsert, ItemSelect } from '../../db/schemas/items';
 import { items } from '../../db/schemas/items';
@@ -16,6 +16,7 @@ import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { softDeleteRowSync } from './softDelete';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { applyListSort, storyEntityConditions } from './storyEntityListQuery';
 import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -69,24 +70,12 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       favoriteFilterState,
       advancedSearchCriteria,
     ): Promise<ItemSelect[]> {
-      const conditions: (SQL<boolean> | undefined)[] = [
-        eq(items.storyId, storyId) as SQL<boolean>,
-        eq(items.isDeleted, false) as SQL<boolean>,
-      ];
-
-      if (searchTerm) {
-        conditions.push(
-          sql`${items.name} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
-        );
-      }
-
-      // These were previously compared against 'favorites'/'not-favorites' (plural), which
-      // no caller ever sends - the UI emits the singular form - so the filter never matched.
-      if (favoriteFilterState === 'favorite') {
-        conditions.push(eq(items.isFavorite, true) as SQL<boolean>);
-      } else if (favoriteFilterState === 'not-favorite') {
-        conditions.push(eq(items.isFavorite, false) as SQL<boolean>);
-      }
+      // The favourite filter compares the singular form the UI emits; see storyEntityConditions.
+      const conditions: SQL<boolean>[] = storyEntityConditions(items, storyId, {
+        searchColumn: items.name,
+        searchTerm,
+        favoriteFilterState,
+      });
 
       conditions.push(
         ...(await buildAdvancedSearchConditions(
@@ -97,26 +86,13 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
         )),
       );
 
-      const finalConditions = conditions.filter((c) => c !== undefined) as SQL<boolean>[];
-      let query = db
+      const query = db
         .select()
         .from(items)
-        .where(and(...finalConditions))
+        .where(and(...conditions))
         .$dynamic();
 
-      if (sortBy) {
-        const orderBy = sortDirection === 'desc' ? desc : asc;
-        const sortKey = sortBy as keyof ItemSelect;
-        if (items[sortKey]) {
-          query = query.orderBy(orderBy(items[sortKey]));
-        } else {
-          console.warn(`Unknown sortBy field: ${sortBy}`);
-        }
-      } else {
-        query = query.orderBy(asc(items.createdAt));
-      }
-
-      return query.all();
+      return applyListSort(query, items, sortBy, sortDirection).all();
     },
 
     async getById(itemId: string): Promise<ItemSelect | undefined> {

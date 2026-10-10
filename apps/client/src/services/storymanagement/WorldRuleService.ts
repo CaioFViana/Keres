@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, WorldRuleInsert, WorldRuleSelect } from '../../db';
 import { worldRules } from '../../db';
 import { tagRelations } from '../../db/schemas/tagRelations';
@@ -17,6 +17,7 @@ import {
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
+import { applyKeyedListSort, storyEntityConditions } from './storyEntityListQuery';
 import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -74,16 +75,11 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
       favoriteFilterState,
       advancedSearchCriteria,
     ): Promise<WorldRuleWithTags[]> {
-      const conditions: (SQL<boolean> | undefined)[] = [
-        eq(worldRules.storyId, storyId) as SQL<boolean>,
-        eq(worldRules.isDeleted, false) as SQL<boolean>,
-      ];
-
-      if (searchTerm) {
-        conditions.push(
-          sql`${worldRules.title} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
-        );
-      }
+      const conditions: SQL<boolean>[] = storyEntityConditions(worldRules, storyId, {
+        searchColumn: worldRules.title,
+        searchTerm,
+        favoriteFilterState,
+      });
 
       if (activeFilterTags && activeFilterTags.length > 0) {
         // Filter world rules by tags
@@ -108,12 +104,6 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         }
       }
 
-      if (favoriteFilterState === 'favorite') {
-        conditions.push(eq(worldRules.isFavorite, true) as SQL<boolean>);
-      } else if (favoriteFilterState === 'not-favorite') {
-        conditions.push(eq(worldRules.isFavorite, false) as SQL<boolean>);
-      }
-
       conditions.push(
         ...(await buildAdvancedSearchConditions(
           'WorldRule',
@@ -122,8 +112,6 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
           (field, value) => buildCustomAttributeSearchCondition(db, worldRules.id, field, value),
         )),
       );
-
-      const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
       const query = db
         .select({
@@ -140,30 +128,20 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
           ),
         )
         .leftJoin(tags, and(eq(tags.id, tagRelations.tagId), eq(tags.isDeleted, false)))
-        .where(and(...finalConditions))
+        .where(and(...conditions))
         .$dynamic();
 
-      let resultQuery = query;
-
-      if (sortBy) {
-        const orderBy = sortDirection === 'desc' ? desc : asc;
-        switch (sortBy) {
-          case 'title':
-            resultQuery = resultQuery.orderBy(orderBy(worldRules.title));
-            break;
-          case 'createdAt':
-            resultQuery = resultQuery.orderBy(orderBy(worldRules.createdAt));
-            break;
-          case 'updatedAt':
-            resultQuery = resultQuery.orderBy(orderBy(worldRules.updatedAt));
-            break;
-          default:
-            console.warn(`Unknown sortBy field: ${sortBy}`);
-            break;
-        }
-      } else {
-        resultQuery = resultQuery.orderBy(asc(worldRules.title));
-      }
+      const resultQuery = applyKeyedListSort(
+        query,
+        sortBy,
+        sortDirection,
+        {
+          title: worldRules.title,
+          createdAt: worldRules.createdAt,
+          updatedAt: worldRules.updatedAt,
+        },
+        worldRules.title,
+      );
 
       const rawResults = await resultQuery.all();
 

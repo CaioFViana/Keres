@@ -1,5 +1,5 @@
 import type { SQL } from 'drizzle-orm';
-import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ChoiceInsert, ChoiceSelect } from '../../db/schemas/choices';
 import { choices } from '../../db/schemas/choices';
@@ -17,6 +17,7 @@ import {
 import { createServerService } from '../ServerService';
 import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
+import { applyListSort, storyEntityConditions } from './storyEntityListQuery';
 import { softDeleteRowSync } from './softDelete';
 
 // Choices have no favourite flag; the parameter is accepted for signature parity with
@@ -78,16 +79,10 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
       favoriteFilterState,
       advancedSearchCriteria,
     ): Promise<ChoiceSelect[]> {
-      const conditions: (SQL<boolean> | undefined)[] = [
-        eq(choices.storyId, storyId) as SQL<boolean>,
-        eq(choices.isDeleted, false) as SQL<boolean>,
-      ];
-
-      if (searchTerm) {
-        conditions.push(
-          sql`${choices.text} LIKE ${`%${searchTerm}%`} COLLATE NOCASE` as SQL<boolean>,
-        );
-      }
+      const conditions: SQL<boolean>[] = storyEntityConditions(choices, storyId, {
+        searchColumn: choices.text,
+        searchTerm,
+      });
 
       if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
         const { chapterId, sceneId, nextSceneId, ...otherCriteria } = advancedSearchCriteria;
@@ -116,26 +111,13 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
         }
       }
 
-      const finalConditions = conditions.filter((c) => c !== undefined) as SQL<boolean>[];
-      let query = db
+      const query = db
         .select()
         .from(choices)
-        .where(and(...finalConditions))
+        .where(and(...conditions))
         .$dynamic();
 
-      if (sortBy) {
-        const orderBy = sortDirection === 'desc' ? desc : asc;
-        const sortKey = sortBy as keyof ChoiceSelect;
-        if (choices[sortKey]) {
-          query = query.orderBy(orderBy(choices[sortKey]));
-        } else {
-          console.warn(`Unknown sortBy field: ${sortBy}`);
-        }
-      } else {
-        query = query.orderBy(asc(choices.createdAt));
-      }
-
-      return query.all();
+      return applyListSort(query, choices, sortBy, sortDirection).all();
     },
 
     async getById(choiceId: string): Promise<ChoiceSelect | undefined> {

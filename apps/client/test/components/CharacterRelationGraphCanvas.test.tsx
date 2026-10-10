@@ -218,12 +218,12 @@ describe('character relation graph skia overlay', () => {
     const plates = root.queryAll((node) => node.type === 'SkiaRoundedRect');
     expect(plates).toHaveLength(2);
     const ally = texts.find((text) => text.props.text === 'ally')!;
-    const plate = plates.find((candidate) => candidate.props.width === 4 * 6.2 + 10)!;
-    // Background plate keeps the historical sizing heuristic, centered on the label point.
+    const plate = plates.find((candidate) => candidate.props.width === 4 * 6 + 12)!;
+    // The plate is the measured text plus 12 of air, centered on the label point.
     expect(plate.props).toMatchObject({
-      x: 400 - (4 * 6.2 + 10) / 2,
+      x: 400 - (4 * 6 + 12) / 2,
       y: 260 - 8,
-      width: 4 * 6.2 + 10,
+      width: 4 * 6 + 12,
       height: 16,
       r: 4,
       color: '#000',
@@ -418,5 +418,35 @@ describe('character relation graph nodes', () => {
     const { view } = await renderGraph(true, { label: 'Relation Map' });
 
     expect(view.getByLabelText('Relation Map').props.role).toBe('region');
+  });
+});
+
+describe('character relation graph edge colours', () => {
+  it('draws an edge in the colour of its kind, found however it was written', async () => {
+    const { root } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      edgeColors: new Map([['friend', '#D55E00']]),
+    });
+    await fireLayout(root);
+
+    expect(pathOf(root, 'M ab').props.color).toBe('#D55E00');
+    // 'rival' has no colour of its own: the plain border colour.
+    expect(pathOf(root, 'M bc').props.color).toBe('#444');
+  });
+
+  it('keeps the colour of a kind while its line is strong or faded', async () => {
+    const { root } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      selectedNodeId: 'a',
+      focusNodeIds: new Set(['a', 'b']),
+      edgeColors: new Map([
+        ['friend', '#D55E00'],
+        ['rival', '#009E73'],
+      ]),
+    });
+    await fireLayout(root);
+
+    expect(pathOf(root, 'M ab').props).toMatchObject({ color: '#D55E00', opacity: 1 });
+    expect(pathOf(root, 'M bc').props).toMatchObject({ color: '#009E73', opacity: 0.15 });
   });
 });

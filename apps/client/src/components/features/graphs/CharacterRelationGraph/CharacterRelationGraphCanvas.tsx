@@ -9,6 +9,7 @@ import { useEdgeFont } from '../SkiaEdgeCanvas/useEdgeFont';
 import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
 import { useGraphCanvasViewport } from '../../../../hooks/useGraphCanvasViewport';
 import { useTheme } from '../../../../theme';
+import { foldRelationType } from '@keres/shared/graphs/relationTypeColors';
 import type {
   CharacterRelationGraphLayout,
   RelationGraphNode,
@@ -35,6 +36,8 @@ interface CharacterRelationGraphCanvasProps {
   highlightedNodeIds?: string[];
   /** The selected node and its direct neighbours; everyone else fades. Null while nothing is selected. */
   focusNodeIds?: ReadonlySet<string> | null;
+  /** A colour for each kind of relation, keyed by `foldRelationType`; a kind without one is drawn in the border colour. */
+  edgeColors?: ReadonlyMap<string, string>;
   /** What a screen reader says for a node (its name and how many relations it has). */
   nodeAccessibilityLabel: (node: RelationGraphNode) => string;
   /** Names the canvas as a region for a screen reader. */
@@ -55,6 +58,7 @@ const CharacterRelationGraphCanvas = forwardRef<
       selectedNodeId,
       highlightedNodeIds,
       focusNodeIds = null,
+      edgeColors,
       nodeAccessibilityLabel,
       label,
       onSelectNode,
@@ -94,7 +98,10 @@ const CharacterRelationGraphCanvas = forwardRef<
                   key={edge.id}
                   path={edge.path}
                   style="stroke"
-                  color={strong ? colors.primary : colors.border}
+                  color={
+                    edgeColors?.get(foldRelationType(edge.label)) ??
+                    (strong ? colors.primary : colors.border)
+                  }
                   strokeWidth={strong ? 2.4 : 1.6}
                   opacity={selectedNodeId ? (strong ? 1 : 0.15) : 0.85}
                 />
@@ -102,13 +109,7 @@ const CharacterRelationGraphCanvas = forwardRef<
             })}
 
             {showEdgeLabels && edgeFont && (
-              <SkiaEdgeLabels
-                edges={labelledEdges}
-                font={edgeFont}
-                maxChars={22}
-                charWidth={6.2}
-                colors={colors}
-              />
+              <SkiaEdgeLabels edges={labelledEdges} font={edgeFont} maxChars={22} colors={colors} />
             )}
           </SkiaEdgeCanvas>
         </SkiaOverlayErrorBoundary>

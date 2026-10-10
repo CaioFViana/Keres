@@ -11,6 +11,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GraphLegend from '@/src/components/features/graphs/GraphLegend/GraphLegend';
 import GraphNodeFinder from '@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
@@ -20,22 +21,31 @@ import { graphMapHeaderStyleDefs } from '@/src/components/features/graphs/graphM
 import type { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
+import type { Character } from '@keres/shared/entities/Character';
 import { useDrizzle } from '../../db';
 import type { CharacterSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import type { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
 import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { RelationGraphEdge } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { limitFocusSelection, MAX_FOCUS_SELECTION } from '@keres/shared/graphs/graphNeighborhood';
+import {
+  assignRelationTypeColors,
+  foldRelationType,
+} from '@keres/shared/graphs/relationTypeColors';
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
 import { buildCharacterRelationMapFileName } from '../../utils/storyTransfer';
+import { useCharacterRelationEditor } from './useCharacterRelationEditor';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 
@@ -67,7 +77,7 @@ const CharacterRelationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const navigateAcross = useNavigateAcrossStacks();
   const drizzleDb = useDrizzle();
@@ -79,8 +89,12 @@ const CharacterRelationGraphScreen = () => {
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
   /** Empty means the whole map; the focus filter only narrows it. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  /** Kinds of relation the author switched off in the legend (folded). */
+  const [hiddenTypes, setHiddenTypes] = useState<string[]>([]);
 
   const storyId = selectedStory?.id;
+  const { userId } = useUserSettingsStore();
+  const { canEdit } = useStoryRole(storyId);
 
   const loadGraphData = useCallback(
     async (id: string) => {
@@ -96,6 +110,7 @@ const CharacterRelationGraphScreen = () => {
     data: loaded,
     loading,
     error,
+    reload,
   } = useGraphDataLoader({
     storyId,
     load: loadGraphData,
@@ -110,9 +125,53 @@ const CharacterRelationGraphScreen = () => {
     title: t('character_relation_map_title'),
   });
 
+  // The colours come from every relation, not the visible ones, so a kind keeps its colour while
+  // the author switches others off.
+  const typeColors = useMemo(
+    () =>
+      assignRelationTypeColors(
+        relations.map((relation) => relation.relationType),
+        isDarkMode ? 'dark' : 'light',
+      ),
+    [isDarkMode, relations],
+  );
+
+  const legendItems = useMemo(() => {
+    const kinds = new Map<string, { label: string; count: number }>();
+    for (const relation of relations) {
+      const key = foldRelationType(relation.relationType);
+      if (!key) continue;
+      const kind = kinds.get(key);
+      if (kind) kind.count += 1;
+      else kinds.set(key, { label: relation.relationType.trim(), count: 1 });
+    }
+    return [...kinds.entries()]
+      .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))
+      .map(([key, kind]) => ({
+        id: key,
+        label: `${kind.label} (${kind.count})`,
+        color: typeColors.get(key) ?? colors.border,
+        hidden: hiddenTypes.includes(key),
+        onToggle: () =>
+          setHiddenTypes((current) =>
+            current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+          ),
+      }));
+  }, [colors.border, hiddenTypes, relations, typeColors]);
+
+  const visibleRelations = useMemo(
+    () =>
+      hiddenTypes.length === 0
+        ? relations
+        : relations.filter(
+            (relation) => !hiddenTypes.includes(foldRelationType(relation.relationType)),
+          ),
+    [hiddenTypes, relations],
+  );
+
   const filtered = useMemo(
-    () => filterCharacterRelationGraph(characters, relations, selectedIds),
-    [characters, relations, selectedIds],
+    () => filterCharacterRelationGraph(characters, visibleRelations, selectedIds),
+    [characters, visibleRelations, selectedIds],
   );
 
   const layout = useMemo(
@@ -125,8 +184,6 @@ const CharacterRelationGraphScreen = () => {
     [filtered, isCompact],
   );
 
-  const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
-
   const focus = useGraphFocus({
     nodes: layout.nodes,
     edges: layout.edges,
@@ -136,6 +193,18 @@ const CharacterRelationGraphScreen = () => {
     clearFilter: () => setSelectedIds([]),
   });
   const { selectedNode, selectedNodeId, closeDetails } = focus;
+
+  const editor = useCharacterRelationEditor({
+    db: drizzleDb,
+    storyId,
+    userId,
+    relations,
+    reload,
+  });
+
+  // A big map writes no relation type until one character is in focus: then its own are written.
+  const showEdgeLabels =
+    labelsOverride ?? (layout.edges.length <= EDGE_LABEL_AUTO_LIMIT || !!selectedNode);
 
   const connections = useMemo((): CharacterRelationNodeConnection[] => {
     if (!selectedNodeId) return [];
@@ -181,6 +250,7 @@ const CharacterRelationGraphScreen = () => {
         subtitle: mapSubtitle,
         showEdgeLabels,
         highlightedNodeIds: selectedIds,
+        relationTypeColors: typeColors,
         labels: {
           isolated: t('character_relation_map_badge_isolated'),
         },
@@ -304,12 +374,15 @@ const CharacterRelationGraphScreen = () => {
         selectedNodeId={selectedNodeId}
         highlightedNodeIds={selectedIds}
         focusNodeIds={focus.focusNodeIds}
+        edgeColors={typeColors}
         nodeAccessibilityLabel={(node) =>
           t('graph_node_a11y', { name: node.character.name, count: node.degree })
         }
         onSelectNode={(node) => focus.tapNode(node.id)}
         onBackgroundTap={focus.clearFocus}
       />
+
+      <GraphLegend title={t('graph_legend_title')} items={legendItems} />
 
       <GraphCanvasControls
         variant="map"
@@ -351,12 +424,54 @@ const CharacterRelationGraphScreen = () => {
                 label: connection.characterName,
                 detail: connection.relationType,
                 onPress: () => focus.selectNode(connection.characterId),
+                trailing: canEdit
+                  ? [
+                      {
+                        icon: 'pencil' as const,
+                        label: `${t('edit')}: ${connection.characterName}`,
+                        onPress: () => {
+                          closeDetails();
+                          editor.openEdit(selectedNode.id, connection.relationId);
+                        },
+                      },
+                      {
+                        icon: 'trash-outline' as const,
+                        label: `${t('delete')}: ${connection.characterName}`,
+                        destructive: true,
+                        onPress: () => editor.remove(selectedNode.id, connection.relationId),
+                      },
+                    ]
+                  : undefined,
               })),
+              action: canEdit
+                ? {
+                    label: t('add_character_relation'),
+                    onPress: () => {
+                      closeDetails();
+                      editor.openAdd(selectedNode.id);
+                    },
+                  }
+                : undefined,
             },
           ]}
           actionLabel={t('character_relation_map_open_character')}
           onAction={() => handleOpenCharacter(selectedNode.id)}
           onClose={closeDetails}
+        />
+      )}
+
+      {editor.target && (
+        <CharacterRelationModal
+          isVisible
+          onClose={editor.close}
+          onSave={(relatedId, relationType, relationId) =>
+            void editor.save(relatedId, relationType, relationId)
+          }
+          initialRelation={editor.editing}
+          characters={characters as unknown as Character[]}
+          currentStoryId={storyId ?? ''}
+          currentCharacterId={editor.target.characterId}
+          relatedCharacterIds={editor.relatedCharacterIds}
         />
       )}
     </View>

@@ -11,6 +11,10 @@ const mockDeliverMapExport = jest.fn();
 const mockZoomBy = jest.fn();
 const mockFitToScreen = jest.fn();
 const mockFitToRect = jest.fn();
+const mockSaveRelation = jest.fn();
+const mockDeleteRelation = jest.fn();
+const mockAlert = jest.fn();
+let mockCanEdit = true;
 const mockTCalls: [string, unknown][] = [];
 const mockUseScreenHeader = jest.fn();
 const mockDb = {};
@@ -98,6 +102,7 @@ jest.mock(
             selectedNodeId: string | null;
             highlightedNodeIds: string[];
             focusNodeIds: Set<string> | null;
+            edgeColors: Map<string, string>;
             nodeAccessibilityLabel: (node: never) => string;
             onSelectNode: (node: { id: string }) => void;
             onBackgroundTap: () => void;
@@ -123,6 +128,7 @@ jest.mock(
                 selected: props.selectedNodeId,
                 highlighted: props.highlightedNodeIds,
                 focus: props.focusNodeIds ? [...props.focusNodeIds].sort() : null,
+                edgeColors: Object.fromEntries(props.edgeColors ?? []),
                 labels_a11y: props.layout.nodes.map((node) =>
                   props.nodeAccessibilityLabel(node as never),
                 ),
@@ -150,6 +156,30 @@ jest.mock(
     };
   },
 );
+jest.mock('@/src/components/features/graphs/GraphLegend/GraphLegend', () => ({
+  __esModule: true,
+  default: (props: {
+    items: { id: string; label: string; color: string; hidden?: boolean; onToggle?: () => void }[];
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.View,
+      { testID: 'legend' },
+      ...props.items.map((item) =>
+        react.createElement(
+          native.Text,
+          {
+            key: item.id,
+            testID: `legend-${item.id}`,
+            onPress: item.onToggle,
+          },
+          JSON.stringify({ label: item.label, color: item.color, hidden: !!item.hidden }),
+        ),
+      ),
+    );
+  },
+}));
 jest.mock('@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder', () => ({
   __esModule: true,
   default: (props: { options: { id: string; label: string }[]; onPick: (id: string) => void }) => {
@@ -173,7 +203,15 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
   default: (props: {
     title: string;
     badges?: { label: string }[];
-    sections: { items: { id: string; label: string; onPress: () => void }[] }[];
+    sections: {
+      items: {
+        id: string;
+        label: string;
+        onPress: () => void;
+        trailing?: { label: string; onPress: () => void }[];
+      }[];
+      action?: { label: string; onPress: () => void };
+    }[];
     actionLabel: string;
     onAction: () => void;
     onClose: () => void;
@@ -189,15 +227,39 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
         { testID: 'sheet-badges' },
         JSON.stringify((props.badges ?? []).map((badge) => badge.label)),
       ),
-      ...props.sections.flatMap((section) =>
-        section.items.map((item) =>
+      ...props.sections.flatMap((section) => [
+        ...section.items.flatMap((item) => [
           react.createElement(
             native.Text,
             { key: item.id, testID: `sheet-item-${item.id}`, onPress: item.onPress },
             item.label,
           ),
-        ),
-      ),
+          ...(item.trailing ?? []).map((action) =>
+            react.createElement(
+              native.Text,
+              {
+                key: `${item.id}-${action.label}`,
+                testID: `sheet-row-action-${action.label}`,
+                onPress: action.onPress,
+              },
+              action.label,
+            ),
+          ),
+        ]),
+        ...(section.action
+          ? [
+              react.createElement(
+                native.Text,
+                {
+                  key: 'section-action',
+                  testID: 'sheet-section-action',
+                  onPress: section.action.onPress,
+                },
+                section.action.label,
+              ),
+            ]
+          : []),
+      ]),
       react.createElement(
         native.Text,
         { testID: 'sheet-action', onPress: props.onAction },
@@ -220,6 +282,8 @@ jest.mock('../../../src/services/storymanagement/CharacterRelationService', () =
   __esModule: true,
   createCharacterRelationService: () => ({
     getCharacterRelationsByStoryId: mockGetCharacterRelationsByStoryId,
+    saveCharacterRelation: (...args: unknown[]) => mockSaveRelation(...args),
+    deleteCharacterRelation: (...args: unknown[]) => mockDeleteRelation(...args),
   }),
 }));
 jest.mock('../../../src/state/notificationStore', () => ({
@@ -230,10 +294,60 @@ jest.mock('../../../src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('../../../src/state/userSettingsStore', () => {
+  const store = () => ({ userId: 'user-1' });
+  store.getState = () => ({ exportFormat: 'svg' });
+  return { __esModule: true, useUserSettingsStore: store };
+});
+jest.mock('../../../src/hooks/useStoryRole', () => ({
   __esModule: true,
-  useUserSettingsStore: { getState: () => ({ exportFormat: 'svg' }) },
+  useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
+jest.mock('../../../src/utils/AppAlert', () => ({
+  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
+}));
+jest.mock(
+  '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal',
+  () => ({
+    __esModule: true,
+    default: (props: {
+      onClose: () => void;
+      onSave: (relatedId: string, type: string, relationId?: string) => void;
+      initialRelation: { id: string } | null;
+      currentCharacterId: string;
+      relatedCharacterIds: string[];
+    }) => {
+      const react = jest.requireActual('react') as typeof import('react');
+      const native = jest.requireActual('react-native') as typeof import('react-native');
+      return react.createElement(
+        native.View,
+        { testID: 'relation-modal' },
+        react.createElement(
+          native.Text,
+          { testID: 'relation-modal-info' },
+          JSON.stringify({
+            current: props.currentCharacterId,
+            related: props.relatedCharacterIds,
+            editing: props.initialRelation?.id ?? null,
+          }),
+        ),
+        react.createElement(
+          native.Text,
+          {
+            testID: 'relation-modal-save',
+            onPress: () => props.onSave('char-3', 'mentor', props.initialRelation?.id),
+          },
+          'save',
+        ),
+        react.createElement(
+          native.Text,
+          { testID: 'relation-modal-close', onPress: props.onClose },
+          'close',
+        ),
+      );
+    },
+  }),
+);
 jest.mock('../../../src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
@@ -312,6 +426,7 @@ function graphMarker(view: { getByTestId: (id: string) => { props: { children?: 
     selected: string | null;
     highlighted: string[];
     focus: string[] | null;
+    edgeColors: Record<string, string>;
     labels_a11y: string[];
   };
 }
@@ -322,6 +437,11 @@ beforeEach(() => {
   mockGetCharacterRelationsByStoryId.mockReset();
   mockDeliverMapExport.mockReset();
   mockStory = { id: 'story-1', title: 'Saga' };
+  mockCanEdit = true;
+  mockSaveRelation.mockReset();
+  mockDeleteRelation.mockReset();
+  mockSaveRelation.mockResolvedValue({});
+  mockDeleteRelation.mockResolvedValue(true);
   mockIsCompact = false;
   mockLanguage = 'en';
   mockGetCharactersByStoryId.mockResolvedValue([
@@ -659,4 +779,216 @@ it('refreshes in silence: the map stays on screen and keeps its focus', async ()
   expect(view.queryByTestId('screen-loading')).toBeNull();
   expect(view.getByTestId('graph-canvas')).toBeTruthy();
   expect(graphMarker(view).selected).toBe('char-1');
+});
+
+describe('the kinds of relation', () => {
+  const PALETTE = [
+    '#0072B2',
+    '#D55E00',
+    '#009E73',
+    '#CC79A7',
+    '#B8860B',
+    '#56B4E9',
+    '#7A5195',
+    '#8C6D31',
+  ];
+
+  beforeEach(() => {
+    mockGetCharactersByStoryId.mockResolvedValue([
+      makeCharacter('char-1', 'Aria'),
+      makeCharacter('char-2', 'Bram'),
+      makeCharacter('char-3', 'Cy'),
+    ]);
+    mockGetCharacterRelationsByStoryId.mockResolvedValue([
+      makeRelation('rel-1', 'char-1', 'char-2', 'Friend'),
+      makeRelation('rel-2', 'char-2', 'char-3', 'friend'),
+      makeRelation('rel-3', 'char-1', 'char-3', 'Rival'),
+    ]);
+  });
+
+  it('are listed in the legend with how many relations each has, the biggest first', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+
+    expect(JSON.parse(view.getByTestId('legend-friend').props.children)).toMatchObject({
+      label: 'Friend (2)',
+      hidden: false,
+    });
+    expect(JSON.parse(view.getByTestId('legend-rival').props.children)).toMatchObject({
+      label: 'Rival (1)',
+    });
+    const order = view
+      .getByTestId('legend')
+      .props.children.map((child: { props: { testID: string } }) => child.props.testID);
+    expect(order).toEqual(['legend-friend', 'legend-rival']);
+  });
+
+  it('get a colour of the palette each, the same one in the legend and on the canvas', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+
+    const { edgeColors } = graphMarker(view);
+    expect(Object.keys(edgeColors).sort()).toEqual(['friend', 'rival']);
+    expect(PALETTE).toContain(edgeColors.friend);
+    expect(edgeColors.friend).not.toBe(edgeColors.rival);
+    expect(JSON.parse(view.getByTestId('legend-friend').props.children).color).toBe(
+      edgeColors.friend,
+    );
+  });
+
+  it('can be switched off in the legend, and back on', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+    expect(graphMarker(view).edges).toBe(3);
+
+    await fireEvent.press(view.getByTestId('legend-friend'));
+    expect(graphMarker(view).edges).toBe(1);
+    expect(JSON.parse(view.getByTestId('legend-friend').props.children).hidden).toBe(true);
+    // The colours do not move while a kind is off.
+    expect(Object.keys(graphMarker(view).edgeColors).sort()).toEqual(['friend', 'rival']);
+
+    await fireEvent.press(view.getByTestId('legend-friend'));
+    expect(graphMarker(view).edges).toBe(3);
+  });
+
+  it('colour the lines of the exported map too', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+
+    await fireEvent.press(view.getByLabelText('character_relation_map_export'));
+    await waitFor(() => expect(mockDeliverMapExport).toHaveBeenCalled());
+
+    const svg = mockDeliverMapExport.mock.calls[0][0] as string;
+    expect(PALETTE.some((color) => svg.includes(`stroke="${color}"`))).toBe(true);
+  });
+});
+
+describe('writing the relation types on a big map', () => {
+  const chain = (count: number) => {
+    const people = Array.from({ length: count }, (_, i) => makeCharacter(`c${i}`, `Char ${i}`));
+    const links = Array.from({ length: count - 1 }, (_, i) =>
+      makeRelation(`r${i}`, `c${i}`, `c${i + 1}`),
+    );
+    mockGetCharactersByStoryId.mockResolvedValue(people);
+    mockGetCharacterRelationsByStoryId.mockResolvedValue(links);
+  };
+
+  it('writes none while nothing is in focus, and writes the focused one once something is', async () => {
+    chain(45);
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+    expect(graphMarker(view).labels).toBe(false);
+
+    await fireEvent.press(view.getByTestId('node-c3'));
+    expect(graphMarker(view).labels).toBe(true);
+
+    await fireEvent.press(view.getByTestId('canvas-background'));
+    expect(graphMarker(view).labels).toBe(false);
+  });
+
+  it('obeys the author when the labels are switched off', async () => {
+    chain(45);
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+    // On, then off: an explicit choice wins over the focus.
+    await fireEvent.press(view.getByLabelText('character_relation_map_toggle_labels'));
+    expect(graphMarker(view).labels).toBe(true);
+    await fireEvent.press(view.getByLabelText('character_relation_map_toggle_labels'));
+    await fireEvent.press(view.getByTestId('node-c3'));
+
+    expect(graphMarker(view).labels).toBe(false);
+  });
+});
+
+describe('editing the relations of a character from the map', () => {
+  const openSheetOf = async (view: Awaited<ReturnType<typeof render>>, id: string) => {
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+    await fireEvent.press(view.getByTestId(`node-${id}`));
+  };
+
+  it('offers to add, change and remove only to someone who may edit', async () => {
+    mockCanEdit = false;
+    const view = await render(<CharacterRelationGraphScreen />);
+
+    await openSheetOf(view, 'char-1');
+
+    expect(view.getByTestId('node-sheet')).toBeTruthy();
+    expect(view.queryByTestId('sheet-section-action')).toBeNull();
+    expect(view.queryByTestId('sheet-row-action-edit: Bram')).toBeNull();
+    expect(view.queryByTestId('sheet-row-action-delete: Bram')).toBeNull();
+  });
+
+  it('adds a relation: the details give way to the form of that character', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await openSheetOf(view, 'char-1');
+
+    await fireEvent.press(view.getByTestId('sheet-section-action'));
+
+    expect(view.queryByTestId('node-sheet')).toBeNull();
+    expect(JSON.parse(view.getByTestId('relation-modal-info').props.children)).toEqual({
+      current: 'char-1',
+      related: ['char-2'],
+      editing: null,
+    });
+  });
+
+  it('saves what the form returns, then shows the map again from the data', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await openSheetOf(view, 'char-1');
+    await fireEvent.press(view.getByTestId('sheet-section-action'));
+    const loadsBefore = mockGetCharacterRelationsByStoryId.mock.calls.length;
+
+    await fireEvent.press(view.getByTestId('relation-modal-save'));
+
+    await waitFor(() => expect(mockSaveRelation).toHaveBeenCalledTimes(1));
+    expect(mockSaveRelation.mock.calls[0][0]).toBe('user-1');
+    expect(mockSaveRelation.mock.calls[0][1]).toMatchObject({
+      storyId: 'story-1',
+      character1Id: 'char-1',
+      character2Id: 'char-3',
+      relationType: 'mentor',
+    });
+    await waitFor(() =>
+      expect(mockGetCharacterRelationsByStoryId.mock.calls.length).toBeGreaterThan(loadsBefore),
+    );
+    // The map stayed on screen all along.
+    expect(view.queryByTestId('screen-loading')).toBeNull();
+  });
+
+  it('changes a relation: the form opens on it', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await openSheetOf(view, 'char-1');
+
+    await fireEvent.press(view.getByTestId('sheet-row-action-edit: Bram'));
+
+    expect(JSON.parse(view.getByTestId('relation-modal-info').props.children)).toMatchObject({
+      current: 'char-1',
+      editing: 'rel-1',
+    });
+  });
+
+  it('closes the form without writing anything', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await openSheetOf(view, 'char-1');
+    await fireEvent.press(view.getByTestId('sheet-section-action'));
+
+    await fireEvent.press(view.getByTestId('relation-modal-close'));
+
+    expect(view.queryByTestId('relation-modal')).toBeNull();
+    expect(mockSaveRelation).not.toHaveBeenCalled();
+  });
+
+  it('removes a relation only after the author confirms', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await openSheetOf(view, 'char-1');
+
+    await fireEvent.press(view.getByTestId('sheet-row-action-delete: Bram'));
+    expect(mockAlert).toHaveBeenCalledTimes(1);
+    expect(mockDeleteRelation).not.toHaveBeenCalled();
+
+    const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => void }[];
+    await act(async () => buttons.find((b) => b.text === 'delete')!.onPress!());
+
+    expect(mockDeleteRelation).toHaveBeenCalledWith('user-1', 'rel-1');
+  });
 });

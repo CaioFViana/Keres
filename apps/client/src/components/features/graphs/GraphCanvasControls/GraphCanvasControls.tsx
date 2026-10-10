@@ -8,11 +8,13 @@ interface Props {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFit: () => void;
+  /** Centres the camera on what is selected. Left out where nothing can be selected. */
+  onCenterSelection?: () => void;
   onExport?: () => void;
   exporting?: boolean;
   exportLabel?: string;
   /** Zoom and fit accessibility labels; without them the shared canvas strings are used. */
-  labels?: { zoomIn: string; zoomOut: string; fit: string };
+  labels?: { zoomIn: string; zoomOut: string; fit: string; center?: string };
   /** Only the maps with edge labels can switch them; the others leave this out. */
   edgeLabels?: {
     visible: boolean;
@@ -33,6 +35,7 @@ const GraphCanvasControls: React.FC<Props> = ({
   onZoomIn,
   onZoomOut,
   onFit,
+  onCenterSelection,
   onExport,
   exporting = false,
   exportLabel,
@@ -90,6 +93,15 @@ const GraphCanvasControls: React.FC<Props> = ({
       >
         <Ionicons name="scan-outline" size={20} color={colors.text} />
       </TouchableOpacity>
+      {onCenterSelection && (
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={onCenterSelection}
+          accessibilityLabel={labels?.center ?? t('center_on_selection')}
+        >
+          <Ionicons name="locate-outline" size={20} color={colors.text} />
+        </TouchableOpacity>
+      )}
       {edgeLabels && (
         <TouchableOpacity
           style={styles.controlButton}

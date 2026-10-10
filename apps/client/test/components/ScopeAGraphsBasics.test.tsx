@@ -3,6 +3,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import CanvasLine from '../../src/components/features/graphs/CanvasLine/CanvasLine';
 import GraphCanvasControls from '../../src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
+import GraphEmptyState from '../../src/components/features/graphs/GraphEmptyState/GraphEmptyState';
 import GraphConnectionModal from '../../src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
 import GraphNodeSheet from '../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 
@@ -173,6 +174,79 @@ describe('GraphCanvasControls', () => {
     expect(busy.container.queryAll((node: any) => node.type === 'ActivityIndicator')).toHaveLength(
       1,
     );
+  });
+});
+
+describe('GraphCanvasControls centring', () => {
+  it('shows the centre button only where something can be selected, and wires it', async () => {
+    const base = { onZoomIn: jest.fn(), onZoomOut: jest.fn(), onFit: jest.fn() };
+    const without = await render(<GraphCanvasControls {...base} />);
+    expect(without.queryByLabelText('center_on_selection')).toBeNull();
+
+    const onCenterSelection = jest.fn();
+    const withIt = await render(
+      <GraphCanvasControls {...base} onCenterSelection={onCenterSelection} />,
+    );
+    await fireEvent.press(withIt.getByLabelText('center_on_selection'));
+    expect(onCenterSelection).toHaveBeenCalledTimes(1);
+
+    const named = await render(
+      <GraphCanvasControls
+        {...base}
+        onCenterSelection={onCenterSelection}
+        labels={{ zoomIn: 'in', zoomOut: 'out', fit: 'fit', center: 'Go to character' }}
+      />,
+    );
+    expect(named.getByLabelText('Go to character')).toBeTruthy();
+  });
+});
+
+describe('GraphEmptyState', () => {
+  const colors = {
+    textSecondary: '#555',
+    text: '#111',
+    background: '#fff',
+    surface: '#fff',
+    border: '#ddd',
+    primary: '#00f',
+    onPrimary: '#fff',
+    error: '#f00',
+    primaryContainer: '#aaf',
+  } as never;
+
+  it('says what is missing and nothing more by default', async () => {
+    const view = await render(
+      <GraphEmptyState colors={colors} icon="people-outline" message="Nothing here" />,
+    );
+
+    expect(view.getByText('Nothing here')).toBeTruthy();
+    expect(view.queryByTestId('Create')).toBeNull();
+  });
+
+  it('adds a hint and an action that goes where the author can fix it', async () => {
+    const onAction = jest.fn();
+    const view = await render(
+      <GraphEmptyState
+        colors={colors}
+        icon="people-outline"
+        message="No characters yet"
+        hint="Characters you create show up here."
+        actionLabel="Create"
+        onAction={onAction}
+      />,
+    );
+
+    expect(view.getByText('Characters you create show up here.')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('Create'));
+    expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no action without a handler', async () => {
+    const view = await render(
+      <GraphEmptyState colors={colors} icon="people-outline" message="x" actionLabel="Create" />,
+    );
+
+    expect(view.queryByTestId('Create')).toBeNull();
   });
 });
 

@@ -7,7 +7,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import ConversationListItem from '../../components/features/messages/ConversationListItem';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useMessageInbox } from '../../hooks/useMessageInbox';
@@ -17,6 +16,7 @@ import { useUnseenMessagesStore } from '../../state/unseenMessagesStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { type ConversationPeer, conversationKey } from '../../utils/conversationKey';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type MessageInboxNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -41,7 +41,6 @@ const MessageInboxScreen = () => {
   const unseen = useUnseenMessagesStore((state) => state.unseen);
   const [picking, setPicking] = useState(false);
   useScreenTour('MessageInbox');
-  const listAnchorRef = useScreenAnchor('Messages', 'list');
 
   const togglePicker = useCallback(() => setPicking((open) => !open), []);
   useScreenHeader({
@@ -147,7 +146,7 @@ const MessageInboxScreen = () => {
           {t('messages_servers_unreachable')}
         </Text>
       )}
-      <View ref={listAnchorRef} collapsable={false} style={styles.listAnchor}>
+      <GuideAnchor screen="Messages" part="list" style={styles.listAnchor}>
         <FlatList
           data={inbox.entries}
           renderItem={renderEntry}
@@ -158,7 +157,7 @@ const MessageInboxScreen = () => {
             </Text>
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };

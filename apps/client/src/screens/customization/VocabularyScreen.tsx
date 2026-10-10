@@ -5,7 +5,6 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import ArcMediumChanges from '@/src/components/features/arcs/ArcMediumChanges';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryArcs } from '@/src/hooks/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
@@ -28,6 +27,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type VocabularyNavigation = NativeStackNavigationProp<StorySettingsStackParamList, 'Vocabulary'>;
 type DraftTerms = Record<
@@ -166,7 +166,6 @@ VocabularyTermCard.displayName = 'VocabularyTermCard';
 const VocabularyScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('Vocabulary');
-  const termsAnchorRef = useScreenAnchor('Vocabulary', 'terms');
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
@@ -299,7 +298,7 @@ const VocabularyScreen = () => {
 
   return (
     <KeyboardAwareScreen style={common.container} contentContainerStyle={styles.content}>
-      <View ref={termsAnchorRef} collapsable={false}>
+      <GuideAnchor screen="Vocabulary" part="terms">
         <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
         <Text style={styles.scope} testID="vocabulary-scope">
           {arcScope
@@ -360,7 +359,7 @@ const VocabularyScreen = () => {
           </FormActions>
         )}
         <View testID="vocabulary-footer-spacer" style={styles.footerSpacer} />
-      </View>
+      </GuideAnchor>
     </KeyboardAwareScreen>
   );
 };

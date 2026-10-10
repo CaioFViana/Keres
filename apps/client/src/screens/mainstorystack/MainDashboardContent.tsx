@@ -11,12 +11,13 @@ import DetailContainer from '@/src/components/layout/DetailContainer/DetailConta
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { type ThemeColors } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { typography } from '../../theme/tokens';
 import { getLanguageOptions } from '../../utils/i18n';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type MainDashboardContentProps = {
   story: Story | null | undefined;
@@ -94,8 +95,6 @@ export function MainDashboardContent({
   onAddArc,
   writing,
 }: MainDashboardContentProps) {
-  const overviewAnchorRef = useScreenAnchor('MainDashboard', 'overview');
-  const worksAnchorRef = useScreenAnchor('MainDashboard', 'works');
   const writingAnchorRef = useScreenAnchor('MainDashboard', 'writing');
   const styles = useThemedStyles(createStyles);
 
@@ -127,17 +126,17 @@ export function MainDashboardContent({
       )}
 
       {!!story && !!arcs?.length && !!onOpenArcs && (
-        <View ref={worksAnchorRef} collapsable={false}>
+        <GuideAnchor screen="MainDashboard" part="works">
           <UniverseWorksSection
             arcs={arcs}
             onOpenArcs={onOpenArcs}
             onOpenArc={onOpenArc}
             onAddArc={onAddArc}
           />
-        </View>
+        </GuideAnchor>
       )}
 
-      <View ref={overviewAnchorRef} collapsable={false}>
+      <GuideAnchor screen="MainDashboard" part="overview">
         <SummaryCard
           layout="section"
           title={t('story_overview')}
@@ -165,7 +164,7 @@ export function MainDashboardContent({
               : undefined
           }
         />
-      </View>
+      </GuideAnchor>
 
       {!!story?.id && (
         <DashboardSection

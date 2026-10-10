@@ -9,7 +9,6 @@ import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilte
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import { useDrizzle } from '../../db';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
@@ -23,6 +22,7 @@ import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -58,7 +58,6 @@ interface ResultSection {
 const GlobalSearchScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('GlobalSearch');
-  const searchAnchorRef = useScreenAnchor('GlobalSearch', 'search');
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -195,7 +194,7 @@ const GlobalSearchScreen = () => {
   return (
     <View style={styles(colors).container}>
       <View style={styles(colors).searchContainer}>
-        <View ref={searchAnchorRef} collapsable={false} style={styles(colors).searchRow}>
+        <GuideAnchor screen="GlobalSearch" part="search" style={styles(colors).searchRow}>
           <TextInput
             placeholder={t('global_search_placeholder')}
             value={query}
@@ -208,7 +207,7 @@ const GlobalSearchScreen = () => {
             onPress={handleFavoriteFilterToggle}
             style={styles(colors).favoriteFilterButton}
           />
-        </View>
+        </GuideAnchor>
       </View>
 
       {loading && (

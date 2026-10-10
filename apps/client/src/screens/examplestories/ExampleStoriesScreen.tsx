@@ -1,7 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { LanguageInstallRow } from '@/src/components/common';
 import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +20,7 @@ import { type ThemeColors, useTheme } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { layout } from '../../theme/layout';
 import { typography } from '../../theme/tokens';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 /**
  * The catalog of example stories packaged with the app.
@@ -67,7 +67,6 @@ function getStoryPreview(language: ExampleStoryLanguage, fallbackTitle: string):
 const ExampleStoriesScreen = () => {
   useBackButtonHandler();
   useScreenTour('ExampleStories');
-  const listAnchorRef = useScreenAnchor('ExampleStories', 'list');
   const { t, i18n } = useTranslation();
   useScreenHeader({ target: 'self', title: t('examples_title') });
   const { colors } = useTheme();
@@ -204,7 +203,7 @@ const ExampleStoriesScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="ExampleStories" part="list" style={{ flex: 1 }}>
         <FlatList
           data={entries}
           keyExtractor={(item) => item.slug}
@@ -220,7 +219,7 @@ const ExampleStoriesScreen = () => {
             </View>
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };

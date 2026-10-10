@@ -25,6 +25,7 @@ import { typography } from '../../theme/tokens';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'characters_title',
@@ -45,7 +46,6 @@ const StorySchemaListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('StorySchemaList');
   const tabsAnchorRef = useScreenAnchor('StorySchema', 'tabs');
-  const fieldsAnchorRef = useScreenAnchor('StorySchema', 'fields');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
 
@@ -175,7 +175,7 @@ const StorySchemaListScreen = () => {
         ))}
       </ScrollView>
 
-      <View ref={fieldsAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="StorySchema" part="fields" style={{ flex: 1 }}>
         <FlatList
           data={fields}
           keyExtractor={(item) => item.id}
@@ -212,7 +212,7 @@ const StorySchemaListScreen = () => {
           )}
           ListEmptyComponent={<Text style={styles.emptyText}>{t('no_custom_attributes')}</Text>}
         />
-      </View>
+      </GuideAnchor>
 
       <StorySchemaFieldReorderModal
         isVisible={isReorderModalVisible}

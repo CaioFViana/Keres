@@ -17,7 +17,6 @@ import type { PackVisibility } from '@keres/shared';
 import type { ServerSelect } from '../../db/schema';
 import { packApiService } from '../../services/PackApiService';
 import { createServerService } from '../../services/ServerService';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
@@ -30,6 +29,7 @@ import { typography } from '../../theme/tokens';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { isServerless } from '../../utils/clientFlavor';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.
@@ -46,8 +46,6 @@ import { isServerless } from '../../utils/clientFlavor';
 const PackListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('PackList');
-  const listAnchorRef = useScreenAnchor('Packs', 'list');
-  const actionsAnchorRef = useScreenAnchor('Packs', 'actions');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<{ navigate: (screen: string, params?: unknown) => void }>();
@@ -238,7 +236,7 @@ const PackListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Packs" part="list" style={{ flex: 1 }}>
         <FlatList
           contentContainerStyle={styles.content}
           data={packs}
@@ -247,7 +245,7 @@ const PackListScreen = () => {
           ListHeaderComponent={
             <>
               <Text style={styles.description}>{t('packs_description')}</Text>
-              <View ref={actionsAnchorRef} collapsable={false}>
+              <GuideAnchor screen="Packs" part="actions">
                 <TouchableOpacity
                   style={styles.createButton}
                   onPress={() => navigation.navigate('PackForm', {})}
@@ -278,12 +276,12 @@ const PackListScreen = () => {
                     {t('shipped_packs_title')}
                   </Text>
                 </TouchableOpacity>
-              </View>
+              </GuideAnchor>
             </>
           }
           ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}
         />
-      </View>
+      </GuideAnchor>
       <SharePackModal
         visible={!isServerless() && sharingPack !== null}
         packName={sharingPack?.name ?? ''}

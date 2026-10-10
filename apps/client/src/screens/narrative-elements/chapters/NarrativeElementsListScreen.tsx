@@ -19,7 +19,6 @@ import { useDrizzle } from '../../../db';
 import type { ChapterType } from '@keres/shared';
 import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
 import { AppAlert } from '../../../utils/AppAlert';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useScreenTour } from '../../../guides/useScreenTour';
 import OutsideArcNotice from '../../../components/features/arcs/OutsideArcNotice';
 import { useArcSearchScope } from '../../../hooks/useArcSearchScope';
@@ -52,6 +51,7 @@ import {
 } from './createChapterListItemRenderer';
 import { useAdvancedNarrativeMatches } from './useAdvancedNarrativeMatches';
 import { useVisibleChapters } from './useVisibleChapters';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -61,7 +61,6 @@ export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
 const NarrativeElementsListScreen = () => {
   useBackButtonHandler();
   useScreenTour('NarrativeElementsStack');
-  const listAnchorRef = useScreenAnchor('NarrativeElements', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const db = useDrizzle();
@@ -509,7 +508,7 @@ const NarrativeElementsListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="NarrativeElements" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
           // The rows here are chapters with their scenes, filtered by three scopes at once; no count of one
@@ -560,7 +559,7 @@ const NarrativeElementsListScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
       <ChapterReorderModal
         isVisible={reorderingType !== null}
         onClose={() => setReorderingType(null)}

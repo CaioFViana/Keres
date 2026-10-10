@@ -29,7 +29,7 @@ jest.mock('react-i18next', () => ({
 const mockScreenAnchor = jest.fn();
 jest.mock('../../src/guides/useGuideAnchor', () => ({
   __esModule: true,
-  useGuideAnchor: jest.fn(() => () => {}),
+  useGuideAnchor: (id: string) => mockScreenAnchor(id),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
 }));
 
@@ -105,7 +105,7 @@ describe('BoardCanvasHeaderActions', () => {
 
     expect(view.getByLabelText('board_revert')).toBeTruthy();
     expect(view.getByLabelText('board_save')).toBeTruthy();
-    expect(mockScreenAnchor).toHaveBeenCalledWith('BoardCanvas', 'document');
+    expect(mockScreenAnchor).toHaveBeenCalledWith('screen:BoardCanvas:document');
     expect(view.queryByLabelText('graph_connection_mode')).toBeNull();
     expect(view.queryByLabelText('objects_edit')).toBeNull();
     expect(view.queryByLabelText('board_edit_layout')).toBeNull();

@@ -14,7 +14,6 @@ import BoardCreateModal from '@/src/components/features/boards/BoardCreateModal'
 import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -33,6 +32,7 @@ import { useThemedStyles } from '../../theme/useThemedStyles';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'BoardsStack'>,
@@ -42,7 +42,6 @@ type Navigation = CompositeNavigationProp<
 const BoardListScreen = () => {
   useBackButtonHandler();
   useScreenTour('BoardsStack');
-  const listAnchorRef = useScreenAnchor('Boards', 'list');
   const { t } = useTranslation();
   const boardAppearance = getEntityAppearance('Board');
   const navigation = useNavigation<Navigation>();
@@ -166,7 +165,7 @@ const BoardListScreen = () => {
           accessibilityLabel={t('board_search_placeholder')}
         />
       </View>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Boards" part="list" style={{ flex: 1 }}>
         <FlatList
           data={filteredBoards}
           keyExtractor={(item) => item.id}
@@ -195,7 +194,7 @@ const BoardListScreen = () => {
             />
           )}
         />
-      </View>
+      </GuideAnchor>
       <BoardCreateModal
         visible={createVisible}
         onCancel={() => setCreateVisible(false)}

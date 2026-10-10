@@ -15,7 +15,6 @@ import SceneMusicTargetPicker from '@/src/components/features/scenes/SceneMusic/
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
@@ -39,6 +38,7 @@ import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { sceneMusicWordKey } from '@/src/utils/sceneMusicWords';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;
 
@@ -49,8 +49,6 @@ type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;
 const SceneMusicScreen = () => {
   useBackButtonHandler();
   useScreenTour('SceneMusic');
-  const noticeAnchorRef = useScreenAnchor('SceneMusic', 'notice');
-  const cardsAnchorRef = useScreenAnchor('SceneMusic', 'cards');
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
@@ -151,17 +149,17 @@ const SceneMusicScreen = () => {
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
       <Text style={[styles.sceneName, { color: colors.text }]}>{scene.name}</Text>
-      <View ref={noticeAnchorRef} collapsable={false}>
+      <GuideAnchor screen="SceneMusic" part="notice">
         <Text style={[styles.notice, { color: colors.textSecondary }]}>
           {t('scene_music_notice')}
         </Text>
-      </View>
+      </GuideAnchor>
       {playback.problem ? (
         <Text style={[styles.notice, { color: colors.error }]} testID="scene-music-listen-problem">
           {t(playback.problem === 'no-tune' ? 'scene_music_listen_none' : 'melody_play_failed')}
         </Text>
       ) : null}
-      <View ref={cardsAnchorRef} collapsable={false}>
+      <GuideAnchor screen="SceneMusic" part="cards">
         {views.length === 0 ? (
           <View style={styles.emptyBox} testID="scene-music-empty">
             <Ionicons name="musical-notes-outline" size={40} color={colors.textSecondary} />
@@ -225,7 +223,7 @@ const SceneMusicScreen = () => {
             }
           />
         ))}
-      </View>
+      </GuideAnchor>
       {canEdit && views.length > 0 ? (
         <View style={styles.add}>
           <Button onPress={() => setPickerFor('add')}>{t('scene_music_add')}</Button>

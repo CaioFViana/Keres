@@ -58,7 +58,7 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
 }));
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
 jest.mock('../../../src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
-jest.mock('../../../src/guides/useGuideAnchor', () => ({ useScreenAnchor: () => null }));
+jest.mock('../../../src/guides/useGuideAnchor', () => ({ useScreenAnchor: () => null, useGuideAnchor: () => null }));
 jest.mock('../../../src/hooks/useKeyboardOverlap', () => ({
   useKeyboardOverlap: (...args: unknown[]) => mockUseKeyboardOverlap(...args),
 }));

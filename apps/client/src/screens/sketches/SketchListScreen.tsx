@@ -17,7 +17,6 @@ import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import SketchCreateModal from '@/src/components/features/sketches/SketchCreateModal';
 import { useDrizzle } from '../../db';
 import type { GallerySelect, SketchSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
@@ -36,6 +35,7 @@ import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type Navigation = NativeStackNavigationProp<SketchStackParamList, 'SketchList'>;
 
@@ -95,7 +95,6 @@ const SketchCover: React.FC<{ storyId: string; sketch: SketchSelect }> = ({ stor
 const SketchListScreen = () => {
   useBackButtonHandler();
   useScreenTour('SketchStack');
-  const listAnchorRef = useScreenAnchor('Sketches', 'list');
   const { t } = useTranslation();
   const navigation = useNavigation<Navigation>();
   const db = useDrizzle();
@@ -218,7 +217,7 @@ const SketchListScreen = () => {
           accessibilityLabel={t('sketch_search_placeholder')}
         />
       </View>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Sketches" part="list" style={{ flex: 1 }}>
         <FlatList
           data={filteredSketches}
           keyExtractor={(item) => item.id}
@@ -240,7 +239,7 @@ const SketchListScreen = () => {
             />
           )}
         />
-      </View>
+      </GuideAnchor>
       <SketchCreateModal
         visible={createVisible}
         onCancel={() => setCreateVisible(false)}

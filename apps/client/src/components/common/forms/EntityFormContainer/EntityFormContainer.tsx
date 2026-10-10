@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ScreenTitle from '@/src/components/layout/ScreenTitle/ScreenTitle';
 import {
@@ -8,9 +8,9 @@ import {
 } from '@/src/components/layout/ScreenContainer/ScreenContainer';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import PlanUsageBanner from '@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useTheme } from '@/src/theme';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 interface EntityFormContainerProps {
   children: React.ReactNode;
@@ -44,8 +44,6 @@ export default function EntityFormContainer({
   // The first entity form opened explains the form for all of them; the forms that are not about the
   // story's content (`planUsage` off) are not part of it.
   useScreenTour('EntityForm', planUsage);
-  const fieldsAnchorRef = useScreenAnchor('EntityForm', 'fields');
-  const actionsAnchorRef = useScreenAnchor('EntityForm', 'actions');
   return (
     <KeyboardAwareScreen
       style={[{ backgroundColor: colors.background }, style]}
@@ -62,13 +60,13 @@ export default function EntityFormContainer({
         <Text style={[styles.description, { color: colors.textSecondary }]}>{description}</Text>
       )}
       {planUsage && <PlanUsageBanner />}
-      <View ref={fieldsAnchorRef} collapsable={false}>
+      <GuideAnchor screen="EntityForm" part="fields">
         {children}
-      </View>
+      </GuideAnchor>
       {actions && (
-        <View ref={actionsAnchorRef} collapsable={false}>
+        <GuideAnchor screen="EntityForm" part="actions">
           <FormActions stackOnCompact>{actions}</FormActions>
-        </View>
+        </GuideAnchor>
       )}
     </KeyboardAwareScreen>
   );

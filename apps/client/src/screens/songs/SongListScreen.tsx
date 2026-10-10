@@ -16,7 +16,6 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SongCreateModal from '@/src/components/features/songs/SongCreateModal';
 import { useDrizzle } from '../../db';
 import type { SongSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useScreenHeader } from '../../hooks/useScreenHeader';
@@ -33,6 +32,7 @@ import { type ThemeColors, useTheme } from '../../theme';
 import { typography } from '../../theme/tokens';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { deliverFile, pickTextFile } from '../../utils/storyTransfer';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type Navigation = NativeStackNavigationProp<SongStackParamList, 'SongList'>;
 
@@ -55,7 +55,6 @@ export function cueSheetFileName(title: string, extension: 'csv' | 'md'): string
 const SongListScreen = () => {
   useBackButtonHandler();
   useScreenTour('SongStack');
-  const listAnchorRef = useScreenAnchor('Songs', 'list');
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<Navigation>();
@@ -213,7 +212,7 @@ const SongListScreen = () => {
   if (loading) return <ScreenLoading padded message={t('loading')} />;
 
   return (
-    <View style={styles.container} ref={listAnchorRef} collapsable={false}>
+    <GuideAnchor screen="Songs" part="list" style={styles.container}>
       <TextInput
         testID="song-search"
         accessibilityLabel={t('songs_search')}
@@ -263,7 +262,7 @@ const SongListScreen = () => {
         onCancel={() => setCreating(false)}
         onConfirm={(title) => void create(title)}
       />
-    </View>
+    </GuideAnchor>
   );
 };
 

@@ -62,7 +62,7 @@ jest.mock('../../../src/hooks/useSketchCompact', () => ({
   useSketchCompact: () => false,
 }));
 jest.mock('../../../src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
-jest.mock('../../../src/guides/useGuideAnchor', () => ({ useScreenAnchor: () => undefined }));
+jest.mock('../../../src/guides/useGuideAnchor', () => ({ useScreenAnchor: () => undefined, useGuideAnchor: () => undefined }));
 jest.mock('../../../src/theme', () => {
   const actual = jest.requireActual('../../../src/theme');
   return {

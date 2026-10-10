@@ -17,7 +17,6 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '../../db';
 import SuggestionGroupChooser, { type SuggestionGroup } from './SuggestionGroupChooser';
 import type { SuggestionSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
@@ -41,6 +40,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
@@ -68,7 +68,6 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
 const SuggestionsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('Suggestions');
-  const groupsAnchorRef = useScreenAnchor('Suggestions', 'groups');
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
 
@@ -464,7 +463,7 @@ const SuggestionsScreen = () => {
   );
 
   return (
-    <View ref={groupsAnchorRef} collapsable={false} style={commonContainerStyles.container}>
+    <GuideAnchor screen="Suggestions" part="groups" style={commonContainerStyles.container}>
       <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
       {isCompact ? (
         <>
@@ -541,7 +540,7 @@ const SuggestionsScreen = () => {
           <Button onPress={copyToSelected}>{t('suggestion_copy_confirm')}</Button>
         </FormActions>
       </ResponsiveModal>
-    </View>
+    </GuideAnchor>
   );
 };
 

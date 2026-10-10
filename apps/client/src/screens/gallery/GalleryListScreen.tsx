@@ -15,7 +15,6 @@ import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGa
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '../../db';
 import type { GallerySelect } from '../../db/schemas/galleries';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -40,6 +39,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { type ThemeColors } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,
@@ -49,7 +49,6 @@ export type GalleryScreenNavigationProp = CompositeNavigationProp<
 const GalleryListScreen = () => {
   useBackButtonHandler();
   useScreenTour('GalleryStack');
-  const listAnchorRef = useScreenAnchor('Gallery', 'list');
   const { t } = useTranslation();
   const { breakpoint } = useResponsiveLayout();
   const navigation = useNavigation<GalleryScreenNavigationProp>();
@@ -301,10 +300,10 @@ const GalleryListScreen = () => {
           void handleAddLink(url, title);
         }}
       />
-      <View
-        ref={listAnchorRef}
+      <GuideAnchor
+        screen="Gallery"
+        part="list"
         testID="gallery-list-area"
-        collapsable={false}
         style={{ flex: 1 }}
         onLayout={handleListLayout}
       >
@@ -337,7 +336,7 @@ const GalleryListScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };

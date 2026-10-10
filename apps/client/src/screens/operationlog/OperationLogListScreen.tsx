@@ -2,7 +2,6 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -25,11 +24,11 @@ export type OperationLogScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'OperationLogStack'>,
   NativeStackNavigationProp<OperationLogStackParamList, 'OperationLogDetail'>
 >;
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 const OperationLogScreen: React.FC = () => {
   useBackButtonHandler();
   useScreenTour('OperationLogStack');
-  const listAnchorRef = useScreenAnchor('OperationLog', 'list');
   const { t } = useTranslation();
 
   const navigateAcross = useNavigateAcrossStacks();
@@ -78,7 +77,7 @@ const OperationLogScreen: React.FC = () => {
   }
 
   return (
-    <View ref={listAnchorRef} collapsable={false} style={styles.container}>
+    <GuideAnchor screen="OperationLog" part="list" style={styles.container}>
       <OperationLogList
         storyId={selectedStory.id}
         paginated={true}
@@ -87,7 +86,7 @@ const OperationLogScreen: React.FC = () => {
         shouldRefetch={shouldRefetch}
         showPrivateGaps
       />
-    </View>
+    </GuideAnchor>
   );
 };
 

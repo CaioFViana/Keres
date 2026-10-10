@@ -9,7 +9,7 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) =>
 const mockScreenAnchor = jest.fn();
 jest.mock('../../src/guides/useGuideAnchor', () => ({
   __esModule: true,
-  useGuideAnchor: jest.fn(() => () => {}),
+  useGuideAnchor: (id: string) => mockScreenAnchor(id),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
 }));
 
@@ -34,7 +34,7 @@ describe('LocationMapHeaderActions', () => {
 
     expect(view.getByTestId('location-map-revert')).toBeTruthy();
     expect(view.getByTestId('location-map-save')).toBeTruthy();
-    expect(mockScreenAnchor).toHaveBeenCalledWith('LocationMap', 'document');
+    expect(mockScreenAnchor).toHaveBeenCalledWith('screen:LocationMap:document');
     expect(view.queryByLabelText('graph_connection_mode')).toBeNull();
     expect(view.queryByLabelText('trajectory_show')).toBeNull();
     expect(view.queryByLabelText('objects_edit')).toBeNull();

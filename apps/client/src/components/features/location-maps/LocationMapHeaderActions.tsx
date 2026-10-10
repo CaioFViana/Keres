@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
+import { TouchableOpacity } from 'react-native';
 import { useTheme } from '@/src/theme';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 interface Props {
   dirty: boolean;
@@ -20,12 +20,11 @@ interface Props {
 const LocationMapHeaderActions: React.FC<Props> = ({ dirty, saving, onRevert, onSave }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const documentAnchorRef = useScreenAnchor('LocationMap', 'document');
 
   return (
-    <View
-      ref={documentAnchorRef}
-      collapsable={false}
+    <GuideAnchor
+      screen="LocationMap"
+      part="document"
       style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, gap: 14 }}
     >
       <TouchableOpacity
@@ -52,7 +51,7 @@ const LocationMapHeaderActions: React.FC<Props> = ({ dirty, saving, onRevert, on
           color={dirty ? colors.primary : colors.textSecondary}
         />
       </TouchableOpacity>
-    </View>
+    </GuideAnchor>
   );
 };
 

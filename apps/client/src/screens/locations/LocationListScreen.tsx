@@ -13,7 +13,6 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
@@ -30,6 +29,7 @@ import { useLocationStore } from '../../state/locationStore';
 import { type ThemeColors } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -39,7 +39,6 @@ export type LocationsScreenNavigationProp = CompositeNavigationProp<
 const LocationsScreen = () => {
   useBackButtonHandler();
   useScreenTour('LocationsStack');
-  const listAnchorRef = useScreenAnchor('Locations', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
@@ -145,7 +144,7 @@ const LocationsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Locations" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
           onPreviewCount={previewCount}
@@ -180,7 +179,7 @@ const LocationsScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };

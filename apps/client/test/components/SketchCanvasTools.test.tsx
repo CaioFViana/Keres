@@ -6,7 +6,7 @@ jest.mock('../../src/hooks/useSketchCompact', () => ({
   ...jest.requireActual('../../src/hooks/useSketchCompact'),
   useSketchCompact: jest.fn(() => false),
 }));
-jest.mock('../../src/guides/useGuideAnchor', () => ({ useScreenAnchor: () => undefined }));
+jest.mock('../../src/guides/useGuideAnchor', () => ({ useScreenAnchor: () => undefined, useGuideAnchor: () => undefined }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock('../../src/theme', () => ({

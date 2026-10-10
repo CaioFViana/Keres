@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -14,7 +14,6 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagListItem from '@/src/components/features/list-items/TagListItem';
 import type { TagSelect } from '../../db/schemas/tags';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
@@ -23,6 +22,7 @@ import type {
   TagsStackParamList,
 } from '../../navigation/MainSystemStack';
 import { useTagStore } from '../../state/tagStore';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type TagsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'TagsStack'>, // Corrected to TagsStack
@@ -32,7 +32,6 @@ export type TagsScreenNavigationProp = CompositeNavigationProp<
 const TagsScreen = () => {
   useBackButtonHandler();
   useScreenTour('TagsStack');
-  const listAnchorRef = useScreenAnchor('Tags', 'list');
   const { t } = useTranslation();
 
   const navigation = useNavigation<TagsScreenNavigationProp>();
@@ -99,7 +98,7 @@ const TagsScreen = () => {
 
   return (
     <ScreenContainer>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Tags" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
           data={tags}
@@ -123,7 +122,7 @@ const TagsScreen = () => {
             },
           ]}
         />
-      </View>
+      </GuideAnchor>
     </ScreenContainer>
   );
 };

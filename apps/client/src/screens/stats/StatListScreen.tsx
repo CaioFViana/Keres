@@ -13,7 +13,6 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import ReorderModal from '../../components/common/modals/ReorderModal/ReorderModal';
 import { useDrizzle } from '../../db';
 import type { StatSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -27,6 +26,7 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 import { createStoryService } from '../../services/storymanagement/StoryService';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
@@ -34,8 +34,6 @@ type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'St
 const StatListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('StatList');
-  const settingsAnchorRef = useScreenAnchor('Stats', 'settings');
-  const axesAnchorRef = useScreenAnchor('Stats', 'axes');
   const { t } = useTranslation();
 
   const { colors } = useTheme();
@@ -249,9 +247,9 @@ const StatListScreen = () => {
     statNotation !== ((selectedStory?.statNotation ?? 'letter') as StatNotation);
 
   const settingsCard = (
-    <View
-      ref={settingsAnchorRef}
-      collapsable={false}
+    <GuideAnchor
+      screen="Stats"
+      part="settings"
       style={styles.settingsCard}
       testID="stat-system-settings"
     >
@@ -295,7 +293,7 @@ const StatListScreen = () => {
           </Button>
         </FormActions>
       )}
-    </View>
+    </GuideAnchor>
   );
 
   return (
@@ -339,7 +337,7 @@ const StatListScreen = () => {
       </View>
 
       {statSystem ? (
-        <View ref={axesAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GuideAnchor screen="Stats" part="axes" style={{ flex: 1 }}>
           <FlatList
             data={sections}
             keyExtractor={(section) => section.key}
@@ -379,7 +377,7 @@ const StatListScreen = () => {
               </View>
             )}
           />
-        </View>
+        </GuideAnchor>
       ) : (
         <>
           {settingsCard}

@@ -23,7 +23,6 @@ import type {
   TagSelect,
 } from '../../db/schema';
 import type { ItemSelect } from '../../db/schemas/items';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
@@ -50,6 +49,7 @@ import { createTagRelationService } from '../../services/storymanagement/TagRela
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,
@@ -59,7 +59,6 @@ export type ItemsScreenNavigationProp = CompositeNavigationProp<
 const ItemListScreen = () => {
   useBackButtonHandler();
   useScreenTour('ItemsStack');
-  const listAnchorRef = useScreenAnchor('Items', 'list');
   const { t } = useTranslation();
   const { agree, term } = useStoryVocabulary();
   const drizzleDb = useDrizzle();
@@ -315,7 +314,7 @@ const ItemListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Items" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
           onPreviewCount={previewCount}
@@ -354,7 +353,7 @@ const ItemListScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };

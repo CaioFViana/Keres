@@ -16,7 +16,6 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 import type {
   ActiveLine,
@@ -29,6 +28,7 @@ import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/utils/AppAlert';
 import MelodyPlayerCard, { TOUCH, useMelodyVoice } from './MelodyPlayerCard';
 import PartTuneEditor from './PartTuneEditor';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 interface MelodyPanelProps {
   lyrics: string;
@@ -85,8 +85,6 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const sound = useMelodyVoice();
-  const playerAnchorRef = useScreenAnchor('SongTune', 'player');
-  const partsAnchorRef = useScreenAnchor('SongTune', 'parts');
   const { voice } = sound;
   const [moreOpen, setMoreOpen] = useState(!editable);
   /** The part being written, by its place among the sections of the words. */
@@ -153,7 +151,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
 
   return (
     <View testID="melody-panel">
-      <View ref={playerAnchorRef} collapsable={false}>
+      <GuideAnchor screen="SongTune" part="player">
         <MelodyPlayerCard
           state={sound}
           phase={phase}
@@ -165,7 +163,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
           onStop={onStop}
           showOptions={musicTools}
         />
-      </View>
+      </GuideAnchor>
 
       <Text style={[styles.heading, { color: colors.text }]}>{t('melody_parts')}</Text>
       {view.rows.length === 0 ? (
@@ -173,7 +171,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
           {t('melody_parts_empty')}
         </Text>
       ) : (
-        <View testID="melody-status" ref={partsAnchorRef} collapsable={false}>
+        <GuideAnchor screen="SongTune" part="parts" testID="melody-status">
           {view.rows.map((row) => {
             const off = row.alignment === 'short' || row.alignment === 'long';
             const open = editable && row.sectionIndex === editing;
@@ -254,7 +252,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
               </View>
             );
           })}
-        </View>
+        </GuideAnchor>
       )}
 
       {view.errors.length > 0 ? (

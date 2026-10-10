@@ -34,7 +34,6 @@ import SongLyricsEditor from '@/src/components/features/songs/SongLyricsEditor';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { useDrizzle } from '../../db';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useNavigateAcrossStacks } from '../../hooks/useNavigateAcrossStacks';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -57,6 +56,7 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { typography } from '../../theme/tokens';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { deliverFile } from '../../utils/storyTransfer';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type RouteProps = RouteProp<SongStackParamList, 'SongEditor'>;
 
@@ -98,8 +98,6 @@ const SongEditorScreen = () => {
   useScreenTour('SongEditor', canEdit);
   // The tune has its own tour, opened the first time the tab is: that is where the sound is.
   useScreenTour('SongTune', tab === 'tune');
-  const tabsAnchorRef = useScreenAnchor('SongEditor', 'tabs');
-  const wordsAnchorRef = useScreenAnchor('SongEditor', 'words');
 
   const lyrics = draft.value('lyrics') ?? '';
   const title = draft.value('title') ?? '';
@@ -290,13 +288,13 @@ const SongEditorScreen = () => {
         onBlur={() => void draft.flush()}
       />
 
-      <View ref={tabsAnchorRef} collapsable={false}>
+      <GuideAnchor screen="SongEditor" part="tabs">
         <SongTabs value={tab} onChange={setTab} />
-      </View>
+      </GuideAnchor>
 
       {tab === 'words' ? (
         <>
-          <View ref={wordsAnchorRef} collapsable={false}>
+          <GuideAnchor screen="SongEditor" part="words">
             <SongLyricsEditor
               value={lyrics}
               onChange={(next) => {
@@ -313,7 +311,7 @@ const SongEditorScreen = () => {
               syllableLanguage={syllableLanguage}
               activeLine={playback.active}
             />
-          </View>
+          </GuideAnchor>
 
           <Text style={styles.label}>{t('song_translation')}</Text>
           <Text style={styles.hint}>{t('song_translation_hint')}</Text>

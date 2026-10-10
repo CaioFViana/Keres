@@ -3,7 +3,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -14,7 +14,6 @@ import CharacterRelationRows from '@/src/components/features/relations/Character
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { useDrizzle } from '../../db';
 import type { CharacterSelect } from '../../db/schemas/characters';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
@@ -32,11 +31,11 @@ import type { CharactersScreenNavigationProp } from '../../navigation/navigation
 import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 const CharactersScreen = () => {
   useBackButtonHandler();
   useScreenTour('CharactersStack');
-  const listAnchorRef = useScreenAnchor('Characters', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
 
@@ -205,7 +204,7 @@ const CharactersScreen = () => {
 
   return (
     <ScreenContainer>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Characters" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
           onPreviewCount={previewCount}
@@ -240,7 +239,7 @@ const CharactersScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </ScreenContainer>
   );
 };

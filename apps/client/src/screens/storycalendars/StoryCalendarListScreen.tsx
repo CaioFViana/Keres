@@ -19,7 +19,6 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '@/src/db';
 import type { StoryCalendarSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
@@ -36,6 +35,7 @@ import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/Date
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 /**
  * The story's calendars.
@@ -47,7 +47,6 @@ import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
 const StoryCalendarListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('StoryCalendarList');
-  const listAnchorRef = useScreenAnchor('StoryCalendars', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
@@ -385,7 +384,7 @@ const StoryCalendarListScreen = () => {
   );
 
   return (
-    <View ref={listAnchorRef} collapsable={false} style={styles.root}>
+    <GuideAnchor screen="StoryCalendars" part="list" style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>{t('calendar_list_intro')}</Text>
 
@@ -567,7 +566,7 @@ const StoryCalendarListScreen = () => {
           onClose={() => setInspectedCalendar(null)}
         />
       )}
-    </View>
+    </GuideAnchor>
   );
 };
 

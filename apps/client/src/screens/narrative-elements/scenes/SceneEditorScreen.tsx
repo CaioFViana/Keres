@@ -29,7 +29,6 @@ import {
   useEntityInitialLoad,
 } from '../../../hooks/useEntityRefreshLifecycle';
 import { useSceneBodyDraft } from '../../../hooks/useSceneBodyDraft';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useScreenTour } from '../../../guides/useScreenTour';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
 import { useStoryRole } from '../../../hooks/useStoryRole';
@@ -45,6 +44,7 @@ import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
 import { AppAlert } from '../../../utils/AppAlert';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
 type SceneEditorNavigation = NativeStackNavigationProp<
@@ -73,8 +73,6 @@ function SceneEditorContent({
   const { colors } = useTheme();
   const { t } = useTranslation();
   useScreenTour('SceneEditor');
-  const toolbarAnchorRef = useScreenAnchor('SceneEditor', 'toolbar');
-  const footerAnchorRef = useScreenAnchor('SceneEditor', 'footer');
   // Write/read/review state machine: write owns the toolbar, the native editor and the save
   // footer; read and review render the live serialized doc (unsaved typing included), with
   // review adding the prose-comments entry. Mode switches never touch the doc.
@@ -231,7 +229,7 @@ function SceneEditorContent({
         />
       ) : null}
       {mode === 'write' && (
-        <View ref={toolbarAnchorRef} collapsable={false}>
+        <GuideAnchor screen="SceneEditor" part="toolbar">
           <SceneBodyToolbar
             testID="scene-body-toolbar"
             onAction={handleToolbarAction}
@@ -243,7 +241,7 @@ function SceneEditorContent({
               strikethrough: activeMarks.includes('strikethrough'),
             }}
           />
-        </View>
+        </GuideAnchor>
       )}
       <ScrollView
         ref={scrollRef}
@@ -291,7 +289,7 @@ function SceneEditorContent({
         </View>
       )}
       {mode === 'write' && (
-        <View ref={footerAnchorRef} collapsable={false}>
+        <GuideAnchor screen="SceneEditor" part="footer">
           <SceneBodyFooter
             testID="scene-body-footer"
             wordCount={wordCount}
@@ -303,7 +301,7 @@ function SceneEditorContent({
             hasUnsavedChanges={hasUnsavedChanges}
             onSave={() => void save()}
           />
-        </View>
+        </GuideAnchor>
       )}
       <CommentThreadModal
         visible={commentsOpen}

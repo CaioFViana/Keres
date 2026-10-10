@@ -11,7 +11,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { createServerService } from '../../services/ServerService';
 import { createStoryContentMetricsService } from '../../services/storymanagement/StoryContentMetricsService';
@@ -25,6 +24,7 @@ import { type ThemeColors, useTheme } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type RootStackParamList = {
   ColdInstall: undefined;
@@ -42,7 +42,6 @@ type StorySelectionScreenNavigationProp = NativeStackNavigationProp<
 const StorySelectionScreen = () => {
   useBackButtonHandler();
   useScreenTour('StorySelectionMain');
-  const listAnchorRef = useScreenAnchor('StorySelection', 'list');
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
@@ -219,7 +218,7 @@ const StorySelectionScreen = () => {
 
   return (
     <View style={commonContainerStyles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={styles.list}>
+      <GuideAnchor screen="StorySelection" part="list" style={styles.list}>
         <FlatList
           data={stories}
           renderItem={({ item }) => (
@@ -257,7 +256,7 @@ const StorySelectionScreen = () => {
           }
           style={styles.list}
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };

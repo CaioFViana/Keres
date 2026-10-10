@@ -14,7 +14,6 @@ import {
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
 import type { PlotSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import type { AdvancedSearchCriteria } from '../../utils/advancedSearchCriteria';
 import { plotMatches } from '../../utils/plotSearch';
@@ -28,6 +27,7 @@ import type {
 import { useStoryStore } from '../../state/storyStore';
 import type { ThemeColors } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type PlotsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'PlotsStack'>,
@@ -44,7 +44,6 @@ export type PlotsScreenNavigationProp = CompositeNavigationProp<
 const PlotListScreen = () => {
   useBackButtonHandler();
   useScreenTour('PlotsStack');
-  const listAnchorRef = useScreenAnchor('Plots', 'list');
   const { t } = useTranslation();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const { selectedStory } = useStoryStore();
@@ -157,7 +156,7 @@ const PlotListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Plots" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           data={visiblePlots}
           renderItem={renderPlotListItem}
@@ -195,7 +194,7 @@ const PlotListScreen = () => {
           disableFavoriteFilter
           isLoading={loading}
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };

@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
+import { TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../theme';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 interface Props {
   dirty: boolean;
@@ -19,11 +19,10 @@ interface Props {
 const SketchCanvasHeaderActions: React.FC<Props> = ({ dirty, onRevert, onSave }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const documentAnchorRef = useScreenAnchor('SketchCanvas', 'document');
   return (
-    <View
-      ref={documentAnchorRef}
-      collapsable={false}
+    <GuideAnchor
+      screen="SketchCanvas"
+      part="document"
       style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}
     >
       <TouchableOpacity
@@ -44,7 +43,7 @@ const SketchCanvasHeaderActions: React.FC<Props> = ({ dirty, onRevert, onSave })
           color={dirty ? colors.primary : colors.textSecondary}
         />
       </TouchableOpacity>
-    </View>
+    </GuideAnchor>
   );
 };
 export default SketchCanvasHeaderActions;

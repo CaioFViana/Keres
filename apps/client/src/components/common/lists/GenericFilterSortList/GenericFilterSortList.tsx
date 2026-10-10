@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
 import { ActivityIndicator, FlatList, Keyboard, StyleSheet, Text, View } from 'react-native';
 import { entityFieldMetadata, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
-import { useScreenAnchor } from '../../../../guides/useGuideAnchor';
+import GuideAnchor from '../../../../guides/GuideAnchor';
 import { useTheme } from '../../../../theme';
 import { countActiveCriteria, withoutCriterion } from '../../../../utils/advancedSearchCriteria';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
@@ -278,8 +278,6 @@ const GenericFilterSortList = <T,>({
   ]);
 
   // The search and the filter and sort controls are tour targets, named by the kind of list.
-  const searchAnchorRef = useScreenAnchor(entityName ?? 'List', 'search');
-  const controlsAnchorRef = useScreenAnchor(entityName ?? 'List', 'controls');
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -368,26 +366,30 @@ const GenericFilterSortList = <T,>({
     <View style={styles.container} onLayout={handleToolbarLayout}>
       {isWide ? (
         <View style={styles.row}>
-          <View ref={searchAnchorRef} collapsable={false} style={styles.grow3}>
+          <GuideAnchor screen={entityName ?? 'List'} part="search" style={styles.grow3}>
             {searchField}
-          </View>
-          <View ref={controlsAnchorRef} collapsable={false} style={[styles.row, styles.grow4]}>
+          </GuideAnchor>
+          <GuideAnchor
+            screen={entityName ?? 'List'}
+            part="controls"
+            style={[styles.row, styles.grow4]}
+          >
             {showTagFilter ? <View style={styles.grow}>{tagFilter}</View> : null}
             <View style={styles.grow}>{sortPicker}</View>
             {showFavoriteFilter ? favoriteButton : null}
             {directionButton}
-          </View>
+          </GuideAnchor>
           {filtersButton}
         </View>
       ) : (
         <>
           <View style={styles.row}>
-            <View ref={searchAnchorRef} collapsable={false} style={styles.grow}>
+            <GuideAnchor screen={entityName ?? 'List'} part="search" style={styles.grow}>
               {searchField}
-            </View>
+            </GuideAnchor>
             {filtersButton}
           </View>
-          <View ref={controlsAnchorRef} collapsable={false} style={styles.controls}>
+          <GuideAnchor screen={entityName ?? 'List'} part="controls" style={styles.controls}>
             {showTagFilter ? (
               <View style={styles.row}>
                 <View style={styles.grow}>{tagFilter}</View>
@@ -399,7 +401,7 @@ const GenericFilterSortList = <T,>({
               {showFavoriteFilter && !favoriteInTagRow ? favoriteButton : null}
               {directionButton}
             </View>
-          </View>
+          </GuideAnchor>
         </>
       )}
 

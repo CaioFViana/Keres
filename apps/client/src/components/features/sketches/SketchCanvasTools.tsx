@@ -7,7 +7,6 @@ import {
   CanvasActionBar,
   CanvasActionBarButton,
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useSketchCompact } from '../../../hooks/useSketchCompact';
 import type { SketchTool } from '../../../state/sketchToolStore';
 import { type ThemeColors, useTheme } from '../../../theme';
@@ -20,6 +19,7 @@ import {
   type SketchToolEntry,
   type SketchToolGroup,
 } from './sketchToolGroups';
+import GuideAnchor from '@/src/guides/GuideAnchor';
 
 interface SketchCanvasToolsProps {
   tool: SketchTool;
@@ -84,7 +84,6 @@ const SketchCanvasTools: React.FC<SketchCanvasToolsProps> = (props) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const compact = useSketchCompact();
-  const toolsAnchorRef = useScreenAnchor('SketchCanvas', 'tools');
   const [menu, setMenu] = useState<OpenMenu>(null);
   const [lastByGroup, setLastByGroup] = useState<Record<string, string>>({});
   const styles = useThemedStyles(createStyles);
@@ -257,10 +256,10 @@ const SketchCanvasTools: React.FC<SketchCanvasToolsProps> = (props) => {
   }
 
   return (
-    <View ref={toolsAnchorRef} collapsable={false}>
+    <GuideAnchor screen="SketchCanvas" part="tools">
       {bar}
       {sheet}
-    </View>
+    </GuideAnchor>
   );
 };
 

@@ -440,6 +440,56 @@ describe('TierEnforcementService getStoryPlan', () => {
   });
 });
 
+describe('TierEnforcementService getAccountPlan', () => {
+  it('reports no ceilings, and no plan name, for a person with no plan', async () => {
+    await expect(tierEnforcementService.getAccountPlan(userId)).resolves.toEqual({
+      tierName: null,
+      isDefault: false,
+      maxStories: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxPublicationsPerDay: null,
+      maxPublishedArcs: null,
+      storiesUsed: 1,
+      entitiesUsedTotal: 0,
+    });
+  });
+
+  it("reports the person's own plan with its ceilings and how many stories they use", async () => {
+    const tierId = await seedTier({
+      maxStories: 3,
+      maxEntitiesPerStory: 500,
+      maxEntitiesTotal: 900,
+      maxPublicationsPerDay: 2,
+      maxPublishedArcs: 1,
+    });
+    await assignTier(tierId);
+
+    await expect(tierEnforcementService.getAccountPlan(userId)).resolves.toEqual({
+      tierName: `Tier ${tierId}`,
+      isDefault: false,
+      maxStories: 3,
+      maxEntitiesPerStory: 500,
+      maxEntitiesTotal: 900,
+      maxPublicationsPerDay: 2,
+      maxPublishedArcs: 1,
+      storiesUsed: 1,
+      entitiesUsedTotal: 0,
+    });
+  });
+
+  it('says so when the plan is the one every account starts on', async () => {
+    const tierId = await seedTier({ maxStories: 1 });
+    await db.update(tiers).set({ isDefault: true }).where(eq(tiers.id, tierId));
+    await assignTier(tierId);
+
+    expect(await tierEnforcementService.getAccountPlan(userId)).toMatchObject({
+      isDefault: true,
+      maxStories: 1,
+    });
+  });
+});
+
 describe('a free plan with every ceiling at 0', () => {
   const everythingAtZero = {
     maxStories: 0,

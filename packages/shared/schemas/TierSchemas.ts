@@ -110,6 +110,27 @@ export const StoryPlanSchema = z.object({
 export type StoryPlan = z.infer<typeof StoryPlanSchema>;
 
 /**
+ * The plan a person has on a server - the one that counts for them, whether they pay for it, were given it or
+ * have it by default - with its ceilings and how much of them they use. Read by the person themselves, to see
+ * what their plan comes with without opening a story. `null` ceilings are unlimited; no plan at all (no
+ * signup default either) is unlimited too, with `tierName` `null`.
+ */
+export const AccountPlanSchema = z.object({
+  tierName: z.string().nullable(),
+  /** The plan every new account starts on, which nobody pays for. */
+  isDefault: z.boolean(),
+  maxStories: z.number().int().nullable(),
+  maxEntitiesPerStory: z.number().int().nullable(),
+  maxEntitiesTotal: z.number().int().nullable(),
+  maxPublicationsPerDay: z.number().int().nullable(),
+  maxPublishedArcs: z.number().int().nullable(),
+  storiesUsed: z.number().int(),
+  /** Counted the way the total ceiling counts; only worked out when the plan has a total ceiling. */
+  entitiesUsedTotal: z.number().int(),
+});
+export type AccountPlan = z.infer<typeof AccountPlanSchema>;
+
+/**
  * One tier as the public landing page sees it: no ids of other tables, no timestamps, no
  * deletion flags - only what a visitor compares before registering. Served by
  * `GET /api/public/tiers`, already filtered (`isPublicForSale`, not deleted) and ordered.

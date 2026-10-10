@@ -95,6 +95,21 @@ describe('GET /user/by-tag/:tag', () => {
   });
 });
 
+describe('GET /user/plan', () => {
+  it('answers with the plan that counts for the person, here no plan and so no ceilings', async () => {
+    const { status, data } = await request('GET', '/user/plan', { token: ana.token });
+
+    expect(status).toBe(200);
+    expect(data).toMatchObject({ tierName: null, maxStories: null, storiesUsed: 0 });
+  });
+
+  it('requires a session', async () => {
+    const { status } = await request('GET', '/user/plan');
+
+    expect(status).toBe(401);
+  });
+});
+
 describe('PUT /user/tag', () => {
   it('changes the tag and makes the user findable by it', async () => {
     const { status } = await request('PUT', '/user/tag', {

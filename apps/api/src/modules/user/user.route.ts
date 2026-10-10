@@ -1,4 +1,5 @@
 import {
+  AccountPlanSchema,
   RegenerateRecoveryCodesSchema,
   UpdateUserPasswordSchema,
   UpdateUserProfileSchema,
@@ -12,6 +13,7 @@ import {
   userService,
 } from '../../services/UserService';
 import { friendshipService } from '../../services/FriendshipService';
+import { tierEnforcementService } from '../../services/TierEnforcementService';
 import { AppError, isUniqueViolation } from '../../utils/errors';
 
 const userResponseSchema = t.Object({
@@ -66,6 +68,28 @@ export const userRoutes = new Elysia()
       detail: {
         summary: 'Get User Details by ID',
         description: 'Retrieves the ID, username and tag of a user by their unique ID.',
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .get(
+    '/plan',
+    async ({ user }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+      return tierEnforcementService.getAccountPlan(user.userId);
+    },
+    {
+      response: {
+        200: AccountPlanSchema,
+        401: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: "The authenticated user's plan",
+        description:
+          'The plan that counts for the user - paid for, given by an administrator or the signup default - with its ceilings (null is unlimited) and how much of them is used, so the client can say what the plan comes with.',
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },

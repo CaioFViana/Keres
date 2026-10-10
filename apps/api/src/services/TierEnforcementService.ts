@@ -1,4 +1,4 @@
-import { getTierCountedEntityTypes, type StoryPlan } from '@keres/shared';
+import { type AccountPlan, getTierCountedEntityTypes, type StoryPlan } from '@keres/shared';
 import { and, count, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
@@ -185,6 +185,25 @@ export class TierEnforcementService {
     );
     const counts = await Promise.all(handlers.map((h) => h.countForStoryIds(storyIds)));
     return counts.reduce((sum, c) => sum + c, 0);
+  }
+
+  /** What the person's own plan comes with and how much of it they use: the account-level view of `getEffectiveTier`. */
+  async getAccountPlan(userId: string): Promise<AccountPlan> {
+    const tier = await this.getEffectiveTier(userId);
+    const liveStoryIds = await this.liveStoryIdsOf(userId);
+    const entitiesUsedTotal =
+      tier && tier.maxEntitiesTotal !== null ? await this.countEntities(liveStoryIds) : 0;
+    return {
+      tierName: tier?.name ?? null,
+      isDefault: tier?.isDefault ?? false,
+      maxStories: tier?.maxStories ?? null,
+      maxEntitiesPerStory: tier?.maxEntitiesPerStory ?? null,
+      maxEntitiesTotal: tier?.maxEntitiesTotal ?? null,
+      maxPublicationsPerDay: tier?.maxPublicationsPerDay ?? null,
+      maxPublishedArcs: tier?.maxPublishedArcs ?? null,
+      storiesUsed: liveStoryIds.length,
+      entitiesUsedTotal,
+    };
   }
 
   /**

@@ -10,7 +10,8 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import type { CommentSelect } from '../../db/schema';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 
 /**
@@ -22,7 +23,6 @@ const CommentListScreen: React.FC = () => {
   useBackButtonHandler();
   useScreenTour('CommentsStack');
   const listAnchorRef = useScreenAnchor('Comments', 'list');
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const navigateToDetail = useNavigateToEntityDetail();
   const { selectedStory } = useStoryStore();
@@ -39,11 +39,7 @@ const CommentListScreen: React.FC = () => {
     [navigateToDetail],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    noStoryContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    noStoryText: { fontSize: 18, color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (!selectedStory?.id) {
     return (
@@ -59,5 +55,12 @@ const CommentListScreen: React.FC = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    noStoryContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    noStoryText: { fontSize: 18, color: colors.textSecondary },
+  });
 
 export default CommentListScreen;

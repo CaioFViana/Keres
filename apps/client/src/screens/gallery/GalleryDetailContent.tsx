@@ -36,7 +36,9 @@ import { createGalleryService } from '../../services/storymanagement/GalleryServ
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { typography } from '../../theme/tokens';
 import { AppAlert } from '../../utils/AppAlert';
 import { openGalleryExternally } from '../../utils/openGalleryExternally';
 
@@ -231,104 +233,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
     ]);
   }, [media, userId, galleryService, showNotification, t, onClose]);
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    content: {
-      padding: 20,
-      width: '100%',
-      maxWidth: 1500,
-      alignSelf: 'center',
-    },
-    layout: {
-      width: '100%',
-    },
-    wideLayout: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 24,
-    },
-    widePreviewColumn: {
-      flex: 1,
-    },
-    wideDetailsColumn: {
-      flex: 1.15,
-    },
-    preview: {
-      width: '100%',
-      aspectRatio: 1,
-      borderRadius: 8,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      marginBottom: 15,
-    },
-    widePreview: {
-      marginBottom: 0,
-    },
-    image: {
-      width: '100%',
-      height: '100%',
-    },
-    placeholderText: {
-      color: colors.textSecondary,
-      marginTop: 10,
-      fontSize: 14,
-      textAlign: 'center',
-      paddingHorizontal: 20,
-    },
-    headerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 15,
-    },
-    headerActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    closeButton: {
-      padding: 4,
-    },
-    fileName: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      flex: 1,
-      marginRight: 10,
-    },
-    metaRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingVertical: 4,
-    },
-    metaLabel: {
-      fontSize: 13,
-      color: colors.textSecondary,
-    },
-    metaValue: {
-      fontSize: 13,
-      color: colors.text,
-      flexShrink: 1,
-      textAlign: 'right',
-      marginLeft: 10,
-    },
-    input: {
-      width: '100%',
-      marginBottom: 10,
-    },
-    notesInput: {
-      height: 100,
-      textAlignVertical: 'top',
-      paddingTop: 10,
-    },
-    deleteButton: {
-      backgroundColor: colors.error,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (loading) {
     return <ScreenLoading message={t('loading')} padded />;
@@ -517,5 +422,104 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
     </>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    content: {
+      padding: 20,
+      width: '100%',
+      maxWidth: 1500,
+      alignSelf: 'center',
+    },
+    layout: {
+      width: '100%',
+    },
+    wideLayout: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 24,
+    },
+    widePreviewColumn: {
+      flex: 1,
+    },
+    wideDetailsColumn: {
+      flex: 1.15,
+    },
+    preview: {
+      width: '100%',
+      aspectRatio: 1,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      marginBottom: 15,
+    },
+    widePreview: {
+      marginBottom: 0,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    placeholderText: {
+      color: colors.textSecondary,
+      marginTop: 10,
+      fontSize: 14,
+      textAlign: 'center',
+      paddingHorizontal: 20,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 15,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    closeButton: {
+      padding: 4,
+    },
+    fileName: {
+      ...typography.title,
+      color: colors.text,
+      flex: 1,
+      marginRight: 10,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 4,
+    },
+    metaLabel: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    metaValue: {
+      fontSize: 13,
+      color: colors.text,
+      flexShrink: 1,
+      textAlign: 'right',
+      marginLeft: 10,
+    },
+    input: {
+      width: '100%',
+      marginBottom: 10,
+    },
+    notesInput: {
+      height: 100,
+      textAlignVertical: 'top',
+      paddingTop: 10,
+    },
+    deleteButton: {
+      backgroundColor: colors.error,
+    },
+  });
 
 export default GalleryDetailContent;

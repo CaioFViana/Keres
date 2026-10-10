@@ -42,7 +42,8 @@ import { createSceneService } from '@/src/services/storymanagement/SceneService'
 import { useStoryStore } from '@/src/state/storyStore';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
@@ -67,7 +68,6 @@ type ChapterDetailScreenRouteProp = RouteProp<ChapterDetailScreenParamList, 'Cha
 
 const ChapterDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const route = useRoute<ChapterDetailScreenRouteProp>();
   const { chapterId, occurrence } = route.params;
@@ -127,7 +127,7 @@ const ChapterDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const styles = StyleSheet.create({ ...commonDetailStyleDefs(colors) });
+  const styles = useThemedStyles(createStyles);
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current) {
@@ -471,5 +471,8 @@ const ChapterDetailScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonDetailStyleDefs(colors) });
 
 export default ChapterDetailScreen;

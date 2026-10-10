@@ -26,7 +26,8 @@ import { createLocationMapService } from '../../services/storymanagement/Locatio
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
@@ -38,7 +39,6 @@ type Navigation = CompositeNavigationProp<
 
 const LocationMapListScreen = () => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const mapAppearance = getEntityAppearance('LocationMap');
   const navigation = useNavigation<Navigation>();
   useBackButtonHandler({
@@ -98,16 +98,7 @@ const LocationMapListScreen = () => {
     ],
   });
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    searchContainer: { padding: 10 },
-    empty: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 32,
-      paddingHorizontal: 24,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const filteredMaps = useMemo(
     () => filterByNameAndDescription(maps, searchQuery),
@@ -235,5 +226,17 @@ const LocationMapListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    searchContainer: { padding: 10 },
+    empty: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 32,
+      paddingHorizontal: 24,
+    },
+  });
 
 export default LocationMapListScreen;

@@ -37,7 +37,8 @@ import type {
 } from '../../navigation/MainSystemStack';
 import { useItemStore } from '../../state/itemStore';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
@@ -60,7 +61,6 @@ const ItemListScreen = () => {
   const listAnchorRef = useScreenAnchor('Items', 'list');
   const { t } = useTranslation();
   const { agree, term } = useStoryVocabulary();
-  const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const navigation = useNavigation<ItemsScreenNavigationProp>();
@@ -286,7 +286,7 @@ const ItemListScreen = () => {
     [t],
   );
 
-  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -367,5 +367,8 @@ const ItemListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
 export default ItemListScreen;

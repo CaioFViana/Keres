@@ -25,7 +25,9 @@ import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
 import { createServerService } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { typography } from '../../theme/tokens';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -224,32 +226,7 @@ const ChangePasswordScreen = () => {
     }
   };
 
-  const styles = StyleSheet.create({
-    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
-    saveButton: { marginTop: 20 },
-    linkRow: { marginTop: 8, alignSelf: 'flex-start' },
-    linkText: { fontSize: 14, fontWeight: '600', color: colors.primary },
-    sectionDivider: {
-      height: 1,
-      backgroundColor: colors.border,
-      marginTop: 30,
-      marginBottom: 20,
-    },
-    sectionHint: { color: colors.textSecondary, fontSize: 13, marginBottom: 16, lineHeight: 18 },
-    recoveryCodesBox: {
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 16,
-      marginBottom: 20,
-      borderColor: colors.border,
-    },
-    recoveryCode: {
-      fontSize: 16,
-      fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
-      marginBottom: 8,
-      color: colors.text,
-    },
-  });
+  const styles = useThemedStyles(createStyles, [scrollBottomPadding]);
 
   if (loading) {
     return <ScreenLoading message={t('loading')} />;
@@ -389,5 +366,33 @@ const ChangePasswordScreen = () => {
     </KeyboardAwareScreen>
   );
 };
+
+const createStyles = (colors: ThemeColors, [scrollBottomPadding]: [number]) =>
+  StyleSheet.create({
+    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
+    saveButton: { marginTop: 20 },
+    linkRow: { marginTop: 8, alignSelf: 'flex-start' },
+    linkText: { ...typography.label, color: colors.primary },
+    sectionDivider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginTop: 30,
+      marginBottom: 20,
+    },
+    sectionHint: { ...typography.hint, color: colors.textSecondary, marginBottom: 16 },
+    recoveryCodesBox: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 16,
+      marginBottom: 20,
+      borderColor: colors.border,
+    },
+    recoveryCode: {
+      ...typography.bodyLarge,
+      fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+      marginBottom: 8,
+      color: colors.text,
+    },
+  });
 
 export default ChangePasswordScreen;

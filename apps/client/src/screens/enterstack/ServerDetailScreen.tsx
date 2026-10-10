@@ -26,7 +26,9 @@ import type { ServerManagementStackParamList } from '../../navigation/StorySelec
 import { createServerService } from '../../services/ServerService';
 import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
 import { userApiService } from '../../services/UserApiService';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { typography } from '../../theme/tokens';
 import { adminConversationKey } from '../../utils/conversationKey';
 
 type ServerDetailRouteProp = RouteProp<ServerManagementStackParamList, 'ServerDetail'>;
@@ -90,54 +92,7 @@ const ServerDetailScreen = () => {
     navigation.navigate('Conversation', { serverId, peer: 'admin' });
   };
 
-  const styles = StyleSheet.create({
-    header: { alignItems: 'center', marginBottom: 20, gap: 8 },
-    name: { fontSize: 22, fontWeight: 'bold', color: colors.text, textAlign: 'center' },
-    url: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      backgroundColor: colors.card,
-      paddingHorizontal: 14,
-      marginBottom: 20,
-    },
-    row: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: 12,
-      paddingVertical: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    lastRow: { borderBottomWidth: 0 },
-    label: { fontSize: 14, color: colors.textSecondary },
-    value: { flexShrink: 1, fontSize: 14, color: colors.text, textAlign: 'right' },
-    tagEditRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    tagAt: { fontSize: 14, color: colors.textSecondary },
-    tagInput: {
-      fontSize: 14,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      width: 140,
-      height: 32,
-      marginBottom: 0,
-      color: colors.text,
-    },
-    tagValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    tagText: { fontSize: 14, fontWeight: '600', color: colors.primary },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: 'bold',
-      textTransform: 'uppercase',
-      color: colors.textSecondary,
-      marginBottom: 8,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (loading && !server) {
     return <ScreenLoading message={t('loading_servers')} />;
@@ -299,5 +254,55 @@ const ServerDetailScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    header: { alignItems: 'center', marginBottom: 20, gap: 8 },
+    name: { fontSize: 22, fontWeight: 'bold', color: colors.text, textAlign: 'center' },
+    url: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      backgroundColor: colors.card,
+      paddingHorizontal: 14,
+      marginBottom: 20,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    lastRow: { borderBottomWidth: 0 },
+    label: { fontSize: 14, color: colors.textSecondary },
+    value: { flexShrink: 1, fontSize: 14, color: colors.text, textAlign: 'right' },
+    tagEditRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    tagAt: { fontSize: 14, color: colors.textSecondary },
+    tagInput: {
+      fontSize: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      width: 140,
+      height: 32,
+      marginBottom: 0,
+      color: colors.text,
+    },
+    tagValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    tagText: { ...typography.label, color: colors.primary },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+  });
 
 export default ServerDetailScreen;

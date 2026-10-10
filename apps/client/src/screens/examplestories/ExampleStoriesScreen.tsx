@@ -17,7 +17,10 @@ import { createStoryService } from '../../services/storymanagement/StoryService'
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { layout } from '../../theme/layout';
+import { typography } from '../../theme/tokens';
 
 /**
  * The catalog of example stories packaged with the app.
@@ -129,51 +132,7 @@ const ExampleStoriesScreen = () => {
     [drizzleDb, userId, showNotification, t, fetchStoryList],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    ...commonDetailStyleDefs(colors),
-    content: {
-      padding: 20,
-      paddingBottom: 60,
-    },
-    description: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginBottom: 18,
-      lineHeight: 20,
-    },
-    card: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      marginBottom: 10,
-      backgroundColor: colors.surface,
-    },
-    cardTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    cardTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginLeft: 8,
-      flexShrink: 1,
-    },
-    cardAuthor: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      fontStyle: 'italic',
-      marginTop: 2,
-    },
-    cardDescription: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginTop: 6,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderItem = useCallback(
     ({ item }: { item: ExampleStoryEntry }) => {
@@ -193,7 +152,7 @@ const ExampleStoriesScreen = () => {
 
       return (
         <View style={styles.card}>
-          <View style={styles.cardTitleRow}>
+          <View style={layout.row}>
             <Ionicons
               name={preview.type === 'branching' ? 'git-branch-outline' : 'book-outline'}
               size={18}
@@ -239,7 +198,7 @@ const ExampleStoriesScreen = () => {
       styles.cardAuthor,
       styles.cardDescription,
       styles.cardTitle,
-      styles.cardTitleRow,
+      layout.row,
       t,
     ],
   );
@@ -266,5 +225,46 @@ const ExampleStoriesScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
+    content: {
+      padding: 20,
+      paddingBottom: 60,
+    },
+    description: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 18,
+    },
+    card: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      marginBottom: 10,
+      backgroundColor: colors.surface,
+    },
+    cardTitle: {
+      ...typography.sectionTitle,
+      color: colors.text,
+      marginLeft: 8,
+      flexShrink: 1,
+    },
+    cardAuthor: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      marginTop: 2,
+    },
+    cardDescription: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 6,
+    },
+  });
 
 export default ExampleStoriesScreen;

@@ -28,7 +28,8 @@ import { createBoardService } from '../../services/storymanagement/BoardService'
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { AppAlert } from '../../utils/AppAlert';
@@ -43,7 +44,6 @@ const BoardListScreen = () => {
   useScreenTour('BoardsStack');
   const listAnchorRef = useScreenAnchor('Boards', 'list');
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const boardAppearance = getEntityAppearance('Board');
   const navigation = useNavigation<Navigation>();
   const db = useDrizzle();
@@ -99,16 +99,7 @@ const BoardListScreen = () => {
     ],
   });
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    searchContainer: { padding: 10 },
-    empty: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 32,
-      paddingHorizontal: 24,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const filteredBoards = useMemo(
     () => filterByNameAndDescription(boards, searchQuery),
@@ -236,5 +227,17 @@ const BoardListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    searchContainer: { padding: 10 },
+    empty: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: 32,
+      paddingHorizontal: 24,
+    },
+  });
 
 export default BoardListScreen;

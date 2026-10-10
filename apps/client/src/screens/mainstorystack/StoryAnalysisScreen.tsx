@@ -30,7 +30,9 @@ import { createStoryIndexService } from '../../services/storymanagement/StoryInd
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { typography } from '../../theme/tokens';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
@@ -112,6 +114,7 @@ const StoryAnalysisScreen = () => {
   const [prevCompletenessChecks, setPrevCompletenessChecks] = useState(
     selectedStory?.completenessChecks,
   );
+  const styles = useThemedStyles(createStyles);
   if (selectedStory?.completenessChecks !== prevCompletenessChecks) {
     setPrevCompletenessChecks(selectedStory?.completenessChecks);
     setCompletenessChecks(selectedStory?.completenessChecks ?? false);
@@ -264,114 +267,6 @@ const StoryAnalysisScreen = () => {
     },
     [navigation],
   );
-
-  const styles = StyleSheet.create({
-    ...commonDetailStyleDefs(colors),
-    emptyIconWrap: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primaryContainer,
-      marginBottom: 14,
-    },
-    scrollContent: {
-      // The common container already applies 20px on every side. Repeating the padding on the scrollable
-      // content left the check's card 40px away from the edges, unlike the drawer's other screens.
-      flexGrow: 1,
-    },
-    subtitle: {
-      color: colors.textSecondary,
-      marginBottom: 16,
-    },
-    analysisCard: {
-      // The same measurements as the result cards, so the check control does not look like a region with a
-      // deeper inset than the report below it.
-      backgroundColor: colors.card,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 15,
-      marginBottom: 10,
-    },
-    preferencesCard: {
-      backgroundColor: colors.card,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 15,
-      marginBottom: 14,
-    },
-    preferenceRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      paddingVertical: 4,
-    },
-    preferenceBody: { flex: 1 },
-    preferenceTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-    preferenceDescription: {
-      color: colors.textSecondary,
-      fontSize: 13,
-      marginTop: 3,
-      lineHeight: 18,
-    },
-    analysisHint: {
-      color: colors.textSecondary,
-      fontSize: 13,
-      marginBottom: 12,
-      lineHeight: 18,
-    },
-    progressRow: {
-      marginBottom: 12,
-    },
-    progressLabel: {
-      color: colors.textSecondary,
-      fontSize: 13,
-      marginBottom: 6,
-    },
-    progressTrack: {
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.border,
-      overflow: 'hidden',
-    },
-    progressFill: {
-      height: '100%',
-      borderRadius: 4,
-      backgroundColor: colors.primary,
-    },
-    cancelButton: {
-      backgroundColor: colors.error,
-      marginTop: 4,
-    },
-    fixButton: {
-      marginTop: 8,
-    },
-    findingRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 8,
-    },
-    findingTextGroup: {
-      flex: 1,
-      marginLeft: 10,
-    },
-    findingEntityName: {
-      fontSize: 15,
-      fontWeight: 'bold',
-      color: colors.text,
-    },
-    findingMessage: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-  });
 
   if (loading) {
     return <ScreenLoading padded message={t('loading_analysis')} />;
@@ -533,5 +428,112 @@ const StoryAnalysisScreen = () => {
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonDetailStyleDefs(colors),
+    emptyIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+      marginBottom: 14,
+    },
+    scrollContent: {
+      // The common container already applies 20px on every side. Repeating the padding on the scrollable
+      // content left the check's card 40px away from the edges, unlike the drawer's other screens.
+      flexGrow: 1,
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      marginBottom: 16,
+    },
+    analysisCard: {
+      // The same measurements as the result cards, so the check control does not look like a region with a
+      // deeper inset than the report below it.
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 10,
+    },
+    preferencesCard: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 14,
+    },
+    preferenceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 4,
+    },
+    preferenceBody: { flex: 1 },
+    preferenceTitle: { ...typography.sectionTitle, color: colors.text },
+    preferenceDescription: {
+      ...typography.hint,
+      color: colors.textSecondary,
+      marginTop: 3,
+    },
+    analysisHint: {
+      ...typography.hint,
+      color: colors.textSecondary,
+      marginBottom: 12,
+    },
+    progressRow: {
+      marginBottom: 12,
+    },
+    progressLabel: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      marginBottom: 6,
+    },
+    progressTrack: {
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.border,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      borderRadius: 4,
+      backgroundColor: colors.primary,
+    },
+    cancelButton: {
+      backgroundColor: colors.error,
+      marginTop: 4,
+    },
+    fixButton: {
+      marginTop: 8,
+    },
+    findingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 8,
+    },
+    findingTextGroup: {
+      flex: 1,
+      marginLeft: 10,
+    },
+    findingEntityName: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    findingMessage: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+  });
 
 export default StoryAnalysisScreen;

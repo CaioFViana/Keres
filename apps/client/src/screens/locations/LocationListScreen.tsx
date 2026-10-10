@@ -27,7 +27,8 @@ import type {
 } from '../../navigation/MainSystemStack';
 import type { LocationWithTags } from '../../services/storymanagement/LocationService';
 import { useLocationStore } from '../../state/locationStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
@@ -41,7 +42,6 @@ const LocationsScreen = () => {
   const listAnchorRef = useScreenAnchor('Locations', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
 
   const {
@@ -77,7 +77,7 @@ const LocationsScreen = () => {
   const { canEdit } = useStoryRole(storyId);
   const memoizedTagFilterOptions = useStoryTagFilterOptions(storyId);
 
-  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -184,5 +184,8 @@ const LocationsScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
 export default LocationsScreen;

@@ -22,7 +22,8 @@ import { usePlanCheckout } from '../../hooks/usePlanCheckout';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { verifyPlayPurchase } from '../../services/PaymentService';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import {
   formatMoney,
   isMethodSoldForOffer,
@@ -86,7 +87,6 @@ function limitLines(
 const ServerPlanScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t, i18n } = useTranslation();
-  const { colors } = useTheme();
   const navigation = useNavigation<ServerPlanNavigationProp>();
   const { serverId } = useRoute<ServerPlanRouteProp>().params;
   const { servers, loading, error } = useServerStatuses(serverId);
@@ -203,43 +203,7 @@ const ServerPlanScreen = () => {
       .catch(() => undefined);
   }, [online, overview, server]);
 
-  const styles = StyleSheet.create({
-    intro: { fontSize: 14, color: colors.textSecondary, marginBottom: 16 },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: 'bold',
-      textTransform: 'uppercase',
-      color: colors.textSecondary,
-      marginBottom: 8,
-    },
-    offer: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      backgroundColor: colors.card,
-      padding: 14,
-      marginBottom: 10,
-      gap: 4,
-    },
-    offerSelected: { borderColor: colors.primary, borderWidth: 2 },
-    offerName: { fontSize: 17, fontWeight: 'bold', color: colors.text },
-    offerLine: { fontSize: 13, color: colors.textSecondary },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-    chip: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 16,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      backgroundColor: colors.card,
-    },
-    chipSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
-    chipText: { fontSize: 14, color: colors.text },
-    chipTextSelected: { color: colors.background, fontWeight: '600' },
-    hint: { fontSize: 13, color: colors.textSecondary, marginBottom: 12 },
-    error: { fontSize: 14, color: colors.error, marginBottom: 12 },
-    cancelButton: { backgroundColor: colors.border, marginBottom: 20 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const chip = (
     key: string,
@@ -449,5 +413,44 @@ const ServerPlanScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    intro: { fontSize: 14, color: colors.textSecondary, marginBottom: 16 },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    offer: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      backgroundColor: colors.card,
+      padding: 14,
+      marginBottom: 10,
+      gap: 4,
+    },
+    offerSelected: { borderColor: colors.primary, borderWidth: 2 },
+    offerName: { fontSize: 17, fontWeight: 'bold', color: colors.text },
+    offerLine: { fontSize: 13, color: colors.textSecondary },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: colors.card,
+    },
+    chipSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
+    chipText: { fontSize: 14, color: colors.text },
+    chipTextSelected: { color: colors.background, fontWeight: '600' },
+    hint: { fontSize: 13, color: colors.textSecondary, marginBottom: 12 },
+    error: { fontSize: 14, color: colors.error, marginBottom: 12 },
+    cancelButton: { backgroundColor: colors.border, marginBottom: 20 },
+  });
 
 export default ServerPlanScreen;

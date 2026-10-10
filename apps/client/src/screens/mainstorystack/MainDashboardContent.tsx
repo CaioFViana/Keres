@@ -13,7 +13,9 @@ import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { typography } from '../../theme/tokens';
 import { getLanguageOptions } from '../../utils/i18n';
 
 export type MainDashboardContentProps = {
@@ -47,7 +49,10 @@ export type MainDashboardContentProps = {
   onOpenArc?: (arcId: string) => void;
   onAddArc?: () => void;
   /** The scene to pick up, the shortcuts to start something and the manuscript; absent leaves the block out. */
-  writing?: Omit<ComponentProps<typeof StoryWritingSection>, 'anchorRef' | 'chapterCount' | 'sceneCount'>;
+  writing?: Omit<
+    ComponentProps<typeof StoryWritingSection>,
+    'anchorRef' | 'chapterCount' | 'sceneCount'
+  >;
 };
 
 function languageLabel(t: TFunction, language: string | null | undefined): string | null {
@@ -89,17 +94,10 @@ export function MainDashboardContent({
   onAddArc,
   writing,
 }: MainDashboardContentProps) {
-  const { colors } = useTheme();
   const overviewAnchorRef = useScreenAnchor('MainDashboard', 'overview');
   const worksAnchorRef = useScreenAnchor('MainDashboard', 'works');
   const writingAnchorRef = useScreenAnchor('MainDashboard', 'writing');
-  const styles = StyleSheet.create({
-    sectionLink: {
-      color: colors.primary,
-      fontSize: 14,
-      fontWeight: '600',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const resolvedLanguage = languageLabel(t, story?.language);
 
@@ -190,3 +188,11 @@ export function MainDashboardContent({
     </DetailContainer>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sectionLink: {
+      ...typography.label,
+      color: colors.primary,
+    },
+  });

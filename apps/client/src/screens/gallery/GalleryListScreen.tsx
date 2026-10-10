@@ -38,7 +38,8 @@ import { createGalleryService } from '../../services/storymanagement/GalleryServ
 import { useGalleryStore } from '../../state/galleryStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,
@@ -50,7 +51,6 @@ const GalleryListScreen = () => {
   useScreenTour('GalleryStack');
   const listAnchorRef = useScreenAnchor('Gallery', 'list');
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const { breakpoint } = useResponsiveLayout();
   const navigation = useNavigation<GalleryScreenNavigationProp>();
   const navigateAcross = useNavigateAcrossStacks();
@@ -283,12 +283,7 @@ const GalleryListScreen = () => {
     [t],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    columnWrapper: {
-      paddingHorizontal: GALLERY_ROW_PADDING,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (error) {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
@@ -344,5 +339,13 @@ const GalleryListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    columnWrapper: {
+      paddingHorizontal: GALLERY_ROW_PADDING,
+    },
+  });
 
 export default GalleryListScreen;

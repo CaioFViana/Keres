@@ -42,7 +42,8 @@ import type { LocationService } from '../../services/storymanagement/LocationSer
 import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { useStoryStats } from '../../hooks/useStoryStats';
 import { useStoryStore } from '../../state/storyStore';
@@ -62,7 +63,6 @@ const noopModeWrite = async () => {};
 
 const CharacterDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const { openCharacter: openPresenceMatrix } = useOpenPresenceMatrixViewer();
@@ -147,14 +147,7 @@ const CharacterDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
-  const styles = StyleSheet.create({
-    subTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      marginBottom: 15,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchCharacter = useCallback(async () => {
     if (!characterServiceRef.current) {
@@ -513,4 +506,14 @@ const CharacterDetailScreen = () => {
     />
   );
 };
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    subTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 15,
+    },
+  });
+
 export default CharacterDetailScreen;

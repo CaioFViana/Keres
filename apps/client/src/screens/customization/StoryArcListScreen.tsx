@@ -18,7 +18,9 @@ import { createStoryArcService } from '@/src/services/storymanagement/StoryArcSe
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 import { AppAlert } from '@/src/utils/AppAlert';
 
 const StoryArcListScreen = () => {
@@ -33,8 +35,7 @@ const StoryArcListScreen = () => {
   const { userId } = useUserSettingsStore();
   const notify = useNotificationStore((state) => state.showNotification);
   const vocab = useStoryVocabulary();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<ArcsStackParamList, 'StoryArcList'>>();
+  const navigation = useNavigation<NativeStackNavigationProp<ArcsStackParamList, 'StoryArcList'>>();
   const [arcs, setArcs] = useState<StoryArcSelect[]>([]);
 
   const reload = useCallback(async () => {
@@ -95,23 +96,7 @@ const StoryArcListScreen = () => {
     );
   };
 
-  const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: colors.background, padding: 14 },
-    intro: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 14 },
-    card: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: 14,
-      marginBottom: 10,
-    },
-    title: { fontSize: 16, fontWeight: '700', color: colors.text },
-    empty: { fontSize: 13, color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ScrollView ref={listAnchorRef} style={styles.root}>
@@ -139,5 +124,24 @@ const StoryArcListScreen = () => {
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.background, padding: 14 },
+    intro: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 14 },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: 10,
+    },
+    title: { ...typography.sectionTitle, color: colors.text },
+    empty: { fontSize: 13, color: colors.textSecondary },
+  });
 
 export default StoryArcListScreen;

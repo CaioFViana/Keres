@@ -37,7 +37,8 @@ import { useBoardDraftStore } from '../../state/boardDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
 import { galleryMediaForNode, nextStaggeredPosition } from '../../utils/boardLayout';
@@ -178,6 +179,7 @@ const BoardCanvasScreen = () => {
   }, [load]);
 
   const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const styles = useThemedStyles(createStyles);
   if (storyId !== prevStoryId) {
     setPrevStoryId(storyId);
     if (!storyId) {
@@ -406,10 +408,6 @@ const BoardCanvasScreen = () => {
     (content.overlays ?? []).find((overlay) => overlay.id === overlayActions.sheetOverlayId) ??
     null;
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-  });
-
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !board) {
     return (
@@ -564,5 +562,10 @@ const BoardCanvasScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+  });
 
 export default BoardCanvasScreen;

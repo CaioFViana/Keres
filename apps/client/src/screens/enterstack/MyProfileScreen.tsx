@@ -24,7 +24,9 @@ import type { ServerManagementStackParamList } from '../../navigation/StorySelec
 import { isOfflineError } from '../../services/apiClient';
 import { createServerService } from '../../services/ServerService';
 import { userApiService } from '../../services/UserApiService';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { typography } from '../../theme/tokens';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -119,18 +121,7 @@ const MyProfileScreen = () => {
     }
   };
 
-  const styles = StyleSheet.create({
-    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
-    previewContainer: { alignItems: 'center', marginBottom: 20 },
-    charCount: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      textAlign: 'right',
-      marginTop: -2,
-      marginBottom: 10,
-    },
-    saveButton: { marginTop: 20 },
-  });
+  const styles = useThemedStyles(createStyles, [scrollBottomPadding]);
 
   if (loading) {
     return <ScreenLoading message={t('loading')} />;
@@ -190,5 +181,19 @@ const MyProfileScreen = () => {
     </KeyboardAwareScreen>
   );
 };
+
+const createStyles = (colors: ThemeColors, [scrollBottomPadding]: [number]) =>
+  StyleSheet.create({
+    scrollViewContent: { padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 },
+    previewContainer: { alignItems: 'center', marginBottom: 20 },
+    charCount: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'right',
+      marginTop: -2,
+      marginBottom: 10,
+    },
+    saveButton: { marginTop: 20 },
+  });
 
 export default MyProfileScreen;

@@ -21,7 +21,8 @@ import { useStoryListStore } from '../../state/storyListStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSummaryStore } from '../../state/summaryStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 
@@ -214,38 +215,7 @@ const StorySelectionScreen = () => {
     [storyService, t, updateStoryFavoriteStatus, userId],
   );
 
-  const styles = StyleSheet.create({
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 16,
-      marginTop: 4,
-      color: colors.text,
-    },
-    emptyState: {
-      alignItems: 'center',
-      paddingVertical: 36,
-      paddingHorizontal: 24,
-    },
-    emptyIconWrap: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primaryContainer,
-      marginBottom: 14,
-    },
-    emptyText: {
-      color: colors.textSecondary,
-      fontSize: 15,
-      textAlign: 'center',
-      lineHeight: 22,
-    },
-    list: {
-      flex: 1,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={commonContainerStyles.container}>
@@ -291,5 +261,39 @@ const StorySelectionScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 16,
+      marginTop: 4,
+      color: colors.text,
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 36,
+      paddingHorizontal: 24,
+    },
+    emptyIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+      marginBottom: 14,
+    },
+    emptyText: {
+      color: colors.textSecondary,
+      fontSize: 15,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    list: {
+      flex: 1,
+    },
+  });
 
 export default StorySelectionScreen;

@@ -12,7 +12,9 @@ import { createStoryService } from '../../services/storymanagement/StoryService'
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors, useTheme } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { typography } from '../../theme/tokens';
 import { createULID } from '../../utils/entityUtils';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { pickStoryExportFile, StoryImportError } from '../../utils/storyTransfer';
@@ -105,40 +107,7 @@ const ImportStoryScreen = () => {
     }
   }, [drizzleDb, userId, navigation, showNotification, t, fetchStoryList]);
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    content: {
-      padding: 20,
-      paddingBottom: 60,
-    },
-    sectionDescription: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginBottom: 14,
-      lineHeight: 20,
-    },
-    importButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-    },
-    importButtonText: {
-      color: colors.onPrimary,
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginLeft: 8,
-    },
-    note: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      lineHeight: 19,
-      marginTop: 18,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -156,5 +125,39 @@ const ImportStoryScreen = () => {
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    content: {
+      padding: 20,
+      paddingBottom: 60,
+    },
+    sectionDescription: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 14,
+    },
+    importButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+    },
+    importButtonText: {
+      ...typography.sectionTitle,
+      color: colors.onPrimary,
+      marginLeft: 8,
+    },
+    note: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      lineHeight: 19,
+      marginTop: 18,
+    },
+  });
 
 export default ImportStoryScreen;

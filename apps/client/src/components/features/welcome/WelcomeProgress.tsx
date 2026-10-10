@@ -61,9 +61,6 @@ const WelcomeProgress: React.FC<WelcomeProgressProps> = ({
   onSelect,
 }) => {
   const { t } = useTranslation();
-  const styles = StyleSheet.create({
-    row: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  });
 
   return (
     <View
@@ -85,5 +82,9 @@ const WelcomeProgress: React.FC<WelcomeProgressProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+});
 
 export default WelcomeProgress;

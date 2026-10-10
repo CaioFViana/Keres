@@ -35,7 +35,8 @@ import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
-import { useTheme } from '../../theme';
+import { type ThemeColors } from '../../theme';
+import { useThemedStyles } from '../../theme/useThemedStyles';
 import { directConversationKey } from '../../utils/conversationKey';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
@@ -48,7 +49,6 @@ type FriendDetailScreenNavigationProp = NativeStackNavigationProp<
 const FriendDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
   const navigation = useNavigation<FriendDetailScreenNavigationProp>();
   const route = useRoute<FriendDetailScreenRouteProp>();
@@ -272,15 +272,7 @@ const FriendDetailScreen = () => {
     onInvited: closeInvite,
   });
 
-  const styles = StyleSheet.create({
-    bio: { fontSize: 15, color: colors.text, lineHeight: 21, marginTop: 16 },
-    blockedNote: { fontSize: 13, color: colors.textSecondary, marginTop: 20 },
-    sections: { marginTop: 28, gap: 28 },
-    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 32 },
-    column: { minWidth: 0, gap: 28 },
-    // Only side by side do the columns share the width: stacked, `flex: 1` has no height to share.
-    columnShare: { flex: 1 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (loading) {
     return <ScreenLoading message={t('loading')} />;
@@ -381,5 +373,16 @@ const FriendDetailScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    bio: { fontSize: 15, color: colors.text, lineHeight: 21, marginTop: 16 },
+    blockedNote: { fontSize: 13, color: colors.textSecondary, marginTop: 20 },
+    sections: { marginTop: 28, gap: 28 },
+    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 32 },
+    column: { minWidth: 0, gap: 28 },
+    // Only side by side do the columns share the width: stacked, `flex: 1` has no height to share.
+    columnShare: { flex: 1 },
+  });
 
 export default FriendDetailScreen;

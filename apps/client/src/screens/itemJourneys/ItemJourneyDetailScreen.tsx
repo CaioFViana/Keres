@@ -11,7 +11,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
@@ -39,6 +39,7 @@ import { useItemStore } from '../../state/itemStore';
 import { useSceneStore } from '../../state/sceneStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
+import { layout } from '../../theme/layout';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
@@ -155,10 +156,6 @@ const ItemJourneyDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
-
-  const styles = StyleSheet.create({
-    relationLink: { flexDirection: 'row', alignItems: 'center' },
-  });
 
   const fetchItemJourney = useCallback(async () => {
     if (!itemJourneyServiceRef.current) {
@@ -302,7 +299,7 @@ const ItemJourneyDetailScreen = () => {
   const relationsPanel = (
     <>
       {relatedItem && (
-        <TouchableOpacity onPress={handleItemPress} style={styles.relationLink} activeOpacity={0.7}>
+        <TouchableOpacity onPress={handleItemPress} style={layout.row} activeOpacity={0.7}>
           <View style={{ flex: 1 }}>
             <DetailField label={itemCopy.entity} value={relatedItem.name} />
           </View>
@@ -311,11 +308,7 @@ const ItemJourneyDetailScreen = () => {
       )}
 
       {relatedScene && (
-        <TouchableOpacity
-          onPress={handleScenePress}
-          style={styles.relationLink}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity onPress={handleScenePress} style={layout.row} activeOpacity={0.7}>
           <View style={{ flex: 1 }}>
             <DetailField label={sceneCopy.entity} value={relatedScene.name} />
           </View>
@@ -324,11 +317,7 @@ const ItemJourneyDetailScreen = () => {
       )}
 
       {newCharacterOwner && (
-        <TouchableOpacity
-          onPress={handleNewOwnerPress}
-          style={styles.relationLink}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity onPress={handleNewOwnerPress} style={layout.row} activeOpacity={0.7}>
           <View style={{ flex: 1 }}>
             <DetailField
               label={t('item_journey_new_character_owner_label', {

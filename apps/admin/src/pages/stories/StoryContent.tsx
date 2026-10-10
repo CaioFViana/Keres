@@ -11,6 +11,7 @@ import {
   type AdminStorySketchSummary,
 } from '../../api/AdminStoryApiService';
 import { Pagination } from '../../components/Pagination';
+import { entityTypeLabel } from '../../i18n/entityTypeLabel';
 
 type ContentTab = 'media' | 'boards' | 'sketches' | 'maps' | 'entities';
 
@@ -110,7 +111,7 @@ function Boards({ rows }: { rows: AdminStoryBoardSummary[] }) {
             <ul>
               {board.summary.entityPins.map((pin) => (
                 <li key={`${pin.entityType}:${pin.entityId}`}>
-                  {pin.entityType}: {pin.label}
+                  {entityTypeLabel(t, pin.entityType)}: {pin.label}
                   {pin.note && <span className="hint"> — {pin.note}</span>}
                 </li>
               ))}
@@ -287,7 +288,7 @@ function Entities({ storyId }: { storyId: string }) {
         >
           {types.map((entry) => (
             <option key={entry.entityType} value={entry.entityType}>
-              {entry.entityType} ({entry.liveCount})
+              {entityTypeLabel(t, entry.entityType)} ({entry.liveCount})
             </option>
           ))}
         </select>

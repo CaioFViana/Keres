@@ -5,6 +5,7 @@ import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared/metadata/recoverableEnti
 import type { DeletedItem, OperationLogEntry } from '../../api/RecoveryApiService';
 import { RecoveryApiService } from '../../api/RecoveryApiService';
 import { Modal } from '../../components/Modal';
+import { entityTypeLabel } from '../../i18n/entityTypeLabel';
 
 export function RecoveryPage() {
   const { t, i18n } = useTranslation('admin');
@@ -39,7 +40,12 @@ export function RecoveryPage() {
 
   const restore = async (item: DeletedItem) => {
     const label = item.name ? `"${item.name}"` : item.id;
-    if (!confirm(t('recovery.confirmRestore', { entityType: item.entityType, label }))) return;
+    if (
+      !confirm(
+        t('recovery.confirmRestore', { entityType: entityTypeLabel(t, item.entityType), label }),
+      )
+    )
+      return;
     try {
       await RecoveryApiService.restore(item.entityType, item.id);
       setItems((prev) =>
@@ -91,9 +97,9 @@ export function RecoveryPage() {
             {t('recovery.entityType')}
             <select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
               <option value="">{t('recovery.allEntityTypes')}</option>
-              {RECOVERABLE_ENTITY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              {RECOVERABLE_ENTITY_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {entityTypeLabel(t, type)}
                 </option>
               ))}
             </select>
@@ -137,7 +143,7 @@ export function RecoveryPage() {
               <tbody>
                 {items.map((item) => (
                   <tr key={`${item.entityType}:${item.id}`}>
-                    <td>{item.entityType}</td>
+                    <td>{entityTypeLabel(t, item.entityType)}</td>
                     <td>{item.name ?? <span className="hint">{t('recovery.unnamed')}</span>}</td>
                     <td className="mono-code">{item.id}</td>
                     <td>{storyCell(item)}</td>
@@ -215,7 +221,7 @@ export function RecoveryPage() {
                     >
                       <td>{new Date(entry.createdAt).toLocaleString(i18n.language)}</td>
                       <td>{entry.operationType}</td>
-                      <td>{entry.entityType}</td>
+                      <td>{entityTypeLabel(t, entry.entityType)}</td>
                       <td>{entry.entityName ?? <span className="hint">{entry.entityId}</span>}</td>
                       <td title={entry.storyId}>{entry.storyTitle ?? entry.storyId}</td>
                       <td title={entry.userId}>{entry.username ?? entry.userId}</td>
@@ -245,7 +251,7 @@ export function RecoveryPage() {
                   <dd>{selectedEntry.operationType}</dd>
                   <dt>{t('recovery.columnEntity')}</dt>
                   <dd>
-                    {selectedEntry.entityType}
+                    {entityTypeLabel(t, selectedEntry.entityType)}
                     {selectedEntry.entityName ? ` · ${selectedEntry.entityName}` : ''}
                   </dd>
                   <dt>{t('recovery.columnId')}</dt>

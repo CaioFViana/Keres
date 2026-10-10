@@ -97,12 +97,32 @@ function installAdapter() {
     });
 
     const key = Object.keys(routes).find((fragment) => url.includes(fragment));
-    const scripted = key === undefined ? undefined : (routes[key] as { refusedWith?: string });
+    const scripted =
+      key === undefined
+        ? undefined
+        : (routes[key] as { refusedWith?: string; conflictCode?: string });
+    if (scripted?.conflictCode) {
+      const error: any = new Error('Request failed with status code 409');
+      error.config = config;
+      error.request = {};
+      error.response = {
+        status: 409,
+        data: { message: 'was here before', code: scripted.conflictCode },
+        config,
+        headers: {},
+      };
+      throw error;
+    }
     if (scripted?.refusedWith) {
       const error: any = new Error('Request failed with status code 403');
       error.config = config;
       error.request = {};
-      error.response = { status: 403, data: { message: scripted.refusedWith }, config, headers: {} };
+      error.response = {
+        status: 403,
+        data: { message: scripted.refusedWith },
+        config,
+        headers: {},
+      };
       throw error;
     }
     if (key === undefined || routes[key] === null) {
@@ -381,6 +401,28 @@ describe('uploadNewStoryToServer', () => {
       message: 'Story limit reached for your plan (1).',
     });
     expect(mockStoryService.updateStory).not.toHaveBeenCalled();
+  });
+
+  it("says the story was on the server before when the server asks for the owner's agreement", async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = { conflictCode: 'STORY_PREVIOUSLY_ON_SERVER' };
+
+    const result = await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    expect(result).toEqual({ success: false, reason: 'previously_on_server' });
+    expect(mockStoryService.updateStory).not.toHaveBeenCalled();
+  });
+
+  it('asks the server to erase the old copy only when the owner agreed to it', async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = { storyId: STORY_ID };
+
+    await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+    await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER, { replaceOldCopy: true });
+
+    const imports = seen.filter((request) => request.url.includes('/stories/import'));
+    expect(imports[0].url).not.toContain('replaceUnlinked');
+    expect(imports[1].url).toContain('replaceUnlinked=true');
   });
 
   it('marks every operation included in the imported snapshot as already sent', async () => {

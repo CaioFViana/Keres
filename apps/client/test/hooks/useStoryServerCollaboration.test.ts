@@ -149,7 +149,9 @@ describe('useStoryServerCollaboration', () => {
     );
     await act(async () => view.result.current.setUploadTargetServerId('server-1'));
     await act(async () => view.result.current.handleSendToServer());
-    expect(mockUpload).toHaveBeenCalledWith('story-1', server, 'user-1');
+    expect(mockUpload).toHaveBeenCalledWith('story-1', server, 'user-1', {
+      replaceOldCopy: false,
+    });
     expect(mockStoryState.setSelectedStory).toHaveBeenCalledWith(
       expect.objectContaining({ serverId: 'server-1' }),
     );
@@ -251,6 +253,42 @@ describe('useStoryServerCollaboration', () => {
     await act(async () => view.result.current.handleSendToServer());
     expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_failed');
     (console.error as jest.Mock).mockRestore();
+  });
+
+  it('tells the owner a story was on the server before, and only replaces its old data once they agree', async () => {
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() =>
+      expect(view.result.current.uploadServerOptions).toEqual([
+        { label: 'Main', value: 'server-1' },
+      ]),
+    );
+    await act(async () => view.result.current.setUploadTargetServerId('server-1'));
+
+    mockUpload.mockResolvedValueOnce({ success: false, reason: 'previously_on_server' });
+    await act(async () => view.result.current.handleSendToServer());
+
+    // The first try never asks for the old copy to be replaced, whatever the press passes along.
+    expect(mockUpload).toHaveBeenLastCalledWith('story-1', expect.anything(), expect.anything(), {
+      replaceOldCopy: false,
+    });
+    const [title, message, buttons] = mockAlert.mock.calls.at(-1) as [
+      string,
+      string,
+      { text: string; onPress?: () => void }[],
+    ];
+    expect(title).toBe('send_to_server_previous_title');
+    expect(message).toBe('send_to_server_previous_message');
+    expect(buttons.map((button) => button.text)).toEqual([
+      'cancel',
+      'send_to_server_previous_confirm',
+    ]);
+
+    mockUpload.mockResolvedValueOnce({ success: true });
+    await act(async () => buttons[1].onPress?.());
+
+    expect(mockUpload).toHaveBeenLastCalledWith('story-1', expect.anything(), expect.anything(), {
+      replaceOldCopy: true,
+    });
   });
 
   it('reports collaborator failures instead of failing silently', async () => {

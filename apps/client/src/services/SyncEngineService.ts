@@ -61,6 +61,7 @@ export interface SyncEngineDependencies {
     storyId: string,
     server: ServerSelect,
     userId: string,
+    options?: { replaceOldCopy?: boolean },
   ): Promise<StoryUploadResult>;
 }
 
@@ -272,8 +273,9 @@ export class SyncEngineService {
     storyId: string,
     server: ServerSelect,
     userId: string,
+    options?: { replaceOldCopy?: boolean },
   ): Promise<StoryUploadResult> {
-    return this.dependencies.uploadNewStoryToServer(this._db, storyId, server, userId);
+    return this.dependencies.uploadNewStoryToServer(this._db, storyId, server, userId, options);
   }
 
   private get conflictService(): SyncConflictService {

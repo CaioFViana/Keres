@@ -208,18 +208,31 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     };
   }, [linkedServer, isOwnerOnServer, collaborators, pendingInvitations, friendshipService]);
 
-  const handleSendToServer = async () => {
+  const sendToServer = async (replaceOldCopy: boolean) => {
     if (!storyId || !userId || !uploadTargetServerId) return;
     const targetServer = availableServers.find((server) => server.id === uploadTargetServerId);
     if (!targetServer) return;
     setServerActionLoading(true);
     try {
-      const result = await syncEngine.uploadNewStoryToServer(storyId, targetServer, userId);
+      const result = await syncEngine.uploadNewStoryToServer(storyId, targetServer, userId, {
+        replaceOldCopy,
+      });
       if (result.success) {
         setServerId(targetServer.id);
         setUploadTargetServerId(null);
         if (selectedStory) setSelectedStory({ ...selectedStory, serverId: targetServer.id });
         AppAlert.alert(t('success'), t('send_to_server_success'));
+      } else if (result.reason === 'previously_on_server') {
+        // The server still keeps the data of an earlier link. Starting over erases it for good, so the owner
+        // is told so and has to agree before it is sent again.
+        AppAlert.alert(t('send_to_server_previous_title'), t('send_to_server_previous_message'), [
+          { text: t('cancel'), style: 'cancel' },
+          {
+            text: t('send_to_server_previous_confirm'),
+            style: 'destructive',
+            onPress: () => void sendToServer(true),
+          },
+        ]);
       } else if (result.reason === 'already_exists') {
         AppAlert.alert(t('error'), t('send_to_server_already_exists'));
       } else if (result.reason === 'refused') {
@@ -234,6 +247,9 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       setServerActionLoading(false);
     }
   };
+
+  /** The send button: a press event must not be taken for the agreement to replace an old copy. */
+  const handleSendToServer = () => sendToServer(false);
 
   /** Invites the picked friend: they become a collaborator only once they accept. */
   const handleAddCollaborator = async () => {

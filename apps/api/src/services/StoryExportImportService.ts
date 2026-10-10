@@ -12,7 +12,12 @@ export class StoryExportImportService {
     return this.exporter.exportStory(storyId, userId);
   }
 
-  async importStory(userId: string, fullStoryJSON: unknown, newStoryId?: string): Promise<string> {
-    return this.importer.importStory(userId, fullStoryJSON, newStoryId);
+  async importStory(
+    userId: string,
+    fullStoryJSON: unknown,
+    newStoryId?: string,
+    options?: { replaceUnlinked?: boolean },
+  ): Promise<string> {
+    return this.importer.importStory(userId, fullStoryJSON, newStoryId, options);
   }
 }

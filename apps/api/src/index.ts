@@ -303,7 +303,7 @@ export async function createApp() {
             userId,
             storyId,
           });
-          return { message: err.message };
+          return err.code ? { message: err.message, code: err.code } : { message: err.message };
         }
 
         // Route handlers that deliberately picked a non-500 status before throwing a plain

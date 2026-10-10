@@ -85,6 +85,7 @@ export const storyRoutes = new Elysia()
         user.userId,
         body,
         query.storyId,
+        { replaceUnlinked: query.replaceUnlinked === 'true' },
       );
       return { storyId: newStoryId };
     },
@@ -96,6 +97,9 @@ export const storyRoutes = new Elysia()
         // already exists for the user. Absent (the default): it generates a new ID, used when
         // downloading/duplicating a story that already exists on another server.
         storyId: t.Optional(t.String()),
+        // `true` when the owner agreed to start over a story that was unlinked from this server before: its old
+        // data is erased for good first. Without it such a story is refused with a 409 that says so.
+        replaceUnlinked: t.Optional(t.String()),
       }),
       response: t.Object({ storyId: t.String() }),
       detail: {

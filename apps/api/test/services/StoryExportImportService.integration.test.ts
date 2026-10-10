@@ -420,6 +420,54 @@ describe('id preservation when uploading a local story', () => {
   });
 });
 
+describe('sending a story again after it was unlinked from the server', () => {
+  /** What unlinking does on the server: the story is marked deleted and everything else stays. */
+  const unlink = () =>
+    db
+      .update(stories)
+      .set({ isDeleted: true, deletedAt: new Date() })
+      .where(eq(stories.id, ORIGINAL_STORY_ID));
+
+  it('says the story was here before, with a code the client can act on, and changes nothing', async () => {
+    await service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID);
+    await unlink();
+
+    await expect(
+      service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID),
+    ).rejects.toMatchObject({ status: 409, code: 'STORY_PREVIOUSLY_ON_SERVER' });
+    expect((await storyRow(ORIGINAL_STORY_ID))?.isDeleted).toBe(true);
+  });
+
+  it('erases the old data for good and uploads the story anew once the owner agrees', async () => {
+    await service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID);
+    await unlink();
+    const [oldScene] = await db.select().from(scenes);
+
+    const storyId = await service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID, {
+      replaceUnlinked: true,
+    });
+
+    expect(storyId).toBe(ORIGINAL_STORY_ID);
+    expect((await storyRow(ORIGINAL_STORY_ID))?.isDeleted).toBe(false);
+    // One of each: the old rows are gone, not joined by a second set.
+    expect(await db.select().from(stories)).toHaveLength(1);
+    expect(await db.select().from(scenes)).toHaveLength(1);
+    expect(await db.select().from(chapters)).toHaveLength(1);
+    expect(oldScene.id).toBe(ORIGINAL_SCENE_ID);
+  });
+
+  it('still refuses a story that is live on the server, whatever the owner agrees to', async () => {
+    await service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID);
+
+    await expect(
+      service.importStory(IMPORTER_ID, buildExport(), ORIGINAL_STORY_ID, {
+        replaceUnlinked: true,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect((await storyRow(ORIGINAL_STORY_ID))?.isDeleted).toBe(false);
+  });
+});
+
 describe('rejected packages', () => {
   it('rejects a package from a newer app with a status the client can act on', async () => {
     const fromTheFuture = buildExport({ formatVersion: CURRENT_STORY_FORMAT_VERSION + 1 });

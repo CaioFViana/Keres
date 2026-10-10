@@ -10,6 +10,8 @@ export class AppError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    /** A name the client can act on (ask the person something, say) when the message alone would not do. */
+    public readonly code?: string,
   ) {
     super(message);
     this.name = 'AppError';

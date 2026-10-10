@@ -283,4 +283,40 @@ describe('buildLocationGraphLayout', () => {
     expect(layout.nodes).toHaveLength(400);
     expect(Number.isFinite(layout.height)).toBe(true);
   });
+
+  describe('the arrow of a contains line', () => {
+    const tipOf = (arrow: string) => arrow.split(' ')[0].split(',').map(Number);
+
+    it('is at the end of the line, where the child is', () => {
+      const layout = buildLocationGraphLayout(
+        [location('a'), location('b')],
+        [rel('r', 'a', 'b', 'contains')],
+      );
+      const [edge] = layout.edges;
+      const [tipX, tipY] = tipOf(edge.arrow!);
+      const lastPoint = edge.path.split(' ').slice(-2).map(Number);
+
+      expect(edge.arrow).not.toBeNull();
+      expect(tipX).toBeCloseTo(lastPoint[0], 6);
+      expect(tipY).toBeCloseTo(lastPoint[1], 6);
+    });
+
+    it('has three corners', () => {
+      const layout = buildLocationGraphLayout(
+        [location('a'), location('b')],
+        [rel('r', 'a', 'b', 'contains')],
+      );
+
+      expect(layout.edges[0].arrow!.split(' ')).toHaveLength(3);
+    });
+
+    it('is not drawn on a connected_to line, which has no direction', () => {
+      const layout = buildLocationGraphLayout(
+        [location('a'), location('b')],
+        [rel('r', 'a', 'b', 'connected_to')],
+      );
+
+      expect(layout.edges[0].arrow).toBeNull();
+    });
+  });
 });

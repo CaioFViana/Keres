@@ -249,4 +249,32 @@ describe('location map specifics', () => {
 
     expect(svg).not.toContain('stroke="#0033aa" stroke-width="2.5"');
   });
+
+  describe('location map SVG arrows', () => {
+    const relations = (type: 'contains' | 'connected_to') => [
+      { id: 'r', locationAId: 'a', locationBId: 'b', relationType: type },
+    ];
+    const locations = [
+      { id: 'a', name: 'Reino' },
+      { id: 'b', name: 'Cidade' },
+    ];
+
+    it('draws an arrowhead on a contains line, in the colour of the line', () => {
+      const svg = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('contains')),
+        locationOptions(),
+      );
+
+      expect(svg).toMatch(/<polygon points="[^"]+" fill="#0033aa"/);
+    });
+
+    it('draws none on a connected_to line', () => {
+      const svg = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('connected_to')),
+        locationOptions(),
+      );
+
+      expect(svg).not.toContain('<polygon');
+    });
+  });
 });

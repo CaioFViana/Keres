@@ -1,3 +1,4 @@
+import { canvasOverlayArrowhead } from './canvasOverlayGeometry';
 import { maxOf, normalizeToPadding, straightEdgeBetween } from './graphLayoutShared';
 import { wrapLabel } from './storyGraphLayout';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
@@ -64,6 +65,11 @@ export interface LocationGraphEdge {
   targetId: string;
   /** An SVG path's `d` between the two nodes' borders. */
   path: string;
+  /**
+   * The arrowhead, as a polygon `points` string, at the child's end of a `contains` line: it is the
+   * relation that has a direction (parent to child). Null for `connected_to`, which has none.
+   */
+  arrow: string | null;
 }
 
 export interface LocationGraphLayout {
@@ -409,13 +415,20 @@ function buildNode(positioned: PositionedNode, isIsolated = false): LocationGrap
   };
 }
 
+/** Length of the arrowhead on a `contains` line, in world units. */
+const ARROW_SIZE = 10;
+
 function buildEdge(
   relation: GraphLocationRelation,
   relationType: LocationRelationKind,
   source: LocationGraphNode,
   target: LocationGraphNode,
 ): LocationGraphEdge {
-  const { path } = straightEdgeBetween(source, target);
+  const { start, end, path } = straightEdgeBetween(source, target);
+  const arrow =
+    relationType === 'contains'
+      ? canvasOverlayArrowhead(end, Math.atan2(end.y - start.y, end.x - start.x), ARROW_SIZE)
+      : null;
 
   return {
     id: relation.id,
@@ -424,5 +437,6 @@ function buildEdge(
     sourceId: source.id,
     targetId: target.id,
     path,
+    arrow,
   };
 }

@@ -1,9 +1,10 @@
 import { DashPathEffect, Path } from '@shopify/react-native-skia';
-import { forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import GraphNodeBox from '../GraphNodeBox/GraphNodeBox';
 import SkiaEdgeCanvas from '../SkiaEdgeCanvas/SkiaEdgeCanvas';
 import SkiaOverlayErrorBoundary from '../SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { polygonPointsToPath } from '../SkiaEdgeCanvas/polygonPointsToPath';
 import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
 import { useGraphCanvasViewport } from '../../../../hooks/useGraphCanvasViewport';
 import { useTheme } from '../../../../theme';
@@ -76,18 +77,23 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
               const strong =
                 !!selectedNodeId &&
                 (edge.sourceId === selectedNodeId || edge.targetId === selectedNodeId);
-              const baseOpacity = contains ? 0.9 : 0.65;
+              const color = contains ? colors.primary : colors.textSecondary;
+              const opacity = selectedNodeId ? (strong ? 1 : 0.15) : contains ? 0.9 : 0.65;
               return (
-                <Path
-                  key={edge.id}
-                  path={edge.path}
-                  style="stroke"
-                  color={contains ? colors.primary : colors.textSecondary}
-                  strokeWidth={(contains ? 1.8 : 1.4) + (strong ? 0.8 : 0)}
-                  opacity={selectedNodeId ? (strong ? 1 : 0.15) : baseOpacity}
-                >
-                  {!contains && <DashPathEffect intervals={[6, 4]} />}
-                </Path>
+                <React.Fragment key={edge.id}>
+                  <Path
+                    path={edge.path}
+                    style="stroke"
+                    color={color}
+                    strokeWidth={(contains ? 1.8 : 1.4) + (strong ? 0.8 : 0)}
+                    opacity={opacity}
+                  >
+                    {!contains && <DashPathEffect intervals={[6, 4]} />}
+                  </Path>
+                  {edge.arrow && (
+                    <Path path={polygonPointsToPath(edge.arrow)} color={color} opacity={opacity} />
+                  )}
+                </React.Fragment>
               );
             })}
           </SkiaEdgeCanvas>

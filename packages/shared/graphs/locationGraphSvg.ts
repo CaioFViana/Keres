@@ -112,5 +112,7 @@ function renderEdge(edge: LocationGraphEdge, options: LocationGraphSvgOptions): 
   const width = edge.relationType === 'contains' ? 1.8 : 1.4;
   const opacity = edge.relationType === 'contains' ? 0.9 : 0.65;
   const dash = edge.relationType === 'connected_to' ? ' stroke-dasharray="6 4"' : '';
-  return `<path d="${edge.path}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-opacity="${opacity}"${dash}/>`;
+  const line = `<path d="${edge.path}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-opacity="${opacity}"${dash}/>`;
+  if (!edge.arrow) return line;
+  return `${line}\n<polygon points="${edge.arrow}" fill="${stroke}" fill-opacity="${opacity}"/>`;
 }

@@ -345,3 +345,39 @@ describe('location graph nodes', () => {
     expect(view.getByLabelText('Location Structure Map').props.role).toBe('region');
   });
 });
+
+describe('location graph arrowheads', () => {
+  const withArrow = {
+    ...LAYOUT,
+    edges: [
+      { ...LAYOUT.edges[0], arrow: '600,460 590,450 592,462' },
+      { ...LAYOUT.edges[1], arrow: null },
+    ],
+  } as unknown as LocationGraphLayout;
+
+  it('draws the arrowhead of a contains line, and none for the other kind', async () => {
+    const { root } = await renderGraph({ layout: withArrow });
+    await fireLayout(root);
+
+    const heads = root.queryAll(
+      (node) => node.type === 'SkiaPath' && node.props.path === 'M 600,460 L 590,450 L 592,462 Z',
+    );
+    expect(heads).toHaveLength(1);
+    expect(heads[0].props.color).toBe('#85f');
+    expect(root.queryAll((node) => node.type === 'SkiaPath')).toHaveLength(3);
+  });
+
+  it('fades the arrowhead with its line while another node is in focus', async () => {
+    const { root } = await renderGraph({
+      layout: withArrow,
+      selectedNodeId: 'c',
+      focusNodeIds: new Set(['c']),
+    });
+    await fireLayout(root);
+
+    const head = root.queryAll(
+      (node) => node.type === 'SkiaPath' && node.props.path === 'M 600,460 L 590,450 L 592,462 Z',
+    )[0];
+    expect(head.props.opacity).toBe(0.15);
+  });
+});

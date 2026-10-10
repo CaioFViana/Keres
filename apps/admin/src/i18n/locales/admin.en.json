@@ -382,6 +382,25 @@
       "safetyNet": "Safety net, last run since this server started: {{when}} - asked about {{subscriptions}} subscription(s) and {{attempts}} attempt(s), found {{found}} missed payment(s).",
       "safetyNetNotYet": "Safety net: has not run since this server started (it runs every 15 minutes).",
       "overdue": "Past their date: {{renewing}} still inside the margin for the renewal to arrive, {{due}} due."
+    },
+    "details": {
+      "giftConverted": "{{months}} month(s) given by {{by}}; {{left}} day(s) of {{from}} became {{became}}",
+      "gift": "{{months}} month(s) given by {{by}}",
+      "canceledByUser": "Asked by the user: it ends when the paid period does.",
+      "canceledAtProvider": "Cancelled at the provider.",
+      "periodEnded": "The paid period ended.",
+      "paidUntil": "Paid until {{until}}.",
+      "unpaidFor": "Unpaid for {{days}} days.",
+      "unmatched": "Notice about something this server never opened: {{type}}",
+      "refusedOtherAccount": "Refused: the purchase token belongs to another account.",
+      "refusedDuplicate": "Refused: the same charge was already applied under another id.",
+      "changedFrom": "Changed from {{from}}: {{left}} day(s) left became {{became}}.",
+      "refundedFull": "Refunded in full: the period it paid for ends now.",
+      "refundedEarlier": "An earlier payment was refunded: the current period stands.",
+      "refundedPartly": "Partly refunded: the period stands.",
+      "closedStopped": "The account was closed; the renewal had already been stopped.",
+      "closedConnector": "The account was closed; the connector cannot stop renewals, so stop it at the provider.",
+      "closed": "The account was closed."
     }
   },
   "recovery": {

@@ -382,6 +382,25 @@
       "safetyNet": "Rede de segurança, última rodada desde que este servidor iniciou: {{when}} - consultou {{subscriptions}} assinatura(s) e {{attempts}} tentativa(s), achou {{found}} pagamento(s) perdido(s).",
       "safetyNetNotYet": "Rede de segurança: ainda não rodou desde que este servidor iniciou (roda a cada 15 minutos).",
       "overdue": "Com a data vencida: {{renewing}} ainda na margem para a renovação chegar, {{due}} em atraso."
+    },
+    "details": {
+      "giftConverted": "{{months}} mês(es) dado(s) por {{by}}; {{left}} dia(s) de {{from}} viraram {{became}}",
+      "gift": "{{months}} mês(es) dado(s) por {{by}}",
+      "canceledByUser": "Pedido da pessoa: acaba quando o período pago acabar.",
+      "canceledAtProvider": "Cancelada no provedor.",
+      "periodEnded": "O período pago terminou.",
+      "paidUntil": "Pago até {{until}}.",
+      "unpaidFor": "Sem pagar há {{days}} dias.",
+      "unmatched": "Aviso sobre algo que este servidor nunca abriu: {{type}}",
+      "refusedOtherAccount": "Recusado: o token da compra pertence a outra conta.",
+      "refusedDuplicate": "Recusado: a mesma cobrança já foi aplicada com outro id.",
+      "changedFrom": "Trocou de {{from}}: {{left}} dia(s) restantes viraram {{became}}.",
+      "refundedFull": "Reembolsado por inteiro: o período que ele pagou termina agora.",
+      "refundedEarlier": "Um pagamento anterior foi reembolsado: o período atual continua.",
+      "refundedPartly": "Reembolsado em parte: o período continua.",
+      "closedStopped": "A conta foi encerrada; a renovação já tinha sido interrompida.",
+      "closedConnector": "A conta foi encerrada; o conector não consegue interromper renovações, então interrompa no provedor.",
+      "closed": "A conta foi encerrada."
     }
   },
   "recovery": {

@@ -14,6 +14,7 @@ import {
   round,
   truncate,
 } from './graphSvgShared';
+import { foldRelationType } from './relationTypeColors';
 
 /**
  * Serialises the relation map as a complete SVG file - the same reasoning as the story map
@@ -29,6 +30,8 @@ export interface CharacterRelationMapSvgOptions {
   showEdgeLabels: boolean;
   /** Characters drawn with an emphasised outline - the ones the focus filter selected. */
   highlightedNodeIds?: string[];
+  /** A colour for each kind of relation, keyed by `foldRelationType`; a kind without one is drawn in the border colour. */
+  relationTypeColors?: ReadonlyMap<string, string>;
   labels: {
     isolated: string;
   };
@@ -92,7 +95,9 @@ function renderHeader(options: CharacterRelationMapSvgOptions, hasIsolatedLegend
 }
 
 function renderEdge(edge: RelationGraphEdge, options: CharacterRelationMapSvgOptions): string {
-  return `<path d="${edge.path}" fill="none" stroke="${options.colors.border}" stroke-width="1.6" stroke-opacity="0.85"/>`;
+  const stroke =
+    options.relationTypeColors?.get(foldRelationType(edge.label)) ?? options.colors.border;
+  return `<path d="${edge.path}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-opacity="0.85"/>`;
 }
 
 function renderEdgeLabel(edge: RelationGraphEdge, options: CharacterRelationMapSvgOptions): string {

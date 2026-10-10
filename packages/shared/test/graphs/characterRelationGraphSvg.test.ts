@@ -189,4 +189,40 @@ describe('renderCharacterRelationMapSvg', () => {
       renderCharacterRelationMapSvg(layout, options()),
     );
   });
+
+  describe('colour by kind of relation', () => {
+    const colours = new Map([['aliado', '#D55E00']]);
+
+    it('draws an edge in the colour of its kind', () => {
+      const svg = renderCharacterRelationMapSvg(
+        connected(),
+        options({ relationTypeColors: colours }),
+      );
+
+      expect(svg).toContain('stroke="#D55E00"');
+    });
+
+    it('finds the colour of a kind however it was written', () => {
+      const layout = layoutOf(
+        [
+          { id: 'a', name: 'A' },
+          { id: 'b', name: 'B' },
+        ],
+        [{ id: 'r1', character1Id: 'a', character2Id: 'b', relationType: '  ALIADO ' }],
+      );
+
+      expect(
+        renderCharacterRelationMapSvg(layout, options({ relationTypeColors: colours })),
+      ).toContain('stroke="#D55E00"');
+    });
+
+    it('keeps the border colour for a kind without one, and without a map', () => {
+      const other = new Map([['rival', '#009E73']]);
+
+      expect(
+        renderCharacterRelationMapSvg(connected(), options({ relationTypeColors: other })),
+      ).not.toContain('#009E73');
+      expect(renderCharacterRelationMapSvg(connected(), options())).toContain('stroke="#cccccc"');
+    });
+  });
 });

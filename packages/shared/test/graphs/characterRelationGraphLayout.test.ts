@@ -226,4 +226,55 @@ describe('buildCharacterRelationGraphLayout', () => {
     expect(layout.nodes).toHaveLength(2000);
     expect(Number.isFinite(layout.width)).toBe(true);
   });
+
+  describe('a hub in the middle of a larger group', () => {
+    const star = (spokes: number) =>
+      buildCharacterRelationGraphLayout(
+        [character('hub'), ...Array.from({ length: spokes }, (_, i) => character(`s${i}`))],
+        Array.from({ length: spokes }, (_, i) => relation(`r${i}`, 'hub', `s${i}`)),
+      );
+    type Box = { x: number; y: number; width: number; height: number };
+    const centre = (n: Box) => ({ x: n.x + n.width / 2, y: n.y + n.height / 2 });
+    const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+      Math.hypot(a.x - b.x, a.y - b.y);
+
+    it('puts the most connected character in the middle and the others at one distance around it', () => {
+      const layout = star(7);
+      const hub = centre(layout.nodes.find((n) => n.id === 'hub')!);
+      const distances = layout.nodes
+        .filter((n) => n.id !== 'hub')
+        .map((n) => distance(centre(n), hub));
+
+      expect(distances).toHaveLength(7);
+      for (const d of distances) expect(d).toBeCloseTo(distances[0], 6);
+      expect(distances[0]).toBeGreaterThan(NODE_WIDTH);
+    });
+
+    it('does not overlap, however many spokes there are', () => {
+      for (const spokes of [3, 4, 5, 12, 40]) {
+        expect(overlappingPairs(star(spokes).nodes)).toEqual([]);
+      }
+    });
+
+    it('keeps a group of three on a plain circle, with nobody in the middle', () => {
+      const layout = star(2);
+      const points = layout.nodes.map(centre);
+      const middle = {
+        x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+        y: points.reduce((sum, p) => sum + p.y, 0) / points.length,
+      };
+      // On a circle every node is as far from the middle as the others; none is at the middle.
+      const distances = points.map((p) => distance(p, middle));
+      for (const d of distances) expect(d).toBeGreaterThan(NODE_HEIGHT);
+    });
+
+    it('starts the ring with the neighbours of the hub, so its first relations are the nearest in the ring', () => {
+      const layout = star(5);
+      const top = layout.nodes
+        .filter((n) => n.id !== 'hub')
+        .sort((a, b) => centre(a).y - centre(b).y)[0];
+
+      expect(top.id).toBe('s0');
+    });
+  });
 });

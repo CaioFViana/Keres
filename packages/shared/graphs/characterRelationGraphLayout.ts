@@ -55,6 +55,10 @@ const NODE_GAP = 18;
 const CLUSTER_GAP = 60;
 /** Minimum radius even for clusters of 2-3 characters, so they are not squeezed together. */
 const MIN_CLUSTER_RADIUS = NODE_HEIGHT * 1.6;
+/** From this many characters on, the most connected one sits in the middle and the rest ring it. */
+const HUB_IN_MIDDLE_FROM = 4;
+/** Far enough from a hub in the middle that its box and a ring node's box do not touch. */
+const MIN_HUB_RING_RADIUS = NODE_WIDTH + NODE_GAP;
 const LABEL_MAX_CHARS = 14;
 const LABEL_MAX_LINES = 2;
 
@@ -231,20 +235,31 @@ interface ClusterBox {
   height: number;
 }
 
-/** Spreads a cluster around a circle, with a radius large enough that the nodes do not overlap. */
+/**
+ * Lays a cluster out around a circle. A small group (two or three) walks the whole circle; a larger
+ * one puts its most connected character in the middle with the rest on the ring around it, so the
+ * hub's relations are short spokes and the lines that used to cut across the middle of the circle
+ * are gone. Either way the radius is large enough that the nodes do not overlap.
+ */
 function layoutComponentCircular(members: WorkNode[]): ClusterBox {
   const ordered = orderByBreadthFromHub(members);
   const count = ordered.length;
+  const hubInMiddle = count >= HUB_IN_MIDDLE_FROM;
+  const ring = hubInMiddle ? ordered.slice(1) : ordered;
 
-  const circumferenceNeeded = count * (NODE_WIDTH + NODE_GAP);
-  const radius = Math.max(MIN_CLUSTER_RADIUS, circumferenceNeeded / (2 * Math.PI));
+  const circumferenceNeeded = ring.length * (NODE_WIDTH + NODE_GAP);
+  const radius = Math.max(
+    hubInMiddle ? MIN_HUB_RING_RADIUS : MIN_CLUSTER_RADIUS,
+    circumferenceNeeded / (2 * Math.PI),
+  );
 
-  const nodes = ordered.map((work, index) => {
-    const angle = (index / count) * Math.PI * 2 - Math.PI / 2; // first node at the top of the circle
+  const nodes = ring.map((work, index) => {
+    const angle = (index / ring.length) * Math.PI * 2 - Math.PI / 2; // first node at the top of the circle
     const centerX = Math.cos(angle) * radius;
     const centerY = Math.sin(angle) * radius;
     return buildNode(work, centerX - NODE_WIDTH / 2, centerY - NODE_HEIGHT / 2);
   });
+  if (hubInMiddle) nodes.unshift(buildNode(ordered[0], -NODE_WIDTH / 2, -NODE_HEIGHT / 2));
 
   const minX = minOf(nodes.map((node) => node.x));
   const minY = minOf(nodes.map((node) => node.y));

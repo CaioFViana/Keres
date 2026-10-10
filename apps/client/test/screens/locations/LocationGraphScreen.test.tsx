@@ -1,5 +1,6 @@
 import { chooseExportFormat } from '../../../src/utils/exportFormatPrompt';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { entityEventEmitter } from '../../../src/utils/EventEmitter';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -10,13 +11,18 @@ const mockGetAllRelationsForStory = jest.fn();
 const mockDeliverMapExport = jest.fn();
 const mockZoomBy = jest.fn();
 const mockFitToScreen = jest.fn();
+const mockFitToRect = jest.fn();
+const mockTCalls: [string, unknown][] = [];
 
 let mockIsCompact = false;
 let mockLanguage = 'en';
 const mockBuildFileName = jest.fn((...args: unknown[]) => `${args[0] as string}-map.svg`);
 
 const mockNavigation = { navigate: mockNavigate, goBack: mockGoBack };
-const mockT = ((key: string) => key) as (key: string) => string;
+const mockT = ((key: string, options?: unknown) => {
+  mockTCalls.push([key, options]);
+  return key;
+}) as (key: string) => string;
 const mockDrizzleDb = {};
 const mockSelectedStory = { id: 'story-1', title: 'My Story' };
 const mockColors = {
@@ -151,13 +157,21 @@ jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCa
         layout: { nodes: { id: string; location: { name: string } }[]; edges: unknown[] };
         selectedNodeId: string | null;
         highlightedNodeIds: string[];
+        focusNodeIds: Set<string> | null;
+        nodeAccessibilityLabel: (node: never) => string;
         onSelectNode: (node: { id: string }) => void;
+        onBackgroundTap: () => void;
       },
-      ref: React.Ref<{ zoomBy: (factor: number) => void; fitToScreen: () => void }>,
+      ref: React.Ref<{
+        zoomBy: (factor: number) => void;
+        fitToScreen: () => void;
+        fitToRect: (rect: unknown) => void;
+      }>,
     ) {
       React.useImperativeHandle(ref, () => ({
         zoomBy: mockZoomBy,
         fitToScreen: mockFitToScreen,
+        fitToRect: mockFitToRect,
       }));
       return (
         <>
@@ -167,7 +181,12 @@ jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCa
               edges: props.layout.edges.length,
               selected: props.selectedNodeId,
               highlighted: props.highlightedNodeIds,
+              focus: props.focusNodeIds ? [...props.focusNodeIds].sort() : null,
+              labels_a11y: props.layout.nodes.map((n) => props.nodeAccessibilityLabel(n as never)),
             })}
+          </Text>
+          <Text testID="canvas-background" onPress={props.onBackgroundTap}>
+            background
           </Text>
           {props.layout.nodes.map((node) => (
             <Text key={node.id} testID={`node-${node.id}`} onPress={() => props.onSelectNode(node)}>
@@ -177,6 +196,39 @@ jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCa
         </>
       );
     }),
+  };
+});
+jest.mock('../../../src/components/features/graphs/GraphNodeFinder/GraphNodeFinder', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      options: { id: string; label: string }[];
+      onPick: (id: string) => void;
+    }) => (
+      <>
+        {props.options.map((option) => (
+          <Text
+            key={option.id}
+            testID={`find-${option.id}`}
+            onPress={() => props.onPick(option.id)}
+          >
+            {option.label}
+          </Text>
+        ))}
+      </>
+    ),
+  };
+});
+jest.mock('../../../src/components/features/graphs/GraphLegend/GraphLegend', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: { items: { id: string; label: string; dashed?: boolean }[] }) => (
+      <Text testID="legend-items">
+        {JSON.stringify(props.items.map((i) => [i.id, !!i.dashed]))}
+      </Text>
+    ),
   };
 });
 jest.mock('../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
@@ -355,6 +407,8 @@ describe('LocationGraphScreen', () => {
     expect(view.queryByTestId('node-sheet-title')).not.toBeNull();
     await fireEvent.press(view.getByTestId('node-sheet-close'));
     expect(view.queryByTestId('node-sheet-title')).toBeNull();
+    // Closing the details leaves the focus on the place.
+    expect(jsonOf(view, 'canvas-marker').selected).toBe('loc-1');
   });
 
   it('drives the canvas camera through the control buttons', async () => {
@@ -444,5 +498,138 @@ describe('LocationGraphScreen', () => {
     } finally {
       logSpy.mockRestore();
     }
+  });
+
+  it('focuses the tapped place and its neighbours, and a tap on empty canvas lets go', async () => {
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+    expect(jsonOf(view, 'canvas-marker').focus).toBeNull();
+
+    await fireEvent.press(view.getByTestId('node-loc-1'));
+    expect(jsonOf(view, 'canvas-marker').focus).toEqual(['loc-1', 'loc-2']);
+
+    await fireEvent.press(view.getByTestId('canvas-background'));
+    expect(jsonOf(view, 'canvas-marker').selected).toBeNull();
+    expect(jsonOf(view, 'canvas-marker').focus).toBeNull();
+    expect(view.queryByTestId('node-sheet-title')).toBeNull();
+  });
+
+  it('tells a screen reader each place by name and number of relations', async () => {
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+
+    expect(mockTCalls).toContainEqual(['graph_node_a11y', { name: 'Keep', count: 1 }]);
+    expect(mockTCalls).toContainEqual(['graph_node_a11y', { name: 'Harbor', count: 2 }]);
+    expect(mockTCalls).toContainEqual(['graph_node_a11y', { name: 'Tower', count: 1 }]);
+  });
+
+  describe('finding a place by name', () => {
+    it('focuses it and frames it with its neighbours, without opening the details', async () => {
+      const view = await render(<LocationGraphScreen />);
+      await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+
+      await fireEvent.press(view.getByTestId('find-loc-3'));
+
+      await waitFor(() => expect(jsonOf(view, 'canvas-marker').selected).toBe('loc-3'));
+      expect(mockFitToRect).toHaveBeenCalledTimes(1);
+      expect(view.queryByTestId('node-sheet-title')).toBeNull();
+    });
+
+    it('lifts the filter when it hides the place', async () => {
+      const view = await render(<LocationGraphScreen />);
+      await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+      await fireEvent.press(view.getByTestId('filter-pick-first'));
+      // loc-1 and its neighbour loc-2: loc-3 is hidden.
+      expect(jsonOf(view, 'canvas-marker').nodes).not.toContain('loc-3');
+
+      await fireEvent.press(view.getByTestId('find-loc-3'));
+
+      await waitFor(() => expect(jsonOf(view, 'canvas-marker').selected).toBe('loc-3'));
+      expect(jsonOf(view, 'canvas-marker').nodes).toContain('loc-3');
+      expect(jsonOf(view, 'canvas-marker').highlighted).toEqual([]);
+    });
+  });
+
+  it('offers to centre on the selection only while there is one', async () => {
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+    expect(view.queryByLabelText('center_on_selection')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('node-loc-1'));
+    await fireEvent.press(view.getByLabelText('center_on_selection'));
+
+    expect(mockFitToRect).toHaveBeenCalledTimes(1);
+  });
+
+  it('frames the new map when the focus filter changes', async () => {
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+    expect(mockFitToScreen).not.toHaveBeenCalled();
+
+    await fireEvent.press(view.getByTestId('filter-pick-first'));
+
+    await waitFor(() => expect(mockFitToScreen).toHaveBeenCalledTimes(1));
+  });
+
+  it('names the kinds of line that are on the map in the legend', async () => {
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+
+    expect(jsonOf(view, 'legend-items')).toEqual([
+      ['contains', false],
+      ['connected_to', true],
+    ]);
+  });
+
+  it('leaves out of the legend a kind of line the map does not have', async () => {
+    mockGetAllRelationsForStory.mockResolvedValue([
+      makeRelation('rel-2', 'loc-2', 'loc-3', 'connected_to'),
+    ]);
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+
+    expect(jsonOf(view, 'legend-items')).toEqual([['connected_to', true]]);
+  });
+
+  it('says how to start when there are places but no relations', async () => {
+    mockGetAllRelationsForStory.mockResolvedValue([]);
+    const view = await render(<LocationGraphScreen />);
+
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+    expect(view.getByText('location_graph_none_yet')).toBeTruthy();
+  });
+
+  it('does not nag about relations once there are some', async () => {
+    const view = await render(<LocationGraphScreen />);
+
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+    expect(view.queryByText('location_graph_none_yet')).toBeNull();
+  });
+
+  it('offers to create the first place from the empty map', async () => {
+    mockGetAllLocationsByStoryId.mockResolvedValue([]);
+    mockGetAllRelationsForStory.mockResolvedValue([]);
+    const view = await render(<LocationGraphScreen />);
+
+    await waitFor(() => expect(view.getByText('location_graph_empty')).toBeTruthy());
+    expect(view.getByText('location_graph_empty_hint')).toBeTruthy();
+    await fireEvent.press(view.getByText('location_graph_empty_action'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('LocationForm', { locationId: undefined });
+  });
+
+  it('refreshes in silence: the map stays on screen and keeps its focus', async () => {
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+    await fireEvent.press(view.getByTestId('node-loc-1'));
+    mockGetAllLocationsByStoryId.mockImplementation(() => new Promise(() => {}));
+
+    await act(async () => {
+      entityEventEmitter.emit('story_data_changed', { storyId: 'story-1' });
+    });
+
+    expect(view.queryByTestId('screen-loading')).toBeNull();
+    expect(view.queryByTestId('canvas-marker')).not.toBeNull();
+    expect(jsonOf(view, 'canvas-marker').selected).toBe('loc-1');
   });
 });

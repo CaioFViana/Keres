@@ -1,4 +1,4 @@
-import { act, render, type RenderResult } from '@testing-library/react-native';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import type { LocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
 import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,6 +14,7 @@ jest.mock('../../src/theme', () => ({
       primary: '#85f',
       primaryContainer: '#223',
       surface: '#111',
+      onPrimary: '#fff',
       border: '#444',
       text: '#fff',
       textSecondary: '#aaa',
@@ -100,12 +101,19 @@ beforeEach(() => {
 
 afterEach(() => jest.restoreAllMocks());
 
-async function renderGraph() {
+async function renderGraph(props: Partial<React.ComponentProps<typeof LocationGraphCanvas>> = {}) {
   const ref = createRef<LocationGraphCanvasHandle>();
   const view = await render(
-    <LocationGraphCanvas ref={ref} layout={LAYOUT} selectedNodeId={null} onSelectNode={noop} />,
+    <LocationGraphCanvas
+      ref={ref}
+      layout={LAYOUT}
+      selectedNodeId={null}
+      nodeAccessibilityLabel={(node) => `place ${node.id}`}
+      onSelectNode={noop}
+      {...props}
+    />,
   );
-  return { ref, root: view.container };
+  return { ref, root: view.container, view };
 }
 
 async function fireLayout(root: Root) {
@@ -240,5 +248,100 @@ describe('location graph skia overlay', () => {
       ref.current!.zoomBy(2);
     });
     expectMirror();
+  });
+});
+
+const pathOf = (root: Root, path: string) =>
+  root.queryAll((node) => node.type === 'SkiaPath' && node.props.path === path)[0];
+
+describe('location graph with a node in focus', () => {
+  it('draws the lines that touch the focus stronger, and the others barely there', async () => {
+    const three = {
+      ...LAYOUT,
+      nodes: [...LAYOUT.nodes, { ...LAYOUT.nodes[1], id: 'c', x: 900 }],
+      edges: [
+        ...LAYOUT.edges,
+        {
+          id: 'e3',
+          relation: {},
+          relationType: 'contains',
+          sourceId: 'b',
+          targetId: 'c',
+          path: 'M 800 60 L 900 60',
+        },
+      ],
+    } as unknown as LocationGraphLayout;
+    const { root } = await renderGraph({
+      layout: three,
+      selectedNodeId: 'a',
+      focusNodeIds: new Set(['a', 'b']),
+    });
+    await fireLayout(root);
+
+    // The contains line from the focused node: solid, thicker, fully opaque.
+    expect(pathOf(root, 'M 200 60 L 600 460').props).toMatchObject({
+      strokeWidth: 2.6,
+      opacity: 1,
+    });
+    // The connected_to line also touches it.
+    expect(pathOf(root, 'M 600 460 L 200 60').props).toMatchObject({
+      strokeWidth: 2.2,
+      opacity: 1,
+    });
+    // The one between the neighbours does not.
+    expect(pathOf(root, 'M 800 60 L 900 60').props).toMatchObject({
+      strokeWidth: 1.8,
+      opacity: 0.15,
+    });
+  });
+
+  it('keeps the usual styles while nothing is selected', async () => {
+    const { root } = await renderGraph();
+    await fireLayout(root);
+
+    expect(pathOf(root, 'M 200 60 L 600 460').props).toMatchObject({
+      color: '#85f',
+      strokeWidth: 1.8,
+      opacity: 0.9,
+    });
+    expect(pathOf(root, 'M 600 460 L 200 60').props).toMatchObject({
+      color: '#aaa',
+      strokeWidth: 1.4,
+      opacity: 0.65,
+    });
+  });
+});
+
+describe('location graph nodes', () => {
+  it('are buttons a screen reader can name, and selecting one reports it', async () => {
+    const onSelectNode = jest.fn();
+    const { view } = await renderGraph({ onSelectNode });
+
+    await fireEvent.press(view.getByRole('button', { name: 'place b' }));
+
+    expect(onSelectNode).toHaveBeenCalledWith(expect.objectContaining({ id: 'b' }));
+  });
+
+  it('fade when they are out of the focus, and only those', async () => {
+    const { view } = await renderGraph({
+      selectedNodeId: 'a',
+      focusNodeIds: new Set(['a']),
+    });
+    await fireLayout(view.container);
+
+    const opacityOf = (label: string) => {
+      const inner = view.getByText(label).parent as NonNullable<
+        ReturnType<typeof view.getByText>['parent']
+      >;
+      return StyleSheet.flatten(inner.props.style).opacity;
+    };
+    expect(opacityOf('A')).toBeUndefined();
+    expect(opacityOf('B')).toBeLessThan(0.5);
+  });
+
+  it('are inside a canvas named for a screen reader', async () => {
+    const { view } = await renderGraph({ label: 'Location Structure Map' });
+
+    expect(view.getByLabelText('Location Structure Map').props.role).toBe('region');
   });
 });

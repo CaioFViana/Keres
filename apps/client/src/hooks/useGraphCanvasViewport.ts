@@ -1,7 +1,7 @@
 import type { ForwardedRef } from 'react';
 import { useMemo } from 'react';
 import { spatialRectIntersects } from '@keres/shared';
-import type { CanvasViewportBounds } from './canvasViewportTypes';
+import type { CanvasViewportBounds, CanvasViewportOptions } from './canvasViewportTypes';
 import type { CanvasViewportHandle } from './useCanvasViewport';
 import { useCanvasViewport } from './useCanvasViewport';
 
@@ -19,8 +19,10 @@ interface PositionedNode {
 export function useGraphCanvasViewport<TNode extends PositionedNode>(
   ref: ForwardedRef<CanvasViewportHandle>,
   layout: CanvasViewportBounds & { nodes: TNode[] },
+  /** A tap on empty canvas, in drawing coordinates (a tap on a node never gets here). */
+  onTap?: CanvasViewportOptions['onTap'],
 ) {
-  const viewport = useCanvasViewport(ref, layout, { clampMode: 'free' });
+  const viewport = useCanvasViewport(ref, layout, { clampMode: 'free', onTap });
   const { renderWindow } = viewport;
 
   const visibleNodes = useMemo(

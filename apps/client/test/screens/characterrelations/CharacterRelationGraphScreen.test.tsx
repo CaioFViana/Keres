@@ -10,9 +10,14 @@ const mockNotify = jest.fn();
 const mockDeliverMapExport = jest.fn();
 const mockZoomBy = jest.fn();
 const mockFitToScreen = jest.fn();
+const mockFitToRect = jest.fn();
+const mockTCalls: [string, unknown][] = [];
 const mockUseScreenHeader = jest.fn();
 const mockDb = {};
-const mockT = (key: string) => key;
+const mockT = (key: string, options?: unknown) => {
+  mockTCalls.push([key, options]);
+  return key;
+};
 let mockStory: { id: string; title: string } | null = { id: 'story-1', title: 'Saga' };
 let mockIsCompact = false;
 let mockLanguage = 'en';
@@ -92,14 +97,18 @@ jest.mock(
             showEdgeLabels: boolean;
             selectedNodeId: string | null;
             highlightedNodeIds: string[];
+            focusNodeIds: Set<string> | null;
+            nodeAccessibilityLabel: (node: never) => string;
             onSelectNode: (node: { id: string }) => void;
+            onBackgroundTap: () => void;
           },
-          ref: React.Ref<{ zoomBy: unknown; fitToScreen: unknown }>,
+          ref: React.Ref<{ zoomBy: unknown; fitToScreen: unknown; fitToRect: unknown }>,
         ) => {
           const native = jest.requireActual('react-native') as typeof import('react-native');
           react.useImperativeHandle(ref, () => ({
             zoomBy: mockZoomBy,
             fitToScreen: mockFitToScreen,
+            fitToRect: mockFitToRect,
           }));
           return react.createElement(
             native.View,
@@ -113,7 +122,16 @@ jest.mock(
                 labels: props.showEdgeLabels,
                 selected: props.selectedNodeId,
                 highlighted: props.highlightedNodeIds,
+                focus: props.focusNodeIds ? [...props.focusNodeIds].sort() : null,
+                labels_a11y: props.layout.nodes.map((node) =>
+                  props.nodeAccessibilityLabel(node as never),
+                ),
               }),
+            ),
+            react.createElement(
+              native.Text,
+              { testID: 'canvas-background', onPress: props.onBackgroundTap },
+              'background',
             ),
             ...props.layout.nodes.map((node) =>
               react.createElement(
@@ -132,6 +150,24 @@ jest.mock(
     };
   },
 );
+jest.mock('@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder', () => ({
+  __esModule: true,
+  default: (props: { options: { id: string; label: string }[]; onPick: (id: string) => void }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.View,
+      { testID: 'node-finder' },
+      ...props.options.map((option) =>
+        react.createElement(
+          native.Text,
+          { key: option.id, testID: `find-${option.id}`, onPress: () => props.onPick(option.id) },
+          option.label,
+        ),
+      ),
+    );
+  },
+}));
 jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => ({
   __esModule: true,
   default: (props: {
@@ -275,6 +311,8 @@ function graphMarker(view: { getByTestId: (id: string) => { props: { children?: 
     labels: boolean;
     selected: string | null;
     highlighted: string[];
+    focus: string[] | null;
+    labels_a11y: string[];
   };
 }
 
@@ -343,6 +381,8 @@ it('selects nodes and walks connections through the sheet', async () => {
 
   await fireEvent.press(view.getByTestId('sheet-close'));
   expect(view.queryByTestId('node-sheet')).toBeNull();
+  // Closing the details leaves the focus: the author still sees who is around the character.
+  expect(graphMarker(view).selected).toBe('char-2');
 });
 
 it('opens the character detail from the sheet', async () => {
@@ -481,4 +521,142 @@ it('lays out compact screens top to bottom', async () => {
 
   await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
   expect(graphMarker(view).nodes).toEqual(['char-1', 'char-2']);
+});
+
+it('focuses the tapped node and its neighbours, and a tap on empty canvas lets go', async () => {
+  mockGetCharactersByStoryId.mockResolvedValueOnce([
+    makeCharacter('char-1', 'Aria'),
+    makeCharacter('char-2', 'Bram'),
+    makeCharacter('char-3', 'Cy'),
+  ]);
+  const view = await render(<CharacterRelationGraphScreen />);
+
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+  expect(graphMarker(view).focus).toBeNull();
+
+  await fireEvent.press(view.getByTestId('node-char-1'));
+  expect(graphMarker(view).focus).toEqual(['char-1', 'char-2']);
+
+  await fireEvent.press(view.getByTestId('canvas-background'));
+  expect(graphMarker(view).selected).toBeNull();
+  expect(graphMarker(view).focus).toBeNull();
+  expect(view.queryByTestId('node-sheet')).toBeNull();
+});
+
+it('tells a screen reader each node by name and number of relations', async () => {
+  const view = await render(<CharacterRelationGraphScreen />);
+
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+  expect(mockTCalls).toContainEqual(['graph_node_a11y', { name: 'Aria', count: 1 }]);
+  expect(mockTCalls).toContainEqual(['graph_node_a11y', { name: 'Bram', count: 1 }]);
+});
+
+describe('finding a character by name', () => {
+  it('focuses it and frames it with its neighbours, without opening the details', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+
+    await fireEvent.press(view.getByTestId('find-char-2'));
+
+    await waitFor(() => expect(graphMarker(view).selected).toBe('char-2'));
+    expect(mockFitToRect).toHaveBeenCalledTimes(1);
+    expect(view.queryByTestId('node-sheet')).toBeNull();
+  });
+
+  it('lifts the filter when it hides the character', async () => {
+    mockGetCharactersByStoryId.mockResolvedValue([
+      makeCharacter('char-1', 'Aria'),
+      makeCharacter('char-2', 'Bram'),
+      makeCharacter('char-3', 'Cy'),
+    ]);
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+    await fireEvent.press(view.getByTestId('focus-char-1'));
+    await waitFor(() => expect(graphMarker(view).nodes).toEqual(['char-1', 'char-2']));
+
+    await fireEvent.press(view.getByTestId('find-char-3'));
+
+    await waitFor(() => expect(graphMarker(view).selected).toBe('char-3'));
+    expect(graphMarker(view).nodes).toHaveLength(3);
+    expect(graphMarker(view).highlighted).toEqual([]);
+  });
+});
+
+it('offers to centre on the selection only while there is one', async () => {
+  const view = await render(<CharacterRelationGraphScreen />);
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+  expect(view.queryByLabelText('center_on_selection')).toBeNull();
+
+  await fireEvent.press(view.getByTestId('node-char-1'));
+  await fireEvent.press(view.getByLabelText('center_on_selection'));
+
+  expect(mockFitToRect).toHaveBeenCalledTimes(1);
+});
+
+it('frames the new map when the focus filter changes', async () => {
+  const view = await render(<CharacterRelationGraphScreen />);
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+  expect(mockFitToScreen).not.toHaveBeenCalled();
+
+  await fireEvent.press(view.getByTestId('focus-char-1'));
+
+  await waitFor(() => expect(mockFitToScreen).toHaveBeenCalledTimes(1));
+});
+
+it('says so when the focus filter is full', async () => {
+  const many = Array.from({ length: 12 }, (_, i) => makeCharacter(`c${i}`, `Char ${i}`));
+  mockGetCharactersByStoryId.mockResolvedValue(many);
+  mockGetCharacterRelationsByStoryId.mockResolvedValue([]);
+  const view = await render(<CharacterRelationGraphScreen />);
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+
+  for (const character of many) await fireEvent.press(view.getByTestId(`focus-${character.id}`));
+
+  await waitFor(() => expect(graphMarker(view).highlighted).toHaveLength(12));
+  expect(mockTCalls).toContainEqual(['graph_focus_limit_hint', { count: 12 }]);
+});
+
+it('says how to start when there are characters but no relations', async () => {
+  mockGetCharacterRelationsByStoryId.mockResolvedValue([]);
+  const view = await render(<CharacterRelationGraphScreen />);
+
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+  expect(view.getByText('character_relation_map_none_yet')).toBeTruthy();
+});
+
+it('does not nag about relations once there are some', async () => {
+  const view = await render(<CharacterRelationGraphScreen />);
+
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+  expect(view.queryByText('character_relation_map_none_yet')).toBeNull();
+});
+
+it('offers to create the first character from the empty map', async () => {
+  mockGetCharactersByStoryId.mockResolvedValue([]);
+  mockGetCharacterRelationsByStoryId.mockResolvedValue([]);
+  const view = await render(<CharacterRelationGraphScreen />);
+
+  await waitFor(() => expect(view.getByText('character_relation_map_empty')).toBeTruthy());
+  expect(view.getByText('character_relation_map_empty_hint')).toBeTruthy();
+  await fireEvent.press(view.getByText('character_relation_map_empty_action'));
+
+  expect(mockNavigate).toHaveBeenCalledWith('CharactersStack', {
+    screen: 'CharacterForm',
+    params: { characterId: undefined },
+  });
+});
+
+it('refreshes in silence: the map stays on screen and keeps its focus', async () => {
+  const view = await render(<CharacterRelationGraphScreen />);
+  await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+  await fireEvent.press(view.getByTestId('node-char-1'));
+  mockGetCharactersByStoryId.mockImplementation(() => new Promise(() => {}));
+
+  await act(async () => {
+    entityEventEmitter.emit('story_data_changed', { storyId: 'story-1' });
+  });
+
+  expect(view.queryByTestId('screen-loading')).toBeNull();
+  expect(view.getByTestId('graph-canvas')).toBeTruthy();
+  expect(graphMarker(view).selected).toBe('char-1');
 });

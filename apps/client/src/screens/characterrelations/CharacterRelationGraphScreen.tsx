@@ -2,7 +2,8 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useNavigation } from '@react-navigation/native';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useGraphStoryReload } from '@/src/hooks/useGraphStoryReload';
+import { useGraphDataLoader } from '@/src/hooks/useGraphDataLoader';
+import { useGraphFocus } from '@/src/hooks/useGraphFocus';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -10,6 +11,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GraphNodeFinder from '@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
 import GraphFilterSummary from '@/src/components/features/graphs/GraphFilterSummary/GraphFilterSummary';
@@ -28,7 +30,8 @@ import { createCharacterRelationService } from '../../services/storymanagement/C
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGraphLayout';
+import type { RelationGraphEdge } from '@keres/shared/graphs/characterRelationGraphLayout';
+import { limitFocusSelection, MAX_FOCUS_SELECTION } from '@keres/shared/graphs/graphNeighborhood';
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
@@ -48,8 +51,10 @@ import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 /** Above that the relation type on each edge pollutes more than it informs; the person can turn it back on. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
 
-/** Cap on the focus filter - the same ceiling as the presence matrix series. */
-const MAX_SELECTED_CHARACTERS = 12;
+const relationEnds = (edge: RelationGraphEdge) => [edge.sourceId, edge.targetId] as const;
+
+const NO_CHARACTERS: CharacterSelect[] = [];
+const NO_RELATIONS: CharacterRelationWithNames[] = [];
 
 interface CharacterRelationNodeConnection {
   relationId: string;
@@ -71,37 +76,34 @@ const CharacterRelationGraphScreen = () => {
 
   const canvasRef = useRef<CharacterRelationGraphCanvasHandle>(null);
 
-  const [characters, setCharacters] = useState<CharacterSelect[]>([]);
-  const [relations, setRelations] = useState<CharacterRelationWithNames[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
   /** Empty means the whole map; the focus filter only narrows it. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const storyId = selectedStory?.id;
 
-  const loadGraph = useCallback(async () => {
-    if (!storyId) return;
-    try {
-      setLoading(true);
-      setError(null);
+  const loadGraphData = useCallback(
+    async (id: string) => {
       const [loadedCharacters, loadedRelations] = await Promise.all([
-        createCharacterService(drizzleDb).getCharactersByStoryId(storyId),
-        createCharacterRelationService(drizzleDb).getCharacterRelationsByStoryId(storyId),
+        createCharacterService(drizzleDb).getCharactersByStoryId(id),
+        createCharacterRelationService(drizzleDb).getCharacterRelationsByStoryId(id),
       ]);
-      setCharacters(loadedCharacters);
-      setRelations(loadedRelations);
-    } catch (loadError) {
-      console.log('CharacterRelationGraphScreen: failed to load graph data.', loadError);
-      setError(t('failed_to_load_graph_data'));
-    } finally {
-      setLoading(false);
-    }
-  }, [drizzleDb, storyId, t]);
-
-  useGraphStoryReload(storyId, loadGraph);
+      return { characters: loadedCharacters, relations: loadedRelations };
+    },
+    [drizzleDb],
+  );
+  const {
+    data: loaded,
+    loading,
+    error,
+  } = useGraphDataLoader({
+    storyId,
+    load: loadGraphData,
+    errorMessage: t('failed_to_load_graph_data'),
+    logMessage: 'CharacterRelationGraphScreen: failed to load graph data.',
+  });
+  const characters = loaded?.characters ?? NO_CHARACTERS;
+  const relations = loaded?.relations ?? NO_RELATIONS;
 
   useScreenHeader({
     target: 'parent',
@@ -125,10 +127,15 @@ const CharacterRelationGraphScreen = () => {
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;
 
-  const selectedNode = useMemo(
-    () => layout.nodes.find((node) => node.id === selectedNodeId) ?? null,
-    [layout.nodes, selectedNodeId],
-  );
+  const focus = useGraphFocus({
+    nodes: layout.nodes,
+    edges: layout.edges,
+    ends: relationEnds,
+    canvasRef,
+    filterKey: selectedIds.join(','),
+    clearFilter: () => setSelectedIds([]),
+  });
+  const { selectedNode, selectedNodeId, closeDetails } = focus;
 
   const connections = useMemo((): CharacterRelationNodeConnection[] => {
     if (!selectedNodeId) return [];
@@ -147,16 +154,12 @@ const CharacterRelationGraphScreen = () => {
       });
   }, [layout.edges, layout.nodes, selectedNodeId, t]);
 
-  const handleSelectNode = useCallback((node: RelationGraphNode) => {
-    setSelectedNodeId(node.id);
-  }, []);
-
   const handleOpenCharacter = useCallback(
     (characterId: string) => {
-      setSelectedNodeId(null);
+      closeDetails();
       navigateAcross('CharactersStack', 'CharacterDetail', { characterId });
     },
-    [navigateAcross],
+    [closeDetails, navigateAcross],
   );
 
   const mapSubtitle = useMemo(
@@ -212,6 +215,12 @@ const CharacterRelationGraphScreen = () => {
           borderBottomColor: colors.border,
           paddingVertical: 10,
         },
+        noRelationsHint: {
+          color: colors.textSecondary,
+          fontSize: 12,
+          paddingHorizontal: 12,
+          paddingBottom: 6,
+        },
       }),
     [colors],
   );
@@ -230,9 +239,19 @@ const CharacterRelationGraphScreen = () => {
         colors={colors}
         icon="people-outline"
         message={t('character_relation_map_empty')}
+        hint={t('character_relation_map_empty_hint')}
+        actionLabel={t('character_relation_map_empty_action')}
+        onAction={() =>
+          navigateAcross('CharactersStack', 'CharacterForm', { characterId: undefined })
+        }
       />
     );
   }
+
+  const filterHint =
+    selectedIds.length >= MAX_FOCUS_SELECTION
+      ? `${t('character_relation_map_filter_hint')} ${t('graph_focus_limit_hint', { count: MAX_FOCUS_SELECTION })}`
+      : t('character_relation_map_filter_hint');
 
   return (
     <View style={styles.container}>
@@ -247,14 +266,20 @@ const CharacterRelationGraphScreen = () => {
         </Text>
       </View>
 
+      <GraphNodeFinder
+        options={characters.map((character) => ({ id: character.id, label: character.name }))}
+        placeholder={t('character_relation_map_find')}
+        onPick={focus.goToNode}
+      />
+
       <MultiSelectPill
         options={characters.map((character) => ({
           label: character.name,
           value: character.id,
         }))}
         selectedValues={selectedIds}
-        onSelectionChange={(next) => setSelectedIds(next.slice(0, MAX_SELECTED_CHARACTERS))}
-        maxSelections={MAX_SELECTED_CHARACTERS}
+        onSelectionChange={(next) => setSelectedIds(limitFocusSelection(next).ids)}
+        maxSelections={MAX_FOCUS_SELECTION}
         placeholder={term('Character', true)}
         searchPlaceholder={t('search')}
         triggerStyle={{ marginHorizontal: 8, marginTop: 10, minHeight: 42, paddingVertical: 5 }}
@@ -262,19 +287,28 @@ const CharacterRelationGraphScreen = () => {
       {selectedIds.length > 0 && (
         <GraphFilterSummary
           colors={colors}
-          hint={t('character_relation_map_filter_hint')}
+          hint={filterHint}
           clearLabel={t('character_relation_map_clear_filter')}
           onClear={() => setSelectedIds([])}
         />
       )}
+      {relations.length === 0 && (
+        <Text style={styles.noRelationsHint}>{t('character_relation_map_none_yet')}</Text>
+      )}
 
       <CharacterRelationGraphCanvas
         ref={canvasRef}
+        label={t('character_relation_map_title')}
         layout={layout}
         showEdgeLabels={showEdgeLabels}
         selectedNodeId={selectedNodeId}
         highlightedNodeIds={selectedIds}
-        onSelectNode={handleSelectNode}
+        focusNodeIds={focus.focusNodeIds}
+        nodeAccessibilityLabel={(node) =>
+          t('graph_node_a11y', { name: node.character.name, count: node.degree })
+        }
+        onSelectNode={(node) => focus.tapNode(node.id)}
+        onBackgroundTap={focus.clearFocus}
       />
 
       <GraphCanvasControls
@@ -283,11 +317,13 @@ const CharacterRelationGraphScreen = () => {
           zoomIn: t('character_relation_map_zoom_in'),
           zoomOut: t('character_relation_map_zoom_out'),
           fit: t('character_relation_map_fit'),
+          center: t('center_on_selection'),
         }}
         exportLabel={t('character_relation_map_export')}
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
         onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
         onFit={() => canvasRef.current?.fitToScreen()}
+        onCenterSelection={selectedNode ? focus.centerSelection : undefined}
         edgeLabels={{
           visible: showEdgeLabels,
           label: t('character_relation_map_toggle_labels'),
@@ -297,7 +333,7 @@ const CharacterRelationGraphScreen = () => {
         onExport={handleExport}
       />
 
-      {selectedNode && (
+      {selectedNode && focus.detailsOpen && (
         <GraphNodeSheet
           title={selectedNode.character.name}
           badges={
@@ -314,13 +350,13 @@ const CharacterRelationGraphScreen = () => {
                 icon: 'people-outline' as const,
                 label: connection.characterName,
                 detail: connection.relationType,
-                onPress: () => setSelectedNodeId(connection.characterId),
+                onPress: () => focus.selectNode(connection.characterId),
               })),
             },
           ]}
           actionLabel={t('character_relation_map_open_character')}
           onAction={() => handleOpenCharacter(selectedNode.id)}
-          onClose={() => setSelectedNodeId(null)}
+          onClose={closeDetails}
         />
       )}
     </View>

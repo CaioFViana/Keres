@@ -8,7 +8,7 @@ import {
 import { ulid } from 'ulid';
 import { db } from '../../db';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
-import { AppError } from '../../utils/errors';
+import { AppError, STORY_PREVIOUSLY_ON_SERVER } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { purgeStoryData } from '../StoryPurgeService';
 import { renumberAllArranged } from '../sync/arrangedRanks';
@@ -18,9 +18,6 @@ import { importStoryCore } from './DatabaseStoryPackageCoreImport';
 import { importStoryFinalCollections } from './DatabaseStoryPackageFinalImport';
 import { importStoryInteractions } from './DatabaseStoryPackageInteractionsImport';
 import { importNarrativeCollections } from './DatabaseStoryPackageNarrativeImport';
-
-/** The code a 409 carries when the story being sent was unlinked from this server earlier. */
-export const STORY_PREVIOUSLY_ON_SERVER = 'STORY_PREVIOUSLY_ON_SERVER';
 
 /**
  * Transaction coordinator for portable-story import. It migrates and validates the uploaded

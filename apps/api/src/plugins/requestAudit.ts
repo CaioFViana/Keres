@@ -3,6 +3,7 @@ import { classifyRequest, isAdminApiPath, outcomeOf } from '../audit/requestAudi
 import type { JWTPayload } from '../index';
 import { type AuditInput, auditService } from '../services/AuditService';
 import { trackBackground } from '../utils/backgroundWork';
+import { QUESTION_CODES } from '../utils/errors';
 
 /** What the audit needs of a finished request. */
 export interface FinishedRequest {
@@ -15,6 +16,8 @@ export interface FinishedRequest {
   userAgent: string | null;
   /** The reason a refusal gave, when it gave one. */
   error?: string;
+  /** The code a refusal carried, when it carried one (see `QUESTION_CODES`). */
+  errorCode?: string;
 }
 
 export interface AuditDecision {
@@ -39,6 +42,8 @@ const bodyUsername = (body: unknown): string | null => {
  */
 export function decideAudit(request: FinishedRequest): AuditDecision | null {
   const { method, path, status, user } = request;
+  // A question put to the person is a step of a flow, not something that went wrong.
+  if (request.errorCode && QUESTION_CODES.has(request.errorCode)) return null;
   const { rule, groups } = classifyRequest(method, path);
   const failedMeta = (extra: Record<string, unknown> = {}) => ({
     status,
@@ -134,6 +139,8 @@ export function clientAddress(remote: string | null, forwardedFor: string | null
 
 /** Reasons the error handler saw, until the request finishes and the audit reads them. */
 const reasons = new WeakMap<Request, string>();
+/** The code a refusal carried, by request. */
+const codes = new WeakMap<Request, string>();
 /** Who each request came from, noted when it arrives: the server is not handed to the hooks that run after it. */
 const addresses = new WeakMap<Request, string | null>();
 
@@ -154,6 +161,8 @@ export const requestAudit = new Elysia({ name: 'request-audit' })
   })
   .onError({ as: 'global' }, ({ request, error }) => {
     if (error instanceof Error) reasons.set(request, error.message);
+    const code = (error as { code?: unknown } | null)?.code;
+    if (typeof code === 'string') codes.set(request, code);
   })
   .onAfterResponse({ as: 'global' }, (context) => {
     const { request, set, path } = context;
@@ -169,6 +178,7 @@ export const requestAudit = new Elysia({ name: 'request-audit' })
       ip: addresses.get(request) ?? null,
       userAgent: request.headers.get('user-agent'),
       error: reasons.get(request),
+      errorCode: codes.get(request),
     });
     if (!decision) return;
     trackBackground(

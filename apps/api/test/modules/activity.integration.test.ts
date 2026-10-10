@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { auditEvents, messageLog, tiers, users } from '../../src/db/schema';
+import { auditEvents, messageLog, stories, tiers, users } from '../../src/db/schema';
 import { auditService } from '../../src/services/AuditService';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 
 let admin: TestUser;
@@ -332,6 +332,39 @@ describe('the activity list of the admin panel', () => {
   });
 });
 
+describe('sending a story again after it was unlinked', () => {
+  it('does not record the question put to the owner as a failure, only the upload they agreed to', async () => {
+    const story = await uploadTestStory(ana.token, 'A Queda');
+    const { data: exported } = await request('GET', `/stories/${story.id}/export`, {
+      token: ana.token,
+    });
+    await db.update(stories).set({ isDeleted: true }).where(eq(stories.id, story.id));
+    await eventsOf('story.imported');
+    const before = (await allEvents()).filter((event) => event.action === 'story.imported').length;
+
+    const asked = await request('POST', '/stories/import', {
+      token: ana.token,
+      body: exported,
+      query: { storyId: story.id },
+    });
+    await settle();
+    expect(asked.status).toBe(409);
+    expect(asked.data.code).toBe('STORY_PREVIOUSLY_ON_SERVER');
+    const afterQuestion = (await allEvents()).filter((event) => event.action === 'story.imported');
+    expect(afterQuestion).toHaveLength(before);
+
+    const agreed = await request('POST', '/stories/import', {
+      token: ana.token,
+      body: exported,
+      query: { storyId: story.id, replaceUnlinked: 'true' },
+    });
+    expect(agreed.status).toBe(200);
+    await eventsOf('story.imported', before + 1);
+    const imports = (await allEvents()).filter((event) => event.action === 'story.imported');
+    expect(imports.at(-1)?.outcome).toBe('success');
+  });
+});
+
 describe('the summary', () => {
   it('counts the last hours and says how the server is doing', async () => {
     await befriend(ana, bia);
@@ -376,6 +409,19 @@ describe('the summary', () => {
     });
     expect(data.system.uptimeSeconds).toBeGreaterThanOrEqual(0);
     expect(data.system.version).toMatch(/\d+\.\d+/);
+  });
+
+  it('counts what the administrators did, a plan created by name', async () => {
+    await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Plano de teste' },
+    });
+    await eventsOf('admin.tier_created');
+
+    const { data } = await request('GET', '/admin/api/activity/summary', { token: admin.token });
+
+    expect(data.adminActions).toBe(1);
+    expect(data.byCategory.admin).toBe(1);
   });
 
   it('looks at the window it is asked for', async () => {

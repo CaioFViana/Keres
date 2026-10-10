@@ -18,6 +18,16 @@ export class AppError extends Error {
   }
 }
 
+/** The code a 409 carries when the story being sent was unlinked from this server earlier. */
+export const STORY_PREVIOUSLY_ON_SERVER = 'STORY_PREVIOUSLY_ON_SERVER';
+
+/**
+ * Codes of refusals that are a question to the person rather than a failure: the client asks them and tries
+ * again with their answer. They are not worth a failure in the activity record, which would show an
+ * ordinary step of a flow as something that went wrong.
+ */
+export const QUESTION_CODES: ReadonlySet<string> = new Set([STORY_PREVIOUSLY_ON_SERVER]);
+
 /** `unique_violation` do Postgres. */
 const UNIQUE_VIOLATION = '23505';
 /** `foreign_key_violation` do Postgres. */

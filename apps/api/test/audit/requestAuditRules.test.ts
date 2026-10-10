@@ -189,6 +189,24 @@ describe('decideAudit', () => {
     });
   });
 
+  it('leaves out of the record a refusal that is a question put to the person', () => {
+    const question = finished({
+      method: 'POST',
+      path: '/api/stories/import',
+      status: 409,
+      user: ana,
+      error: 'This story was on this server before.',
+      errorCode: 'STORY_PREVIOUSLY_ON_SERVER',
+    });
+
+    expect(decideAudit(question)).toBeNull();
+    // The same route refused for another reason is still a failure worth a line.
+    expect(decideAudit({ ...question, errorCode: undefined })?.input).toMatchObject({
+      action: 'story.imported',
+      outcome: 'failure',
+    });
+  });
+
   it('takes the actor from the session when there is one, and asks for no lookup', () => {
     const decision = decideAudit(
       finished({ method: 'PUT', path: '/api/user/password', user: ana, body: { password: 'x' } }),

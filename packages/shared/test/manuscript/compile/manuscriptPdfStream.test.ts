@@ -3,15 +3,14 @@ import type {
   CompiledBlock,
   CompiledManuscript,
 } from '../../../manuscript/compile/export/manuscriptCompiler';
+import { pdfGeometry, type LineRun } from '../../../manuscript/compile/export/manuscriptPdfLayout';
 import {
   flattenRuns,
   iterateRuns,
   paginate,
   paginateStream,
-  pdfGeometry,
-  type LineRun,
   type PlacedRun,
-} from '../../../manuscript/compile/export/manuscriptPdfLayout';
+} from '../../../manuscript/compile/export/manuscriptPdfRuns';
 
 const LABELS = { goToPage: 'Go to page', tocHeading: 'Contents' };
 

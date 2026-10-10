@@ -18,7 +18,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
 import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
@@ -34,6 +34,7 @@ import { useSceneFormResources } from './useSceneFormResources';
 import { useSceneFormActions } from './useSceneFormActions';
 import { useSceneFormAssociations } from './useSceneFormAssociations';
 import { useSceneFormState } from './useSceneFormState';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type SceneFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<
@@ -223,9 +224,9 @@ const SceneFormScreen = () => {
           allowDeselect
         />
       </FormField>
-      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+      <ThemedText tone="secondary" style={{ fontSize: 13, marginTop: 4 }}>
         {t('scene_chapter_optional_hint')}
-      </Text>
+      </ThemedText>
 
       {/*
         Optional since 1.6. An era, a war, a rumour heard in three cities is a scene with no single

@@ -11,18 +11,14 @@ import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 // Colour only, no underline: the same link treatment as entity mentions elsewhere.
 const CreditLink = ({ url, children }: { url: string; children: React.ReactNode }) => {
-  const { colors } = useTheme();
   return (
-    <Text
-      style={{ color: colors.primary }}
-      onPress={() => void Linking.openURL(url)}
-      accessibilityRole="link"
-    >
+    <ThemedText tone="primary" onPress={() => void Linking.openURL(url)} accessibilityRole="link">
       {children}
-    </Text>
+    </ThemedText>
   );
 };
 

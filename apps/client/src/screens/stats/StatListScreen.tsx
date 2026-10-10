@@ -27,6 +27,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import GuideAnchor from '@/src/guides/GuideAnchor';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
@@ -228,7 +229,7 @@ const StatListScreen = () => {
           { justifyContent: 'center', alignItems: 'center' },
         ]}
       >
-        <Text style={{ color: colors.error }}>{t('no_story_selected')}</Text>
+        <ThemedText tone="error">{t('no_story_selected')}</ThemedText>
       </View>
     );
   }

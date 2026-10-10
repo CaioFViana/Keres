@@ -8,6 +8,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 import { getLanguageOptions } from '../../../../utils/i18n';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface StoryFieldsFormProps {
   title: string;
@@ -164,9 +165,9 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
             placeholder={t('favorite_behavior')}
             disabled={favoriteBehaviorDisabled ?? !editable}
           />
-          <Text style={{ color: colors.textSecondary, marginBottom: 0 }}>
+          <ThemedText tone="secondary" style={{ marginBottom: 0 }}>
             {t(`favorite_behavior_${favoriteBehavior}_description`)}
-          </Text>
+          </ThemedText>
         </>
       )}
 

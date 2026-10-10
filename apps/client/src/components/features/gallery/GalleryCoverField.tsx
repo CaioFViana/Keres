@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface GalleryCoverFieldProps {
   storyId: string | undefined;
@@ -81,9 +82,9 @@ const GalleryCoverField: React.FC<GalleryCoverFieldProps> = ({
         </View>
       )}
       <View style={styles.actions}>
-        <Text style={{ color: colors.textSecondary }}>
+        <ThemedText tone="secondary">
           {shown ? (shown.title ?? shown.fileName) : t('cover_none')}
-        </Text>
+        </ThemedText>
         {editable ? (
           <View style={styles.buttons}>
             <Button onPress={openPicker}>{t('cover_choose')}</Button>

@@ -1,11 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface Props {
   characterId: string;
@@ -37,9 +38,9 @@ const CharacterRelationRows: React.FC<Props> = ({
         onPress={() => onExpandedChange(!expanded)}
         style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}
       >
-        <Text style={{ flex: 1, color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+        <ThemedText tone="secondary" style={{ flex: 1, fontSize: 12, fontWeight: '700' }}>
           {t('character_relations_title')} ({ownRelations.length})
-        </Text>
+        </ThemedText>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={18}
@@ -62,12 +63,12 @@ const CharacterRelationRows: React.FC<Props> = ({
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontWeight: '600' }}>
+                <ThemedText style={{ fontWeight: '600' }}>
                   {byId.get(otherId)?.name ?? otherId}
-                </Text>
-                <Text style={{ color: colors.textSecondary, marginTop: 2 }}>
+                </ThemedText>
+                <ThemedText tone="secondary" style={{ marginTop: 2 }}>
                   {relation.relationType}
-                </Text>
+                </ThemedText>
               </View>
               <TouchableOpacity
                 onPress={() => navigateToDetail('Character', otherId)}

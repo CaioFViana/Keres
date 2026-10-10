@@ -21,6 +21,7 @@ import { boardPinTypeKey } from '../../../utils/boardPinAppearance';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import type { BoardGalleryMedia } from '../../../utils/boardLayout';
 import BoardNodeSheetGalleryPreview from './BoardNodeSheetGalleryPreview';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface Props {
   node: BoardNodeType;
@@ -311,7 +312,7 @@ const BoardNodeSheet: React.FC<Props> = ({
               placeholder={t('board_connect_pick')}
             />
             <View style={styles.switchRow}>
-              <Text style={{ color: colors.text }}>{t('board_edge_directed')}</Text>
+              <ThemedText>{t('board_edge_directed')}</ThemedText>
               <ThemedSwitch value={directed} onValueChange={setDirected} />
             </View>
             <View style={styles.field}>

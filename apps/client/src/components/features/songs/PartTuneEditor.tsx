@@ -15,6 +15,7 @@ import { TOUCH } from './MelodyPlayerCard';
 import PianoKeys from './PianoKeys';
 import { clampBase, defaultBase, highestBase, PIANO_LOWEST, pianoLayout } from './pianoLayout';
 import SongChip from './SongChip';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /** Note lengths the keyboard offers, in quarter notes. */
 const LENGTHS = [
@@ -84,9 +85,9 @@ const PartTuneEditor: React.FC<PartTuneEditorProps> = ({
       onPress={onSuggest}
     >
       <Ionicons name="sparkles-outline" size={18} color={colors.onPrimary} />
-      <Text style={{ color: colors.onPrimary, fontWeight: '600' }}>
+      <ThemedText tone="onPrimary" style={{ fontWeight: '600' }}>
         {t(hasTune ? 'melody_suggest_again' : 'melody_suggest')}
-      </Text>
+      </ThemedText>
     </TouchableOpacity>
   );
 
@@ -159,7 +160,7 @@ const PartTuneEditor: React.FC<PartTuneEditorProps> = ({
       onPress={() => press(null)}
     >
       <Ionicons name="pause-outline" size={18} color={colors.primary} />
-      <Text style={{ color: colors.primary }}>{t('melody_rest')}</Text>
+      <ThemedText tone="primary">{t('melody_rest')}</ThemedText>
     </TouchableOpacity>
   );
 
@@ -172,7 +173,7 @@ const PartTuneEditor: React.FC<PartTuneEditorProps> = ({
       onPress={() => onChange(removeLastNote(melody, part.label))}
     >
       <Ionicons name="backspace-outline" size={18} color={colors.primary} />
-      <Text style={{ color: colors.primary }}>{t('melody_backspace_short')}</Text>
+      <ThemedText tone="primary">{t('melody_backspace_short')}</ThemedText>
     </TouchableOpacity>
   );
 

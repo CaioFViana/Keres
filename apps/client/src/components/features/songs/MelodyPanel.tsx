@@ -29,6 +29,7 @@ import { AppAlert } from '@/src/utils/AppAlert';
 import MelodyPlayerCard, { TOUCH, useMelodyVoice } from './MelodyPlayerCard';
 import PartTuneEditor from './PartTuneEditor';
 import GuideAnchor from '@/src/guides/GuideAnchor';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface MelodyPanelProps {
   lyrics: string;
@@ -312,7 +313,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
                 onPress={() => onExport(kind, voice)}
               >
                 <Ionicons name="share-outline" size={18} color={colors.primary} />
-                <Text style={{ color: colors.primary }}>{t(`melody_export_${kind}`)}</Text>
+                <ThemedText tone="primary">{t(`melody_export_${kind}`)}</ThemedText>
               </TouchableOpacity>
             ))}
           </View>

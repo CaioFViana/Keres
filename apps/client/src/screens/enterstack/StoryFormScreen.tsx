@@ -25,6 +25,7 @@ import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { useStoryFormActions } from './useStoryFormActions';
 import { useStoryFormResources } from './useStoryFormResources';
 import { useStoryFormState } from './useStoryFormState';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type RootStackParamList = {
   StoryForm: { storyId?: string; start?: 'blank' | 'packs' };
@@ -138,7 +139,7 @@ const StoryFormScreen = () => {
     // Only show error if creating a new story and something went wrong
     return (
       <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.error }}>{error}</Text>
+        <ThemedText tone="error">{error}</ThemedText>
         <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
       </View>
     );
@@ -169,14 +170,14 @@ const StoryFormScreen = () => {
       }
     >
       {!canEdit && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+        <ThemedText tone="secondary" style={{ marginBottom: 15 }}>
           {t('story_read_only_error')}
-        </Text>
+        </ThemedText>
       )}
       {canEdit && !canManageStoryPolicy && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+        <ThemedText tone="secondary" style={{ marginBottom: 15 }}>
           {t('story_owner_only_error')}
-        </Text>
+        </ThemedText>
       )}
 
       {!isEditing && (
@@ -210,7 +211,7 @@ const StoryFormScreen = () => {
             <Text style={[styles.sectionLabel, styles.adultsTitle, { color: colors.text }]}>
               {t('story_nsfw')}
             </Text>
-            <Text style={{ color: colors.textSecondary }}>{t('story_nsfw_description')}</Text>
+            <ThemedText tone="secondary">{t('story_nsfw_description')}</ThemedText>
           </View>
           <ThemedSwitch
             value={isNsfw}

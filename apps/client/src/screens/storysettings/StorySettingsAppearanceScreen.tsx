@@ -23,6 +23,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import ThemePreview from './ThemePreview';
 import { useLoadedStory } from './useLoadedStory';
 import { useStorySettingsSave } from './useStorySettingsSave';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /**
  * How the story looks: its cover, which saves with the button, and its theme, which saves as it is confirmed in
@@ -136,9 +137,9 @@ const StorySettingsAppearanceScreen = () => {
       }
     >
       {!canEdit && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+        <ThemedText tone="secondary" style={{ marginBottom: 15 }}>
           {t('story_read_only_error')}
-        </Text>
+        </ThemedText>
       )}
       <Text style={styles.label}>{t('cover')}</Text>
       <GalleryCoverField

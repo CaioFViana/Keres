@@ -5,6 +5,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useTheme } from '../../../theme';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /** What the picker needs of a pack; `hasExtras` says it carries starter chapters, scenes or characters. */
 export interface PickablePack {
@@ -38,7 +39,7 @@ const StoryPacksPicker: React.FC<StoryPacksPickerProps> = ({
 
   return (
     <View style={styles.container} testID="story-packs-picker">
-      <Text style={{ color: colors.textSecondary }}>{t('packs_apply_hint')}</Text>
+      <ThemedText tone="secondary">{t('packs_apply_hint')}</ThemedText>
       {packs.length > 0 ? (
         <MultiSelectPill
           options={packs.map((pack) => ({ label: pack.name, value: pack.id }))}
@@ -47,20 +48,20 @@ const StoryPacksPicker: React.FC<StoryPacksPickerProps> = ({
           placeholder={t('packs_apply_title')}
         />
       ) : (
-        <Text style={{ color: colors.textSecondary }}>{t('packs_apply_none')}</Text>
+        <ThemedText tone="secondary">{t('packs_apply_none')}</ThemedText>
       )}
       {withExtras.length > 0 && (
         <View>
-          <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+          <ThemedText tone="secondary" style={{ marginBottom: 8 }}>
             {t('packs_apply_extras_hint')}
-          </Text>
+          </ThemedText>
           {withExtras.map((pack) => (
             <View key={pack.id} style={styles.extrasRow}>
               <View style={styles.extrasLabels}>
                 <Text style={[styles.extrasName, { color: colors.text }]}>{pack.name}</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+                <ThemedText tone="secondary" style={{ fontSize: 13 }}>
                   {t('packs_apply_extras')}
-                </Text>
+                </ThemedText>
               </View>
               <ThemedSwitch
                 value={!packsWithoutExtras.includes(pack.id)}

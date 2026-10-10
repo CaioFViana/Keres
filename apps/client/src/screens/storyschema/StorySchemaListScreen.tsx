@@ -26,6 +26,7 @@ import { useThemedStyles } from '../../theme/useThemedStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {
   Character: 'characters_title',
@@ -141,7 +142,7 @@ const StorySchemaListScreen = () => {
           { justifyContent: 'center', alignItems: 'center' },
         ]}
       >
-        <Text style={{ color: colors.error }}>{t('no_story_selected')}</Text>
+        <ThemedText tone="error">{t('no_story_selected')}</ThemedText>
       </View>
     );
   }

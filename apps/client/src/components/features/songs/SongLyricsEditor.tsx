@@ -17,6 +17,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import LeadSheetView from './LeadSheetView';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface SongLyricsEditorProps {
   value: string;
@@ -121,7 +122,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
                   onPress={() => addSection(kind)}
                 >
                   <Ionicons name="add" size={14} color={colors.text} />
-                  <Text style={{ color: colors.text }}>{t(`song_add_${kind}`)}</Text>
+                  <ThemedText>{t(`song_add_${kind}`)}</ThemedText>
                 </TouchableOpacity>
               ))}
               {(musicTools ? ([-1, 1] as const) : []).map((step) => (
@@ -138,7 +139,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
                     size={14}
                     color={colors.text}
                   />
-                  <Text style={{ color: colors.text }}>{t('song_transpose')}</Text>
+                  <ThemedText>{t('song_transpose')}</ThemedText>
                 </TouchableOpacity>
               ))}
               {musicTools && canUndoTranspose ? (
@@ -149,25 +150,25 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
                   onPress={onUndoTranspose}
                 >
                   <Ionicons name="arrow-undo-outline" size={14} color={colors.text} />
-                  <Text style={{ color: colors.text }}>{t('song_transpose_undo')}</Text>
+                  <ThemedText>{t('song_transpose_undo')}</ThemedText>
                 </TouchableOpacity>
               ) : null}
             </View>
           ) : null}
           {duplicates.length > 0 ? (
             <View style={styles.warning} testID="song-duplicates">
-              <Text style={{ color: colors.error }}>
+              <ThemedText tone="error">
                 {t('song_duplicate_sections', { labels: duplicates.join(', ') })}
-              </Text>
+              </ThemedText>
               {editable ? (
                 <TouchableOpacity
                   accessibilityRole="button"
                   testID="song-number-duplicates"
                   onPress={() => onChange(numberDuplicateSections(value, words))}
                 >
-                  <Text style={{ color: colors.primary, marginTop: 4 }}>
+                  <ThemedText tone="primary" style={{ marginTop: 4 }}>
                     {t('song_number_duplicates')}
-                  </Text>
+                  </ThemedText>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -210,9 +211,9 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
             </Text>
           </TouchableOpacity>
           {showSyllables ? (
-            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 4 }}>
+            <ThemedText tone="secondary" style={{ fontSize: 12, marginTop: 4 }}>
               {t('song_syllables_estimate')}
-            </Text>
+            </ThemedText>
           ) : null}
           <LeadSheetView
             lyrics={value}

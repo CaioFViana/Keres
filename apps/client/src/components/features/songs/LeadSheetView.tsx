@@ -10,6 +10,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface LeadSheetViewProps {
   lyrics: string;
@@ -125,7 +126,7 @@ const LeadSheetView: React.FC<LeadSheetViewProps> = ({
   const shown = showAll ? rows : rows.slice(0, firstRows);
 
   if (rows.length === 0) {
-    return <Text style={{ color: colors.textSecondary }}>{t('song_sheet_empty')}</Text>;
+    return <ThemedText tone="secondary">{t('song_sheet_empty')}</ThemedText>;
   }
   return (
     <View testID="lead-sheet">
@@ -156,9 +157,9 @@ const LeadSheetView: React.FC<LeadSheetViewProps> = ({
           onPress={() => setShowAll(true)}
           style={styles.more}
         >
-          <Text style={{ color: colors.primary }}>
+          <ThemedText tone="primary">
             {t('song_sheet_show_all', { count: rows.length - shown.length })}
-          </Text>
+          </ThemedText>
         </TouchableOpacity>
       ) : null}
     </View>

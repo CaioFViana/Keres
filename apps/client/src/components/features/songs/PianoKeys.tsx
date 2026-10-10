@@ -1,8 +1,9 @@
 import { pitchLabel } from '@keres/shared';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
 import { COMPACT_KEY } from './pianoLayout';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface PianoKeysProps {
   /** MIDI pitch of the first key; it should be a C. */
@@ -71,9 +72,9 @@ const PianoKeys: React.FC<PianoKeysProps> = ({
             ]}
             onPress={() => onKey(pitch)}
           >
-            <Text style={{ color: colors.textSecondary, fontSize: 10 }}>
+            <ThemedText tone="secondary" style={{ fontSize: 10 }}>
               {pitch % 12 === 0 ? pitchLabel(pitch) : ''}
-            </Text>
+            </ThemedText>
           </TouchableOpacity>
         ))}
         {blacks.map(({ pitch, left }) => (

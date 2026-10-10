@@ -15,6 +15,7 @@ import { useSongs } from '@/src/hooks/useSongs';
 import type { SceneMusicTarget } from '@/src/services/storymanagement/SceneMusicService';
 import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface SceneMusicTargetPickerProps {
   visible: boolean;
@@ -90,7 +91,7 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
         ) : (
           <>
             {songs.length === 0 ? (
-              <Text style={{ color: colors.textSecondary }}>{t('scene_music_pick_no_songs')}</Text>
+              <ThemedText tone="secondary">{t('scene_music_pick_no_songs')}</ThemedText>
             ) : (
               <ScrollView style={styles.list}>
                 {songs.map((song) => (
@@ -123,7 +124,7 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
                 onPress={onOpenSongs}
                 style={styles.manage}
               >
-                <Text style={{ color: colors.primary }}>{t('scene_music_manage_songs')}</Text>
+                <ThemedText tone="primary">{t('scene_music_manage_songs')}</ThemedText>
               </TouchableOpacity>
             ) : null}
           </>
@@ -131,7 +132,7 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
       ) : gallery.loading ? (
         <ActivityIndicator color={colors.primary} />
       ) : gallery.media.length === 0 ? (
-        <Text style={{ color: colors.textSecondary }}>{t('scene_music_pick_none')}</Text>
+        <ThemedText tone="secondary">{t('scene_music_pick_none')}</ThemedText>
       ) : (
         <ScrollView style={styles.list}>
           {gallery.media.map((item) => (

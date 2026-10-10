@@ -23,6 +23,7 @@ import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
 import { useLoadedStory } from './useLoadedStory';
 import { useStorySettingsSave } from './useStorySettingsSave';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /**
  * The story's identity (title, type, description, genre, author, language, notes), the adults-only flag and
@@ -191,14 +192,14 @@ const StorySettingsGeneralScreen = () => {
       }
     >
       {!canEdit && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+        <ThemedText tone="secondary" style={{ marginBottom: 15 }}>
           {t('story_read_only_error')}
-        </Text>
+        </ThemedText>
       )}
       {canEdit && !canManageStoryPolicy && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+        <ThemedText tone="secondary" style={{ marginBottom: 15 }}>
           {t('story_owner_only_error')}
-        </Text>
+        </ThemedText>
       )}
 
       <StoryFieldsForm

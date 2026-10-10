@@ -9,14 +9,14 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
+
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
 import { useLoadedStory } from './useLoadedStory';
 import { useResetToStorySelection } from './useResetToStorySelection';
 import { useStorySettingsSave } from './useStorySettingsSave';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /**
  * Linking the story to a server and its people. Sending, inviting and leaving act at once; the one setting
@@ -25,7 +25,6 @@ import { useStorySettingsSave } from './useStorySettingsSave';
 const StorySettingsCollaborationScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const navigation = useNavigation();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
   const { canEdit, canManageStoryPolicy } = useStoryRole(storyId);
@@ -65,9 +64,9 @@ const StorySettingsCollaborationScreen = () => {
       }
     >
       {canEdit && !canManageStoryPolicy && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 15 }}>
+        <ThemedText tone="secondary" style={{ marginBottom: 15 }}>
           {t('story_owner_only_error')}
-        </Text>
+        </ThemedText>
       )}
       <StoryCollaborationSection
         storyId={storyId}

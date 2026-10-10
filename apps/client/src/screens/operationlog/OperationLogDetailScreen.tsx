@@ -28,6 +28,7 @@ import { layout } from '../../theme/layout';
 import { typography } from '../../theme/tokens';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
@@ -134,9 +135,9 @@ const OperationLogDetailScreen: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+        <ThemedText tone="secondary" style={{ marginTop: 10 }}>
           {t('loading_details')}...
-        </Text>
+        </ThemedText>
       </View>
     );
   }

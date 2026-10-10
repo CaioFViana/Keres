@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { ScrollView, Text, View, type ScrollViewProps } from 'react-native';
+import { ScrollView, View, type ScrollViewProps } from 'react-native';
 import { useTheme } from '@/src/theme';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import {
@@ -9,6 +9,7 @@ import {
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import { screenLayoutStyles, type ContentWidth } from '../ScreenContainer/ScreenContainer';
 import ScreenTitle from '../ScreenTitle/ScreenTitle';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface DetailContainerProps extends ScrollViewProps {
   title?: string;
@@ -75,7 +76,9 @@ export default function DetailContainer({
       >
         {title !== undefined && <ScreenTitle variant="detail">{title}</ScreenTitle>}
         {description !== undefined && (
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>{description}</Text>
+          <ThemedText tone="secondary" style={{ marginBottom: 20 }}>
+            {description}
+          </ThemedText>
         )}
         {tabs}
         {children}

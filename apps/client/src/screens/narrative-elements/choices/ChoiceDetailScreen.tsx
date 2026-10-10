@@ -51,6 +51,7 @@ import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 export type ChoiceDetailScreenParamList = {
   ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
@@ -350,7 +351,7 @@ const ChoiceDetailScreen = () => {
                     : t('check_group_combinator_and_label')}
                 </Text>
                 {groupChecks.length === 0 && (
-                  <Text style={{ color: colors.textSecondary }}>{t('no_checks_in_group')}</Text>
+                  <ThemedText tone="secondary">{t('no_checks_in_group')}</ThemedText>
                 )}
                 {groupChecks.map((check) => (
                   <Text

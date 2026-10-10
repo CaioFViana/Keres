@@ -15,6 +15,7 @@ import type { ScenePageMedia } from '@/src/services/storymanagement/ScenePageSer
 import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
 import ScenePageThumb from './ScenePageThumb';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface ScenePageMediaPickerProps {
   visible: boolean;
@@ -70,7 +71,7 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
         <ActivityIndicator color={colors.primary} />
       ) : tab === 'sketches' ? (
         sketches.length === 0 ? (
-          <Text style={{ color: colors.textSecondary }}>{t('scene_pages_pick_no_sketches')}</Text>
+          <ThemedText tone="secondary">{t('scene_pages_pick_no_sketches')}</ThemedText>
         ) : (
           <ScrollView style={styles.list}>
             {sketches.map((sketch) => (
@@ -94,7 +95,7 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
           </ScrollView>
         )
       ) : images.length === 0 ? (
-        <Text style={{ color: colors.textSecondary }}>{t('scene_pages_pick_no_images')}</Text>
+        <ThemedText tone="secondary">{t('scene_pages_pick_no_images')}</ThemedText>
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.grid}>
           {images.map((image) => (

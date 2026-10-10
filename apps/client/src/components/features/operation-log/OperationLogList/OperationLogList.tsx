@@ -8,6 +8,7 @@ import { useTheme, type ThemeColors } from '../../../../theme';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { typography } from '../../../../theme/tokens';
 import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface OperationLogListProps {
   storyId: string;
@@ -118,9 +119,9 @@ const OperationLogList: React.FC<OperationLogListProps> = ({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+        <ThemedText tone="secondary" style={{ marginTop: 10 }}>
           {t('loading_operations')}...
-        </Text>
+        </ThemedText>
       </View>
     );
   }

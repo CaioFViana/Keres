@@ -15,6 +15,7 @@ import { typography } from '../../../../theme/tokens';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface ItemJourneyTimelineProps {
   item: ItemSelect;
@@ -88,7 +89,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
     <View>
       <Text style={styles.sectionTitle}>{itemCopy.itemJourneys}</Text>
       {loading ? (
-        <Text style={{ color: colors.textSecondary }}>{t('loading')}</Text>
+        <ThemedText tone="secondary">{t('loading')}</ThemedText>
       ) : (
         <ScrollView
           horizontal

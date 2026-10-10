@@ -2,13 +2,14 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView } from 'react-native';
 import { HelpBlockRenderer } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
 import type { DocLibrary } from '../../help/library';
 import { helpLibrary } from '../../help/library';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useTheme } from '../../theme';
 import { setDocumentTitle } from '../../utils/documentTitle';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;
 
@@ -53,13 +54,13 @@ export function HelpPageScreen({ library = helpLibrary }: HelpPageScreenProps) {
     >
       {page ? (
         <>
-          <Text style={{ fontSize: 26, fontWeight: '700', color: colors.text, marginBottom: 16 }}>
+          <ThemedText style={{ fontSize: 26, fontWeight: '700', marginBottom: 16 }}>
             {page.title}
-          </Text>
+          </ThemedText>
           {usedFallback ? (
-            <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
+            <ThemedText tone="secondary" style={{ marginBottom: 16 }}>
               {t(library.fallbackNoticeKey)}
-            </Text>
+            </ThemedText>
           ) : null}
           {page.blocks.map((block, index) => (
             <HelpBlockRenderer
@@ -71,7 +72,7 @@ export function HelpPageScreen({ library = helpLibrary }: HelpPageScreenProps) {
           ))}
         </>
       ) : (
-        <Text style={{ color: colors.text, fontSize: 16 }}>{t(library.notFoundKey)}</Text>
+        <ThemedText style={{ fontSize: 16 }}>{t(library.notFoundKey)}</ThemedText>
       )}
     </ScrollView>
   );

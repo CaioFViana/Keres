@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { type ThemeColors, useTheme } from '../../../../theme';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { getContrastTextColor, isValidHexColor } from '@keres/shared';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface Tag {
   id: string;
@@ -39,7 +40,7 @@ const TagList: React.FC<TagListProps> = ({
 
   if (!tags || tags.length === 0) {
     if (!emptyMessage) return null;
-    return <Text style={{ color: colors.textSecondary }}>{emptyMessage}</Text>;
+    return <ThemedText tone="secondary">{emptyMessage}</ThemedText>;
   }
 
   return (

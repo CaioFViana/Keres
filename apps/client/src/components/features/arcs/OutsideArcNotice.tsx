@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/src/theme';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface OutsideArcNoticeProps {
   /** How many results the search found outside the arc being looked at. */
@@ -23,9 +24,9 @@ const OutsideArcNotice: React.FC<OutsideArcNoticeProps> = ({ count, expanded, on
       onPress={onToggle}
       style={[styles.row, { borderColor: colors.border }]}
     >
-      <Text style={{ color: colors.primary }}>
+      <ThemedText tone="primary">
         {expanded ? t('search_outside_arc_hide', { count }) : t('search_outside_arc', { count })}
-      </Text>
+      </ThemedText>
     </TouchableOpacity>
   );
 };

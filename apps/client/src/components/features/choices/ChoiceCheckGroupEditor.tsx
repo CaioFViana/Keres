@@ -12,8 +12,9 @@ import {
   type StyleProp,
   type TextStyle,
 } from 'react-native';
-import { type ThemeColors, useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface SelectOption {
   label: string;
@@ -76,7 +77,6 @@ export default function ChoiceCheckGroupEditor({
   onAddCheck,
 }: ChoiceCheckGroupEditorProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
 
   return (
@@ -106,7 +106,7 @@ export default function ChoiceCheckGroupEditor({
             </View>
 
             {groupChecks.length === 0 && (
-              <Text style={{ color: colors.textSecondary }}>{t('no_checks_in_group')}</Text>
+              <ThemedText tone="secondary">{t('no_checks_in_group')}</ThemedText>
             )}
 
             {groupChecks.map((check) => (

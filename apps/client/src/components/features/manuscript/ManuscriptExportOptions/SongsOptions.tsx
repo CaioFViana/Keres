@@ -1,10 +1,10 @@
 import { SONG_LANGUAGES, SONG_PLACEMENTS, SONG_REPEATS } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
-import { useTheme } from '@/src/theme';
+
 import type { ManuscriptExportSettings, withChange } from '../export/manuscriptExportSettings';
 import { OptionPills, OptionSection, SwitchRow } from './ExportOptionRows';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface SongsOptionsProps {
   settings: ManuscriptExportSettings;
@@ -20,7 +20,6 @@ interface SongsOptionsProps {
  */
 const SongsOptions: React.FC<SongsOptionsProps> = ({ settings, change, script }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const placeInScene = script || settings.songsPlacement === 'after-scene';
   return (
     <>
@@ -31,9 +30,9 @@ const SongsOptions: React.FC<SongsOptionsProps> = ({ settings, change, script })
         value={settings.includeSongs}
         onChange={(includeSongs) => change({ includeSongs })}
       />
-      <Text style={{ color: colors.textSecondary, lineHeight: 19, marginTop: 4 }}>
+      <ThemedText tone="secondary" style={{ lineHeight: 19, marginTop: 4 }}>
         {t('export_songs_hint')}
-      </Text>
+      </ThemedText>
       {settings.includeSongs ? (
         <>
           {script ? null : (

@@ -7,6 +7,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { ScenePageView } from '@/src/hooks/useScenePages';
 import { useTheme } from '@/src/theme';
 import ScenePageThumb from './ScenePageThumb';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface ScenePageCardProps {
   view: ScenePageView;
@@ -136,17 +137,17 @@ const ScenePageCard: React.FC<ScenePageCardProps> = ({
               onPress={canEdit ? onReplace : undefined}
               style={[styles.removed, { borderColor: colors.error }]}
             >
-              <Text style={{ color: colors.error, fontWeight: '700' }}>
+              <ThemedText tone="error" style={{ fontWeight: '700' }}>
                 {t('scene_pages_media_removed')}
-              </Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+              </ThemedText>
+              <ThemedText tone="secondary" style={{ fontSize: 12 }}>
                 {t('scene_pages_media_removed_hint')}
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
           ) : view.mediaName ? (
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }} numberOfLines={1}>
+            <ThemedText tone="secondary" style={{ fontSize: 12 }} numberOfLines={1}>
               {view.mediaName}
-            </Text>
+            </ThemedText>
           ) : null}
           <TextInput
             value={text}

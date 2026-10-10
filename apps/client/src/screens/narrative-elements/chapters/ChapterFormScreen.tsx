@@ -16,7 +16,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
 import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
@@ -32,6 +32,7 @@ import { useChapterFormActions } from './useChapterFormActions';
 import { useChapterFormAssociations } from './useChapterFormAssociations';
 import { useChapterFormResources } from './useChapterFormResources';
 import { useChapterFormState } from './useChapterFormState';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type ChapterFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'ChapterForm'>;
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<
@@ -212,9 +213,9 @@ const ChapterFormScreen = () => {
             onValueChange={setIsEvent}
             testID="chapter-is-event"
           />
-          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 5 }}>
+          <ThemedText tone="secondary" style={{ fontSize: 13, marginBottom: 5 }}>
             {t('chapter_is_event_hint')}
-          </Text>
+          </ThemedText>
         </>
       )}
 

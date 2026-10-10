@@ -18,6 +18,7 @@ import {
   MATRIX_THREAD_WIDTH,
   matrixRowCenterY,
 } from '@keres/shared/graphs/presenceMatrixLayout';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface Props {
   layout: PresenceMatrixLayout;
@@ -237,12 +238,13 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
               width: (chapter.end - chapter.start + 1) * layout.sceneWidth - 10,
             }}
           >
-            <Text
+            <ThemedText
+              tone="secondary"
               numberOfLines={1}
-              style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}
+              style={{ fontSize: 10, fontWeight: '700' }}
             >
               {chapter.name}
-            </Text>
+            </ThemedText>
           </View>
         ))}
         {visibleSceneIndexes.map((index) => {

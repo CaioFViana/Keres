@@ -11,6 +11,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useTheme } from '../../../theme';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 export type ServerAuthMode = 'login' | 'register' | 'recover';
 
@@ -96,9 +97,9 @@ export default function ServerRegistrationFields({
       )}
 
       {!serverId && mode === 'recover' && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+        <ThemedText tone="secondary" style={{ marginBottom: 20 }}>
           {t('recover_account_description')}
-        </Text>
+        </ThemedText>
       )}
 
       {hostedSameOrigin && (
@@ -235,9 +236,9 @@ export default function ServerRegistrationFields({
               />
             )}
           </FormField>
-          <Text style={{ color: colors.textSecondary, marginBottom: 20 }}>
+          <ThemedText tone="secondary" style={{ marginBottom: 20 }}>
             {t('change_password_warning')}
-          </Text>
+          </ThemedText>
         </>
       )}
     </>

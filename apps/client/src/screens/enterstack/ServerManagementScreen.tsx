@@ -3,7 +3,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import ServerListItem from '../../components/features/servers/ServerListItem';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
 import { useUnseenMessagesStore } from '../../state/unseenMessagesStore';
@@ -11,6 +11,7 @@ import { adminConversationKey } from '../../utils/conversationKey';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type ServerManagementScreenNavigationProp = NativeStackNavigationProp<
   ServerManagementStackParamList,
@@ -47,7 +48,7 @@ const ServerManagementScreen = () => {
     return (
       <View style={[commonContainerStyles.container, styles.centered]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.text, marginTop: 10 }}>{t('loading_servers')}</Text>
+        <ThemedText style={{ marginTop: 10 }}>{t('loading_servers')}</ThemedText>
       </View>
     );
   }
@@ -55,7 +56,7 @@ const ServerManagementScreen = () => {
   if (error) {
     return (
       <View style={[commonContainerStyles.container, styles.centered]}>
-        <Text style={{ color: colors.error }}>{error}</Text>
+        <ThemedText tone="error">{error}</ThemedText>
       </View>
     );
   }
@@ -79,9 +80,9 @@ const ServerManagementScreen = () => {
         )}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
+          <ThemedText tone="secondary" style={{ textAlign: 'center' }}>
             {t('no_servers_found')}
-          </Text>
+          </ThemedText>
         }
       />
     </View>

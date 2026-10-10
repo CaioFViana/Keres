@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/src/theme';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface ScreenSectionProps {
   title: React.ReactNode;
@@ -25,7 +26,9 @@ export default function ScreenSection({
         {actions}
       </View>
       {description && (
-        <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>{description}</Text>
+        <ThemedText tone="secondary" style={{ marginBottom: 8 }}>
+          {description}
+        </ThemedText>
       )}
       {children}
     </View>

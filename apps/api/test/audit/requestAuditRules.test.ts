@@ -44,6 +44,21 @@ describe('classifyRequest', () => {
     );
   });
 
+  it('names what an administrator did to a story, to a plan given and to a collaborator', () => {
+    expect(classifyRequest('PATCH', '/api/admin/stories/s1')).toMatchObject({
+      rule: { action: 'admin.story_updated' },
+      groups: { id: 's1' },
+    });
+    expect(classifyRequest('POST', '/api/admin/payments/users/u1/gift')).toMatchObject({
+      rule: { action: 'admin.plan_gifted' },
+      groups: { userId: 'u1' },
+    });
+    expect(classifyRequest('DELETE', '/api/admin/stories/s1/collaborators/u2')).toMatchObject({
+      rule: { action: 'admin.story_collaborator_removed' },
+      groups: { id: 's1', userId: 'u2' },
+    });
+  });
+
   it('knows nothing of routes that are not worth a line', () => {
     expect(classifyRequest('GET', '/api/friend/').rule).toBeNull();
     expect(classifyRequest('POST', '/api/sync/story-1').rule).toBeNull();

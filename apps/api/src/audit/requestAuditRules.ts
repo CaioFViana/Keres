@@ -338,6 +338,25 @@ export const AUDIT_RULES: readonly AuditRule[] = [
     targetType: 'message',
     targetGroup: 'id',
   }),
+  admin('POST', 'payments/users/(?<userId>[^/]+)/gift', 'admin.plan_gifted', {
+    targetType: 'user',
+    targetGroup: 'userId',
+    subjectGroup: 'userId',
+  }),
+  admin('PATCH', `stories/${id}`, 'admin.story_updated', {
+    targetType: 'story',
+    targetGroup: 'id',
+  }),
+  admin(
+    'DELETE',
+    `stories/${id}/collaborators/(?<userId>[^/]+)`,
+    'admin.story_collaborator_removed',
+    {
+      targetType: 'story',
+      targetGroup: 'id',
+      subjectGroup: 'userId',
+    },
+  ),
   admin('GET', 'activity/export', 'admin.activity_exported'),
 ];
 

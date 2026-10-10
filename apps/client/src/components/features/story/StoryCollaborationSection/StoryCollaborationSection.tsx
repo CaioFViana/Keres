@@ -105,7 +105,7 @@ export default function StoryCollaborationSection({
           <Button
             onPress={() => collaboration.handleLeaveStory(onLeftStory)}
             disabled={collaboration.serverActionLoading}
-            style={{ backgroundColor: colors.error }}
+            variant="destructive"
             testID="leave-story-button"
           >
             {t('leave_story_title')}
@@ -248,7 +248,7 @@ export default function StoryCollaborationSection({
             <Button
               onPress={collaboration.handleUnlinkFromServer}
               disabled={unlinkBlocked}
-              style={{ backgroundColor: colors.error }}
+              variant="destructive"
             >
               {t('unlink_from_server_title')}
             </Button>

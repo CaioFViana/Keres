@@ -140,7 +140,6 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
         <EntityFormActions
           isEditing={isEditing}
           busy={saving || deleting}
-          colors={colors}
           deleteLabel={copy.deleteLabel}
           saveLabel={copy.saveLabel}
           onDelete={handleDelete}

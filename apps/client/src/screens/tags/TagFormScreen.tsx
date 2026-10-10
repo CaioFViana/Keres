@@ -91,7 +91,6 @@ const TagFormScreen = () => {
         <EntityFormActions
           isEditing={isEditing}
           busy={saving || deleting}
-          colors={colors}
           deleteLabel={t('delete_tag_title')}
           saveLabel={isEditing ? t('save_changes') : t('create_tag')}
           onDelete={handleDelete}

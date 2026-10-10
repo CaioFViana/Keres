@@ -132,6 +132,19 @@ describe('Button variants', () => {
     expect(StyleSheet.flatten(screen.getByText('Stop').props.style).color).toBe('#ff0000');
     expect(StyleSheet.flatten(screen.getByText('Maybe').props.style).color).toBe('#0000ff');
   });
+
+  it('fills a destructive button in the error colour, with no outline', async () => {
+    const screen = await render(
+      <Button testID="destructive" variant="destructive" onPress={jest.fn()}>
+        Delete
+      </Button>,
+    );
+
+    const style = styleOf(screen, 'destructive');
+    expect(style).toMatchObject({ backgroundColor: '#ff0000' });
+    expect(style).not.toHaveProperty('borderWidth');
+    expect(StyleSheet.flatten(screen.getByText('Delete').props.style).color).not.toBe('#ff0000');
+  });
 });
 
 const iconsOf = (view: Awaited<ReturnType<typeof render>>) =>

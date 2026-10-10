@@ -91,7 +91,7 @@ export default function RouteFormScreen() {
         <FormActions stackOnCompact>
           <Button
             onPress={handleDelete}
-            style={{ backgroundColor: colors.error }}
+            variant="destructive"
             disabled={saving || deleting}
           >
             {t('delete_route_title')}

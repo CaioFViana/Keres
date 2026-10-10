@@ -175,7 +175,7 @@ const StorySettingsIndexScreen = () => {
           <Text style={styles.dangerLabel}>{t('story_settings_danger_zone')}</Text>
           <Button
             onPress={handleDelete}
-            style={{ backgroundColor: colors.error }}
+            variant="destructive"
             disabled={!canManageStoryPolicy || deleting}
           >
             {t('delete_story_title')}

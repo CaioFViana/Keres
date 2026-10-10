@@ -171,7 +171,6 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
         <EntityFormActions
           isEditing={isEditing}
           busy={saving || deleting}
-          colors={colors}
           deleteLabel={copy.deleteLabel}
           saveLabel={copy.saveLabel}
           onDelete={handleDelete}

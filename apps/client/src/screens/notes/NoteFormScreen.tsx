@@ -120,7 +120,6 @@ const NoteFormScreen = () => {
         <EntityFormActions
           isEditing={isEditing}
           busy={saving || deleting}
-          colors={colors}
           deleteLabel={t('delete_note_title')}
           saveLabel={isEditing ? t('save_changes') : t('create_note')}
           onDelete={handleDelete}

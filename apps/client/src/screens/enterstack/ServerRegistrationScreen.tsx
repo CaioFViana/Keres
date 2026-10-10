@@ -397,7 +397,7 @@ const ServerRegistrationScreen = () => {
           <FormActions stackOnCompact>
             <Button
               onPress={handleDeleteServer}
-              style={{ backgroundColor: colors.error }}
+              variant="destructive"
               disabled={loading}
             >
               {t('delete_server')}

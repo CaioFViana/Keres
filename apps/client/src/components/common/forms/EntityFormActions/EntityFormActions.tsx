@@ -5,7 +5,6 @@ interface EntityFormActionsProps {
   isEditing: boolean;
   /** Save and delete are both held while either is running. */
   busy: boolean;
-  colors: { error: string };
   deleteLabel: string;
   saveLabel: string;
   onDelete: () => void;
@@ -19,7 +18,6 @@ interface EntityFormActionsProps {
 function EntityFormActions({
   isEditing,
   busy,
-  colors,
   deleteLabel,
   saveLabel,
   onDelete,
@@ -28,7 +26,7 @@ function EntityFormActions({
   return (
     <>
       {isEditing && (
-        <Button onPress={onDelete} style={{ backgroundColor: colors.error }} disabled={busy}>
+        <Button variant="destructive" onPress={onDelete} disabled={busy}>
           {deleteLabel}
         </Button>
       )}

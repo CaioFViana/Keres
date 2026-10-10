@@ -7,9 +7,10 @@ import { useTheme } from '../../../../theme';
 
 /**
  * `primary` is the filled call to action; `secondary` and `danger` are outlined, for what is offered
- * next to it - so a row of choices does not read as a row of equally loud buttons.
+ * next to it - so a row of choices does not read as a row of equally loud buttons. `destructive` is
+ * filled in the error colour: the one that deletes what the form is about, beside its save.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'destructive';
 
 interface ButtonProps {
   variant?: ButtonVariant;
@@ -39,9 +40,13 @@ const Button: React.FC<ButtonProps> = ({
 
   const styles = useMemo(() => {
     const outline = variant === 'secondary' ? colors.primary : colors.error;
-    const outlined = variant !== 'primary';
+    const outlined = variant === 'secondary' || variant === 'danger';
     const base = {
-      backgroundColor: outlined ? 'transparent' : colors.primary,
+      backgroundColor: outlined
+        ? 'transparent'
+        : variant === 'destructive'
+          ? colors.error
+          : colors.primary,
       ...(outlined ? { borderWidth: 1.5, borderColor: outline } : {}),
       paddingVertical: 12,
       paddingHorizontal: 20,

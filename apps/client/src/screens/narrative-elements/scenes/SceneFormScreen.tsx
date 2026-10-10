@@ -206,7 +206,6 @@ const SceneFormScreen = () => {
         <EntityFormActions
           isEditing={isEditing}
           busy={saving || deleting}
-          colors={colors}
           deleteLabel={copy.deleteLabel}
           saveLabel={copy.saveLabel}
           onDelete={handleDelete}

@@ -179,7 +179,7 @@ const ItemJourneyFormScreen = () => {
           {isEditing && (
             <Button
               onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
+              variant="destructive"
               disabled={saving || deleting}
             >
               {t('vocabulary_delete_entity', { entity: journey })}

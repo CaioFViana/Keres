@@ -156,7 +156,7 @@ const StoryFormScreen = () => {
           {isEditing && (
             <Button
               onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
+              variant="destructive"
               disabled={saving || deleting || !canManageStoryPolicy}
             >
               {t('delete_story_title')}

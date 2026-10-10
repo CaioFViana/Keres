@@ -254,6 +254,13 @@ describe('StoryAnalysisScreen', () => {
     );
   });
 
+  it('says the quick checks found nothing on a branching story before the full run', async () => {
+    const view = await render(<StoryAnalysisScreen />);
+
+    await waitFor(() => expect(view.queryByText('analysis_no_quick_issues_found')).not.toBeNull());
+    expect(view.queryByText('analysis_no_issues_found')).toBeNull();
+  });
+
   it('groups findings by category and navigates to their entities', async () => {
     mockAnalyzeStoryCheap.mockResolvedValue({
       findings: [

@@ -79,6 +79,7 @@
   "analysis_music_target_gone": "Has music that points at something that no longer exists. Choose another, or delete it.",
   "analysis_music_two_targets": "Has music that points at a song and at a Gallery medium at once.",
   "analysis_no_issues_found": "No structural problems found. Your story looks solid!",
+  "analysis_no_quick_issues_found": "The quick checks found nothing. Run the check above to also look at scene reachability and choice logic.",
   "analysis_no_start_scene": "This story has no starting scene, so reachability can't be checked.",
   "analysis_route_choice_unavailable": "Contains a choice that is no longer available under the current story state.",
   "analysis_route_invalid": "Contains steps that no longer form a valid path.",

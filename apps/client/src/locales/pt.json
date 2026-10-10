@@ -79,6 +79,7 @@
   "analysis_music_target_gone": "Tem música que aponta para algo que não existe mais. Escolha outra, ou apague.",
   "analysis_music_two_targets": "Tem música que aponta para uma canção e para uma mídia da Galeria ao mesmo tempo.",
   "analysis_no_issues_found": "Nenhum problema estrutural encontrado. Sua história está sólida!",
+  "analysis_no_quick_issues_found": "As checagens rápidas não acharam nada. Rode a checagem acima para olhar também a alcançabilidade das cenas e a lógica das escolhas.",
   "analysis_no_start_scene": "Esta história não tem uma cena inicial, então a alcançabilidade não pode ser verificada.",
   "analysis_route_choice_unavailable": "Contém uma escolha que não está mais disponível no estado atual da história.",
   "analysis_route_invalid": "Contém passos que não formam mais um caminho válido.",

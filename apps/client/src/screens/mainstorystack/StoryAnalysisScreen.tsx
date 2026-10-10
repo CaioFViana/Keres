@@ -345,7 +345,8 @@ const StoryAnalysisScreen = () => {
     </View>
   );
 
-  if (!report || (report.findings.length === 0 && hasRunFull)) {
+  // Nothing found: after the full run that is the verdict, before it only the quick checks have spoken.
+  if (!report || report.findings.length === 0) {
     return (
       <ScrollView
         ref={reportAnchorRef}
@@ -358,7 +359,9 @@ const StoryAnalysisScreen = () => {
           <View style={styles.emptyIconWrap} testID="analysis-empty-icon">
             <Ionicons name="checkmark" size={28} color={colors.onPrimaryContainer} />
           </View>
-          <Text style={styles.emptyText}>{t('analysis_no_issues_found')}</Text>
+          <Text style={styles.emptyText}>
+            {t(hasRunFull ? 'analysis_no_issues_found' : 'analysis_no_quick_issues_found')}
+          </Text>
         </View>
       </ScrollView>
     );

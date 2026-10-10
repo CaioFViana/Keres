@@ -47,7 +47,7 @@ type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;
  * the people in the story hear it, and notes when it comes in. The order is the order of the list.
  */
 const SceneMusicScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('SceneMusic');
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();

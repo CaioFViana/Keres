@@ -32,7 +32,7 @@ const today = () => new Date().toISOString().slice(0, 10);
  * happened; every other detail can wait for the rest of the app. Only offered where the work is a campaign.
  */
 const NewSessionScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();

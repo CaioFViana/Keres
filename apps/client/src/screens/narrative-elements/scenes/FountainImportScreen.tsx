@@ -30,7 +30,7 @@ const key = (name: string) => name.replace(/\s+/g, ' ').trim().toUpperCase();
  * always worth an entry of their own.
  */
 const FountainImportScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();

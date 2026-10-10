@@ -47,7 +47,7 @@ export const scenePageKind = (medium: string | null): 'page' | 'frame' =>
  * The image is a Sketch of the story or a Gallery image; the order is the order of the manuscript.
  */
 const ScenePagesScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();

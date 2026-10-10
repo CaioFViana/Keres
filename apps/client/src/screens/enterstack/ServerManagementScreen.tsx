@@ -3,6 +3,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import { formatDateTime } from '../../utils/formatDateTime';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import ServerListItem from '../../components/features/servers/ServerListItem';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
@@ -24,7 +25,7 @@ type ServerManagementScreenNavigationProp = NativeStackNavigationProp<
  */
 const ServerManagementScreen = () => {
   useBackButtonHandler();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ServerManagementScreenNavigationProp>();
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -71,7 +72,7 @@ const ServerManagementScreen = () => {
             url={item.url}
             userName={item.userName}
             tag={item.tag}
-            lastSync={item.lastSyncDate ? new Date(item.lastSyncDate).toLocaleString() : null}
+            lastSync={item.lastSyncDate ? formatDateTime(item.lastSyncDate, i18n.language) : null}
             status={item.pingStatus}
             apiVersion={item.apiVersion}
             hasUnseenAdminMessage={unseen[adminConversationKey(item.id)] !== undefined}

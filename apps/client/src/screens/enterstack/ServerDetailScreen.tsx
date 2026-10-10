@@ -21,6 +21,7 @@ import { serverCardStyleDefs } from '../../components/features/servers/serverCar
 import ServerStatusPill from '../../components/features/servers/ServerStatusPill';
 import { useDrizzle } from '../../db';
 import { useAccountPlan } from '../../hooks/useAccountPlan';
+import { formatDateTime } from '../../utils/formatDateTime';
 import { usePaymentOverview } from '../../hooks/usePaymentOverview';
 import { useServerDeletion } from '../../hooks/useServerDeletion';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
@@ -51,7 +52,7 @@ interface OwnProfile {
  */
 const ServerDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ServerDetailNavigationProp>();
   const { serverId } = useRoute<ServerDetailRouteProp>().params;
@@ -186,7 +187,7 @@ const ServerDetailScreen = () => {
         {field(
           t('last_sync'),
           server.lastSyncDate
-            ? new Date(server.lastSyncDate).toLocaleString()
+            ? formatDateTime(server.lastSyncDate, i18n.language)
             : t('server_never_synced'),
           true,
         )}

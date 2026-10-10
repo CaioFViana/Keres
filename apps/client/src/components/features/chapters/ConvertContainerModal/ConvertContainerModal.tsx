@@ -10,6 +10,7 @@ import type { ThemeColors } from '../../../../theme';
 import { typography } from '../../../../theme/tokens';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**
  * Turning a chapter into an event, or an event back into a chapter.
@@ -73,9 +74,7 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
 
   return (
     <ResponsiveModal visible={visible} onClose={onCancel} inset="roomy" maxHeight="86%">
-      <Text style={styles.modalTitle}>
-        {becomingChapter ? chapterCopy.convertTo : eventCopy.convertTo}
-      </Text>
+      <ModalHeader title={becomingChapter ? chapterCopy.convertTo : eventCopy.convertTo} />
       <Text style={styles.subtitle}>
         {becomingChapter
           ? t('chapter_convert_to_chapter_message', { name })
@@ -115,12 +114,6 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    modalTitle: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 6,
-      textAlign: 'center',
-    },
     subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, textAlign: 'center' },
     formGroup: { marginBottom: 15 },
     label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },

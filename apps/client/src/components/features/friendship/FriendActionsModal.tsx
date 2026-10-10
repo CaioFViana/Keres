@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 export interface FriendAction {
   id: string;
@@ -44,9 +45,7 @@ const FriendActionsModal: React.FC<FriendActionsModalProps> = ({
       inset="regular"
       contentStyle={styles.content}
     >
-      <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
-        {friendName}
-      </Text>
+      <ModalHeader title={friendName} />
       <View>
         {actions.map((action) => {
           const color = action.destructive ? colors.error : colors.text;
@@ -77,7 +76,6 @@ const FriendActionsModal: React.FC<FriendActionsModalProps> = ({
 
 const styles = StyleSheet.create({
   content: { gap: 8 },
-  title: { fontSize: 18, fontWeight: '700' },
   action: {
     flexDirection: 'row',
     alignItems: 'center',

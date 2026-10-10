@@ -14,6 +14,7 @@ import { getCommonChipStyles, getCommonInputStyles } from '@/src/theme/commonSty
 import { type ThemeColors, useTheme } from '../../../theme';
 import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { space, typography } from '../../../theme/tokens';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface Props {
   visible: boolean;
@@ -63,7 +64,7 @@ const SketchCreateModal: React.FC<Props> = ({
       tone="raised"
       inset="sheet"
     >
-      <Text style={styles.title}>{title ?? t('sketch_create_title')}</Text>
+      <ModalHeader title={title ?? t('sketch_create_title')} />
       <Text style={styles.label}>{t('sketch_name')}</Text>
       <TextInput
         value={name}

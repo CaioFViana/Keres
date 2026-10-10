@@ -7,6 +7,7 @@ import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { typography } from '../../../../theme/tokens';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface LocationPickerModalProps {
   isVisible: boolean;
@@ -36,7 +37,7 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 
   return (
     <ResponsiveModal visible={isVisible} onClose={onClose} inset="regular" maxHeight="78%">
-      <Text style={styles.title}>{title}</Text>
+      <ModalHeader title={title} />
       <FlatList
         data={sortedCandidates}
         keyExtractor={(item) => item.id}

@@ -8,6 +8,7 @@ import { SKETCH_PALETTE } from '../../../state/sketchToolStore';
 import { type ThemeColors, useTheme } from '../../../theme';
 import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { space, typography } from '../../../theme/tokens';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface SketchColorSheetProps {
   color: string;
@@ -59,7 +60,7 @@ const SketchColorSheet: React.FC<SketchColorSheetProps> = ({
   }
   return (
     <ResponsiveModal visible onClose={onClose} placement="adaptive" tone="raised" inset="sheet">
-      <Text style={styles.title}>{t('sketch_color_title')}</Text>
+      <ModalHeader title={t('sketch_color_title')} />
       <View style={styles.grid}>{SKETCH_PALETTE.map(swatch)}</View>
       {recentColors.length > 0 && (
         <>

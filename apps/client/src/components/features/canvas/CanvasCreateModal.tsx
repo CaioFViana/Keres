@@ -8,6 +8,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { type ThemeColors, useTheme } from '../../../theme';
 import { typography } from '../../../theme/tokens';
 import { useThemedStyles } from '../../../theme/useThemedStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 export interface CanvasCreateModalProps {
   visible: boolean;
@@ -66,7 +67,7 @@ const CanvasCreateModal: React.FC<CanvasCreateModalProps> = ({
       inset="roomy"
       maxHeight="86%"
     >
-      <Text style={styles.title}>{title}</Text>
+      <ModalHeader title={title} />
       <View style={styles.field}>
         <Text style={styles.label}>{t('name')}</Text>
         <TextInput
@@ -104,12 +105,6 @@ const CanvasCreateModal: React.FC<CanvasCreateModalProps> = ({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    title: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 16,
-      textAlign: 'center',
-    },
     label: { ...typography.sectionTitle, color: colors.text, marginBottom: 5 },
     field: { marginBottom: 12 },
     buttons: {

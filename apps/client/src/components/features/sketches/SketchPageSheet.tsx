@@ -13,6 +13,7 @@ import type { ThemeColors } from '../../../theme';
 import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { getCommonChipStyles } from '../../../theme/commonStyles';
 import { space, typography } from '../../../theme/tokens';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface SketchPageSheetProps {
   page: SketchPageType;
@@ -45,7 +46,7 @@ const SketchPageSheet: React.FC<SketchPageSheetProps> = ({ page, onApply, onClos
   };
   return (
     <ResponsiveModal visible onClose={onClose} placement="adaptive" tone="raised" inset="sheet">
-      <Text style={styles.title}>{t('sketch_page_title')}</Text>
+      <ModalHeader title={t('sketch_page_title')} />
       <Text style={styles.label}>{t('sketch_page_presets')}</Text>
       <View style={styles.row}>
         {SKETCH_PAGE_PRESETS.map((preset) => {

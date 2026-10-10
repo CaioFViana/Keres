@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useScenePageChoices } from '@/src/hooks/useGalleryMedia';
 import { useTheme } from '@/src/theme';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface ScenePageAddSheetProps {
   visible: boolean;
@@ -85,9 +86,9 @@ const ScenePageAddSheet: React.FC<ScenePageAddSheetProps> = ({
       inset="roomy"
       maxHeight="86%"
     >
-      <Text style={[styles.title, { color: colors.text }]}>
-        {t(replacing ? 'scene_pages_replace_title' : `scene_pages_add_sheet_title_${kind}`)}
-      </Text>
+      <ModalHeader
+        title={t(replacing ? 'scene_pages_replace_title' : `scene_pages_add_sheet_title_${kind}`)}
+      />
       {doors.map((door) => (
         <TouchableOpacity
           key={door.id}

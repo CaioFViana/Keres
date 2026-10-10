@@ -12,6 +12,7 @@ import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEnt
 import Button from '@/src/components/common/controls/Button/Button';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface CharacterRelationModalProps {
   isVisible: boolean;
@@ -110,9 +111,9 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
 
   return (
     <ResponsiveModal visible={isVisible} onClose={onClose} inset="roomy" maxHeight="86%">
-      <Text style={styles.modalTitle}>
-        {initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
-      </Text>
+      <ModalHeader
+        title={initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
+      />
       <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t('related_character')}</Text>
@@ -184,12 +185,6 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    modalTitle: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
     formGroup: {
       marginBottom: 15,
     },

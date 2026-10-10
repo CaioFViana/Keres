@@ -36,6 +36,7 @@ import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { ENTITY_TYPE_ICONS } from '../../utils/entityTypeIcons';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 type UsageSection = { title: string; data: SuggestionUsage[] };
 
@@ -279,7 +280,7 @@ const SuggestionUsageScreen = () => {
         contentStyle={stylesForScreen.modal}
         inset="regular"
       >
-        <Text style={stylesForScreen.modalTitle}>{t('suggestion_rename_value')}</Text>
+        <ModalHeader title={t('suggestion_rename_value')} />
         <TextInput value={newValue} onChangeText={setNewValue} style={commonInputStyles.input} />
         {usages.length > 0 && (
           <TouchableOpacity
@@ -344,7 +345,6 @@ const styles = (colors: any) =>
     relationLinks: { flexDirection: 'row', gap: 10, marginTop: 6 },
     relationLink: { color: colors.primary, fontSize: 13, fontWeight: '700' },
     modal: { gap: 12 },
-    modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
     checkbox: { alignItems: 'center', flexDirection: 'row', gap: 8 },
     checkboxText: { color: colors.text, flex: 1 },
     warning: { color: colors.error, fontSize: 13, lineHeight: 18 },

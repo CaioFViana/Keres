@@ -6,6 +6,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface ThemePickerModalProps {
   visible: boolean;
@@ -59,7 +60,6 @@ const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        title: { color: colors.text, fontSize: 20, fontWeight: '700' },
         description: { color: colors.textSecondary, lineHeight: 19, marginTop: 6 },
         list: { marginTop: 16, maxHeight: 460 },
         option: {
@@ -92,7 +92,7 @@ const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
       maxHeight="90%"
       placement="adaptive"
     >
-      <Text style={styles.title}>{t('select_theme')}</Text>
+      <ModalHeader title={t('select_theme')} />
       <Text style={styles.description}>{t('theme_picker_description')}</Text>
       <ScrollView style={styles.list} showsVerticalScrollIndicator>
         {themeDisplayOptions.map((option) => {

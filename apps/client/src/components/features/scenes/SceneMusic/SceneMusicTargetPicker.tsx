@@ -16,6 +16,7 @@ import type { SceneMusicTarget } from '@/src/services/storymanagement/SceneMusic
 import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface SceneMusicTargetPickerProps {
   visible: boolean;
@@ -67,7 +68,7 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
       inset="roomy"
       maxHeight="86%"
     >
-      <Text style={[styles.title, { color: colors.text }]}>{t('scene_music_pick_title')}</Text>
+      <ModalHeader title={t('scene_music_pick_title')} />
       <View style={styles.tabs}>
         {(['songs', 'gallery'] as const).map((name) => (
           <TouchableOpacity

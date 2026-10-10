@@ -10,6 +10,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { type ThemeColors, useTheme } from '../../../theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface Props {
   visible: boolean;
@@ -45,7 +46,7 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
       contentStyle={styles.sheet}
       maxHeight="86%"
     >
-      <Text style={styles.title}>{t('gallery_add_link_title')}</Text>
+      <ModalHeader title={t('gallery_add_link_title')} />
       <Text style={styles.hint}>{t('gallery_add_link_hint')}</Text>
       <View style={styles.field}>
         <Text style={styles.label}>{t('gallery_link_url')}</Text>
@@ -84,12 +85,6 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     sheet: { overflow: 'visible' },
-    title: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 8,
-      textAlign: 'center',
-    },
     hint: { ...typography.hint, color: colors.textSecondary, marginBottom: 16 },
     label: { ...typography.sectionTitle, color: colors.text, marginBottom: 5 },
     field: { marginBottom: 12, paddingHorizontal: 2, paddingVertical: 2 },

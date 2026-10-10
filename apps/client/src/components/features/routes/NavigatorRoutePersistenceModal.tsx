@@ -11,6 +11,7 @@ import { type ThemeColors, useTheme } from '../../../theme';
 import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { typography } from '../../../theme/tokens';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 export type NavigatorRoutePersistenceMode = 'new' | 'replace';
 
@@ -84,9 +85,9 @@ export default function NavigatorRoutePersistenceModal({
 
   return (
     <ResponsiveModal visible={visible} onClose={onClose} inset="roomy" maxHeight="86%">
-      <Text style={styles.title}>
-        {mode === 'new' ? t('navigator_save_as_route') : t('navigator_replace_route')}
-      </Text>
+      <ModalHeader
+        title={mode === 'new' ? t('navigator_save_as_route') : t('navigator_replace_route')}
+      />
       <Text style={styles.description}>
         {t('navigator_route_steps_ready', { count: stepCount })}
       </Text>
@@ -129,12 +130,6 @@ export default function NavigatorRoutePersistenceModal({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    title: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 8,
-      textAlign: 'center',
-    },
     description: { color: colors.textSecondary, lineHeight: 20, marginBottom: 16 },
     field: { marginBottom: 14, paddingHorizontal: 2, paddingVertical: 2 },
     label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },

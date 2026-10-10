@@ -21,6 +21,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface Props {
   visible: boolean;
@@ -113,7 +114,7 @@ const GalleryAttachExistingModal: React.FC<Props> = ({
       inset="roomy"
       maxHeight="86%"
     >
-      <Text style={styles.title}>{t('gallery_attach_existing_title')}</Text>
+      <ModalHeader title={t('gallery_attach_existing_title')} />
       <Text style={styles.hint}>{t('gallery_attach_existing_hint')}</Text>
       <TextInput
         value={search}

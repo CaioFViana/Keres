@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface GalleryCoverFieldProps {
   storyId: string | undefined;
@@ -99,7 +100,7 @@ const GalleryCoverField: React.FC<GalleryCoverFieldProps> = ({
         inset="roomy"
         maxHeight="86%"
       >
-        <Text style={[styles.title, { color: colors.text }]}>{t('cover_picker_title')}</Text>
+        <ModalHeader title={t('cover_picker_title')} />
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('cover_picker_hint')}</Text>
         {loading ? (
           <ActivityIndicator color={colors.primary} />

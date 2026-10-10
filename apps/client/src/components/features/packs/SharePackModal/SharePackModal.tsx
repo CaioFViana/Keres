@@ -9,6 +9,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { ThemeColors } from '../../../../theme';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { typography } from '../../../../theme/tokens';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**
  * Sharing a pack: which server, and whether it goes on that server's public showcase.
@@ -73,7 +74,7 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
 
   return (
     <ResponsiveModal visible={visible} onClose={onCancel} inset="roomy" maxHeight="86%">
-      <Text style={styles.modalTitle}>{t('packs_share_title')}</Text>
+      <ModalHeader title={t('packs_share_title')} />
       <Text style={styles.subtitle}>{t('packs_share_message', { name: packName })}</Text>
 
       <View style={styles.formGroup}>
@@ -120,12 +121,6 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    modalTitle: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 6,
-      textAlign: 'center',
-    },
     subtitle: {
       fontSize: 14,
       color: colors.textSecondary,

@@ -14,6 +14,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { type ThemeColors, useTheme } from '../../../../theme';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**
  * One stretch of story time: from a moment, and optionally to a moment.
@@ -340,7 +341,7 @@ const AnchorEditModal: React.FC<Props> = ({
         keyboardVerticalOffset={0}
       >
         {isCompact && <View style={styles.handle} />}
-        <Text style={styles.title}>{t('anchor_modal_title')}</Text>
+        <ModalHeader title={t('anchor_modal_title')} />
         <Text style={styles.preview}>{preview}</Text>
         <View style={styles.modes}>
           {(['open', 'closed'] as const).map((option) => {
@@ -419,12 +420,6 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 2,
       backgroundColor: colors.border,
       marginBottom: 14,
-    },
-    title: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 8,
-      textAlign: 'center',
     },
     preview: {
       ...typography.body,

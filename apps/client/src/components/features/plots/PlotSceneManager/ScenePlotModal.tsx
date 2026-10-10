@@ -13,6 +13,7 @@ import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { typography } from '../../../../theme/tokens';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface SceneOption {
   id: string;
@@ -81,9 +82,9 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
 
   return (
     <ResponsiveModal visible={isVisible} onClose={onClose} inset="roomy" maxHeight="86%">
-      <Text style={styles.modalTitle}>
-        {initialRelation ? t('edit_plot_scene_relation') : t('add_scene_to_plot')}
-      </Text>
+      <ModalHeader
+        title={initialRelation ? t('edit_plot_scene_relation') : t('add_scene_to_plot')}
+      />
       <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
           <Text style={styles.label}>{sceneCopy.entity}</Text>
@@ -122,12 +123,6 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    modalTitle: {
-      ...typography.heading,
-      color: colors.text,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
     // The focus ring of shared inputs extends a couple of pixels beyond the field. This is the
     // same breathing room used by the other form modals, so it is never clipped by this surface.
     formGroup: { marginBottom: 15, paddingHorizontal: 2, paddingVertical: 2 },

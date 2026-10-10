@@ -8,6 +8,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { space, typography } from '@/src/theme/tokens';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface SongCreateModalProps {
   visible: boolean;
@@ -34,7 +35,7 @@ const SongCreateModal: React.FC<SongCreateModalProps> = ({ visible, onCancel, on
       tone="raised"
       inset="sheet"
     >
-      <Text style={styles.title}>{t('song_create_title')}</Text>
+      <ModalHeader title={t('song_create_title')} />
       <Text style={styles.label}>{t('song_title')}</Text>
       <TextInput
         testID="song-create-title"

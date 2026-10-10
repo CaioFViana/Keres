@@ -6,6 +6,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 type Role = 'reader' | 'writer';
 
@@ -60,9 +61,7 @@ const InviteToStoryModal: React.FC<InviteToStoryModalProps> = ({
       inset="regular"
       contentStyle={styles.content}
     >
-      <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
-        {t('friend_invite_modal_title', { name: friendName })}
-      </Text>
+      <ModalHeader title={t('friend_invite_modal_title', { name: friendName })} />
 
       {noStories ? (
         <Text style={[styles.muted, { color: colors.textSecondary }]} testID="invite-no-stories">

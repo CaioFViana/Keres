@@ -41,6 +41,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
@@ -482,7 +483,7 @@ const SuggestionsScreen = () => {
         contentStyle={styles.modalContent}
         inset="regular"
       >
-        <Text style={styles.modalTitle}>{t('suggestion_new_list')}</Text>
+        <ModalHeader title={t('suggestion_new_list')} />
         <TextInput
           value={newListName}
           onChangeText={setNewListName}
@@ -500,7 +501,7 @@ const SuggestionsScreen = () => {
         contentStyle={styles.modalContent}
         inset="regular"
       >
-        <Text style={styles.modalTitle}>{t('suggestion_rename_list')}</Text>
+        <ModalHeader title={t('suggestion_rename_list')} />
         <TextInput
           value={renameListName}
           onChangeText={setRenameListName}
@@ -518,7 +519,7 @@ const SuggestionsScreen = () => {
         contentStyle={styles.modalContent}
         inset="regular"
       >
-        <Text style={styles.modalTitle}>{t('suggestion_copy_to')}</Text>
+        <ModalHeader title={t('suggestion_copy_to')} />
         <ScrollView style={styles.copyList}>
           {copyDestinations.map((group) => (
             <TouchableOpacity
@@ -571,7 +572,6 @@ const createStyles = (colors: ThemeColors) =>
     copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
     copyLabel: { flex: 1, color: colors.text },
     modalContent: { gap: 12 },
-    modalTitle: { ...typography.title, color: colors.text },
   });
 
 export default SuggestionsScreen;

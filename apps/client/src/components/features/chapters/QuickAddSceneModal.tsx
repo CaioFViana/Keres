@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '@/src/theme';
 import QuickAddSceneRow from './QuickAddSceneRow';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface Props {
   visible: boolean;
@@ -30,20 +30,11 @@ const QuickAddSceneModal: React.FC<Props> = ({
   testID = 'quick-add-scene',
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        title: { color: colors.text, fontSize: 20, fontWeight: '700' },
-        row: { marginTop: 16 },
-      }),
-    [colors],
-  );
 
   return (
     <ResponsiveModal visible={visible} onClose={onClose} inset="roomy">
       <View testID={testID}>
-        <Text style={styles.title}>{t('quick_add_scene_title', { group: groupName })}</Text>
+        <ModalHeader title={t('quick_add_scene_title', { group: groupName })} />
         <View style={styles.row}>
           <QuickAddSceneRow
             onSubmit={onSubmit}
@@ -60,5 +51,7 @@ const QuickAddSceneModal: React.FC<Props> = ({
     </ResponsiveModal>
   );
 };
+
+const styles = StyleSheet.create({ row: { marginTop: 16 } });
 
 export default QuickAddSceneModal;

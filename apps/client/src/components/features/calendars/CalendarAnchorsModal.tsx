@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface Props {
   visible: boolean;
@@ -63,7 +64,6 @@ const CalendarAnchorsModal = ({
     () =>
       StyleSheet.create({
         content: { minHeight: 200 },
-        title: { color: colors.text, fontSize: 18, fontWeight: '700' },
         hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
         header: {
           flexDirection: 'row',
@@ -105,11 +105,13 @@ const CalendarAnchorsModal = ({
       inset="regular"
       contentStyle={styles.content}
     >
-      <Text style={styles.title}>
-        {reviewing
-          ? t('calendar_change_preview_title')
-          : t('calendar_anchors_title', { name: calendarName })}
-      </Text>
+      <ModalHeader
+        title={
+          reviewing
+            ? t('calendar_change_preview_title')
+            : t('calendar_anchors_title', { name: calendarName })
+        }
+      />
       <Text style={styles.hint}>
         {reviewing ? t('calendar_change_preview_hint') : t('calendar_anchors_hint')}
       </Text>

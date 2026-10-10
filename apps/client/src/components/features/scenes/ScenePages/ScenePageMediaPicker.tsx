@@ -16,6 +16,7 @@ import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
 import ScenePageThumb from './ScenePageThumb';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface ScenePageMediaPickerProps {
   visible: boolean;
@@ -53,7 +54,7 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
       inset="roomy"
       maxHeight="86%"
     >
-      <Text style={[styles.title, { color: colors.text }]}>{t('scene_pages_pick_title')}</Text>
+      <ModalHeader title={t('scene_pages_pick_title')} />
       <View style={styles.tabs}>
         {(['sketches', 'gallery'] as const).map((name) => (
           <TouchableOpacity

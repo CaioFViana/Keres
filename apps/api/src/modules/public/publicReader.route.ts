@@ -5,8 +5,9 @@ import { publicationStorageService } from '../../services/PublicationStorageServ
 import { showcaseService } from '../../services/ShowcaseService';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { AppError } from '../../utils/errors';
-import { DOWNLOAD_URL_TTL_SECONDS } from './showcaseAccess';
-import { assertShowcaseOpen } from './showcaseGate';
+import { signedPublicationUrl } from './showcaseAccess';
+import { openShowcaseStory } from './showcaseGate';
+import { publicationOr404 } from './showcasePublication';
 
 /**
  * The online reader of a published version: its page, and the address that opens it. Its own
@@ -42,12 +43,7 @@ export const publicReaderRoutes = new Elysia()
   .get(
     '/stories/:storyId/publications/:publicationId/reader',
     async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
-      const entry = await showcaseService.getEntry(params.storyId);
-      if (!entry) {
-        throw new AppError(404, 'Not found.');
-      }
-      await assertShowcaseOpen({
-        entry,
+      const { entry } = await openShowcaseStory({
         storyId: params.storyId,
         user,
         showcaseJwt,
@@ -57,13 +53,11 @@ export const publicReaderRoutes = new Elysia()
         ],
       });
 
-      const publication = await showcaseService.getPublication(
+      await publicationOr404(
         params.storyId,
         params.publicationId,
+        (candidate) => candidate.readerByteSize != null,
       );
-      if (!publication || publication.readerByteSize == null) {
-        throw new AppError(404, 'Not found.');
-      }
       const body = await publicationStorageService.readReader(params.storyId, params.publicationId);
       if (!body) {
         throw new AppError(404, 'Not found.');
@@ -97,37 +91,26 @@ export const publicReaderRoutes = new Elysia()
   .post(
     '/stories/:storyId/publications/:publicationId/reader/url',
     async ({ params, headers, jwtShowcase: showcaseJwt, user }) => {
-      const entry = await showcaseService.getEntry(params.storyId);
-      if (!entry) {
-        throw new AppError(404, 'Not found.');
-      }
-      const includeNsfw = await assertShowcaseOpen({
-        entry,
+      const { entry, includeNsfw } = await openShowcaseStory({
         storyId: params.storyId,
         user,
         showcaseJwt,
         credentials: [headers['authorization']],
       });
-
-      const publication = await showcaseService.getPublication(
+      await publicationOr404(
         params.storyId,
         params.publicationId,
+        (candidate) => candidate.readerByteSize != null,
       );
-      if (!publication || publication.readerByteSize == null) {
-        throw new AppError(404, 'Not found.');
-      }
 
-      const needsToken = entry.visibility === 'password' || includeNsfw;
-      const access = needsToken
-        ? await showcaseJwt.sign({
-            storyId: params.storyId,
-            ...(includeNsfw ? { nsfwOk: true as const } : {}),
-            exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
-          })
-        : undefined;
-
-      const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/reader`;
-      return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
+      return signedPublicationUrl({
+        showcaseJwt,
+        entry,
+        storyId: params.storyId,
+        publicationId: params.publicationId,
+        includeNsfw,
+        resource: 'reader',
+      });
     },
     {
       params: t.Object({ storyId: t.String(), publicationId: t.String() }),

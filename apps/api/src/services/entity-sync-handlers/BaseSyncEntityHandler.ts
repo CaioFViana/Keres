@@ -15,7 +15,7 @@ import type { SQL } from 'drizzle-orm';
 import { and, count, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db, type CompatibleDb } from '../../db';
-import { items } from '../../db/schema';
+import { items, scenes } from '../../db/schema';
 import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
 import { syncValuesMatch } from './syncValueComparison';
 
@@ -723,6 +723,27 @@ export abstract class BaseSyncEntityHandler<
       throw new SyncConflictError(
         'referenced_entity_deleted',
         `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
+    }
+  }
+
+  /**
+   * Refuses a link to a scene that is deleted or belongs to another story. `linkName` names the
+   * linking entity in the message. The link's own target is not checked: a link outlives its scene.
+   */
+  protected async assertSceneAlive(
+    storyId: string,
+    sceneId: string,
+    database: CompatibleDb,
+    linkName: string,
+  ): Promise<void> {
+    const scene = await database.query.scenes.findFirst({
+      where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
+    });
+    if (!scene) {
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `The scene this ${linkName} belongs to is no longer active.`,
       );
     }
   }

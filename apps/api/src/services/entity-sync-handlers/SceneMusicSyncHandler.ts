@@ -6,9 +6,8 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreateSceneMusicDataSchema, PartialSceneMusicSchema } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
-import { sceneMusic, scenes } from '../../db/schema';
+import { sceneMusic } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class SceneMusicSyncHandler extends BaseSyncEntityHandler<
@@ -25,22 +24,9 @@ export class SceneMusicSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  /** The link belongs to a live scene of this story. Its target is not checked: a link outlives it. */
-  private async assertSceneAlive(storyId: string, sceneId: string, database: CompatibleDb) {
-    const scene = await database.query.scenes.findFirst({
-      where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
-    });
-    if (!scene) {
-      throw new SyncConflictError(
-        'referenced_entity_deleted',
-        'The scene this music belongs to is no longer active.',
-      );
-    }
-  }
-
   async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db) {
     const data: CreateSceneMusicDataType = this.createSchema.parse(update.data);
-    await this.assertSceneAlive(storyId, data.sceneId, database);
+    await this.assertSceneAlive(storyId, data.sceneId, database, 'music');
     if (await this.findById(update.id!, database)) {
       throw new Error(`Conflict: SceneMusic with ID ${update.id} already exists.`);
     }
@@ -70,7 +56,7 @@ export class SceneMusicSyncHandler extends BaseSyncEntityHandler<
       galleryId: 'galleryId' in changes ? changes.galleryId : current.galleryId,
     };
     if ('sceneId' in changes) {
-      await this.assertSceneAlive(storyId, String(next.sceneId), database);
+      await this.assertSceneAlive(storyId, String(next.sceneId), database, 'music');
     }
     // Pointing the link at something else sets one target and clears the other in the same change;
     // both at once is ambiguous. Neither is fine: that is a link whose target is gone.

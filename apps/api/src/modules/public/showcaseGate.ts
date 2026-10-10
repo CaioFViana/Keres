@@ -55,3 +55,33 @@ export async function assertShowcaseOpen({
   }
   return includeNsfw;
 }
+
+/**
+ * The entry point of every read of a published version: the story's entry (404 when there is none),
+ * then the gate above. Returns the entry, which the caller needs for its own visibility checks, and
+ * whether the viewer may see NSFW content.
+ */
+export async function openShowcaseStory({
+  storyId,
+  user,
+  showcaseJwt,
+  credentials,
+}: {
+  storyId: string;
+  user: JWTPayload | null;
+  showcaseJwt: ShowcaseJwt;
+  credentials: ReadonlyArray<string | undefined>;
+}): Promise<{ entry: { visibility: string }; includeNsfw: boolean }> {
+  const entry = await showcaseService.getEntry(storyId);
+  if (!entry) {
+    throw new AppError(404, 'Not found.');
+  }
+  const includeNsfw = await assertShowcaseOpen({
+    entry,
+    storyId,
+    user,
+    showcaseJwt,
+    credentials,
+  });
+  return { entry, includeNsfw };
+}

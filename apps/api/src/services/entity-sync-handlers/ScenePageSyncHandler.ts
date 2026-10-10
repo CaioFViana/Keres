@@ -6,9 +6,8 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreateScenePageDataSchema, PartialScenePageSchema } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
-import { scenePages, scenes } from '../../db/schema';
+import { scenePages } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ScenePageSyncHandler extends BaseSyncEntityHandler<
@@ -25,22 +24,9 @@ export class ScenePageSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  /** The page belongs to a live scene of this story. Its image is not checked: a page outlives it. */
-  private async assertSceneAlive(storyId: string, sceneId: string, database: CompatibleDb) {
-    const scene = await database.query.scenes.findFirst({
-      where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
-    });
-    if (!scene) {
-      throw new SyncConflictError(
-        'referenced_entity_deleted',
-        'The scene this page belongs to is no longer active.',
-      );
-    }
-  }
-
   async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db) {
     const data: CreateScenePageDataType = this.createSchema.parse(update.data);
-    await this.assertSceneAlive(storyId, data.sceneId, database);
+    await this.assertSceneAlive(storyId, data.sceneId, database, 'page');
     if (await this.findById(update.id!, database)) {
       throw new Error(`Conflict: ScenePage with ID ${update.id} already exists.`);
     }
@@ -70,7 +56,7 @@ export class ScenePageSyncHandler extends BaseSyncEntityHandler<
       galleryId: 'galleryId' in changes ? changes.galleryId : current.galleryId,
     };
     if ('sceneId' in changes) {
-      await this.assertSceneAlive(storyId, String(next.sceneId), database);
+      await this.assertSceneAlive(storyId, String(next.sceneId), database, 'page');
     }
     // Replacing the image sets one and clears the other in the same change; both at once is
     // ambiguous. Neither is fine: that is a page whose image is gone.

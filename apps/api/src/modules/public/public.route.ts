@@ -17,8 +17,14 @@ import {
   slugify,
   VersionSchema,
 } from './publicShapes';
-import { DOWNLOAD_URL_TTL_SECONDS, verifyNsfwToken, verifyShowcaseToken } from './showcaseAccess';
-import { assertShowcaseOpen } from './showcaseGate';
+import {
+  DOWNLOAD_URL_TTL_SECONDS,
+  signedPublicationUrl,
+  verifyNsfwToken,
+  verifyShowcaseToken,
+} from './showcaseAccess';
+import { openShowcaseStory } from './showcaseGate';
+import { publicationCacheControl, publicationOr404 } from './showcasePublication';
 
 /**
  * The public site. No route here requires authentication, and none of them returns anything a
@@ -290,12 +296,7 @@ export const publicRoutes = new Elysia()
       .get(
         '/stories/:storyId/publications/:publicationId/download',
         async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          await assertShowcaseOpen({
-            entry,
+          await openShowcaseStory({
             storyId: params.storyId,
             user,
             showcaseJwt,
@@ -305,15 +306,13 @@ export const publicRoutes = new Elysia()
             ],
           });
 
-          const publication = await showcaseService.getPublication(
-            params.storyId,
-            params.publicationId,
-          );
           // A version made only of a manuscript and/or the reader has no package to serve (nor, on S3,
           // a key to sign).
-          if (!publication || !publication.packageIncluded) {
-            throw new AppError(404, 'Not found.');
-          }
+          const publication = await publicationOr404(
+            params.storyId,
+            params.publicationId,
+            (candidate) => candidate.packageIncluded,
+          );
 
           const fileName = `${slugify(
             (publication.snapshot as { title: string }).title,
@@ -340,11 +339,7 @@ export const publicRoutes = new Elysia()
 
           set.headers['content-type'] = 'application/zip';
           set.headers['content-disposition'] = `attachment; filename="${fileName}"`;
-          // A publication never changes after it is created - but gated (NSFW) content is not
-          // for a shared cache. Keyed on the story's flag, not the viewer class.
-          set.headers['cache-control'] = (await showcaseService.isNsfwStory(params.storyId))
-            ? 'private, max-age=31536000, immutable'
-            : 'public, max-age=31536000, immutable';
+          set.headers['cache-control'] = await publicationCacheControl(params.storyId);
           return body;
         },
         {
@@ -361,40 +356,29 @@ export const publicRoutes = new Elysia()
       .post(
         '/stories/:storyId/publications/:publicationId/download-url',
         async ({ params, headers, jwtShowcase: showcaseJwt, user }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          const includeNsfw = await assertShowcaseOpen({
-            entry,
+          const { entry, includeNsfw } = await openShowcaseStory({
             storyId: params.storyId,
             user,
             showcaseJwt,
             credentials: [headers['authorization']],
           });
-
-          const publication = await showcaseService.getPublication(
+          await publicationOr404(
             params.storyId,
             params.publicationId,
+            (candidate) => candidate.packageIncluded,
           );
-          if (!publication || !publication.packageIncluded) {
-            throw new AppError(404, 'Not found.');
-          }
 
           // A token goes into the URL when the plain address would not open: password stories
           // (existing behavior), or a verified adult's NSFW download (the `nsfwOk` proof, so the
           // header-less download keeps the gating without carrying the session).
-          const needsToken = entry.visibility === 'password' || includeNsfw;
-          const access = needsToken
-            ? await showcaseJwt.sign({
-                storyId: params.storyId,
-                ...(includeNsfw ? { nsfwOk: true as const } : {}),
-                exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
-              })
-            : undefined;
-
-          const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/download`;
-          return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
+          return signedPublicationUrl({
+            showcaseJwt,
+            entry,
+            storyId: params.storyId,
+            publicationId: params.publicationId,
+            includeNsfw,
+            resource: 'download',
+          });
         },
         {
           params: t.Object({ storyId: t.String(), publicationId: t.String() }),
@@ -410,12 +394,7 @@ export const publicRoutes = new Elysia()
       .get(
         '/stories/:storyId/publications/:publicationId/manuscript/download',
         async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          await assertShowcaseOpen({
-            entry,
+          await openShowcaseStory({
             storyId: params.storyId,
             user,
             showcaseJwt,
@@ -463,11 +442,7 @@ export const publicRoutes = new Elysia()
 
           set.headers['content-type'] = meta.mimeType;
           set.headers['content-disposition'] = `attachment; filename="${fileName}"`;
-          // A publication never changes after it is created - but gated (NSFW) content is not
-          // for a shared cache. Keyed on the story's flag, not the viewer class.
-          set.headers['cache-control'] = (await showcaseService.isNsfwStory(params.storyId))
-            ? 'private, max-age=31536000, immutable'
-            : 'public, max-age=31536000, immutable';
+          set.headers['cache-control'] = await publicationCacheControl(params.storyId);
           return body;
         },
         {
@@ -484,37 +459,26 @@ export const publicRoutes = new Elysia()
       .post(
         '/stories/:storyId/publications/:publicationId/manuscript/download-url',
         async ({ params, headers, jwtShowcase: showcaseJwt, user }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          const includeNsfw = await assertShowcaseOpen({
-            entry,
+          const { entry, includeNsfw } = await openShowcaseStory({
             storyId: params.storyId,
             user,
             showcaseJwt,
             credentials: [headers['authorization']],
           });
-
-          const publication = await showcaseService.getPublication(
+          await publicationOr404(
             params.storyId,
             params.publicationId,
+            (candidate) => manuscriptMetaOf(candidate) !== null,
           );
-          if (!publication || !manuscriptMetaOf(publication)) {
-            throw new AppError(404, 'Not found.');
-          }
 
-          const needsToken = entry.visibility === 'password' || includeNsfw;
-          const access = needsToken
-            ? await showcaseJwt.sign({
-                storyId: params.storyId,
-                ...(includeNsfw ? { nsfwOk: true as const } : {}),
-                exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
-              })
-            : undefined;
-
-          const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/manuscript/download`;
-          return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
+          return signedPublicationUrl({
+            showcaseJwt,
+            entry,
+            storyId: params.storyId,
+            publicationId: params.publicationId,
+            includeNsfw,
+            resource: 'manuscript/download',
+          });
         },
         {
           params: t.Object({ storyId: t.String(), publicationId: t.String() }),

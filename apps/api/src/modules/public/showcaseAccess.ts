@@ -2,6 +2,41 @@
 export const DOWNLOAD_URL_TTL_SECONDS = 60;
 
 /**
+ * The address a browser opens a published version by. The plain address is enough, except where it
+ * would not open: a password story, or a verified adult's NSFW content, get a token in the URL that
+ * lasts DOWNLOAD_URL_TTL_SECONDS (the `nsfwOk` proof, so a header-less fetch keeps the gating).
+ */
+export async function signedPublicationUrl({
+  showcaseJwt,
+  entry,
+  storyId,
+  publicationId,
+  includeNsfw,
+  resource,
+}: {
+  showcaseJwt: {
+    sign: (payload: { storyId: string; nsfwOk?: true; exp: number }) => Promise<string>;
+  };
+  entry: { visibility: string };
+  storyId: string;
+  publicationId: string;
+  includeNsfw: boolean;
+  resource: 'download' | 'manuscript/download' | 'reader';
+}): Promise<{ url: string }> {
+  const needsToken = entry.visibility === 'password' || includeNsfw;
+  const access = needsToken
+    ? await showcaseJwt.sign({
+        storyId,
+        ...(includeNsfw ? { nsfwOk: true as const } : {}),
+        exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
+      })
+    : undefined;
+
+  const base = `/api/public/stories/${storyId}/publications/${publicationId}/${resource}`;
+  return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
+}
+
+/**
  * Checks an `Authorization: Showcase <token>` and returns whether it unlocks *this* story.
  *
  * The scope is per story on purpose: holding one story's password does not make another visible.

@@ -11,6 +11,44 @@ import {
 import { requireAdmin } from '../../utils/adminAuth';
 import { AppError } from '../../utils/errors';
 
+/**
+ * The two conflicts a tier write can hit (409), mapped the same way by create and update.
+ * Anything else is rethrown.
+ */
+function rethrowTierWriteError(error: unknown): never {
+  if (error instanceof TierNameAlreadyTakenError) {
+    throw new AppError(409, error.message);
+  }
+  if (error instanceof TierPlayProductAlreadyUsedError) {
+    throw new AppError(409, error.message);
+  }
+  throw error;
+}
+
+/**
+ * The tier fields of the create and update bodies. Both routes declare them loosely (see the
+ * comments on each route); only the Zod schemas are the real gate.
+ */
+const tierBodyFields = {
+  isDefault: t.Optional(t.Boolean()),
+  maxStories: t.Optional(t.Nullable(t.Number())),
+  maxEntitiesPerStory: t.Optional(t.Nullable(t.Number())),
+  maxEntitiesTotal: t.Optional(t.Nullable(t.Number())),
+  maxStorageBytesPerStory: t.Optional(t.Nullable(t.Number())),
+  maxStorageBytesTotal: t.Optional(t.Nullable(t.Number())),
+  maxPublicationsPerDay: t.Optional(t.Nullable(t.Number())),
+  maxPublishedArcs: t.Optional(t.Nullable(t.Number())),
+  maxMessagesPerDay: t.Optional(t.Nullable(t.Number())),
+  priceMonthlyCents: t.Optional(t.Nullable(t.Number())),
+  priceYearlyCents: t.Optional(t.Nullable(t.Number())),
+  playMonthlyProductId: t.Optional(t.Nullable(t.String())),
+  playYearlyProductId: t.Optional(t.Nullable(t.String())),
+  webMonthlyEnabled: t.Optional(t.Boolean()),
+  webYearlyEnabled: t.Optional(t.Boolean()),
+  isPublicForSale: t.Optional(t.Boolean()),
+  sortOrder: t.Optional(t.Number()),
+};
+
 export const adminTierRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
 
@@ -57,13 +95,7 @@ export const adminTierRoutes = new Elysia()
         set.status = 201;
         return created;
       } catch (error) {
-        if (error instanceof TierNameAlreadyTakenError) {
-          throw new AppError(409, error.message);
-        }
-        if (error instanceof TierPlayProductAlreadyUsedError) {
-          throw new AppError(409, error.message);
-        }
-        throw error;
+        rethrowTierWriteError(error);
       }
     },
     {
@@ -72,23 +104,7 @@ export const adminTierRoutes = new Elysia()
       // handler runs, so this must include every field the Zod schema does.
       body: t.Object({
         name: t.String(),
-        isDefault: t.Optional(t.Boolean()),
-        maxStories: t.Optional(t.Nullable(t.Number())),
-        maxEntitiesPerStory: t.Optional(t.Nullable(t.Number())),
-        maxEntitiesTotal: t.Optional(t.Nullable(t.Number())),
-        maxStorageBytesPerStory: t.Optional(t.Nullable(t.Number())),
-        maxStorageBytesTotal: t.Optional(t.Nullable(t.Number())),
-        maxPublicationsPerDay: t.Optional(t.Nullable(t.Number())),
-        maxPublishedArcs: t.Optional(t.Nullable(t.Number())),
-        maxMessagesPerDay: t.Optional(t.Nullable(t.Number())),
-        priceMonthlyCents: t.Optional(t.Nullable(t.Number())),
-        priceYearlyCents: t.Optional(t.Nullable(t.Number())),
-        playMonthlyProductId: t.Optional(t.Nullable(t.String())),
-        playYearlyProductId: t.Optional(t.Nullable(t.String())),
-        webMonthlyEnabled: t.Optional(t.Boolean()),
-        webYearlyEnabled: t.Optional(t.Boolean()),
-        isPublicForSale: t.Optional(t.Boolean()),
-        sortOrder: t.Optional(t.Number()),
+        ...tierBodyFields,
       }),
       detail: { summary: 'Create a tier', tags: ['Admin'], security: [{ bearerAuth: [] }] },
     },
@@ -110,13 +126,7 @@ export const adminTierRoutes = new Elysia()
         if (error instanceof TierNotFoundError) {
           throw new AppError(404, error.message);
         }
-        if (error instanceof TierNameAlreadyTakenError) {
-          throw new AppError(409, error.message);
-        }
-        if (error instanceof TierPlayProductAlreadyUsedError) {
-          throw new AppError(409, error.message);
-        }
-        throw error;
+        rethrowTierWriteError(error);
       }
     },
     {
@@ -125,23 +135,7 @@ export const adminTierRoutes = new Elysia()
       // TierCreateInputSchema, but optional) stays the real gate.
       body: t.Object({
         name: t.Optional(t.String()),
-        isDefault: t.Optional(t.Boolean()),
-        maxStories: t.Optional(t.Nullable(t.Number())),
-        maxEntitiesPerStory: t.Optional(t.Nullable(t.Number())),
-        maxEntitiesTotal: t.Optional(t.Nullable(t.Number())),
-        maxStorageBytesPerStory: t.Optional(t.Nullable(t.Number())),
-        maxStorageBytesTotal: t.Optional(t.Nullable(t.Number())),
-        maxPublicationsPerDay: t.Optional(t.Nullable(t.Number())),
-        maxPublishedArcs: t.Optional(t.Nullable(t.Number())),
-        maxMessagesPerDay: t.Optional(t.Nullable(t.Number())),
-        priceMonthlyCents: t.Optional(t.Nullable(t.Number())),
-        priceYearlyCents: t.Optional(t.Nullable(t.Number())),
-        playMonthlyProductId: t.Optional(t.Nullable(t.String())),
-        playYearlyProductId: t.Optional(t.Nullable(t.String())),
-        webMonthlyEnabled: t.Optional(t.Boolean()),
-        webYearlyEnabled: t.Optional(t.Boolean()),
-        isPublicForSale: t.Optional(t.Boolean()),
-        sortOrder: t.Optional(t.Number()),
+        ...tierBodyFields,
       }),
       detail: { summary: 'Update a tier', tags: ['Admin'], security: [{ bearerAuth: [] }] },
     },

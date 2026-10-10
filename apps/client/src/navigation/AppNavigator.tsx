@@ -1,11 +1,12 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 import SyncInitializer from '@/src/components/features/app/SyncInitializer';
 import { useDrizzle } from '../db';
 import { getClientSettings } from '../services/ClientSettingsService';
+import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
@@ -14,6 +15,7 @@ import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
 import { buildNavigationTheme } from './navigationTheme';
 import StorySelectionStack from './StorySelectionStack';
+import { attachWebHistoryBack, hasScreenBehind } from './webHistoryBack';
 
 export type RootStackParamList = {
   ColdInstall: undefined;
@@ -22,6 +24,32 @@ export type RootStackParamList = {
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
+/** What the browser's Back button does: what the header's back arrow does on the screen in front. */
+function goBackLikeTheHeader() {
+  const store = useHeaderBackActionStore.getState();
+  if (store.backAction) {
+    store.backAction();
+    return;
+  }
+  const wayBack = store.consumeCrossStackReturnAction(navigationRef.getCurrentRoute()?.name);
+  if (wayBack) wayBack();
+  else navigationRef.goBack();
+}
+
+/** Whether the header shows a back arrow on the screen in front: the browser's Back has somewhere to go. */
+const appHasWayBack = () => {
+  const { crossStackReturnScreen } = useHeaderBackActionStore.getState();
+  const current = navigationRef.getCurrentRoute()?.name;
+  return (
+    (crossStackReturnScreen !== undefined && crossStackReturnScreen === current) ||
+    // From the open story down: the story list under it is left from the menu, not by Back.
+    hasScreenBehind(
+      navigationRef.getRootState()?.routes[navigationRef.getRootState()?.index ?? 0]?.state,
+    )
+  );
+};
 
 interface AppNavigatorProps {
   dbInitialized: boolean;
@@ -32,6 +60,10 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const [isColdInstallNeeded, setIsColdInstallNeeded] = useState(false);
   const [showcaseReady, setShowcaseReady] = useState(false);
   const showcase = readShowcaseRequest();
+  const stopWebHistory = useRef<(() => void) | null>(null);
+
+  // The web build's Back button goes back in the app (see webHistoryBack).
+  useEffect(() => () => stopWebHistory.current?.(), []);
 
   const drizzleDb = useDrizzle();
   const { colors, isDarkMode } = useTheme();
@@ -102,6 +134,19 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   // this navigator tree. No linking prop: deep-link routing was never configured.
   return (
     <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        if (Platform.OS !== 'web' || typeof window === 'undefined' || stopWebHistory.current)
+          return;
+        stopWebHistory.current = attachWebHistoryBack(
+          {
+            canGoBack: appHasWayBack,
+            addListener: (type, callback) => navigationRef.addListener(type, callback),
+          },
+          window,
+          goBackLikeTheHeader,
+        );
+      }}
       theme={navigationTheme}
       // Left on, React Navigation writes the focused route's name (`DeviceIndex`, `PackList`) into the
       // title whenever the screen sets its title on a parent navigator - racing the explicit

@@ -69,4 +69,40 @@ describe('style sheets', () => {
 
     expect(stale).toEqual([]);
   });
+
+  describe('values', () => {
+    /**
+     * The font sizes and spacings in use form a scale (see theme/tokens.ts); a style that is a pixel off a
+     * step is drift, not a decision. Corner radii are not checked: a circle's radius is half its size.
+     */
+    const FONT_SIZES = new Set([10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24, 26, 28, 32]);
+    const SMALL_SPACES = new Set([0, 1, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 14, 15, 16, 18, 20, 22, 24]);
+    const SPACE_PROPERTY =
+      /^(padding|paddingHorizontal|paddingVertical|paddingTop|paddingBottom|paddingLeft|paddingRight|margin|marginHorizontal|marginVertical|marginTop|marginBottom|marginLeft|marginRight|gap|rowGap|columnGap)$/;
+    const VALUE = /\b(\w+):\s*(\d+(?:\.\d+)?)\s*[,}\n]/g;
+    const styled = files.filter(
+      ({ path, source }) =>
+        /StyleSheet\.create|style=\{\{/.test(source) &&
+        !/^(exampleStories|shippedPacks)\//.test(path),
+    );
+
+    const offScale = (kind: 'font' | 'space') =>
+      styled.flatMap(({ path, source }) =>
+        [...source.matchAll(VALUE)]
+          .filter(([, key, value]) =>
+            kind === 'font'
+              ? key === 'fontSize' && !FONT_SIZES.has(Number(value))
+              : SPACE_PROPERTY.test(key) && Number(value) < 28 && !SMALL_SPACES.has(Number(value)),
+          )
+          .map(([, key, value]) => `${path}: ${key} ${value}`),
+      );
+
+    it('keep font sizes on the scale', () => {
+      expect(offScale('font')).toEqual([]);
+    });
+
+    it('keep small spacings on the scale', () => {
+      expect(offScale('space')).toEqual([]);
+    });
+  });
 });

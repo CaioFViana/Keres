@@ -57,7 +57,7 @@ const GraphCanvasControls: React.FC<Props> = ({
           borderRadius: 21,
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: 9,
+          marginTop: 10,
           backgroundColor: colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,

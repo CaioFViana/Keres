@@ -243,7 +243,7 @@ const LocationGraphScreen = () => {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
-          paddingVertical: 9,
+          paddingVertical: 10,
         },
       }),
     [colors],

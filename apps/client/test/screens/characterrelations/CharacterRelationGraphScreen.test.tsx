@@ -210,7 +210,7 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
         onPress: () => void;
         trailing?: { label: string; onPress: () => void }[];
       }[];
-      action?: { label: string; onPress: () => void };
+      actions?: { label: string; onPress: () => void }[];
     }[];
     actionLabel: string;
     onAction: () => void;
@@ -246,19 +246,13 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
             ),
           ),
         ]),
-        ...(section.action
-          ? [
-              react.createElement(
-                native.Text,
-                {
-                  key: 'section-action',
-                  testID: 'sheet-section-action',
-                  onPress: section.action.onPress,
-                },
-                section.action.label,
-              ),
-            ]
-          : []),
+        ...(section.actions ?? []).map((action) =>
+          react.createElement(
+            native.Text,
+            { key: 'section-action', testID: 'sheet-section-action', onPress: action.onPress },
+            action.label,
+          ),
+        ),
       ]),
       react.createElement(
         native.Text,

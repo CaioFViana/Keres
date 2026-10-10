@@ -443,14 +443,16 @@ const CharacterRelationGraphScreen = () => {
                     ]
                   : undefined,
               })),
-              action: canEdit
-                ? {
-                    label: t('add_character_relation'),
-                    onPress: () => {
-                      closeDetails();
-                      editor.openAdd(selectedNode.id);
+              actions: canEdit
+                ? [
+                    {
+                      label: t('add_character_relation'),
+                      onPress: () => {
+                        closeDetails();
+                        editor.openAdd(selectedNode.id);
+                      },
                     },
-                  }
+                  ]
                 : undefined,
             },
           ]}

@@ -3,6 +3,8 @@ import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/common
 import { useNavigation } from '@react-navigation/native';
 import { useGraphDataLoader } from '@/src/hooks/useGraphDataLoader';
 import { useGraphFocus } from '@/src/hooks/useGraphFocus';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -27,6 +29,7 @@ import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import { useStoryStore } from '../../state/storyStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import {
@@ -40,10 +43,12 @@ import type {
   LocationRelationKind,
 } from '@keres/shared/graphs/locationGraphLayout';
 import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
+import { collapseLocationGraph } from '@keres/shared/graphs/locationGraphCollapse';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
 import { buildLocationGraphMapFileName } from '../../utils/storyTransfer';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
+import { useLocationRelationEditor } from './useLocationRelationEditor';
 import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 
 /**
@@ -80,8 +85,12 @@ const LocationGraphScreen = () => {
 
   /** Empty means the whole map; the focus filter only narrows it. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  /** Regions whose contents the author folded away, to read a big world at the level of its regions. */
+  const [collapsedIds, setCollapsedIds] = useState<string[]>([]);
 
   const storyId = selectedStory?.id;
+  const { userId } = useUserSettingsStore();
+  const { canEdit } = useStoryRole(storyId);
 
   const loadGraphData = useCallback(
     async (id: string) => {
@@ -97,6 +106,7 @@ const LocationGraphScreen = () => {
     data: loaded,
     loading,
     error,
+    reload,
   } = useGraphDataLoader({
     storyId,
     load: loadGraphData,
@@ -124,15 +134,33 @@ const LocationGraphScreen = () => {
     [locations, graphRelations, selectedIds],
   );
 
+  const folded = useMemo(
+    () => collapseLocationGraph(filtered.locations, filtered.relations, collapsedIds),
+    [filtered, collapsedIds],
+  );
+
   const layout = useMemo(
     () =>
       buildLocationGraphLayout(
-        filtered.locations,
-        filtered.relations,
+        folded.locations,
+        folded.relations,
         isCompact ? 'top-to-bottom' : 'left-to-right',
       ),
-    [filtered, isCompact],
+    [folded, isCompact],
   );
+
+  const hiddenTotal = useMemo(
+    () => [...folded.hiddenCounts.values()].reduce((sum, count) => sum + count, 0),
+    [folded.hiddenCounts],
+  );
+
+  const toggleFold = useCallback((locationId: string) => {
+    setCollapsedIds((current) =>
+      current.includes(locationId)
+        ? current.filter((id) => id !== locationId)
+        : [...current, locationId],
+    );
+  }, []);
 
   const focus = useGraphFocus({
     nodes: layout.nodes,
@@ -143,6 +171,15 @@ const LocationGraphScreen = () => {
     clearFilter: () => setSelectedIds([]),
   });
   const { selectedNode, selectedNodeId, closeDetails } = focus;
+
+  const editor = useLocationRelationEditor({
+    db: drizzleDb,
+    storyId,
+    userId,
+    locations,
+    relations: graphRelations as never,
+    reload,
+  });
 
   const degrees = useMemo(() => degreeById(layout.edges, locationEnds), [layout.edges]);
 
@@ -172,52 +209,76 @@ const LocationGraphScreen = () => {
     [colors.primary, colors.textSecondary, layout.edges, t],
   );
 
+  // What the sheet lists comes from the map before folding: a folded region still holds its places.
   const nameById = useMemo(
-    () => new Map(layout.nodes.map((node) => [node.id, node.location.name])),
-    [layout.nodes],
+    () => new Map(filtered.locations.map((location) => [location.id, location.name])),
+    [filtered.locations],
+  );
+  const nameOf = useCallback(
+    (id: string) => nameById.get(id) ?? t('unknown_location'),
+    [nameById, t],
   );
 
   const selectedParent = useMemo((): LocationNodeConnection | null => {
     if (!selectedNodeId) return null;
-    const parentEdge = layout.edges.find(
-      (edge) => edge.relationType === 'contains' && edge.targetId === selectedNodeId,
+    const parent = filtered.relations.find(
+      (relation) => relation.relationType === 'contains' && relation.locationBId === selectedNodeId,
     );
-    if (!parentEdge) return null;
-    return {
-      relationId: parentEdge.id,
-      locationId: parentEdge.sourceId,
-      locationName: nameById.get(parentEdge.sourceId) ?? t('unknown_location'),
-    };
-  }, [layout.edges, selectedNodeId, nameById, t]);
+    return parent
+      ? {
+          relationId: parent.id,
+          locationId: parent.locationAId,
+          locationName: nameOf(parent.locationAId),
+        }
+      : null;
+  }, [filtered.relations, nameOf, selectedNodeId]);
 
   const selectedChildren = useMemo((): LocationNodeConnection[] => {
     if (!selectedNodeId) return [];
-    return layout.edges
-      .filter((edge) => edge.relationType === 'contains' && edge.sourceId === selectedNodeId)
-      .map((edge) => ({
-        relationId: edge.id,
-        locationId: edge.targetId,
-        locationName: nameById.get(edge.targetId) ?? t('unknown_location'),
+    return filtered.relations
+      .filter(
+        (relation) =>
+          relation.relationType === 'contains' && relation.locationAId === selectedNodeId,
+      )
+      .map((relation) => ({
+        relationId: relation.id,
+        locationId: relation.locationBId,
+        locationName: nameOf(relation.locationBId),
       }));
-  }, [layout.edges, selectedNodeId, nameById, t]);
+  }, [filtered.relations, nameOf, selectedNodeId]);
 
   const selectedConnections = useMemo((): LocationNodeConnection[] => {
     if (!selectedNodeId) return [];
-    return layout.edges
+    return filtered.relations
       .filter(
-        (edge) =>
-          edge.relationType === 'connected_to' &&
-          (edge.sourceId === selectedNodeId || edge.targetId === selectedNodeId),
+        (relation) =>
+          relation.relationType === 'connected_to' &&
+          (relation.locationAId === selectedNodeId || relation.locationBId === selectedNodeId),
       )
-      .map((edge) => {
-        const otherId = edge.sourceId === selectedNodeId ? edge.targetId : edge.sourceId;
-        return {
-          relationId: edge.id,
-          locationId: otherId,
-          locationName: nameById.get(otherId) ?? t('unknown_location'),
-        };
+      .map((relation) => {
+        const otherId =
+          relation.locationAId === selectedNodeId ? relation.locationBId : relation.locationAId;
+        return { relationId: relation.id, locationId: otherId, locationName: nameOf(otherId) };
       });
-  }, [layout.edges, selectedNodeId, nameById, t]);
+  }, [filtered.relations, nameOf, selectedNodeId]);
+
+  /** Where the place stands: the regions above it, from the outermost, e.g. `World › North`. */
+  const ancestorPath = useMemo(() => {
+    if (!selectedNodeId) return '';
+    const names: string[] = [];
+    const seen = new Set([selectedNodeId]);
+    let current = selectedNodeId;
+    for (;;) {
+      const parent = filtered.relations.find(
+        (relation) => relation.relationType === 'contains' && relation.locationBId === current,
+      );
+      if (!parent || seen.has(parent.locationAId)) break;
+      seen.add(parent.locationAId);
+      names.unshift(nameById.get(parent.locationAId) ?? '');
+      current = parent.locationAId;
+    }
+    return names.filter(Boolean).join(' › ');
+  }, [filtered.relations, nameById, selectedNodeId]);
 
   const handleOpenLocation = useCallback(
     (locationId: string) => {
@@ -356,6 +417,14 @@ const LocationGraphScreen = () => {
           onClear={() => setSelectedIds([])}
         />
       )}
+      {collapsedIds.length > 0 && hiddenTotal > 0 && (
+        <GraphFilterSummary
+          colors={colors}
+          hint={t('location_graph_folded_hint', { count: hiddenTotal })}
+          clearLabel={t('location_graph_expand_all')}
+          onClear={() => setCollapsedIds([])}
+        />
+      )}
       {graphRelations.length === 0 && (
         <Text style={styles.noRelationsHint}>{t('location_graph_none_yet')}</Text>
       )}
@@ -367,9 +436,17 @@ const LocationGraphScreen = () => {
         selectedNodeId={selectedNodeId}
         highlightedNodeIds={selectedIds}
         focusNodeIds={focus.focusNodeIds}
-        nodeAccessibilityLabel={(node) =>
-          t('graph_node_a11y', { name: node.location.name, count: degrees.get(node.id) ?? 0 })
-        }
+        hiddenCounts={folded.hiddenCounts}
+        nodeAccessibilityLabel={(node) => {
+          const label = t('graph_node_a11y', {
+            name: node.location.name,
+            count: degrees.get(node.id) ?? 0,
+          });
+          const hidden = folded.hiddenCounts.get(node.id);
+          return hidden
+            ? `${label}, ${t('location_graph_collapsed_hint', { count: hidden })}`
+            : label;
+        }}
         onSelectNode={(node) => focus.tapNode(node.id)}
         onBackgroundTap={focus.clearFocus}
       />
@@ -396,6 +473,7 @@ const LocationGraphScreen = () => {
       {selectedNode && focus.detailsOpen && (
         <GraphNodeSheet
           title={selectedNode.location.name}
+          subtitle={ancestorPath ? { text: ancestorPath } : undefined}
           badges={
             selectedNode.isIsolated
               ? [{ label: t('location_graph_badge_isolated'), color: colors.textSecondary }]
@@ -412,9 +490,30 @@ const LocationGraphScreen = () => {
                       icon: 'arrow-up-outline',
                       label: selectedParent.locationName,
                       onPress: () => focus.selectNode(selectedParent.locationId),
+                      trailing: canEdit
+                        ? [
+                            {
+                              icon: 'trash-outline' as const,
+                              label: `${t('remove')}: ${selectedParent.locationName}`,
+                              destructive: true,
+                              onPress: () => editor.removeParent(selectedNode.id),
+                            },
+                          ]
+                        : undefined,
                     },
                   ]
                 : [],
+              actions: canEdit
+                ? [
+                    {
+                      label: selectedParent ? t('change_parent') : t('set_parent'),
+                      onPress: () => {
+                        closeDetails();
+                        editor.open('parent', selectedNode.id);
+                      },
+                    },
+                  ]
+                : undefined,
             },
             {
               title: t('child_locations'),
@@ -424,7 +523,43 @@ const LocationGraphScreen = () => {
                 icon: 'arrow-down-outline' as const,
                 label: connection.locationName,
                 onPress: () => focus.selectNode(connection.locationId),
+                trailing: canEdit
+                  ? [
+                      {
+                        icon: 'trash-outline' as const,
+                        label: `${t('remove')}: ${connection.locationName}`,
+                        destructive: true,
+                        onPress: () => editor.removeChild(connection.locationId),
+                      },
+                    ]
+                  : undefined,
               })),
+              actions: [
+                ...(canEdit
+                  ? [
+                      {
+                        label: t('add_child_location'),
+                        onPress: () => {
+                          closeDetails();
+                          editor.open('child', selectedNode.id);
+                        },
+                      },
+                    ]
+                  : []),
+                ...(selectedChildren.length > 0
+                  ? [
+                      {
+                        label: collapsedIds.includes(selectedNode.id)
+                          ? t('location_graph_expand')
+                          : t('location_graph_collapse'),
+                        icon: collapsedIds.includes(selectedNode.id)
+                          ? ('chevron-down' as const)
+                          : ('chevron-up' as const),
+                        onPress: () => toggleFold(selectedNode.id),
+                      },
+                    ]
+                  : []),
+              ],
             },
             {
               title: t('connected_locations'),
@@ -434,12 +569,43 @@ const LocationGraphScreen = () => {
                 icon: 'git-network-outline' as const,
                 label: connection.locationName,
                 onPress: () => focus.selectNode(connection.locationId),
+                trailing: canEdit
+                  ? [
+                      {
+                        icon: 'trash-outline' as const,
+                        label: `${t('remove')}: ${connection.locationName}`,
+                        destructive: true,
+                        onPress: () => editor.removeConnection(connection.relationId),
+                      },
+                    ]
+                  : undefined,
               })),
+              actions: canEdit
+                ? [
+                    {
+                      label: t('add_connection'),
+                      onPress: () => {
+                        closeDetails();
+                        editor.open('connection', selectedNode.id);
+                      },
+                    },
+                  ]
+                : undefined,
             },
           ]}
           actionLabel={t('location_graph_open_location')}
           onAction={() => handleOpenLocation(selectedNode.id)}
           onClose={closeDetails}
+        />
+      )}
+
+      {editor.picking && (
+        <LocationPickerModal
+          isVisible
+          onClose={editor.close}
+          onSelect={(locationId) => void editor.pick(locationId)}
+          title={editor.pickerTitle}
+          candidates={editor.candidates}
         />
       )}
     </View>

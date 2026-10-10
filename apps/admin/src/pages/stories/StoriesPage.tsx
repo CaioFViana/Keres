@@ -215,7 +215,7 @@ export function StoriesPage() {
                   {contentOpenId === story.id && (
                     <tr>
                       <td colSpan={7}>
-                        <StoryContent story={story} />
+                        <StoryContent story={story} autoOpen />
                       </td>
                     </tr>
                   )}

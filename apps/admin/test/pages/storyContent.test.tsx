@@ -106,6 +106,15 @@ async function open() {
 }
 
 describe('StoryContent moderation viewer', () => {
+  it('loads at once when the list row asked for it, with no second button to press', async () => {
+    const view = await render(<StoryContent story={{ ...story }} autoOpen />);
+    await flush();
+
+    expect(AdminStoryApiService.media).toHaveBeenCalledWith('story-1');
+    expect(view.container.textContent).toContain('Retrato');
+    await view.unmount();
+  });
+
   it('loads media, boards and maps in parallel when opened', async () => {
     const view = await open();
 

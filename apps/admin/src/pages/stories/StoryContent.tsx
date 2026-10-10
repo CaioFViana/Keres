@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AdminStoryApiService,
@@ -331,7 +331,14 @@ function Entities({ storyId }: { storyId: string }) {
  * drawings themselves need the story canvas to render), and the raw entities. Loaded
  * lazily - only when the reviewer opens the section.
  */
-export function StoryContent({ story }: { story: AdminStoryItem }) {
+export function StoryContent({
+  story,
+  autoOpen = false,
+}: {
+  story: AdminStoryItem;
+  /** Loads at once instead of waiting for its own button: for a list row that was already asked to open it. */
+  autoOpen?: boolean;
+}) {
   const { t } = useTranslation('admin');
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<ContentTab>('media');
@@ -360,7 +367,14 @@ export function StoryContent({ story }: { story: AdminStoryItem }) {
     }
   };
 
-  if (!open) {
+  const startedAutomatically = useRef(false);
+  useEffect(() => {
+    if (!autoOpen || startedAutomatically.current) return;
+    startedAutomatically.current = true;
+    void load();
+  });
+
+  if (!open && !autoOpen) {
     return (
       <button type="button" className="button-secondary" onClick={() => void load()}>
         {t('stories.showContent')}

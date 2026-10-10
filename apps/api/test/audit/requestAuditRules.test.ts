@@ -59,6 +59,16 @@ describe('classifyRequest', () => {
     });
   });
 
+  it('finds the rule of a route at the root of its group, whether or not the path ends in a slash', () => {
+    for (const path of ['/api/admin/tiers', '/api/admin/tiers/']) {
+      expect(classifyRequest('POST', path).rule?.action).toBe('admin.tier_created');
+    }
+    expect(classifyRequest('POST', '/api/admin/users/').rule?.action).toBe('admin.user_created');
+    expect(classifyRequest('PUT', '/api/admin/showcase-settings/').rule?.action).toBe(
+      'admin.showcase_settings_updated',
+    );
+  });
+
   it('knows nothing of routes that are not worth a line', () => {
     expect(classifyRequest('GET', '/api/friend/').rule).toBeNull();
     expect(classifyRequest('POST', '/api/sync/story-1').rule).toBeNull();

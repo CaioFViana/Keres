@@ -53,7 +53,8 @@ const admin = (
   extra: Partial<AuditRule> = {},
 ): AuditRule => ({
   method,
-  pattern: new RegExp(`^/admin/${path}$`),
+  // A route at the root of its group (`POST /admin/tiers`) is seen with the trailing slash the group adds.
+  pattern: new RegExp(`^/admin/${path}/?$`),
   category: 'admin',
   action,
   ...extra,

@@ -2,7 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import type { LocationSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
@@ -26,39 +28,11 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   title,
   candidates,
 }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
 
   const sortedCandidates = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
 
-  const styles = StyleSheet.create({
-    title: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-      textAlign: 'center',
-    },
-    item: {
-      paddingVertical: 12,
-      paddingHorizontal: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    itemText: {
-      color: colors.text,
-      fontSize: 16,
-    },
-    emptyText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
-    },
-    closeButton: {
-      marginTop: 15,
-      alignSelf: 'flex-end',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal visible={isVisible} onClose={onClose} inset="regular" maxHeight="78%">
@@ -80,5 +54,34 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    title: {
+      ...typography.title,
+      color: colors.text,
+      marginBottom: 10,
+      textAlign: 'center',
+    },
+    item: {
+      paddingVertical: 12,
+      paddingHorizontal: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    itemText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+    },
+    emptyText: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingVertical: 20,
+    },
+    closeButton: {
+      marginTop: 15,
+      alignSelf: 'flex-end',
+    },
+  });
 
 export default LocationPickerModal;

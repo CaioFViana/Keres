@@ -11,7 +11,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { OperationLogSelect } from '../../../db/schema';
 import { useEntityName } from '../../../hooks/useEntityName';
 import { useUserDisplayName } from '../../../hooks/useUserDisplayName'; // Import the new hook
-import { useTheme } from '../../../theme';
+import { useTheme, type ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { typography } from '../../../theme/tokens';
 import { isLinkEntityType } from '../../../utils/entityTypeBadge';
 import { truncate } from '../../../utils/stringUtils';
 
@@ -111,60 +113,7 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({
     operationDisplayText = `${t(log.operationType)} ${entityDisplayName}`;
   }
 
-  const styles = StyleSheet.create({
-    cardContainer: {
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      padding: 15,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-      shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 5,
-    },
-    operationMarker: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      marginRight: 9,
-    },
-    entityIcon: { marginRight: 6 },
-    operationTypeText: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      textTransform: 'capitalize',
-      flexShrink: 1,
-    },
-    entityInfo: {
-      fontSize: 14,
-      color: colors.text,
-    },
-    timestamp: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      marginTop: 5,
-      textAlign: 'right',
-    },
-    syncStatus: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      textAlign: 'right',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const formattedDate = log.createdAt.toLocaleString('en-US', {
     dateStyle: 'medium',
@@ -207,5 +156,60 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({
     </TouchableOpacity>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    cardContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 5,
+    },
+    operationMarker: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: 9,
+    },
+    entityIcon: { marginRight: 6 },
+    operationTypeText: {
+      ...typography.sectionTitle,
+      color: colors.text,
+      textTransform: 'capitalize',
+      flexShrink: 1,
+    },
+    entityInfo: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    timestamp: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      marginTop: 5,
+      textAlign: 'right',
+    },
+    syncStatus: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'right',
+    },
+  });
 
 export default OperationLogListItem;

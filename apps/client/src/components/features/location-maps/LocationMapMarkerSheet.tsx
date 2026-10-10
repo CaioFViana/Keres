@@ -13,7 +13,8 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import type { ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { space } from '../../../theme/tokens';
 
 /** Keeps focus rings and input borders inside the rounded ResponsiveModal surface. */
@@ -64,36 +65,7 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    sheet: { maxHeight: '78%' },
-    scroll: { flexShrink: 1 },
-    scrollContent: {
-      paddingHorizontal:
-        LOCATION_MAP_MARKER_SHEET_HORIZONTAL_INSET + LOCATION_MAP_MARKER_SHEET_INNER_PADDING,
-      paddingTop: LOCATION_MAP_MARKER_SHEET_INNER_PADDING,
-      paddingBottom: 24,
-    },
-    // The sheet has no padding of its own: the header and the scroll body each lay out their inset.
-    header: {
-      paddingHorizontal: LOCATION_MAP_MARKER_SHEET_HORIZONTAL_INSET,
-      paddingTop: space.xl,
-      paddingBottom: space.md,
-    },
-    label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 14, marginBottom: 6 },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      color: colors.text,
-      borderRadius: 8,
-      padding: 10,
-    },
-    note: { minHeight: 96, textAlignVertical: 'top' },
-    hint: { color: colors.textSecondary, marginTop: 8 },
-    actionGroup: { gap: 8, marginTop: 8 },
-    remove: { backgroundColor: colors.error, marginTop: 20 },
-    removeInGroup: { backgroundColor: colors.error },
-  });
+  const styles = useThemedStyles(createStyles);
   return (
     <ResponsiveModal
       visible
@@ -189,5 +161,36 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { maxHeight: '78%' },
+    scroll: { flexShrink: 1 },
+    scrollContent: {
+      paddingHorizontal:
+        LOCATION_MAP_MARKER_SHEET_HORIZONTAL_INSET + LOCATION_MAP_MARKER_SHEET_INNER_PADDING,
+      paddingTop: LOCATION_MAP_MARKER_SHEET_INNER_PADDING,
+      paddingBottom: 24,
+    },
+    // The sheet has no padding of its own: the header and the scroll body each lay out their inset.
+    header: {
+      paddingHorizontal: LOCATION_MAP_MARKER_SHEET_HORIZONTAL_INSET,
+      paddingTop: space.xl,
+      paddingBottom: space.md,
+    },
+    label: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 14, marginBottom: 6 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      color: colors.text,
+      borderRadius: 8,
+      padding: 10,
+    },
+    note: { minHeight: 96, textAlignVertical: 'top' },
+    hint: { color: colors.textSecondary, marginTop: 8 },
+    actionGroup: { gap: 8, marginTop: 8 },
+    remove: { backgroundColor: colors.error, marginTop: 20 },
+    removeInGroup: { backgroundColor: colors.error },
+  });
 
 export default LocationMapMarkerSheet;

@@ -2,7 +2,8 @@ import type { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme, type ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
@@ -50,9 +51,7 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const styles = StyleSheet.create({
-    ...relationSectionStyleDefs(colors),
-  });
+  const styles = useThemedStyles(createStyles);
 
   const filteredRelations = relations.filter((rel) => !rel.isDeleted);
   const items = useMemo(
@@ -93,5 +92,10 @@ const GenericRelationDisplay = <TItem extends BaseItem, TRelation extends BaseRe
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...relationSectionStyleDefs(colors),
+  });
 
 export default GenericRelationDisplay;

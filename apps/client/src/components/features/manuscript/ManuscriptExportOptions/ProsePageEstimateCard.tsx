@@ -2,7 +2,9 @@ import type { ManuscriptPageEstimate } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface ProsePageEstimateCardProps {
   /** The count for the settings as they are now; `null` until asked for (or once they changed). */
@@ -25,22 +27,7 @@ const ProsePageEstimateCard: React.FC<ProsePageEstimateCardProps> = ({
   isDocx = false,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    card: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: 8,
-      borderWidth: 1,
-      gap: 4,
-      marginTop: 12,
-      padding: 12,
-    },
-    headline: { color: colors.text, fontSize: 18, fontWeight: '700' },
-    sub: { color: colors.textSecondary, lineHeight: 19 },
-    heading: { color: colors.text, fontWeight: '700', marginTop: 8 },
-    action: { color: colors.primary, fontWeight: '700' },
-  });
+  const styles = useThemedStyles(createStyles);
   const cm = (points: number) => (Math.round((points / POINTS_PER_CM) * 10) / 10).toString();
 
   return (
@@ -79,5 +66,22 @@ const ProsePageEstimateCard: React.FC<ProsePageEstimateCardProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      gap: 4,
+      marginTop: 12,
+      padding: 12,
+    },
+    headline: { ...typography.title, color: colors.text },
+    sub: { color: colors.textSecondary, lineHeight: 19 },
+    heading: { color: colors.text, fontWeight: '700', marginTop: 8 },
+    action: { color: colors.primary, fontWeight: '700' },
+  });
 
 export default ProsePageEstimateCard;

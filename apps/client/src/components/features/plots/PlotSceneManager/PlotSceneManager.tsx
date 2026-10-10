@@ -9,7 +9,8 @@ import { getEntityAppearance } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme, type ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import { AppAlert } from '../../../../utils/AppAlert';
 import { createULID } from '../../../../utils/entityUtils';
@@ -64,14 +65,7 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
     [activeRelations, sceneOptions],
   );
 
-  const styles = StyleSheet.create({
-    ...relationSectionStyleDefs(colors),
-    formSection: { marginTop: 20 },
-    noteText: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
-    buttonContainer: { marginBottom: 10 },
-    emptyText: { color: colors.textSecondary },
-    actionsRow: { flexDirection: 'row', gap: 12 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const handleAdd = () => {
     if (availableScenes.length === 0) {
@@ -168,5 +162,15 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...relationSectionStyleDefs(colors),
+    formSection: { marginTop: 20 },
+    noteText: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
+    buttonContainer: { marginBottom: 10 },
+    emptyText: { color: colors.textSecondary },
+    actionsRow: { flexDirection: 'row', gap: 12 },
+  });
 
 export default PlotSceneManager;

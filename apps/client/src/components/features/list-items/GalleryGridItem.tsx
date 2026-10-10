@@ -7,7 +7,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HighlightedText from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
 import type { GallerySelect } from '../../../db/schemas/galleries';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
-import { useTheme } from '../../../theme';
+import { useTheme, type ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 
 interface GalleryGridItemProps {
   media: GallerySelect;
@@ -90,73 +91,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
   const transferFailed = media.uploadState === 'failed' || media.downloadState === 'failed';
   const pendingUpload = media.uploadState === 'pending';
 
-  const styles = StyleSheet.create({
-    container: {
-      // A fixed width keeps a short last row from stretching its tiles across the whole list.
-      ...(width ? { width, flexGrow: 0, flexShrink: 0 } : { flex: 1 }),
-      margin: 5,
-      borderRadius: 8,
-      overflow: 'hidden',
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    preview: {
-      width: '100%',
-      aspectRatio: 1,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    image: {
-      width: '100%',
-      height: '100%',
-    },
-    info: {
-      padding: 8,
-    },
-    title: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: colors.text,
-    },
-    subtitle: {
-      fontSize: 11,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-    playOverlay: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    badgeRow: {
-      position: 'absolute',
-      top: 6,
-      left: 6,
-      right: 6,
-      flexDirection: 'row',
-      // The star stays at the right even when the type badge is not shown.
-      justifyContent: showsThumbnail ? 'space-between' : 'flex-end',
-      alignItems: 'flex-start',
-    },
-    badge: {
-      backgroundColor: colors.background,
-      opacity: 0.85,
-      borderRadius: 12,
-      padding: 4,
-    },
-    statusText: {
-      fontSize: 10,
-      color: colors.textSecondary,
-      marginTop: 4,
-      fontStyle: 'italic',
-    },
-  });
+  const styles = useThemedStyles(createStyles, [width, showsThumbnail]);
 
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(media.id)}>
@@ -228,5 +163,77 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
     </TouchableOpacity>
   );
 };
+
+const createStyles = (
+  colors: ThemeColors,
+  [width, showsThumbnail]: [number | undefined, boolean],
+) =>
+  StyleSheet.create({
+    container: {
+      // A fixed width keeps a short last row from stretching its tiles across the whole list.
+      ...(width ? { width, flexGrow: 0, flexShrink: 0 } : { flex: 1 }),
+      margin: 5,
+      borderRadius: 8,
+      overflow: 'hidden',
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    preview: {
+      width: '100%',
+      aspectRatio: 1,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    info: {
+      padding: 8,
+    },
+    title: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    subtitle: {
+      fontSize: 11,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    playOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeRow: {
+      position: 'absolute',
+      top: 6,
+      left: 6,
+      right: 6,
+      flexDirection: 'row',
+      // The star stays at the right even when the type badge is not shown.
+      justifyContent: showsThumbnail ? 'space-between' : 'flex-end',
+      alignItems: 'flex-start',
+    },
+    badge: {
+      backgroundColor: colors.background,
+      opacity: 0.85,
+      borderRadius: 12,
+      padding: 4,
+    },
+    statusText: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      marginTop: 4,
+      fontStyle: 'italic',
+    },
+  });
 
 export default GalleryGridItem;

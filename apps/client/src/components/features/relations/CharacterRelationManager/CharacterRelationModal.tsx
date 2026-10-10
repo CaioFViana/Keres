@@ -5,7 +5,9 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme, type ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import Button from '@/src/components/common/controls/Button/Button';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
@@ -104,73 +106,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
     setShowCharacterPicker(false);
   };
 
-  const styles = StyleSheet.create({
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    formGroup: {
-      marginBottom: 15,
-    },
-    label: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    pickerContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      backgroundColor: colors.card,
-      marginBottom: 5,
-      paddingHorizontal: 10,
-      minHeight: 50,
-    },
-    pickerButton: {
-      paddingLeft: 10,
-    },
-    pickerText: {
-      flex: 1,
-      color: colors.text,
-      fontSize: 16,
-      paddingVertical: 8,
-    },
-    errorText: {
-      color: colors.error,
-      fontSize: 12,
-      marginTop: 5,
-    },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 20,
-      paddingHorizontal: '3%',
-    },
-    characterPickerItem: {
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    characterPickerText: {
-      color: colors.text,
-      fontSize: 16,
-    },
-    noCharactersText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
-    },
-    closeButton: {
-      marginTop: 20,
-      alignSelf: 'flex-end',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal visible={isVisible} onClose={onClose} inset="roomy" maxHeight="86%">
@@ -245,5 +181,73 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    modalTitle: {
+      ...typography.heading,
+      color: colors.text,
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    formGroup: {
+      marginBottom: 15,
+    },
+    label: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      marginBottom: 5,
+    },
+    pickerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      backgroundColor: colors.card,
+      marginBottom: 5,
+      paddingHorizontal: 10,
+      minHeight: 50,
+    },
+    pickerButton: {
+      paddingLeft: 10,
+    },
+    pickerText: {
+      ...typography.bodyLarge,
+      flex: 1,
+      color: colors.text,
+      paddingVertical: 8,
+    },
+    errorText: {
+      ...typography.caption,
+      color: colors.error,
+      marginTop: 5,
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      paddingHorizontal: '3%',
+    },
+    characterPickerItem: {
+      paddingVertical: 10,
+      paddingHorizontal: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    characterPickerText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+    },
+    noCharactersText: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingVertical: 20,
+    },
+    closeButton: {
+      marginTop: 20,
+      alignSelf: 'flex-end',
+    },
+  });
 
 export default CharacterRelationModal;

@@ -3,7 +3,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ScreenplayPlace as Place } from '@/src/hooks/useScreenplaySceneContext';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export { useScreenplaySceneContext } from '@/src/hooks/useScreenplaySceneContext';
 
@@ -23,22 +24,7 @@ export const ScreenplaySceneHeader: React.FC<ScreenplaySceneHeaderProps> = ({
   plan,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    box: {
-      backgroundColor: colors.surface,
-      borderBottomColor: colors.border,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      gap: 4,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-    },
-    row: { color: colors.text },
-    label: { color: colors.textSecondary, fontWeight: '700' },
-    heading: { color: colors.text, fontFamily: 'Courier', fontWeight: '700' },
-    note: { color: colors.textSecondary, lineHeight: 18 },
-    warn: { color: colors.error, lineHeight: 18 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.box} testID="screenplay-scene-header">
@@ -67,3 +53,20 @@ export const ScreenplaySceneHeader: React.FC<ScreenplaySceneHeaderProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    box: {
+      backgroundColor: colors.surface,
+      borderBottomColor: colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      gap: 4,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    },
+    row: { color: colors.text },
+    label: { color: colors.textSecondary, fontWeight: '700' },
+    heading: { color: colors.text, fontFamily: 'Courier', fontWeight: '700' },
+    note: { color: colors.textSecondary, lineHeight: 18 },
+    warn: { color: colors.error, lineHeight: 18 },
+  });

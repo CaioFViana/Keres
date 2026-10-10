@@ -2,7 +2,9 @@ import { type ScreenplayEstimate, formatEighths } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface ScreenplayEstimateCardProps {
   estimate: ScreenplayEstimate;
@@ -15,23 +17,9 @@ interface ScreenplayEstimateCardProps {
  */
 const ScreenplayEstimateCard: React.FC<ScreenplayEstimateCardProps> = ({ estimate }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const { preset, geometry } = estimate;
   const inches = (value: number) => value.toFixed(value % 1 === 0 ? 0 : 2).replace(/\.?0+$/, '');
-  const styles = StyleSheet.create({
-    card: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: 8,
-      borderWidth: 1,
-      gap: 4,
-      marginTop: 12,
-      padding: 12,
-    },
-    headline: { color: colors.text, fontSize: 18, fontWeight: '700' },
-    sub: { color: colors.textSecondary, lineHeight: 19 },
-    heading: { color: colors.text, fontWeight: '700', marginTop: 8 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.card} testID="screenplay-estimate">
@@ -75,5 +63,21 @@ const ScreenplayEstimateCard: React.FC<ScreenplayEstimateCardProps> = ({ estimat
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      gap: 4,
+      marginTop: 12,
+      padding: 12,
+    },
+    headline: { ...typography.title, color: colors.text },
+    sub: { color: colors.textSecondary, lineHeight: 19 },
+    heading: { color: colors.text, fontWeight: '700', marginTop: 8 },
+  });
 
 export default ScreenplayEstimateCard;

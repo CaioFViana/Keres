@@ -2,7 +2,9 @@ import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NoteWithTags } from '../../../services/storymanagement/NoteService';
-import { useTheme } from '../../../theme';
+import type { ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { typography } from '../../../theme/tokens';
 import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
@@ -15,29 +17,10 @@ interface NoteListItemProps {
 }
 
 const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onToggleFavorite }) => {
-  const { colors } = useTheme();
-
   const preview = summarizeEntityPreview(OperationLogEntityType.Note, note);
   const bodySummary = truncate(preview?.primaryDetail, 300);
 
-  const styles = StyleSheet.create({
-    noteInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    noteTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      flexShrink: 1,
-    },
-    bodyText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 5,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderHeaderContent = (n: NoteWithTags) => (
     <View style={styles.noteInfo}>
@@ -68,5 +51,24 @@ const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onTogg
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    noteInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    noteTitle: {
+      ...typography.title,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    bodyText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 5,
+    },
+  });
 
 export default NoteListItem;

@@ -2,7 +2,9 @@ import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { StyleSheet, Text, View } from 'react-native';
 import type { TagSelect } from '../../../db/schemas/tags';
-import { useTheme } from '../../../theme';
+import type { ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { typography } from '../../../theme/tokens';
 import { truncate } from '../../../utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
@@ -14,37 +16,10 @@ interface TagListItemProps {
 }
 
 const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails, onToggleFavorite }) => {
-  const { colors } = useTheme();
-
   const preview = summarizeEntityPreview(OperationLogEntityType.Tag, tag);
   const extraNotesSummary = truncate(preview?.primaryDetail, 150);
 
-  const styles = StyleSheet.create({
-    tagInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    tagColorIndicator: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      marginRight: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    tagName: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      flexShrink: 1,
-    },
-    descriptionText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 5,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderHeaderContent = (t: TagSelect) => (
     <View style={styles.tagInfo}>
@@ -72,5 +47,32 @@ const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails, onToggleF
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    tagInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    tagColorIndicator: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      marginRight: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    tagName: {
+      ...typography.title,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    descriptionText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 5,
+    },
+  });
 
 export default TagListItem;

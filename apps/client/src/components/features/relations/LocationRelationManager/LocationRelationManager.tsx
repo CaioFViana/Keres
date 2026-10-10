@@ -4,7 +4,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
+import { useTheme, type ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
@@ -199,23 +200,7 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
     ]);
   };
 
-  const styles = StyleSheet.create({
-    ...relationSectionStyleDefs(colors),
-    subsectionTitle: {
-      fontSize: 15,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 10,
-      marginBottom: 6,
-    },
-    buttonContainer: {
-      marginBottom: 10,
-    },
-    noRelationsText: {
-      color: colors.textSecondary,
-      marginBottom: 8,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.container}>
@@ -349,5 +334,24 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...relationSectionStyleDefs(colors),
+    subsectionTitle: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 10,
+      marginBottom: 6,
+    },
+    buttonContainer: {
+      marginBottom: 10,
+    },
+    noRelationsText: {
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+  });
 
 export default LocationRelationManager;

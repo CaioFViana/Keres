@@ -6,7 +6,9 @@ import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-nati
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import { createULID } from '../../../../utils/entityUtils';
 
 interface Props {
@@ -32,7 +34,6 @@ const NoteRelationManager: React.FC<Props> = ({
   currentEntityType,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const [openedNote, setOpenedNote] = useState<Note | null>(null);
   const notes = useMemo(() => availableNotes.filter((note) => !note.isDeleted), [availableNotes]);
   const byId = useMemo(() => new Map(notes.map((note) => [note.id, note])), [notes]);
@@ -66,19 +67,7 @@ const NoteRelationManager: React.FC<Props> = ({
     [currentEntityId, currentEntityType, currentStoryId, noteRelations, onDelete, onSave],
   );
 
-  const styles = StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modal: { width: '90%', backgroundColor: colors.background, borderRadius: 10, padding: 20 },
-    modalTitle: { fontSize: 22, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
-    modalBody: { fontSize: 16, color: colors.text, marginBottom: 20, maxHeight: '70%' },
-    close: { alignSelf: 'flex-end', padding: 10, borderRadius: 5, backgroundColor: colors.primary },
-    closeText: { color: colors.onPrimary, fontWeight: 'bold' },
-  });
+  const styles = useThemedStyles(createStyles);
   return (
     <>
       <CollapsibleCard
@@ -124,5 +113,20 @@ const NoteRelationManager: React.FC<Props> = ({
     </>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modal: { width: '90%', backgroundColor: colors.background, borderRadius: 10, padding: 20 },
+    modalTitle: { fontSize: 22, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
+    modalBody: { ...typography.bodyLarge, color: colors.text, marginBottom: 20, maxHeight: '70%' },
+    close: { alignSelf: 'flex-end', padding: 10, borderRadius: 5, backgroundColor: colors.primary },
+    closeText: { color: colors.onPrimary, fontWeight: 'bold' },
+  });
 
 export default NoteRelationManager;

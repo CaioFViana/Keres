@@ -8,7 +8,9 @@ import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme, type ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
@@ -75,21 +77,7 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
     onClose();
   };
 
-  const styles = StyleSheet.create({
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    // The focus ring of shared inputs extends a couple of pixels beyond the field. This is the
-    // same breathing room used by the other form modals, so it is never clipped by this surface.
-    formGroup: { marginBottom: 15, paddingHorizontal: 2, paddingVertical: 2 },
-    label: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    counter: { color: colors.textSecondary, fontSize: 12, marginTop: 5, textAlign: 'right' },
-    errorText: { color: colors.error, fontSize: 12, marginTop: 5 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal visible={isVisible} onClose={onClose} inset="roomy" maxHeight="86%">
@@ -131,5 +119,26 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    modalTitle: {
+      ...typography.heading,
+      color: colors.text,
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    // The focus ring of shared inputs extends a couple of pixels beyond the field. This is the
+    // same breathing room used by the other form modals, so it is never clipped by this surface.
+    formGroup: { marginBottom: 15, paddingHorizontal: 2, paddingVertical: 2 },
+    label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },
+    counter: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      marginTop: 5,
+      textAlign: 'right',
+    },
+    errorText: { ...typography.caption, color: colors.error, marginTop: 5 },
+  });
 
 export default ScenePlotModal;

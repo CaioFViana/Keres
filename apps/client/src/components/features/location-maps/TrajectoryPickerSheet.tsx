@@ -6,7 +6,8 @@ import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
+import { useTheme, type ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { space } from '../../../theme/tokens';
 
 interface TrajectoryPickerSheetProps {
@@ -41,24 +42,7 @@ const TrajectoryPickerSheet: React.FC<TrajectoryPickerSheetProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    sheet: { maxHeight: '78%' },
-    scroll: { flexShrink: 1 },
-    scrollContent: { paddingHorizontal: 22, paddingTop: 2, paddingBottom: 24 },
-    // The sheet has no padding of its own: the header and the scroll body lay out their inset.
-    header: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.md },
-    section: {
-      color: colors.text,
-      fontSize: 13,
-      fontWeight: '700',
-      marginTop: 14,
-      marginBottom: 6,
-    },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-    rowLabel: { color: colors.text, flex: 1 },
-    hint: { color: colors.textSecondary, marginTop: 4 },
-    clear: { marginTop: 20 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderRows = (
     entries: { id: string; name: string }[],
@@ -141,5 +125,25 @@ const TrajectoryPickerSheet: React.FC<TrajectoryPickerSheetProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { maxHeight: '78%' },
+    scroll: { flexShrink: 1 },
+    scrollContent: { paddingHorizontal: 22, paddingTop: 2, paddingBottom: 24 },
+    // The sheet has no padding of its own: the header and the scroll body lay out their inset.
+    header: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.md },
+    section: {
+      color: colors.text,
+      fontSize: 13,
+      fontWeight: '700',
+      marginTop: 14,
+      marginBottom: 6,
+    },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+    rowLabel: { color: colors.text, flex: 1 },
+    hint: { color: colors.textSecondary, marginTop: 4 },
+    clear: { marginTop: 20 },
+  });
 
 export default TrajectoryPickerSheet;

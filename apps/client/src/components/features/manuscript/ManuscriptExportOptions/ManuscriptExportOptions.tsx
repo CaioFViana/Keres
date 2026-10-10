@@ -10,7 +10,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useTheme } from '@/src/theme';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import {
   applyPreset,
   FORMAT_CAPABILITIES,
@@ -112,10 +113,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   const style = settings.style;
   const change = (patch: Parameters<typeof withChange>[1]) => onChange(withChange(settings, patch));
   const changeStyle = (patch: Partial<ManuscriptStyle>) => change({ style: patch });
-  const styles = StyleSheet.create({
-    note: { color: colors.textSecondary, lineHeight: 19, marginTop: 4 },
-    label: { color: colors.text, fontSize: 15, marginBottom: 6, marginTop: 6 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View>
@@ -448,5 +446,11 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    note: { color: colors.textSecondary, lineHeight: 19, marginTop: 4 },
+    label: { color: colors.text, fontSize: 15, marginBottom: 6, marginTop: 6 },
+  });
 
 export default ManuscriptExportOptions;

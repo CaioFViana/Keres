@@ -6,7 +6,9 @@ import type { PackVisibility } from '@keres/shared';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 
 /**
  * Sharing a pack: which server, and whether it goes on that server's public showcase.
@@ -42,7 +44,6 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
   onCancel,
   onConfirm,
 }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
 
   const [serverId, setServerId] = useState<string | null>(null);
@@ -68,30 +69,7 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
     setServerId(onlyServerId);
   }
 
-  const styles = StyleSheet.create({
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 6,
-      textAlign: 'center',
-    },
-    subtitle: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    formGroup: { marginBottom: 15 },
-    label: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 20,
-      paddingHorizontal: '3%',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal visible={visible} onClose={onCancel} inset="roomy" maxHeight="86%">
@@ -139,5 +117,30 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    modalTitle: {
+      ...typography.heading,
+      color: colors.text,
+      marginBottom: 6,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    formGroup: { marginBottom: 15 },
+    label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },
+    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      paddingHorizontal: '3%',
+    },
+  });
 
 export default SharePackModal;

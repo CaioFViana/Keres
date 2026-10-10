@@ -3,7 +3,9 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { useCallback, useMemo, useState } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme, type ThemeColors } from '../../../../theme';
+import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { typography } from '../../../../theme/tokens';
 
 interface AudioPreviewPlayerProps {
   uri: string;
@@ -61,7 +63,36 @@ const AudioPreviewPlayer: React.FC<AudioPreviewPlayerProps> = ({ uri }) => {
 
   const progress = status.duration > 0 ? Math.min(status.currentTime / status.duration, 1) : 0;
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles);
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.playButton}
+        onPress={togglePlayback}
+        disabled={!status.isLoaded}
+      >
+        <Ionicons name={status.playing ? 'pause' : 'play'} size={28} color={colors.onPrimary} />
+      </TouchableOpacity>
+      <View style={styles.trackWrapper}>
+        <Pressable
+          style={styles.track}
+          onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+          onPress={handleSeek}
+        >
+          <View style={[styles.trackFill, { width: `${progress * 100}%` }]} />
+        </Pressable>
+        <View style={styles.timeRow}>
+          <Text style={styles.timeText}>{formatTime(status.currentTime)}</Text>
+          <Text style={styles.timeText}>{formatTime(status.duration)}</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     container: {
       width: '100%',
       alignItems: 'center',
@@ -97,35 +128,9 @@ const AudioPreviewPlayer: React.FC<AudioPreviewPlayerProps> = ({ uri }) => {
       marginTop: 6,
     },
     timeText: {
-      fontSize: 12,
+      ...typography.caption,
       color: colors.textSecondary,
     },
   });
-
-  return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.playButton}
-        onPress={togglePlayback}
-        disabled={!status.isLoaded}
-      >
-        <Ionicons name={status.playing ? 'pause' : 'play'} size={28} color={colors.onPrimary} />
-      </TouchableOpacity>
-      <View style={styles.trackWrapper}>
-        <Pressable
-          style={styles.track}
-          onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
-          onPress={handleSeek}
-        >
-          <View style={[styles.trackFill, { width: `${progress * 100}%` }]} />
-        </Pressable>
-        <View style={styles.timeRow}>
-          <Text style={styles.timeText}>{formatTime(status.currentTime)}</Text>
-          <Text style={styles.timeText}>{formatTime(status.duration)}</Text>
-        </View>
-      </View>
-    </View>
-  );
-};
 
 export default AudioPreviewPlayer;

@@ -14,7 +14,8 @@ import { MAP_ICON_OPTIONS } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme, type ThemeColors } from '../../../theme';
+import { useThemedStyles } from '../../../theme/useThemedStyles';
 import { getCommonCardStyles } from '../../../theme/commonStyles';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import type {
@@ -106,11 +107,7 @@ const LocationMapNodeSheet: React.FC<Props> = ({
   const { t } = useTranslation();
   const cardStyles = useMemo(() => getCommonCardStyles(colors), [colors]);
 
-  const styles = StyleSheet.create({
-    ...getCanvasNodeSheetStyles(colors),
-    destinationAction: { marginTop: 12 },
-    colorMarging: { marginBottom: 20 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const relationRow = (relationId: string, label: string, onRemove: (() => void) | undefined) => (
     <View key={relationId} style={styles.item}>
@@ -273,5 +270,12 @@ const LocationMapNodeSheet: React.FC<Props> = ({
     </CanvasNodeSheet>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...getCanvasNodeSheetStyles(colors),
+    destinationAction: { marginTop: 12 },
+    colorMarging: { marginBottom: 20 },
+  });
 
 export default LocationMapNodeSheet;

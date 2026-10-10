@@ -6,6 +6,12 @@ import { ChoiceViewContent } from '../../../../src/screens/narrative-elements/ch
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
+// The graph controls read the theme from context, as they do in the app; the content gets the same palette.
+jest.mock('../../../../src/theme', () => ({
+  __esModule: true,
+  useTheme: () => ({ colors: mockThemeColors }),
+}));
+
 jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
@@ -187,6 +193,7 @@ const colors = {
   star: '#ffcc00',
   shadow: '#000000',
 } as unknown as ThemeColors;
+const mockThemeColors = colors;
 
 function makeNode(overrides: Partial<GraphNode> = {}): GraphNode {
   return {

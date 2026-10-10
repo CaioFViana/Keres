@@ -33,17 +33,12 @@ import { createItemService } from '../../../services/storymanagement/ItemService
 import { createPlotSceneService } from '../../../services/storymanagement/PlotSceneService';
 import { createPlotService } from '../../../services/storymanagement/PlotService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import {
-  buildStoryMapFileName,
-  deliverMapExport,
-  exportFileLanguage,
-} from '../../../utils/storyTransfer';
+import { buildStoryMapFileName } from '../../../utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
-import { chooseExportFormat } from '../../../utils/exportFormatPrompt';
+import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 
 /**
  * The story map: the scenes and the choices that link one to another.
@@ -69,14 +64,13 @@ interface SceneNodeConnection {
 
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { definition: calendar } = useStoryCalendar();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceView'>>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
-  const { showNotification } = useNotificationStore();
   const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<StoryGraphCanvasHandle>(null);
@@ -95,7 +89,6 @@ const ChoiceViewScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
-  const [exporting, setExporting] = useState(false);
 
   const storyId = selectedStory?.id;
 
@@ -303,15 +296,12 @@ const ChoiceViewScreen = () => {
     [isLinearFlow, layout.edges.length, layout.nodes.length, t],
   );
 
-  const handleExport = useCallback(async () => {
-    if (!selectedStory || layout.nodes.length === 0) return;
-
-    const format = await chooseExportFormat();
-    if (!format) return;
-    setExporting(true);
-    try {
-      const svg = renderStoryMapSvg(layout, {
-        title: selectedStory.title,
+  const { exporting, handleExport } = useGraphMapExport({
+    story: selectedStory,
+    hasNodes: layout.nodes.length > 0,
+    renderSvg: (title) =>
+      renderStoryMapSvg(layout, {
+        title,
         subtitle: mapSubtitle,
         showEdgeLabels,
         labels: {
@@ -329,32 +319,15 @@ const ChoiceViewScreen = () => {
           accent: colors.accent,
           error: colors.error,
         },
-      });
-
-      const result = await deliverMapExport(
-        svg,
-        buildStoryMapFileName(selectedStory.title, new Date(), exportFileLanguage(i18n.language)),
-        format,
-      );
-      if (result.delivered) {
-        showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');
-      } else {
-        // With no share sheet the file exists but the user has no way to reach it; saying where it is is more
-        // useful than claiming success.
-        showNotification(
-          t('story_map_export_no_share_target', {
-            path: result.uri || result.fileName,
-          }),
-          'warning',
-        );
-      }
-    } catch (exportError) {
-      console.log('ChoiceViewScreen: failed to export story map.', exportError);
-      showNotification(t('story_map_export_failed'), 'error');
-    } finally {
-      setExporting(false);
-    }
-  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t, i18n]);
+      }),
+    buildFileName: buildStoryMapFileName,
+    messageKeys: {
+      success: 'story_map_export_success',
+      noShareTarget: 'story_map_export_no_share_target',
+      failed: 'story_map_export_failed',
+    },
+    logMessage: 'ChoiceViewScreen: failed to export story map.',
+  });
 
   return (
     <ChoiceViewContent

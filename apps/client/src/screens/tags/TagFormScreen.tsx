@@ -8,14 +8,13 @@ import EntityFormContainer from '@/src/components/common/forms/EntityFormContain
 import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
 import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
 import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
+import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
 import type { TagsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -70,12 +69,11 @@ const TagFormScreen = () => {
     userId,
   });
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
+  useEntityFormHeader({
     title: isEditing ? t('edit_tag_title') : t('create_tag_title'),
-    actions: resetHeaderAction,
+    isEditing,
+    isDirty,
+    resetForm,
   });
 
   if (loading) {

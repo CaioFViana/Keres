@@ -9,7 +9,6 @@ import EntityNotesManager from '@/src/components/features/notes/EntityNotesManag
 import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
 import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
 import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
@@ -22,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
+import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
@@ -180,13 +179,7 @@ const SceneFormScreen = () => {
   });
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   const chapterOptions = useMemo(
     () => chapters.map((chapter) => ({ label: chapter.name, value: chapter.id })),

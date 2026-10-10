@@ -12,7 +12,7 @@ import {
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
 import GraphFilterSummary from '@/src/components/features/graphs/GraphFilterSummary/GraphFilterSummary';
-import GraphMapControls from '@/src/components/features/graphs/GraphMapControls/GraphMapControls';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { graphMapHeaderStyleDefs } from '@/src/components/features/graphs/graphMapHeaderStyles';
 import type { LocationGraphCanvasHandle } from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import LocationGraphCanvas from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
@@ -23,7 +23,6 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
@@ -35,13 +34,9 @@ import type {
 import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
-import {
-  buildLocationGraphMapFileName,
-  deliverMapExport,
-  exportFileLanguage,
-} from '../../utils/storyTransfer';
+import { buildLocationGraphMapFileName } from '../../utils/storyTransfer';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
-import { chooseExportFormat } from '../../utils/exportFormatPrompt';
+import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 
 /**
  * The Locations structure graph: each Location becomes a node, `contains`/`connected_to` become
@@ -63,13 +58,12 @@ interface LocationNodeConnection {
 
 const LocationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
-  const { showNotification } = useNotificationStore();
   const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<LocationGraphCanvasHandle>(null);
@@ -79,7 +73,6 @@ const LocationGraphScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
   /** Empty means the whole map; the focus filter only narrows it. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -208,15 +201,12 @@ const LocationGraphScreen = () => {
     [layout.edges.length, layout.isolatedCount, layout.nodes.length, t],
   );
 
-  const handleExport = useCallback(async () => {
-    if (!selectedStory || layout.nodes.length === 0) return;
-
-    const format = await chooseExportFormat();
-    if (!format) return;
-    setExporting(true);
-    try {
-      const svg = renderLocationGraphMapSvg(layout, {
-        title: selectedStory.title,
+  const { exporting, handleExport } = useGraphMapExport({
+    story: selectedStory,
+    hasNodes: layout.nodes.length > 0,
+    renderSvg: (title) =>
+      renderLocationGraphMapSvg(layout, {
+        title,
         subtitle: graphSubtitle,
         highlightedNodeIds: selectedIds,
         labels: {
@@ -233,37 +223,15 @@ const LocationGraphScreen = () => {
           primaryContainer: colors.primaryContainer,
           primary: colors.primary,
         },
-      });
-
-      const result = await deliverMapExport(
-        svg,
-        buildLocationGraphMapFileName(
-          selectedStory.title,
-          new Date(),
-          exportFileLanguage(i18n.language),
-        ),
-        format,
-      );
-      if (result.delivered) {
-        showNotification(
-          t('location_graph_export_success', { fileName: result.fileName }),
-          'success',
-        );
-      } else {
-        // With no share sheet the file exists, but the user has no way to reach it; saying where
-        // it is is more useful than claiming success.
-        showNotification(
-          t('location_graph_export_no_share_target', { path: result.uri || result.fileName }),
-          'warning',
-        );
-      }
-    } catch (exportError) {
-      console.log('LocationGraphScreen: failed to export location graph.', exportError);
-      showNotification(t('location_graph_export_failed'), 'error');
-    } finally {
-      setExporting(false);
-    }
-  }, [colors, layout, graphSubtitle, selectedIds, selectedStory, showNotification, t, i18n]);
+      }),
+    buildFileName: buildLocationGraphMapFileName,
+    messageKeys: {
+      success: 'location_graph_export_success',
+      noShareTarget: 'location_graph_export_no_share_target',
+      failed: 'location_graph_export_failed',
+    },
+    logMessage: 'LocationGraphScreen: failed to export location graph.',
+  });
 
   const styles = useMemo(
     () =>
@@ -337,14 +305,14 @@ const LocationGraphScreen = () => {
         onSelectNode={handleSelectNode}
       />
 
-      <GraphMapControls
-        colors={colors}
+      <GraphCanvasControls
+        variant="map"
         labels={{
           zoomIn: t('location_graph_zoom_in'),
           zoomOut: t('location_graph_zoom_out'),
           fit: t('location_graph_fit'),
-          export: t('location_graph_export'),
         }}
+        exportLabel={t('location_graph_export')}
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
         onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
         onFit={() => canvasRef.current?.fitToScreen()}

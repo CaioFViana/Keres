@@ -10,7 +10,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
-import GraphMapControls from '@/src/components/features/graphs/GraphMapControls/GraphMapControls';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { graphMapHeaderStyleDefs } from '@/src/components/features/graphs/graphMapHeaderStyles';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -256,14 +256,14 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
         onSelectNode={handleSelectNode}
       />
 
-      <GraphMapControls
-        colors={colors}
+      <GraphCanvasControls
+        variant="map"
         labels={{
           zoomIn: t('story_map_zoom_in'),
           zoomOut: t('story_map_zoom_out'),
           fit: t('story_map_fit'),
-          export: t('story_map_export'),
         }}
+        exportLabel={t('story_map_export')}
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
         onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
         onFit={() => canvasRef.current?.fitToScreen()}

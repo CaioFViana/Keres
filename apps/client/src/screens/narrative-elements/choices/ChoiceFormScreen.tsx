@@ -6,7 +6,6 @@ import EntitySeeAlsoManager from '@/src/components/features/seealso/EntitySeeAls
 import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
 import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
 import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ChoiceCheckGroupEditor from '@/src/components/features/choices/ChoiceCheckGroupEditor';
 import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
@@ -18,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
+import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
@@ -138,13 +137,7 @@ const ChoiceFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   const sceneOptions = useMemo(
     () => scenes.map((scene) => ({ label: scene.name, value: scene.id })),

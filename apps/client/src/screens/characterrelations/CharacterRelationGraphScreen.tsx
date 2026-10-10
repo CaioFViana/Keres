@@ -13,7 +13,7 @@ import {
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
 import GraphFilterSummary from '@/src/components/features/graphs/GraphFilterSummary/GraphFilterSummary';
-import GraphMapControls from '@/src/components/features/graphs/GraphMapControls/GraphMapControls';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { graphMapHeaderStyleDefs } from '@/src/components/features/graphs/graphMapHeaderStyles';
 import type { CharacterRelationGraphCanvasHandle } from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
@@ -25,7 +25,6 @@ import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import type { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
 import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
-import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
@@ -33,13 +32,9 @@ import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGr
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
-import {
-  buildCharacterRelationMapFileName,
-  deliverMapExport,
-  exportFileLanguage,
-} from '../../utils/storyTransfer';
+import { buildCharacterRelationMapFileName } from '../../utils/storyTransfer';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
-import { chooseExportFormat } from '../../utils/exportFormatPrompt';
+import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 
 /**
  * The relations map: a story's characters and who knows whom.
@@ -65,14 +60,13 @@ interface CharacterRelationNodeConnection {
 
 const CharacterRelationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const navigateAcross = useNavigateAcrossStacks();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
-  const { showNotification } = useNotificationStore();
   const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<CharacterRelationGraphCanvasHandle>(null);
@@ -83,7 +77,6 @@ const CharacterRelationGraphScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
-  const [exporting, setExporting] = useState(false);
   /** Empty means the whole map; the focus filter only narrows it. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -176,15 +169,12 @@ const CharacterRelationGraphScreen = () => {
     [layout.edges.length, layout.isolatedCount, layout.nodes.length, t],
   );
 
-  const handleExport = useCallback(async () => {
-    if (!selectedStory || layout.nodes.length === 0) return;
-
-    const format = await chooseExportFormat();
-    if (!format) return;
-    setExporting(true);
-    try {
-      const svg = renderCharacterRelationMapSvg(layout, {
-        title: selectedStory.title,
+  const { exporting, handleExport } = useGraphMapExport({
+    story: selectedStory,
+    hasNodes: layout.nodes.length > 0,
+    renderSvg: (title) =>
+      renderCharacterRelationMapSvg(layout, {
+        title,
         subtitle: mapSubtitle,
         showEdgeLabels,
         highlightedNodeIds: selectedIds,
@@ -200,49 +190,15 @@ const CharacterRelationGraphScreen = () => {
           primaryContainer: colors.primaryContainer,
           primary: colors.primary,
         },
-      });
-
-      const result = await deliverMapExport(
-        svg,
-        buildCharacterRelationMapFileName(
-          selectedStory.title,
-          new Date(),
-          exportFileLanguage(i18n.language),
-        ),
-        format,
-      );
-      if (result.delivered) {
-        showNotification(
-          t('character_relation_map_export_success', { fileName: result.fileName }),
-          'success',
-        );
-      } else {
-        // With no share sheet the file exists, but the user has no way to reach it; saying where
-        // it is is more useful than claiming success.
-        showNotification(
-          t('character_relation_map_export_no_share_target', {
-            path: result.uri || result.fileName,
-          }),
-          'warning',
-        );
-      }
-    } catch (exportError) {
-      console.log('CharacterRelationGraphScreen: failed to export relation map.', exportError);
-      showNotification(t('character_relation_map_export_failed'), 'error');
-    } finally {
-      setExporting(false);
-    }
-  }, [
-    colors,
-    layout,
-    mapSubtitle,
-    selectedIds,
-    selectedStory,
-    showEdgeLabels,
-    showNotification,
-    t,
-    i18n,
-  ]);
+      }),
+    buildFileName: buildCharacterRelationMapFileName,
+    messageKeys: {
+      success: 'character_relation_map_export_success',
+      noShareTarget: 'character_relation_map_export_no_share_target',
+      failed: 'character_relation_map_export_failed',
+    },
+    logMessage: 'CharacterRelationGraphScreen: failed to export relation map.',
+  });
 
   const styles = useMemo(
     () =>
@@ -321,14 +277,14 @@ const CharacterRelationGraphScreen = () => {
         onSelectNode={handleSelectNode}
       />
 
-      <GraphMapControls
-        colors={colors}
+      <GraphCanvasControls
+        variant="map"
         labels={{
           zoomIn: t('character_relation_map_zoom_in'),
           zoomOut: t('character_relation_map_zoom_out'),
           fit: t('character_relation_map_fit'),
-          export: t('character_relation_map_export'),
         }}
+        exportLabel={t('character_relation_map_export')}
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
         onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
         onFit={() => canvasRef.current?.fitToScreen()}

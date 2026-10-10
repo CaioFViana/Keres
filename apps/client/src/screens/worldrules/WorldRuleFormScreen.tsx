@@ -9,7 +9,6 @@ import EntityNotesManager from '@/src/components/features/notes/EntityNotesManag
 import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
 import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
 import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/entities/WorldRule';
@@ -21,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
+import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -148,13 +147,7 @@ const WorldRuleFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   if (loading) {
     return <ScreenLoading />;

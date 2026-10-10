@@ -11,6 +11,19 @@ interface Props {
   onExport?: () => void;
   exporting?: boolean;
   exportLabel?: string;
+  /** Zoom and fit accessibility labels; without them the shared canvas strings are used. */
+  labels?: { zoomIn: string; zoomOut: string; fit: string };
+  /** Only the maps with edge labels can switch them; the others leave this out. */
+  edgeLabels?: {
+    visible: boolean;
+    label: string;
+    onToggle: () => void;
+  };
+  /**
+   * `map` is the cluster on the graph maps: no focus outline on web, and it does not pass touches
+   * through to the canvas underneath.
+   */
+  variant?: 'canvas' | 'map';
 }
 
 /**
@@ -23,9 +36,13 @@ const GraphCanvasControls: React.FC<Props> = ({
   onExport,
   exporting = false,
   exportLabel,
+  labels,
+  edgeLabels,
+  variant = 'canvas',
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const isMap = variant === 'map';
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -44,34 +61,48 @@ const GraphCanvasControls: React.FC<Props> = ({
           backgroundColor: colors.surface,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
+          ...(isMap ? { outlineWidth: 0 } : null),
         },
       }),
-    [colors],
+    [colors, isMap],
   );
 
   return (
-    <View style={styles.controls} pointerEvents="box-none">
+    <View style={styles.controls} pointerEvents={isMap ? undefined : 'box-none'}>
       <TouchableOpacity
         style={styles.controlButton}
         onPress={onZoomIn}
-        accessibilityLabel={t('zoom_in')}
+        accessibilityLabel={labels?.zoomIn ?? t('zoom_in')}
       >
         <Ionicons name="add" size={22} color={colors.text} />
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.controlButton}
         onPress={onZoomOut}
-        accessibilityLabel={t('zoom_out')}
+        accessibilityLabel={labels?.zoomOut ?? t('zoom_out')}
       >
         <Ionicons name="remove" size={22} color={colors.text} />
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.controlButton}
         onPress={onFit}
-        accessibilityLabel={t('fit_to_screen')}
+        accessibilityLabel={labels?.fit ?? t('fit_to_screen')}
       >
         <Ionicons name="scan-outline" size={20} color={colors.text} />
       </TouchableOpacity>
+      {edgeLabels && (
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={edgeLabels.onToggle}
+          accessibilityLabel={edgeLabels.label}
+        >
+          <Ionicons
+            name={edgeLabels.visible ? 'chatbox' : 'chatbox-outline'}
+            size={19}
+            color={edgeLabels.visible ? colors.primary : colors.text}
+          />
+        </TouchableOpacity>
+      )}
       {onExport && (
         <TouchableOpacity
           style={styles.controlButton}

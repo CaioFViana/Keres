@@ -15,7 +15,7 @@ const sourceFiles = (directory: string): string[] =>
 const relative = (path: string) => path.slice(SRC.length + 1).replace(/\\/g, '/');
 
 /** What puts a screen's name in the browser tab: one of these, called by the screen itself. */
-const TITLE_CALL = /useScreenHeader\(|useDocumentTitle\(|setDocumentTitle\(/;
+const TITLE_CALL = /useScreenHeader\(|useEntityFormHeader\(|useDocumentTitle\(|setDocumentTitle\(/;
 
 /** The screens the navigators register (a navigator wrapping more screens is not one of them). */
 function registeredScreens(): { route: string; file: string }[] {

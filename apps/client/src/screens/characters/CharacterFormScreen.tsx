@@ -1,6 +1,5 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,7 +7,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
+import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
@@ -189,13 +188,7 @@ const CharacterFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   if (loading) {
     return <ScreenLoading />;

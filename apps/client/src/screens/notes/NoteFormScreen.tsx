@@ -6,7 +6,6 @@ import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAtt
 import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
 import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
 import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
+import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { NotesStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -107,13 +106,7 @@ const NoteFormScreen = () => {
 
   const formTitle = isEditing ? t('edit_note_title') : t('create_note_title');
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   if (loading) {
     return <ScreenLoading />;

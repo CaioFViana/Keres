@@ -9,7 +9,6 @@ import EntityNotesManager from '@/src/components/features/notes/EntityNotesManag
 import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
 import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
 import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
 import type { RouteProp } from '@react-navigation/native';
@@ -20,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
+import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
@@ -146,13 +145,7 @@ const ChapterFormScreen = () => {
   const arcCopy = useVocabularyEntityCopy('Arc');
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   if (loading) {
     return <ScreenLoading />;

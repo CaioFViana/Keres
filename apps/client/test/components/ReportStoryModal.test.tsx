@@ -1,3 +1,9 @@
+// ResponsiveModal reads the system insets.
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
+
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import ReportStoryModal from '../../src/components/features/story/ReportStoryModal/ReportStoryModal';
 

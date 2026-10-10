@@ -1,3 +1,9 @@
+// ResponsiveModal reads the system insets.
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
+
 import { AttributeType } from '@keres/shared';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';

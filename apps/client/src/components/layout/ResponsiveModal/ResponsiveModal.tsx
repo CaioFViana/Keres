@@ -104,7 +104,11 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
           },
         ]}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable
+          testID="responsive-modal-backdrop"
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+        />
         <View
           style={[
             styles.content,

@@ -2,10 +2,12 @@ import { getEntityAppearance } from '@keres/shared';
 import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { ThemeColors } from '../../../../theme';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
 import { typography } from '../../../../theme/tokens';
@@ -97,36 +99,19 @@ const NoteRelationManager: React.FC<Props> = ({
           })}
         />
       </CollapsibleCard>
-      {openedNote && (
-        <Modal animationType="fade" transparent visible onRequestClose={() => setOpenedNote(null)}>
-          <Pressable style={styles.overlay} onPress={() => setOpenedNote(null)}>
-            <Pressable style={styles.modal} onPress={(event) => event.stopPropagation()}>
-              <Text style={styles.modalTitle}>{openedNote.title}</Text>
-              <Text style={styles.modalBody}>{openedNote.body}</Text>
-              <TouchableOpacity onPress={() => setOpenedNote(null)} style={styles.close}>
-                <Text style={styles.closeText}>{t('close')}</Text>
-              </TouchableOpacity>
-            </Pressable>
-          </Pressable>
-        </Modal>
-      )}
+      <ResponsiveModal visible={!!openedNote} onClose={() => setOpenedNote(null)} inset="regular">
+        <ModalHeader title={openedNote?.title ?? ''} onClose={() => setOpenedNote(null)} />
+        <ScrollView>
+          <Text style={styles.modalBody}>{openedNote?.body}</Text>
+        </ScrollView>
+      </ResponsiveModal>
     </>
   );
 };
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modal: { width: '90%', backgroundColor: colors.background, borderRadius: 10, padding: 20 },
-    modalTitle: { fontSize: 22, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
-    modalBody: { ...typography.bodyLarge, color: colors.text, marginBottom: 20, maxHeight: '70%' },
-    close: { alignSelf: 'flex-end', padding: 10, borderRadius: 5, backgroundColor: colors.primary },
-    closeText: { color: colors.onPrimary, fontWeight: 'bold' },
+    modalBody: { ...typography.bodyLarge, color: colors.text },
   });
 
 export default NoteRelationManager;

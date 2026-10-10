@@ -3,10 +3,10 @@ import { type MutableRefObject, useCallback, useEffect, useRef } from 'react';
 import { AUTO_PAN_EDGE, AUTO_PAN_MAX_SCREEN_SPEED, type Transform } from './canvasViewportTypes';
 
 interface AutoPanInput {
-  transform: MutableRefObject<Transform>;
-  viewport: MutableRefObject<{ width: number; height: number }>;
+  transformRef: MutableRefObject<Transform>;
+  viewportRef: MutableRefObject<{ width: number; height: number }>;
   /** Told how far the camera moved in world units on every frame, so a dragged pin can follow it. */
-  onAutoPan: MutableRefObject<((delta: SpatialPoint) => void) | undefined>;
+  onAutoPanRef: MutableRefObject<((delta: SpatialPoint) => void) | undefined>;
   cameraTopLeft(): SpatialPoint;
   clamp(): void;
   publish(): void;
@@ -19,9 +19,9 @@ interface AutoPanInput {
  * and `stopAutoPan` ends the drift when the drag does.
  */
 export function useCanvasAutoPan({
-  transform,
-  viewport,
-  onAutoPan,
+  transformRef,
+  viewportRef,
+  onAutoPanRef,
   cameraTopLeft,
   clamp,
   publish,
@@ -43,18 +43,18 @@ export function useCanvasAutoPan({
       const elapsed = Math.min(48, Math.max(1, timestamp - state.timestamp || 16));
       state.timestamp = timestamp;
       const before = cameraTopLeft();
-      transform.current.x -= (state.x * (AUTO_PAN_MAX_SCREEN_SPEED * elapsed)) / 1000;
-      transform.current.y -= (state.y * (AUTO_PAN_MAX_SCREEN_SPEED * elapsed)) / 1000;
+      transformRef.current.x -= (state.x * (AUTO_PAN_MAX_SCREEN_SPEED * elapsed)) / 1000;
+      transformRef.current.y -= (state.y * (AUTO_PAN_MAX_SCREEN_SPEED * elapsed)) / 1000;
       clamp();
       const after = cameraTopLeft();
-      onAutoPan.current?.({ x: after.x - before.x, y: after.y - before.y });
+      onAutoPanRef.current?.({ x: after.x - before.x, y: after.y - before.y });
       publish();
       syncOverlays();
       state.frame = requestAnimationFrame((nextTimestamp) =>
         autoPanFrameRef.current?.(nextTimestamp),
       );
     },
-    [cameraTopLeft, clamp, onAutoPan, publish, syncOverlays, transform],
+    [cameraTopLeft, clamp, onAutoPanRef, publish, syncOverlays, transformRef],
   );
   useEffect(() => {
     autoPanFrameRef.current = autoPanFrame;
@@ -62,7 +62,7 @@ export function useCanvasAutoPan({
 
   const updateAutoPan = useCallback(
     (screenPoint: SpatialPoint) => {
-      const { width, height } = viewport.current;
+      const { width, height } = viewportRef.current;
       const edgeFactor = (value: number, size: number) => {
         if (value < AUTO_PAN_EDGE) return -(1 - value / AUTO_PAN_EDGE);
         if (value > size - AUTO_PAN_EDGE) return (value - (size - AUTO_PAN_EDGE)) / AUTO_PAN_EDGE;
@@ -80,7 +80,7 @@ export function useCanvasAutoPan({
       }
       if (!x && !y) stopAutoPan();
     },
-    [stopAutoPan, viewport],
+    [stopAutoPan, viewportRef],
   );
 
   useEffect(() => stopAutoPan, [stopAutoPan]);

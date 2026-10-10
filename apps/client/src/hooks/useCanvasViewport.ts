@@ -434,8 +434,8 @@ export function useCanvasViewport(
   }, [screenToWorldPoint]);
 
   const { centerOn, fitToRect, zoomAt, panBy } = useCanvasCameraMoves({
-    transform,
-    viewport,
+    transformRef: transform,
+    viewportRef: viewport,
     minScale: minScaleOption,
     maxScale,
     clamp,
@@ -467,9 +467,9 @@ export function useCanvasViewport(
   );
 
   const { stopAutoPan, updateAutoPan } = useCanvasAutoPan({
-    transform,
-    viewport,
-    onAutoPan: autoPanHandler,
+    transformRef: transform,
+    viewportRef: viewport,
+    onAutoPanRef: autoPanHandler,
     cameraTopLeft,
     clamp,
     publish,

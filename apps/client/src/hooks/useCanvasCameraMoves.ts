@@ -4,8 +4,8 @@ import { transformCenteredOn, transformFittingRect } from './canvasCameraMath';
 import type { Transform } from './canvasViewportTypes';
 
 interface CameraMovesInput {
-  transform: MutableRefObject<Transform>;
-  viewport: MutableRefObject<{ width: number; height: number }>;
+  transformRef: MutableRefObject<Transform>;
+  viewportRef: MutableRefObject<{ width: number; height: number }>;
   minScale: number;
   maxScale: number;
   clamp(): void;
@@ -21,8 +21,8 @@ interface CameraMovesInput {
  * step. They write the same camera `fitToScreen` writes, then publish it the same way.
  */
 export function useCanvasCameraMoves({
-  transform,
-  viewport,
+  transformRef,
+  viewportRef,
   minScale,
   maxScale,
   clamp,
@@ -33,50 +33,50 @@ export function useCanvasCameraMoves({
 }: CameraMovesInput) {
   const apply = useCallback(
     (next: Transform) => {
-      transform.current = next;
+      transformRef.current = next;
       clamp();
       publish();
-      setScaleState(transform.current.scale);
+      setScaleState(transformRef.current.scale);
       syncOverlays(true);
     },
-    [clamp, publish, setScaleState, syncOverlays, transform],
+    [clamp, publish, setScaleState, syncOverlays, transformRef],
   );
 
   const centerOn = useCallback(
     (point: SpatialPoint, scale?: number) => {
-      if (!viewport.current.width || !viewport.current.height) return;
-      const target = Math.max(minScale, Math.min(maxScale, scale ?? transform.current.scale));
-      apply(transformCenteredOn(point, target, viewport.current));
+      if (!viewportRef.current.width || !viewportRef.current.height) return;
+      const target = Math.max(minScale, Math.min(maxScale, scale ?? transformRef.current.scale));
+      apply(transformCenteredOn(point, target, viewportRef.current));
     },
-    [apply, maxScale, minScale, transform, viewport],
+    [apply, maxScale, minScale, transformRef, viewportRef],
   );
 
   const fitToRect = useCallback(
     (rect: SpatialRect) => {
-      if (!viewport.current.width || !viewport.current.height) return;
-      apply(transformFittingRect(rect, viewport.current, { minScale, maxScale }));
+      if (!viewportRef.current.width || !viewportRef.current.height) return;
+      apply(transformFittingRect(rect, viewportRef.current, { minScale, maxScale }));
     },
-    [apply, maxScale, minScale, viewport],
+    [apply, maxScale, minScale, viewportRef],
   );
 
   const zoomAt = useCallback(
     (factor: number, focus: { x: number; y: number }) => {
-      zoomAround(transform.current.scale * factor, focus);
-      setScaleState(transform.current.scale);
+      zoomAround(transformRef.current.scale * factor, focus);
+      setScaleState(transformRef.current.scale);
       syncOverlays();
     },
-    [setScaleState, syncOverlays, transform, zoomAround],
+    [setScaleState, syncOverlays, transformRef, zoomAround],
   );
 
   const panBy = useCallback(
     (dx: number, dy: number) => {
-      transform.current.x += dx;
-      transform.current.y += dy;
+      transformRef.current.x += dx;
+      transformRef.current.y += dy;
       clamp();
       publish();
       syncOverlays();
     },
-    [clamp, publish, syncOverlays, transform],
+    [clamp, publish, syncOverlays, transformRef],
   );
 
   return { centerOn, fitToRect, zoomAt, panBy };

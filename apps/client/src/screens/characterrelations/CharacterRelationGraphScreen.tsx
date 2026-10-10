@@ -169,9 +169,18 @@ const CharacterRelationGraphScreen = () => {
     [hiddenTypes, relations],
   );
 
+  // A character whose only relations are of a kind switched off leaves the map with them, rather
+  // than turning up as "no relations": it is not unrelated, only out of this view.
+  const visibleCharacters = useMemo(() => {
+    if (hiddenTypes.length === 0) return characters;
+    const related = new Set(relations.flatMap((r) => [r.character1Id, r.character2Id]));
+    const stillRelated = new Set(visibleRelations.flatMap((r) => [r.character1Id, r.character2Id]));
+    return characters.filter((c) => !related.has(c.id) || stillRelated.has(c.id));
+  }, [characters, hiddenTypes.length, relations, visibleRelations]);
+
   const filtered = useMemo(
-    () => filterCharacterRelationGraph(characters, visibleRelations, selectedIds),
-    [characters, visibleRelations, selectedIds],
+    () => filterCharacterRelationGraph(visibleCharacters, visibleRelations, selectedIds),
+    [visibleCharacters, visibleRelations, selectedIds],
   );
 
   const layout = useMemo(

@@ -845,6 +845,32 @@ describe('the kinds of relation', () => {
     expect(graphMarker(view).edges).toBe(3);
   });
 
+  it('take along a character whose only relations are of the kind switched off', async () => {
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+    expect(graphMarker(view).nodes).toEqual(['char-1', 'char-2', 'char-3']);
+
+    await fireEvent.press(view.getByTestId('legend-friend'));
+
+    // char-2 only had Friend relations: out of this view, not "without relations".
+    expect(graphMarker(view).nodes).toEqual(['char-1', 'char-3']);
+  });
+
+  it('keep a character that never had a relation, whatever kinds are switched off', async () => {
+    mockGetCharactersByStoryId.mockResolvedValue([
+      makeCharacter('char-1', 'Aria'),
+      makeCharacter('char-2', 'Bram'),
+      makeCharacter('char-3', 'Cy'),
+      makeCharacter('char-9', 'Solo'),
+    ]);
+    const view = await render(<CharacterRelationGraphScreen />);
+    await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
+
+    await fireEvent.press(view.getByTestId('legend-friend'));
+
+    expect(graphMarker(view).nodes).toContain('char-9');
+  });
+
   it('colour the lines of the exported map too', async () => {
     const view = await render(<CharacterRelationGraphScreen />);
     await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());

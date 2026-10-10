@@ -16,6 +16,7 @@ import {
 import { type ThemeColors, useTheme } from '../../../../theme';
 import { typography } from '../../../../theme/tokens';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 export interface MultiSelectOption {
   label: string;
@@ -287,23 +288,28 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         maxHeight={Math.min(screenHeight * 0.75, 720)}
       >
         <View style={{ flexShrink: 1 }}>
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderTitleRow}>
-              {activeGroup && effectiveGroups.length > 1 && (
-                <TouchableOpacity onPress={backToGroups} style={styles.backButton}>
+          <ModalHeader
+            bordered
+            singleLine
+            title={
+              activeGroup && effectiveGroups.length > 1
+                ? activeGroup.label
+                : label || placeholder || t('select_tags')
+            }
+            leading={
+              activeGroup && effectiveGroups.length > 1 ? (
+                <TouchableOpacity
+                  onPress={backToGroups}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('go_back')}
+                  hitSlop={8}
+                >
                   <Ionicons name="chevron-back" size={22} color={colors.text} />
                 </TouchableOpacity>
-              )}
-              <Text style={styles.modalTitle} numberOfLines={1}>
-                {activeGroup && effectiveGroups.length > 1
-                  ? activeGroup.label
-                  : label || placeholder || t('select_tags')}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+              ) : null
+            }
+            onClose={closeModal}
+          />
 
           {activeGroup && (
             <TextInput
@@ -516,31 +522,6 @@ const createStyles = (colors: ThemeColors) =>
     selectionSummary: {
       ...typography.label,
       color: colors.text,
-    },
-    modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    modalHeaderTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    backButton: {
-      padding: 5,
-      marginRight: 5,
-    },
-    modalTitle: {
-      ...typography.title,
-      color: colors.text,
-      flexShrink: 1,
-    },
-    closeButton: {
-      padding: 5,
     },
     searchInput: {
       marginHorizontal: 15,

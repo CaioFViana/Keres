@@ -21,6 +21,15 @@ interface ModalHeaderProps {
   closeDisabled?: boolean;
   /** Colour of the subtitle, when it carries meaning (the colour of a chapter or a plot). */
   subtitleColor?: string;
+  /**
+   * An edge-to-edge bar with a line under it, for a sheet that lays out its own width instead of
+   * sitting inside the padding of the modal surface (a thread, a viewer, a picker with a back step).
+   */
+  bordered?: boolean;
+  /** Placed before the title, e.g. the button that steps back inside a picker. */
+  leading?: React.ReactNode;
+  /** Keeps a long title on one line, cut with an ellipsis, so it never pushes the close button off. */
+  singleLine?: boolean;
 }
 
 /**
@@ -36,14 +45,28 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
   closeTestID,
   closeDisabled,
   subtitleColor,
+  bordered,
+  leading,
+  singleLine,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   return (
-    <View style={[layout.row, styles.header]}>
+    <View
+      style={[
+        layout.row,
+        styles.header,
+        bordered && [styles.bordered, { borderBottomColor: colors.border }],
+      ]}
+    >
+      {leading}
       <View style={layout.fill}>
-        <Text accessibilityRole="header" style={[typography.title, { color: colors.text }]}>
+        <Text
+          accessibilityRole="header"
+          numberOfLines={singleLine ? 1 : undefined}
+          style={[typography.title, { color: colors.text }]}
+        >
           {title}
         </Text>
         {subtitle ? (
@@ -78,6 +101,7 @@ const ModalHeader: React.FC<ModalHeaderProps> = ({
 
 const styles = StyleSheet.create({
   header: { gap: space.lg, marginBottom: space.md },
+  bordered: { padding: space.xl, marginBottom: 0, borderBottomWidth: StyleSheet.hairlineWidth },
   subtitle: { marginTop: space.xxs },
 });
 

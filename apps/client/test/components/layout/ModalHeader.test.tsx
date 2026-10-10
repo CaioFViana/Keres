@@ -1,10 +1,10 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('../../../src/theme', () => ({
-  useTheme: () => ({ colors: { text: '#111111', textSecondary: '#666666' } }),
+  useTheme: () => ({ colors: { text: '#111111', textSecondary: '#666666', border: '#dddddd' } }),
 }));
 
 import ModalHeader from '../../../src/components/layout/ModalHeader/ModalHeader';
@@ -56,5 +56,45 @@ describe('ModalHeader', () => {
     expect(view.getByText('Chapter').props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({ color: '#ff0000' })]),
     );
+  });
+
+  describe('bordered', () => {
+    const rootStyle = (view: Awaited<ReturnType<typeof render>>, title: string) =>
+      StyleSheet.flatten(view.getByText(title).parent?.parent?.props.style);
+
+    it('is a padded bar with a line under it and no space below, only when asked', async () => {
+      const bar = await render(<ModalHeader bordered title="Thread" />);
+      expect(rootStyle(bar, 'Thread')).toMatchObject({
+        padding: 16,
+        marginBottom: 0,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#dddddd',
+      });
+
+      const plain = await render(<ModalHeader title="Thread" />);
+      expect(rootStyle(plain, 'Thread')).not.toHaveProperty('borderBottomWidth');
+    });
+
+    it('puts what leads before the title and can keep the title to one line', async () => {
+      const view = await render(
+        <ModalHeader
+          bordered
+          singleLine
+          title="A very long title"
+          leading={<Text testID="back">back</Text>}
+          onClose={() => {}}
+        />,
+      );
+
+      expect(view.getByTestId('back')).toBeTruthy();
+      expect(view.getByText('A very long title').props.numberOfLines).toBe(1);
+      expect(view.getByLabelText('close')).toBeTruthy();
+    });
+
+    it('lets a long title wrap unless told to keep it on one line', async () => {
+      const view = await render(<ModalHeader title="A very long title" />);
+
+      expect(view.getByText('A very long title').props.numberOfLines).toBeUndefined();
+    });
   });
 });

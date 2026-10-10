@@ -21,6 +21,7 @@ import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
 import { MAX_VISIBLE_SERIES, seriesColor } from './presenceMatrixConstants';
 import { chooseExportFormat } from '../../../utils/exportFormatPrompt';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 type BulkOrder = 'appearance' | 'alphabetical';
 
 const PresenceMatrixViewerContent: React.FC<{
@@ -237,14 +238,6 @@ const PresenceMatrixViewerContent: React.FC<{
     () =>
       StyleSheet.create({
         root: { flex: 1, backgroundColor: colors.background },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 12,
-          borderBottomWidth: 1,
-          borderColor: colors.border,
-        },
-        title: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '700' },
         chips: {
           flexDirection: 'row',
           gap: 6,
@@ -324,12 +317,7 @@ const PresenceMatrixViewerContent: React.FC<{
   if (story?.type !== 'linear')
     return (
       <View style={styles.root}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('presence_matrix_title')}</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={26} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        <ModalHeader bordered title={t('presence_matrix_title')} onClose={onClose} />
         <Text style={styles.message}>{t('presence_matrix_branching_unavailable')}</Text>
       </View>
     );
@@ -341,14 +329,13 @@ const PresenceMatrixViewerContent: React.FC<{
     );
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {request.kind === 'item' ? t('presence_matrix_item_title') : t('presence_matrix_title')}
-        </Text>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={26} color={colors.text} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        bordered
+        title={
+          request.kind === 'item' ? t('presence_matrix_item_title') : t('presence_matrix_title')
+        }
+        onClose={onClose}
+      />
       {request.kind === 'character' && (
         <MultiSelectPill
           options={characters.map((character) => ({

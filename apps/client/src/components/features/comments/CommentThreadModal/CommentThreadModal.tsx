@@ -28,6 +28,7 @@ import {
   CRITICALITY_LEVELS,
   DEFAULT_CRITICALITY,
 } from '../../../../utils/commentCriticality';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface CommentThreadModalProps {
   visible: boolean;
@@ -267,14 +268,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
         keyboardVerticalOffset={0}
         footer={footer}
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {fieldLabel}
-          </Text>
-          <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')} hitSlop={8}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        <ModalHeader bordered singleLine title={fieldLabel} onClose={onClose} />
 
         <View style={styles.list}>
           {sortedComments.length === 0 ? (
@@ -337,15 +331,6 @@ const createStyles = (colors: ThemeColors) =>
     // Edge to edge: the keyboard screen and the header below lay out their own padding.
     sheet: { flex: 1 },
     keyboardContent: { flexGrow: 1 },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 15,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    headerTitle: { fontSize: 16, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
     list: { paddingHorizontal: 15, flexGrow: 1 },
     commentRow: { flexDirection: 'row', marginVertical: 10 },
     commentBody: { flex: 1, marginLeft: 10 },

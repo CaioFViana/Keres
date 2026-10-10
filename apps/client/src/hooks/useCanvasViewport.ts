@@ -1,10 +1,13 @@
 import type React from 'react';
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { View } from 'react-native';
-import { Animated, PanResponder } from 'react-native';
+import { Animated, PanResponder, Platform } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import { capturePointer, releasePointer } from '../utils/pointerCapture';
+import { attachCanvasWebInput } from './canvasWebInput';
+import { useCanvasAutoPan } from './useCanvasAutoPan';
+import { useCanvasCameraMoves } from './useCanvasCameraMoves';
 import {
   spatialNativeSurface,
   spatialOverlayNeedsSync,
@@ -14,8 +17,6 @@ import {
   type SpatialRect,
 } from '@keres/shared';
 import {
-  AUTO_PAN_EDGE,
-  AUTO_PAN_MAX_SCREEN_SPEED,
   type CanvasCameraTransform,
   type CanvasViewportBounds,
   type CanvasViewportHandle,
@@ -131,8 +132,6 @@ export function useCanvasViewport(
   const tapping = useRef(false);
   /** The identity of the last bounds already framed, so as not to reframe on every render. */
   const fittedBounds = useRef<CanvasViewportBounds | null>(null);
-  const autoPan = useRef({ x: 0, y: 0, frame: null as number | null, timestamp: 0 });
-  const autoPanFrameRef = useRef<((timestamp: number) => void) | null>(null);
 
   const publish = useCallback(() => {
     animatedScale.setValue(transform.current.scale);
@@ -434,78 +433,48 @@ export function useCanvasViewport(
     return screenToWorldPoint({ x: width / 2, y: height / 2 });
   }, [screenToWorldPoint]);
 
+  const { centerOn, fitToRect, zoomAt, panBy } = useCanvasCameraMoves({
+    transform,
+    viewport,
+    minScale: minScaleOption,
+    maxScale,
+    clamp,
+    publish,
+    syncOverlays,
+    zoomAround,
+    setScaleState,
+  });
+
+  // Mouse wheel and keyboard on web; native and the test renderer attach nothing.
+  useEffect(
+    () => attachCanvasWebInput(containerRef, Platform.OS, { zoomAt, panBy, fit: fitToScreen }),
+    [fitToScreen, panBy, zoomAt],
+  );
+
   useImperativeHandle(
     ref,
     () => ({
       fitToScreen,
       zoomBy: (factor: number) => {
-        zoomAround(transform.current.scale * factor, {
-          x: viewport.current.width / 2,
-          y: viewport.current.height / 2,
-        });
-        setScaleState(transform.current.scale);
-        syncOverlays();
+        zoomAt(factor, { x: viewport.current.width / 2, y: viewport.current.height / 2 });
       },
       viewportWorldCenter,
       resetRotation,
+      centerOn,
+      fitToRect,
     }),
-    [fitToScreen, resetRotation, syncOverlays, viewportWorldCenter, zoomAround],
+    [centerOn, fitToRect, fitToScreen, resetRotation, viewportWorldCenter, zoomAt],
   );
 
-  const stopAutoPan = useCallback(() => {
-    if (autoPan.current.frame !== null) cancelAnimationFrame(autoPan.current.frame);
-    autoPan.current = { x: 0, y: 0, frame: null, timestamp: 0 };
-  }, []);
-
-  const autoPanFrame = useCallback(
-    (timestamp: number) => {
-      const state = autoPan.current;
-      state.frame = null;
-      if (!state.x && !state.y) return;
-      const elapsed = Math.min(48, Math.max(1, timestamp - state.timestamp || 16));
-      state.timestamp = timestamp;
-      const before = cameraTopLeft();
-      transform.current.x -= (state.x * (AUTO_PAN_MAX_SCREEN_SPEED * elapsed)) / 1000;
-      transform.current.y -= (state.y * (AUTO_PAN_MAX_SCREEN_SPEED * elapsed)) / 1000;
-      clamp();
-      const after = cameraTopLeft();
-      autoPanHandler.current?.({ x: after.x - before.x, y: after.y - before.y });
-      publish();
-      syncOverlays();
-      state.frame = requestAnimationFrame((nextTimestamp) =>
-        autoPanFrameRef.current?.(nextTimestamp),
-      );
-    },
-    [cameraTopLeft, clamp, publish, syncOverlays],
-  );
-  useEffect(() => {
-    autoPanFrameRef.current = autoPanFrame;
-  }, [autoPanFrame]);
-
-  const updateAutoPan = useCallback(
-    (screenPoint: SpatialPoint) => {
-      const { width, height } = viewport.current;
-      const edgeFactor = (value: number, size: number) => {
-        if (value < AUTO_PAN_EDGE) return -(1 - value / AUTO_PAN_EDGE);
-        if (value > size - AUTO_PAN_EDGE) return (value - (size - AUTO_PAN_EDGE)) / AUTO_PAN_EDGE;
-        return 0;
-      };
-      const x = width ? edgeFactor(screenPoint.x, width) : 0;
-      const y = height ? edgeFactor(screenPoint.y, height) : 0;
-      autoPan.current.x = x;
-      autoPan.current.y = y;
-      if ((x || y) && autoPan.current.frame === null) {
-        autoPan.current.timestamp = 0;
-        autoPan.current.frame = requestAnimationFrame((timestamp) =>
-          autoPanFrameRef.current?.(timestamp),
-        );
-      }
-      if (!x && !y) stopAutoPan();
-    },
-    [stopAutoPan],
-  );
-
-  useEffect(() => stopAutoPan, [stopAutoPan]);
+  const { stopAutoPan, updateAutoPan } = useCanvasAutoPan({
+    transform,
+    viewport,
+    onAutoPan: autoPanHandler,
+    cameraTopLeft,
+    clamp,
+    publish,
+    syncOverlays,
+  });
 
   const handleLayout = useCallback(() => {
     containerRef.current?.measureInWindow((x, y, width, height) => {
@@ -705,6 +674,8 @@ export function useCanvasViewport(
     rotation: rotationState,
     resetRotation,
     viewportWorldCenter,
+    centerOn,
+    fitToRect,
     updateAutoPan,
     stopAutoPan,
   };

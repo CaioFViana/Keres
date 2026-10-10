@@ -12,9 +12,10 @@ jest.mock('../../src/theme', () => ({
 
 type Root = RenderResult['container'];
 
-function renderFrame(containerRef = createRef<View>()) {
+function renderFrame(containerRef = createRef<View>(), label?: string) {
   return render(
     <GraphCanvasFrame
+      label={label}
       containerRef={containerRef}
       handleLayout={() => undefined}
       panHandlers={PanResponder.create({}).panHandlers}
@@ -48,6 +49,19 @@ describe('GraphCanvasFrame', () => {
 
   it('keeps pointerEvents out of the shared plane geometry (it only works as a View prop)', () => {
     expect(graphCanvasPlaneStyle).not.toHaveProperty('pointerEvents');
+  });
+
+  it('names the canvas as a region for a screen reader when it has a label', async () => {
+    const view = await renderFrame(createRef<View>(), 'Character relations');
+
+    const region = view.getByLabelText('Character relations');
+    expect(region.props.role).toBe('region');
+  });
+
+  it('is not announced as a region when it has no label', async () => {
+    const view = await renderFrame();
+
+    expect(view.queryByRole('region')).toBeNull();
   });
 
   it('suppresses native dragstart on a web container so image gestures stay in the responder system', () => {

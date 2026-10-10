@@ -8,6 +8,10 @@ export interface CanvasViewportHandle {
   viewportWorldCenter(): SpatialPoint;
   /** Harmless everywhere rotation is off; sketches use it for the reset control. */
   resetRotation(): void;
+  /** Puts a point of the drawing (world coordinates) in the middle of the screen, at the current zoom unless one is given. */
+  centerOn(point: SpatialPoint, scale?: number): void;
+  /** Frames a part of the drawing (world coordinates), without magnifying a small one past a readable size. */
+  fitToRect(rect: SpatialRect): void;
 }
 
 /**

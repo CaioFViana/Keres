@@ -5,3 +5,4 @@ export { default as EntityMetadata } from './EntityMetadata/EntityMetadata';
 export { default as MapIcon } from './MapIcon/MapIcon';
 export { default as SummaryCard } from './SummaryCard/SummaryCard';
 export { default as TagList } from './TagList/TagList';
+export { default as ThemedText } from './ThemedText/ThemedText';

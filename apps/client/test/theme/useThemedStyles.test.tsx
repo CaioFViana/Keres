@@ -53,4 +53,17 @@ describe('useThemedStyles', () => {
     await rerender({});
     expect((result.current as { label: { fontSize: number } }).label.fontSize).toBe(16);
   });
+
+  it('keeps object values by identity and refuses more than five extra values', async () => {
+    const metrics = { size: 4 };
+    const factory = jest.fn((colors: { text: string }, [m]: [{ size: number }]) =>
+      StyleSheet.create({ box: { color: colors.text, width: m.size } }),
+    );
+    const { rerender } = await renderHook(() => useThemedStyles(factory as never, [metrics]));
+    await rerender({});
+    expect(factory).toHaveBeenCalledTimes(1);
+
+    const tooMany = () => useThemedStyles(createStyles as never, [1, 2, 3, 4, 5, 6] as never);
+    await expect(renderHook(tooMany)).rejects.toThrow('at most 5');
+  });
 });

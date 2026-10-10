@@ -21,7 +21,7 @@ interface SelectionDrawerMenuProps {
  * The menu outside a story. A message nobody has opened shows as a dot on the entry it is behind, and on the
  * group while that group is folded away.
  */
-export const SelectionDrawerMenu: React.FC<SelectionDrawerMenuProps> = ({
+const SelectionDrawerMenu: React.FC<SelectionDrawerMenuProps> = ({
   state,
   navigation,
   drawerId,

@@ -198,7 +198,6 @@ const ExampleStoriesScreen = () => {
       styles.cardAuthor,
       styles.cardDescription,
       styles.cardTitle,
-      layout.row,
       t,
     ],
   );

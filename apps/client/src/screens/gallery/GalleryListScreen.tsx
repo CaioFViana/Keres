@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -246,7 +246,9 @@ const GalleryListScreen = () => {
 
   // Before the list has been measured the window's breakpoint stands in for its width.
   const scrollbarKey = `${listWidth}:${galleries.length}`;
-  scrollbarKeyRef.current = scrollbarKey;
+  useEffect(() => {
+    scrollbarKeyRef.current = scrollbarKey;
+  }, [scrollbarKey]);
   const grid =
     listWidth > 0
       ? galleryGridLayout(listWidth, scrollbar.forKey === scrollbarKey ? scrollbar.width : 0)

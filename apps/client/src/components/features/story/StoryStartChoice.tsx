@@ -15,12 +15,12 @@ interface StoryStartChoiceProps {
   children?: React.ReactNode;
 }
 
-const OPTIONS: ReadonlyArray<{
+const OPTIONS: readonly {
   id: StoryStart;
   icon: keyof typeof Ionicons.glyphMap;
   titleKey: string;
   bodyKey: string;
-}> = [
+}[] = [
   {
     id: 'blank',
     icon: 'document-outline',

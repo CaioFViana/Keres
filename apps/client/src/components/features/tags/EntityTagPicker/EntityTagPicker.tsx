@@ -1,7 +1,7 @@
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 
 interface EntityTagPickerProps {
-  tags: ReadonlyArray<{ id: string; name: string; color?: string | null }>;
+  tags: readonly { id: string; name: string; color?: string | null }[];
   selectedTagIds: string[];
   onSelectionChange: (tagIds: string[]) => void;
   placeholder: string;

@@ -39,7 +39,7 @@ interface GroupedDrawerMenuProps {
  * Entries in groups that open and close, with the entries that are always there below them. The group with
  * the screen on show is open; the rest are as they were left, across sessions. A group folded away still shows a dot while something inside it asks for attention.
  */
-export const GroupedDrawerMenu: React.FC<GroupedDrawerMenuProps> = ({
+const GroupedDrawerMenu: React.FC<GroupedDrawerMenuProps> = ({
   state,
   navigation,
   drawerId,

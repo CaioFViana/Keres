@@ -42,7 +42,7 @@ export interface EntityFormActionsConfig<TData, TEntity extends PersistedEntity>
   update(userId: string, entityId: string, data: TData): Promise<unknown>;
   remove(userId: string, entityId: string): Promise<void>;
   /** Secondary writes, in order (tags, notes, see-also, relations); the attribute values follow them. */
-  secondarySteps?: ReadonlyArray<(entityId: string) => Promise<void>>;
+  secondarySteps?: readonly ((entityId: string) => Promise<void>)[];
   persistSecondaryDraft?(entityId: string): Promise<void>;
   clearSecondaryDraft?(entityId: string): Promise<void>;
   /** What the screen says: the failure to save, and the success after a create or an update. */

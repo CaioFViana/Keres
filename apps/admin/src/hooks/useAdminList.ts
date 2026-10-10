@@ -37,7 +37,7 @@ export function useAdminList<T>(load: () => Promise<Paged<T>>, deps: readonly un
     return () => {
       ignore = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `deps` is the caller's list of what the request depends on.
+    // `deps` is the caller's list of what the request depends on, so it is spread here by design.
   }, [...deps, reloadToken]);
 
   return {

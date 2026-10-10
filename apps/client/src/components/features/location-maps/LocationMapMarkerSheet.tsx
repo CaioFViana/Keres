@@ -4,7 +4,7 @@ import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/Icon
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 import {
   MAP_ICON_OPTIONS,
   MAX_LOCATION_MAP_NOTE_LENGTH,

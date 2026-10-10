@@ -84,7 +84,7 @@ jest.mock('../../src/navigation/openMenuLeaf', () => ({
   openMenuLeaf: (...args: unknown[]) => mockOpenLeaf(...args),
 }));
 
-import { MainDrawerMenu } from '../../src/components/common/navigation/MainDrawerMenu/MainDrawerMenu';
+import MainDrawerMenu from '../../src/components/common/navigation/MainDrawerMenu/MainDrawerMenu';
 
 const renderMenu = (props: Partial<React.ComponentProps<typeof MainDrawerMenu>> = {}) =>
   render(

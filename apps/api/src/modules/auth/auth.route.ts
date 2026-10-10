@@ -1,6 +1,7 @@
 import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
-import { Cookie, Elysia, t } from 'elysia';
+import type { Cookie } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { comparePassword, hashPassword } from '../../config/bcrypt';
 import { env } from '../../config/env';

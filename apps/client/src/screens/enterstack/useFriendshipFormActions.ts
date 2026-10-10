@@ -79,7 +79,9 @@ export function useFriendshipFormActions({
 
   // The lookup runs by itself once the tag stops changing, so there is no "check" button to find.
   const checkRef = useRef(handleCheckFriendTag);
-  checkRef.current = handleCheckFriendTag;
+  useEffect(() => {
+    checkRef.current = handleCheckFriendTag;
+  }, [handleCheckFriendTag]);
   useEffect(() => {
     const tag = normalizeUserTag(state.friendTag);
     if (!state.selectedServerId || !isTagValid(tag)) return undefined;

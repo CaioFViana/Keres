@@ -28,7 +28,7 @@ interface MainDrawerMenuProps {
  * (each as it was left in this story), and the entries that are always there (settings, help, leaving the
  * story) at the bottom.
  */
-export const MainDrawerMenu: React.FC<MainDrawerMenuProps> = ({
+const MainDrawerMenu: React.FC<MainDrawerMenuProps> = ({
   state,
   navigation,
   drawerId,

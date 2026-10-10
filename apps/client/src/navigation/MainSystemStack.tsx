@@ -1,5 +1,5 @@
 // The stack definitions live in MainSystemStacks; this file composes the drawer.
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import type { NavigatorScreenParams } from '@react-navigation/native';

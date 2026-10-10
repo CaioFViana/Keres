@@ -28,7 +28,7 @@ const FirstStoryStart: React.FC<FirstStoryStartProps> = ({
   const { t } = useTranslation();
   const { isCompact } = useResponsiveLayout();
 
-  const cards: ReadonlyArray<{
+  const cards: readonly {
     id: string;
     icon: keyof typeof Ionicons.glyphMap;
     title: string;
@@ -36,7 +36,7 @@ const FirstStoryStart: React.FC<FirstStoryStartProps> = ({
     action: string;
     onPress: () => void;
     primary?: boolean;
-  }> = [
+  }[] = [
     {
       id: 'blank',
       icon: 'document-outline',

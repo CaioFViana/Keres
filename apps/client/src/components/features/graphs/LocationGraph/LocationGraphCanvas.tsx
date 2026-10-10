@@ -33,6 +33,8 @@ interface LocationGraphCanvasProps {
   highlightedNodeIds?: string[];
   /** The selected node and its direct neighbours; everyone else fades. Null while nothing is selected. */
   focusNodeIds?: ReadonlySet<string> | null;
+  /** For each folded place, how many places are folded into it: shown as a count on the node. */
+  hiddenCounts?: ReadonlyMap<string, number>;
   /** What a screen reader says for a node (its name and how many relations it has). */
   nodeAccessibilityLabel: (node: LocationGraphNode) => string;
   /** Names the canvas as a region for a screen reader. */
@@ -49,6 +51,7 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
       selectedNodeId,
       highlightedNodeIds,
       focusNodeIds = null,
+      hiddenCounts,
       nodeAccessibilityLabel,
       label,
       onSelectNode,
@@ -118,6 +121,7 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
             highlighted={highlightedNodeIds?.includes(node.id) ?? false}
             dimmed={!!focusNodeIds && !focusNodeIds.has(node.id)}
             accessibilityLabel={nodeAccessibilityLabel(node)}
+            badge={hiddenCounts?.has(node.id) ? `+${hiddenCounts.get(node.id)}` : undefined}
             onPress={() => onSelectNode(node)}
           />
         ))}

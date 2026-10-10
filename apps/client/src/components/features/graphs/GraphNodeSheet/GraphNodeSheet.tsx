@@ -36,8 +36,14 @@ export interface GraphNodeSheetSection {
   description?: string;
   emptyMessage?: string;
   items?: GraphNodeSheetItem[];
-  /** A button under the section's rows: add one more (a relation, a child). */
-  action?: { label: string; icon?: keyof typeof Ionicons.glyphMap; onPress: () => void };
+  /** Buttons under the section's rows: add one more (a relation, a child), fold what it holds. */
+  actions?: GraphNodeSheetSectionAction[];
+}
+
+export interface GraphNodeSheetSectionAction {
+  label: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
 }
 
 interface GraphNodeSheetProps {
@@ -256,16 +262,17 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
                   </TouchableOpacity>
                 ))
               ))}
-            {section.action && (
+            {section.actions?.map((action) => (
               <TouchableOpacity
+                key={action.label}
                 style={styles.sectionAction}
-                onPress={section.action.onPress}
+                onPress={action.onPress}
                 accessibilityRole="button"
               >
-                <Ionicons name={section.action.icon ?? 'add'} size={18} color={colors.primary} />
-                <Text style={styles.sectionActionText}>{section.action.label}</Text>
+                <Ionicons name={action.icon ?? 'add'} size={18} color={colors.primary} />
+                <Text style={styles.sectionActionText}>{action.label}</Text>
               </TouchableOpacity>
-            )}
+            ))}
           </View>
         ))}
         <TouchableOpacity style={styles.actionButton} onPress={onAction}>

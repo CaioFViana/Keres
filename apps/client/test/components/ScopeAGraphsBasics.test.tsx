@@ -378,7 +378,7 @@ describe('GraphNodeSheet editing', () => {
             title: 'Relations',
             emptyMessage: 'None yet',
             items: [],
-            action: { label: 'Add relation', onPress: add },
+            actions: [{ label: 'Add relation', onPress: add }],
           },
         ]}
       />,

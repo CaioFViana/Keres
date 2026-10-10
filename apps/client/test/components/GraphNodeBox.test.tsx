@@ -117,4 +117,12 @@ describe('GraphNodeBox', () => {
     expect(boxes(await renderNode({ dimmed: true })).inner.opacity).toBeLessThan(0.5);
     expect(boxes(await renderNode()).inner.opacity).toBeUndefined();
   });
+
+  it('shows a small count in the corner only when it has one', async () => {
+    const withBadge = await renderNode({ badge: '+3' });
+    expect(withBadge.getByText('+3')).toBeTruthy();
+
+    const without = await renderNode();
+    expect(without.queryByText('+3')).toBeNull();
+  });
 });

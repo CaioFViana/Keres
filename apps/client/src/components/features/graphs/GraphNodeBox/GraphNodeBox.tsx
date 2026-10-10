@@ -26,6 +26,8 @@ interface GraphNodeBoxProps {
   dimmed: boolean;
   /** What a screen reader says: the name and how many relations it has. */
   accessibilityLabel: string;
+  /** A small count in the corner, e.g. `+3` for the places folded into a region. */
+  badge?: string;
   onPress: () => void;
 }
 
@@ -43,6 +45,7 @@ const GraphNodeBox: React.FC<GraphNodeBoxProps> = ({
   highlighted,
   dimmed,
   accessibilityLabel,
+  badge,
   onPress,
 }) => {
   const styles = useThemedStyles(createStyles, [shape]);
@@ -76,6 +79,11 @@ const GraphNodeBox: React.FC<GraphNodeBoxProps> = ({
             {line}
           </Text>
         ))}
+        {!!badge && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge}</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -114,6 +122,15 @@ const createStyles = (colors: ThemeColors, [shape]: [GraphNodeBoxProps['shape']]
       textAlign: 'center',
     },
     labelSelected: { color: colors.onPrimary },
+    badge: {
+      position: 'absolute',
+      right: 4,
+      bottom: 2,
+      borderRadius: 8,
+      paddingHorizontal: 5,
+      backgroundColor: colors.primary,
+    },
+    badgeText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: fontWeight.bold },
   });
 
 export default GraphNodeBox;

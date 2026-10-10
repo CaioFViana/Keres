@@ -381,3 +381,20 @@ describe('location graph arrowheads', () => {
     expect(head.props.opacity).toBe(0.15);
   });
 });
+
+describe('location graph folded regions', () => {
+  it('shows how many places are folded into a region, on that region only', async () => {
+    const { view } = await renderGraph({ hiddenCounts: new Map([['a', 4]]) });
+    await fireLayout(view.container);
+
+    expect(view.getByText('+4')).toBeTruthy();
+    expect(view.queryAllByText(/^\+\d+$/)).toHaveLength(1);
+  });
+
+  it('shows no count when nothing is folded', async () => {
+    const { view } = await renderGraph();
+    await fireLayout(view.container);
+
+    expect(view.queryAllByText(/^\+\d+$/)).toHaveLength(0);
+  });
+});

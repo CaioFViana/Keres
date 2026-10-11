@@ -96,6 +96,7 @@ export const ShowcaseStoryCardSchema = z.object({
   owner: ShowcaseOwnerSchema,
   versionCount: z.number().int(),
   latestVersion: ShowcaseVersionSchema,
+  hasCover: z.boolean().default(false),
   updatedAt: z.string(),
 });
 
@@ -104,6 +105,7 @@ export const ShowcaseStoryDetailSchema = z.object({
   snapshot: StoryPublicationSnapshotSchema,
   owner: ShowcaseOwnerSchema,
   versions: z.array(ShowcaseVersionSchema),
+  hasCover: z.boolean().default(false),
   updatedAt: z.string(),
 });
 

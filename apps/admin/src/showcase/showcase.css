@@ -291,6 +291,18 @@ a {
   );
 }
 
+/* The cover beside the card: its own shape, never stretched. */
+.story-card-cover {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 84px;
+  height: 120px;
+  margin: 14px 0 14px 16px;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: var(--shadow-card);
+}
+
 .story-card-body {
   flex: 1;
   padding: 18px 20px;
@@ -486,6 +498,17 @@ a {
 
 .back-link:hover {
   color: var(--page-tint, var(--color-primary));
+}
+
+.story-cover {
+  display: block;
+  width: min(220px, 60%);
+  height: auto;
+  max-height: 340px;
+  margin: 0 0 18px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
 }
 
 .story-head h1 {

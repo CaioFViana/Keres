@@ -71,7 +71,7 @@ const page: HelpPage = {
           key: 'coverGalleryId',
           label: 'Cover',
           whatToWrite: 'Pick an image from the gallery to stand for this work.',
-          note: 'Optional. It does not copy or move the image.',
+          note: 'Optional. It does not copy or move the image. It stands in for the icon of the work on the dashboard, and is the first page of a book exported or published of this work alone.',
         },
         {
           key: 'pageFormat',

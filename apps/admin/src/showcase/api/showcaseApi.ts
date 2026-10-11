@@ -164,6 +164,23 @@ export async function fetchDownloadUrl(storyId: string, publicationId: string): 
 }
 
 /**
+ * The cover of a story as an address the page can draw: the picture is fetched with the credentials of the
+ * viewer (a protected or adults-only story answers only to them, and an image tag cannot send headers) and kept
+ * as a local object URL. `null` when there is no cover to show; the caller revokes the address when done.
+ */
+export async function fetchCoverUrl(storyId: string): Promise<string | null> {
+  try {
+    const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}/cover`, {
+      headers: storyHeaders(storyId),
+    });
+    if (!response.ok) return null;
+    return URL.createObjectURL(await response.blob());
+  } catch {
+    return null;
+  }
+}
+
+/**
  * A version's manuscript address. Same short-lived-token dance as the package link: only the path
  * differs, because the artifact (readable text, not the Keres base) does.
  */

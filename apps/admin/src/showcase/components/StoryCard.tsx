@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 import { paletteVars } from '../theme/paletteVars';
 import { OwnerAvatar } from './OwnerAvatar';
+import { StoryCover } from './StoryCover';
 import { formatBytes, formatDate, genreList } from '../format';
 
 export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
@@ -20,6 +21,7 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
       style={paletteVars(snapshot.theme, resolved)}
     >
       <div className="story-card-accent" aria-hidden="true" />
+      <StoryCover storyId={story.storyId} hasCover={story.hasCover} className="story-card-cover" />
       <div className="story-card-body">
         <div className="story-card-head">
           <h3>{snapshot.title}</h3>

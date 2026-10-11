@@ -45,6 +45,8 @@ export interface ShowcaseStoryCard {
   owner: ShowcaseOwner;
   versionCount: number;
   latestVersion: ShowcaseVersion;
+  /** The story has a cover the site can show: it is served at `/stories/:storyId/cover`. */
+  hasCover?: boolean;
   updatedAt: string;
 }
 
@@ -54,6 +56,8 @@ export interface ShowcaseStoryDetail {
   snapshot: StoryPublicationSnapshot;
   owner: ShowcaseOwner;
   versions: ShowcaseVersion[];
+  /** The story has a cover the site can show: it is served at `/stories/:storyId/cover`. */
+  hasCover?: boolean;
   updatedAt: string;
 }
 

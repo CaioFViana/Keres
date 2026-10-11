@@ -12,6 +12,7 @@ import { useShowcaseAuth } from '../auth/ShowcaseAuthProvider';
 import { LoginDialog } from '../components/LoginDialog';
 import { OwnerAvatar } from '../components/OwnerAvatar';
 import { PasswordGate } from '../components/PasswordGate';
+import { StoryCover } from '../components/StoryCover';
 import { formatBytes, formatDate, genreList } from '../format';
 import { paletteDisplayName, paletteVars } from '../theme/paletteVars';
 import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
@@ -130,6 +131,7 @@ export function StoryPage() {
       </Link>
 
       <header className="story-head">
+        <StoryCover storyId={detail.storyId} hasCover={detail.hasCover} className="story-cover" />
         <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
         {snapshot.isNsfw && <span className="badge badge-adult">{t('story.adultsOnly')}</span>}
         <h1>{snapshot.title}</h1>

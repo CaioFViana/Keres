@@ -9,7 +9,10 @@ import type {
 import { comparePassword } from '../config/bcrypt';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { stories, storyPublications, storyShowcaseEntries, users } from '../db/schema';
+import { galleries, stories, storyPublications, storyShowcaseEntries, users } from '../db/schema';
+
+/** What a cover may be to be served to a page: raster images only, nothing that runs. */
+const COVER_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
 /**
  * The public site's anonymous reads.
@@ -31,6 +34,28 @@ export class ShowcaseService {
       avatarColor: row.avatarColor,
       avatarIcon: row.avatarIcon,
     };
+  }
+
+  /**
+   * The picture that is the cover of a story, when it has a usable one: a live image of the story's own Gallery,
+   * in a format a browser draws without running anything. The site shows the cover as it is now, not as it was in a
+   * version: a cover is the story's face, not part of a release.
+   */
+  async coverOf(storyId: string): Promise<{ hash: string; mimeType: string } | null> {
+    const [row] = await db
+      .select({ hash: galleries.hash, mimeType: galleries.mimeType })
+      .from(stories)
+      .innerJoin(galleries, eq(galleries.id, stories.coverGalleryId))
+      .where(
+        and(
+          eq(stories.id, storyId),
+          eq(galleries.storyId, storyId),
+          eq(galleries.isDeleted, false),
+          eq(galleries.mediaType, 'image'),
+        ),
+      )
+      .limit(1);
+    return row && COVER_MIME_TYPES.has(row.mimeType) ? row : null;
   }
 
   private versionOf(row: typeof storyPublications.$inferSelect): ShowcaseVersion {
@@ -130,6 +155,7 @@ export class ShowcaseService {
         owner: this.ownerOf(entry),
         versionCount: versions.length,
         latestVersion: this.versionOf(versions[0]),
+        hasCover: (await this.coverOf(entry.storyId)) !== null,
         updatedAt: entry.updatedAt.toISOString(),
       });
     }
@@ -227,6 +253,7 @@ export class ShowcaseService {
       snapshot: versions[0].snapshot as StoryPublicationSnapshot,
       owner: this.ownerOf(entry),
       versions: versions.map((version) => this.versionOf(version)),
+      hasCover: (await this.coverOf(storyId)) !== null,
       updatedAt: entry.updatedAt.toISOString(),
     };
   }

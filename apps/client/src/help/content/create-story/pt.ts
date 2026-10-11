@@ -94,7 +94,7 @@ const page: HelpPage = {
           label: 'Capa',
           whatToWrite:
             'Escolha uma imagem da galeria desta história para representar o universo inteiro.',
-          note: 'Opcional. Aparece onde a história é apresentada, como na vitrine. Cada obra (arco) pode ter a sua própria capa.',
+          note: 'Opcional. Aparece no cartão da história na sua lista e no painel, na vitrine quando a história é publicada, e como primeira página de um livro exportado ou publicado (PDF, Word, EPUB, HTML). Cada obra (arco) pode ter a sua própria capa, que um livro dessa obra usa no lugar dela.',
         },
       ],
     },

@@ -2,6 +2,7 @@ import { APP_RELEASE } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { jwtShowcase } from '../../config/jwt';
 import type { JWTPayload } from '../../index';
+import { mediaStorageService } from '../../services/MediaStorageService';
 import { packService } from '../../services/PackService';
 import { publicationStorageService } from '../../services/PublicationStorageService';
 import { showcaseLogoStorageService } from '../../services/ShowcaseLogoStorageService';
@@ -246,6 +247,7 @@ export const publicRoutes = new Elysia()
               snapshot: SnapshotSchema,
               owner: OwnerSchema,
               versions: t.Array(VersionSchema),
+              hasCover: t.Optional(t.Boolean()),
               updatedAt: t.String(),
             }),
           ]),
@@ -253,6 +255,43 @@ export const publicRoutes = new Elysia()
             summary: 'A published story',
             description:
               'For a password-protected story without a valid unlock token, answers with a stub that carries no information about the story.',
+            tags: ['Showcase'],
+          },
+        },
+      )
+      .get(
+        '/stories/:storyId/cover',
+        async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
+          // The same gates as the story's page: a password, an adults-only shelf and a hidden story keep their cover too.
+          await openShowcaseStory({
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [
+              headers['authorization'],
+              query.access ? `Showcase ${query.access}` : undefined,
+            ],
+          });
+          const cover = await showcaseService.coverOf(params.storyId);
+          const stored = cover ? await mediaStorageService.read(cover.hash) : null;
+          if (!cover || !stored) {
+            throw new AppError(404, 'Not found.');
+          }
+          set.headers['content-type'] = cover.mimeType;
+          set.headers['x-content-type-options'] = 'nosniff';
+          // A cover can change; an adults-only story's is not for a shared cache.
+          set.headers['cache-control'] = (await showcaseService.isNsfwStory(params.storyId))
+            ? 'private, max-age=300'
+            : 'public, max-age=300';
+          return stored.body;
+        },
+        {
+          params: t.Object({ storyId: t.String() }),
+          query: t.Object({ access: t.Optional(t.String()) }),
+          detail: {
+            summary: 'The cover of a published story',
+            description:
+              'The picture the author chose as the cover, as it is now. 404 when the story has none, or is not for this viewer.',
             tags: ['Showcase'],
           },
         },

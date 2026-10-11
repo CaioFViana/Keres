@@ -70,7 +70,7 @@ const page: HelpPage = {
           key: 'coverGalleryId',
           label: 'Capa',
           whatToWrite: 'Escolha uma imagem da galeria para representar esta obra.',
-          note: 'Opcional. Não copia nem move a imagem.',
+          note: 'Opcional. Não copia nem move a imagem. Ocupa o lugar do ícone da obra no painel e é a primeira página de um livro exportado ou publicado só desta obra.',
         },
         {
           key: 'pageFormat',

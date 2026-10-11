@@ -92,7 +92,7 @@ const page: HelpPage = {
           key: 'coverGalleryId',
           label: 'Cover',
           whatToWrite: "Pick an image from this story's gallery to stand for the whole universe.",
-          note: 'Optional. It is shown where the story is presented, such as the showcase. Each work (arc) can have its own cover.',
+          note: 'Optional. It is shown on the story card in your list and on the dashboard, on the showcase when the story is published, and as the first page of an exported or published book (PDF, Word, EPUB, HTML). Each work (arc) can have its own cover, which a book of that work uses instead.',
         },
       ],
     },

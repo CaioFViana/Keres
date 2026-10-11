@@ -432,13 +432,14 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'owner',
       'versionCount',
       'latestVersion',
+      'hasCover',
       'updatedAt',
       'isNsfw',
     ],
   },
   ShowcaseStoryDetail: {
     documented: [],
-    invisible: ['storyId', 'snapshot', 'owner', 'versions', 'updatedAt'],
+    invisible: ['storyId', 'snapshot', 'owner', 'versions', 'hasCover', 'updatedAt'],
   },
   ShowcaseVersion: {
     documented: [],

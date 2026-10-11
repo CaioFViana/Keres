@@ -149,9 +149,37 @@ const total = results.reduce(
   (sum, result) => ({ files: sum.files + result.files, lines: sum.lines + result.lines }),
   { files: 0, lines: 0 },
 );
+const tests = results.find((result) => result.name === 'Tests');
+const totalWithoutTests = {
+  files: total.files - (tests?.files ?? 0),
+  lines: total.lines - (tests?.lines ?? 0),
+};
+// Curated content, not hand-written application code.
+const dataOnlyCategories = new Set(['Client-Help', 'Client-StoryDevices', 'Client-Narratives']);
+const dataOnly = results
+  .filter((result) => dataOnlyCategories.has(result.name))
+  .reduce(
+    (sum, result) => ({ files: sum.files + result.files, lines: sum.lines + result.lines }),
+    { files: 0, lines: 0 },
+  );
+const totalWithoutData = {
+  files: total.files - dataOnly.files,
+  lines: total.lines - dataOnly.lines,
+};
+const totalWithoutTestsOrData = {
+  files: totalWithoutTests.files - dataOnly.files,
+  lines: totalWithoutTests.lines - dataOnly.lines,
+};
+const tableRows = [
+  ...results,
+  { name: 'Total (no tests)', ...totalWithoutTests },
+  { name: 'Total (no data)', ...totalWithoutData },
+  { name: 'Total (no tests, no data)', ...totalWithoutTestsOrData },
+  { name: 'Total', ...total },
+];
 
 console.table(
-  [...results, { name: 'Total', ...total }].map((result) => ({
+  tableRows.map((result) => ({
     Category: result.name,
     Files: result.files,
     'Lines of code': result.lines,

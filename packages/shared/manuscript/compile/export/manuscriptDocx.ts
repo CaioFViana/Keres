@@ -1,3 +1,4 @@
+import type { Table } from 'docx';
 import {
   AlignmentType,
   Bookmark,
@@ -12,14 +13,13 @@ import {
   PageNumber,
   PageReference,
   Paragraph,
-  Table,
   Tab,
   TabStopType,
   TextRun,
 } from 'docx';
 import {
-  sceneHeadingLabel,
   manuscriptTocEntries,
+  sceneHeadingLabel,
   type CompiledManuscript,
   type CompiledSpan,
   type ManuscriptRenderOptions,

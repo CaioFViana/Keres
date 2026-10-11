@@ -12,6 +12,7 @@ import {
   PageNumber,
   PageReference,
   Paragraph,
+  Table,
   Tab,
   TabStopType,
   TextRun,
@@ -24,7 +25,8 @@ import {
   type ManuscriptRenderOptions,
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
-import { DEFAULT_PAGE_ASPECT, pageImageOf } from './manuscriptPageFigure';
+import { docxPageTables } from './manuscriptDocxPages';
+import { DEFAULT_PAGE_ASPECT, pageImageOf, withPageRuns } from './manuscriptPageFigure';
 
 export type ManuscriptDocxLabels = {
   /** Prefix of a choice reference, e.g. "Go to page" - the number itself is a PAGEREF field. */
@@ -117,7 +119,7 @@ export function buildManuscriptDocument(
   labels: ManuscriptDocxLabels,
   options: ManuscriptRenderOptions = {},
 ): Document {
-  const children: Paragraph[] = [];
+  const children: (Paragraph | Table)[] = [];
   const pushToc = (entries: ManuscriptTocEntry[]) => {
     if (entries.length === 0) return;
     children.push(
@@ -152,7 +154,7 @@ export function buildManuscriptDocument(
   let tocEmitted = false;
   // Display numbers of one ordered run; any other block restarts the run at 1.
   let orderedNumber = 0;
-  for (const block of manuscript.blocks) {
+  for (const block of withPageRuns(manuscript.blocks, manuscript.pageLayout)) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) pushToc(manuscriptTocEntries(manuscript.blocks));
@@ -257,7 +259,14 @@ export function buildManuscriptDocument(
         );
         break;
       }
+      case 'pages':
+        children.push(...docxPageTables(block, manuscript));
+        break;
       case 'page': {
+        if (manuscript.pageLayout === 'sheet') {
+          children.push(...docxPageTables(block, manuscript));
+          break;
+        }
         children.push(
           new Paragraph({
             keepNext: true,

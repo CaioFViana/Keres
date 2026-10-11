@@ -5,13 +5,15 @@ import {
   type ManuscriptRenderOptions,
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
-import { DEFAULT_PAGE_ASPECT } from './manuscriptPageFigure';
+import { DEFAULT_PAGE_ASPECT, openingsOf, withPageRuns } from './manuscriptPageFigure';
+import { openingPlateRun, sheetPlateRuns } from './manuscriptPdfPlates';
 import {
   choiceText,
   hardLineGroups,
   pagePicturePlacement,
   pdfGeometry,
   pdfImageFor,
+  renderOptionsOf,
   widthOfTextAtSize,
   wordsOf,
   wrapGroup,
@@ -49,7 +51,7 @@ export function* iterateRuns(
   options: ManuscriptRenderOptions,
   measure: PdfMeasure = widthOfTextAtSize,
 ): Generator<LineRun, void, undefined> {
-  const geometry = pdfGeometry(options);
+  const geometry = pdfGeometry(renderOptionsOf(options, manuscript));
   const { contentWidth: CONTENT_WIDTH, bodySize: BODY_SIZE, bodyLeading: BODY_LEADING } = geometry;
   const runs: LineRun[] = [];
   const pushHeading = (
@@ -148,7 +150,7 @@ export function* iterateRuns(
   let opensNewPage = false;
   const drain = function* (): Generator<LineRun, void, undefined> {
     for (const run of runs) {
-      if (run.words.length === 0 && !run.image) continue;
+      if (run.words.length === 0 && !run.image && !run.plate) continue;
       if (opensNewPage) {
         run.forcePageBreak = true;
         opensNewPage = false;
@@ -162,7 +164,7 @@ export function* iterateRuns(
   let tocEmitted = false;
   // Display numbers of one ordered run; any other block restarts the run at 1.
   let orderedCount = 0;
-  for (const block of manuscript.blocks) {
+  for (const block of withPageRuns(manuscript.blocks, manuscript.pageLayout)) {
     if (block.kind !== 'ordered') orderedCount = 0;
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
@@ -265,7 +267,17 @@ export function* iterateRuns(
         });
         break;
       }
+      case 'pages':
+        // Spreads: each opening is a sheet of its own.
+        for (const opening of openingsOf(block.pages)) {
+          runs.push(openingPlateRun(opening, manuscript, geometry, measure));
+        }
+        break;
       case 'page': {
+        if (manuscript.pageLayout === 'sheet') {
+          runs.push(...sheetPlateRuns(block, manuscript, geometry, measure));
+          break;
+        }
         pushHeading(block.label, 'times-bold', 10, 13, {
           spaceBefore: 8,
           spaceAfter: 3,

@@ -2,6 +2,7 @@ import { deflate } from 'pako';
 import type { CompiledManuscript, ManuscriptRenderOptions } from './manuscriptCompiler';
 import {
   pdfGeometry,
+  renderOptionsOf,
   widthOfTextAtSize,
   type ManuscriptPdfLabels,
   type PdfFont,
@@ -9,7 +10,16 @@ import {
   type PdfMeasure,
 } from './manuscriptPdfLayout';
 import { iterateRuns, paginateStream, sameAnchorPages, type PdfAnchor } from './manuscriptPdfRuns';
-import { FONT_KEYS, PdfWriter, drawLine, drawPicture, trim, utf16beHex } from './manuscriptPdfDraw';
+import {
+  FONT_KEYS,
+  PLATE_LINE,
+  PdfWriter,
+  drawLine,
+  drawPicture,
+  drawPlatePicture,
+  trim,
+  utf16beHex,
+} from './manuscriptPdfDraw';
 import { loadPdfFontPack, type PdfFontMatrices, type PdfFontPack } from './manuscriptPdfFonts';
 import { planPdfImages } from './manuscriptPdfImages';
 
@@ -68,7 +78,8 @@ function layoutPass(
         // collected explicitly too.
         if (pack) {
           for (const { run } of page) {
-            for (const word of run.words) {
+            const words = [...run.words, ...(run.plate?.lines.flatMap((line) => line.words) ?? [])];
+            for (const word of words) {
               pack.collect(word.font, word.text);
               pack.collect(word.font, ' ');
             }
@@ -80,6 +91,34 @@ function layoutPass(
       const content = new PdfWriter();
       const drawn = new Set<number>();
       for (const { run, y } of page) {
+        if (run.plate) {
+          for (const picture of run.plate.pictures) {
+            if (!imageOrder.has(picture.mediaId)) {
+              imageOrder.set(picture.mediaId, imageOrder.size + 1);
+            }
+            const index = imageOrder.get(picture.mediaId)!;
+            drawn.add(index);
+            drawPlatePicture(picture, y, content, geometry, index);
+          }
+          for (const line of run.plate.lines) {
+            drawLine(
+              {
+                ...PLATE_LINE,
+                words: line.words,
+                size: line.size,
+                leading: line.size,
+                indent: line.x,
+                gray: line.gray,
+              },
+              y - line.top,
+              content,
+              geometry,
+              measure,
+              pack,
+            );
+          }
+          continue;
+        }
         if (run.image) {
           if (!imageOrder.has(run.image.mediaId)) {
             imageOrder.set(run.image.mediaId, imageOrder.size + 1);
@@ -170,7 +209,7 @@ export function buildManuscriptPdf(
   labels: ManuscriptPdfLabels,
   options: ManuscriptRenderOptions = {},
 ): Uint8Array {
-  const geometry = pdfGeometry(options);
+  const geometry = pdfGeometry(renderOptionsOf(options, manuscript));
   let anchors = new Map<string, PdfAnchor>();
   let laid: LaidPass | null = null;
   for (let pass = 0; pass < 3; pass += 1) {
@@ -275,7 +314,7 @@ export async function buildManuscriptPdfAsync(
 ): Promise<Uint8Array> {
   const pack = await loadPdfFontPack(matrices);
   const measure: PdfMeasure = (text, font, size) => pack.measure(text, font, size);
-  const geometry = pdfGeometry(options);
+  const geometry = pdfGeometry(renderOptionsOf(options, manuscript));
   let anchors = new Map<string, PdfAnchor>();
   for (let pass = 0; pass < 3; pass += 1) {
     const settled = layoutPass(
@@ -424,7 +463,7 @@ export function estimateManuscriptPages(
   labels: ManuscriptPdfLabels,
   options: ManuscriptRenderOptions = {},
 ): ManuscriptPageEstimate {
-  const geometry = pdfGeometry(options);
+  const geometry = pdfGeometry(renderOptionsOf(options, manuscript));
   const { pageCount } = paginateStream(
     iterateRuns(manuscript, labels, new Map(), options),
     geometry,

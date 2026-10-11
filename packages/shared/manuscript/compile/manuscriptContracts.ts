@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PAGE_FORMATS } from './pageFormat';
+import { PAGE_FORMATS, PAGE_LAYOUTS } from './pageFormat';
 import { SONG_LANGUAGES, SONG_PLACEMENTS, SONG_REPEATS } from './songPrint';
 import { ManuscriptStyleSchema } from './manuscriptStyle';
 
@@ -149,6 +149,11 @@ export const ManuscriptOptionsSchema = z.object({
   language: z.string().max(35).optional(),
   /** The frame a page's picture is shown in (`pageFormat.ts`); absent is the comic-book page's. */
   pageFormat: z.enum(PAGE_FORMATS).optional(),
+  /**
+   * How the pages are laid out (`pageFormat.ts`): in a flow, as a planning sheet, or in spreads. The text formats
+   * (Markdown, plain text) carry no pictures and always flow.
+   */
+  pageLayout: z.enum(PAGE_LAYOUTS).default('flow'),
   /** Writes each scene's music under it, as a line of italic text: what it is and when it comes in. */
   includeMusicCues: z.boolean().default(false),
   /** Prints the songs the scenes sing: the words, never a reference or a recording. Off unless asked. */

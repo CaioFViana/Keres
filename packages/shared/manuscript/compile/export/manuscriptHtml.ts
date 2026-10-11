@@ -6,7 +6,7 @@ import {
   type ManuscriptRenderOptions,
 } from './manuscriptCompiler';
 import { bytesToBase64 } from '../../../utils/base64';
-import { hasPages, PAGE_CSS, pageFigureMarkup } from './manuscriptPageFigure';
+import { hasPages, pageBlockMarkup, pageCssFor, withPageRuns } from './manuscriptPageFigure';
 
 export type ManuscriptHtmlLabels = {
   /** Name-based cross-reference, e.g. "See" - the PDF renderer reports no page mapping. */
@@ -110,7 +110,7 @@ export function buildManuscriptHtml(
       openList = null;
     }
   };
-  for (const block of manuscript.blocks) {
+  for (const block of withPageRuns(manuscript.blocks, manuscript.pageLayout)) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) pushToc();
@@ -155,7 +155,8 @@ export function buildManuscriptHtml(
         parts.push(`<p class="scene-break">${escapeHtml(block.text)}</p>`);
         break;
       case 'page':
-        parts.push(pageFigureMarkup(block, manuscript, dataUriOf));
+      case 'pages':
+        parts.push(pageBlockMarkup(block, manuscript, dataUriOf));
         break;
       case 'choice': {
         const lead = `• ${escapeHtml(block.text)}`;
@@ -181,7 +182,7 @@ export function buildManuscriptHtml(
       options,
       manuscript.blocks.some((block) => block.kind === 'scene-break'),
     ),
-    hasPages(manuscript.blocks) ? PAGE_CSS : '',
+    hasPages(manuscript.blocks) ? pageCssFor(manuscript.pageLayout) : '',
   ]
     .filter(Boolean)
     .join('\n');

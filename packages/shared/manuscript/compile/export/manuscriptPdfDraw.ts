@@ -7,6 +7,7 @@ import {
   type PdfFont,
   type PdfGeometry,
   type PdfMeasure,
+  type PdfPlatePicture,
   type Word,
 } from './manuscriptPdfLayout';
 
@@ -257,3 +258,35 @@ export function drawPicture(
     `${trim(picture.width)} 0 0 ${trim(picture.height)} ${trim(left + picture.dx)} ${trim(bottom + picture.dy)} cm /Im${imageIndex} Do Q\n`,
   );
 }
+
+/** A picture of a plate: its frame is `x` from the left margin and `top` below the top of the plate. */
+export function drawPlatePicture(
+  picture: PdfPlatePicture,
+  y: number,
+  writer: PdfWriter,
+  geometry: PdfGeometry,
+  imageIndex: number,
+): void {
+  const left = geometry.margin + picture.x;
+  const bottom = y - picture.top - picture.frameHeight;
+  writer.ascii('q ');
+  if (picture.clip) {
+    writer.ascii(
+      `${trim(left)} ${trim(bottom)} ${trim(picture.frameWidth)} ${trim(picture.frameHeight)} re W n `,
+    );
+  }
+  writer.ascii(
+    `${trim(picture.width)} 0 0 ${trim(picture.height)} ${trim(left + picture.dx)} ${trim(bottom + picture.dy)} cm /Im${imageIndex} Do Q\n`,
+  );
+}
+
+/** What a plate's line is drawn as: left-aligned from `indent`, nothing else about it special. */
+export const PLATE_LINE: Omit<LineRun, 'words' | 'size' | 'leading' | 'indent' | 'gray'> = {
+  spaceBefore: 0,
+  spaceAfter: 0,
+  centered: false,
+  bookmarkId: null,
+  linkTarget: null,
+  keepWithNext: false,
+  forcePageBreak: false,
+};

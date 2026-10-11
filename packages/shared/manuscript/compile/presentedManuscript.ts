@@ -55,7 +55,10 @@ export function presentedManuscriptOf(
   // title fill) still runs over the finished array.
   const language = parsed.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
   const present = blockPresenterFor(parsed.style, language);
+  // Markdown and plain text carry no pictures: their pages are a caption and the lines that follow it.
+  const pageLayout = parsed.format === 'md' || parsed.format === 'txt' ? 'flow' : parsed.pageLayout;
   const pageWords = {
+    layout: pageLayout,
     caption: parsed.pageNoun === 'frame' ? labels.frameLabel : labels.pageLabel,
     removed: labels.mediaRemoved,
     ...(parsed.includeMusicCues ? { musicLabel: labels.musicLabel } : {}),
@@ -113,6 +116,7 @@ export function presentedManuscriptOf(
         ...finished,
         images: input.media,
         pageAspect: PAGE_FORMAT_ASPECT[parsed.pageFormat ?? 'comic-us'],
+        pageLayout,
       }
     : finished;
 }

@@ -72,6 +72,7 @@ describe('ManuscriptOptionsSchema', () => {
       includeSceneNames: false,
       includeSongs: false,
       includeToc: false,
+      pageLayout: 'flow',
       pageNoun: 'page',
       resetSceneNumbers: false,
       sceneOrder: 'discovery',

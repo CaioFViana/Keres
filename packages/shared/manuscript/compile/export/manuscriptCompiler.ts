@@ -9,6 +9,7 @@ import {
   type ManuscriptSection,
 } from '../manuscriptSections';
 import type { ManuscriptImage } from '../../images/imageInfo';
+import type { PageLayout } from '../pageFormat';
 import { parseManuscriptMarkdown } from '../parseManuscriptMarkdown';
 import type { BlockPresenter } from '../manuscriptStyle';
 import type { ManuscriptSong } from '../manuscriptSections';
@@ -80,6 +81,12 @@ export type CompiledBlock =
       kind: 'page';
       id: string;
       label: string;
+      /** The page number (the first of two for a double-page spread, which takes both). */
+      number: number;
+      /** A double-page spread: one picture over two pages. */
+      spread: boolean;
+      /** What goes with the page, a line at a time; the flow layout also writes them as the paragraphs that follow. */
+      text: string[];
       image: CompiledPageImage | null;
       placeholder: string;
     }
@@ -106,6 +113,8 @@ export type CompiledManuscript = {
   images?: Record<string, ManuscriptImage>;
   /** Width over height of the frame pictures are shown in; absent is the comic-book page's. */
   pageAspect?: number;
+  /** How the pages are laid out; absent is a flow. */
+  pageLayout?: PageLayout;
 };
 
 /** Word bookmark names start with a letter, hold no spaces and stay under 40 chars. */
@@ -175,6 +184,8 @@ type SectionsInput = {
 export type PageWords = {
   caption: string;
   removed: string;
+  /** `flow` (the default) writes a page's text as the paragraphs after it; the other layouts keep it in the page. */
+  layout?: PageLayout;
   musicLabel?: string;
   songs?: SongPrint;
 };
@@ -295,17 +306,28 @@ function sectionsToBlocks({
       // A page whose picture is gone stays in the story, waiting for another, but is not in the
       // manuscript: no number, no caption, and its text stays with it.
       if (!page.mediaId) continue;
-      pageNumber += 1;
+      const spread = page.spread === true;
+      const first = pageNumber + 1;
+      pageNumber += spread ? 2 : 1;
+      // What goes with the page, a line at a time: a script's lines are not one paragraph.
+      const lines = (page.text ?? '')
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line !== '');
       emit({
         kind: 'page',
         id: page.id,
-        label: `${pageWords.caption} ${pageNumber}`,
+        label: spread
+          ? `${pageWords.caption} ${first}\u2013${first + 1}`
+          : `${pageWords.caption} ${first}`,
+        number: first,
+        spread,
+        text: lines,
         image: page.mediaId ? { mediaId: page.mediaId, fit: page.fit } : null,
         placeholder: pageWords.removed,
       });
-      // What goes with the page, a line at a time: a script's lines are not one paragraph.
-      for (const line of (page.text ?? '').split(/\r?\n/)) {
-        if (line.trim() !== '') emit({ kind: 'paragraph', spans: [plainSpan(line.trim())] });
+      if (!pageWords.layout || pageWords.layout === 'flow') {
+        for (const line of lines) emit({ kind: 'paragraph', spans: [plainSpan(line)] });
       }
     }
     if (pageWords.musicLabel) {
@@ -646,4 +668,6 @@ export type ManuscriptRenderOptions = {
   fontFamily?: 'serif' | 'sans';
   /** Page geometry (PDF). */
   pageSize?: 'a4' | '6x9';
+  /** How a comic's pages are laid out; a PDF of spreads is set on landscape sheets, one opening to a sheet. */
+  pageLayout?: PageLayout;
 };

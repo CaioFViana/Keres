@@ -46,8 +46,23 @@ const PAGE_SIZES = {
   '6x9': { pageWidth: 432, pageHeight: 648, margin: 54 },
 } as const;
 
+/** The same sheets turned on their side, for the spreads of a comic: an opening is two pages wide. */
+const SPREAD_PAGE_SIZES = {
+  a4: { pageWidth: 841.89, pageHeight: 595.28, margin: 36 },
+  '6x9': { pageWidth: 648, pageHeight: 432, margin: 30 },
+} as const;
+
+/** The options with the layout the manuscript asks for, when the caller did not name one. */
+export function renderOptionsOf(
+  options: ManuscriptRenderOptions,
+  manuscript: { pageLayout?: ManuscriptRenderOptions['pageLayout'] },
+): ManuscriptRenderOptions {
+  return { ...options, pageLayout: options.pageLayout ?? manuscript.pageLayout };
+}
+
 export function pdfGeometry(options: ManuscriptRenderOptions = {}): PdfGeometry {
-  const page = PAGE_SIZES[options.pageSize ?? 'a4'];
+  const size = options.pageSize ?? 'a4';
+  const page = options.pageLayout === 'spreads' ? SPREAD_PAGE_SIZES[size] : PAGE_SIZES[size];
   const bodySize = options.fontSize ?? 11;
   const bodyLeading = bodySize * (options.lineSpacing ?? 1.5);
   const block = options.paragraphStyle === 'block';
@@ -167,7 +182,22 @@ export type LineRun = {
   forcePageBreak: boolean;
   /** A page's picture: this run draws it instead of words, and `leading` is the height of its frame. */
   image?: PdfPagePicture;
+  /** A plate: pictures and lines set side by side, in the box this run is tall. `leading` is the plate's height. */
+  plate?: PdfPlate;
 };
+
+/** A picture of a plate: its frame sits `x` from the left margin and `top` below the top of the plate. */
+export type PdfPlatePicture = PdfPagePicture & { x: number; top: number };
+
+/** A line of a plate, `x` from the left margin and `top` below the top of the plate. */
+export type PdfPlateLine = { words: Word[]; size: number; x: number; top: number; gray: number };
+
+/**
+ * A comic's page set the way a plan or a printed book sets it: the picture and its text side by side (a sheet), or
+ * two pictures across an opening (spreads). Pictures and lines are placed inside the plate's own box, so the
+ * paginator only has to know how tall it is.
+ */
+export type PdfPlate = { pictures: PdfPlatePicture[]; lines: PdfPlateLine[] };
 
 /**
  * Where a picture goes inside its run: the frame (full text width, `leading` tall) and the picture within

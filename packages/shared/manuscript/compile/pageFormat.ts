@@ -41,3 +41,34 @@ export function pageFormatFor(
 ): PageFormat {
   return chosen ?? DEFAULT_PAGE_FORMAT[medium];
 }
+
+/**
+ * How the pages of a comic or a storyboard are laid out in a document.
+ *  - `flow`: a caption, the picture across the width of the page, the text under it, one after another.
+ *  - `sheet`: a planning sheet - the picture beside its text, as a script goes to an artist.
+ *  - `spreads`: the pages in pairs as a printed comic opens (the first page alone on the right), pictures only.
+ */
+export const PAGE_LAYOUTS = ['flow', 'sheet', 'spreads'] as const;
+
+export type PageLayout = (typeof PAGE_LAYOUTS)[number];
+
+export function isPageLayout(value: unknown): value is PageLayout {
+  return typeof value === 'string' && (PAGE_LAYOUTS as readonly string[]).includes(value);
+}
+
+/** What each medium lays its pages out as until the person chooses: a plan is read as a sheet. */
+export const DEFAULT_PAGE_LAYOUT: Record<ArcMedium, PageLayout> = {
+  generic: 'flow',
+  screenplay: 'flow',
+  comic: 'sheet',
+  storyboard: 'sheet',
+  campaign: 'flow',
+};
+
+/** The layout in effect for a work of this medium. */
+export function pageLayoutFor(
+  medium: ArcMedium,
+  chosen: PageLayout | null | undefined,
+): PageLayout {
+  return chosen ?? DEFAULT_PAGE_LAYOUT[medium];
+}

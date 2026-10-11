@@ -8,7 +8,14 @@ import {
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
 import { escapeHtml, spansToHtml, typographyCss } from './manuscriptHtml';
-import { hasPages, PAGE_CSS, pageFigureMarkup, usedPageImages } from './manuscriptPageFigure';
+import {
+  hasPages,
+  type PageRun,
+  pageBlockMarkup,
+  pageCssFor,
+  usedPageImages,
+  withPageRuns,
+} from './manuscriptPageFigure';
 
 /**
  * The compiled manuscript as an EPUB 3 package, assembled by hand over JSZip: the content is simple
@@ -141,19 +148,20 @@ function imagePathOf(mediaId: string, mimeType: string, order: Map<string, numbe
 }
 
 type PageContext = {
-  manuscript: Pick<CompiledManuscript, 'images' | 'pageAspect'>;
+  manuscript: Pick<CompiledManuscript, 'images' | 'pageAspect' | 'pageLayout'>;
   order: Map<string, number>;
 };
 
 function blockXhtml(
-  block: CompiledBlock,
+  block: CompiledBlock | PageRun,
   labels: ManuscriptEpubLabels,
   href: (bookmarkId: string) => string,
   pages: PageContext,
 ): string {
   switch (block.kind) {
     case 'page':
-      return pageFigureMarkup(block, pages.manuscript, (mediaId, image) =>
+    case 'pages':
+      return pageBlockMarkup(block, pages.manuscript, (mediaId, image) =>
         imagePathOf(mediaId, image.mimeType, pages.order),
       );
     case 'title':
@@ -208,7 +216,7 @@ function blocksXhtml(
       openList = null;
     }
   };
-  for (const block of blocks) {
+  for (const block of withPageRuns(blocks, pages.manuscript.pageLayout)) {
     if (block.kind === 'bullet' || block.kind === 'ordered') {
       const tag = block.kind === 'bullet' ? 'ul' : 'ol';
       if (openList !== tag) {
@@ -252,7 +260,7 @@ export function buildManuscriptEpubEntries(
     options,
     manuscript.blocks.some((block) => block.kind === 'scene-break'),
   );
-  const pageCss = hasPages(manuscript.blocks) ? `${PAGE_CSS}\n` : '';
+  const pageCss = hasPages(manuscript.blocks) ? `${pageCssFor(manuscript.pageLayout)}\n` : '';
   const stylesheet = `${STYLESHEET}${pageCss}${extraCss ? `${extraCss}\n` : ''}`;
   const pageContext: PageContext = { manuscript, order: new Map() };
 

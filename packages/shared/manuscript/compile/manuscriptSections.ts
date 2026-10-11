@@ -19,6 +19,8 @@ export interface ManuscriptPage {
   mediaId: string | null;
   fit: 'contain' | 'cover';
   text: string | null;
+  /** The picture is a double-page spread: it takes two page numbers and, in spreads, both sides of the opening. */
+  spread?: boolean;
 }
 
 /** The words of a song a manuscript may print: what is sung, what it means, and which parts this scene sings. */

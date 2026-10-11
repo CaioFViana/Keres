@@ -348,7 +348,7 @@ describe('GenericFilterSortList', () => {
   });
 
   it('sorts through the single picker and flips direction', async () => {
-    const props = baseProps();
+    const props = { ...baseProps(), currentSortValue: 'name' };
     const screen = await render(
       <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
     );
@@ -368,8 +368,25 @@ describe('GenericFilterSortList', () => {
     expect(arrow().props.name).toBe('arrow-down');
   });
 
-  it('follows the direction its parent gives it, such as a remembered one that arrives late', async () => {
+  it('keeps the direction arrow waiting until there is a field to sort by', async () => {
     const props = baseProps();
+    const screen = await render(
+      <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
+    );
+
+    expect(screen.getByTestId('list-sort-direction').props.accessibilityState.disabled).toBe(true);
+    await screen.rerender(
+      <GenericFilterSortList
+        {...props}
+        sortOptions={[{ label: 'Name', value: 'name' }]}
+        currentSortValue="name"
+      />,
+    );
+    expect(screen.getByTestId('list-sort-direction').props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('follows the direction its parent gives it, such as a remembered one that arrives late', async () => {
+    const props = { ...baseProps(), currentSortValue: 'name' };
     const screen = await render(
       <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
     );

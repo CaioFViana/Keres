@@ -37,17 +37,21 @@ export const FiltersButton: React.FC<{ count: number; onPress: () => void }> = (
   );
 };
 
+/** Without a field to sort by there is nothing for the direction to turn around: the button waits for one. */
 export const SortDirectionButton: React.FC<{
   direction: 'asc' | 'desc';
   onPress: () => void;
-}> = ({ direction, onPress }) => {
+  disabled?: boolean;
+}> = ({ direction, onPress, disabled = false }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.square, { backgroundColor: colors.primary }]}
+      disabled={disabled}
+      style={[styles.square, { backgroundColor: colors.primary }, disabled && styles.disabled]}
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
       accessibilityLabel={
         direction === 'asc' ? t('list_sort_ascending') : t('list_sort_descending')
       }
@@ -63,6 +67,7 @@ export const SortDirectionButton: React.FC<{
 };
 
 const styles = StyleSheet.create({
+  disabled: { opacity: 0.4 },
   filters: {
     flexDirection: 'row',
     alignItems: 'center',

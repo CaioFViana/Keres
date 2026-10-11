@@ -348,7 +348,11 @@ const GenericFilterSortList = <T,>({
     />
   );
   const directionButton = (
-    <SortDirectionButton direction={sortDirection} onPress={handleSortDirectionToggle} />
+    <SortDirectionButton
+      direction={sortDirection}
+      onPress={handleSortDirectionToggle}
+      disabled={!selectedSort}
+    />
   );
   const filtersButton = canFilterByField ? (
     <FiltersButton count={activeCriteriaCount} onPress={handleOpenAdvancedSearchModal} />

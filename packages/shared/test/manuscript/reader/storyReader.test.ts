@@ -5,6 +5,7 @@ import {
   type CompileStoryReaderInput,
   type ReaderRules,
 } from '../../../manuscript/reader/storyReader';
+import { solidPng } from '../images/imageFixtures';
 
 const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
 
@@ -672,5 +673,130 @@ describe('the reader stylesheet', () => {
 
     expect(html).toContain('h3.scene, .scene-name {');
     expect(html).not.toMatch(/^\.scene, /m);
+  });
+});
+
+describe('a comic reader', () => {
+  const picture = (id: string) => ({
+    id,
+    mediaId: 'a',
+    fit: 'contain' as const,
+    text: `Script of ${id}`,
+  });
+  const comic = (): CompileStoryReaderInput => ({
+    storyTitle: 'The Roof',
+    storyType: 'linear',
+    chapters: [{ id: 'ch', name: 'Issue one', index: 1, type: 'chapter' }],
+    scenes: [
+      scene('s1', 'Opening', 1, '', {
+        chapterId: 'ch',
+        pages: [picture('p1'), picture('p2'), picture('p3'), picture('p4')],
+      }),
+    ],
+    choices: [],
+    media: { a: solidPng(30, 45) },
+  });
+  const read = (pageLayout: 'sheet' | 'spreads' | 'flow') =>
+    open(
+      decode(
+        compileStoryReader(comic(), { ...READER_OPTIONS, includeSceneNames: false, pageLayout })
+          .bytes,
+      ),
+    );
+  const shown = (document: Document) =>
+    [...document.querySelectorAll('#view > *')]
+      .filter((node) => !(node as HTMLElement).hidden && node.tagName !== 'NAV')
+      .map((node) => node.className || node.tagName.toLowerCase());
+  const key = (window: Window, name: string) =>
+    window.document.dispatchEvent(
+      new (window as never as typeof globalThis).KeyboardEvent('keydown', { key: name }),
+    );
+
+  it('is read a page at a time with the buttons of a book, the first page showing', () => {
+    const { document, click } = read('sheet');
+
+    expect(document.getElementById('counter')!.textContent).toBe('1 / 4');
+    expect(shown(document)).toContain('page sheet');
+    expect(document.querySelectorAll('#view > figure.page:not([hidden])')).toHaveLength(1);
+    expect((document.getElementById('act-prev') as HTMLButtonElement).disabled).toBe(true);
+
+    click('#act-next');
+    expect(document.getElementById('counter')!.textContent).toBe('2 / 4');
+    expect(
+      document.querySelector('#view > figure.page:not([hidden]) figcaption')!.textContent,
+    ).toBe('Page 2');
+    expect((document.getElementById('act-prev') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('turns with the arrow keys and stops at the ends', () => {
+    const { dom } = read('sheet');
+    const counter = () => dom.window.document.getElementById('counter')!.textContent;
+
+    key(dom.window as never, 'ArrowRight');
+    key(dom.window as never, 'ArrowRight');
+    expect(counter()).toBe('3 / 4');
+    key(dom.window as never, 'End');
+    expect(counter()).toBe('4 / 4');
+    key(dom.window as never, 'ArrowRight');
+    expect(counter()).toBe('4 / 4');
+    key(dom.window as never, 'Home');
+    key(dom.window as never, 'ArrowLeft');
+    expect(counter()).toBe('1 / 4');
+  });
+
+  it('shows an opening at a time in spreads: the first page alone on the right, then pairs', () => {
+    const { document, click } = read('spreads');
+
+    expect(document.getElementById('counter')!.textContent).toBe('1 / 3');
+    expect(
+      document.querySelectorAll('#view > section.spread:not([hidden]) figure.page'),
+    ).toHaveLength(1);
+    click('#act-next');
+    expect(
+      document.querySelectorAll('#view > section.spread:not([hidden]) figure.page'),
+    ).toHaveLength(2);
+    expect(document.querySelector('#view > section.spread:not([hidden])')!.textContent).toContain(
+      'Page 2',
+    );
+    expect(document.querySelector('#view > section.spread:not([hidden])')!.textContent).toContain(
+      'Page 3',
+    );
+  });
+
+  it('puts the script of a planning sheet away and back at a button', () => {
+    const { document, click } = read('sheet');
+    const view = document.getElementById('view')!;
+
+    expect(view.classList.contains('hide-script')).toBe(false);
+    click('#act-script');
+    expect(view.classList.contains('hide-script')).toBe(true);
+    click('#act-script');
+    expect(view.classList.contains('hide-script')).toBe(false);
+  });
+
+  it('offers no script button for spreads, which carry none', () => {
+    const { document } = read('spreads');
+
+    expect((document.getElementById('act-script') as HTMLButtonElement).hidden).toBe(true);
+  });
+
+  it('jumps from the contents to the page its heading sits with', () => {
+    const { document, click } = read('sheet');
+    click('#act-next');
+    click('#act-next');
+    expect(document.getElementById('counter')!.textContent).toBe('3 / 4');
+
+    click('#act-contents');
+    click('.sheet-box .contents button');
+
+    expect(document.getElementById('counter')!.textContent).toBe('1 / 4');
+  });
+
+  it('stays the scrolling document it was when the pages are a flow', () => {
+    const { document } = read('flow');
+
+    expect(document.getElementById('act-next')).toBeNull();
+    expect(document.getElementById('progress')).not.toBeNull();
+    expect(document.querySelectorAll('#view [hidden]')).toHaveLength(0);
   });
 });

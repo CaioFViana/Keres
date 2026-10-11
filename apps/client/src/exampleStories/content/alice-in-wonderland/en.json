@@ -389,7 +389,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "nextSceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
-      "text": "Continue toward The hall of little doors"
+      "text": "Let go and fall"
     },
     {
       "id": "1G34W0BT0QAC168PTBTEW0DV7F",
@@ -401,7 +401,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "nextSceneId": "01KYXBHD0BV57YSDKQAR1T1764",
-      "text": "Continue toward Drink me, eat me"
+      "text": "Try the little bottle and the cake"
     },
     {
       "id": "045AY9DJPDF5WTP4D05Y4NPZA5",
@@ -413,7 +413,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
       "nextSceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
-      "text": "Continue toward The grinning cat"
+      "text": "Wander on into the trees"
     },
     {
       "id": "37FXCFKM6R2CE3NFPB5X56MQ10",
@@ -425,7 +425,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
-      "text": "Continue toward The mad tea party"
+      "text": "Follow the Cat's directions to the Hatter"
     },
     {
       "id": "7E9M3H9Q54Q1T9Z4B48XTAWX63",
@@ -437,7 +437,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "nextSceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
-      "text": "Continue toward Painting the roses red"
+      "text": "Leave the table for the garden"
     },
     {
       "id": "4902C6M5PA0488NWNV94ZM7B9G",
@@ -449,7 +449,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continue toward The croquet game"
+      "text": "Take a flamingo and join the game"
     },
     {
       "id": "1FVDHK39ZG3WPD639GAVZ0W2GJ",
@@ -461,7 +461,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
       "nextSceneId": "21DVEKTZND27TY3158T9SNQ6JF",
-      "text": "Continue toward A quiet dismissal"
+      "text": "Slip away quietly"
     },
     {
       "id": "79DBZVNSNFZX1JSNHYTY73YNZA",
@@ -473,7 +473,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "06CG24WTEHTCV3267J4180G8SZ",
-      "text": "Continue toward Off with her head"
+      "text": "Linger a moment too long"
     },
     {
       "id": "70QJFBB5B7PP1R1NP4DPEN9R4F",
@@ -485,7 +485,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
-      "text": "Continue toward The trial of the Knave"
+      "text": "Follow the crowd to the court"
     },
     {
       "id": "7SG5ZW3H8V87ZBRVGFET1WJNJG",
@@ -497,7 +497,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continue toward Waking on the bank"
+      "text": "Stand up and say what you think of them all"
     },
     {
       "id": "4Y0XXGC50ZGY3YGEP7H51B08TJ",
@@ -509,7 +509,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continue toward Staying for the sentence"
+      "text": "Wait to hear the sentence"
     },
     {
       "id": "2X40DPXMFG71JX8Q4M0965PEFH",
@@ -521,7 +521,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "nextSceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
-      "text": "Continue toward The grinning cat"
+      "text": "Ignore the doors and follow the grin"
     },
     {
       "id": "706FXK8P33YQK6DT5TJCJDHMZ2",
@@ -533,7 +533,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continue toward The croquet game"
+      "text": "Go straight to the Queen's garden"
     },
     {
       "id": "1SAM1CBJ91VA2TJWY15TGSJY35",
@@ -545,7 +545,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
       "nextSceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
-      "text": "Continue toward The grinning cat"
+      "text": "Slip back to ask the Cat for help"
     },
     {
       "id": "6SSCFTEN3CAH4FJWZ8BAS62AKD",
@@ -557,7 +557,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continue toward Staying for the sentence"
+      "text": "Refuse to run"
     },
     {
       "id": "6Z89JKQ2G508YG5HAJZJM4XHCF",
@@ -569,7 +569,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continue toward Waking on the bank"
+      "text": "Close your eyes and wish it all away"
     }
   ],
   "characters": [

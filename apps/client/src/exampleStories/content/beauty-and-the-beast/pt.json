@@ -389,7 +389,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "nextSceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
-      "text": "Continuar em direção a Perdido na floresta"
+      "text": "Pôr-se a caminho de casa"
     },
     {
       "id": "106SV9FT0TF1AKBN1ZA4H8AE6X",
@@ -401,7 +401,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
       "nextSceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
-      "text": "Continuar em direção a A rosa roubada e as condições"
+      "text": "Entrar pelo primeiro portão que encontra"
     },
     {
       "id": "3BGJPNEADCH1TVHBSMVG5QVGFF",
@@ -413,7 +413,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continuar em direção a Bela toma o lugar dele"
+      "text": "Aceitar as condições da Fera pelo pai"
     },
     {
       "id": "5703JX3H562JNXK0A7P04GDFH6",
@@ -425,7 +425,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "nextSceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
-      "text": "Continuar em direção a O jantar na mesa comprida"
+      "text": "Sentar-se à mesa"
     },
     {
       "id": "7F9442FBXXVX9SA6AWTQ0R5D2G",
@@ -437,7 +437,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
       "nextSceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
-      "text": "Continuar em direção a A biblioteca que ele lhe abre"
+      "text": "Aceitar o convite para a biblioteca"
     },
     {
       "id": "3GF7KKCS78EPGJH1NZGYQW415Z",
@@ -449,7 +449,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
       "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
-      "text": "Continuar em direção a A mesma pergunta toda noite"
+      "text": "Ficar mais uma noite"
     },
     {
       "id": "10F06VEVPJWN403K97FBTRZ3X9",
@@ -461,7 +461,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "nextSceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
-      "text": "Continuar em direção a Licença para partir"
+      "text": "Pedir licença para visitar a família"
     },
     {
       "id": "7FS8EV4XNH76NP62X1M6BA00E4",
@@ -473,7 +473,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "nextSceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
-      "text": "Continuar em direção a A inveja das irmãs"
+      "text": "Voltar para casa, para as irmãs"
     },
     {
       "id": "6QDE3GPN70BZXXE4JMCVAPY5N7",
@@ -485,7 +485,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "nextSceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
-      "text": "Continuar em direção a Uma visão no espelho"
+      "text": "Olhar para o espelho"
     },
     {
       "id": "5S9R6XT25KB3T7THCFW5QD0FS0",
@@ -497,7 +497,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "nextSceneId": "3M9NCH83JWWPKM939XW84PZ0YH",
-      "text": "Continuar em direção a Um final misericordioso"
+      "text": "Voltar depressa ao castelo"
     },
     {
       "id": "713YFK31QPP7VN9FXWMZXZZDSQ",
@@ -509,7 +509,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "nextSceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9",
-      "text": "Continuar em direção a Um final justo"
+      "text": "Deixar as coisas seguirem seu curso"
     },
     {
       "id": "1G1MJ8402Y0DHA5RASFX3799VG",
@@ -521,7 +521,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continuar em direção a Bela toma o lugar dele"
+      "text": "Falar antes que o pai possa"
     },
     {
       "id": "4FCWFGZBZE5T91YNYZGF8H33YW",
@@ -533,7 +533,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
-      "text": "Continuar em direção a A mesma pergunta toda noite"
+      "text": "Acostumar-se às noites do castelo"
     },
     {
       "id": "48N50K3MTEVQ3DEBEB3XVDCVNR",
@@ -545,7 +545,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continuar em direção a Bela toma o lugar dele"
+      "text": "Lembrar o dia em que ela chegou"
     },
     {
       "id": "3AFKX1W39TYP44CSZ8HKXBDHTR",
@@ -557,7 +557,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "nextSceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9",
-      "text": "Continuar em direção a Um final justo"
+      "text": "Deixar que as irmãs respondam por isso"
     },
     {
       "id": "77JD24S3XNTKJ7H3AAXABFFDSG",
@@ -569,7 +569,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "nextSceneId": "3M9NCH83JWWPKM939XW84PZ0YH",
-      "text": "Continuar em direção a Um final misericordioso"
+      "text": "Recusar-se a deixá-lo"
     }
   ],
   "characters": [

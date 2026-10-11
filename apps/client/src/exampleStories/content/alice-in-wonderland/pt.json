@@ -389,7 +389,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "nextSceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
-      "text": "Continuar em direção a O salão das portinhas"
+      "text": "Soltar-se e cair"
     },
     {
       "id": "1G34W0BT0QAC168PTBTEW0DV7F",
@@ -401,7 +401,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BWCDE4PXFSFKRT6D9",
       "nextSceneId": "01KYXBHD0BV57YSDKQAR1T1764",
-      "text": "Continuar em direção a Beba-me, coma-me"
+      "text": "Provar o frasquinho e o bolo"
     },
     {
       "id": "045AY9DJPDF5WTP4D05Y4NPZA5",
@@ -413,7 +413,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
       "nextSceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
-      "text": "Continuar em direção a O gato que sorri"
+      "text": "Seguir adiante entre as árvores"
     },
     {
       "id": "37FXCFKM6R2CE3NFPB5X56MQ10",
@@ -425,7 +425,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
-      "text": "Continuar em direção a O chá maluco"
+      "text": "Seguir a indicação do Gato até o Chapeleiro"
     },
     {
       "id": "7E9M3H9Q54Q1T9Z4B48XTAWX63",
@@ -437,7 +437,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BBHSKQPWQBKK5QXMT",
       "nextSceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
-      "text": "Continuar em direção a Pintando as rosas de vermelho"
+      "text": "Deixar a mesa e ir para o jardim"
     },
     {
       "id": "4902C6M5PA0488NWNV94ZM7B9G",
@@ -449,7 +449,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B4DE9B4MK3N9BW73M",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continuar em direção a O jogo de croqué"
+      "text": "Pegar um flamingo e entrar no jogo"
     },
     {
       "id": "1FVDHK39ZG3WPD639GAVZ0W2GJ",
@@ -461,7 +461,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
       "nextSceneId": "21DVEKTZND27TY3158T9SNQ6JF",
-      "text": "Continuar em direção a Uma dispensa discreta"
+      "text": "Escapulir em silêncio"
     },
     {
       "id": "79DBZVNSNFZX1JSNHYTY73YNZA",
@@ -473,7 +473,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "06CG24WTEHTCV3267J4180G8SZ",
-      "text": "Continuar em direção a Cortem-lhe a cabeça"
+      "text": "Demorar-se um instante demais"
     },
     {
       "id": "70QJFBB5B7PP1R1NP4DPEN9R4F",
@@ -485,7 +485,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
-      "text": "Continuar em direção a O julgamento do Valete"
+      "text": "Seguir a multidão até o tribunal"
     },
     {
       "id": "7SG5ZW3H8V87ZBRVGFET1WJNJG",
@@ -497,7 +497,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continuar em direção a Acordando na margem"
+      "text": "Levantar-se e dizer o que pensa de todos"
     },
     {
       "id": "4Y0XXGC50ZGY3YGEP7H51B08TJ",
@@ -509,7 +509,7 @@
       "deletedAt": null,
       "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continuar em direção a Ficando para a sentença"
+      "text": "Esperar para ouvir a sentença"
     },
     {
       "id": "2X40DPXMFG71JX8Q4M0965PEFH",
@@ -521,7 +521,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0B1AN43HZH3R8A5XXT",
       "nextSceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
-      "text": "Continuar em direção a O gato que sorri"
+      "text": "Ignorar as portas e seguir o sorriso"
     },
     {
       "id": "706FXK8P33YQK6DT5TJCJDHMZ2",
@@ -533,7 +533,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
       "nextSceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
-      "text": "Continuar em direção a O jogo de croqué"
+      "text": "Ir direto ao jardim da Rainha"
     },
     {
       "id": "1SAM1CBJ91VA2TJWY15TGSJY35",
@@ -545,7 +545,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0BC0D1AGHBNZHY2E31",
       "nextSceneId": "01KYXBHD0BKDNRQMZJ17RYF1DS",
-      "text": "Continuar em direção a O gato que sorri"
+      "text": "Voltar de fininho para pedir ajuda ao Gato"
     },
     {
       "id": "6SSCFTEN3CAH4FJWZ8BAS62AKD",
@@ -557,7 +557,7 @@
       "deletedAt": null,
       "sceneId": "06CG24WTEHTCV3267J4180G8SZ",
       "nextSceneId": "2GDBQ0K0RXF6724TJBMYACS80B",
-      "text": "Continuar em direção a Ficando para a sentença"
+      "text": "Recusar-se a fugir"
     },
     {
       "id": "6Z89JKQ2G508YG5HAJZJM4XHCF",
@@ -569,7 +569,7 @@
       "deletedAt": null,
       "sceneId": "21DVEKTZND27TY3158T9SNQ6JF",
       "nextSceneId": "0RTPPWCYN8NVSJXRMCAV4FCHV2",
-      "text": "Continuar em direção a Acordando na margem"
+      "text": "Fechar os olhos e desejar que tudo passe"
     }
   ],
   "characters": [

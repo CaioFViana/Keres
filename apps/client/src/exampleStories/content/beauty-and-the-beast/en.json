@@ -389,7 +389,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "nextSceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
-      "text": "Continue toward Lost in the forest"
+      "text": "Set out on the road home"
     },
     {
       "id": "106SV9FT0TF1AKBN1ZA4H8AE6X",
@@ -401,7 +401,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FT4ZRD77W22A1SPXT",
       "nextSceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
-      "text": "Continue toward The stolen rose and the terms"
+      "text": "Take the first gate he finds"
     },
     {
       "id": "3BGJPNEADCH1TVHBSMVG5QVGFF",
@@ -413,7 +413,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F2WTDYAAN0EMWZA7K",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continue toward Beauty takes his place"
+      "text": "Accept the Beast's terms for her father"
     },
     {
       "id": "5703JX3H562JNXK0A7P04GDFH6",
@@ -425,7 +425,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "nextSceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
-      "text": "Continue toward Dinner at the long table"
+      "text": "Sit down at the table"
     },
     {
       "id": "7F9442FBXXVX9SA6AWTQ0R5D2G",
@@ -437,7 +437,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FP0MCK3BYTQ2F68S3",
       "nextSceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
-      "text": "Continue toward The library he opens for her"
+      "text": "Accept the invitation to the library"
     },
     {
       "id": "3GF7KKCS78EPGJH1NZGYQW415Z",
@@ -449,7 +449,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FF1H85QR8W0FP4RAY",
       "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
-      "text": "Continue toward The same question every night"
+      "text": "Stay another evening"
     },
     {
       "id": "10F06VEVPJWN403K97FBTRZ3X9",
@@ -461,7 +461,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "nextSceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
-      "text": "Continue toward Leave to depart"
+      "text": "Ask leave to visit her family"
     },
     {
       "id": "7FS8EV4XNH76NP62X1M6BA00E4",
@@ -473,7 +473,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "nextSceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
-      "text": "Continue toward Her sisters' envy"
+      "text": "Go home to her sisters"
     },
     {
       "id": "6QDE3GPN70BZXXE4JMCVAPY5N7",
@@ -485,7 +485,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "nextSceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
-      "text": "Continue toward A vision in the mirror"
+      "text": "Look into the mirror"
     },
     {
       "id": "5S9R6XT25KB3T7THCFW5QD0FS0",
@@ -497,7 +497,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "nextSceneId": "3M9NCH83JWWPKM939XW84PZ0YH",
-      "text": "Continue toward A merciful ending"
+      "text": "Hurry back to the castle"
     },
     {
       "id": "713YFK31QPP7VN9FXWMZXZZDSQ",
@@ -509,7 +509,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6KZ6K8P86KN8ETRW",
       "nextSceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9",
-      "text": "Continue toward A just ending"
+      "text": "Let things take their course"
     },
     {
       "id": "1G1MJ8402Y0DHA5RASFX3799VG",
@@ -521,7 +521,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0F6JAR48EF3W034H4S",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continue toward Beauty takes his place"
+      "text": "Speak up before her father can"
     },
     {
       "id": "4FCWFGZBZE5T91YNYZGF8H33YW",
@@ -533,7 +533,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
       "nextSceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
-      "text": "Continue toward The same question every night"
+      "text": "Settle into the castle's evenings"
     },
     {
       "id": "48N50K3MTEVQ3DEBEB3XVDCVNR",
@@ -545,7 +545,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FCVVDZYCNGN6AK3ZG",
       "nextSceneId": "01KYXBHD0FY4PN6VXMXA3AAH94",
-      "text": "Continue toward Beauty takes his place"
+      "text": "Think back to the day she came"
     },
     {
       "id": "3AFKX1W39TYP44CSZ8HKXBDHTR",
@@ -557,7 +557,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FVKWVAB6FKV7FP326",
       "nextSceneId": "7SCSP564TA4EMRC5JHJ8B1S6J9",
-      "text": "Continue toward A just ending"
+      "text": "Let her sisters answer for it"
     },
     {
       "id": "77JD24S3XNTKJ7H3AAXABFFDSG",
@@ -569,7 +569,7 @@
       "deletedAt": null,
       "sceneId": "01KYXBHD0FNSJK7K4WW0A2CNZZ",
       "nextSceneId": "3M9NCH83JWWPKM939XW84PZ0YH",
-      "text": "Continue toward A merciful ending"
+      "text": "Refuse to leave him"
     }
   ],
   "characters": [

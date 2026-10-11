@@ -216,6 +216,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 import SettingsScreen from '../../../src/screens/enterstack/AppSettingsScreen';
@@ -327,6 +328,17 @@ describe('AppSettingsScreen', () => {
     await fireEvent.press(view.getByTestId('pill-select_language-clear'));
     expect(mockSetLanguage).toHaveBeenCalledWith(mockDrizzle, 'en');
     expect(mockChangeLanguage).toHaveBeenCalledWith('en');
+  });
+
+  it('shows the music tools as they were kept, even when no song screen was opened since the reload', async () => {
+    useMusicToolsStore.getState().reset();
+    await AsyncStorage.setItem('@keres/music-tools', 'true');
+
+    const view = await render(<SettingsScreen />);
+    await view.findByText('dark_mode');
+
+    // Nothing else asked the store to read the device: the screen did.
+    await waitFor(() => expect(useMusicToolsStore.getState().enabled).toBe(true));
   });
 
   it('toggles the boolean settings', async () => {

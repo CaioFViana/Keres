@@ -34,6 +34,7 @@ import { useGuideStore } from '../../state/guideStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
+import { useMusicTools } from '../../hooks/useMusicTools';
 import { useMusicToolsStore } from '../../state/musicToolsStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -188,7 +189,8 @@ const SettingsScreen = () => {
     showNotification(t('tutorials_reset_success'), 'success');
   };
 
-  const musicTools = useMusicToolsStore((state) => state.enabled);
+  // The hook, not the bare store: it reads the choice kept on the device the first time, so a reload does not show it off.
+  const musicTools = useMusicTools();
   const setMusicTools = useMusicToolsStore((state) => state.setEnabled);
 
   const handleLiteraryDevicesToggle = (value: boolean) => {

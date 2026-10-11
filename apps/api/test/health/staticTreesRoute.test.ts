@@ -62,6 +62,9 @@ describe.each([
 
     expect(response.headers.get('content-security-policy')).toContain("default-src 'self'");
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+    // The public site draws a cover it fetched with the viewer's credentials as a blob; nothing else loosens.
+    expect(response.headers.get('content-security-policy')).toContain("img-src 'self' data: blob:");
+    expect(response.headers.get('content-security-policy')).toContain("script-src 'self';");
   });
 });
 

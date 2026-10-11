@@ -59,12 +59,15 @@ const manuscriptShape = {
   sceneOrder: t.Optional(t.Union([t.Literal('discovery'), t.Literal('shuffled')])),
   /** Seed of the shuffled order; the same seed prints the same book. */
   shuffleSeed: t.Optional(t.String({ maxLength: 64 })),
+  /** Branching stories, paged formats: every scene opens a page of its own. */
+  scenePerPage: t.Optional(t.Boolean()),
   /** Keeps only this arc's containers and scenes; must belong to the story. */
   arcId: t.Optional(t.String()),
   labels: t.Optional(
     t.Object({
       goToPage: t.Optional(t.String({ maxLength: 80 })),
       goToScene: t.Optional(t.String({ maxLength: 80 })),
+      sceneWord: t.Optional(t.String({ maxLength: 80 })),
       looseHeading: t.Optional(t.String({ maxLength: 80 })),
       tocHeading: t.Optional(t.String({ maxLength: 80 })),
       endOfExcerpt: t.Optional(t.String({ maxLength: 80 })),

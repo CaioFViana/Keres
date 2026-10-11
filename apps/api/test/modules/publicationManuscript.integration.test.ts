@@ -358,6 +358,21 @@ describe('publishing with a manuscript', () => {
     expect(manuscript).toContain('End body.');
   });
 
+  it('accepts one scene per page for a branching PDF and says the scene beside the page', async () => {
+    const story = await uploadTestStory(ana.token, 'Branches', 'branching');
+    await seedBranchingContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'pdf',
+        scenePerPage: true,
+        labels: { sceneWord: 'cena', goToPage: 'Vá para a página' },
+      },
+    });
+
+    expect(status).toBe(200);
+  });
+
   it('refuses an oversized manuscript and writes no package', async () => {
     const story = await uploadTestStory(ana.token);
     // 1800 scenes at the per-scene body cap: ~54 MB of prose, past the 50 MB manuscript cap.

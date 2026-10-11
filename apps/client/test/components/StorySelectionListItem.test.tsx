@@ -18,6 +18,12 @@ jest.mock('../../src/theme/useThemeColors', () => ({
   }),
 }));
 
+// The cover reads the Gallery: nothing this card test is about.
+jest.mock('../../src/components/common/display/CoverImage/CoverImage', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

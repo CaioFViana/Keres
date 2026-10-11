@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CoverImage from '@/src/components/common/display/CoverImage/CoverImage';
 import { useTheme } from '@/src/theme';
 
 interface StoryIdentityCardProps {
@@ -14,6 +15,8 @@ interface StoryIdentityCardProps {
   extraNotes?: string | null;
   /** Set for a story that syncs: the last server log it has caught up with. */
   syncedLog?: number | null;
+  /** The Gallery medium that is the cover of the story: shown beside what the story is. */
+  coverGalleryId?: string | null;
 }
 
 /** Past this many characters (or lines) a text is folded to a few lines with a way to open it. */
@@ -67,6 +70,7 @@ const StoryIdentityCard: React.FC<StoryIdentityCardProps> = ({
   description,
   extraNotes,
   syncedLog,
+  coverGalleryId,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -82,39 +86,58 @@ const StoryIdentityCard: React.FC<StoryIdentityCardProps> = ({
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <View style={styles.tags}>
-        <View
-          accessible
-          accessibilityLabel={kind}
-          style={[styles.kind, { backgroundColor: colors.primaryContainer }]}
-        >
-          <Ionicons
-            name={branching ? 'git-branch-outline' : 'arrow-forward-outline'}
-            size={16}
-            color={colors.onPrimaryContainer}
-          />
-        </View>
-        {tags.map((tag) => (
-          <View key={tag.icon} style={styles.tag}>
-            <Ionicons name={tag.icon} size={15} color={colors.textSecondary} />
-            <Text style={[styles.tagText, { color: colors.text }]}>{tag.text}</Text>
+      <CoverImage
+        galleryId={coverGalleryId}
+        width={COVER_WIDTH}
+        height={COVER_HEIGHT}
+        testID="story-cover"
+      />
+      <View style={styles.content}>
+        <View style={styles.tags}>
+          <View
+            accessible
+            accessibilityLabel={kind}
+            style={[styles.kind, { backgroundColor: colors.primaryContainer }]}
+          >
+            <Ionicons
+              name={branching ? 'git-branch-outline' : 'arrow-forward-outline'}
+              size={16}
+              color={colors.onPrimaryContainer}
+            />
           </View>
-        ))}
-      </View>
-      {about ? <FoldedText icon="reader-outline" text={about} /> : null}
-      {notes ? <FoldedText icon="document-text-outline" text={notes} /> : null}
-      {syncedLog ? (
-        <View style={styles.sync}>
-          <Ionicons name="cloud-done-outline" size={14} color={colors.textSecondary} />
-          <Text style={[styles.syncText, { color: colors.textSecondary }]}>{syncedLog}</Text>
+          {tags.map((tag) => (
+            <View key={tag.icon} style={styles.tag}>
+              <Ionicons name={tag.icon} size={15} color={colors.textSecondary} />
+              <Text style={[styles.tagText, { color: colors.text }]}>{tag.text}</Text>
+            </View>
+          ))}
         </View>
-      ) : null}
+        {about ? <FoldedText icon="reader-outline" text={about} /> : null}
+        {notes ? <FoldedText icon="document-text-outline" text={notes} /> : null}
+        {syncedLog ? (
+          <View style={styles.sync}>
+            <Ionicons name="cloud-done-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.syncText, { color: colors.textSecondary }]}>{syncedLog}</Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 };
 
+const COVER_WIDTH = 84;
+const COVER_HEIGHT = 120;
+
 const styles = StyleSheet.create({
-  card: { borderRadius: 14, borderWidth: 1, gap: 10, marginTop: 8, padding: 14 },
+  card: {
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 14,
+    marginTop: 8,
+    padding: 14,
+  },
+  content: { flexGrow: 1, flexShrink: 1, gap: 10 },
   tags: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   kind: {
     alignItems: 'center',

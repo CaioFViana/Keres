@@ -1,5 +1,6 @@
 export { default as Avatar } from './Avatar/Avatar';
 export { default as CollapsibleCard } from './CollapsibleCard/CollapsibleCard';
+export { default as CoverImage } from './CoverImage/CoverImage';
 export { default as DetailField } from './DetailField/DetailField';
 export { default as EntityMetadata } from './EntityMetadata/EntityMetadata';
 export { default as MapIcon } from './MapIcon/MapIcon';

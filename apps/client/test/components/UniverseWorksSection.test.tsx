@@ -3,6 +3,21 @@ import type { StoryArcSelect } from '../../src/db/schema';
 import UniverseWorksSection from '../../src/components/features/arcs/UniverseWorksSection';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+jest.mock('../../src/components/common/display/CoverImage/CoverImage', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      galleryId,
+      testID,
+      fallback,
+    }: {
+      galleryId?: string | null;
+      testID?: string;
+      fallback?: React.ReactNode;
+    }) => (galleryId ? <Text testID={testID}>{galleryId}</Text> : <>{fallback}</>),
+  };
+});
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>
@@ -48,6 +63,24 @@ describe('UniverseWorksSection', () => {
     expect(view.getByText('Book One')).toBeTruthy();
     expect(view.getByText('arc_medium_comic · Ana')).toBeTruthy();
     expect(view.getByText('arc_medium_screenplay')).toBeTruthy();
+  });
+
+  it('shows the cover of a work where the icon of its form would be', async () => {
+    const view = await render(
+      <UniverseWorksSection
+        arcs={[
+          {
+            ...arc('a', 'Book One', 'comic'),
+            coverGalleryId: 'gal-1',
+          } as unknown as StoryArcSelect,
+          arc('b', 'Season 1'),
+        ]}
+        onOpenArcs={jest.fn()}
+      />,
+    );
+
+    expect(view.getByTestId('universe-work-cover-a')).toBeTruthy();
+    expect(view.queryByTestId('universe-work-cover-b')).toBeNull();
   });
 
   it('says what a universe is while there is a single work', async () => {

@@ -113,6 +113,7 @@ export function MainDashboardContent({
           description={story.description}
           extraNotes={story.extraNotes}
           syncedLog={story.serverId ? story.lastServerSyncedLog : null}
+          coverGalleryId={story.coverGalleryId}
         />
       )}
 

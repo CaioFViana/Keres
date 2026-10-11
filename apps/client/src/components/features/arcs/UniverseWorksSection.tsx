@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import CoverImage from '@/src/components/common/display/CoverImage/CoverImage';
 import type { ArcMedium } from '@keres/shared/metadata/ArcMedium';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -84,9 +85,21 @@ const UniverseWorksSection: React.FC<UniverseWorksSectionProps> = ({
               style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => onOpenArc?.(row.id)}
             >
-              <View style={[styles.tile, { backgroundColor: colors.primaryContainer }]}>
-                <Ionicons name={MEDIUM_ICONS[medium]} size={20} color={colors.onPrimaryContainer} />
-              </View>
+              <CoverImage
+                galleryId={row.coverGalleryId}
+                width={38}
+                height={54}
+                testID={`universe-work-cover-${row.id}`}
+                fallback={
+                  <View style={[styles.tile, { backgroundColor: colors.primaryContainer }]}>
+                    <Ionicons
+                      name={MEDIUM_ICONS[medium]}
+                      size={20}
+                      color={colors.onPrimaryContainer}
+                    />
+                  </View>
+                }
+              />
               <View style={styles.text}>
                 <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
                   {row.title}

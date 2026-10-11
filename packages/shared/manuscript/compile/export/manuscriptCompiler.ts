@@ -60,8 +60,7 @@ export type CompiledBlock =
       /** Null when this scene already contributed its bookmark (route loops). */
       bookmarkId: string | null;
       /**
-       * A gamebook's scene opens its own page in the paged formats (PDF, Word): its choices point at pages, and
-       * several scenes on one page would all be "page 1".
+       * Set when the gamebook gives every scene a page of its own in the paged formats (PDF, Word).
        */
       ownPage?: boolean;
     }
@@ -92,6 +91,8 @@ export type CompiledBlock =
       /** Null when the target is not part of this export: render name-only, no reference. */
       targetBookmarkId: string | null;
       targetSceneName: string | null;
+      /** A gamebook's number for the target scene: the paged formats say it beside the page ("page 12, scene 7"). */
+      targetSceneNumber?: number;
       /** Requirement lines carried from the choice input; renderers draw one sub-line each. */
       requirements?: string[];
       /** Effect lines carried from the choice input; renderers draw one sub-line each. */
@@ -155,7 +156,7 @@ type SectionsInput = {
    * A gamebook: every scene carries its number as a heading (the name too, when `showNames`), and a
    * choice into a scene that is not in the export ends there, saying so with `endLabel`.
    */
-  gamebook?: { showNames: boolean; endLabel: string };
+  gamebook?: { showNames: boolean; endLabel: string; scenePerPage?: boolean };
   /** What a page is called and what stands in for a picture that is gone. */
   pageWords?: PageWords;
   /**
@@ -278,7 +279,7 @@ function sectionsToBlocks({
         number: resetSceneNumbersPerChapter ? groupNumber : section.position,
         name: gamebook && !gamebook.showNames ? '' : section.scene.name,
         bookmarkId: bookmarkId && !emitted.has(bookmarkId) ? bookmarkId : null,
-        ...(gamebook ? { ownPage: true } : {}),
+        ...(gamebook?.scenePerPage ? { ownPage: true } : {}),
       });
     }
     if (bookmarkId) emitted.add(bookmarkId);
@@ -340,6 +341,7 @@ function sectionsToBlocks({
           text: targetBookmarkId ? choice.text : `${choice.text} — ${gamebook.endLabel}`,
           targetSceneId: choice.nextSceneId,
           targetBookmarkId,
+          targetSceneNumber: targetBookmarkId ? targetPosition : undefined,
           // Without names a reference is the scene's number: "See 12".
           targetSceneName:
             targetBookmarkId && targetPosition !== undefined
@@ -508,6 +510,8 @@ export type CompileGamebookOptions = {
   startLabels: { choose: string; begin: string };
   /** Text drawn between two consecutive scenes. Defaults to none. */
   sceneSeparator?: string | null;
+  /** Every scene opens a page of its own in the paged formats. */
+  scenePerPage?: boolean;
   pageWords?: PageWords;
   /**
    * Presents each block at creation (the pipeline's fused path). Absent, blocks
@@ -530,6 +534,7 @@ export function compileGamebookManuscript({
   endLabel,
   startLabels,
   sceneSeparator = null,
+  scenePerPage = false,
   pageWords,
   present,
 }: CompileGamebookOptions): CompiledManuscript {
@@ -563,6 +568,7 @@ export function compileGamebookManuscript({
               targetSceneId: start.id,
               targetBookmarkId: bookmarkIdForScene(start.id),
               targetSceneName: showSceneNames ? start.name : String(positionOf.get(start.id)),
+              targetSceneNumber: positionOf.get(start.id),
             }),
           ),
         ]
@@ -581,7 +587,7 @@ export function compileGamebookManuscript({
         includeSceneNames: true,
         resetSceneNumbersPerChapter: false,
         sceneSeparator,
-        gamebook: { showNames: showSceneNames, endLabel },
+        gamebook: { showNames: showSceneNames, endLabel, scenePerPage },
         pageWords,
         present,
       }),

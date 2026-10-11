@@ -29,6 +29,8 @@ import { DEFAULT_PAGE_ASPECT, pageImageOf } from './manuscriptPageFigure';
 export type ManuscriptDocxLabels = {
   /** Prefix of a choice reference, e.g. "Go to page" - the number itself is a PAGEREF field. */
   goToPage: string;
+  /** The word before a scene number: "Go to page 12, scene 7". Absent: "scene". */
+  sceneWord?: string;
   /** Index heading, e.g. "Contents". */
   tocHeading: string;
 };
@@ -313,6 +315,19 @@ export function buildManuscriptDocument(
               children: [
                 new TextRun(`${lead} — ${labels.goToPage} `),
                 new PageReference(block.targetBookmarkId, { hyperlink: true }),
+                // The page can hold several scenes: the scene's number says which one.
+                ...(block.targetSceneNumber === undefined
+                  ? []
+                  : [
+                      new TextRun(
+                        `, ${labels.sceneWord ?? 'scene'} ${block.targetSceneNumber}${
+                          block.targetSceneName &&
+                          block.targetSceneName !== String(block.targetSceneNumber)
+                            ? ` (${block.targetSceneName})`
+                            : ''
+                        }`,
+                      ),
+                    ]),
               ],
             }),
           );

@@ -51,6 +51,8 @@ const labelSchema = z.string().max(80);
 export const ManuscriptLabelsSchema = z.object({
   goToPage: labelSchema,
   goToScene: labelSchema,
+  /** A gamebook choice in the paged formats ends "Go to page 12, scene 7": this is the word before the number. */
+  sceneWord: labelSchema,
   looseHeading: labelSchema,
   tocHeading: labelSchema,
   /** Said after a gamebook choice whose target is not part of the export (an arc's edge). */
@@ -76,6 +78,7 @@ export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   goToPage: 'Go to page',
   goToScene: 'See',
+  sceneWord: 'scene',
   looseHeading: 'Appendix',
   tocHeading: 'Contents',
   endOfExcerpt: 'end of this excerpt',
@@ -129,6 +132,11 @@ export const ManuscriptOptionsSchema = z.object({
   sceneOrder: z.enum(['discovery', 'shuffled']).default('discovery'),
   /** Seed of the shuffled order; the same seed prints the same book. */
   shuffleSeed: z.string().max(64).optional(),
+  /**
+   * Branching stories only, in the paged formats (PDF, Word): every scene opens a page of its own. Off, scenes run
+   * on and a choice names both the page and the scene: "Go to page 12, scene 7".
+   */
+  scenePerPage: z.boolean().default(false),
   /** When set, only this arc's containers and scenes are included. */
   arcId: z.string().optional(),
   /** Label overrides; anything absent falls back to `DEFAULT_MANUSCRIPT_LABELS`. */

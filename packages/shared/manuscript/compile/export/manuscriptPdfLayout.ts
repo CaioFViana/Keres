@@ -14,6 +14,8 @@ import { TIMES_WIDTHS, type TimesFontKey } from './timesWidths';
 export type ManuscriptPdfLabels = {
   /** Prefix of a choice reference, e.g. "Go to page" - the number is real, from layout. */
   goToPage: string;
+  /** The word before a scene number: "Go to page 12, scene 7". Absent: "scene". */
+  sceneWord?: string;
   /** Index heading, e.g. "Contents". */
   tocHeading: string;
 };
@@ -322,9 +324,20 @@ export function choiceText(
   targetSceneName: string | null,
   page: number | null,
   labels: ManuscriptPdfLabels,
+  targetSceneNumber?: number,
 ): string {
   const lead = `• ${text}`;
-  if (page !== null) return `${lead} — ${labels.goToPage} ${page}`;
+  if (page !== null) {
+    const where = `${lead} — ${labels.goToPage} ${page}`;
+    // A gamebook's scenes can share a page, so the page alone does not say which one: the scene's number,
+    // and its name when the book shows names, ends the reference.
+    if (targetSceneNumber === undefined) return where;
+    const name =
+      targetSceneName && targetSceneName !== String(targetSceneNumber)
+        ? ` (${targetSceneName})`
+        : '';
+    return `${where}, ${labels.sceneWord ?? 'scene'} ${targetSceneNumber}${name}`;
+  }
   if (targetSceneName) return `${lead} — ${targetSceneName}`;
   return lead;
 }

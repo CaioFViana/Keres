@@ -10,6 +10,8 @@ import type { ManuscriptFormat } from './manuscriptContracts';
 export type ManuscriptRenderLabels = {
   goToPage: string;
   goToScene: string;
+  /** The word before a scene number in a paged choice: "Go to page 12, scene 7". Absent: "scene". */
+  sceneWord?: string;
   tocHeading: string;
 };
 

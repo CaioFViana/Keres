@@ -389,7 +389,7 @@ export function* iterateRuns(
           });
         };
         pushWrapped(
-          choiceText(block.text, block.targetSceneName, page, labels),
+          choiceText(block.text, block.targetSceneName, page, labels, block.targetSceneNumber),
           CHOICE_INDENT,
           annotations.length > 0 ? 0 : 7,
         );

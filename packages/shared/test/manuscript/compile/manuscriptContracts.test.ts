@@ -47,6 +47,7 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
     expect(DEFAULT_MANUSCRIPT_LABELS).toEqual({
       goToPage: 'Go to page',
       goToScene: 'See',
+      sceneWord: 'scene',
       looseHeading: 'Appendix',
       tocHeading: 'Contents',
       endOfExcerpt: 'end of this excerpt',
@@ -74,6 +75,7 @@ describe('ManuscriptOptionsSchema', () => {
       pageNoun: 'page',
       resetSceneNumbers: false,
       sceneOrder: 'discovery',
+      scenePerPage: false,
       songChords: false,
       songLanguage: 'sung',
       songRepeat: 'first-only',

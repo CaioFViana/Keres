@@ -1,20 +1,20 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
-import { buildManuscriptDocxBytes } from '../../../manuscript/compile/export/manuscriptDocx';
 import {
   compileGamebookManuscript,
   type CompiledBlock,
+  type ManuscriptChoice,
 } from '../../../manuscript/compile/export/manuscriptCompiler';
+import { buildManuscriptDocxBytes } from '../../../manuscript/compile/export/manuscriptDocx';
 import { pdfGeometry } from '../../../manuscript/compile/export/manuscriptPdfLayout';
 import {
   flattenRuns,
   paginateStream,
   type PdfAnchor,
 } from '../../../manuscript/compile/export/manuscriptPdfRuns';
-import type { ManuscriptChoice } from '../../../manuscript/compile/export/manuscriptCompiler';
 import type { ManuscriptScene } from '../../../manuscript/compile/manuscriptSections';
 
-const LABELS = { goToPage: 'Go to page', tocHeading: 'Contents' };
+const LABELS = { goToPage: 'Go to page', sceneWord: 'scene', tocHeading: 'Contents' };
 
 const scene = (id: string, name: string, index: number, isStart = false): ManuscriptScene => ({
   id,
@@ -35,93 +35,120 @@ const choices = [
   choice('c-3', 's-b', 's-c', 'Go on'),
 ];
 
-const gamebook = (showSceneNames: boolean) =>
+const gamebook = (options: { showSceneNames?: boolean; scenePerPage?: boolean } = {}) =>
   compileGamebookManuscript({
     title: 'My Book',
     scenes,
     choices,
     order: 'discovery',
-    showSceneNames,
+    showSceneNames: options.showSceneNames ?? false,
+    scenePerPage: options.scenePerPage,
     endLabel: 'the end of this excerpt',
     startLabels: { choose: 'Choose where to begin', begin: 'Begin' },
   });
 
-/** The page every scene landed on, and the page each choice line points to, as the PDF lays them out. */
-function layoutOf(manuscript: ReturnType<typeof gamebook>) {
-  const geometry = pdfGeometry({});
+type Gamebook = ReturnType<typeof gamebook>;
+
+/** The page every scene landed on, and the lines of the PDF, as it lays them out. */
+function layoutOf(manuscript: Gamebook, labels: typeof LABELS = LABELS) {
   const firstPass = paginateStream(
-    flattenRuns(manuscript, LABELS, new Map(), {}),
-    geometry,
+    flattenRuns(manuscript, labels, new Map(), {}),
+    pdfGeometry({}),
     () => undefined,
   );
   const anchors: Map<string, PdfAnchor> = firstPass.anchors;
-  const lines = flattenRuns(manuscript, LABELS, anchors, {}).map((run) =>
+  const lines = flattenRuns(manuscript, labels, anchors, {}).map((run) =>
     run.words.map((word) => word.text).join(' '),
   );
   return { anchors, lines, pages: firstPass.pageCount };
 }
 
-const sceneHeadings = (manuscript: ReturnType<typeof gamebook>) =>
+const sceneHeadings = (manuscript: Gamebook) =>
   manuscript.blocks.filter(
     (block): block is Extract<CompiledBlock, { kind: 'scene-heading' }> =>
       block.kind === 'scene-heading',
   );
+const pageOf = (manuscript: Gamebook, anchors: Map<string, PdfAnchor>, id: string) =>
+  anchors.get(sceneHeadings(manuscript).find((entry) => entry.id === id)!.bookmarkId!)?.page;
 
-describe('a gamebook in the paged formats', () => {
-  it('opens a page for each scene, which is what lets a choice say which page to go to', () => {
-    for (const showSceneNames of [false, true]) {
-      const manuscript = gamebook(showSceneNames);
-      const { anchors } = layoutOf(manuscript);
+describe('a gamebook choice in the PDF', () => {
+  it('names the page and the scene, so scenes that share a page can still be told apart', () => {
+    const manuscript = gamebook();
+    const { anchors, lines } = layoutOf(manuscript);
 
-      const pages = sceneHeadings(manuscript).map(
-        (heading) => anchors.get(heading.bookmarkId!)?.page,
-      );
-
-      expect(pages).toHaveLength(3);
-      expect(new Set(pages).size).toBe(3);
-    }
+    // The three short scenes run on, all on page 1: the page alone would send the reader nowhere in particular.
+    expect([pageOf(manuscript, anchors, 's-b'), pageOf(manuscript, anchors, 's-c')]).toEqual([
+      1, 1,
+    ]);
+    expect(lines).toContain('• Knock — Go to page 1, scene 2');
+    expect(lines).toContain('• Climb — Go to page 1, scene 3');
+    expect(lines).toContain('• Go on — Go to page 1, scene 3');
   });
 
-  it('keeps the first scene on the title page and takes the others to their own', () => {
-    const manuscript = gamebook(false);
+  it('adds the name of the scene in brackets when the book shows names', () => {
+    const { lines } = layoutOf(gamebook({ showSceneNames: true }));
+
+    expect(lines).toContain('• Climb — Go to page 1, scene 3 (Gamma)');
+  });
+
+  it('says the scene in the words it is given', () => {
+    const { lines } = layoutOf(gamebook(), {
+      goToPage: 'Vá para a página',
+      sceneWord: 'cena',
+      tocHeading: 'Índice',
+    });
+
+    expect(lines).toContain('• Climb — Vá para a página 1, cena 3');
+  });
+
+  it('leaves the scenes running on by default', () => {
+    expect(layoutOf(gamebook()).pages).toBe(1);
+    expect(sceneHeadings(gamebook()).some((heading) => heading.ownPage)).toBe(false);
+  });
+});
+
+describe('a gamebook with one scene per page', () => {
+  it('opens a page for each scene, the first staying on the page of the title', () => {
+    const manuscript = gamebook({ scenePerPage: true });
     const { anchors } = layoutOf(manuscript);
 
-    const [first, second, third] = sceneHeadings(manuscript).map(
-      (heading) => anchors.get(heading.bookmarkId!)?.page,
-    );
-
-    expect([first, second, third]).toEqual([1, 2, 3]);
+    expect(['s-a', 's-b', 's-c'].map((id) => pageOf(manuscript, anchors, id))).toEqual([1, 2, 3]);
   });
 
-  it('points every choice at the page its scene is on, with no two scenes sharing a page number', () => {
-    const manuscript = gamebook(false);
-    const { anchors, lines } = layoutOf(manuscript);
-    const pageOf = (id: string) => {
-      const heading = sceneHeadings(manuscript).find((entry) => entry.id === id);
-      return anchors.get(heading!.bookmarkId!)?.page;
-    };
+  it('points every choice at the page of its scene, and still names the scene', () => {
+    const { lines } = layoutOf(gamebook({ scenePerPage: true }));
 
-    expect(lines).toContain(`• Knock — Go to page ${pageOf('s-b')}`);
-    expect(lines).toContain(`• Climb — Go to page ${pageOf('s-c')}`);
-    expect(lines).toContain(`• Go on — Go to page ${pageOf('s-c')}`);
-    expect(pageOf('s-b')).not.toBe(pageOf('s-c'));
+    expect(lines).toContain('• Knock — Go to page 2, scene 2');
+    expect(lines).toContain('• Climb — Go to page 3, scene 3');
   });
 
-  it('marks the scenes of a gamebook, and no others, as opening a page of their own', () => {
-    expect(sceneHeadings(gamebook(false)).every((heading) => heading.ownPage === true)).toBe(true);
+  it('marks the scenes as opening a page of their own', () => {
+    expect(
+      sceneHeadings(gamebook({ scenePerPage: true })).every((heading) => heading.ownPage === true),
+    ).toBe(true);
   });
 });
 
 describe('a gamebook in a Word document', () => {
-  it('starts each scene but the first on a new page, so the page its choices cite is one scene', async () => {
-    const bytes = await buildManuscriptDocxBytes(gamebook(false), {
+  const docx = async (scenePerPage: boolean) => {
+    const bytes = await buildManuscriptDocxBytes(gamebook({ scenePerPage }), {
       goToPage: 'Go to page',
+      sceneWord: 'scene',
       tocHeading: 'Contents',
     });
     const zip = await JSZip.loadAsync(bytes);
-    const xml = await zip.file('word/document.xml')!.async('string');
+    return zip.file('word/document.xml')!.async('string');
+  };
 
-    // Three scene headings; the first follows the title, the other two open pages.
-    expect((xml.match(/<w:pageBreakBefore\/>/g) ?? []).length).toBe(2);
+  it('starts each scene but the first on a new page when asked to', async () => {
+    expect(((await docx(true)).match(/<w:pageBreakBefore\/>/g) ?? []).length).toBe(2);
+    expect(((await docx(false)).match(/<w:pageBreakBefore\/>/g) ?? []).length).toBe(0);
+  });
+
+  it('ends a choice with the scene beside the page the field gives', async () => {
+    const xml = await docx(false);
+
+    expect(xml).toContain(', scene 2');
+    expect(xml).toContain(', scene 3');
   });
 });

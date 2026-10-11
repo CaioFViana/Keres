@@ -87,6 +87,7 @@ export function presentedManuscriptOf(
       endLabel: labels.endOfExcerpt,
       startLabels: { choose: labels.chooseStart, begin: labels.beginAt },
       sceneSeparator: sceneSeparatorText(parsed.style),
+      scenePerPage: parsed.scenePerPage,
       pageWords,
       present,
     }).blocks;

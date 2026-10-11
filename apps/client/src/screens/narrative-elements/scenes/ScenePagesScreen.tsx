@@ -61,9 +61,7 @@ const ScenePagesScreen = () => {
   const { canEdit } = useStoryRole(scene?.storyId);
   const medium = useSceneArcMedium(scene ?? { chapterId: null });
   const kind = scenePageKind(medium);
-  const { pages, loading } = useScenePages(sceneId, scene?.storyId, {
-    redrawFor: canEdit ? userId : null,
-  });
+  const { pages, loading } = useScenePages(sceneId, scene?.storyId);
   /** Which page the add sheet is for: `add` for a new one, a page's id to replace its picture. */
   const [sheetFor, setSheetFor] = useState<'add' | string | null>(null);
   const [pickerFor, setPickerFor] = useState<'add' | string | null>(null);

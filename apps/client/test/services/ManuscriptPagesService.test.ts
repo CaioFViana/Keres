@@ -15,21 +15,16 @@ import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../help
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const mockReadBytes = jest.fn();
-const mockEnsurePreview = jest.fn();
-const mockReadPreview = jest.fn();
+const mockRasterize = jest.fn();
 
 jest.mock('../../src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { readBytes: (...args: unknown[]) => mockReadBytes(...args) },
 }));
-jest.mock('../../src/services/storymanagement/SketchPreviewService', () => ({
+jest.mock('../../src/utils/svgRaster', () => ({
   __esModule: true,
-  SKETCH_PREVIEW_PRINT_LOOK: { colors: {}, paper: '#ffffff' },
-  createSketchPreviewService: () => ({
-    ensure: (...args: unknown[]) => mockEnsurePreview(...args),
-    readBytes: (...args: unknown[]) => mockReadPreview(...args),
-    peek: jest.fn(),
-  }),
+  fitRasterSize: (width: number, height: number) => ({ width, height }),
+  rasterizeMapSvg: (...args: unknown[]) => mockRasterize(...args),
 }));
 
 /** A 2x1 PNG, enough for its header to be read. */
@@ -113,14 +108,7 @@ beforeEach(async () => {
   await seedScene('scene-1');
   await seedScene('scene-2');
   mockReadBytes.mockReset().mockImplementation(async () => tinyPng());
-  mockEnsurePreview
-    .mockReset()
-    .mockImplementation(async (name: string) => ({
-      uri: `preview://${name}.png`,
-      bytes: tinyPng(),
-      cached: false,
-    }));
-  mockReadPreview.mockReset().mockResolvedValue(null);
+  mockRasterize.mockReset().mockImplementation(async () => tinyPng());
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
@@ -157,11 +145,8 @@ describe('loadManuscriptPages', () => {
 
     const { pagesByScene, media } = await load();
 
-    expect(mockEnsurePreview).toHaveBeenCalledTimes(1);
-    const [name, content, look] = mockEnsurePreview.mock.calls[0];
-    expect(name).toBe('Roughs');
-    expect(content).toEqual(sketch.content);
-    expect(look).toEqual({ colors: {}, paper: '#ffffff' });
+    // Rendered once for both pages, straight from the content.
+    expect(mockRasterize).toHaveBeenCalledTimes(1);
     expect(pagesByScene.get('scene-1')?.map((page) => [page.text, page.mediaId])).toEqual([
       ['panel', `sketch:${sketch.id}`],
       ['panel again', `sketch:${sketch.id}`],
@@ -182,7 +167,7 @@ describe('loadManuscriptPages', () => {
 
     const { pagesByScene, media, problems } = await load();
 
-    expect(mockEnsurePreview).not.toHaveBeenCalled();
+    expect(mockRasterize).not.toHaveBeenCalled();
     expect(pagesByScene.get('scene-1')?.map((page) => [page.text, page.mediaId])).toEqual([
       ['still here', null],
       ['no sketch', null],
@@ -207,13 +192,13 @@ describe('loadManuscriptPages', () => {
     expect(problems).toMatchObject({ unsupported: 1, missing: 1 });
   });
 
-  it('counts a Sketch whose preview could not be drawn, leaving the page without a picture', async () => {
+  it('counts a Sketch that could not be drawn, leaving the page without a picture', async () => {
     const sketch = await createSketchService(database.db).createSketch(TEST_USER_ID, {
       storyId: TEST_STORY_ID,
       name: 'Roughs',
     } as never);
     await pageOf('scene-1', { sketchId: sketch.id }, 'text');
-    mockEnsurePreview.mockRejectedValue(new Error('no raster host'));
+    mockRasterize.mockRejectedValue(new Error('no raster host'));
 
     const { pagesByScene, problems } = await load();
 
@@ -244,7 +229,7 @@ describe('loadManuscriptPages', () => {
     const { pagesByScene, media, problems } = await load(undefined, false);
 
     expect(mockReadBytes).not.toHaveBeenCalled();
-    expect(mockEnsurePreview).not.toHaveBeenCalled();
+    expect(mockRasterize).not.toHaveBeenCalled();
     expect(media).toEqual({});
     expect(pagesByScene.get('scene-1')?.map((page) => page.mediaId !== null)).toEqual([
       true,

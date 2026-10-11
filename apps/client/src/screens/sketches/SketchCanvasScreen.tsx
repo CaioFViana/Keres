@@ -47,12 +47,10 @@ import { useCanvasHistory } from '../../hooks/useCanvasHistory';
 import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
 import { useSketchDrawing } from '../../hooks/useSketchDrawing';
 import { useSketchExport } from '../../hooks/useSketchExport';
-import { sketchLookFromTheme } from '../../hooks/useSketchPreviewUri';
 import { useSketchSelection } from '../../hooks/useSketchSelection';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SketchStackParamList } from '../../navigation/MainSystemStack';
 import { createSketchService } from '../../services/storymanagement/SketchService';
-import { createSketchPreviewService } from '../../services/storymanagement/SketchPreviewService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useSketchDraftStore } from '../../state/sketchDraftStore';
 import { isObjectTool, useSketchToolStore, type SketchTool } from '../../state/sketchToolStore';
@@ -165,7 +163,6 @@ const SketchCanvasScreen = () => {
     setActiveLayer,
     selectOverlay: overlayActions.selectOverlay,
   });
-  const previewLook = useMemo(() => sketchLookFromTheme(colors), [colors]);
   const closeExport = useCallback(() => setShowExport(false), []);
   const { busy, handleExportSvg, handleExportPng, handleSaveToGallery } = useSketchExport({
     docRef,
@@ -249,21 +246,13 @@ const SketchCanvasScreen = () => {
       });
       setSketch(updated);
       setSavedDoc(savedFrom);
-      // The list shows the sketch by its cached preview, so draw it here on save, under this
-      // theme, instead of waiting until the sketch is picked as a scene page. The file lives
-      // outside the Gallery and never fails the save itself: the content is already stored.
-      try {
-        await createSketchPreviewService().ensure(updated.name, validated, previewLook);
-      } catch (previewError) {
-        console.log('SketchCanvasScreen: failed to draw sketch preview.', previewError);
-      }
       showNotification(t('sketch_saved'), 'success');
     } catch (saveError) {
       console.log('SketchCanvasScreen: failed to save sketch.', saveError);
       const tooLarge = saveError instanceof Error && /too large/i.test(saveError.message);
       showNotification(t(tooLarge ? 'sketch_too_large' : 'sketch_save_failed'), 'error');
     }
-  }, [db, previewLook, showNotification, sketch, t, userId]);
+  }, [db, showNotification, sketch, t, userId]);
 
   const revert = useCallback(() => {
     resetDoc(savedDoc);

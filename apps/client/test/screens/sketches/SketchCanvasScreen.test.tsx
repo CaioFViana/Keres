@@ -15,7 +15,6 @@ const mockUpdateSketch = jest.fn();
 const mockHydrate = jest.fn();
 const mockRemember = jest.fn();
 const mockRasterize = jest.fn();
-const mockEnsurePreview = jest.fn();
 let mockCanEdit = true;
 
 /** The props the screen hands the canvas; tests call its handlers the way gestures would. */
@@ -168,11 +167,6 @@ jest.mock('../../../src/services/storymanagement/SketchService', () => ({
 jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
   createGalleryService: () => ({}),
 }));
-jest.mock('../../../src/services/storymanagement/SketchPreviewService', () => ({
-  createSketchPreviewService: () => ({
-    ensure: (...args: unknown[]) => mockEnsurePreview(...args),
-  }),
-}));
 jest.mock('../../../src/services/MediaFileService', () => ({ mediaFileService: {} }));
 jest.mock('../../../src/utils/storyTransfer', () => ({
   buildSketchFileName: () => 'sketch.svg',
@@ -219,7 +213,6 @@ describe('SketchCanvasScreen', () => {
     mockGetSketch.mockResolvedValue(row());
     mockHydrate.mockResolvedValue(null);
     mockRasterize.mockReturnValue(framedRaster());
-    mockEnsurePreview.mockResolvedValue({ uri: 'preview://thumb.png', bytes: null, cached: true });
     mockUpdateSketch.mockImplementation(async (_user: string, _id: string, changes: any) => ({
       ...row(2),
       ...changes,
@@ -474,44 +467,14 @@ describe('SketchCanvasScreen', () => {
     expect(mockNotify).toHaveBeenCalledWith('sketch_saved', 'success');
   });
 
-  it('draws the list preview on save, under the current theme', async () => {
+  it('saves only the drawing: no preview file, no Gallery row', async () => {
     await open();
     await stroke(line(10, 10));
     await act(async () => header().onSave());
-    expect(mockEnsurePreview).toHaveBeenCalledTimes(1);
-    const [name, content, look] = mockEnsurePreview.mock.calls[0];
-    expect(name).toBe('Throne room');
-    expect(content.layers[0].data).not.toBe('');
-    // The mocked theme in this file: the preview follows it instead of fixed paper.
-    expect(look).toEqual({
-      colors: {
-        background: '#fff',
-        surface: '#f4f4f4',
-        text: '#111',
-        textSecondary: '#555',
-        border: '#ddd',
-        primary: '#00f',
-      },
-      paper: '#f4f4f4',
-    });
-    expect(header().dirty).toBe(false);
-  });
-
-  it('saves only the drawing: the preview never becomes a Gallery row', async () => {
-    await open();
-    await stroke(line(10, 10));
-    await act(async () => header().onSave());
+    // The list draws the thumbnail straight from this content, so the save stores nothing else.
     expect(mockUpdateSketch).toHaveBeenCalledTimes(1);
     expect(mockUpdateSketch.mock.calls[0][2]).not.toHaveProperty('coverGalleryId');
     expect(mockUpdateSketch.mock.calls[0][2]).not.toHaveProperty('coverSourceHash');
-  });
-
-  it('keeps the save when the preview cannot be drawn', async () => {
-    mockEnsurePreview.mockRejectedValueOnce(new Error('svg raster: snapshot produced no bytes'));
-    await open();
-    await stroke(line(10, 10));
-    await act(async () => header().onSave());
-    expect(mockUpdateSketch).toHaveBeenCalledTimes(1);
     expect(mockNotify).toHaveBeenCalledWith('sketch_saved', 'success');
     expect(header().dirty).toBe(false);
   });

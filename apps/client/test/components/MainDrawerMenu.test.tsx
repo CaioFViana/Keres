@@ -266,13 +266,36 @@ describe('MainDrawerMenu', () => {
     expect(view.queryByTestId('drawer-item-CalendarsStack')).toBeNull();
   });
 
-  it('never hides the screen on show behind a group left shut', async () => {
+  it('keeps a group shut even when it holds the screen on show', async () => {
     await AsyncStorage.setItem('@keres/drawer-groups/story-1', JSON.stringify({ write: false }));
     const view = await renderMenu();
     await act(async () => {});
 
-    expect(view.getByTestId('drawer-item-MainDashboard').props.children).toBe(
-      'dashboard_title:focused',
+    expect(view.queryByTestId('drawer-item-MainDashboard')).toBeNull();
+  });
+
+  it('keeps a shut active group shut when moving to another group', async () => {
+    const view = await renderMenu();
+    expect(view.getByTestId('drawer-item-MainDashboard')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('drawer-group-write'));
+    expect(view.queryByTestId('drawer-item-MainDashboard')).toBeNull();
+    await waitFor(async () =>
+      expect(
+        JSON.parse((await AsyncStorage.getItem('@keres/drawer-groups/story-1')) ?? '{}'),
+      ).toEqual({ write: false }),
     );
+
+    mockFocused = { route: 'CharactersStack', focus: {} };
+    view.rerender(
+      <MainDrawerMenu state={{ routes: [], index: 0 } as never} navigation={{} as never} drawerId="main-system" />,
+    );
+    await act(async () => {});
+
+    expect(view.queryByTestId('drawer-item-MainDashboard')).toBeNull();
+    expect(view.getByTestId('drawer-item-CharactersStack')).toBeTruthy();
+    expect(
+      JSON.parse((await AsyncStorage.getItem('@keres/drawer-groups/story-1')) ?? '{}'),
+    ).toEqual({ write: false });
   });
 });

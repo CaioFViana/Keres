@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { DrawerItem } from '@react-navigation/drawer';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { drawerAnchorId } from '../../../../guides/anchorRegistry';
@@ -36,8 +36,12 @@ interface GroupedDrawerMenuProps {
 }
 
 /**
- * Entries in groups that open and close, with the entries that are always there below them. The group with
- * the screen on show is open; the rest are as they were left, across sessions. A group folded away still shows a dot while something inside it asks for attention.
+ * Entries in groups that open and close, with the entries that are always there below them. One source of
+ * truth: every header press instantly records that group's new state (kept across sessions under
+ * `storageKey`), and what shows is that record. A group never touched takes the menu's default - open while
+ * it holds the screen on show, so the current entry is not hidden on a first visit. An explicit choice always
+ * wins, including for the group on show. A group folded away still shows a dot while something inside it asks
+ * for attention.
  */
 const GroupedDrawerMenu: React.FC<GroupedDrawerMenuProps> = ({
   state,
@@ -58,19 +62,13 @@ const GroupedDrawerMenu: React.FC<GroupedDrawerMenuProps> = ({
   const activeLeafOf = (leaves: MenuLeaf[]) =>
     leaves.find((leaf) => isLeafActive(leaf, focusedRoute, focus));
   const activeGroupId = groups.find((group) => activeLeafOf(group.leaves))?.id ?? null;
-  // The group with the screen on show is open - the screen is never hidden - unless the person shuts it while
-  // they are on that screen. Going to another group forgets that.
-  const [shutActive, setShutActive] = useState(false);
-  const [seenActiveGroup, setSeenActiveGroup] = useState(activeGroupId);
-  if (activeGroupId !== seenActiveGroup) {
-    setSeenActiveGroup(activeGroupId);
-    setShutActive(false);
-  }
+  // The only writable state is `userOpen` (persisted instantly by `setGroupOpen`): a header press records the
+  // group's new state whatever the group, so a shut group stays shut when the person moves on. The active
+  // group is only a read-time default for groups never touched, so a first visit still shows where they are.
   const isOpen = (group: MenuGroup) =>
-    group.id === activeGroupId ? !shutActive : (userOpen[group.id] ?? group.defaultOpen);
+    userOpen[group.id] ?? (group.id === activeGroupId ? true : group.defaultOpen);
   const toggle = (group: MenuGroup, open: boolean) => {
-    if (group.id === activeGroupId) setShutActive(open);
-    else setGroupOpen(group.id, !open);
+    setGroupOpen(group.id, !open);
   };
 
   const styles = useMemo(

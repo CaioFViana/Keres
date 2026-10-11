@@ -1,19 +1,30 @@
 import {
+  decodeSketchDocument,
   MAX_MANUSCRIPT_IMAGE_PIXELS,
+  validateSketchContent,
   type ManuscriptImage,
   type ManuscriptPage,
   readImageInfo,
 } from '@keres/shared';
 import type { AppDrizzleClient } from '../../db';
+import { renderSketchSvg } from '../../utils/sketchSvg';
+import type { SvgExportColors } from '../../utils/svgExport';
+import { fitRasterSize, rasterizeMapSvg } from '../../utils/svgRaster';
 import { mediaFileService } from '../MediaFileService';
 import { createGalleryService } from './GalleryService';
 import { createScenePageService, groupPagesByScene } from './ScenePageService';
-import {
-  createSketchPreviewService,
-  SKETCH_PREVIEW_PRINT_LOOK,
-} from './SketchPreviewService';
 import { createSketchService } from './SketchService';
 import { ensureSketchSnapshot } from './SketchSnapshotService';
+
+/** A manuscript page is paper whatever theme the app is in. */
+const PRINT_COLORS: SvgExportColors = {
+  background: '#ffffff',
+  surface: '#ffffff',
+  text: '#1f1f1f',
+  textSecondary: '#5a5a5a',
+  border: '#c8c8c8',
+  primary: '#3b5bdb',
+};
 
 /** What could not be put in the manuscript, counted so the person is told rather than left to find a blank. */
 export interface ManuscriptPagesProblems {
@@ -38,8 +49,8 @@ const isSketchMediaKey = (mediaId: string) => mediaId.startsWith('sketch:');
 
 /**
  * The pages of a story's scenes, ready for a manuscript: each page's picture read from this device (a
- * Sketch drawn from its content on paper), and each page that has none left in place as a page
- * without a picture. Drawing a Sketch adds no Gallery row: the file lives in the preview cache.
+ * Sketch drawn straight from its content on paper), and each page that has none left in place
+ * as a page without a picture. Drawing a Sketch writes no file and adds no Gallery row.
  */
 export async function loadManuscriptPages(
   db: AppDrizzleClient,
@@ -93,9 +104,14 @@ export async function loadManuscriptPages(
     try {
       const sketch = await createSketchService(db).getById(sketchId);
       if (sketch && !sketch.isDeleted) {
-        const previews = createSketchPreviewService();
-        const made = await previews.ensure(sketch.name, sketch.content, SKETCH_PREVIEW_PRINT_LOOK);
-        const bytes = made.bytes ?? (await previews.readBytes(made.uri));
+        const doc = decodeSketchDocument(validateSketchContent(sketch.content));
+        const svg = renderSketchSvg(doc, {
+          title: sketch.name,
+          colors: PRINT_COLORS,
+          paper: '#ffffff',
+        });
+        const pixels = fitRasterSize(doc.page.width, doc.page.height);
+        const bytes = await rasterizeMapSvg(svg, pixels.width, pixels.height);
         const info = bytes ? readImageInfo(bytes) : null;
         if (bytes && info && info.width * info.height <= MAX_MANUSCRIPT_IMAGE_PIXELS) {
           result = sketchMediaKey(sketch.id);
@@ -177,8 +193,8 @@ export async function estimateManuscriptPageBytes(
  * changed since its snapshot was made, and returns how many were redrawn. This is the one automatic
  * path that still writes to the Gallery, and only on an explicit publish: the server compiles a
  * publication from what it was sent and cannot draw a Sketch itself, so the new snapshots are
- * changes that still have to sync before the publication can show them. Display and local export
- * draw from the preview cache instead and never touch the Gallery.
+ * changes that still have to sync before the publication can show them. Display draws from the
+ * content itself and local export renders it directly instead, never touching the Gallery.
  */
 export async function refreshStaleSketchSnapshots(
   db: AppDrizzleClient,

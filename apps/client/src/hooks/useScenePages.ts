@@ -1,25 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
-import type { ScenePageSelect } from '@/src/db/schema';
+import type { ScenePageSelect, SketchSelect } from '@/src/db/schema';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
-import { createSketchPreviewService } from '@/src/services/storymanagement/SketchPreviewService';
 import { createSketchService } from '@/src/services/storymanagement/SketchService';
-import type { SketchPreviewLook } from '@/src/services/storymanagement/SketchPreviewService';
-import { useTheme } from '@/src/theme';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { sketchLookFromTheme } from './useSketchPreviewUri';
 
-/** A page with what it shows: the Gallery medium or cached Sketch preview to draw, and its name. */
+/** A page with what it shows: the Gallery medium to draw, or the Sketch to draw, and its name. */
 export interface ScenePageView {
   page: ScenePageSelect;
   /** The Gallery medium to draw: the page's own (`null` if it has none or is a Sketch). */
   thumbGalleryId: string | null;
-  /**
-   * The cached preview of a Sketch page under the current theme (`null` for Gallery pages and
-   * while undrawn). The file lives outside the Gallery and never syncs.
-   */
-  thumbPreviewUri: string | null;
+  /** The Sketch to draw in place of a medium; `null` for Gallery pages. */
+  sketch: Pick<SketchSelect, 'name' | 'content'> | null;
   mediaName: string | null;
   isSketch: boolean;
   /** The Sketch or medium it pointed at is gone (or never resolved): the page keeps only its text. */
@@ -29,7 +22,6 @@ export interface ScenePageView {
 export async function scenePageViewOf(
   db: ReturnType<typeof useDrizzle>,
   page: ScenePageSelect,
-  look: SketchPreviewLook,
 ): Promise<ScenePageView> {
   if (page.galleryId) {
     const row = await createGalleryService(db).getById(page.galleryId);
@@ -37,7 +29,7 @@ export async function scenePageViewOf(
     return {
       page,
       thumbGalleryId: alive ? page.galleryId : null,
-      thumbPreviewUri: null,
+      sketch: null,
       mediaName: alive ? (row.title ?? row.fileName) : null,
       isSketch: false,
       mediaGone: !alive,
@@ -49,9 +41,7 @@ export async function scenePageViewOf(
     return {
       page,
       thumbGalleryId: null,
-      thumbPreviewUri: alive
-        ? await createSketchPreviewService().peek(sketch.content, look)
-        : null,
+      sketch: alive ? { name: sketch.name, content: sketch.content } : null,
       mediaName: alive ? sketch.name : null,
       isSketch: true,
       mediaGone: !alive,
@@ -60,7 +50,7 @@ export async function scenePageViewOf(
   return {
     page,
     thumbGalleryId: null,
-    thumbPreviewUri: null,
+    sketch: null,
     mediaName: null,
     isSketch: false,
     mediaGone: true,
@@ -71,20 +61,11 @@ export async function scenePageViewOf(
  * A scene's pages, in order, each with what it shows. Reloads when pages, Sketches or the Gallery
  * change, so a page whose image was deleted on another device turns into "media removed".
  *
- * With `redrawFor` (the person who may edit), a Sketch page is also kept showing the drawing as
- * it is now: a missing preview is drawn in the background, one sketch at a time. The files live
- * outside the Gallery: picking a Sketch never adds a medium to it.
+ * A Sketch page draws straight from the Sketch's content, so picking one never adds a medium to
+ * the Gallery and there is nothing to redraw: the newest drawing shows by itself.
  */
-export function useScenePages(
-  sceneId: string | undefined,
-  storyId: string | undefined,
-  options: { redrawFor?: string | null } = {},
-) {
-  const redrawFor = options.redrawFor ?? null;
+export function useScenePages(sceneId: string | undefined, storyId: string | undefined) {
   const db = useDrizzle();
-  const { colors } = useTheme();
-  const look = useMemo(() => sketchLookFromTheme(colors), [colors]);
-  const redrawing = useRef(false);
   const [pages, setPages] = useState<ScenePageView[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -96,46 +77,14 @@ export function useScenePages(
     }
     try {
       const rows = await createScenePageService(db).getPagesForScene(sceneId);
-      const views = await Promise.all(rows.map((row) => scenePageViewOf(db, row, look)));
-      setPages(views);
-      if (redrawFor && !redrawing.current) {
-        redrawing.current = true;
-        let redrawn = false;
-        try {
-          const sketchIds = new Set(
-            views.flatMap((view) =>
-              view.isSketch && !view.mediaGone && view.page.sketchId ? [view.page.sketchId] : [],
-            ),
-          );
-          const previews = createSketchPreviewService();
-          const sketches = createSketchService(db);
-          for (const sketchId of sketchIds) {
-            const sketch = await sketches.getById(sketchId);
-            if (!sketch || sketch.isDeleted) continue;
-            if (!(await previews.ensure(sketch.name, sketch.content, look)).cached) redrawn = true;
-          }
-        } catch (error) {
-          console.log('useScenePages: could not draw a Sketch page.', error);
-        } finally {
-          redrawing.current = false;
-        }
-        if (redrawn) {
-          setPages(
-            await Promise.all(
-              (await createScenePageService(db).getPagesForScene(sceneId)).map((row) =>
-                scenePageViewOf(db, row, look),
-              ),
-            ),
-          );
-        }
-      }
+      setPages(await Promise.all(rows.map((row) => scenePageViewOf(db, row))));
     } catch (error) {
       console.log('useScenePages: failed to load the pages.', error);
       setPages([]);
     } finally {
       setLoading(false);
     }
-  }, [db, look, redrawFor, sceneId]);
+  }, [db, sceneId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no scene is given; everything else waits for `await`.

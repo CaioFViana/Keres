@@ -192,6 +192,8 @@ export class SubscriptionService {
     auditService.record({
       category: 'payment',
       action: 'payment.subscription_canceled',
+      // The person asked for it, so the person is who did it; the provider's own events have no one.
+      actorUserId: userId,
       subjectUserId: userId,
       meta: { by: 'user' },
     });

@@ -9,6 +9,7 @@ import {
 } from './manuscriptCompiler';
 import { escapeHtml, spansToHtml, typographyCss } from './manuscriptHtml';
 import {
+  COVER_CSS,
   hasPages,
   type PageRun,
   pageBlockMarkup,
@@ -99,6 +100,15 @@ ${body}
 </body>
 </html>
 `;
+}
+
+/** Where the cover sits in the package, when the book has one. */
+function coverOf(
+  manuscript: CompiledManuscript,
+): { path: string; image: NonNullable<CompiledManuscript['images']>[string] } | null {
+  const image = manuscript.cover ? manuscript.images?.[manuscript.cover] : undefined;
+  if (!image) return null;
+  return { path: `images/cover.${image.mimeType === 'image/jpeg' ? 'jpg' : 'png'}`, image };
 }
 
 type ContentFile = { name: string; title: string; blocks: CompiledBlock[] };
@@ -260,8 +270,10 @@ export function buildManuscriptEpubEntries(
     options,
     manuscript.blocks.some((block) => block.kind === 'scene-break'),
   );
+  const cover = coverOf(manuscript);
   const pageCss = hasPages(manuscript.blocks) ? `${pageCssFor(manuscript.pageLayout)}\n` : '';
-  const stylesheet = `${STYLESHEET}${pageCss}${extraCss ? `${extraCss}\n` : ''}`;
+  const coverCss = cover ? `${COVER_CSS}\n` : '';
+  const stylesheet = `${STYLESHEET}${pageCss}${coverCss}${extraCss ? `${extraCss}\n` : ''}`;
   const pageContext: PageContext = { manuscript, order: new Map() };
 
   const texts = files
@@ -291,9 +303,26 @@ export function buildManuscriptEpubEntries(
     true,
   );
 
+  const coverText = cover
+    ? {
+        name: 'cover.xhtml',
+        content: xhtmlDocument(
+          manuscript.title,
+          language,
+          `<figure class="cover"><img src="${cover.path}" alt="${escapeHtml(manuscript.title)}" /></figure>`,
+        ),
+      }
+    : null;
+
   const manifest = [
     '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>',
     '<item id="style" href="style.css" media-type="text/css"/>',
+    ...(cover && coverText
+      ? [
+          `<item id="cover-image" href="${cover.path}" media-type="${cover.image.mimeType}" properties="cover-image"/>`,
+          `<item id="cover" href="${coverText.name}" media-type="application/xhtml+xml"/>`,
+        ]
+      : []),
     ...texts.map(
       (text, index) =>
         `<item id="text${index}" href="${text.name}" media-type="application/xhtml+xml"/>`,
@@ -305,7 +334,10 @@ export function buildManuscriptEpubEntries(
       `<item id="img${pageContext.order.get(mediaId)}" href="${path}" media-type="${image.mimeType}"/>`,
     );
   }
-  const spine = texts.map((_, index) => `<itemref idref="text${index}"/>`);
+  const spine = [
+    ...(coverText ? ['<itemref idref="cover"/>'] : []),
+    ...texts.map((_, index) => `<itemref idref="text${index}"/>`),
+  ];
   const creator = metadata.author?.trim()
     ? `\n    <dc:creator>${escapeHtml(metadata.author.trim())}</dc:creator>`
     : '';
@@ -315,7 +347,7 @@ export function buildManuscriptEpubEntries(
     <dc:identifier id="bookid">${escapeHtml(identifier)}</dc:identifier>
     <dc:title>${escapeHtml(manuscript.title)}</dc:title>
     <dc:language>${escapeHtml(language)}</dc:language>${creator}
-    <meta property="dcterms:modified">${modifiedStamp(metadata.modified ?? new Date(0))}</meta>
+    <meta property="dcterms:modified">${modifiedStamp(metadata.modified ?? new Date(0))}</meta>${cover ? '\n    <meta name="cover" content="cover-image"/>' : ''}
   </metadata>
   <manifest>
     ${manifest.join('\n    ')}
@@ -332,6 +364,7 @@ export function buildManuscriptEpubEntries(
     ['OEBPS/content.opf', opf],
     ['OEBPS/nav.xhtml', nav],
     ['OEBPS/style.css', stylesheet],
+    ...(coverText ? ([[`OEBPS/${coverText.name}`, coverText.content]] as [string, string][]) : []),
     ...texts.map((text): [string, string] => [`OEBPS/${text.name}`, text.content]),
   ];
 }
@@ -352,6 +385,9 @@ export async function buildManuscriptEpubBytes(
       compression: path === 'mimetype' ? 'STORE' : 'DEFLATE',
     });
   }
+  // The cover, once, where the package points at it.
+  const cover = coverOf(manuscript);
+  if (cover) zip.file(`OEBPS/${cover.path}`, cover.image.bytes, { date, compression: 'STORE' });
   // The pictures of the pages: each once, at the path the pages point at (first use, in book order).
   const order = new Map<string, number>();
   for (const { mediaId, image } of usedPageImages(manuscript)) {

@@ -115,6 +115,8 @@ export type CompiledManuscript = {
   pageAspect?: number;
   /** How the pages are laid out; absent is a flow. */
   pageLayout?: PageLayout;
+  /** The cover: a key into `images`. It comes first in the formats that carry pictures. */
+  cover?: string;
 };
 
 /** Word bookmark names start with a letter, hold no spaces and stay under 40 chars. */

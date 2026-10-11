@@ -34,6 +34,8 @@ export type CompileStoryManuscriptInput = {
   arcs?: { id: string; title: string }[];
   /** The pictures the scenes' pages point at, by the `mediaId` of the page. */
   media?: Record<string, ManuscriptImage>;
+  /** The key in `media` of the picture that is the cover of the book, when there is one. */
+  cover?: string;
 };
 
 /**
@@ -117,6 +119,8 @@ export function presentedManuscriptOf(
         images: input.media,
         pageAspect: PAGE_FORMAT_ASPECT[parsed.pageFormat ?? 'comic-us'],
         pageLayout,
+        // A cover is only a cover when its picture is there: a missing one is no cover, not a hole.
+        ...(input.cover && input.media[input.cover] ? { cover: input.cover } : {}),
       }
     : finished;
 }

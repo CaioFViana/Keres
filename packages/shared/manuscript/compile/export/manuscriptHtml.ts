@@ -6,7 +6,14 @@ import {
   type ManuscriptRenderOptions,
 } from './manuscriptCompiler';
 import { bytesToBase64 } from '../../../utils/base64';
-import { hasPages, pageBlockMarkup, pageCssFor, withPageRuns } from './manuscriptPageFigure';
+import {
+  COVER_CSS,
+  coverMarkup,
+  hasPages,
+  pageBlockMarkup,
+  pageCssFor,
+  withPageRuns,
+} from './manuscriptPageFigure';
 
 export type ManuscriptHtmlLabels = {
   /** Name-based cross-reference, e.g. "See" - the PDF renderer reports no page mapping. */
@@ -110,6 +117,8 @@ export function buildManuscriptHtml(
       openList = null;
     }
   };
+  const cover = coverMarkup(manuscript, dataUriOf);
+  if (cover) parts.push(cover);
   for (const block of withPageRuns(manuscript.blocks, manuscript.pageLayout)) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
@@ -183,6 +192,7 @@ export function buildManuscriptHtml(
       manuscript.blocks.some((block) => block.kind === 'scene-break'),
     ),
     hasPages(manuscript.blocks) ? pageCssFor(manuscript.pageLayout) : '',
+    cover ? COVER_CSS : '',
   ]
     .filter(Boolean)
     .join('\n');

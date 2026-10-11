@@ -160,6 +160,34 @@ export function* iterateRuns(
     runs.length = 0;
   };
 
+  // The cover has the first sheet to itself: the picture whole, in the middle, and whatever follows opens a new page.
+  const coverImage = manuscript.cover ? manuscript.images?.[manuscript.cover] : undefined;
+  if (manuscript.cover && coverImage && pdfImageFor(manuscript.images ?? {}, manuscript.cover)) {
+    const picture = pagePicturePlacement(
+      coverImage,
+      'contain',
+      coverImage.width / coverImage.height,
+      geometry,
+      manuscript.cover,
+    );
+    runs.push({
+      words: [],
+      size: 0,
+      leading: picture.frameHeight,
+      indent: 0,
+      spaceBefore: 0,
+      spaceAfter: 0,
+      centered: false,
+      gray: INK,
+      bookmarkId: null,
+      linkTarget: null,
+      keepWithNext: false,
+      forcePageBreak: false,
+      image: picture,
+    });
+    yield* drain();
+    opensNewPage = true;
+  }
   let prevBlockKind: string | null = null;
   let tocEmitted = false;
   // Display numbers of one ordered run; any other block restarts the run at 1.

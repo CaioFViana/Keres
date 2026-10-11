@@ -152,6 +152,32 @@ export function buildManuscriptDocument(
   };
   let firstContent = true;
   let tocEmitted = false;
+  const coverImage = manuscript.cover ? manuscript.images?.[manuscript.cover] : undefined;
+  if (coverImage) {
+    // The cover has the first page to itself: the picture whole, in the middle.
+    const scale = Math.min(PAGE_IMAGE_WIDTH_PX / coverImage.width, 860 / coverImage.height);
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            type: coverImage.mimeType === 'image/jpeg' ? 'jpg' : 'png',
+            data: coverImage.bytes,
+            transformation: {
+              width: Math.max(1, Math.round(coverImage.width * scale)),
+              height: Math.max(1, Math.round(coverImage.height * scale)),
+            },
+            altText: {
+              name: manuscript.title,
+              title: manuscript.title,
+              description: manuscript.title,
+            },
+          }),
+        ],
+      }),
+      new Paragraph({ children: [new PageBreak()] }),
+    );
+  }
   // Display numbers of one ordered run; any other block restarts the run at 1.
   let orderedNumber = 0;
   for (const block of withPageRuns(manuscript.blocks, manuscript.pageLayout)) {

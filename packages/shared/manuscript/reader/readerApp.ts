@@ -587,7 +587,7 @@ export const READER_COMIC_SOURCE = `
   var lead = 0;
   nodes.forEach(function (node, index) {
     if (node.tagName === 'NAV') return;
-    if (node.matches('figure.page, section.spread')) {
+    if (node.matches('figure.page, section.spread, figure.cover')) {
       units.push({ from: lead, to: index });
       lead = index + 1;
     }

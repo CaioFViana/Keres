@@ -5,6 +5,9 @@ import { escapeHtml } from './manuscriptHtml';
 
 export type PageBlock = Extract<CompiledBlock, { kind: 'page' }>;
 
+/** Turns a picture into what the document points at: a data URI in one HTML file, a path inside an EPUB. */
+export type Source = (mediaId: string, image: ManuscriptImage) => string;
+
 /** The aspect a page frame has when the manuscript does not say: the American comic book page. */
 export const DEFAULT_PAGE_ASPECT = PAGE_FORMAT_ASPECT['comic-us'];
 
@@ -27,6 +30,20 @@ figure.page .frame { width: 100%; overflow: hidden; }
 figure.page .frame img { width: 100%; height: 100%; object-fit: cover; }
 figure.page .missing { font-style: italic; text-indent: 0; border: 1px dashed #999; padding: 1em; text-align: center; margin: 0; }`;
 
+/** The cover of a book: its own page, the picture whole in the middle. */
+export const COVER_CSS = `figure.cover { margin: 0 0 2em; padding: 0; text-align: center; page-break-after: always; break-after: page; }
+figure.cover img { display: block; max-width: 100%; max-height: 92vh; width: auto; height: auto; margin: 0 auto; }`;
+
+/** The cover as markup, or nothing for a manuscript without one. */
+export function coverMarkup(
+  manuscript: Pick<CompiledManuscript, 'images' | 'cover' | 'title'>,
+  src: Source,
+): string {
+  const image = manuscript.cover ? manuscript.images?.[manuscript.cover] : undefined;
+  if (!manuscript.cover || !image) return '';
+  return `<figure class="cover"><img src="${escapeHtml(src(manuscript.cover, image))}" alt="${escapeHtml(manuscript.title)}" /></figure>`;
+}
+
 /** A planning sheet: the picture beside what is said about it. Stacks on a narrow screen. */
 export const SHEET_CSS = `figure.page.sheet { display: flex; gap: 1.2em; align-items: flex-start; }
 figure.page.sheet .art { flex: 0 0 var(--art, 38%); min-width: 0; }
@@ -47,8 +64,6 @@ export function pageCssFor(layout: PageLayout | undefined): string {
   if (layout === 'spreads') return `${PAGE_CSS}\n${SPREAD_CSS}`;
   return PAGE_CSS;
 }
-
-type Source = (mediaId: string, image: ManuscriptImage) => string;
 
 /** What stands where a page's picture goes: the picture (cropped to its frame when it fills it), or the placeholder. */
 function pictureMarkup(

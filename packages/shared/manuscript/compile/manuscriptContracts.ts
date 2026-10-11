@@ -154,6 +154,11 @@ export const ManuscriptOptionsSchema = z.object({
    * (Markdown, plain text) carry no pictures and always flow.
    */
   pageLayout: z.enum(PAGE_LAYOUTS).default('flow'),
+  /**
+   * Puts the cover of the story (or of the work, for an arc export) first, in the formats that carry pictures. The
+   * caller that holds the pictures decides whether there is a cover to put: this only says it may be used.
+   */
+  includeCover: z.boolean().default(true),
   /** Writes each scene's music under it, as a line of italic text: what it is and when it comes in. */
   includeMusicCues: z.boolean().default(false),
   /** Prints the songs the scenes sing: the words, never a reference or a recording. Off unless asked. */

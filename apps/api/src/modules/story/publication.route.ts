@@ -46,6 +46,8 @@ const manuscriptShape = {
   resetSceneNumbers: t.Optional(t.Boolean()),
   /** The frame a page's picture is shown in (a comic or a storyboard). */
   pageFormat: t.Optional(oneOf(PAGE_FORMATS)),
+  /** Puts the cover of the story or the work first, when it has one (default: yes). */
+  includeCover: t.Optional(t.Boolean()),
   /** How the pages are laid out: a flow, a planning sheet or spreads (a comic or a storyboard). */
   pageLayout: t.Optional(oneOf(PAGE_LAYOUTS)),
   /** Pages are captioned "Page 3", or "Frame 3" in a storyboard. */

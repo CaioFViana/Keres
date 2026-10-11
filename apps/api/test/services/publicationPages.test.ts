@@ -1,7 +1,7 @@
 import type { CompileStoryReaderInput, FullStoryExportType } from '@keres/shared';
 import { MAX_MANUSCRIPT_BYTES } from '@keres/shared';
 import { describe, expect, it, vi } from 'vitest';
-import { staleSketchPages, withScenePages } from '../../src/services/publicationPages';
+import { staleSketchPages, withCover, withScenePages } from '../../src/services/publicationPages';
 
 /** The header of a PNG: its size is all the pipeline reads before handing the bytes on. */
 function pngHeader(width: number, height: number): Uint8Array {
@@ -286,5 +286,68 @@ describe('staleSketchPages', () => {
     });
 
     expect(staleSketchPages(storyExport)).toBe(2);
+  });
+});
+
+describe('withCover', () => {
+  const storyCover = gallery('g-story');
+  const arcCover = gallery('g-arc');
+  const coverExport = (extra: Record<string, unknown> = {}) =>
+    ({
+      ...exportOf({ galleryItems: [storyCover, arcCover] }),
+      story: { coverGalleryId: 'g-story' },
+      storyArcs: [{ id: 'arc-1', coverGalleryId: 'g-arc', isDeleted: false }],
+      ...extra,
+    }) as FullStoryExportType;
+  const headers = async (hash: string) =>
+    hash === 'hash-g-arc' ? pngHeader(50, 70) : pngHeader(30, 40);
+
+  it('puts the cover of the story in the pictures and names it, for a format that shows pictures', async () => {
+    const result = await withCover(base, coverExport(), { format: 'html' }, headers);
+
+    expect(result.cover).toBe('cover:g-story');
+    expect(result.media?.['cover:g-story']).toMatchObject({ width: 30, height: 40 });
+  });
+
+  it('prefers the cover of the work being exported, and falls back to the story’s when it has none', async () => {
+    const withArc = await withCover(
+      base,
+      coverExport(),
+      { format: 'pdf', arcId: 'arc-1' },
+      headers,
+    );
+    const without = await withCover(
+      base,
+      coverExport({ storyArcs: [{ id: 'arc-1', coverGalleryId: null, isDeleted: false }] }),
+      { format: 'pdf', arcId: 'arc-1' },
+      headers,
+    );
+
+    expect(withArc.cover).toBe('cover:g-arc');
+    expect(without.cover).toBe('cover:g-story');
+  });
+
+  it('hands the input back for a text format, when asked not to, or when there is no usable cover', async () => {
+    expect(await withCover(base, coverExport(), { format: 'md' }, headers)).toBe(base);
+    expect(
+      await withCover(base, coverExport(), { format: 'html', includeCover: false }, headers),
+    ).toBe(base);
+    expect(
+      await withCover(
+        base,
+        coverExport({ galleryItems: [gallery('g-story', { isDeleted: true })] }),
+        { format: 'html' },
+        headers,
+      ),
+    ).toBe(base);
+    expect(await withCover(base, coverExport(), { format: 'html' }, async () => null)).toBe(base);
+    expect(
+      await withCover(
+        base,
+        coverExport(),
+        { format: 'html' },
+        async () => new Uint8Array([1, 2, 3]),
+      ),
+    ).toBe(base);
   });
 });

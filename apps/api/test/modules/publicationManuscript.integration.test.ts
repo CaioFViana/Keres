@@ -20,6 +20,7 @@ import {
   songs,
   storyArcs,
   storyPublications,
+  stories,
 } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
@@ -813,5 +814,64 @@ describe('publishing the songs of a story', () => {
     const text = await storedManuscript(story.id);
     expect(text).toContain('~Light the lantern');
     expect(text).not.toContain('[[');
+  });
+});
+
+/** A story whose cover is a picture of its Gallery, stored on the server. */
+async function seedCover(storyId: string): Promise<string> {
+  const png = realPng();
+  const hash = createHash('md5').update(png).digest('hex');
+  await mediaStorageService.store(
+    hash,
+    'image/png',
+    png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer,
+  );
+  const galleryId = newId();
+  await db.insert(galleries).values({
+    id: galleryId,
+    storyId,
+    mediaType: 'image',
+    mimeType: 'image/png',
+    fileName: 'cover.png',
+    hash,
+    sizeBytes: png.byteLength,
+  });
+  await db.update(stories).set({ coverGalleryId: galleryId }).where(eq(stories.id, storyId));
+  return galleryId;
+}
+
+describe('publishing the cover of a story', () => {
+  it('puts the cover first in an HTML manuscript', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedCover(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'html' } });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figure class="cover">');
+    expect(html.indexOf('<figure class="cover">')).toBeLessThan(html.indexOf('<h1 class="title">'));
+  });
+
+  it('leaves it out when the publisher says so', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedCover(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'html', includeCover: false },
+    });
+
+    expect(status).toBe(200);
+    expect((await storedManuscriptBytes(story.id)).toString('utf8')).not.toContain('class="cover"');
+  });
+
+  it('puts it in a PDF as a picture of its own', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedCover(story.id);
+
+    expect((await publish(ana.token, story.id, { manuscript: { format: 'pdf' } })).status).toBe(
+      200,
+    );
+    expect((await storedManuscriptBytes(story.id)).toString('latin1')).toContain('/Subtype /Image');
   });
 });

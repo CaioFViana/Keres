@@ -143,3 +143,32 @@ export function staleSketchPages(storyExport: FullStoryExportType): number {
     return !!sketch && !isSketchSnapshotFresh(sketch);
   }).length;
 }
+
+/**
+ * Gives the compile input the cover of the book - the work's own when an arc is exported and it has one, else the
+ * story's - for the formats that carry pictures. A cover that is gone, is not an image the pipeline embeds or
+ * cannot be read is no cover: the book is made without it, as a missing page picture is.
+ */
+export async function withCover(
+  input: CompileStoryReaderInput,
+  storyExport: FullStoryExportType,
+  options: { format: string; arcId?: string; includeCover?: boolean },
+  readMedia: ReadMediaBytes,
+): Promise<CompileStoryReaderInput> {
+  if (options.includeCover === false || !carriesPictures(options.format)) return input;
+  const arc = options.arcId
+    ? (storyExport.storyArcs ?? []).find((row) => row.id === options.arcId && !row.isDeleted)
+    : undefined;
+  const coverId = arc?.coverGalleryId ?? storyExport.story.coverGalleryId;
+  const row = coverId
+    ? storyExport.galleryItems.find(
+        (item) => item.id === coverId && !item.isDeleted && item.mediaType === 'image',
+      )
+    : undefined;
+  if (!row) return input;
+  const bytes = await readMedia(row.hash).catch(() => null);
+  const info = bytes ? readImageInfo(bytes) : null;
+  if (!bytes || !info || info.width * info.height > MAX_MANUSCRIPT_IMAGE_PIXELS) return input;
+  const key = `cover:${row.id}`;
+  return { ...input, media: { ...(input.media ?? {}), [key]: { ...info, bytes } }, cover: key };
+}

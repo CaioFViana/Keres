@@ -67,6 +67,7 @@ describe('ManuscriptOptionsSchema', () => {
   it('defaults the content switches', () => {
     expect(ManuscriptOptionsSchema.parse({ format: 'md' })).toEqual({
       format: 'md',
+      includeCover: true,
       includeLooseScenes: false,
       includeMusicCues: false,
       includeSceneNames: false,

@@ -14,7 +14,7 @@ import { db } from '../db';
 import { users } from '../db/schema';
 import { AppError } from '../utils/errors';
 import { compileInputOf } from './publicationCompileInput';
-import { withScenePages, type ReadMediaBytes } from './publicationPages';
+import { withCover, withScenePages, type ReadMediaBytes } from './publicationPages';
 import { withSceneSongs } from './publicationSongs';
 import { mediaStorageService } from './MediaStorageService';
 import { publicationPdfFontMatrices } from './publicationPdfFonts';
@@ -135,15 +135,20 @@ export async function compileManuscript(
 ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
   try {
     const compiled = await compileStoryManuscript(
-      withSceneSongs(
-        await withScenePages(
-          compileInputOf(storyExport),
+      await withCover(
+        withSceneSongs(
+          await withScenePages(
+            compileInputOf(storyExport),
+            storyExport,
+            { format: options.format, arcId: options.arcId },
+            readMedia,
+          ),
           storyExport,
-          { format: options.format, arcId: options.arcId },
-          readMedia,
+          options,
         ),
         storyExport,
-        options,
+        { format: options.format, arcId: options.arcId, includeCover: options.includeCover },
+        readMedia,
       ),
       // The book's author defaults to the work's, then the story's, as on the device.
       {
@@ -175,15 +180,20 @@ export async function compileReader(
   readMedia: ReadMediaBytes = readStoredMedia,
 ): Promise<{ bytes: Uint8Array }> {
   try {
-    const input = withSceneSongs(
-      await withScenePages(
-        compileInputOf(storyExport),
+    const input = await withCover(
+      withSceneSongs(
+        await withScenePages(
+          compileInputOf(storyExport),
+          storyExport,
+          { format: 'reader', arcId: options.arcId },
+          readMedia,
+        ),
         storyExport,
-        { format: 'reader', arcId: options.arcId },
-        readMedia,
+        options,
       ),
       storyExport,
-      options,
+      { format: 'reader', arcId: options.arcId, includeCover: options.includeCover },
+      readMedia,
     );
     return compileStoryReader(input, {
       ...options,

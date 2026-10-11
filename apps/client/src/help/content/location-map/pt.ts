@@ -38,7 +38,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Formas, linhas e carimbos' },
     {
       type: 'paragraph',
-      text: 'Adicionar objetos (ícone de formas) desenha por cima do mapa: retângulos, elipses, molduras, linhas, polígonos, formas prontas e carimbos (um ícone). Funciona como no board: arraste para retângulos, elipses, molduras e formas prontas; toque em cada ponto de uma linha ou polígono e escolha Concluir; toque uma vez para um carimbo. Editar objetos seleciona um para mover, remodelar, bloquear, mudar a camada ou abrir os detalhes (rótulo, cor, tracejado ou preenchido). Nada do que se desenha altera Locais nem relações.',
+      text: 'Adicionar objetos (ícone de formas) desenha por cima do mapa: retângulos, elipses, molduras, linhas, polígonos, formas prontas e carimbos (um ícone). Funciona como no quadro: arraste para retângulos, elipses, molduras e formas prontas; toque em cada ponto de uma linha ou polígono e escolha Concluir; toque uma vez para um carimbo. Editar objetos seleciona um para mover, remodelar, bloquear, mudar a camada ou abrir os detalhes (rótulo, cor, tracejado ou preenchido). Nada do que se desenha altera Locais nem relações.',
     },
     { type: 'heading', level: 2, text: 'Trajetos' },
     {

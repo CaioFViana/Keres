@@ -58,7 +58,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Adicionais' },
     {
       type: 'paragraph',
-      text: 'Adicionais são o esqueleto inicial: os capítulos, cenas, personagens, locais, regras do mundo, notas, boards e mapas da história de origem, com as ligações entre eles. Chegam como elementos comuns com seus próprios nomes, prontos para editar — e dois pacotes com um capítulo de mesmo nome chegam como “Apresentação” e “Apresentação (2)” em vez de se chocarem.',
+      text: 'Adicionais são o esqueleto inicial: os capítulos, cenas, personagens, locais, regras do mundo, notas, quadros e mapas da história de origem, com as ligações entre eles. Chegam como elementos comuns com seus próprios nomes, prontos para editar — e dois pacotes com um capítulo de mesmo nome chegam como “Apresentação” e “Apresentação (2)” em vez de se chocarem.',
     },
     {
       type: 'paragraph',

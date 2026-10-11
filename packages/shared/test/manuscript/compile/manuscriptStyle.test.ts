@@ -97,6 +97,25 @@ describe('numbers', () => {
 });
 
 describe('presentManuscript', () => {
+  it('keeps what is not words: the pictures, the frame, the layout of the pages and the cover', () => {
+    const manuscript = {
+      ...compile(),
+      images: {
+        cover: { mimeType: 'image/png' as const, width: 1, height: 1, bytes: new Uint8Array() },
+      },
+      pageAspect: 0.7,
+      pageLayout: 'sheet' as const,
+      cover: 'cover',
+    };
+
+    const presented = presentManuscript(manuscript, { frontMatter: ['By Ana'] });
+
+    expect(presented.images).toBe(manuscript.images);
+    expect(presented.pageAspect).toBe(0.7);
+    expect(presented.pageLayout).toBe('sheet');
+    expect(presented.cover).toBe('cover');
+  });
+
   it('changes nothing without a style', () => {
     const manuscript = compile();
     expect(presentManuscript(manuscript)).toEqual(manuscript);

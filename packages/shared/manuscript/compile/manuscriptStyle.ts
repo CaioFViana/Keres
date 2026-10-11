@@ -360,6 +360,9 @@ export function presentManuscript(
     ...finished,
     ...(manuscript.images ? { images: manuscript.images } : {}),
     ...(manuscript.pageAspect !== undefined ? { pageAspect: manuscript.pageAspect } : {}),
+    // How the pages are laid out and the cover are not words either: they ride along too.
+    ...(manuscript.pageLayout ? { pageLayout: manuscript.pageLayout } : {}),
+    ...(manuscript.cover ? { cover: manuscript.cover } : {}),
   };
 }
 

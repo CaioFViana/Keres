@@ -270,3 +270,70 @@ describe('exportManuscript', () => {
     );
   });
 });
+
+describe('a comic through exportManuscript', () => {
+  /** A one-pixel PNG: enough for its header to be read and for the picture to be embedded. */
+  const png = {
+    mimeType: 'image/png' as const,
+    width: 2,
+    height: 1,
+    bytes: Uint8Array.from(
+      Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    ),
+  };
+  const comic = (extra: Record<string, unknown> = {}) =>
+    ({
+      title: 'The Roof',
+      blocks: [
+        { kind: 'title', text: 'The Roof' },
+        {
+          kind: 'page',
+          id: 'p1',
+          label: 'Page 1',
+          number: 1,
+          spread: false,
+          text: ['Panel 1: she waits.'],
+          image: { mediaId: 'a', fit: 'contain' },
+          placeholder: 'Image removed',
+        },
+      ],
+      images: { a: png, cover: png },
+      pageAspect: 0.65,
+      ...extra,
+    }) as unknown as CompiledManuscript;
+  const htmlOf = async (manuscript: CompiledManuscript) => {
+    await exportManuscript({ storyTitle: 'The Roof', manuscript, format: 'html', labels });
+    const delivered = mockDeliverFile.mock.calls[0][0] as string | Uint8Array;
+    return typeof delivered === 'string' ? delivered : Buffer.from(delivered).toString('utf8');
+  };
+
+  it('sets the page as a planning sheet, with its text in it, when the manuscript says so', async () => {
+    const html = await htmlOf(comic({ pageLayout: 'sheet' }));
+
+    expect(html).toContain('<figure class="page sheet"');
+    expect(html).toContain('<p>Panel 1: she waits.</p>');
+  });
+
+  it('sets the pages in spreads', async () => {
+    const html = await htmlOf(comic({ pageLayout: 'spreads' }));
+
+    expect(html).toContain('<section class="spread">');
+  });
+
+  it('puts the cover first, before the title', async () => {
+    const html = await htmlOf(comic({ pageLayout: 'sheet', cover: 'cover' }));
+
+    expect(html.indexOf('<figure class="cover">')).toBeGreaterThan(-1);
+    expect(html.indexOf('<figure class="cover">')).toBeLessThan(html.indexOf('<h1 class="title">'));
+  });
+
+  it('leaves out what it was not given: no cover, and no sheet for a flow', async () => {
+    const html = await htmlOf(comic());
+
+    expect(html).not.toContain('class="cover"');
+    expect(html).not.toContain('page sheet');
+  });
+});

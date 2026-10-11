@@ -423,8 +423,16 @@ describe('changing plan while time is left', () => {
 
   it('keeps carrying the time over for the same plan, and starts from the payment for one that lapsed', async () => {
     await subscribedTo(ana, dearId, 20, { amountCents: 7000 });
-    const same = await buyPlan(ana, dearId);
-    expect(await extraDays(ana, same)).toBeGreaterThan(19.9);
+    const endedAt = (await subscriptionOf(ana)).paidUntil;
+    await buyPlan(ana, dearId);
+    // The new period starts where the old one ended, a calendar month long: counted in calendar months, not in
+    // days, so the answer is the same whichever month the test runs in (a month from the 31st is 30 days).
+    expect(
+      Math.abs(
+        (await subscriptionOf(ana)).paidUntil.getTime() -
+          addBillingPeriod(endedAt, 'monthly').getTime(),
+      ),
+    ).toBeLessThan(1000);
 
     await subscribedTo(bia, cheapId, -5, { status: 'due' });
     const lapsed = await buyPlan(bia, dearId);

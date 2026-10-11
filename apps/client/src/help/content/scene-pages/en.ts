@@ -65,7 +65,19 @@ const page: HelpPage = {
             'Whole (the entire image is shown) or Fill (the image is cropped, centred, to fill the frame).',
           note: 'Whole is the default. Fill never changes the image itself, only how much of it shows.',
         },
+        {
+          key: 'spread',
+          label: 'Double-page spread',
+          whatToWrite:
+            'Turn it on when one picture runs across two pages, like a splash that opens a scene. The page takes two numbers (Page 4–5) and, where pages are set in openings, both sides of one.',
+          note: 'Off by default. A spread belongs on a left-hand page, so the page before it should be an odd number.',
+        },
       ],
+    },
+    { type: 'heading', level: 2, text: 'How the pages are laid out' },
+    {
+      type: 'paragraph',
+      text: 'When you export or publish a comic or a storyboard you choose a page layout. A planning sheet sets each picture beside its text, the way a script goes to an artist: a few pages to a sheet. Spreads set the pictures in pairs as a printed comic opens (the first page alone on the right, then 2 and 3, 4 and 5), so you can judge page turns and reveals; only the pictures and their numbers are shown. Flow is the plain document: the picture across the width, its text under it. A comic or a storyboard starts on the planning sheet.',
     },
     { type: 'heading', level: 2, text: 'Sketches stay up to date' },
     {

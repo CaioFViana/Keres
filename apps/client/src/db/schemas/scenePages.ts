@@ -17,6 +17,7 @@ export const scenePages = sqliteTable(
     sketchId: text('sketch_id'),
     galleryId: text('gallery_id'),
     fit: text('fit').$type<ScenePageFit>().notNull().default('contain'),
+    spread: integer('spread', { mode: 'boolean' }).notNull().default(false),
     text: text('text'),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),

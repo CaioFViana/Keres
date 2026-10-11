@@ -108,6 +108,28 @@ describe('withScenePages', () => {
     expect(readMedia).toHaveBeenCalledWith('hash-g1');
   });
 
+  it('says which pages are double-page spreads, and says nothing of the others', async () => {
+    const storyExport = exportOf({
+      galleryItems: [gallery('g1')],
+      scenePages: [
+        page('p1', 's1', 'a0', { galleryId: 'g1', spread: true }),
+        page('p2', 's1', 'a1', { galleryId: 'g1' }),
+      ],
+    });
+
+    const result = await withScenePages(
+      base,
+      storyExport,
+      { format: 'html' },
+      vi.fn(async () => pngHeader(30, 40)),
+    );
+
+    expect(result.scenes[0].pages?.map((p) => [p.id, p.spread])).toEqual([
+      ['p1', true],
+      ['p2', undefined],
+    ]);
+  });
+
   it('reads a picture once however many pages use it', async () => {
     const storyExport = exportOf({
       galleryItems: [gallery('g1')],

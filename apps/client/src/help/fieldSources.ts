@@ -73,7 +73,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     invisible: ['id', 'storyId', 'sceneId', 'rank', 'version', 'isDeleted', 'deletedAt'],
   },
   ScenePage: {
-    documented: ['text', 'fit', 'sketchId', 'galleryId', 'createdAt', 'updatedAt'],
+    documented: ['text', 'fit', 'spread', 'sketchId', 'galleryId', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'sceneId', 'rank', 'version', 'isDeleted', 'deletedAt'],
   },
   Sketch: {

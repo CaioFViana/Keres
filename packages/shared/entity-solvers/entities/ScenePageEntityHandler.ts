@@ -8,7 +8,7 @@ export const scenePageEntityHandler = createSimpleEntityHandler({
   conflictLabelKey: 'scene_page',
   displayField: 'text',
   previewDetailsFields: ['text'],
-  help: { source: 'scene-pages', fields: ['text', 'fit'] },
+  help: { source: 'scene-pages', fields: ['text', 'fit', 'spread'] },
   exportReferences: [
     { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
     // The image may be gone while the page and its text stay: the references are optional.

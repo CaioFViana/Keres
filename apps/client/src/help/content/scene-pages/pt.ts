@@ -69,7 +69,19 @@ const page: HelpPage = {
             'Inteira (a imagem aparece por completo) ou Preencher (a imagem é cortada, centralizada, para preencher o quadro).',
           note: 'Inteira é o padrão. Preencher nunca altera a imagem em si, só quanto dela aparece.',
         },
+        {
+          key: 'spread',
+          label: 'Página dupla',
+          whatToWrite:
+            'Ligue quando uma só imagem atravessa duas páginas, como uma splash que abre uma cena. A página ocupa dois números (Página 4–5) e, onde as páginas são montadas em aberturas, os dois lados de uma.',
+          note: 'Desligado por padrão. Uma página dupla fica à esquerda, então a página anterior deve ter número ímpar.',
+        },
       ],
+    },
+    { type: 'heading', level: 2, text: 'Como as páginas são montadas' },
+    {
+      type: 'paragraph',
+      text: 'Ao exportar ou publicar um quadrinho ou um storyboard você escolhe a montagem das páginas. A folha de planejamento põe cada imagem ao lado do seu texto, como um roteiro chega ao desenhista: poucas páginas por folha. Os spreads põem as imagens em pares como um quadrinho impresso se abre (a primeira página sozinha à direita, depois 2 e 3, 4 e 5), para você julgar viradas de página e revelações; só as imagens e seus números aparecem. O fluxo é o documento simples: a imagem na largura, o texto embaixo. Um quadrinho ou storyboard começa na folha de planejamento.',
     },
     { type: 'heading', level: 2, text: 'Esboços sempre em dia' },
     {

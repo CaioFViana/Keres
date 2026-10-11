@@ -1,0 +1,1 @@
+ALTER TABLE `scene_pages` ADD `spread` integer DEFAULT false NOT NULL;

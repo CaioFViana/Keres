@@ -152,6 +152,23 @@ describe('ScenePageService', () => {
     expect(cleared.version).toBe(3);
   });
 
+  it('makes a page a double-page spread, and a single page again, logging each as its own change', async () => {
+    const page = await addPage('scene-1', { galleryId: 'g' });
+    expect(page.spread).toBe(false);
+
+    const spread = await service().updatePage(TEST_USER_ID, page.id, { spread: true });
+    expect(spread).toMatchObject({ spread: true, version: 2 });
+    const same = await service().updatePage(TEST_USER_ID, page.id, { spread: true });
+    expect(same.version).toBe(2);
+    const single = await service().updatePage(TEST_USER_ID, page.id, { spread: false });
+    expect(single).toMatchObject({ spread: false, version: 3 });
+
+    const updates = (await operations()).filter(
+      (operation) => operation.operationType === 'update',
+    );
+    expect(payloadOf(updates[0])).toMatchObject({ spread: true });
+  });
+
   it('replaces the image with another kind, clearing the old one in the same change', async () => {
     const page = await addPage('scene-1', { galleryId: 'g-1' }, { text: 'keep me' });
 

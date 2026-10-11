@@ -63,6 +63,20 @@ describe('scene pages through the sync endpoint', () => {
     });
   });
 
+  it('keeps a page a double-page spread, and a single page when the client does not say', async () => {
+    const spreadId = newId();
+    const singleId = newId();
+    const response = await push([
+      create(spreadId, pageData({ spread: true })),
+      create(singleId, pageData()),
+    ]);
+
+    expect(response.data.conflicts).toEqual([]);
+    const rows = await db.select().from(scenePages);
+    expect(rows.find((row) => row.id === spreadId)?.spread).toBe(true);
+    expect(rows.find((row) => row.id === singleId)?.spread).toBe(false);
+  });
+
   it('retries a create without a conflict', async () => {
     const id = newId();
     const data = pageData();

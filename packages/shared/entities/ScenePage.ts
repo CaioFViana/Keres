@@ -26,6 +26,11 @@ export interface ScenePage {
   /** A Gallery medium (an image) of this story. */
   galleryId: string | null;
   fit: ScenePageFit;
+  /**
+   * A double-page spread: one picture over two pages. It takes two page numbers and, where pages are set in
+   * openings, both sides of one.
+   */
+  spread: boolean;
   /** What goes with the page; free text. */
   text: string | null;
   createdAt: Date;

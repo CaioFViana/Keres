@@ -102,6 +102,7 @@ export async function loadManuscriptPages(
         id: page.id,
         mediaId: galleryId ? (readPictures ? await mediaIdOf(galleryId) : galleryId) : null,
         fit: page.fit,
+        ...(page.spread ? { spread: true } : {}),
         text: page.text,
       });
     }

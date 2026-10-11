@@ -117,6 +117,7 @@ export async function withScenePages(
         mediaId: id && usable.has(id) ? id : null,
         fit: page.fit,
         text: page.text,
+        ...(page.spread ? { spread: true } : {}),
       };
     });
   };

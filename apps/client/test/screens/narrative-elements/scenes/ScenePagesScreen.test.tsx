@@ -214,6 +214,7 @@ const view = (id: string, overrides: Partial<ScenePageView> = {}): ScenePageView
     sketchId: null,
     galleryId: 'g',
     fit: 'contain',
+    spread: false,
     text: `text ${id}`,
     version: 1,
     isDeleted: false,

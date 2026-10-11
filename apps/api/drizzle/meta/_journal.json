@@ -498,6 +498,13 @@
       "when": 1791339611307,
       "tag": "0070_smooth_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1791733636371,
+      "tag": "0071_left_chameleon",
+      "breakpoints": true
     }
   ]
 }

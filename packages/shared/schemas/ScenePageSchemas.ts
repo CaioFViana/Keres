@@ -19,6 +19,7 @@ export const ScenePageSchema = z.object({
   sketchId: z.string().min(1).nullable(),
   galleryId: z.string().min(1).nullable(),
   fit: ScenePageFitSchema.default('contain'),
+  spread: z.boolean().default(false),
   text: z.string().max(MAX_SCENE_PAGE_TEXT_LENGTH).nullable().default(null),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),

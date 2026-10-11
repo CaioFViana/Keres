@@ -39,7 +39,7 @@ export interface ScenePageService {
   updatePage(
     currentUserId: string,
     pageId: string,
-    changes: Partial<{ text: string | null; fit: ScenePageFit }>,
+    changes: Partial<{ text: string | null; fit: ScenePageFit; spread: boolean }>,
   ): Promise<ScenePageSelect>;
   /** Puts another image in the page's place (also the way out of "media removed"). */
   replaceMedia(
@@ -139,6 +139,7 @@ export const createScenePageService = (db: AppDrizzleClient): ScenePageService =
       const normalised = {
         ...(changes.text !== undefined ? { text: changes.text?.trim() ? changes.text : null } : {}),
         ...(changes.fit !== undefined ? { fit: changes.fit } : {}),
+        ...(changes.spread !== undefined ? { spread: changes.spread } : {}),
       };
       const changed = getChangedFields(original, { ...original, ...normalised });
       delete changed.version;
@@ -184,7 +185,9 @@ export const createScenePageService = (db: AppDrizzleClient): ScenePageService =
   async function writeChange(
     currentUserId: string,
     original: ScenePageSelect,
-    changes: Partial<Pick<ScenePageSelect, 'rank' | 'text' | 'fit' | 'sketchId' | 'galleryId'>>,
+    changes: Partial<
+      Pick<ScenePageSelect, 'rank' | 'text' | 'fit' | 'spread' | 'sketchId' | 'galleryId'>
+    >,
   ): Promise<ScenePageSelect> {
     const userIdToLog = await userIdFor(currentUserId, original.storyId);
     const updated = await runLocalWrite(db, original.storyId, () => {

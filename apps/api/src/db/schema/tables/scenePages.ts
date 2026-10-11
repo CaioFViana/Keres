@@ -27,6 +27,8 @@ export const scenePages = table(
     galleryId: text('gallery_id'),
     /** 'contain' | 'cover' (see `SCENE_PAGE_FITS`). */
     fit: text('fit').notNull().default('contain'),
+    /** A double-page spread: one picture over two pages. */
+    spread: boolean('spread').notNull().default(false),
     text: text('text'),
     createdAt: timestampNow('created_at'),
     updatedAt: timestampNow('updated_at'),

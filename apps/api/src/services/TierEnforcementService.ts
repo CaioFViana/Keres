@@ -253,6 +253,34 @@ export class TierEnforcementService {
   }
 
   /**
+   * Judges an uploaded story package against the entity ceilings before anything is written: the package's
+   * own entities against the ceiling of one story, and what the person has already against the total. A story
+   * made offline can hold far more than the plan allows, and the creation check of the sync would only meet
+   * the limit one row at a time, after the whole package was in.
+   */
+  async assertCanImportEntities(userId: string, incoming: number): Promise<void> {
+    const tier = await this.getEffectiveTier(userId);
+    if (!tier || (tier.maxEntitiesPerStory === null && tier.maxEntitiesTotal === null)) {
+      return;
+    }
+
+    if (tier.maxEntitiesPerStory !== null && incoming > tier.maxEntitiesPerStory) {
+      throw new TierLimitExceededError(
+        `This story has ${incoming} entities, more than your plan allows in one story (${tier.maxEntitiesPerStory}).`,
+      );
+    }
+
+    if (tier.maxEntitiesTotal !== null) {
+      const held = await this.countEntities(await this.liveStoryIdsOf(userId));
+      if (held + incoming > tier.maxEntitiesTotal) {
+        throw new TierLimitExceededError(
+          `This story has ${incoming} entities and you already have ${held}: together that is over your plan's total (${tier.maxEntitiesTotal}).`,
+        );
+      }
+    }
+  }
+
+  /**
    * Storage a set of live gallery rows uses. Each row counts once per story that references it
    * (the blob is deduplicated globally, but each story "uses" its bytes), and at the blob's TRUE
    * size once the bytes are stored - the size a client declares in the row only stands in until

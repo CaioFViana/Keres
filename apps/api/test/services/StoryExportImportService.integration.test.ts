@@ -16,6 +16,7 @@ import {
   scenes,
   storySchemaFields,
   stories,
+  tiers,
   users,
 } from '../../src/db/schema';
 import { StoryExportImportService } from '../../src/services/StoryExportImportService';
@@ -703,5 +704,46 @@ describe('public-favorite history on import', () => {
       .where(and(eq(operationLog.storyId, storyId), eq(operationLog.entityType, 'Favorite')));
 
     expect(logs).toHaveLength(0);
+  });
+});
+
+describe('a story sent to a plan with entity ceilings', () => {
+  const planOf = async (limits: { maxEntitiesPerStory?: number; maxEntitiesTotal?: number }) => {
+    const tierId = newId();
+    await db.insert(tiers).values({
+      id: tierId,
+      name: `Tier ${tierId}`,
+      isDefault: false,
+      maxStories: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: null,
+      maxStorageBytesTotal: null,
+      ...limits,
+    } as never);
+    await db.update(users).set({ tierId }).where(eq(users.id, IMPORTER_ID));
+  };
+
+  // buildExport carries a chapter, a location and a scene: three entities the plan counts.
+  it('refuses a package with more entities than one story may hold, and writes nothing', async () => {
+    await planOf({ maxEntitiesPerStory: 2 });
+
+    await expect(service.importStory(IMPORTER_ID, buildExport())).rejects.toMatchObject({
+      status: 403,
+      message: expect.stringMatching(/3 entities, more than your plan allows in one story \(2\)/),
+    });
+    expect(await db.select().from(stories).where(eq(stories.userId, IMPORTER_ID))).toHaveLength(0);
+  });
+
+  it('takes a package that fits, and counts the story against the total', async () => {
+    await planOf({ maxEntitiesPerStory: 3, maxEntitiesTotal: 3 });
+
+    const storyId = await service.importStory(IMPORTER_ID, buildExport());
+
+    expect((await storyRow(storyId))!.userId).toBe(IMPORTER_ID);
+    await expect(service.importStory(IMPORTER_ID, buildExport())).rejects.toMatchObject({
+      status: 403,
+      message: expect.stringMatching(/over your plan's total \(3\)/),
+    });
   });
 });

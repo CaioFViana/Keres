@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getStorySyncEntityTypes,
+  countTierEntitiesInStoryPackage,
   getTierCountedEntityTypes,
   getTierRelationalEntityTypes,
   TIER_EXEMPT_ENTITY_TYPES,
@@ -98,5 +99,26 @@ describe('the music of a scene and the plan', () => {
     expect(getTierCountedEntityTypes()).toContain('Song');
     expect(getTierRelationalEntityTypes()).not.toContain('Song');
     expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('Song');
+  });
+});
+
+describe('the entities of an uploaded package', () => {
+  it('counts the live rows of the types a plan counts, and nothing else', () => {
+    const counted = countTierEntitiesInStoryPackage({
+      story: { id: 's' },
+      characters: [{ id: 'a' }, { id: 'b' }, { id: 'c', isDeleted: true }],
+      scenes: [{ id: 'x' }],
+      // links between entities, favorites and comments are not counted by any plan
+      characterRelations: [{ id: 'r1' }, { id: 'r2' }],
+      favorites: [{ id: 'f' }],
+      comments: [{ id: 'k' }],
+    });
+
+    expect(counted).toBe(3);
+  });
+
+  it('reads a package with missing collections as the entities it does carry', () => {
+    expect(countTierEntitiesInStoryPackage({})).toBe(0);
+    expect(countTierEntitiesInStoryPackage({ notes: [{ id: 'n' }], songs: 'broken' })).toBe(1);
   });
 });

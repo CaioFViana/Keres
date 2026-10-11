@@ -236,6 +236,45 @@ describe('TierEnforcementService entity limits', () => {
   });
 });
 
+describe('TierEnforcementService uploaded stories', () => {
+  it('lets any package through for a person with no entity ceiling', async () => {
+    await assignTier(await seedTier({ maxStories: 5 }));
+
+    await expect(
+      tierEnforcementService.assertCanImportEntities(userId, 100000),
+    ).resolves.toBeUndefined();
+  });
+
+  it('refuses a package bigger than the ceiling of one story, and says how big it is', async () => {
+    await assignTier(await seedTier({ maxEntitiesPerStory: 10 }));
+
+    await expect(tierEnforcementService.assertCanImportEntities(userId, 11)).rejects.toThrow(
+      /This story has 11 entities, more than your plan allows in one story \(10\)/,
+    );
+  });
+
+  it('takes a package exactly as big as the ceiling', async () => {
+    await assignTier(await seedTier({ maxEntitiesPerStory: 10 }));
+
+    await expect(
+      tierEnforcementService.assertCanImportEntities(userId, 10),
+    ).resolves.toBeUndefined();
+  });
+
+  it('adds the package to what the person already has against the total ceiling', async () => {
+    await assignTier(await seedTier({ maxEntitiesTotal: 5 }));
+    await db.insert(characters).values({ id: newId(), storyId, name: 'Nyx' } as never);
+    await db.insert(characters).values({ id: newId(), storyId, name: 'Eos' } as never);
+
+    await expect(
+      tierEnforcementService.assertCanImportEntities(userId, 3),
+    ).resolves.toBeUndefined();
+    await expect(tierEnforcementService.assertCanImportEntities(userId, 4)).rejects.toThrow(
+      /you already have 2: together that is over your plan's total \(5\)/,
+    );
+  });
+});
+
 describe('TierEnforcementService what counts as an entity', () => {
   async function seedTagWithRelations(relations: number) {
     const tagId = newId();

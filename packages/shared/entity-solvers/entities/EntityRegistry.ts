@@ -235,6 +235,27 @@ export function getTierCountedEntityTypes(): readonly OperationLogEntityType[] {
 }
 
 /**
+ * How many entities of a portable story package a plan's entity ceilings would count: the live rows of the
+ * counted types only, the same rule `getTierCountedEntityTypes` gives the API and the client elsewhere. For an
+ * upload to be judged before it is written, not after.
+ */
+export function countTierEntitiesInStoryPackage(storyPackage: object): number {
+  const counted = new Set<string>(getTierCountedEntityTypes());
+  const collections = storyPackage as Record<string, unknown>;
+  let total = 0;
+  for (const { entityType, collection } of getStoryExportCollections()) {
+    if (!counted.has(entityType)) continue;
+    const rows = collections[collection];
+    if (!Array.isArray(rows)) continue;
+    total += rows.filter(
+      (row) =>
+        !(row && typeof row === 'object' && (row as { isDeleted?: unknown }).isDeleted === true),
+    ).length;
+  }
+  return total;
+}
+
+/**
  * The entity types a story synchronizes that no plan counts because they only link or fill in others
  * (see `TIER_RELATIONAL_ENTITY_TYPES`). The client shows them apart, for information.
  */

@@ -1,4 +1,5 @@
 import {
+  countTierEntitiesInStoryPackage,
   describeStoryIntegrityViolations,
   findStoryExportIntegrityErrors,
   FullStoryExportSchema,
@@ -60,6 +61,10 @@ export class DatabaseStoryPackageImporter {
     // was going to be discarded anyway.
     try {
       await tierEnforcementService.assertCanCreateStory(userId);
+      await tierEnforcementService.assertCanImportEntities(
+        userId,
+        countTierEntitiesInStoryPackage(validatedFullStory),
+      );
     } catch (error) {
       if (error instanceof TierLimitExceededError) {
         throw new AppError(403, error.message);

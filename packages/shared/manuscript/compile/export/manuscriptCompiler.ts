@@ -59,6 +59,11 @@ export type CompiledBlock =
       name: string;
       /** Null when this scene already contributed its bookmark (route loops). */
       bookmarkId: string | null;
+      /**
+       * A gamebook's scene opens its own page in the paged formats (PDF, Word): its choices point at pages, and
+       * several scenes on one page would all be "page 1".
+       */
+      ownPage?: boolean;
     }
   | { kind: 'loose-heading'; label: string; bookmarkId: string }
   | { kind: 'paragraph'; spans: CompiledSpan[] }
@@ -273,6 +278,7 @@ function sectionsToBlocks({
         number: resetSceneNumbersPerChapter ? groupNumber : section.position,
         name: gamebook && !gamebook.showNames ? '' : section.scene.name,
         bookmarkId: bookmarkId && !emitted.has(bookmarkId) ? bookmarkId : null,
+        ...(gamebook ? { ownPage: true } : {}),
       });
     }
     if (bookmarkId) emitted.add(bookmarkId);

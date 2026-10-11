@@ -221,6 +221,14 @@ export function* iterateRuns(
           gray: GRAY,
           bookmarkId: block.bookmarkId,
           keepWithNext: true,
+          // A gamebook's scene opens a page of its own, so "Go to page N" names one scene. What follows the title
+          // or a chapter heading is already at the top of a page.
+          forcePageBreak:
+            block.ownPage === true &&
+            prevBlockKind !== null &&
+            prevBlockKind !== 'title' &&
+            prevBlockKind !== 'subtitle' &&
+            prevBlockKind !== 'chapter',
         });
         break;
       case 'paragraph': {

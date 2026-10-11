@@ -212,6 +212,8 @@ export function buildManuscriptDocument(
           new Paragraph({
             heading: HeadingLevel.HEADING_2,
             keepNext: true,
+            // A gamebook's scene opens a page of its own, so the page its choices point at is one scene's.
+            pageBreakBefore: block.ownPage === true && !firstContent,
             children: block.bookmarkId
               ? [new Bookmark({ id: block.bookmarkId, children: [run] })]
               : [run],

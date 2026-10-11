@@ -64,7 +64,7 @@
     "deletedAccount": "(account closed)",
     "empty": "Nothing recorded for these filters.",
     "categories": {
-      "auth": "Sign-in",
+      "auth": "Access",
       "account": "Account",
       "friendship": "Friends",
       "message": "Messages",

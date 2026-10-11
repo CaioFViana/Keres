@@ -64,7 +64,7 @@
     "deletedAccount": "(conta encerrada)",
     "empty": "Nada registrado para estes filtros.",
     "categories": {
-      "auth": "Entrada",
+      "auth": "Acesso",
       "account": "Conta",
       "friendship": "Amigos",
       "message": "Mensagens",

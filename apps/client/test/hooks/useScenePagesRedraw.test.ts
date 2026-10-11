@@ -3,15 +3,30 @@ import { useScenePages } from '../../src/hooks/useScenePages';
 
 const mockGetPages = jest.fn();
 const mockGetSketch = jest.fn();
+const mockGetGallery = jest.fn();
+const mockPeek = jest.fn();
 const mockEnsure = jest.fn();
 
 jest.mock('../../src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
+const mockThemeColors = {
+  background: '#fff',
+  surface: '#fff',
+  text: '#111',
+  textSecondary: '#555',
+  border: '#ddd',
+  primary: '#00f',
+};
+jest.mock('@/src/theme', () => ({
+  __esModule: true,
+  // Stable across renders, like the app provider: a fresh object per call would reload forever.
+  useTheme: () => ({ isDarkMode: false, colors: mockThemeColors }),
+}));
 jest.mock('../../src/services/storymanagement/GalleryService', () => ({
   __esModule: true,
-  createGalleryService: () => ({ getById: jest.fn() }),
+  createGalleryService: () => ({ getById: (...args: unknown[]) => mockGetGallery(...args) }),
 }));
 jest.mock('../../src/services/storymanagement/ScenePageService', () => ({
   __esModule: true,
@@ -23,9 +38,12 @@ jest.mock('../../src/services/storymanagement/SketchService', () => ({
   __esModule: true,
   createSketchService: () => ({ getById: (...args: unknown[]) => mockGetSketch(...args) }),
 }));
-jest.mock('../../src/services/storymanagement/SketchSnapshotService', () => ({
+jest.mock('../../src/services/storymanagement/SketchPreviewService', () => ({
   __esModule: true,
-  ensureSketchSnapshot: (...args: unknown[]) => mockEnsure(...args),
+  createSketchPreviewService: () => ({
+    peek: (...args: unknown[]) => mockPeek(...args),
+    ensure: (...args: unknown[]) => mockEnsure(...args),
+  }),
 }));
 
 const sketchPage = (id: string, sketchId: string) => ({
@@ -42,9 +60,14 @@ beforeEach(() => {
     id,
     name: id,
     isDeleted: false,
-    coverGalleryId: null,
+    content: { page: { width: 10, height: 10 }, layers: [], overlays: [] },
   }));
-  mockEnsure.mockResolvedValue({ galleryId: 'g1', regenerated: false });
+  mockPeek.mockResolvedValue(null);
+  mockEnsure.mockImplementation(async (name: string) => ({
+    uri: `preview://${name}.png`,
+    bytes: null,
+    cached: false,
+  }));
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -54,7 +77,7 @@ afterEach(async () => {
 });
 
 describe('a page drawn as a Sketch', () => {
-  it('has its Sketch drawn again, once each, when the person may edit', async () => {
+  it('has its preview drawn again, once each, when the person may edit', async () => {
     mockGetPages.mockResolvedValue([
       sketchPage('p1', 'sk-1'),
       sketchPage('p2', 'sk-1'),
@@ -64,8 +87,16 @@ describe('a page drawn as a Sketch', () => {
     await renderHook(() => useScenePages('scene-1', 'story-1', { redrawFor: 'user-1' }));
 
     await waitFor(() => expect(mockEnsure).toHaveBeenCalledTimes(2));
-    expect(mockEnsure.mock.calls.map((call) => call[2])).toEqual(['sk-1', 'sk-2']);
-    expect(mockEnsure.mock.calls[0][1]).toBe('user-1');
+    expect(mockEnsure.mock.calls.map((call) => call[0])).toEqual(['sk-1', 'sk-2']);
+  });
+
+  it('draws nothing into the Gallery when redrawing', async () => {
+    mockGetPages.mockResolvedValue([sketchPage('p1', 'sk-1')]);
+
+    await renderHook(() => useScenePages('scene-1', 'story-1', { redrawFor: 'user-1' }));
+
+    await waitFor(() => expect(mockEnsure).toHaveBeenCalledTimes(1));
+    expect(mockGetGallery).not.toHaveBeenCalled();
   });
 
   it('is left alone for someone who may not edit, and by the places that only count pages', async () => {
@@ -79,22 +110,16 @@ describe('a page drawn as a Sketch', () => {
     expect(mockEnsure).not.toHaveBeenCalled();
   });
 
-  it('shows the new picture once the drawing was made again', async () => {
+  it('shows the new preview once the drawing was made again', async () => {
     mockGetPages.mockResolvedValue([sketchPage('p1', 'sk-1')]);
-    const sketchWith = (coverGalleryId: string | null) => ({
-      id: 'sk-1',
-      name: 'sk-1',
-      isDeleted: false,
-      coverGalleryId,
-    });
-    mockGetSketch.mockResolvedValueOnce(sketchWith(null)).mockResolvedValue(sketchWith('g9'));
-    mockEnsure.mockResolvedValue({ galleryId: 'g9', regenerated: true });
+    mockPeek.mockResolvedValue('preview://sk-1.png');
 
     const { result } = await renderHook(() =>
       useScenePages('scene-1', 'story-1', { redrawFor: 'user-1' }),
     );
 
-    await waitFor(() => expect(result.current.pages[0]?.thumbGalleryId).toBe('g9'));
+    await waitFor(() => expect(result.current.pages[0]?.thumbPreviewUri).toBe('preview://sk-1.png'));
+    expect(result.current.pages[0]).toMatchObject({ thumbGalleryId: null, isSketch: true });
   });
 
   it('keeps going when a drawing cannot be made', async () => {

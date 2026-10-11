@@ -7,8 +7,31 @@ import { scenePageViewOf } from '../../src/hooks/useScenePages';
 import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
 import { createScenePageService } from '../../src/services/storymanagement/ScenePageService';
 import { createSketchService } from '../../src/services/storymanagement/SketchService';
+import type { SketchPreviewLook } from '../../src/services/storymanagement/SketchPreviewService';
 import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+
+const mockPeek = jest.fn();
+
+jest.mock('../../src/services/storymanagement/SketchPreviewService', () => ({
+  __esModule: true,
+  createSketchPreviewService: () => ({
+    peek: (...args: unknown[]) => mockPeek(...args),
+    ensure: jest.fn(),
+  }),
+}));
+
+const look: SketchPreviewLook = {
+  colors: {
+    background: '#fff',
+    surface: '#fff',
+    text: '#111',
+    textSecondary: '#555',
+    border: '#ddd',
+    primary: '#00f',
+  },
+  paper: '#fff',
+};
 
 let database: TestDatabase;
 
@@ -48,6 +71,7 @@ beforeEach(async () => {
   database = await createTestDatabase();
   await seedLocalStory(database);
   await seedScene();
+  mockPeek.mockReset().mockResolvedValue(null);
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
@@ -62,34 +86,46 @@ describe('scenePageViewOf', () => {
     const image = await newImage('panel.png');
     const page = await pageWith({ galleryId: image.id });
 
-    expect(await scenePageViewOf(database.db, page)).toEqual({
+    expect(await scenePageViewOf(database.db, page, look)).toEqual({
       page,
       thumbGalleryId: image.id,
+      thumbPreviewUri: null,
       mediaName: 'panel.png',
       isSketch: false,
       mediaGone: false,
     });
   });
 
-  it('shows a Sketch page by the cover of its Sketch, and by nothing while it has none', async () => {
+  it('shows a Sketch page by its cached preview, never by the Gallery', async () => {
     const sketch = await createSketchService(database.db).createSketch(TEST_USER_ID, {
       storyId: TEST_STORY_ID,
       name: 'Throne room',
     } as never);
     const page = await pageWith({ sketchId: sketch.id });
 
-    expect(await scenePageViewOf(database.db, page)).toMatchObject({
+    expect(await scenePageViewOf(database.db, page, look)).toMatchObject({
       thumbGalleryId: null,
+      thumbPreviewUri: null,
       mediaName: 'Throne room',
       isSketch: true,
       mediaGone: false,
     });
 
+    mockPeek.mockResolvedValue('preview://throne.png');
+    expect(await scenePageViewOf(database.db, page, look)).toMatchObject({
+      thumbGalleryId: null,
+      thumbPreviewUri: 'preview://throne.png',
+    });
+
+    // Even a cover set by an explicit gallery export is not what the page draws.
     const cover = await newImage('cover.png');
     await createSketchService(database.db).updateSketch(TEST_USER_ID, sketch.id, {
       coverGalleryId: cover.id,
     });
-    expect(await scenePageViewOf(database.db, page)).toMatchObject({ thumbGalleryId: cover.id });
+    expect(await scenePageViewOf(database.db, page, look)).toMatchObject({
+      thumbGalleryId: null,
+      thumbPreviewUri: 'preview://throne.png',
+    });
   });
 
   it('calls a page whose medium was deleted "media removed", keeping the page', async () => {
@@ -100,8 +136,9 @@ describe('scenePageViewOf', () => {
       .set({ isDeleted: true })
       .where(eq(schema.galleries.id, image.id));
 
-    expect(await scenePageViewOf(database.db, page)).toMatchObject({
+    expect(await scenePageViewOf(database.db, page, look)).toMatchObject({
       thumbGalleryId: null,
+      thumbPreviewUri: null,
       mediaName: null,
       mediaGone: true,
     });
@@ -109,7 +146,7 @@ describe('scenePageViewOf', () => {
 
   it('calls a page whose Sketch is deleted or never existed "media removed"', async () => {
     const page = await pageWith({ sketchId: 'never-there' });
-    expect(await scenePageViewOf(database.db, page)).toMatchObject({
+    expect(await scenePageViewOf(database.db, page, look)).toMatchObject({
       isSketch: true,
       mediaGone: true,
     });
@@ -120,7 +157,7 @@ describe('scenePageViewOf', () => {
     const page = await pageWith({ galleryId: image.id });
 
     expect(
-      await scenePageViewOf(database.db, { ...page, galleryId: null, sketchId: null }),
+      await scenePageViewOf(database.db, { ...page, galleryId: null, sketchId: null }, look),
     ).toMatchObject({ mediaGone: true, isSketch: false });
   });
 });

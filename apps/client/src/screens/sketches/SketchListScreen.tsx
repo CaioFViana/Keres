@@ -1,35 +1,31 @@
 import {
   emptySketchContent,
   generateSketchLocalId,
-  getEntityAppearance,
   SKETCH_PAGE_PRESETS,
 } from '@keres/shared';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import SketchCreateModal from '@/src/components/features/sketches/SketchCreateModal';
+import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
 import { useDrizzle } from '../../db';
-import type { GallerySelect, SketchSelect } from '../../db/schema';
+import type { SketchSelect } from '../../db/schema';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
 import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SketchStackParamList } from '../../navigation/MainSystemStack';
 import { filterByNameAndDescription } from '../../utils/filterByNameAndDescription';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
 import { createSketchService } from '../../services/storymanagement/SketchService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
-import { type ThemeColors, useTheme } from '../../theme';
+import type { ThemeColors } from '../../theme';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useThemedStyles } from '../../theme/useThemedStyles';
@@ -38,59 +34,6 @@ import { AppAlert } from '../../utils/AppAlert';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type Navigation = NativeStackNavigationProp<SketchStackParamList, 'SketchList'>;
-
-/** The gallery snapshot linked as the sketch's cover, or the sketch icon when none. */
-const SketchCover: React.FC<{ storyId: string; sketch: SketchSelect }> = ({ storyId, sketch }) => {
-  const { colors } = useTheme();
-  const db = useDrizzle();
-  const [cover, setCover] = useState<GallerySelect | null>(null);
-  useEffect(() => {
-    let alive = true;
-    if (sketch.coverGalleryId) {
-      const coverId = sketch.coverGalleryId;
-      void createGalleryService(db)
-        .getById(coverId)
-        .then((row) => {
-          if (alive) setCover(row && !row.isDeleted ? row : null);
-        })
-        .catch(() => {
-          if (alive) setCover(null);
-        });
-    }
-    return () => {
-      alive = false;
-    };
-  }, [db, sketch.coverGalleryId, storyId]);
-  // The cached row only counts when it matches the sketch's current cover link;
-  // a missing or changed link falls back to the icon with no extra render pass.
-  const visibleCover = cover && cover.id === sketch.coverGalleryId ? cover : null;
-  const resolvedUri = useResolvedMediaUri(visibleCover?.localPath);
-  if (visibleCover && resolvedUri) {
-    return (
-      <Image
-        source={{ uri: resolvedUri }}
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 8,
-          marginRight: 12,
-          backgroundColor: colors.border,
-        }}
-        contentFit="cover"
-        accessibilityLabel={visibleCover.title ?? sketch.name}
-      />
-    );
-  }
-  const appearance = getEntityAppearance('Sketch');
-  return (
-    <Ionicons
-      name={appearance.icon as keyof typeof Ionicons.glyphMap}
-      size={24}
-      color={appearance.color}
-      style={{ marginRight: 12 }}
-    />
-  );
-};
 
 const SketchListScreen = () => {
   useBackButtonHandler();
@@ -228,7 +171,7 @@ const SketchListScreen = () => {
           }
           renderItem={({ item }) => (
             <CanvasListRow
-              leading={storyId ? <SketchCover storyId={storyId} sketch={item} /> : null}
+              leading={<SketchPreviewThumb sketch={item} />}
               name={item.name}
               description={item.description}
               canEdit={!!canEdit}

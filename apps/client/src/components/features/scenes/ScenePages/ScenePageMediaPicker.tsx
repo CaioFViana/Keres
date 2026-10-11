@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
 import { useScenePageChoices } from '@/src/hooks/useGalleryMedia';
 import type { ScenePageMedia } from '@/src/services/storymanagement/ScenePageService';
 import { useTheme } from '@/src/theme';
@@ -83,12 +84,7 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
                 style={[styles.row, { borderBottomColor: colors.border }]}
                 onPress={() => onPick({ sketchId: sketch.id })}
               >
-                <ScenePageThumb
-                  galleryId={sketch.coverGalleryId}
-                  width={48}
-                  height={48}
-                  label={sketch.name}
-                />
+                <SketchPreviewThumb sketch={sketch} size={48} borderRadius={6} gutter={false} />
                 <Text style={[styles.rowName, { color: colors.text }]}>{sketch.name}</Text>
                 <Ionicons name="brush-outline" size={18} color={colors.textSecondary} />
               </TouchableOpacity>

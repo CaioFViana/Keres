@@ -223,6 +223,7 @@ const view = (id: string, overrides: Partial<ScenePageView> = {}): ScenePageView
     updatedAt: new Date(),
   },
   thumbGalleryId: 'g',
+  thumbPreviewUri: null,
   mediaName: 'image.png',
   isSketch: false,
   mediaGone: false,

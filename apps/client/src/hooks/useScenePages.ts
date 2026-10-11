@@ -1,17 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ScenePageSelect } from '@/src/db/schema';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
+import { createSketchPreviewService } from '@/src/services/storymanagement/SketchPreviewService';
 import { createSketchService } from '@/src/services/storymanagement/SketchService';
-import { ensureSketchSnapshot } from '@/src/services/storymanagement/SketchSnapshotService';
+import type { SketchPreviewLook } from '@/src/services/storymanagement/SketchPreviewService';
+import { useTheme } from '@/src/theme';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { sketchLookFromTheme } from './useSketchPreviewUri';
 
-/** A page with what it shows: the Gallery medium to draw, its name, and whether the image is gone. */
+/** A page with what it shows: the Gallery medium or cached Sketch preview to draw, and its name. */
 export interface ScenePageView {
   page: ScenePageSelect;
-  /** The Gallery medium to draw: the page's own, or the cover of its Sketch (`null` if it has none). */
+  /** The Gallery medium to draw: the page's own (`null` if it has none or is a Sketch). */
   thumbGalleryId: string | null;
+  /**
+   * The cached preview of a Sketch page under the current theme (`null` for Gallery pages and
+   * while undrawn). The file lives outside the Gallery and never syncs.
+   */
+  thumbPreviewUri: string | null;
   mediaName: string | null;
   isSketch: boolean;
   /** The Sketch or medium it pointed at is gone (or never resolved): the page keeps only its text. */
@@ -21,6 +29,7 @@ export interface ScenePageView {
 export async function scenePageViewOf(
   db: ReturnType<typeof useDrizzle>,
   page: ScenePageSelect,
+  look: SketchPreviewLook,
 ): Promise<ScenePageView> {
   if (page.galleryId) {
     const row = await createGalleryService(db).getById(page.galleryId);
@@ -28,6 +37,7 @@ export async function scenePageViewOf(
     return {
       page,
       thumbGalleryId: alive ? page.galleryId : null,
+      thumbPreviewUri: null,
       mediaName: alive ? (row.title ?? row.fileName) : null,
       isSketch: false,
       mediaGone: !alive,
@@ -38,21 +48,32 @@ export async function scenePageViewOf(
     const alive = !!sketch && !sketch.isDeleted;
     return {
       page,
-      thumbGalleryId: alive ? sketch.coverGalleryId : null,
+      thumbGalleryId: null,
+      thumbPreviewUri: alive
+        ? await createSketchPreviewService().peek(sketch.content, look)
+        : null,
       mediaName: alive ? sketch.name : null,
       isSketch: true,
       mediaGone: !alive,
     };
   }
-  return { page, thumbGalleryId: null, mediaName: null, isSketch: false, mediaGone: true };
+  return {
+    page,
+    thumbGalleryId: null,
+    thumbPreviewUri: null,
+    mediaName: null,
+    isSketch: false,
+    mediaGone: true,
+  };
 }
 
 /**
  * A scene's pages, in order, each with what it shows. Reloads when pages, Sketches or the Gallery
  * change, so a page whose image was deleted on another device turns into "media removed".
  *
- * With `redrawFor` (the person who may edit), a page drawn as a Sketch is also kept showing the drawing as it is
- * now: a Sketch that has no picture yet, or changed since its picture was made, is drawn again, one at a time.
+ * With `redrawFor` (the person who may edit), a Sketch page is also kept showing the drawing as
+ * it is now: a missing preview is drawn in the background, one sketch at a time. The files live
+ * outside the Gallery: picking a Sketch never adds a medium to it.
  */
 export function useScenePages(
   sceneId: string | undefined,
@@ -61,6 +82,8 @@ export function useScenePages(
 ) {
   const redrawFor = options.redrawFor ?? null;
   const db = useDrizzle();
+  const { colors } = useTheme();
+  const look = useMemo(() => sketchLookFromTheme(colors), [colors]);
   const redrawing = useRef(false);
   const [pages, setPages] = useState<ScenePageView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +96,7 @@ export function useScenePages(
     }
     try {
       const rows = await createScenePageService(db).getPagesForScene(sceneId);
-      const views = await Promise.all(rows.map((row) => scenePageViewOf(db, row)));
+      const views = await Promise.all(rows.map((row) => scenePageViewOf(db, row, look)));
       setPages(views);
       if (redrawFor && !redrawing.current) {
         redrawing.current = true;
@@ -84,8 +107,12 @@ export function useScenePages(
               view.isSketch && !view.mediaGone && view.page.sketchId ? [view.page.sketchId] : [],
             ),
           );
+          const previews = createSketchPreviewService();
+          const sketches = createSketchService(db);
           for (const sketchId of sketchIds) {
-            if ((await ensureSketchSnapshot(db, redrawFor, sketchId))?.regenerated) redrawn = true;
+            const sketch = await sketches.getById(sketchId);
+            if (!sketch || sketch.isDeleted) continue;
+            if (!(await previews.ensure(sketch.name, sketch.content, look)).cached) redrawn = true;
           }
         } catch (error) {
           console.log('useScenePages: could not draw a Sketch page.', error);
@@ -96,7 +123,7 @@ export function useScenePages(
           setPages(
             await Promise.all(
               (await createScenePageService(db).getPagesForScene(sceneId)).map((row) =>
-                scenePageViewOf(db, row),
+                scenePageViewOf(db, row, look),
               ),
             ),
           );
@@ -108,7 +135,7 @@ export function useScenePages(
     } finally {
       setLoading(false);
     }
-  }, [db, redrawFor, sceneId]);
+  }, [db, look, redrawFor, sceneId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no scene is given; everything else waits for `await`.

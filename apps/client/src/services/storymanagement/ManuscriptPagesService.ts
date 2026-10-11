@@ -8,6 +8,10 @@ import type { AppDrizzleClient } from '../../db';
 import { mediaFileService } from '../MediaFileService';
 import { createGalleryService } from './GalleryService';
 import { createScenePageService, groupPagesByScene } from './ScenePageService';
+import {
+  createSketchPreviewService,
+  SKETCH_PREVIEW_PRINT_LOOK,
+} from './SketchPreviewService';
 import { createSketchService } from './SketchService';
 import { ensureSketchSnapshot } from './SketchSnapshotService';
 
@@ -28,10 +32,14 @@ export interface ManuscriptPagesLoad {
   problems: ManuscriptPagesProblems;
 }
 
+/** A Sketch page's key in `media`: its drawing, not a Gallery row. */
+const sketchMediaKey = (sketchId: string) => `sketch:${sketchId}`;
+const isSketchMediaKey = (mediaId: string) => mediaId.startsWith('sketch:');
+
 /**
  * The pages of a story's scenes, ready for a manuscript: each page's picture read from this device (a
- * Sketch through its snapshot, redrawn first if the drawing has changed since), and each page that has
- * none left in place as a page without a picture.
+ * Sketch drawn from its content on paper), and each page that has none left in place as a page
+ * without a picture. Drawing a Sketch adds no Gallery row: the file lives in the preview cache.
  */
 export async function loadManuscriptPages(
   db: AppDrizzleClient,
@@ -77,30 +85,58 @@ export async function loadManuscriptPages(
     return result;
   };
 
+  // A drawing is rendered once however many pages stand on it.
+  const sketched = new Map<string, string | null>();
+  const sketchPictureIdOf = async (sketchId: string): Promise<string | null> => {
+    if (sketched.has(sketchId)) return sketched.get(sketchId) ?? null;
+    let result: string | null = null;
+    try {
+      const sketch = await createSketchService(db).getById(sketchId);
+      if (sketch && !sketch.isDeleted) {
+        const previews = createSketchPreviewService();
+        const made = await previews.ensure(sketch.name, sketch.content, SKETCH_PREVIEW_PRINT_LOOK);
+        const bytes = made.bytes ?? (await previews.readBytes(made.uri));
+        const info = bytes ? readImageInfo(bytes) : null;
+        if (bytes && info && info.width * info.height <= MAX_MANUSCRIPT_IMAGE_PIXELS) {
+          result = sketchMediaKey(sketch.id);
+          media[result] = { ...info, bytes };
+        } else if (bytes) {
+          problems.unsupported += 1;
+        } else {
+          problems.snapshot += 1;
+        }
+      } else {
+        problems.missing += 1;
+      }
+    } catch (error) {
+      console.log('loadManuscriptPages: could not draw a sketch preview.', error);
+      problems.snapshot += 1;
+    }
+    sketched.set(sketchId, result);
+    return result;
+  };
+
   const pagesByScene = new Map<string, ManuscriptPage[]>();
   for (const [sceneId, pages] of groupPagesByScene(rows)) {
     const out: ManuscriptPage[] = [];
     for (const page of pages) {
       let galleryId = page.galleryId;
       if (!galleryId && page.sketchId && !readPictures) {
-        // No picture is wanted, so no snapshot is drawn: the Sketch only has to still exist.
+        // No picture is wanted, so nothing is drawn: the Sketch only has to still exist.
         const sketch = await createSketchService(db).getById(page.sketchId);
-        if (sketch && !sketch.isDeleted) galleryId = `sketch:${sketch.id}`;
+        if (sketch && !sketch.isDeleted) galleryId = sketchMediaKey(sketch.id);
         else problems.missing += 1;
       } else if (!galleryId && page.sketchId) {
-        try {
-          galleryId = (await ensureSketchSnapshot(db, userId, page.sketchId))?.galleryId ?? null;
-          if (!galleryId) problems.missing += 1;
-        } catch (error) {
-          console.log('loadManuscriptPages: could not draw a sketch snapshot.', error);
-          problems.snapshot += 1;
-        }
+        galleryId = await sketchPictureIdOf(page.sketchId);
       } else if (!galleryId) {
         problems.missing += 1;
       }
       out.push({
         id: page.id,
-        mediaId: galleryId ? (readPictures ? await mediaIdOf(galleryId) : galleryId) : null,
+        mediaId:
+          galleryId && readPictures && !isSketchMediaKey(galleryId)
+            ? await mediaIdOf(galleryId)
+            : galleryId,
         fit: page.fit,
         ...(page.spread ? { spread: true } : {}),
         text: page.text,
@@ -119,7 +155,7 @@ export async function estimateManuscriptPageBytes(
   const galleryService = createGalleryService(db);
   const rows = await createScenePageService(db).getPagesForStory(storyId);
   const sizes = new Map<string, number[]>();
-  // A Sketch has no file until its snapshot is drawn: counted as a large PNG, on the safe side.
+  // A Sketch is drawn at export time, so its bytes are unknown: counted as a large PNG, on the safe side.
   const SKETCH_SNAPSHOT_GUESS = 1_000_000;
   for (const page of rows) {
     let bytes = SKETCH_SNAPSHOT_GUESS;
@@ -137,10 +173,12 @@ export async function estimateManuscriptPageBytes(
 }
 
 /**
- * Redraws the snapshot of every Sketch that a page of the story stands on and whose drawing changed
- * since its snapshot was made, and returns how many were redrawn. A publication is compiled by the
- * server from what it was sent, so this runs first: the new snapshots are changes that still have to
- * sync before the publication can show them.
+ * Redraws the Gallery snapshot of every Sketch that a page of the story stands on and whose drawing
+ * changed since its snapshot was made, and returns how many were redrawn. This is the one automatic
+ * path that still writes to the Gallery, and only on an explicit publish: the server compiles a
+ * publication from what it was sent and cannot draw a Sketch itself, so the new snapshots are
+ * changes that still have to sync before the publication can show them. Display and local export
+ * draw from the preview cache instead and never touch the Gallery.
  */
 export async function refreshStaleSketchSnapshots(
   db: AppDrizzleClient,

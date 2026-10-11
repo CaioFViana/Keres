@@ -104,6 +104,7 @@ const ScenePageCard: React.FC<ScenePageCardProps> = ({
         <View style={styles.imageColumn}>
           <ScenePageThumb
             galleryId={view.thumbGalleryId}
+            previewUri={view.thumbPreviewUri}
             width={120}
             height={120}
             fit={page.fit}

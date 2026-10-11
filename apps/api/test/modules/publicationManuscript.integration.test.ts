@@ -586,6 +586,45 @@ describe('publishing the pages of a comic', () => {
     expect(pdf).toContain('/XObject <<');
   });
 
+  it('sets the page beside its text on a planning sheet, and the text once', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'html', pageLayout: 'sheet' },
+    });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figure class="page sheet"');
+    expect(html).toContain('<div class="script"><figcaption>Page 1</figcaption><p>First panel</p>');
+    expect(html.match(/First panel/g)).toHaveLength(1);
+  });
+
+  it('sets the pages of a PDF in spreads on landscape sheets', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'pdf', pageLayout: 'spreads' },
+    });
+
+    expect(status).toBe(200);
+    const pdf = (await storedManuscriptBytes(story.id)).toString('latin1');
+    expect(pdf).toContain('/MediaBox [0 0 841.89 595.28]');
+    expect(pdf).toContain('/Subtype /Image');
+  });
+
+  it('refuses a layout it does not know', async () => {
+    const story = await uploadTestStory(ana.token);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'html', pageLayout: 'carousel' },
+    });
+
+    expect(status).toBe(422);
+  });
+
   it('leaves the pictures out of a markdown manuscript but keeps each page and its text', async () => {
     const story = await uploadTestStory(ana.token);
     await seedComicContent(story.id);

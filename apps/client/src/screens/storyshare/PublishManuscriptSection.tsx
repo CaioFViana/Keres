@@ -117,6 +117,7 @@ export function PublishManuscriptSection({
             arcs={releasingWork ? [] : manuscript.manuscriptArcs}
             showFormat={manuscript.attachManuscript}
             hasSongs={manuscript.hasSungSongs}
+            pagesMedium={manuscript.pagesMedium}
           />
         </View>
       )}

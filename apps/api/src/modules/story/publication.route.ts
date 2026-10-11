@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import {
   PAGE_FORMATS,
+  PAGE_LAYOUTS,
   SONG_LANGUAGES,
   SONG_PLACEMENTS,
   SONG_REPEATS,
@@ -45,6 +46,8 @@ const manuscriptShape = {
   resetSceneNumbers: t.Optional(t.Boolean()),
   /** The frame a page's picture is shown in (a comic or a storyboard). */
   pageFormat: t.Optional(oneOf(PAGE_FORMATS)),
+  /** How the pages are laid out: a flow, a planning sheet or spreads (a comic or a storyboard). */
+  pageLayout: t.Optional(oneOf(PAGE_LAYOUTS)),
   /** Pages are captioned "Page 3", or "Frame 3" in a storyboard. */
   pageNoun: t.Optional(t.Union([t.Literal('page'), t.Literal('frame')])),
   /** Writes the songs the scenes sing: the words only, never a Gallery reference. */

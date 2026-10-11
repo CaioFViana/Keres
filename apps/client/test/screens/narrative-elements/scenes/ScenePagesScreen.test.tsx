@@ -445,6 +445,21 @@ describe('ScenePagesScreen', () => {
     expect(mockUpdatePage).toHaveBeenCalledWith('user-1', 'p2', { fit: 'cover' });
   });
 
+  it('turns a page of a comic into a double-page spread, and back', async () => {
+    const screen = await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('scene-page-spread-p2'));
+
+    expect(mockUpdatePage).toHaveBeenCalledWith('user-1', 'p2', { spread: true });
+  });
+
+  it('offers no double page for the frames of a storyboard', async () => {
+    mockMedium = 'storyboard';
+    const screen = await renderScreen();
+
+    expect(screen.queryByTestId('scene-page-spread-p2')).toBeNull();
+  });
+
   it('asks before deleting a page, and deletes it once confirmed', async () => {
     const screen = await renderScreen();
 

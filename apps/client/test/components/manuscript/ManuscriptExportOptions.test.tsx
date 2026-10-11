@@ -99,6 +99,53 @@ function ScriptHarness({
   );
 }
 
+describe('ManuscriptExportOptions page layout', () => {
+  function PagesHarness({ medium }: { medium: 'comic' | 'storyboard' | null }) {
+    const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+    useEffect(() => {
+      latest = settings;
+    });
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch={false}
+        looseCount={0}
+        chapterNumberingAvailable
+        arcs={[]}
+        pagesMedium={medium}
+      />
+    );
+  }
+
+  it('offers the layouts of a comic, and lets the medium of the work choose until the person does', async () => {
+    const view = await render(<PagesHarness medium="comic" />);
+    await fireEvent.press(view.getByTestId('export-format-pdf'));
+
+    expect(view.getByTestId('export-page-layout-sheet')).toBeTruthy();
+    expect(view.getByTestId('export-page-layout-spreads')).toBeTruthy();
+    expect(view.getByTestId('export-page-layout-flow')).toBeTruthy();
+    expect(latest?.pageLayout).toBeNull();
+
+    await fireEvent.press(view.getByTestId('export-page-layout-spreads'));
+    expect(latest?.pageLayout).toBe('spreads');
+  });
+
+  it('offers nothing for the formats with no pictures', async () => {
+    const comic = await render(<PagesHarness medium="comic" />);
+    await fireEvent.press(comic.getByTestId('export-format-md'));
+    expect(comic.queryByTestId('export-page-layout')).toBeNull();
+  });
+
+  it('offers nothing for a work with no pages to set', async () => {
+    const prose = await render(<PagesHarness medium={null} />);
+    await fireEvent.press(prose.getByTestId('export-format-pdf'));
+    expect(prose.queryByTestId('export-page-layout')).toBeNull();
+  });
+});
+
 describe('ManuscriptExportOptions size', () => {
   const assess = (bytes: number) => assessManuscriptSize(bytes, 100 * 1024 * 1024);
 

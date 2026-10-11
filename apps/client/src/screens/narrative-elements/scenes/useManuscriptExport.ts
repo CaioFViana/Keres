@@ -10,6 +10,7 @@ import {
   manuscriptSizeAssessment,
   PAGE_FORMAT_ASPECT,
   pageFormatFor,
+  pageLayoutFor,
   presentManuscript,
   renderOptionsOf,
   sceneSeparatorText,
@@ -389,7 +390,13 @@ export function useManuscriptExport() {
               : arcs.length === 1
                 ? arcs[0]
                 : null;
+          // Markdown and plain text carry no pictures: their pages stay a caption and the lines after it.
+          const pageLayout =
+            settings.format === 'md' || settings.format === 'txt'
+              ? ('flow' as const)
+              : pageLayoutFor(arcInEffect?.medium ?? 'generic', settings.pageLayout);
           const pageWords = {
+            layout: pageLayout,
             caption: t(
               arcInEffect?.medium === 'storyboard'
                 ? 'export_manuscript_frame_label'
@@ -491,7 +498,7 @@ export function useManuscriptExport() {
           const result = await exportManuscript({
             storyTitle: title,
             manuscript: loadedPages
-              ? { ...manuscript, images: loadedPages.media, pageAspect }
+              ? { ...manuscript, images: loadedPages.media, pageAspect, pageLayout }
               : manuscript,
             format: settings.format,
             labels,

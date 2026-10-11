@@ -1,9 +1,11 @@
 import {
+  type ArcMedium,
   MANUSCRIPT_PRESETS,
   type ManuscriptFormat,
   type ManuscriptPageEstimate,
   type ManuscriptSizeAssessment,
   type ManuscriptStyle,
+  pageLayoutFor,
   type ScreenplayEstimate,
 } from '@keres/shared';
 import React from 'react';
@@ -60,6 +62,8 @@ interface ManuscriptExportOptionsProps {
   hasMusic?: boolean;
   /** A song is sung in the story: the export offers to print it. */
   hasSongs?: boolean;
+  /** The medium of the work whose pages are set (a comic or a storyboard): asks how they are laid out. */
+  pagesMedium?: ArcMedium | null;
 }
 
 /** `12.3 MB`: one decimal, and `< 0.1 MB` for what is not worth a figure. */
@@ -105,6 +109,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   sizeEstimate = null,
   hasMusic = false,
   hasSongs = false,
+  pagesMedium = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -220,6 +225,23 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
               onChange={(scenePerPage) => change({ scenePerPage })}
             />
           ) : null}
+        </>
+      ) : null}
+
+      {pagesMedium && ['pdf', 'docx', 'html', 'epub'].includes(settings.format) ? (
+        <>
+          <OptionSection title={t('export_manuscript_pages_section')} />
+          <OptionPills
+            label={t('export_manuscript_page_layout_hint')}
+            testID="export-page-layout"
+            value={pageLayoutFor(pagesMedium, settings.pageLayout)}
+            onChange={(pageLayout) => change({ pageLayout })}
+            options={[
+              { value: 'sheet', label: t('export_manuscript_page_layout_sheet') },
+              { value: 'spreads', label: t('export_manuscript_page_layout_spreads') },
+              { value: 'flow', label: t('export_manuscript_page_layout_flow') },
+            ]}
+          />
         </>
       ) : null}
 

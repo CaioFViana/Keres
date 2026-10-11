@@ -920,6 +920,14 @@ describe('ManuscriptExportScreen pages', () => {
       image: { mediaId: 'g-1', fit: 'contain' },
     });
     expect(JSON.stringify(call.manuscript.blocks)).toContain('Caption');
+    // A storyboard is read as a planning sheet until the person says otherwise: its text stays in the page.
+    expect(call.manuscript.pageLayout).toBe('sheet');
+    expect(page.text).toEqual(['Caption']);
+    // The page's text is in the page, not repeated as a paragraph after it.
+    const paragraphs = JSON.stringify(
+      call.manuscript.blocks.filter((block: { kind: string }) => block.kind === 'paragraph'),
+    );
+    expect(paragraphs).not.toContain('Caption');
   });
 
   it('reads no picture for a format that cannot show one, and still carries the text', async () => {

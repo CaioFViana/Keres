@@ -892,6 +892,39 @@ describe('StoryPublishScreen', () => {
     expect(mockPublish.mock.calls[0][6]).not.toHaveProperty('pageNoun');
   });
 
+  it('sends a planning sheet for a comic by default, and the layout the person chose', async () => {
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'Issue', author: null, medium: 'comic', pageFormat: null },
+    ]);
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(await view.findByTestId('export-format-pdf'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({ pageLayout: 'sheet' });
+
+    mockPublish.mockClear();
+    await fireEvent.press(await view.findByTestId('export-page-layout-spreads'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({ pageLayout: 'spreads' });
+  });
+
+  it('asks nothing about the pages of a work that is not a comic or a storyboard', async () => {
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'Book', author: null, medium: 'generic', pageFormat: null },
+    ]);
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(await view.findByTestId('export-format-pdf'));
+
+    expect(view.queryByTestId('export-page-layout')).toBeNull();
+  });
+
   it('credits the story author when the released work has none', async () => {
     mockFindStories.mockResolvedValue({ ...story, author: 'Story Author' });
     mockGetArcs.mockResolvedValue([

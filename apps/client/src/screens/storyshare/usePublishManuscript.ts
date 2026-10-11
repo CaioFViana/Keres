@@ -3,6 +3,7 @@ import {
   isLooseScene,
   type PageFormat,
   pageFormatFor,
+  pageLayoutFor,
   type ReaderLabels,
 } from '@keres/shared';
 import { useCallback, useState } from 'react';
@@ -190,6 +191,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
               pageNoun:
                 arcInEffect.medium === 'storyboard' ? ('frame' as const) : ('page' as const),
               pageFormat: pageFormatFor(arcInEffect.medium, arcInEffect.pageFormat),
+              pageLayout: pageLayoutFor(arcInEffect.medium, settings.pageLayout),
             }
           : {}),
         ...(branching
@@ -257,6 +259,17 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     [publishReader, shapeOf],
   );
 
+  // The work whose pages are set (the one released, or the only one there is), when it is a comic or a storyboard.
+  const pagesArc = settings.arcId
+    ? manuscriptArcs.find((row) => row.id === settings.arcId)
+    : manuscriptArcs.length === 1
+      ? manuscriptArcs[0]
+      : undefined;
+  const pagesMedium =
+    pagesArc && (pagesArc.medium === 'comic' || pagesArc.medium === 'storyboard')
+      ? pagesArc.medium
+      : null;
+
   return {
     attachManuscript,
     setAttachManuscript,
@@ -271,6 +284,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     manuscriptLooseCount,
     hasSungSongs,
     manuscriptArcs,
+    pagesMedium,
     releaseArcId,
     setReleaseArcId,
     resetForStory,

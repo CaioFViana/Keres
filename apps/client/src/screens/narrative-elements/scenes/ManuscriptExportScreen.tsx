@@ -108,6 +108,7 @@ const ManuscriptExportScreen = () => {
         chapterNumberingAvailable={!isBranching}
         arcs={arcs}
         chronicle={medium === 'campaign'}
+        pagesMedium={medium === 'comic' || medium === 'storyboard' ? medium : null}
       />
     </EntityFormContainer>
   );

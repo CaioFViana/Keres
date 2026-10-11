@@ -17,6 +17,9 @@ interface ScenePageCardProps {
   canEdit: boolean;
   onTextCommit: (text: string) => void;
   onFitChange: (fit: ScenePageFit) => void;
+  /** A comic page can run across two pages; a storyboard frame cannot. */
+  allowSpread?: boolean;
+  onSpreadChange?: (spread: boolean) => void;
   onMove: (delta: -1 | 1) => void;
   onReplace: () => void;
   onDelete: () => void;
@@ -31,6 +34,8 @@ const ScenePageCard: React.FC<ScenePageCardProps> = ({
   canEdit,
   onTextCommit,
   onFitChange,
+  allowSpread = false,
+  onSpreadChange,
   onMove,
   onReplace,
   onDelete,
@@ -128,6 +133,23 @@ const ScenePageCard: React.FC<ScenePageCardProps> = ({
                 );
               })}
             </View>
+          ) : null}
+          {canEdit && allowSpread && onSpreadChange ? (
+            <TouchableOpacity
+              accessibilityRole="switch"
+              accessibilityState={{ checked: page.spread }}
+              testID={`scene-page-spread-${page.id}`}
+              style={[
+                styles.fit,
+                { borderColor: colors.border },
+                page.spread && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => onSpreadChange(!page.spread)}
+            >
+              <Text style={{ color: page.spread ? colors.onPrimary : colors.text, fontSize: 12 }}>
+                {t('scene_pages_spread')}
+              </Text>
+            </TouchableOpacity>
           ) : null}
         </View>
         <View style={styles.textColumn}>

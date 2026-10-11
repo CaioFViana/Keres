@@ -3,6 +3,7 @@ import type {
   ManuscriptLabels,
   ReaderLabels,
   ManuscriptStyle,
+  PageLayout,
   PublicationLabelMode,
   ShowcaseVisibility,
   StoryPublication,
@@ -45,6 +46,8 @@ export interface PublishManuscriptOptions {
   sceneOrder?: 'discovery' | 'shuffled';
   /** Branching, paged formats: every scene opens a page of its own. */
   scenePerPage?: boolean;
+  /** A comic's or a storyboard's pages: laid out in a flow, as a planning sheet or in spreads. */
+  pageLayout?: PageLayout;
   /** When set, only this arc ships, under its title. */
   arcId?: string;
   /** Only for the screenplay formats: paper, numbering and headings. */

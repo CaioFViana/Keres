@@ -206,6 +206,11 @@ const ScenePagesScreen = () => {
           onFitChange={(fit: ScenePageFit) =>
             userId && void attempt(() => service.updatePage(userId, view.page.id, { fit }), 'edit')
           }
+          allowSpread={kind === 'page'}
+          onSpreadChange={(spread) =>
+            userId &&
+            void attempt(() => service.updatePage(userId, view.page.id, { spread }), 'edit')
+          }
           onMove={(delta) =>
             userId &&
             void attempt(() => service.movePage(userId, view.page.id, index + delta), 'move')

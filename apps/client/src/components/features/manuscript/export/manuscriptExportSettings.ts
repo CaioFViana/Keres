@@ -1,5 +1,6 @@
 import {
   MANUSCRIPT_PRESET_SETTINGS,
+  type PageLayout,
   type SongLanguage,
   type SongPlacement,
   type SongRepeat,
@@ -60,6 +61,8 @@ export type ManuscriptExportSettings = {
   sceneOrder: 'discovery' | 'shuffled';
   /** Branching, paged formats: every scene opens a page of its own (off: a choice names page and scene). */
   scenePerPage: boolean;
+  /** How a comic's or a storyboard's pages are laid out; null lets the work's medium choose. */
+  pageLayout: PageLayout | null;
   /** Which arc to export; null exports every arc. */
   arcId: string | null;
   /** A generated title page: the author and a copyright line under the title. */
@@ -87,6 +90,7 @@ export function defaultExportSettings(author = ''): ManuscriptExportSettings {
     includeIndex: false,
     sceneOrder: 'discovery',
     scenePerPage: false,
+    pageLayout: null,
     arcId: null,
     titlePage: false,
     author,

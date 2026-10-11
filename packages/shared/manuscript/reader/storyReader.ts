@@ -18,12 +18,8 @@ import {
   ManuscriptOptionsSchema,
 } from '../compile/manuscriptContracts';
 import { renderOptionsOf } from '../compile/manuscriptStyle';
-import {
-  READER_BRANCHING_SOURCE,
-  READER_COMIC_SOURCE,
-  READER_COMMON_SOURCE,
-  READER_LINEAR_SOURCE,
-} from './readerApp';
+import { READER_BRANCHING_SOURCE, READER_COMMON_SOURCE, READER_LINEAR_SOURCE } from './readerApp';
+import { READER_COMIC_SOURCE } from './readerComic';
 import { READER_ENGINE_SOURCE } from './readerEngine';
 
 const labelSchema = z.string().max(120);

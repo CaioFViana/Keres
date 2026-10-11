@@ -255,6 +255,7 @@ export function useManuscriptExport() {
         presented,
         {
           goToPage: t('export_manuscript_go_to_page'),
+          sceneWord: t('export_manuscript_scene_word'),
           tocHeading: t('export_manuscript_index_heading'),
         },
         { ...renderOptionsOf(style), includeToc: settings.includeIndex },
@@ -290,6 +291,7 @@ export function useManuscriptExport() {
           const labels = {
             goToPage: t('export_manuscript_go_to_page'),
             goToScene: t('export_manuscript_go_to_scene'),
+            sceneWord: t('export_manuscript_scene_word'),
             tocHeading: t('export_manuscript_index_heading'),
           };
           // A specific arc exports as its own book: the arc title replaces the story title on
@@ -462,6 +464,7 @@ export function useManuscriptExport() {
                 scenes: exportScenes,
                 choices: annotatedChoices,
                 order: settings.sceneOrder,
+                scenePerPage: settings.scenePerPage,
                 showSceneNames: settings.includeSceneNames,
                 endLabel: t('export_manuscript_end_of_excerpt'),
                 startLabels: {

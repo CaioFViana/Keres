@@ -211,6 +211,15 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
               { value: 'shuffled', label: t('export_manuscript_scene_order_shuffled') },
             ]}
           />
+          {settings.format === 'pdf' || settings.format === 'docx' ? (
+            <SwitchRow
+              label={t('export_manuscript_scene_per_page')}
+              hint={t('export_manuscript_scene_per_page_hint')}
+              testID="export-scene-per-page"
+              value={settings.scenePerPage}
+              onChange={(scenePerPage) => change({ scenePerPage })}
+            />
+          ) : null}
         </>
       ) : null}
 

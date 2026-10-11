@@ -272,6 +272,7 @@ describe('server-bound API services', () => {
       sceneOrder: 'shuffled',
       labels: {
         goToPage: 'Go to page',
+        sceneWord: 'scene',
         goToScene: 'See',
         looseHeading: 'Loose scenes',
         tocHeading: 'Contents',

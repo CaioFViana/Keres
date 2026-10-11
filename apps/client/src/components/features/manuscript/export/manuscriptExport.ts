@@ -75,6 +75,7 @@ export async function deliverScreenplay({
 export type ManuscriptExportLabels = {
   goToPage: string;
   goToScene: string;
+  sceneWord?: string;
   tocHeading: string;
 };
 

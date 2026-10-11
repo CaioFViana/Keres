@@ -192,7 +192,9 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
               pageFormat: pageFormatFor(arcInEffect.medium, arcInEffect.pageFormat),
             }
           : {}),
-        ...(branching ? { sceneOrder: settings.sceneOrder } : {}),
+        ...(branching
+          ? { sceneOrder: settings.sceneOrder, scenePerPage: settings.scenePerPage }
+          : {}),
         ...(settings.arcId ? { arcId: settings.arcId } : {}),
         ...(isScreenplayFormat(format) ? { screenplay: { ...settings.screenplay } } : {}),
         // Only the words of the songs sung in the story go out, never a recording or a link.
@@ -208,6 +210,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
         labels: {
           goToPage: t('export_manuscript_go_to_page'),
           goToScene: t('export_manuscript_go_to_scene'),
+          sceneWord: t('export_manuscript_scene_word'),
           looseHeading: t('export_manuscript_loose_heading'),
           tocHeading: t('export_manuscript_index_heading'),
           endOfExcerpt: t('export_manuscript_end_of_excerpt'),

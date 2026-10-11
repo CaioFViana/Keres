@@ -253,6 +253,7 @@ const story = {
 const manuscriptLabels = {
   goToPage: 'export_manuscript_go_to_page',
   goToScene: 'export_manuscript_go_to_scene',
+  sceneWord: 'export_manuscript_scene_word',
   looseHeading: 'export_manuscript_loose_heading',
   tocHeading: 'export_manuscript_index_heading',
   endOfExcerpt: 'export_manuscript_end_of_excerpt',
@@ -997,7 +998,7 @@ describe('StoryPublishScreen', () => {
         'both',
         'public',
         undefined,
-        manuscriptPayload({ sceneOrder: 'discovery' }),
+        manuscriptPayload({ sceneOrder: 'discovery', scenePerPage: false }),
         undefined,
         true,
         undefined,
@@ -1018,6 +1019,21 @@ describe('StoryPublishScreen', () => {
     await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
     expect(mockPublish.mock.calls[0][6]).toMatchObject({ sceneOrder: 'shuffled' });
     expect(mockPublish.mock.calls[0][6]).not.toHaveProperty('routeId');
+  });
+
+  it('sends one scene per page when a branching story asks for it in the PDF', async () => {
+    mockFindStories.mockResolvedValue({ ...story, type: 'branching' });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(await view.findByTestId('export-format-pdf'));
+    await fireEvent.press(await view.findByTestId('export-scene-per-page'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({ format: 'pdf', scenePerPage: true });
   });
 
   it('leaves a linear story without a scene order', async () => {

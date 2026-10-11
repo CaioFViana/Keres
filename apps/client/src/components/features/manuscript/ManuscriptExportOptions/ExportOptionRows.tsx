@@ -56,6 +56,7 @@ function useRowStyles() {
           paddingVertical: 8,
         },
         switchLabel: { color: colors.text, flex: 1, fontSize: 15 },
+        switchHint: { color: colors.textSecondary, fontSize: 13, marginBottom: 6 },
       }),
     [colors],
   );
@@ -144,22 +145,28 @@ export function SwitchRow({
   value,
   onChange,
   testID,
+  hint,
 }: {
   label: string;
   value: boolean;
   onChange: (value: boolean) => void;
   testID: string;
+  /** What the switch does, in a line under it, when the label alone would not say. */
+  hint?: string;
 }) {
   const styles = useRowStyles();
   return (
-    <View style={styles.switchRow}>
-      <Text style={styles.switchLabel}>{label}</Text>
-      <ThemedSwitch
-        testID={testID}
-        accessibilityLabel={label}
-        value={value}
-        onValueChange={onChange}
-      />
+    <View>
+      <View style={styles.switchRow}>
+        <Text style={styles.switchLabel}>{label}</Text>
+        <ThemedSwitch
+          testID={testID}
+          accessibilityLabel={label}
+          value={value}
+          onValueChange={onChange}
+        />
+      </View>
+      {hint ? <Text style={styles.switchHint}>{hint}</Text> : null}
     </View>
   );
 }

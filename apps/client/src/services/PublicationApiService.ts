@@ -43,6 +43,8 @@ export interface PublishManuscriptOptions {
   style: ManuscriptStyle;
   /** Branching stories: how the gamebook numbers its scenes. */
   sceneOrder?: 'discovery' | 'shuffled';
+  /** Branching, paged formats: every scene opens a page of its own. */
+  scenePerPage?: boolean;
   /** When set, only this arc ships, under its title. */
   arcId?: string;
   /** Only for the screenplay formats: paper, numbering and headings. */

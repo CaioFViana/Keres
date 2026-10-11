@@ -58,6 +58,8 @@ export type ManuscriptExportSettings = {
   includeIndex: boolean;
   /** Branching only: how the gamebook numbers its scenes. */
   sceneOrder: 'discovery' | 'shuffled';
+  /** Branching, paged formats: every scene opens a page of its own (off: a choice names page and scene). */
+  scenePerPage: boolean;
   /** Which arc to export; null exports every arc. */
   arcId: string | null;
   /** A generated title page: the author and a copyright line under the title. */
@@ -84,6 +86,7 @@ export function defaultExportSettings(author = ''): ManuscriptExportSettings {
     resetSceneNumbers: false,
     includeIndex: false,
     sceneOrder: 'discovery',
+    scenePerPage: false,
     arcId: null,
     titlePage: false,
     author,

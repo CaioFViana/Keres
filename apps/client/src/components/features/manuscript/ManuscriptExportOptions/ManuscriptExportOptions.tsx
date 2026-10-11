@@ -64,6 +64,8 @@ interface ManuscriptExportOptionsProps {
   hasSongs?: boolean;
   /** The medium of the work whose pages are set (a comic or a storyboard): asks how they are laid out. */
   pagesMedium?: ArcMedium | null;
+  /** The story or the work has a cover: the formats that carry pictures offer to put it first. */
+  hasCover?: boolean;
 }
 
 /** `12.3 MB`: one decimal, and `< 0.1 MB` for what is not worth a figure. */
@@ -110,6 +112,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   hasMusic = false,
   hasSongs = false,
   pagesMedium = null,
+  hasCover = false,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -355,6 +358,15 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
             value={settings.titlePage}
             onChange={(titlePage) => change({ titlePage })}
           />
+          {hasCover && ['pdf', 'docx', 'epub', 'html'].includes(settings.format) ? (
+            <SwitchRow
+              testID="export-cover"
+              label={t('export_manuscript_cover')}
+              hint={t('export_manuscript_cover_hint')}
+              value={settings.cover}
+              onChange={(cover) => change({ cover })}
+            />
+          ) : null}
           {settings.titlePage || settings.format === 'epub' ? (
             <View>
               <Text style={styles.label}>{t('export_manuscript_author')}</Text>

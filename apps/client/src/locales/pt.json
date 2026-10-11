@@ -807,6 +807,8 @@
   "export_manuscript_cjk_without": "Exportar sem eles",
   "export_manuscript_collapse_spaces": "Juntar espaços repetidos",
   "export_manuscript_contents": "Conteúdo",
+  "export_manuscript_cover": "Pôr a capa na frente",
+  "export_manuscript_cover_hint": "A capa da história, ou da obra quando uma é exportada, como primeira página do livro. Os formatos sem imagens a deixam de fora.",
   "export_manuscript_default": "Padrão",
   "export_manuscript_description": "Comece de um modelo ou ajuste cada opção. O arquivo é gerado neste dispositivo.",
   "export_manuscript_end_of_excerpt": "fim deste trecho",

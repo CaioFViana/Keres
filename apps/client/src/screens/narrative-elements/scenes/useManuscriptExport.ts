@@ -51,6 +51,7 @@ import {
 } from '../../../services/storymanagement/ManuscriptMusicService';
 import {
   estimateManuscriptPageBytes,
+  loadManuscriptCover,
   loadManuscriptPages,
 } from '../../../services/storymanagement/ManuscriptPagesService';
 import { songPrintOf } from '../../../components/features/manuscript/export/songPrintOf';
@@ -410,6 +411,16 @@ export function useManuscriptExport() {
               ? { songs: songPrintOf(settings, t('export_manuscript_songs_heading')) }
               : {}),
           };
+          // The cover of the work being exported, else the story's: read from this device, and left out when it cannot be.
+          const cover =
+            carriesPictures && settings.cover
+              ? await loadManuscriptCover(
+                  db,
+                  exportArc?.coverGalleryId ??
+                    arcInEffect?.coverGalleryId ??
+                    selectedStory?.coverGalleryId,
+                )
+              : null;
           const pageAspect =
             PAGE_FORMAT_ASPECT[
               pageFormatFor(arcInEffect?.medium ?? 'generic', arcInEffect?.pageFormat)
@@ -497,9 +508,19 @@ export function useManuscriptExport() {
           const now = new Date();
           const result = await exportManuscript({
             storyTitle: title,
-            manuscript: loadedPages
-              ? { ...manuscript, images: loadedPages.media, pageAspect, pageLayout }
-              : manuscript,
+            manuscript:
+              loadedPages || cover
+                ? {
+                    ...manuscript,
+                    images: {
+                      ...(loadedPages?.media ?? {}),
+                      ...(cover ? { [cover.key]: cover.image } : {}),
+                    },
+                    pageAspect,
+                    pageLayout,
+                    ...(cover ? { cover: cover.key } : {}),
+                  }
+                : manuscript,
             format: settings.format,
             labels,
             cjkMatrix,

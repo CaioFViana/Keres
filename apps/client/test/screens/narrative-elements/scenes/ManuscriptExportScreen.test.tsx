@@ -61,7 +61,13 @@ jest.mock('../../../../src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = {
-      selectedStory: { id: 'story-1', type: mockStoryType, title: mockStoryTitle, author: 'Ana' },
+      selectedStory: {
+        id: 'story-1',
+        type: mockStoryType,
+        title: mockStoryTitle,
+        author: 'Ana',
+        coverGalleryId: mockStoryCover,
+      },
       activeArcId: mockActiveArcId,
       effectiveArc: mockEffectiveMedium ? { id: 'arc-x', medium: mockEffectiveMedium } : null,
     };
@@ -76,10 +82,13 @@ jest.mock('../../../../src/services/storymanagement/LocationService', () => ({
 }));
 
 const mockLoadManuscriptPages = jest.fn();
+const mockLoadManuscriptCover = jest.fn(async (..._args: unknown[]) => null as unknown);
+let mockStoryCover: string | null = null;
 let mockPageBytes = new Map<string, number[]>();
 jest.mock('../../../../src/services/storymanagement/ManuscriptPagesService', () => ({
   __esModule: true,
   loadManuscriptPages: (...args: unknown[]) => mockLoadManuscriptPages(...args),
+  loadManuscriptCover: (...args: unknown[]) => mockLoadManuscriptCover(...args),
   estimateManuscriptPageBytes: async () => mockPageBytes,
 }));
 let mockHasMusic = false;
@@ -325,6 +334,8 @@ beforeEach(() => {
   mockLanguage = 'en';
   mockLocations = [];
   mockEffectiveMedium = null;
+  mockStoryCover = null;
+  mockLoadManuscriptCover.mockResolvedValue(null);
   mockManuscriptData = linearData();
   mockExportManuscript.mockResolvedValue({ delivered: true, fileName: 'x.docx' });
   mockDeliverScreenplay.mockResolvedValue({ delivered: true, fileName: 'script.fountain' });
@@ -928,6 +939,43 @@ describe('ManuscriptExportScreen pages', () => {
       call.manuscript.blocks.filter((block: { kind: string }) => block.kind === 'paragraph'),
     );
     expect(paragraphs).not.toContain('Caption');
+  });
+
+  it('puts the cover of the story first in a format that carries pictures, and reads it from the cover of the story', async () => {
+    mockStoryCover = 'gal-cover';
+    mockLoadManuscriptCover.mockResolvedValue({ key: 'cover:gal-cover', image: picture });
+    const view = await renderScreen();
+
+    await exportWith(view, {
+      format: 'pdf',
+      includeSceneNames: true,
+      includeLooseScenes: false,
+      resetSceneNumbers: false,
+      includeIndex: false,
+      arcId: null,
+    });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockLoadManuscriptCover.mock.calls[0][1]).toBe('gal-cover');
+    const call = mockExportManuscript.mock.calls[0][0];
+    expect(call.manuscript.cover).toBe('cover:gal-cover');
+    expect(call.manuscript.images).toMatchObject({ 'cover:gal-cover': picture });
+  });
+
+  it('reads no cover for a format without pictures, or when the person turned it off', async () => {
+    mockStoryCover = 'gal-cover';
+    const view = await renderScreen();
+    await exportWith(view, {
+      format: 'md',
+      includeSceneNames: true,
+      includeLooseScenes: false,
+      resetSceneNumbers: false,
+      includeIndex: false,
+      arcId: null,
+    });
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockLoadManuscriptCover).not.toHaveBeenCalled();
+    expect(mockExportManuscript.mock.calls[0][0].manuscript.cover).toBeUndefined();
   });
 
   it('reads no picture for a format that cannot show one, and still carries the text', async () => {

@@ -146,6 +146,50 @@ describe('ManuscriptExportOptions page layout', () => {
   });
 });
 
+describe('ManuscriptExportOptions cover', () => {
+  function CoverHarness({ hasCover }: { hasCover: boolean }) {
+    const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+    useEffect(() => {
+      latest = settings;
+    });
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch={false}
+        looseCount={0}
+        chapterNumberingAvailable
+        arcs={[]}
+        hasCover={hasCover}
+      />
+    );
+  }
+
+  it('offers to put the cover first, on by default, in a format that carries pictures', async () => {
+    const view = await render(<CoverHarness hasCover />);
+    await fireEvent.press(view.getByTestId('export-format-pdf'));
+
+    expect(view.getByTestId('export-cover')).toBeTruthy();
+    expect(latest?.cover).toBe(true);
+    await fireEvent.press(view.getByTestId('export-cover'));
+    expect(latest?.cover).toBe(false);
+  });
+
+  it('offers nothing for a format without pictures, or when there is no cover', async () => {
+    const text = await render(<CoverHarness hasCover />);
+    await fireEvent.press(text.getByTestId('export-format-md'));
+    expect(text.queryByTestId('export-cover')).toBeNull();
+  });
+
+  it('offers nothing when the story and the work have no cover', async () => {
+    const bare = await render(<CoverHarness hasCover={false} />);
+    await fireEvent.press(bare.getByTestId('export-format-pdf'));
+    expect(bare.queryByTestId('export-cover')).toBeNull();
+  });
+});
+
 describe('ManuscriptExportOptions size', () => {
   const assess = (bytes: number) => assessManuscriptSize(bytes, 100 * 1024 * 1024);
 

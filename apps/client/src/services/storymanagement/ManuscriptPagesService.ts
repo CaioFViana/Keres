@@ -159,3 +159,26 @@ export async function refreshStaleSketchSnapshots(
   }
   return redrawn;
 }
+
+/**
+ * The cover of a book, read from this device: the picture it is, or `null` when it has none, it is gone, it is not
+ * on this device or it is not an image the manuscript can embed (a GIF, a WebP). Said by returning nothing: a book
+ * without its cover is still a book.
+ */
+export async function loadManuscriptCover(
+  db: AppDrizzleClient,
+  galleryId: string | null | undefined,
+): Promise<{ key: string; image: ManuscriptImage } | null> {
+  if (!galleryId) return null;
+  try {
+    const row = await createGalleryService(db).getById(galleryId);
+    if (!row || row.isDeleted || row.mediaType !== 'image' || !row.localPath) return null;
+    const bytes = await mediaFileService.readBytes(row.localPath);
+    const info = readImageInfo(bytes);
+    if (!info || info.width * info.height > MAX_MANUSCRIPT_IMAGE_PIXELS) return null;
+    return { key: `cover:${galleryId}`, image: { ...info, bytes } };
+  } catch (error) {
+    console.log('loadManuscriptCover: could not read the cover.', error);
+    return null;
+  }
+}

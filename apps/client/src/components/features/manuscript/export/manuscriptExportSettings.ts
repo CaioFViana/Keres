@@ -65,6 +65,8 @@ export type ManuscriptExportSettings = {
   pageLayout: PageLayout | null;
   /** Which arc to export; null exports every arc. */
   arcId: string | null;
+  /** Puts the cover of the story or the work first, when it has one and the format carries pictures. */
+  cover: boolean;
   /** A generated title page: the author and a copyright line under the title. */
   titlePage: boolean;
   /** The book's author (EPUB metadata, title page); the story's by default. */
@@ -92,6 +94,7 @@ export function defaultExportSettings(author = ''): ManuscriptExportSettings {
     scenePerPage: false,
     pageLayout: null,
     arcId: null,
+    cover: true,
     titlePage: false,
     author,
     style: {},

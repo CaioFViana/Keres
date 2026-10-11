@@ -61,6 +61,14 @@ const ManuscriptExportScreen = () => {
   // export is of), never for a branching story, whose order is a graph and not a script.
   const exportedArc = settings.arcId ? arcs.find((arc) => arc.id === settings.arcId) : undefined;
   const medium = exportedArc?.medium ?? effectiveArc?.medium ?? 'generic';
+  // The cover to put first: the work's own, else the story's.
+  const selectedStory = useStoryStore((state) => state.selectedStory);
+  const effectiveFull = effectiveArc ? arcs.find((arc) => arc.id === effectiveArc.id) : undefined;
+  const hasCover = !!(
+    exportedArc?.coverGalleryId ??
+    effectiveFull?.coverGalleryId ??
+    selectedStory?.coverGalleryId
+  );
   const formats =
     !isBranching && medium === 'screenplay'
       ? [...MANUSCRIPT_EXPORT_FORMATS, ...SCREENPLAY_EXPORT_FORMATS]
@@ -109,6 +117,7 @@ const ManuscriptExportScreen = () => {
         arcs={arcs}
         chronicle={medium === 'campaign'}
         pagesMedium={medium === 'comic' || medium === 'storyboard' ? medium : null}
+        hasCover={hasCover}
       />
     </EntityFormContainer>
   );

@@ -807,6 +807,8 @@
   "export_manuscript_cjk_without": "Export without them",
   "export_manuscript_collapse_spaces": "Collapse repeated spaces",
   "export_manuscript_contents": "Contents",
+  "export_manuscript_cover": "Put the cover first",
+  "export_manuscript_cover_hint": "The cover of the story, or of the work when one is exported, as the first page of the book. The formats without pictures leave it out.",
   "export_manuscript_default": "Default",
   "export_manuscript_description": "Start from a preset or adjust each option. The file is made on this device.",
   "export_manuscript_end_of_excerpt": "end of this excerpt",

@@ -32,6 +32,8 @@ export type PublishableArc = {
   author: string | null;
   medium: ArcMedium;
   pageFormat?: PageFormat | null;
+  /** The Gallery medium that is the work's cover. */
+  coverGalleryId?: string | null;
 };
 
 /** The words of the reader's own interface, in the publisher's language. */
@@ -87,6 +89,8 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   // A song is sung somewhere in the story: only then does the publication offer to print songs.
   const [hasSungSongs, setHasSungSongs] = useState(false);
   const [manuscriptArcs, setManuscriptArcs] = useState<PublishableArc[]>([]);
+  // The cover of the story itself, which a work without its own falls back to.
+  const [storyCoverId, setStoryCoverId] = useState<string | null>(null);
   // What goes out: `null` is the whole universe; an id is one work of it (manuscript and/or reader only).
   const [releaseArcId, setReleaseArcIdState] = useState<string | null>(null);
 
@@ -101,6 +105,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
       setManuscriptLooseCount(0);
       setHasSungSongs(false);
       setManuscriptArcs([]);
+      setStoryCoverId(story.coverGalleryId ?? null);
       setReleaseArcIdState(null);
       void (async () => {
         try {
@@ -112,6 +117,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
               author: arc.author,
               medium: arc.medium,
               pageFormat: arc.pageFormat,
+              coverGalleryId: arc.coverGalleryId,
             })),
           );
           setHasSungSongs((await storyMusicFacts(drizzleDb, story.id)).hasSungSongs);
@@ -200,6 +206,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
         ...(branching
           ? { sceneOrder: settings.sceneOrder, scenePerPage: settings.scenePerPage }
           : {}),
+        ...(settings.cover ? {} : { includeCover: false }),
         ...(settings.arcId ? { arcId: settings.arcId } : {}),
         ...(isScreenplayFormat(format) ? { screenplay: { ...settings.screenplay } } : {}),
         // Only the words of the songs sung in the story go out, never a recording or a link.
@@ -268,6 +275,8 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     : manuscriptArcs.length === 1
       ? manuscriptArcs[0]
       : undefined;
+  // Whether there is a cover to put first: the work's own, else the story's.
+  const hasCover = !!(pagesArc?.coverGalleryId ?? storyCoverId);
   const pagesMedium =
     pagesArc && (pagesArc.medium === 'comic' || pagesArc.medium === 'storyboard')
       ? pagesArc.medium
@@ -288,6 +297,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     hasSungSongs,
     manuscriptArcs,
     pagesMedium,
+    hasCover,
     releaseArcId,
     setReleaseArcId,
     resetForStory,

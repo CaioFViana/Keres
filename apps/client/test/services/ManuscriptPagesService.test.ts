@@ -5,6 +5,7 @@ import { deflateSync } from 'node:zlib';
 import * as schema from '../../src/db/schema';
 import {
   estimateManuscriptPageBytes,
+  loadManuscriptCover,
   loadManuscriptPages,
 } from '../../src/services/storymanagement/ManuscriptPagesService';
 import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
@@ -236,5 +237,37 @@ describe('estimateManuscriptPageBytes', () => {
 
     expect(sizes.get('scene-1')).toEqual([12_345, 1_000_000]);
     expect(sizes.get('scene-2')).toEqual([0]);
+  });
+});
+
+describe('loadManuscriptCover', () => {
+  it('reads the picture of the cover, named by the medium it is', async () => {
+    const cover = await newImage('cover.png');
+
+    const loaded = await loadManuscriptCover(database.db, cover.id);
+
+    expect(loaded?.key).toBe(`cover:${cover.id}`);
+    expect(loaded?.image).toMatchObject({ mimeType: 'image/png', width: 2, height: 1 });
+    expect(mockReadBytes).toHaveBeenCalledWith('/media/cover.png');
+  });
+
+  it('is nothing when there is no cover, or the medium is gone, not an image or not on this device', async () => {
+    expect(await loadManuscriptCover(database.db, null)).toBeNull();
+    expect(await loadManuscriptCover(database.db, 'nowhere')).toBeNull();
+
+    const gone = await newImage('gone.png');
+    await createGalleryService(database.db).deleteGallery(TEST_USER_ID, gone.id);
+    expect(await loadManuscriptCover(database.db, gone.id)).toBeNull();
+
+    const missing = await newImage('missing.png');
+    mockReadBytes.mockRejectedValueOnce(new Error('no such file'));
+    expect(await loadManuscriptCover(database.db, missing.id)).toBeNull();
+  });
+
+  it('is nothing for a file that is not a PNG or a JPEG', async () => {
+    const odd = await newImage('odd.png');
+    mockReadBytes.mockResolvedValueOnce(new Uint8Array([1, 2, 3]));
+
+    expect(await loadManuscriptCover(database.db, odd.id)).toBeNull();
   });
 });

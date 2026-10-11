@@ -118,6 +118,7 @@ export function PublishManuscriptSection({
             showFormat={manuscript.attachManuscript}
             hasSongs={manuscript.hasSungSongs}
             pagesMedium={manuscript.pagesMedium}
+            hasCover={manuscript.hasCover}
           />
         </View>
       )}

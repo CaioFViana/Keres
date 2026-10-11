@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ScenePageSelect } from '@/src/db/schema';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
 import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { ensureSketchSnapshot } from '@/src/services/storymanagement/SketchSnapshotService';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /** A page with what it shows: the Gallery medium to draw, its name, and whether the image is gone. */
@@ -49,9 +50,18 @@ export async function scenePageViewOf(
 /**
  * A scene's pages, in order, each with what it shows. Reloads when pages, Sketches or the Gallery
  * change, so a page whose image was deleted on another device turns into "media removed".
+ *
+ * With `redrawFor` (the person who may edit), a page drawn as a Sketch is also kept showing the drawing as it is
+ * now: a Sketch that has no picture yet, or changed since its picture was made, is drawn again, one at a time.
  */
-export function useScenePages(sceneId: string | undefined, storyId: string | undefined) {
+export function useScenePages(
+  sceneId: string | undefined,
+  storyId: string | undefined,
+  options: { redrawFor?: string | null } = {},
+) {
+  const redrawFor = options.redrawFor ?? null;
   const db = useDrizzle();
+  const redrawing = useRef(false);
   const [pages, setPages] = useState<ScenePageView[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,14 +73,42 @@ export function useScenePages(sceneId: string | undefined, storyId: string | und
     }
     try {
       const rows = await createScenePageService(db).getPagesForScene(sceneId);
-      setPages(await Promise.all(rows.map((row) => scenePageViewOf(db, row))));
+      const views = await Promise.all(rows.map((row) => scenePageViewOf(db, row)));
+      setPages(views);
+      if (redrawFor && !redrawing.current) {
+        redrawing.current = true;
+        let redrawn = false;
+        try {
+          const sketchIds = new Set(
+            views.flatMap((view) =>
+              view.isSketch && !view.mediaGone && view.page.sketchId ? [view.page.sketchId] : [],
+            ),
+          );
+          for (const sketchId of sketchIds) {
+            if ((await ensureSketchSnapshot(db, redrawFor, sketchId))?.regenerated) redrawn = true;
+          }
+        } catch (error) {
+          console.log('useScenePages: could not draw a Sketch page.', error);
+        } finally {
+          redrawing.current = false;
+        }
+        if (redrawn) {
+          setPages(
+            await Promise.all(
+              (await createScenePageService(db).getPagesForScene(sceneId)).map((row) =>
+                scenePageViewOf(db, row),
+              ),
+            ),
+          );
+        }
+      }
     } catch (error) {
       console.log('useScenePages: failed to load the pages.', error);
       setPages([]);
     } finally {
       setLoading(false);
     }
-  }, [db, sceneId]);
+  }, [db, redrawFor, sceneId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no scene is given; everything else waits for `await`.

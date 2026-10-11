@@ -744,6 +744,15 @@ describe('LocationGraphScreen', () => {
       expect(view.getByTestId('sheet-section-child_locations').props.children).toBe('Harbor');
     });
 
+    it('does not call a folded region lonely: it still holds its places', async () => {
+      const view = await render(<LocationGraphScreen />);
+      await fold(view);
+
+      expect(view.getByTestId('node-sheet-badges').props.children).not.toContain(
+        'location_graph_badge_isolated',
+      );
+    });
+
     it('offers to show it again, and does', async () => {
       const view = await render(<LocationGraphScreen />);
       await fold(view);

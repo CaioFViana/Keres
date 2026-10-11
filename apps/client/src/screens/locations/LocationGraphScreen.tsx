@@ -474,8 +474,12 @@ const LocationGraphScreen = () => {
         <GraphNodeSheet
           title={selectedNode.location.name}
           subtitle={ancestorPath ? { text: ancestorPath } : undefined}
+          // Judged on the map before folding: a folded region alone on the drawing still holds its places.
           badges={
-            selectedNode.isIsolated
+            selectedNode.isIsolated &&
+            !selectedParent &&
+            selectedChildren.length === 0 &&
+            selectedConnections.length === 0
               ? [{ label: t('location_graph_badge_isolated'), color: colors.textSecondary }]
               : undefined
           }

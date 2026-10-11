@@ -67,9 +67,9 @@ function filtersOf(applied: Applied): ActivityFilters {
   };
 }
 
-function UserCell({ user }: { user: AuditUserRef | null }) {
+function UserCell({ user, none = '-' }: { user: AuditUserRef | null; none?: string }) {
   const { t } = useTranslation('admin');
-  if (!user) return <>-</>;
+  if (!user) return <>{none}</>;
   const label = user.tag ? `@${user.tag}` : user.username;
   return (
     <>
@@ -438,7 +438,11 @@ export function ActivityPage() {
                       {actionLabel(entry.action)}
                     </td>
                     <td>
-                      <UserCell user={entry.actor} />
+                      <UserCell
+                        user={entry.actor}
+                        // What the payment service reports has no person behind it.
+                        none={entry.category === 'payment' ? t('activity.byPaymentService') : '-'}
+                      />
                     </td>
                     <td>
                       <UserCell user={entry.subject} />

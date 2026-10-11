@@ -203,6 +203,27 @@ describe('StoryContent moderation viewer', () => {
     await view.unmount();
   });
 
+  it('names a row by the words it carries when it has no name, rather than by its id', async () => {
+    vi.mocked(AdminStoryApiService.entityTypes).mockResolvedValue([
+      { entityType: 'Choice', liveCount: 1 },
+    ]);
+    vi.mocked(AdminStoryApiService.entities).mockResolvedValue({
+      items: [{ id: '01HZ-CHOICE', text: 'Let go and fall' }],
+      total: 1,
+      page: 1,
+      pageSize: 25,
+    });
+
+    const view = await open();
+    const tabs = Array.from(view.container.querySelectorAll('[role="tab"]'));
+    await click(tabs.find((tab) => tab.textContent === 'Entities')!);
+    await flush();
+    await flush();
+
+    expect(view.container.querySelector('summary')?.textContent).toBe('Let go and fall');
+    await view.unmount();
+  });
+
   it('advances entity pages through the pagination controls', async () => {
     vi.mocked(AdminStoryApiService.entityTypes).mockResolvedValue([
       { entityType: 'OperationLog', liveCount: 3 },

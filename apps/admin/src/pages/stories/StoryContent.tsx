@@ -211,10 +211,13 @@ function formatFieldValue(value: unknown): string {
   return String(value);
 }
 
+/** What a row is called in the list: its name, or the words it carries (a choice has text, a note a title), cut short. */
 function rowLabel(row: Record<string, unknown>): string {
-  for (const key of ['name', 'title', 'label']) {
-    if (typeof row[key] === 'string' && (row[key] as string).length > 0) {
-      return row[key] as string;
+  for (const key of ['name', 'title', 'label', 'text', 'summary', 'description']) {
+    const value = row[key];
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const words = value.trim().replace(/\s+/g, ' ');
+      return words.length > 80 ? `${words.slice(0, 80)}…` : words;
     }
   }
   return typeof row.id === 'string' ? row.id : JSON.stringify(row).slice(0, 60);

@@ -209,6 +209,18 @@ describe('activity page: the record', () => {
     expect(rows[2].textContent).toContain('ghost');
   });
 
+  it('names the payment service where a payment event has no person who did it', async () => {
+    mocks.list.mockResolvedValue(
+      page([event({ id: 'p', category: 'payment', action: 'payment.succeeded', actor: null })]),
+    );
+    const view = await renderPage();
+    await flush();
+
+    expect(
+      view.container.querySelectorAll('tbody tr')[0].querySelectorAll('td')[2].textContent,
+    ).toBe('Payment service');
+  });
+
   it('marks failures and refusals apart from what worked', async () => {
     mocks.list.mockResolvedValue(
       page([event({ id: 'a', outcome: 'failure' }), event({ id: 'b', outcome: 'denied' })]),

@@ -177,11 +177,7 @@ const ItemJourneyFormScreen = () => {
       actions={
         <>
           {isEditing && (
-            <Button
-              onPress={handleDelete}
-              variant="destructive"
-              disabled={saving || deleting}
-            >
+            <Button onPress={handleDelete} variant="destructive" disabled={saving || deleting}>
               {t('vocabulary_delete_entity', { entity: journey })}
             </Button>
           )}

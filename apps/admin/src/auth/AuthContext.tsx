@@ -1,10 +1,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import {
-  login as doLogin,
-  logout as doLogout,
-  probeAdminAccess,
-} from '../api/AdminAuthService';
+import { login as doLogin, logout as doLogout, probeAdminAccess } from '../api/AdminAuthService';
 import {
   getStoredUsername,
   getToken,

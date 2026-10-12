@@ -158,10 +158,10 @@ const totalWithoutTests = {
 const dataOnlyCategories = new Set(['Client-Help', 'Client-StoryDevices', 'Client-Narratives']);
 const dataOnly = results
   .filter((result) => dataOnlyCategories.has(result.name))
-  .reduce(
-    (sum, result) => ({ files: sum.files + result.files, lines: sum.lines + result.lines }),
-    { files: 0, lines: 0 },
-  );
+  .reduce((sum, result) => ({ files: sum.files + result.files, lines: sum.lines + result.lines }), {
+    files: 0,
+    lines: 0,
+  });
 const totalWithoutData = {
   files: total.files - dataOnly.files,
   lines: total.lines - dataOnly.lines,

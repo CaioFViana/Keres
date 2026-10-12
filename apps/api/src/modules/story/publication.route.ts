@@ -129,9 +129,7 @@ const ReaderRequestSchema = t.Object({
 /** The long-standing JSON publication body. */
 const PublishJsonBody = t.Object({
   operationVersion: t.Integer({ minimum: 0 }),
-  labelMode: t.Optional(
-    t.Union([t.Literal('version'), t.Literal('date'), t.Literal('both')]),
-  ),
+  labelMode: t.Optional(t.Union([t.Literal('version'), t.Literal('date'), t.Literal('both')])),
   /**
    * Sent on every publication, not only when it changes: it is the choice the person made for this
    * publication. Omitting it is equivalent to `public`, so publishing without asking for a password
@@ -193,7 +191,10 @@ function isFilePart(part: unknown): part is {
   );
 }
 
-async function uploadedFileOf(part: unknown, name: string): Promise<PublishUploadedFile | undefined> {
+async function uploadedFileOf(
+  part: unknown,
+  name: string,
+): Promise<PublishUploadedFile | undefined> {
   if (part === undefined) return undefined;
   if (!isFilePart(part)) {
     throw new AppError(400, `The multipart publication ${name} must be a file.`);
@@ -256,12 +257,11 @@ async function publishWithClientBytes(
 }
 
 /** Multipart (`data` part) carries client-compiled bytes; anything else is the JSON publication. */
-function isMultipartPublishBody(body: unknown): body is { data: unknown } & Record<string, unknown> {
+function isMultipartPublishBody(
+  body: unknown,
+): body is { data: unknown } & Record<string, unknown> {
   return (
-    typeof body === 'object' &&
-    body !== null &&
-    'data' in body &&
-    !('operationVersion' in body)
+    typeof body === 'object' && body !== null && 'data' in body && !('operationVersion' in body)
   );
 }
 

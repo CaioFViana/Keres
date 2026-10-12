@@ -255,22 +255,18 @@ export class PublicationApiService {
         files.reader.filename,
       );
     }
-    const response = await this.clientFor(server).post(
-      `/stories/${storyId}/publications`,
-      form,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: options?.timeoutMs ?? PUBLISH_UPLOAD_TIMEOUT_MS,
-        ...(options?.signal ? { signal: options.signal } : {}),
-        ...(options?.onUploadProgress
-          ? {
-              onUploadProgress: (event: { loaded: number; total?: number }) => {
-                if (event.total) options.onUploadProgress?.(event.loaded / event.total);
-              },
-            }
-          : {}),
-      },
-    );
+    const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: options?.timeoutMs ?? PUBLISH_UPLOAD_TIMEOUT_MS,
+      ...(options?.signal ? { signal: options.signal } : {}),
+      ...(options?.onUploadProgress
+        ? {
+            onUploadProgress: (event: { loaded: number; total?: number }) => {
+              if (event.total) options.onUploadProgress?.(event.loaded / event.total);
+            },
+          }
+        : {}),
+    });
     return response.data;
   }
 

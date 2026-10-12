@@ -12,7 +12,11 @@ export interface Notification {
 interface NotificationState {
   currentNotifications: (Notification | null)[]; // Array to hold up to 3 active notifications
   queue: Notification[];
-  showNotification: (message: string, type?: NotificationType, options?: { force?: boolean }) => void;
+  showNotification: (
+    message: string,
+    type?: NotificationType,
+    options?: { force?: boolean },
+  ) => void;
   clearNotificationLane: (laneIndex: number) => void; // New action to clear a specific lane
   clearAll: () => void;
 }
@@ -23,7 +27,11 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   clearAll: () => set({ currentNotifications: [null, null, null], queue: [] }),
 
-  showNotification: (message: string, type: NotificationType = 'info', options?: { force?: boolean }) => {
+  showNotification: (
+    message: string,
+    type: NotificationType = 'info',
+    options?: { force?: boolean },
+  ) => {
     const newNotification: Notification = {
       id: createULID(),
       message,

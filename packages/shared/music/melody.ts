@@ -380,7 +380,8 @@ export function replaceSection(text: string, label: string | null, tune: string)
       lines.splice(firstMark < 0 ? lines.length : firstMark, 0, ...tune.split('\n'));
       return lines.join('\n');
     }
-    const body = lines.length > 0 && lines[lines.length - 1].trim() === '' ? lines.slice(0, -1) : lines;
+    const body =
+      lines.length > 0 && lines[lines.length - 1].trim() === '' ? lines.slice(0, -1) : lines;
     return [...body, `P:${label}`, ...tune.split('\n')].join('\n');
   }
   const [from, to] = span;

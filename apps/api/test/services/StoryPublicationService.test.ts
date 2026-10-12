@@ -136,7 +136,11 @@ beforeEach(() => {
   dbState.failTransaction = false;
   dbState.inserts.length = 0;
   dbState.existingPublications.length = 0;
-  for (const fn of [...Object.values(storeFns), ...Object.values(tierFns), ...Object.values(compileFns)]) {
+  for (const fn of [
+    ...Object.values(storeFns),
+    ...Object.values(tierFns),
+    ...Object.values(compileFns),
+  ]) {
     fn.mockClear();
   }
   tierFns.getEffectiveTier.mockResolvedValue(null);
@@ -395,7 +399,10 @@ describe('StoryPublicationService version retention', () => {
 
     expect(storeFns.delete).toHaveBeenCalledWith('story-1', 'old-5');
     expect(storeFns.delete).toHaveBeenCalledWith('story-1', 'old-6');
-    expect(storeFns.delete).not.toHaveBeenCalledWith('story-1', expect.stringMatching(/^old-[0-4]$/));
+    expect(storeFns.delete).not.toHaveBeenCalledWith(
+      'story-1',
+      expect.stringMatching(/^old-[0-4]$/),
+    );
   });
 
   it('trims to the plan’s versions per story', async () => {

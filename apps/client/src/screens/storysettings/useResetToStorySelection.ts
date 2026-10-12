@@ -16,8 +16,6 @@ export function useResetToStorySelection() {
     ) {
       root = parent;
     }
-    root.dispatch(
-      CommonActions.reset({ index: 0, routes: [{ name: 'StorySelection' }] }) as never,
-    );
+    root.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'StorySelection' }] }) as never);
   }, [navigation]);
 }

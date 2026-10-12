@@ -14,9 +14,7 @@ import { StatRadarChart } from '../../components/features/stats/StatRadarChart/S
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type {
-  MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';

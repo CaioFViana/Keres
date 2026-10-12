@@ -10,9 +10,7 @@ import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSw
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryStats } from '../../hooks/useStoryStats';
-import type {
-  MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import type { StatsStackParamList } from '../../navigation/StatsStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
@@ -21,10 +19,7 @@ import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import { buildStatRanking } from '../../utils/statRanking';
 
-type StatRankingNavigationProp = NativeStackNavigationProp<
-  StatsStackParamList,
-  'StatRanking'
->;
+type StatRankingNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatRanking'>;
 
 /**
  * The tier list: one stat chosen at the top and everybody in the story sorted by it. Each mode

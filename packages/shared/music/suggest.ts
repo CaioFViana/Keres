@@ -76,7 +76,9 @@ export function suggestTune(input: SuggestInput): string {
   const flats = input.key ? keyPrefersFlats(input.key) : false;
   const bar = quarterBeatsPerBar(input.meter);
   const lines = input.syllablesPerLine.filter((count) => count > 0);
-  const random = generator(input.attempt * 7919 + lines.reduce((sum, count) => sum * 31 + count, 17));
+  const random = generator(
+    input.attempt * 7919 + lines.reduce((sum, count) => sum * 31 + count, 17),
+  );
   const out: string[] = [];
   let step = [0, 2, 4][Math.floor(random() * 3)];
 

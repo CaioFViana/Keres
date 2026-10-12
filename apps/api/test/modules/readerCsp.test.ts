@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { READER_CSP, READER_SCRIPT_HASHES } from '../../src/modules/public/readerCsp';
 
-const hashOf = (source: string) => `'sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}'`;
+const hashOf = (source: string) =>
+  `'sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}'`;
 
 /** The executable engine block of a compiled reader page (not its JSON story data). */
 function executableScriptOf(html: string): string {

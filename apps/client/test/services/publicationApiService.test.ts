@@ -155,7 +155,11 @@ describe('publishCompiled', () => {
       true,
       undefined,
       {
-        manuscript: { bytes: manuscriptBytes, filename: 'manuscript.md', mimeType: 'text/markdown' },
+        manuscript: {
+          bytes: manuscriptBytes,
+          filename: 'manuscript.md',
+          mimeType: 'text/markdown',
+        },
       },
       { onUploadProgress, timeoutMs: 60000, signal },
     );

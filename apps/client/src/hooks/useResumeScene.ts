@@ -17,9 +17,7 @@ export interface ResumeScene {
  */
 export function useResumeScene(storyId: string | undefined): ResumeScene | null {
   const db = useDrizzle();
-  const [resume, setResume] = useState<{ storyId: string; scene: ResumeScene | null } | null>(
-    null,
-  );
+  const [resume, setResume] = useState<{ storyId: string; scene: ResumeScene | null } | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -28,8 +26,9 @@ export function useResumeScene(storyId: string | undefined): ResumeScene | null 
       void (async () => {
         try {
           const scene = await createSceneService(db).getLastEdited(storyId);
-          const chapter =
-            scene?.chapterId ? await createChapterService(db).getById(scene.chapterId) : undefined;
+          const chapter = scene?.chapterId
+            ? await createChapterService(db).getById(scene.chapterId)
+            : undefined;
           if (cancelled) return;
           setResume({
             storyId,

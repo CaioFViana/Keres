@@ -55,12 +55,7 @@ describe('validateUploadedManuscript', () => {
   it('accepts zip bytes for the zipped formats', () => {
     expect(validateUploadedManuscript(zipBytes(), 'docx', 'book.docx').format).toBe('docx');
     expect(
-      validateUploadedManuscript(
-        zipBytes(),
-        'epub',
-        'book.epub',
-        'application/epub+zip',
-      ).format,
+      validateUploadedManuscript(zipBytes(), 'epub', 'book.epub', 'application/epub+zip').format,
     ).toBe('epub');
   });
 
@@ -99,9 +94,7 @@ describe('validateUploadedManuscript', () => {
   });
 
   it('refuses a non-document as HTML', () => {
-    expect(
-      statusOf(() => validateUploadedManuscript(mdBytes(), 'html', 'book.html')),
-    ).toBe(400);
+    expect(statusOf(() => validateUploadedManuscript(mdBytes(), 'html', 'book.html'))).toBe(400);
     expect(validateUploadedManuscript(htmlBytes(), 'html', 'book.html').format).toBe('html');
   });
 });

@@ -39,7 +39,8 @@ describe('suggestTune', () => {
         const pitches = parseMelody(tune([7, 7, 7, 7], key, attempt)).sections[0].notes.map(
           (n) => n.pitch as number,
         );
-        for (const pitch of pitches) expect(scale.has((((pitch - tonic) % 12) + 12) % 12)).toBe(true);
+        for (const pitch of pitches)
+          expect(scale.has((((pitch - tonic) % 12) + 12) % 12)).toBe(true);
       }
     }
   });
@@ -64,7 +65,8 @@ describe('suggestTune', () => {
   it('rests the end of an early line on the fifth or the third, not on home', () => {
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const lines = tune([6, 6, 6], 'C', attempt).split('\n');
-      const endOf = (line: string) => parseMelody(line).sections[0].notes.slice(-1)[0].pitch as number;
+      const endOf = (line: string) =>
+        parseMelody(line).sections[0].notes.slice(-1)[0].pitch as number;
       expect(endOf(lines[0]) % 12).toBe(7);
       expect(endOf(lines[1]) % 12).toBe(4);
     }

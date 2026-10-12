@@ -288,7 +288,11 @@ describe('MainDrawerMenu', () => {
 
     mockFocused = { route: 'CharactersStack', focus: {} };
     view.rerender(
-      <MainDrawerMenu state={{ routes: [], index: 0 } as never} navigation={{} as never} drawerId="main-system" />,
+      <MainDrawerMenu
+        state={{ routes: [], index: 0 } as never}
+        navigation={{} as never}
+        drawerId="main-system"
+      />,
     );
     await act(async () => {});
 

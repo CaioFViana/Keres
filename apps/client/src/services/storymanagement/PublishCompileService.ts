@@ -12,10 +12,7 @@ import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../../db';
 import type { StorySelect } from '../../db/schema';
 import { pdfFontMatrices } from '../../components/features/manuscript/export/pdfFontAssets';
-import type {
-  PublishManuscriptOptions,
-  PublishReaderOptions,
-} from '../PublicationApiService';
+import type { PublishManuscriptOptions, PublishReaderOptions } from '../PublicationApiService';
 import { createChapterService } from './ChapterService';
 import { createChoiceService } from './ChoiceService';
 import { createChoiceCheckGroupService } from './ChoiceCheckGroupService';
@@ -85,9 +82,18 @@ export async function renderPublishManuscript(
   signal?: AbortSignal,
 ): Promise<CompiledPublishManuscript> {
   signal?.throwIfAborted();
-  const compiled = await compileStoryManuscript(input, options, await pdfFontMatrices().catch(() => null) ?? undefined);
+  const compiled = await compileStoryManuscript(
+    input,
+    options,
+    (await pdfFontMatrices().catch(() => null)) ?? undefined,
+  );
   signal?.throwIfAborted();
-  return { bytes: compiled.bytes, extension: compiled.extension, mimeType: compiled.mimeType, format: options.format as ManuscriptFormat };
+  return {
+    bytes: compiled.bytes,
+    extension: compiled.extension,
+    mimeType: compiled.mimeType,
+    format: options.format as ManuscriptFormat,
+  };
 }
 
 /** Renders an already-assembled reader input to its self-contained page. */
@@ -103,7 +109,13 @@ export function renderPublishReader(
 export interface PublishCompileRows {
   storyTitle: string;
   storyType: 'linear' | 'branching';
-  chapters: { id: string; name: string; index: number; type: 'chapter' | 'event'; arcId: string | null }[];
+  chapters: {
+    id: string;
+    name: string;
+    index: number;
+    type: 'chapter' | 'event';
+    arcId: string | null;
+  }[];
   scenes: {
     id: string;
     chapterId: string | null;
@@ -158,7 +170,10 @@ export interface PublishCompileRows {
  * plays by. Mirrors the server's `compileInputOf` over the synced export, so a
  * publication reads exactly like the local file.
  */
-export function buildPublishCompileInput(rows: PublishCompileRows, t: TFunction): CompileStoryReaderInput {
+export function buildPublishCompileInput(
+  rows: PublishCompileRows,
+  t: TFunction,
+): CompileStoryReaderInput {
   const annotations = describeChoiceAnnotations({
     groups: rows.groups,
     checks: rows.checks,
@@ -277,8 +292,7 @@ export async function compilePublishArtifacts(
     // Pages ride with in-scope scenes only, exactly like the server's export
     // does; formats without pictures keep a page's caption and text.
     const manuscriptCarriesPictures =
-      manuscriptOptions !== undefined &&
-      PICTURE_MANUSCRIPT_FORMATS.has(manuscriptOptions.format);
+      manuscriptOptions !== undefined && PICTURE_MANUSCRIPT_FORMATS.has(manuscriptOptions.format);
     const readPictures = manuscriptCarriesPictures || readerOptions !== undefined;
     const loadedPages =
       (manuscriptOptions || readerOptions) && inScope.size > 0
@@ -384,11 +398,7 @@ export async function compilePublishArtifacts(
       );
     }
     if (readerOptions) {
-      const rendered = renderPublishReader(
-        withMedia,
-        readerOptions as ReaderOptionsInput,
-        signal,
-      );
+      const rendered = renderPublishReader(withMedia, readerOptions as ReaderOptionsInput, signal);
       result.reader = { bytes: rendered.bytes, mimeType: rendered.mimeType };
     }
     return result;

@@ -181,7 +181,9 @@ const StorySettingsIndexScreen = () => {
             {t('delete_story_title')}
           </Button>
           {!canManageStoryPolicy && (
-            <Text style={[styles.dangerLabel, { marginTop: 8 }]}>{t('story_owner_only_error')}</Text>
+            <Text style={[styles.dangerLabel, { marginTop: 8 }]}>
+              {t('story_owner_only_error')}
+            </Text>
           )}
         </View>
       </ScrollView>

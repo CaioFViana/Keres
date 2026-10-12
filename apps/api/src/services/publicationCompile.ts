@@ -236,7 +236,10 @@ export function validateUploadedReader(
   }
   const mimeKind = mimeByteKindOf(mimeType);
   if (mimeKind && mimeKind !== 'text') {
-    throw new AppError(400, `The uploaded reader MIME type "${mimeType}" must be HTML ("text/html").`);
+    throw new AppError(
+      400,
+      `The uploaded reader MIME type "${mimeType}" must be HTML ("text/html").`,
+    );
   }
   assertHtmlDocument(bytes, 'reader');
   return { bytes };

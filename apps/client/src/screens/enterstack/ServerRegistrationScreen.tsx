@@ -395,11 +395,7 @@ const ServerRegistrationScreen = () => {
       actions={
         serverId ? (
           <FormActions stackOnCompact>
-            <Button
-              onPress={handleDeleteServer}
-              variant="destructive"
-              disabled={loading}
-            >
+            <Button onPress={handleDeleteServer} variant="destructive" disabled={loading}>
               {t('delete_server')}
             </Button>
             <Button onPress={handleSave} disabled={loading}>

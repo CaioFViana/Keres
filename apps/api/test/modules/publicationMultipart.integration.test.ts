@@ -195,7 +195,13 @@ describe('publishing with client-compiled bytes', () => {
       ana.token,
       story.id,
       { manuscript: { format: 'md' } },
-      { manuscript: { bytes: new TextEncoder().encode('%PDF-1.7\n%fake\n'), filename: 'book.md', mimeType: 'text/markdown' } },
+      {
+        manuscript: {
+          bytes: new TextEncoder().encode('%PDF-1.7\n%fake\n'),
+          filename: 'book.md',
+          mimeType: 'text/markdown',
+        },
+      },
     );
 
     expect(status).toBe(400);
@@ -207,13 +213,18 @@ describe('publishing with client-compiled bytes', () => {
     const story = await uploadTestStory(ana.token);
     await seedLinearContent(story.id);
 
-    const { status } = await publishMultipart(ana.token, story.id, { reader: {} }, {
-      reader: {
-        bytes: new TextEncoder().encode('Just some words.\n'),
-        filename: 'reader.html',
-        mimeType: 'text/html',
+    const { status } = await publishMultipart(
+      ana.token,
+      story.id,
+      { reader: {} },
+      {
+        reader: {
+          bytes: new TextEncoder().encode('Just some words.\n'),
+          filename: 'reader.html',
+          mimeType: 'text/html',
+        },
       },
-    });
+    );
 
     expect(status).toBe(400);
     expect(await storedPublicationFiles(story.id)).toEqual([]);

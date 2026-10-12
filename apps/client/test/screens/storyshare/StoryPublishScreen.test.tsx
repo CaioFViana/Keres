@@ -1448,9 +1448,7 @@ describe('StoryPublishScreen', () => {
       (...args: unknown[]) =>
         new Promise((_resolve, reject) => {
           capturedOptions = args[11] as typeof capturedOptions;
-          capturedOptions.signal.addEventListener('abort', () =>
-            reject({ name: 'CanceledError' }),
-          );
+          capturedOptions.signal.addEventListener('abort', () => reject({ name: 'CanceledError' }));
         }),
     );
     const view = await render(<StoryPublishScreen />);

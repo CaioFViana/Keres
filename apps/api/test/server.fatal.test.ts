@@ -29,6 +29,9 @@ vi.mock('../src/services/AuditService', () => ({
   auditService: { record: vi.fn(), prune: vi.fn() },
 }));
 vi.mock('../src/services/AttemptLimitService', () => ({ pruneAttemptLimits: vi.fn() }));
+vi.mock('../src/services/UserService', () => ({
+  userService: { pruneDeletedAccounts: vi.fn() },
+}));
 vi.mock('../src/utils/logger', () => ({
   logger: { info: mocks.loggerInfo, error: mocks.loggerError },
   setLogSink: mocks.setLogSink,

@@ -272,6 +272,15 @@ describe('AppSettingsScreen', () => {
     expect(view.getByText('settings_reset_application_hint')).toBeTruthy();
   });
 
+  it('reads the app terms from Settings', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByLabelText('settings_terms');
+
+    await fireEvent.press(view.getByLabelText('settings_terms'));
+    await view.findByTestId('settings-terms-modal-scroll');
+    expect(view.getByTestId('settings-terms-modal-accept')).toBeTruthy();
+  });
+
   it('opens the credits screen from the Keres emblem', async () => {
     const view = await render(<SettingsScreen />);
     await view.findByLabelText('credits_open_credits');

@@ -65,6 +65,9 @@ const SERVER = {
   version: 1,
   isDeleted: false,
   deletedAt: null,
+  tosText: null,
+  tosVersion: null,
+  tosAcceptedAt: null,
 };
 const LOCAL_USER = 'local-user';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

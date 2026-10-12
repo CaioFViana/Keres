@@ -43,4 +43,23 @@ describe('UserService', () => {
       ).status,
     ).toBe(200);
   });
+
+  it('deactivates on self-deletion but keeps the row reserved until the prune', async () => {
+    const ana = await registerUser('ana');
+    const service = new UserService();
+
+    await service.deleteOwnAccount(ana.userId, ana.password);
+
+    // Login stops at once, while the username stays taken through the grace period.
+    expect(
+      (await request('POST', '/auth/login', { body: { username: ana.username, password: ana.password } }))
+        .status,
+    ).toBe(401);
+    await expect(service.deleteOwnAccount(ana.userId, ana.password)).rejects.toThrow();
+    expect(await service.pruneDeletedAccounts(30)).toBe(0);
+
+    // Past the grace the personal data is erased and the names are freed.
+    expect(await service.pruneDeletedAccounts(0)).toBe(1);
+    expect(await service.pruneDeletedAccounts(0)).toBe(0);
+  });
 });

@@ -10,13 +10,16 @@ import ServerRecoveryCodesPanel from '@/src/components/features/servers/ServerRe
 import ServerRegistrationFields, {
   type ServerAuthMode,
 } from '@/src/components/features/servers/ServerRegistrationFields';
+import TermsModal, {
+  type TermsSection,
+} from '@/src/components/features/servers/TermsModal/TermsModal';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -35,6 +38,7 @@ import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { authenticateWithKeresServer, keresAuthAlertMessage } from '../../utils/keresServerAuth';
+import { fetchServerTerms } from '../../services/ServerTermsService';
 import { isAllowedServerUrl, normalizeServerUrl } from '../../utils/serverUrl';
 
 type RootStackParamList = {
@@ -53,7 +57,7 @@ const MIN_PASSWORD_LENGTH = 8;
 
 const ServerRegistrationScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<ServerRegistrationScreenNavigationProp>();
   const route =
@@ -79,6 +83,16 @@ const ServerRegistrationScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
+  // Creating an account needs the server's terms first: offered once agreed, the agreed copy
+  // travels into the saved server row so it reads offline later. A ref, not state: the agree
+  // button continues straight into saving, and state would still read stale in that same tick.
+  const [pendingTerms, setPendingTerms] = useState<{
+    version: number;
+    updatedAt: string;
+    sections: TermsSection[];
+    text: string;
+  } | null>(null);
+  const agreedTermsRef = useRef<{ version: number; text: string } | null>(null);
 
   const hostedSameOrigin = usesHttpOnlyCookieSession();
   const lockedServerAddress = hostedSameOrigin ? hostedApiOrigin() : null;
@@ -140,6 +154,17 @@ const ServerRegistrationScreen = () => {
         AppAlert.alert(t('error'), t('passwords_do_not_match'));
         return;
       }
+      // The account is only created under the server's own terms: read them right after the
+      // address checked out, and pause for agreement before anything is written anywhere.
+      // A server predating the terms route simply has none to agree to.
+      setLoading(true);
+      const terms = await fetchServerTerms(addressToSave, i18n.language);
+      if (terms && agreedTermsRef.current?.version !== terms.version) {
+        setPendingTerms(terms);
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
     }
 
     setLoading(true);
@@ -200,7 +225,18 @@ const ServerRegistrationScreen = () => {
         ? await serverService
             .updateServer(serverId, serverData)
             .then(() => serverService.getServerById(serverId))
-        : await serverService.createServer({ ...serverData, lastSyncDate: new Date() });
+        : await serverService.createServer({
+            ...serverData,
+            lastSyncDate: new Date(),
+            // The agreed copy, if the server served terms: it reads offline from here on.
+            ...(agreedTermsRef.current
+              ? {
+                  tosText: agreedTermsRef.current.text,
+                  tosVersion: String(agreedTermsRef.current.version),
+                  tosAcceptedAt: new Date(),
+                }
+              : {}),
+          });
       AppAlert.alert(
         t('success'),
         serverId ? t('server_updated_successfully') : t('server_registered_successfully'),
@@ -251,7 +287,16 @@ const ServerRegistrationScreen = () => {
     serverId,
     mode,
     setActiveServer,
+    i18n.language,
   ]);
+
+  const handleAgreeTerms = useCallback(() => {
+    if (!pendingTerms) return;
+    agreedTermsRef.current = { version: pendingTerms.version, text: pendingTerms.text };
+    setPendingTerms(null);
+    // Continue straight into registration: the gate above now reads the agreement from the ref.
+    void handleSave();
+  }, [pendingTerms, handleSave]);
 
   const handleRecover = useCallback(async () => {
     const addressToSave = (lockedServerAddress ?? serverAddress).trim();
@@ -437,6 +482,25 @@ const ServerRegistrationScreen = () => {
         inputStyle={commonInputStyles.input}
       />
       {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+      <TermsModal
+        visible={pendingTerms !== null}
+        title={t('server_terms_title')}
+        subtitle={
+          pendingTerms
+            ? t('server_terms_version', {
+                version: pendingTerms.version,
+                date: pendingTerms.updatedAt,
+              })
+            : undefined
+        }
+        sections={pendingTerms?.sections ?? []}
+        mode="accept"
+        acceptLabel={t('terms_accept')}
+        onAccept={handleAgreeTerms}
+        onClose={() => setPendingTerms(null)}
+        requireScrollToEnd
+        testID="server-terms-modal"
+      />
     </EntityFormContainer>
   );
 };

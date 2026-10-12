@@ -18,6 +18,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import TermsModal from '../../components/features/servers/TermsModal/TermsModal';
+import {
+  CLIENT_TERMS_UPDATED_AT,
+  CLIENT_TERMS_VERSION,
+  clientTermsFor,
+} from '../../legal/clientTerms';
+import {
+  getAcceptedClientTermsVersion,
+  setAcceptedClientTermsVersion,
+} from '../../legal/clientTermsAcceptance';
 import WelcomePageView from '../../components/features/welcome/WelcomePageView';
 import WelcomeLanguagePicker from '../../components/features/welcome/WelcomeLanguagePicker';
 import WelcomePager, { useWelcomePager } from '../../components/features/welcome/WelcomePager';
@@ -78,6 +88,25 @@ const ColdInstallScreen = () => {
   const [page, setPage] = useState(0);
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [termsVisible, setTermsVisible] = useState(false);
+  const [acceptedTermsVersion, setAcceptedTermsVersion] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getAcceptedClientTermsVersion().then((version) => {
+      if (!cancelled) setAcceptedTermsVersion(version);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const termsAccepted = acceptedTermsVersion === CLIENT_TERMS_VERSION;
+  const acceptTerms = () => {
+    setAcceptedTermsVersion(CLIENT_TERMS_VERSION);
+    setTermsVisible(false);
+    void setAcceptedClientTermsVersion(CLIENT_TERMS_VERSION);
+  };
   const { t } = useTranslation();
   useDocumentTitle(t('welcome'));
   const navigation = useNavigation<ColdInstallScreenNavigationProp>();
@@ -196,6 +225,8 @@ const ColdInstallScreen = () => {
     // No need to call setStoreLanguage here, as it will be set during handleProceed
   };
 
+  // The terms read from here, whenever the person opens them; the server's own terms are
+  // what every account creation actually requires agreement to, at registration.
   const isProceedDisabled = trimmedUsername.length === 0;
 
   const metrics = useMemo<Metrics>(
@@ -334,12 +365,37 @@ const ColdInstallScreen = () => {
                     style={[commonInputStyles.input, { width: '100%', marginTop: 4 }]}
                   />
                   {usernameError && <Text style={styles.errorText}>{usernameError}</Text>}
+                  <TouchableOpacity
+                    onPress={() => setTermsVisible(true)}
+                    accessibilityRole="button"
+                    testID="welcome-terms-button"
+                  >
+                    <Text style={styles.termsLink}>
+                      {termsAccepted
+                        ? t('welcome_terms_accepted')
+                        : t('welcome_terms_read')}
+                    </Text>
+                  </TouchableOpacity>
                 </>
               )}
             </WelcomePageView>
           ))}
         </WelcomePager>
       </KeyboardAwareScreen>
+      <TermsModal
+        visible={termsVisible}
+        title={t('client_terms_title')}
+        subtitle={t('client_terms_version', {
+          version: CLIENT_TERMS_VERSION,
+          date: CLIENT_TERMS_UPDATED_AT,
+        })}
+        sections={clientTermsFor(selectedLanguage)}
+        mode="accept"
+        acceptLabel={t('terms_accept')}
+        onAccept={acceptTerms}
+        onClose={() => setTermsVisible(false)}
+        testID="welcome-terms-modal"
+      />
     </View>
   );
 };
@@ -383,6 +439,13 @@ const createStyles = (colors: ThemeColors, [m]: [Metrics]) =>
       ? { width: '100%' as const, paddingVertical: 15, borderRadius: 14 }
       : { minWidth: 200, paddingVertical: 14, borderRadius: 14 },
     back: { color: colors.primary, fontSize: 16, fontWeight: '600', padding: 10 },
+    termsLink: {
+      color: colors.primary,
+      fontSize: 14,
+      fontWeight: '600',
+      marginTop: 12,
+      textDecorationLine: 'underline',
+    },
     appLinkRow: { width: m.pageWidth, alignItems: 'flex-end', paddingTop: 10 },
     appLink: { color: colors.textSecondary, fontSize: 13, textDecorationLine: 'underline' },
   });

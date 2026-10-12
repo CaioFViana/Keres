@@ -5,6 +5,13 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SettingsGroup from '@/src/components/features/app/SettingsGroup';
 import SettingsRow from '@/src/components/features/app/SettingsRow';
+import TermsModal from '@/src/components/features/servers/TermsModal/TermsModal';
+import {
+  CLIENT_TERMS_UPDATED_AT,
+  CLIENT_TERMS_VERSION,
+  clientTermsFor,
+} from '@/src/legal/clientTerms';
+import { setAcceptedClientTermsVersion } from '@/src/legal/clientTermsAcceptance';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
@@ -96,6 +103,7 @@ const SettingsScreen = () => {
   // What is typed is kept apart from what is saved: the name is saved as it becomes valid, and the
   // field can pass through empty while it is being rewritten without ever saving that.
   const [usernameDraft, setUsernameDraft] = useState<string | null>(null);
+  const [termsVisible, setTermsVisible] = useState(false);
   const usernameInvalid = usernameDraft !== null && normalizeLocalUsername(usernameDraft) === null;
   const handleUsernameChange = (newUsername: string) => {
     setUsernameDraft(newUsername);
@@ -409,6 +417,13 @@ const SettingsScreen = () => {
                   <ThemedSwitch value={showTutorials} onValueChange={handleShowTutorialsToggle} />
                 }
               />
+              <SettingsRow
+                icon="document-text-outline"
+                label={t('settings_terms')}
+                hint={t('settings_terms_hint')}
+                onPress={() => setTermsVisible(true)}
+                testID="settings-terms-row"
+              />
               {/* A payment is due to a server: a build with no servers has none to warn about. */}
               {isServerless() ? null : (
                 <SettingsRow
@@ -482,6 +497,23 @@ const SettingsScreen = () => {
           Keres {APP_RELEASE.version} {APP_RELEASE.name}
         </Text>
       </View>
+      <TermsModal
+        visible={termsVisible}
+        title={t('client_terms_title')}
+        subtitle={t('client_terms_version', {
+          version: CLIENT_TERMS_VERSION,
+          date: CLIENT_TERMS_UPDATED_AT,
+        })}
+        sections={clientTermsFor(i18n.language)}
+        mode="accept"
+        acceptLabel={t('terms_accept')}
+        onAccept={() => {
+          setTermsVisible(false);
+          void setAcceptedClientTermsVersion(CLIENT_TERMS_VERSION);
+        }}
+        onClose={() => setTermsVisible(false)}
+        testID="settings-terms-modal"
+      />
     </KeyboardAwareScreen>
   );
 };

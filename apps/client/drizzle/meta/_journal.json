@@ -414,6 +414,13 @@
       "when": 1791733622644,
       "tag": "0058_lethal_phantom_reporter",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1791770496605,
+      "tag": "0059_terms_accepted_columns",
+      "breakpoints": true
     }
   ]
 }

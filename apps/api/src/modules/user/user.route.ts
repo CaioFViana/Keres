@@ -13,6 +13,7 @@ import {
   userService,
 } from '../../services/UserService';
 import { friendshipService } from '../../services/FriendshipService';
+import { storyNsfwService } from '../../services/StoryNsfwService';
 import { tierEnforcementService } from '../../services/TierEnforcementService';
 import { AppError, isUniqueViolation } from '../../utils/errors';
 
@@ -294,6 +295,42 @@ export const userRoutes = new Elysia()
         summary: 'Regenerate your recovery codes',
         description:
           'Requires the current password. Invalidates all previous recovery codes and returns a fresh batch - shown only in this response, store them.',
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .delete(
+    '/account',
+    async ({ body, user }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+
+      try {
+        await userService.deleteOwnAccount(user.userId, body.currentPassword);
+        // A deleted account must not linger in adults-only stories: same cleanup as a revocation.
+        await storyNsfwService.removeUserFromNsfwStories(user.userId, 'account-deactivated');
+        return { message: 'Account deleted.' };
+      } catch (error) {
+        if (error instanceof InvalidCurrentPasswordError) {
+          throw new AppError(401, error.message);
+        }
+        throw error;
+      }
+    },
+    {
+      body: t.Object({
+        currentPassword: t.String(),
+      }),
+      response: {
+        200: t.Object({ message: t.String() }),
+        401: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Delete your own account',
+        description:
+          'Requires the current password. Deactivates the account at once (login stops working) and personal data is erased within 30 days; contributions to stories owned by others remain, attributed to a removed account.',
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },

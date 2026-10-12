@@ -14,9 +14,11 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import DeleteAccountModal from '../../components/features/servers/DeleteAccountModal/DeleteAccountModal';
 import PlanLimitsCard from '../../components/features/servers/PlanLimitsCard';
 import PlanStatusCard from '../../components/features/servers/PlanStatusCard';
 import ServerActionRow from '../../components/features/servers/ServerActionRow';
+import TermsModal from '../../components/features/servers/TermsModal/TermsModal';
 import { serverCardStyleDefs } from '../../components/features/servers/serverCardStyleDefs';
 import ServerStatusPill from '../../components/features/servers/ServerStatusPill';
 import { useDrizzle } from '../../db';
@@ -27,9 +29,13 @@ import { useServerDeletion } from '../../hooks/useServerDeletion';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
 import { useServerTagEditor } from '../../hooks/useServerTagEditor';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
+import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
 import { createServerService } from '../../services/ServerService';
+import { authTokenManager } from '../../services/AuthTokenManager';
+import { isOfflineError } from '../../services/apiClient';
 import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
 import { userApiService } from '../../services/UserApiService';
+import { AppAlert } from '../../utils/AppAlert';
 import { type ThemeColors, useTheme } from '../../theme';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import { typography } from '../../theme/tokens';
@@ -66,6 +72,36 @@ const ServerDetailScreen = () => {
 
   const tagEditor = useServerTagEditor(server, serverService, updateTag);
   const deleteServer = useServerDeletion(serverService, () => navigation.goBack());
+
+  const [termsVisible, setTermsVisible] = useState(false);
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleteWorking, setDeleteWorking] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Deleting the account ends it on the server; the local server entry stays so the address
+  // can be registered again, but its tokens go with the account.
+  const handleDeleteAccount = async (currentPassword: string) => {
+    if (!server) return;
+    setDeleteWorking(true);
+    setDeleteError(null);
+    try {
+      await userApiService.deleteOwnAccount(server, currentPassword);
+      await authTokenManager.clearAuthForServer(server.id);
+      setDeleteVisible(false);
+      AppAlert.alert(t('success'), t('delete_account_done'));
+      navigation.goBack();
+    } catch (err) {
+      if (isOfflineError(err)) {
+        setDeleteError(t('server_unreachable'));
+      } else if ((err as { response?: { status?: number } })?.response?.status === 401) {
+        setDeleteError(t('incorrect_current_password'));
+      } else {
+        setDeleteError(t('failed_to_delete_account'));
+      }
+    } finally {
+      setDeleteWorking(false);
+    }
+  };
 
   // The avatar is the user's own on this server: it is read once the server answers, and the
   // generated one stands in until then (and when it never does).
@@ -245,6 +281,26 @@ const ServerDetailScreen = () => {
         onPress={() => navigation.navigate('ChangePassword', { serverId })}
         testID="server-action-password"
       />
+      {server.tosText ? (
+        <ServerActionRow
+          icon="document-text-outline"
+          title={t('server_action_terms')}
+          description={t('server_action_terms_hint', { version: server.tosVersion ?? '' })}
+          onPress={() => setTermsVisible(true)}
+          testID="server-action-terms"
+        />
+      ) : null}
+      <ServerActionRow
+        icon="person-remove-outline"
+        title={t('delete_account')}
+        description={t('delete_account_hint')}
+        destructive
+        onPress={() => {
+          setDeleteError(null);
+          setDeleteVisible(true);
+        }}
+        testID="server-action-delete-account"
+      />
       <ServerActionRow
         icon="create-outline"
         title={t('server_action_connection')}
@@ -259,6 +315,32 @@ const ServerDetailScreen = () => {
         destructive
         onPress={() => void deleteServer(serverId)}
         testID="server-action-delete"
+      />
+      {server.tosText ? (
+        <TermsModal
+          visible={termsVisible}
+          title={t('server_terms_title')}
+          subtitle={t('server_terms_version', {
+            version: server.tosVersion ?? '',
+            date:
+              server.tosAcceptedAt != null
+                ? formatDateTime(server.tosAcceptedAt, i18n.language)
+                : '',
+          })}
+          sections={[{ heading: t('server_terms_title'), paragraphs: [server.tosText] }]}
+          mode="read"
+          onClose={() => setTermsVisible(false)}
+          testID="server-terms-modal"
+        />
+      ) : null}
+      <DeleteAccountModal
+        visible={deleteVisible}
+        serverName={server.name}
+        eraseDays={ACCOUNT_DELETION_GRACE_DAYS}
+        working={deleteWorking}
+        error={deleteError}
+        onConfirm={(password) => void handleDeleteAccount(password)}
+        onClose={() => setDeleteVisible(false)}
       />
     </DetailContainer>
   );

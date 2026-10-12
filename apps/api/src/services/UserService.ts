@@ -1,6 +1,7 @@
 import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
-import { deriveUserTag, normalizeUserTag } from '@keres/shared';
-import { and, eq, sql } from 'drizzle-orm';
+import { ACCOUNT_DELETION_GRACE_DAYS, deriveUserTag, normalizeUserTag } from '@keres/shared';
+import { randomUUID } from 'node:crypto';
+import { and, eq, lt, notLike, sql } from 'drizzle-orm';
 import { comparePassword, hashPassword } from '../config/bcrypt';
 import { db } from '../db';
 import { users } from '../db/schema/tables/users';
@@ -209,6 +210,74 @@ export class UserService {
     }
 
     return recoveryCodeService.generateCodes(userId);
+  }
+
+  /**
+   * Self-service deletion: it requires the current password, like changeOwnPassword, and only
+   * deactivates - the row stays reserved through the grace period so the username and tag cannot
+   * be claimed while recovery is still possible. Login already excludes such rows (see
+   * `findLiveByUsername`); the prune below erases them for good.
+   */
+  async deleteOwnAccount(userId: string, currentPassword: string): Promise<void> {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { id: true, password: true, isDeleted: true },
+    });
+    if (!user || user.isDeleted) {
+      throw new Error('User not found.');
+    }
+
+    const isValid = await comparePassword(currentPassword, user.password);
+    if (!isValid) {
+      throw new InvalidCurrentPasswordError();
+    }
+
+    await db
+      .update(users)
+      .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  /**
+   * Erases the personal data of accounts deleted past the grace period. Anonymizes instead of
+   * deleting rows: stories, permissions and messages keep pointing at their author, so
+   * contributions to shared stories survive while nothing identifies who made them. Usernames
+   * and tags are freed by the same move.
+   */
+  async pruneDeletedAccounts(
+    graceDays: number = ACCOUNT_DELETION_GRACE_DAYS,
+    now: Date = new Date(),
+  ): Promise<number> {
+    const cutoff = new Date(now.getTime() - graceDays * 24 * 60 * 60_000);
+    const expired = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(
+        and(
+          eq(users.isDeleted, true),
+          lt(users.deletedAt, cutoff),
+          // Already anonymized rows stay untouched: without this every run would re-hash.
+          notLike(users.username, 'deleted:%'),
+        ),
+      );
+
+    for (const row of expired) {
+      await db
+        .update(users)
+        .set({
+          username: `deleted:${row.id}`,
+          tag: `deleted_${row.id.toLowerCase()}`,
+          password: await hashPassword(`deleted:${randomUUID()}`),
+          avatarColor: null,
+          avatarIcon: null,
+          bio: null,
+          tierId: null,
+          isAdultVerified: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, row.id));
+    }
+    return expired.length;
   }
 }
 

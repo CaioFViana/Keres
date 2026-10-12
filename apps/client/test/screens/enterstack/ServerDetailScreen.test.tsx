@@ -17,6 +17,8 @@ const mockUpdateServer = jest.fn();
 const mockDeleteServer = jest.fn();
 const mockUpdateOwnTag = jest.fn();
 const mockGetOwnProfile = jest.fn();
+const mockDeleteOwnAccount = jest.fn();
+const mockClearAuthForServer = jest.fn();
 const mockApiGet = jest.fn();
 const mockPaymentOverview = jest.fn();
 const mockAccountPlan = jest.fn();
@@ -117,6 +119,13 @@ jest.mock('../../../src/services/UserApiService', () => ({
   userApiService: {
     updateOwnTag: (...args: unknown[]) => mockUpdateOwnTag(...args),
     getOwnProfile: (...args: unknown[]) => mockGetOwnProfile(...args),
+    deleteOwnAccount: (...args: unknown[]) => mockDeleteOwnAccount(...args),
+  },
+}));
+
+jest.mock('../../../src/services/AuthTokenManager', () => ({
+  authTokenManager: {
+    clearAuthForServer: (...args: unknown[]) => mockClearAuthForServer(...args),
   },
 }));
 
@@ -161,6 +170,8 @@ describe('ServerDetailScreen', () => {
     mockUpdateServer.mockResolvedValue(undefined);
     mockUpdateOwnTag.mockResolvedValue({ tag: 'newtag' });
     mockGetOwnProfile.mockResolvedValue({ avatarColor: '#abcdef', avatarIcon: 'ion:star' });
+    mockDeleteOwnAccount.mockResolvedValue(undefined);
+    mockClearAuthForServer.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -225,6 +236,62 @@ describe('ServerDetailScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('ChangePassword', { serverId: 'srv-1' });
     await fireEvent.press(view.getByTestId('server-action-connection'));
     expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', { serverId: 'srv-1' });
+  });
+
+  it('reads the agreed server terms from the local copy, offline', async () => {
+    mockGetAllServers.mockResolvedValue([
+      {
+        ...server,
+        tosText: 'Rules\nBe kind.',
+        tosVersion: '3',
+        tosAcceptedAt: new Date('2026-10-01T10:00:00.000Z'),
+      },
+    ]);
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-terms'));
+    await view.findByTestId('server-terms-modal-scroll');
+    expect(mockApiGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the terms row when no copy was ever agreed to', async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    expect(view.queryByTestId('server-action-terms')).toBeNull();
+  });
+
+  it('deletes the account with the current password, then forgets its tokens', async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-delete-account'));
+    await fireEvent.changeText(view.getByTestId('delete-account-modal-password'), 'password123');
+    await fireEvent.press(view.getByTestId('delete-account-modal-confirm'));
+
+    await waitFor(() => expect(mockDeleteOwnAccount).toHaveBeenCalledTimes(1));
+    expect(mockDeleteOwnAccount).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'srv-1' }),
+      'password123',
+    );
+    expect(mockClearAuthForServer).toHaveBeenCalledWith('srv-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', 'delete_account_done');
+    expect(mockGoBack).toHaveBeenCalled();
+  });
+
+  it('says why deleting the account failed', async () => {
+    mockDeleteOwnAccount.mockRejectedValue({ response: { status: 401 } });
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-delete-account'));
+    await fireEvent.changeText(view.getByTestId('delete-account-modal-password'), 'wrong');
+    await fireEvent.press(view.getByTestId('delete-account-modal-confirm'));
+
+    await view.findByText('incorrect_current_password');
+    expect(mockClearAuthForServer).not.toHaveBeenCalled();
+    expect(mockGoBack).not.toHaveBeenCalled();
   });
 
   it("opens the conversation with this server's administrators, in the same stack so back returns here", async () => {

@@ -124,6 +124,11 @@ jest.mock('../../../src/utils/keresServerAuth', () => ({
   keresAuthAlertMessage: () => 'auth-failed-message',
 }));
 
+const mockFetchServerTerms = jest.fn();
+jest.mock('../../../src/services/ServerTermsService', () => ({
+  fetchServerTerms: (...args: unknown[]) => mockFetchServerTerms(...args),
+}));
+
 jest.mock('../../../src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
@@ -249,6 +254,8 @@ describe('ServerRegistrationScreen', () => {
     mockGetTokens.mockResolvedValue(null);
     mockAuthenticate.mockResolvedValue(authOk);
     mockRedeem.mockResolvedValue({ success: false, reason: 'invalid_code' });
+    // Servers without the terms route simply have none to agree to.
+    mockFetchServerTerms.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -320,6 +327,79 @@ describe('ServerRegistrationScreen', () => {
     expect(mockSetActiveServer).toHaveBeenCalledWith(expect.objectContaining({ id: 'srv-new' }));
     expect(mockAlert).toHaveBeenCalledWith('success', 'server_registered_successfully');
     expect(mockGoBack).toHaveBeenCalled();
+  });
+
+  it('asks for the server terms before creating an account, and saves the agreed copy', async () => {
+    mockFetchServerTerms.mockResolvedValue({
+      version: 3,
+      updatedAt: '2026-10-12',
+      sections: [{ heading: 'Rules', paragraphs: ['Be kind.'] }],
+      text: 'Rules\nBe kind.',
+    });
+    const view = await render(<ServerRegistrationScreen />);
+    await view.findByText('register_server');
+    await fireEvent.press(view.getByTestId('set-mode-register'));
+    await fillLogin(view);
+    await fireEvent.press(view.getByTestId('set-password'));
+    await fireEvent.press(view.getByTestId('set-confirm'));
+    await fireEvent.press(view.getByText('create_account'));
+
+    // Nothing is written before agreement: no auth, no server row.
+    await view.findByTestId('server-terms-modal-scroll');
+    expect(mockAuthenticate).not.toHaveBeenCalled();
+    expect(mockServerService.createServer).not.toHaveBeenCalled();
+    // Agreement is gated on reading to the end: pressing early changes nothing.
+    expect(view.queryByText('terms_scroll_to_accept')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('server-terms-modal-accept'));
+    expect(mockAuthenticate).not.toHaveBeenCalled();
+    expect(mockServerService.createServer).not.toHaveBeenCalled();
+
+    await fireEvent(view.getByTestId('server-terms-modal-scroll'), 'onScroll', {
+      nativeEvent: {
+        contentSize: { height: 1000 },
+        layoutMeasurement: { height: 200 },
+        contentOffset: { y: 100 },
+      },
+    });
+    await fireEvent.press(view.getByTestId('server-terms-modal-accept'));
+    expect(mockServerService.createServer).not.toHaveBeenCalled();
+
+    await fireEvent(view.getByTestId('server-terms-modal-scroll'), 'onScroll', {
+      nativeEvent: {
+        contentSize: { height: 1000 },
+        layoutMeasurement: { height: 200 },
+        contentOffset: { y: 800 },
+      },
+    });
+    expect(view.queryByText('terms_scroll_to_accept')).toBeNull();
+    await fireEvent.press(view.getByTestId('server-terms-modal-accept'));
+
+    await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+    expect(mockServerService.createServer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tosText: 'Rules\nBe kind.',
+        tosVersion: '3',
+        tosAcceptedAt: expect.any(Date),
+      }),
+    );
+    expect(mockAuthenticate).toHaveBeenCalledTimes(1);
+  });
+
+  it('registers without terms when the server predates the terms route', async () => {
+    mockFetchServerTerms.mockResolvedValue(null);
+    const view = await render(<ServerRegistrationScreen />);
+    await view.findByText('register_server');
+    await fireEvent.press(view.getByTestId('set-mode-register'));
+    await fillLogin(view);
+    await fireEvent.press(view.getByTestId('set-password'));
+    await fireEvent.press(view.getByTestId('set-confirm'));
+    await fireEvent.press(view.getByText('create_account'));
+
+    await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+    const saved = mockServerService.createServer.mock.calls[0][0] as Record<string, unknown>;
+    expect(saved.tosText).toBeUndefined();
+    expect(saved.tosVersion).toBeUndefined();
+    expect(view.queryByTestId('server-terms-modal-scroll')).toBeNull();
   });
 
   it('shows the auth failure message without saving', async () => {

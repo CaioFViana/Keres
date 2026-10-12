@@ -180,6 +180,7 @@ jest.mock('../../../src/components/common', () => {
   };
 });
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, configure, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler, Linking } from 'react-native';
 import ColdInstallScreen from '../../../src/screens/enterstack/ColdInstallScreen';
@@ -466,5 +467,22 @@ describe('ColdInstallScreen', () => {
     expect(mockNotify).toHaveBeenCalledWith('press_back_again_to_exit', 'info');
     expect(mockBackHandler.current?.()).toBe(true);
     expect(BackHandler.exitApp).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads the app terms from the last step and records the agreement', async () => {
+    const setItem = jest.spyOn(AsyncStorage, 'setItem');
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome');
+    await goToNameStep(view);
+
+    expect(view.getByText('welcome_terms_read')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('welcome-terms-button'));
+    await view.findByTestId('welcome-terms-modal-scroll');
+    await fireEvent.press(view.getByTestId('welcome-terms-modal-accept'));
+
+    await waitFor(() =>
+      expect(setItem).toHaveBeenCalledWith('@keres/client-terms/accepted-version', '1'),
+    );
+    expect(view.getByText('welcome_terms_accepted')).toBeTruthy();
   });
 });

@@ -3,6 +3,7 @@ import { APP_RELEASE, SYNC_PROTOCOL_RANGE } from '@keres/shared';
 import { Elysia } from 'elysia';
 import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
+import { SERVER_TERMS, SERVER_TERMS_UPDATED_AT, SERVER_TERMS_VERSION } from './legal/serverTerms';
 import { packRoutes } from './modules/pack/pack.route';
 import { friendRoutes } from './modules/friend/friend.route';
 import { storyInvitationRoutes } from './modules/friend/storyInvitation.route';
@@ -109,6 +110,30 @@ export function createApiRoutes() {
           description:
             'Returns this server release and the synchronization protocol range it supports. ' +
             'A client compares its own protocol version against that range before registering.',
+          tags: ['Health Check'],
+        },
+      },
+    )
+    .get(
+      '/keres-tos',
+      ({ set }) => {
+        set.status = 200;
+        // Public on purpose: a person reads and accepts these terms *before* creating an
+        // account, and a client keeps a local copy to show again without asking the server.
+        // Third-party operators serve their own text here - this is always this server's rules.
+        return {
+          version: SERVER_TERMS_VERSION,
+          updatedAt: SERVER_TERMS_UPDATED_AT,
+          en: SERVER_TERMS.en,
+          pt: SERVER_TERMS.pt,
+        };
+      },
+      {
+        detail: {
+          summary: "This server's terms of service",
+          description:
+            'Returns the versioned terms of service of this server in every supported language. ' +
+            'A client presents them at registration and records which version was accepted.',
           tags: ['Health Check'],
         },
       },

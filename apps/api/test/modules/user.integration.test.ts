@@ -410,3 +410,41 @@ describe('PUT /user/recovery-codes', () => {
     expect(status).toBe(401);
   });
 });
+
+describe('DELETE /user/account', () => {
+  it('deactivates the account with the current password, and login stops working', async () => {
+    const { status } = await request('DELETE', '/user/account', {
+      token: ana.token,
+      body: { currentPassword: ana.password },
+    });
+
+    expect(status).toBe(200);
+
+    const login = await request('POST', '/auth/login', {
+      body: { username: ana.username, password: ana.password },
+    });
+    expect(login.status).toBe(401);
+  });
+
+  it('refuses a wrong password and leaves the account alive', async () => {
+    const { status } = await request('DELETE', '/user/account', {
+      token: ana.token,
+      body: { currentPassword: 'senha-errada-123' },
+    });
+
+    expect(status).toBe(401);
+
+    const login = await request('POST', '/auth/login', {
+      body: { username: ana.username, password: ana.password },
+    });
+    expect(login.status).toBe(200);
+  });
+
+  it('requires a session', async () => {
+    const { status } = await request('DELETE', '/user/account', {
+      body: { currentPassword: ana.password },
+    });
+
+    expect(status).toBe(401);
+  });
+});

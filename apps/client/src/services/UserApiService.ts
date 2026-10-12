@@ -55,6 +55,11 @@ export class UserApiService {
     return response.data.recoveryCodes;
   }
 
+  /** Deletes the current user's own account on `server` - requires the current password. */
+  async deleteOwnAccount(server: ServerSelect, currentPassword: string): Promise<void> {
+    await this.clientFor(server).delete('/user/account', { data: { currentPassword } });
+  }
+
   /** The plan the current user has on `server`, or `undefined` from a server older than this route. */
   async getOwnPlan(server: ServerSelect): Promise<AccountPlan | null> {
     try {

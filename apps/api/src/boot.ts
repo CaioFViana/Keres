@@ -14,6 +14,8 @@ import { subscriptionService } from './services/payments/SubscriptionService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
 import { mediaStorageService } from './services/MediaStorageService';
+import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
+import { userService } from './services/UserService';
 import { effectiveDefaultTierId } from './services/defaultTier';
 import { reconcileRootAdmin } from './services/RootAdminService';
 import { normalizeStoredUserTags } from './services/UserTagMaintenance';
@@ -167,6 +169,36 @@ function startPaymentsScheduler(): () => void {
   };
 }
 
+/**
+ * Erases the personal data of accounts deleted past the grace period: once at start (what aged
+ * while the server was down) and daily after, like the activity record. Best-effort: a failed
+ * run only leaves erased-late rows for the next one.
+ */
+function startDeletedAccountPruneScheduler(): () => void {
+  const prune = () => {
+    trackBackground(
+      userService.pruneDeletedAccounts().then(
+        (erased) => {
+          if (erased > 0) {
+            logger.info(
+              `Accounts: erased ${erased} account(s) deleted over ${ACCOUNT_DELETION_GRACE_DAYS} days ago.`,
+            );
+          }
+        },
+        (error: unknown) => {
+          logger.error('Deleted account cleanup failed', error);
+        },
+      ),
+    );
+  };
+  const first = setTimeout(prune, 60_000);
+  const every = setInterval(prune, 24 * 60 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
+}
+
 /** Drops the lockout counters whose window is long over: once at start and daily after, like the activity record. */
 function startAttemptLimitPruneScheduler(): () => void {
   const prune = () => {
@@ -211,6 +243,7 @@ export async function bootAndListen(options?: {
     startMediaBlobSweepScheduler(),
     startAuditRetentionScheduler(),
     startAttemptLimitPruneScheduler(),
+    startDeletedAccountPruneScheduler(),
   ];
   const startedAt = Date.now();
   const shutdown = createShutdown({

@@ -1,6 +1,9 @@
 import {
   compileStoryReader,
+  FORMAT_META,
+  ManuscriptFormatSchema,
   ManuscriptOptionsSchema,
+  MAX_MANUSCRIPT_BYTES,
   ReaderOptionsSchema,
   type FullStoryExportType,
   type ManuscriptFormat,
@@ -89,6 +92,154 @@ export function assertArcBelongs(
   if (!belongs) {
     throw new AppError(400, `Arc "${arcId}" does not belong to this story.`);
   }
+}
+
+/**
+ * Client-compiled uploads: the device compiled the manuscript or the reader itself and the server
+ * stores the bytes as sent, without compiling. Nothing here trusts the bytes: the shared size cap,
+ * the file extension and MIME type against the requested format, and a magic-byte sniff all run
+ * before the first blob is stored. There is no client digest precedent (unlike media uploads), so
+ * the magic bytes stand in for the hash check.
+ */
+
+/** What bytes a manuscript format is made of: `%PDF`, a `PK` zip, or text. */
+function manuscriptByteKindOf(format: ManuscriptFormat): 'pdf' | 'zip' | 'text' {
+  if (format === 'pdf' || format === 'screenplay-pdf') return 'pdf';
+  if (format === 'docx' || format === 'epub') return 'zip';
+  return 'text';
+}
+
+/** What the bytes look like from their first bytes: PDF and zip by magic, text by having no NUL. */
+function sniffByteKind(bytes: Uint8Array): 'pdf' | 'zip' | 'text' | 'binary' | 'empty' {
+  if (bytes.byteLength === 0) return 'empty';
+  if (
+    bytes.byteLength >= 4 &&
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46
+  ) {
+    return 'pdf';
+  }
+  if (bytes.byteLength >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b) {
+    return 'zip';
+  }
+  const head = bytes.subarray(0, Math.min(bytes.byteLength, 8192));
+  for (let index = 0; index < head.byteLength; index++) {
+    if (head[index] === 0) return 'binary';
+  }
+  return 'text';
+}
+
+/**
+ * A MIME type's byte kind, or `null` when it says nothing about the bytes. Absent and generic
+ * (`application/octet-stream`) senders say nothing, and so do types outside the manuscript's world
+ * (a wrong charger, not a wrong file): the extension and the sniff below carry those cases.
+ */
+function mimeByteKindOf(mimeType: string | null | undefined): 'pdf' | 'zip' | 'text' | null {
+  const mime = (mimeType ?? '').split(';')[0].trim().toLowerCase();
+  if (!mime || mime === 'application/octet-stream') return null;
+  if (mime === 'application/pdf') return 'pdf';
+  if (
+    mime === 'application/zip' ||
+    mime === 'application/epub+zip' ||
+    mime.startsWith('application/vnd.openxmlformats')
+  ) {
+    return 'zip';
+  }
+  if (mime.startsWith('text/')) return 'text';
+  return null;
+}
+
+/** The shared manuscript cap for uploads: 413, not 400 - the bytes are fine, there are too many. */
+function assertUploadSize(kind: 'manuscript' | 'reader', bytes: Uint8Array): void {
+  if (bytes.byteLength > MAX_MANUSCRIPT_BYTES) {
+    const what = kind === 'manuscript' ? 'Manuscript' : 'Reader';
+    throw new AppError(
+      413,
+      `${what} exceeds the ${MAX_MANUSCRIPT_BYTES}-byte limit (${bytes.byteLength} bytes).`,
+    );
+  }
+  if (bytes.byteLength === 0) {
+    throw new AppError(400, `The uploaded ${kind} is empty.`);
+  }
+}
+
+function assertHtmlDocument(bytes: Uint8Array, what: string): void {
+  if (sniffByteKind(bytes) !== 'text' || !bytes.subarray(0, 1024).includes(0x3c)) {
+    throw new AppError(400, `The uploaded ${what} is not an HTML document.`);
+  }
+}
+
+/**
+ * Validates client-compiled manuscript bytes against the requested format, without compiling.
+ * `pdf` and `screenplay-pdf` share the `.pdf` extension, so the name alone never tells a paged
+ * screenplay from a plain paged manuscript - the sniff below does.
+ */
+export function validateUploadedManuscript(
+  bytes: Uint8Array,
+  format: ManuscriptFormat,
+  filename?: string | null,
+  mimeType?: string | null,
+): { bytes: Uint8Array; format: ManuscriptFormat } {
+  const parsed = ManuscriptFormatSchema.safeParse(format);
+  if (!parsed.success) {
+    throw new AppError(400, `Invalid manuscript format "${String(format)}".`);
+  }
+  assertUploadSize('manuscript', bytes);
+  const meta = FORMAT_META[parsed.data];
+  if (filename) {
+    const extension = filename.split('.').pop()?.toLowerCase() ?? '';
+    if (extension !== meta.extension) {
+      throw new AppError(
+        400,
+        `The uploaded manuscript file extension ".${extension}" does not match the "${parsed.data}" format (".${meta.extension}").`,
+      );
+    }
+  }
+  const expectedKind = manuscriptByteKindOf(parsed.data);
+  const mimeKind = mimeByteKindOf(mimeType);
+  if (mimeKind && mimeKind !== expectedKind) {
+    throw new AppError(
+      400,
+      `The uploaded manuscript MIME type "${mimeType}" does not match the "${parsed.data}" format (${meta.mimeType}).`,
+    );
+  }
+  const actualKind = sniffByteKind(bytes);
+  if (actualKind !== expectedKind) {
+    throw new AppError(
+      400,
+      `The uploaded manuscript is not ${expectedKind === 'text' ? 'text' : `a ${expectedKind.toUpperCase()}`} as the "${parsed.data}" format requires.`,
+    );
+  }
+  if (parsed.data === 'html') {
+    assertHtmlDocument(bytes, 'manuscript');
+  }
+  return { bytes, format: parsed.data };
+}
+
+/** Validates a client-compiled reader page: always one self-contained HTML document. */
+export function validateUploadedReader(
+  bytes: Uint8Array,
+  filename?: string | null,
+  mimeType?: string | null,
+): { bytes: Uint8Array } {
+  assertUploadSize('reader', bytes);
+  if (filename) {
+    const extension = filename.split('.').pop()?.toLowerCase() ?? '';
+    if (extension !== 'html' && extension !== 'htm') {
+      throw new AppError(
+        400,
+        `The uploaded reader file extension ".${extension}" must be ".html".`,
+      );
+    }
+  }
+  const mimeKind = mimeByteKindOf(mimeType);
+  if (mimeKind && mimeKind !== 'text') {
+    throw new AppError(400, `The uploaded reader MIME type "${mimeType}" must be HTML ("text/html").`);
+  }
+  assertHtmlDocument(bytes, 'reader');
+  return { bytes };
 }
 
 /**

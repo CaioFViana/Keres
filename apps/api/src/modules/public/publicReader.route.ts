@@ -8,27 +8,16 @@ import { AppError } from '../../utils/errors';
 import { signedPublicationUrl } from './showcaseAccess';
 import { openShowcaseStory } from './showcaseGate';
 import { publicationOr404 } from './showcasePublication';
+import { READER_CSP } from './readerCsp';
 
 /**
  * The online reader of a published version: its page, and the address that opens it. Its own
  * module because it has its own concern (a page of somebody's story, run by the visitor's browser)
  * and its own rules about what that page may do.
+ *
+ * What the page may do lives in `readerCsp.ts`: a sandbox with no fetches, whose inline engine
+ * runs only when its bytes match one of the three hashes the compiler serves.
  */
-
-/**
- * What a reader page may do when the browser renders it. `sandbox` gives it an opaque origin even
- * when someone opens the address directly (no cookies, no storage, no reaching the showcase page),
- * and nothing may be fetched: the page carries its own story and its own code.
- */
-const READER_CSP = [
-  'sandbox allow-scripts',
-  "default-src 'none'",
-  "style-src 'unsafe-inline'",
-  "script-src 'unsafe-inline'",
-  'img-src data:',
-  "base-uri 'none'",
-  "form-action 'none'",
-].join('; ');
 
 export const publicReaderRoutes = new Elysia()
   // Same optional session as the other public routes: the global derive fills `user`.

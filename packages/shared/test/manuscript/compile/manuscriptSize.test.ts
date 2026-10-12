@@ -47,6 +47,13 @@ describe('assessManuscriptSize', () => {
     expect(assessManuscriptSize(0).limit).toBe(MAX_MANUSCRIPT_BYTES);
     expect(manuscriptSizeAssessment({ format: 'md', textBytes: 100 }).status).toBe('ok');
   });
+
+  it('warns at four fifths of the raised limit and refuses past it', () => {
+    // Eighty megabytes is exactly the near threshold of the 100 MB cap.
+    expect(assessManuscriptSize(80 * 1024 * 1024).status).toBe('near');
+    expect(assessManuscriptSize(80 * 1024 * 1024)).toMatchObject({ limit: MAX_MANUSCRIPT_BYTES });
+    expect(assessManuscriptSize(MAX_MANUSCRIPT_BYTES + 1).status).toBe('over');
+  });
 });
 
 describe('estimateManuscriptBytes', () => {

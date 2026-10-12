@@ -422,6 +422,21 @@ ${args.main}
 
 const button = (id: string, label: string) => `<button id="${id}">${escapeHtml(label)}</button>`;
 
+/**
+ * The exact script bundles a published reader page runs, in the order the page serves them.
+ * One shared builder feeds the compiler below and the server's Content-Security-Policy hashes,
+ * so the hashed bytes and the served bytes cannot drift apart: a branching story runs the engine
+ * with the common and branching code, a linear story the common code with the linear one, and a
+ * comic or storyboard reader the common code with the comic one.
+ */
+export function readerScriptBundles(): { branching: string; linear: string; comic: string } {
+  return {
+    branching: [READER_ENGINE_SOURCE, READER_COMMON_SOURCE, READER_BRANCHING_SOURCE].join('\n'),
+    linear: [READER_COMMON_SOURCE, READER_LINEAR_SOURCE].join('\n'),
+    comic: [READER_COMMON_SOURCE, READER_COMIC_SOURCE].join('\n'),
+  };
+}
+
 /** The branching reader page for a presented gamebook. */
 export function buildBranchingReaderHtml(
   manuscript: CompiledManuscript,
@@ -437,7 +452,7 @@ export function buildBranchingReaderHtml(
     data,
     bar: `<header id="bar">${button('act-back', labels.back)}${button('act-path', labels.path)}${button('act-bag', labels.inventory)}${button('act-saves', labels.saves)}<span id="here" class="here"></span>${button('act-home', labels.restart)}${button('act-look', labels.appearance)}</header>`,
     main: '<main id="view"></main>',
-    scripts: [READER_ENGINE_SOURCE, READER_COMMON_SOURCE, READER_BRANCHING_SOURCE].join('\n'),
+    scripts: readerScriptBundles().branching,
   });
 }
 
@@ -476,7 +491,7 @@ export function buildLinearReaderHtml(
       ? `<header id="bar">${button('act-contents', labels.contents)}${button('act-prev', labels.previousPage)}<span id="counter" class="counter"></span>${button('act-next', labels.nextPage)}<span id="here" class="here"></span>${button('act-script', labels.script)}${button('act-look', labels.appearance)}</header>`
       : `<header id="bar">${button('act-contents', labels.contents)}<span id="here" class="here"></span>${button('act-look', labels.appearance)}<span id="progress"></span></header>`,
     main: `<main id="view">${between('<body>\n', '\n</body>')}</main>`,
-    scripts: [READER_COMMON_SOURCE, paged ? READER_COMIC_SOURCE : READER_LINEAR_SOURCE].join('\n'),
+    scripts: paged ? readerScriptBundles().comic : readerScriptBundles().linear,
   });
 }
 

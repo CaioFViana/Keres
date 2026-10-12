@@ -50,6 +50,11 @@ describe('GET /public/config', () => {
     const { data } = await request('GET', '/public/config');
     expect(data.showcaseEnabled).toBe(true);
   });
+
+  it('advertises client-compiled uploads', async () => {
+    const { data } = await request('GET', '/public/config');
+    expect(data.compiledUpload).toBe(true);
+  });
 });
 
 describe('GET /public/stories', () => {

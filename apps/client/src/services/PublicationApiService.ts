@@ -12,6 +12,30 @@ import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 
+/**
+ * How long a publication upload may take. The default HTTP timeout trips on a
+ * slow network long before 100MB of manuscript and reader bytes arrive; the
+ * upload carries its own ceiling instead.
+ */
+export const PUBLISH_UPLOAD_TIMEOUT_MS = 300_000;
+
+/** Per-request options for a publication call: progress, patience and a way out. */
+export interface PublishRequestOptions {
+  /** Called with 0–1 as the upload progresses; never called on the legacy JSON path. */
+  onUploadProgress?: (fraction: number) => void;
+  /** Overrides the timeout for this call only. */
+  timeoutMs?: number;
+  /** Cancels the upload in flight. */
+  signal?: AbortSignal;
+}
+
+/** One compiled file of a multipart publication: the bytes plus what to call them. */
+export interface CompiledPublishUpload {
+  bytes: Uint8Array;
+  filename: string;
+  mimeType: string;
+}
+
 export interface StoryShowcaseState {
   isPublished: boolean;
   visibility: ShowcaseVisibility;
@@ -79,20 +103,43 @@ export class PublicationApiService {
   }
 
   /**
+   * The server's public showcase config, `undefined` when it cannot say:
+   * unreachable, or older than the route. The route is public: it needs no
+   * sign-in. `compiledUpload` is absent on servers that predate
+   * client-compiled uploads.
+   */
+  async getPublicConfig(
+    server: ServerSelect,
+  ): Promise<{ showcaseEnabled?: boolean; compiledUpload?: boolean } | undefined> {
+    try {
+      const response = await this.clientFor(server).get<{
+        showcaseEnabled?: boolean;
+        compiledUpload?: boolean;
+      }>('/public/config');
+      return response.data;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
    * Whether the server has its public pages turned on - without them it refuses every publication. `undefined`
    * when it cannot say: unreachable, or older than the route. The route is public: it needs no sign-in.
    */
   async isShowcaseEnabled(server: ServerSelect): Promise<boolean | undefined> {
-    try {
-      const response = await this.clientFor(server).get<{ showcaseEnabled?: boolean }>(
-        '/public/config',
-      );
-      return typeof response.data?.showcaseEnabled === 'boolean'
-        ? response.data.showcaseEnabled
-        : undefined;
-    } catch {
-      return undefined;
-    }
+    const config = await this.getPublicConfig(server);
+    return typeof config?.showcaseEnabled === 'boolean' ? config.showcaseEnabled : undefined;
+  }
+
+  /**
+   * Whether the server takes client-compiled manuscript and reader bytes: it
+   * does when its config advertises the upload capability. Absent on older
+   * servers and when unreachable: those only speak the legacy JSON
+   * publication, which the server compiles itself.
+   */
+  async supportsCompiledUpload(server: ServerSelect): Promise<boolean> {
+    const config = await this.getPublicConfig(server);
+    return config?.compiledUpload === true;
   }
 
   /** Every story publication this account can read on this server - its own or shared with it. */
@@ -123,18 +170,107 @@ export class PublicationApiService {
     reader?: PublishReaderOptions,
     includePackage = true,
     arcId?: string,
+    options?: PublishRequestOptions,
   ): Promise<StoryPublication> {
-    const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, {
-      operationVersion,
-      labelMode,
-      visibility,
-      password,
-      manuscript,
-      reader,
-      includePackage,
-      // One work of the story: a manuscript and/or the reader of it, never the package.
-      ...(arcId ? { arcId } : {}),
-    });
+    const response = await this.clientFor(server).post(
+      `/stories/${storyId}/publications`,
+      {
+        operationVersion,
+        labelMode,
+        visibility,
+        password,
+        manuscript,
+        reader,
+        includePackage,
+        // One work of the story: a manuscript and/or the reader of it, never the package.
+        ...(arcId ? { arcId } : {}),
+      },
+      {
+        ...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
+        ...(options?.signal ? { signal: options.signal } : {}),
+        ...(options?.onUploadProgress
+          ? {
+              onUploadProgress: (event: { loaded?: number; total?: number }) => {
+                if (event.total) options.onUploadProgress?.((event.loaded ?? 0) / event.total);
+              },
+            }
+          : {}),
+      },
+    );
+    return response.data;
+  }
+
+  /**
+   * Publishes with client-compiled bytes: the exact JSON body above rides as
+   * the `data` part, and a file part's presence selects the pre-compiled path
+   * for that artifact. The other artifact, when asked for, still compiles on
+   * the server. Only for servers that advertise the capability (see
+   * `supportsCompiledUpload`); older servers only speak `publish`.
+   */
+  async publishCompiled(
+    server: ServerSelect,
+    storyId: string,
+    operationVersion: number,
+    labelMode: PublicationLabelMode,
+    visibility: ShowcaseVisibility = 'public',
+    password?: string,
+    manuscript?: PublishManuscriptOptions,
+    reader?: PublishReaderOptions,
+    includePackage = true,
+    arcId?: string,
+    files?: { manuscript?: CompiledPublishUpload; reader?: CompiledPublishUpload },
+    options?: PublishRequestOptions,
+  ): Promise<StoryPublication> {
+    const form = new FormData();
+    form.append(
+      'data',
+      JSON.stringify({
+        operationVersion,
+        labelMode,
+        visibility,
+        password,
+        manuscript,
+        reader,
+        includePackage,
+        // One work of the story: a manuscript and/or the reader of it, never the package.
+        ...(arcId ? { arcId } : {}),
+      }),
+    );
+    // A Blob uploads from memory on every platform: the native `{uri, name,
+    // type}` file only points at files on disk, and these bytes were compiled
+    // here, not written anywhere.
+    if (files?.manuscript) {
+      form.append(
+        'manuscript',
+        new Blob([files.manuscript.bytes as unknown as BlobPart], {
+          type: files.manuscript.mimeType,
+        }),
+        files.manuscript.filename,
+      );
+    }
+    if (files?.reader) {
+      form.append(
+        'reader',
+        new Blob([files.reader.bytes as unknown as BlobPart], { type: files.reader.mimeType }),
+        files.reader.filename,
+      );
+    }
+    const response = await this.clientFor(server).post(
+      `/stories/${storyId}/publications`,
+      form,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: options?.timeoutMs ?? PUBLISH_UPLOAD_TIMEOUT_MS,
+        ...(options?.signal ? { signal: options.signal } : {}),
+        ...(options?.onUploadProgress
+          ? {
+              onUploadProgress: (event: { loaded: number; total?: number }) => {
+                if (event.total) options.onUploadProgress?.(event.loaded / event.total);
+              },
+            }
+          : {}),
+      },
+    );
     return response.data;
   }
 

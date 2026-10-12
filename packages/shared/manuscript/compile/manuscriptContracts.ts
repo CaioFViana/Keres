@@ -18,7 +18,7 @@ export const ManuscriptFormatSchema = z.enum([
 export type ManuscriptFormat = z.infer<typeof ManuscriptFormatSchema>;
 
 /** Largest manuscript the pipeline emits: anything bigger must be split first. */
-export const MAX_MANUSCRIPT_BYTES = 50 * 1024 * 1024;
+export const MAX_MANUSCRIPT_BYTES = 100 * 1024 * 1024;
 
 /** What a published version records about its manuscript rendition. */
 export const ManuscriptInfoSchema = z.object({

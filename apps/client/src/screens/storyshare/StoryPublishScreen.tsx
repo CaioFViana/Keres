@@ -14,7 +14,15 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Clipboard from 'expo-clipboard';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -94,9 +102,19 @@ const StoryPublishScreen = () => {
     );
   }
 
-  const { story, server, showcase, reason, manuscript, busy } = publishing;
+  const { story, server, showcase, reason, manuscript, busy, phase, uploadProgress, publishError } =
+    publishing;
   const url = buildStoryPublicUrl(server.url, story.id);
   const cannotPublish = !!reason || busy || manuscript.nothingSelected;
+  // Compiling and uploading share `busy`, but not their words: the button says which is happening.
+  const busyLabel =
+    phase === 'compiling'
+      ? t('publish_compiling')
+      : phase === 'uploading'
+        ? t('publish_uploading')
+        : t('publish_in_progress');
+  const uploadPercent =
+    uploadProgress == null ? null : Math.round(Math.max(0, Math.min(1, uploadProgress)) * 100);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -132,7 +150,7 @@ const StoryPublishScreen = () => {
       <View style={isCompact ? undefined : styles.columns} testID="story-publish-columns">
         <View style={isCompact ? undefined : styles.column}>
           <ScreenSection title={t('story_publish_step_what')} />
-          <PublishManuscriptSection story={story} manuscript={manuscript} />
+          <PublishManuscriptSection story={story} manuscript={manuscript} disabled={busy} />
         </View>
         <View style={isCompact ? undefined : styles.column}>
           <ScreenSection title={t('story_publish_step_who')} />
@@ -146,8 +164,9 @@ const StoryPublishScreen = () => {
                   publishing.labelMode === mode && styles.modeOptionActive,
                 ]}
                 onPress={() => publishing.setLabelMode(mode)}
+                disabled={busy}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: publishing.labelMode === mode }}
+                accessibilityState={{ selected: publishing.labelMode === mode, disabled: busy }}
               >
                 <Text
                   style={[styles.modeText, publishing.labelMode === mode && styles.modeTextActive]}
@@ -163,6 +182,7 @@ const StoryPublishScreen = () => {
             <ThemedSwitch
               value={publishing.usePassword}
               onValueChange={publishing.setUsePassword}
+              disabled={busy}
               testID="publish-password-switch"
             />
           </View>
@@ -181,6 +201,7 @@ const StoryPublishScreen = () => {
               <PasswordInput
                 value={publishing.password}
                 onChangeText={publishing.setPassword}
+                editable={!busy}
                 placeholder={t('publish_password_placeholder')}
               />
               {showcase.hasPassword && (
@@ -196,15 +217,76 @@ const StoryPublishScreen = () => {
             disabled={cannotPublish}
             testID="story-publish-submit"
             style={styles.publishButton}
-            accessibilityLabel={busy ? t('publish_in_progress') : t('publish_create_version')}
+            accessibilityLabel={busy ? busyLabel : t('publish_create_version')}
           >
             <View style={styles.primaryButtonContent}>
               <Ionicons name="cloud-upload-outline" size={18} color={colors.onPrimary} />
               <Text style={styles.primaryButtonText}>
-                {busy ? t('publish_in_progress') : t('publish_create_version')}
+                {busy ? busyLabel : t('publish_create_version')}
               </Text>
             </View>
           </Button>
+          {/*
+            Compiling runs through on this device, so it offers no cancel;
+            uploading can be stopped, and shows how far the bytes got when the
+            service reports it.
+          */}
+          {phase === 'compiling' ? (
+            <View style={styles.phaseRow}>
+              <ActivityIndicator testID="story-publish-compiling" color={colors.primary} />
+            </View>
+          ) : null}
+          {phase === 'uploading' ? (
+            <View style={styles.phaseRow}>
+              {uploadPercent == null ? (
+                <ActivityIndicator testID="story-publish-uploading" color={colors.primary} />
+              ) : (
+                <View style={styles.progressWrap}>
+                  <View
+                    style={styles.progressTrack}
+                    testID="story-publish-progress"
+                    accessibilityRole="progressbar"
+                    accessibilityLabel={t('publish_upload_progress')}
+                    accessibilityValue={{ min: 0, max: 100, now: uploadPercent }}
+                  >
+                    <View style={[styles.progressFill, { width: `${uploadPercent}%` }]} />
+                  </View>
+                  <Text style={styles.phaseText}>{`${uploadPercent}%`}</Text>
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.cancelButton}
+                testID="story-publish-cancel"
+                accessibilityRole="button"
+                onPress={publishing.cancelPublish}
+              >
+                <Text style={styles.cancelButtonText}>{t('publish_cancel_upload')}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+          {/*
+            A failed publish stays on the screen after its toast is gone: the
+            message, and another try where trying again can help. The fields
+            above are editable again - only the publish runs under `busy`.
+          */}
+          {publishError && !busy ? (
+            <View style={styles.errorCard} testID="story-publish-error">
+              {publishError.kind === 'upload' ? (
+                <Text style={styles.errorTitle}>{t('publish_upload_failed')}</Text>
+              ) : null}
+              <Text style={styles.errorMessage}>{publishError.message}</Text>
+              {publishError.retryable ? (
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  testID="story-publish-retry"
+                  accessibilityRole="button"
+                  onPress={() => void publishing.retryPublish()}
+                >
+                  <Text style={styles.retryButtonText}>{t('publish_retry')}</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -323,6 +405,47 @@ const createStyles = (colors: ThemeColors) =>
     },
     hint: { ...typography.caption, color: colors.textSecondary, marginTop: -4, marginBottom: 16 },
     publishButton: { marginTop: 8 },
+    phaseRow: { marginTop: 12, gap: 8 },
+    phaseText: { ...typography.caption, color: colors.textSecondary },
+    progressWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    progressTrack: {
+      flex: 1,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.border,
+      overflow: 'hidden',
+    },
+    progressFill: { height: 8, borderRadius: 4, backgroundColor: colors.primary },
+    cancelButton: {
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      borderColor: colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    cancelButtonText: { ...typography.label, color: colors.textSecondary },
+    errorCard: {
+      backgroundColor: colors.surface,
+      borderColor: colors.error,
+      borderRadius: 10,
+      borderWidth: StyleSheet.hairlineWidth,
+      marginTop: 12,
+      padding: 14,
+      gap: 8,
+    },
+    errorTitle: { fontSize: 14, fontWeight: 'bold', color: colors.error },
+    errorMessage: { fontSize: 13, color: colors.text },
+    retryButton: {
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    retryButtonText: { ...typography.label, color: colors.onPrimary },
     primaryButtonContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
     primaryButtonText: {
       color: colors.onPrimary,

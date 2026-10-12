@@ -37,6 +37,7 @@ const tierBodyFields = {
   maxStorageBytesPerStory: t.Optional(t.Nullable(t.Number())),
   maxStorageBytesTotal: t.Optional(t.Nullable(t.Number())),
   maxPublicationsPerDay: t.Optional(t.Nullable(t.Number())),
+  maxPublicationsPerStory: t.Optional(t.Nullable(t.Number())),
   maxPublishedArcs: t.Optional(t.Nullable(t.Number())),
   maxMessagesPerDay: t.Optional(t.Nullable(t.Number())),
   priceMonthlyCents: t.Optional(t.Nullable(t.Number())),

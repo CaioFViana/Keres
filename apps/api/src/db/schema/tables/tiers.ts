@@ -22,6 +22,12 @@ export const tiers = table('tiers', {
   maxStorageBytesTotal: bigintNumber('max_storage_bytes_total'),
   /** Versions published in any rolling 24 hours (see `publication_log`); 0 forbids publishing. */
   maxPublicationsPerDay: integer('max_publications_per_day'),
+  /**
+   * Published versions kept per story (per work, like the pruning: each work keeps its own);
+   * `null` is unlimited, 0 keeps none and refuses the publication. Existing rows backfill 5,
+   * which is what every story kept before.
+   */
+  maxPublicationsPerStory: integer('max_publications_per_story'),
   /** Works (arcs) of one story that may be live on the showcase at once; `null` is unlimited, 0 forbids arc releases. */
   maxPublishedArcs: integer('max_published_arcs'),
   /** Messages to other users in any rolling 24 hours (see `message_log`); 0 silences the user. */

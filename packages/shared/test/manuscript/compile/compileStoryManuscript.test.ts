@@ -285,7 +285,28 @@ describe('compileStoryManuscript limits', () => {
     await expect(compileStoryManuscript(big, { format: 'txt' })).rejects.toThrow(
       `exceeds the ${MAX_MANUSCRIPT_BYTES}-byte limit`,
     );
-    // It builds, validates and renders fifty megabytes of text: a fraction of a second here, but on a busy
-    // CI machine the default five seconds is not a margin for that.
+    // It builds, validates and renders a hundred megabytes of text: a fraction of a second here, but on a
+    // busy CI machine the default five seconds is not a margin for that.
+  }, 60_000);
+
+  it('compiles what fits under the raised budget', async () => {
+    // Sixty megabytes: refused under the old cap, accepted now.
+    const fitting = input({
+      scenes: [
+        {
+          id: 's-1',
+          chapterId: 'ch-1',
+          name: 'Opening',
+          index: 1,
+          body: 'x'.repeat(60 * 1024 * 1024),
+          isDeleted: false,
+        },
+      ],
+    });
+
+    const result = await compileStoryManuscript(fitting, { format: 'txt' });
+
+    expect(result.bytes.length).toBeGreaterThan(50 * 1024 * 1024);
+    expect(result.bytes.length).toBeLessThanOrEqual(MAX_MANUSCRIPT_BYTES);
   }, 60_000);
 });

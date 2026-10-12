@@ -22,7 +22,10 @@ const mockGetPubs = jest.fn();
 const mockSyncPubs = jest.fn();
 const mockGetShowcase = jest.fn();
 const mockShowcaseEnabled = jest.fn();
+const mockSupportsCompiledUpload = jest.fn();
 const mockPublish = jest.fn();
+const mockPublishCompiled = jest.fn();
+const mockCompilePublishArtifacts = jest.fn();
 const mockDeletePublication = jest.fn();
 const mockUnpublish = jest.fn();
 const mockIsOffline = jest.fn();
@@ -144,7 +147,9 @@ jest.mock('../../../src/services/PublicationApiService', () => ({
   publicationApiService: {
     getStoryShowcase: (...args: unknown[]) => mockGetShowcase(...args),
     isShowcaseEnabled: (...args: unknown[]) => mockShowcaseEnabled(...args),
+    supportsCompiledUpload: (...args: unknown[]) => mockSupportsCompiledUpload(...args),
     publish: (...args: unknown[]) => mockPublish(...args),
+    publishCompiled: (...args: unknown[]) => mockPublishCompiled(...args),
     deletePublication: (...args: unknown[]) => mockDeletePublication(...args),
     unpublish: (...args: unknown[]) => mockUnpublish(...args),
   },
@@ -204,6 +209,10 @@ jest.mock('../../../src/services/apiClient', () => ({
   default: {},
   apiUrl: (base: string, path: string) => `${base}${path}`,
   isOfflineError: (err: unknown) => !!(err as { isOffline?: boolean } | null)?.isOffline,
+  isAbortError: (err: unknown) =>
+    (err as { name?: string; code?: string })?.name === 'AbortError' ||
+    (err as { name?: string; code?: string })?.name === 'CanceledError' ||
+    (err as { name?: string; code?: string })?.code === 'ERR_CANCELED',
 }));
 
 jest.mock('../../../src/state/connectivityStore', () => ({
@@ -211,9 +220,8 @@ jest.mock('../../../src/state/connectivityStore', () => ({
     typeof selector === 'function' ? selector(mockConnectivity) : mockConnectivity,
 }));
 
-const mockRefreshSnapshots = jest.fn();
-jest.mock('../../../src/services/storymanagement/ManuscriptPagesService', () => ({
-  refreshStaleSketchSnapshots: (...args: unknown[]) => mockRefreshSnapshots(...args),
+jest.mock('../../../src/services/storymanagement/PublishCompileService', () => ({
+  compilePublishArtifacts: (...args: unknown[]) => mockCompilePublishArtifacts(...args),
 }));
 let mockSungSongs = false;
 jest.mock('../../../src/services/storymanagement/ManuscriptMusicService', () => ({
@@ -308,7 +316,10 @@ describe('StoryPublishScreen', () => {
   beforeEach(() => {
     mockCompact.current = true;
     jest.clearAllMocks();
-    mockRefreshSnapshots.mockResolvedValue(0);
+    // An older server by default: the legacy JSON publication, as before.
+    mockSupportsCompiledUpload.mockResolvedValue(false);
+    mockCompilePublishArtifacts.mockResolvedValue({});
+    mockPublishCompiled.mockResolvedValue({ label: 'v1' });
     jest.spyOn(Linking, 'openURL').mockResolvedValue(true as never);
     mockGetAllServers.mockResolvedValue([server]);
     mockFindStories.mockResolvedValue(story);
@@ -463,18 +474,26 @@ describe('StoryPublishScreen', () => {
     expect(Linking.openURL).toHaveBeenCalledWith('https://s.example/showcase/story/story-1');
   });
 
-  it('redraws a changed sketch picture first and asks for a sync instead of publishing a stale one', async () => {
-    mockRefreshSnapshots.mockResolvedValue(2);
+  it('publishes without redrawing sketch pictures: the device compile draws them itself', async () => {
     const view = await render(<StoryPublishScreen />);
     await view.findByTestId('story-publish-status');
     await view.findByText('publish_create_version');
     await fireEvent.press(view.getByText('publish_create_version'));
 
-    await waitFor(() =>
-      expect(mockNotify).toHaveBeenCalledWith('publish_snapshots_redrawn', 'warning'),
-    );
-    expect(mockRefreshSnapshots).toHaveBeenCalledWith(mockDrizzle, 'user-1', 'story-1');
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockNotify).not.toHaveBeenCalledWith('publish_snapshots_redrawn', 'warning');
+  });
+
+  it('compiles and uploads nothing while the story is blocked', async () => {
+    mockIsOffline.mockReturnValue(true);
+    const view = await render(<StoryPublishScreen />);
+    await view.findByText('publish_blocked_offline');
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    // The blocked button stays shut: no local bytes are compiled and none go up.
+    expect(mockCompilePublishArtifacts).not.toHaveBeenCalled();
     expect(mockPublish).not.toHaveBeenCalled();
+    expect(mockPublishCompiled).not.toHaveBeenCalled();
   });
 
   it('requires a long enough password when the padlock is on', async () => {
@@ -1200,5 +1219,393 @@ describe('StoryPublishScreen', () => {
 
     await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
     expect(mockPublish.mock.calls[0][7]).toBeUndefined();
+  });
+
+  it('compiles on the device and uploads against a server that takes bytes', async () => {
+    mockSupportsCompiledUpload.mockResolvedValue(true);
+    mockCompilePublishArtifacts.mockResolvedValue({
+      manuscript: {
+        bytes: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+        extension: 'pdf',
+        mimeType: 'application/pdf',
+        format: 'pdf',
+      },
+    });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    await fireEvent.press(view.getByTestId('export-format-pdf'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublishCompiled).toHaveBeenCalledTimes(1));
+    expect(mockPublish).not.toHaveBeenCalled();
+    const call = mockPublishCompiled.mock.calls[0];
+    expect(call.slice(0, 10)).toEqual([
+      server,
+      'story-1',
+      5,
+      'both',
+      'public',
+      undefined,
+      expect.objectContaining({ format: 'pdf' }),
+      undefined,
+      true,
+      undefined,
+    ]);
+    expect(call[10]).toEqual({
+      manuscript: {
+        bytes: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+        filename: 'manuscript.pdf',
+        mimeType: 'application/pdf',
+      },
+    });
+    expect(call[11]).toEqual({
+      signal: expect.any(AbortSignal),
+      onUploadProgress: expect.any(Function),
+    });
+    expect(mockSyncPubs).toHaveBeenCalledWith(server);
+  });
+
+  it('uploads the reader alone as reader.html', async () => {
+    mockSupportsCompiledUpload.mockResolvedValue(true);
+    mockCompilePublishArtifacts.mockResolvedValue({
+      reader: {
+        bytes: new TextEncoder().encode('<!DOCTYPE html>'),
+        mimeType: 'text/html; charset=utf-8',
+      },
+    });
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
+    await fireEvent.press(view.getByTestId('publish-package-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublishCompiled).toHaveBeenCalledTimes(1));
+    expect(mockPublishCompiled.mock.calls[0][10]).toEqual({
+      reader: {
+        bytes: new TextEncoder().encode('<!DOCTYPE html>'),
+        filename: 'reader.html',
+        mimeType: 'text/html; charset=utf-8',
+      },
+    });
+  });
+
+  it('stays on the legacy call against an older server, even with a manuscript', async () => {
+    mockSupportsCompiledUpload.mockResolvedValue(false);
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockCompilePublishArtifacts).not.toHaveBeenCalled();
+    expect(mockPublishCompiled).not.toHaveBeenCalled();
+  });
+
+  it('treats a 409 after the upload as sync-then-retry, never success', async () => {
+    await withSilencedConsole(['log'], async () => {
+      mockSupportsCompiledUpload.mockResolvedValue(true);
+      mockCompilePublishArtifacts.mockResolvedValue({
+        manuscript: {
+          bytes: new Uint8Array([1, 2, 3]),
+          extension: 'md',
+          mimeType: 'text/markdown',
+          format: 'md',
+        },
+      });
+      mockPublishCompiled.mockRejectedValueOnce({ response: { status: 409 } });
+      const view = await render(<StoryPublishScreen />);
+      await view.findByTestId('story-publish-status');
+      await view.findByText('publish_create_version');
+
+      await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+      await view.findByTestId('publish-manuscript-options-story-1');
+      await fireEvent.press(view.getByText('publish_create_version'));
+
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('publish_blocked_not_synced', 'error'),
+      );
+      expect(mockAlert).not.toHaveBeenCalledWith(
+        'publish_version_created',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+  });
+
+  it('tells a refused upload once and never retries it blindly', async () => {
+    await withSilencedConsole(['log'], async () => {
+      mockSupportsCompiledUpload.mockResolvedValue(true);
+      mockCompilePublishArtifacts.mockResolvedValue({
+        manuscript: {
+          bytes: new Uint8Array([1, 2, 3]),
+          extension: 'md',
+          mimeType: 'text/markdown',
+          format: 'md',
+        },
+      });
+      mockPublishCompiled.mockRejectedValueOnce({ response: { status: 413 } });
+      const view = await render(<StoryPublishScreen />);
+      await view.findByTestId('story-publish-status');
+      await view.findByText('publish_create_version');
+
+      await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+      await view.findByTestId('publish-manuscript-options-story-1');
+      await fireEvent.press(view.getByText('publish_create_version'));
+
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('publish_failed', 'error'));
+      expect(mockPublishCompiled).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('tells a failed compile instead of uploading nothing', async () => {
+    await withSilencedConsole(['log'], async () => {
+      mockSupportsCompiledUpload.mockResolvedValue(true);
+      mockCompilePublishArtifacts.mockRejectedValueOnce(new Error('could not draw'));
+      const view = await render(<StoryPublishScreen />);
+      await view.findByTestId('story-publish-status');
+      await view.findByText('publish_create_version');
+
+      await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+      await view.findByTestId('publish-manuscript-options-story-1');
+      await fireEvent.press(view.getByText('publish_create_version'));
+
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('publish_compile_failed', 'error'),
+      );
+      expect(mockPublishCompiled).not.toHaveBeenCalled();
+    });
+  });
+
+  it('names the compiling phase on the button and locks the choices while it runs', async () => {
+    mockSupportsCompiledUpload.mockResolvedValue(true);
+    let resolveCompile!: (value: unknown) => void;
+    mockCompilePublishArtifacts.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveCompile = resolve;
+        }),
+    );
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    // The compile phase: its own label, a spinner, no cancel, and the choices stand as sent.
+    await view.findByText('publish_compiling');
+    expect(view.getByTestId('story-publish-compiling')).toBeTruthy();
+    expect(view.queryByTestId('story-publish-cancel')).toBeNull();
+    const submit = view.getByTestId('story-publish-submit');
+    expect(submit.props.accessibilityState?.disabled).toBe(true);
+    expect(submit.props.accessibilityLabel).toBe('publish_compiling');
+    expect(
+      view.getByTestId('publish-manuscript-switch-story-1').props.accessibilityState,
+    ).toMatchObject({ disabled: true });
+
+    await act(async () => {
+      resolveCompile({
+        manuscript: {
+          bytes: new Uint8Array([1, 2, 3]),
+          extension: 'md',
+          mimeType: 'text/markdown',
+          format: 'md',
+        },
+      });
+    });
+    await waitFor(() => expect(mockPublishCompiled).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith(
+        'publish_version_created',
+        expect.any(String),
+        expect.any(Array),
+      ),
+    );
+  });
+
+  it('bars the upload with its progress and lets it be cancelled', async () => {
+    mockSupportsCompiledUpload.mockResolvedValue(true);
+    mockCompilePublishArtifacts.mockResolvedValue({
+      manuscript: {
+        bytes: new Uint8Array([1, 2, 3]),
+        extension: 'md',
+        mimeType: 'text/markdown',
+        format: 'md',
+      },
+    });
+    let capturedOptions!: { signal: AbortSignal; onUploadProgress?: (fraction: number) => void };
+    mockPublishCompiled.mockImplementationOnce(
+      (...args: unknown[]) =>
+        new Promise((_resolve, reject) => {
+          capturedOptions = args[11] as typeof capturedOptions;
+          capturedOptions.signal.addEventListener('abort', () =>
+            reject({ name: 'CanceledError' }),
+          );
+        }),
+    );
+    const view = await render(<StoryPublishScreen />);
+    await view.findByTestId('story-publish-status');
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await view.findByText('publish_uploading');
+    expect(view.getByTestId('story-publish-submit').props.accessibilityLabel).toBe(
+      'publish_uploading',
+    );
+
+    await act(async () => {
+      capturedOptions.onUploadProgress?.(0.5);
+    });
+    const bar = await view.findByTestId('story-publish-progress');
+    expect(bar.props.accessibilityValue).toMatchObject({ min: 0, max: 100, now: 50 });
+    expect(bar.props.accessibilityLabel).toBe('publish_upload_progress');
+
+    await fireEvent.press(view.getByTestId('story-publish-cancel'));
+    await view.findByText('publish_create_version');
+    // Cancelling stops it quietly: no failure notice, no public address.
+    expect(mockNotify).not.toHaveBeenCalled();
+    expect(mockAlert).not.toHaveBeenCalledWith(
+      'publish_version_created',
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('keeps a failed upload on screen and retries it without compiling again', async () => {
+    await withSilencedConsole(['log'], async () => {
+      mockSupportsCompiledUpload.mockResolvedValue(true);
+      mockCompilePublishArtifacts.mockResolvedValue({
+        manuscript: {
+          bytes: new Uint8Array([1, 2, 3]),
+          extension: 'md',
+          mimeType: 'text/markdown',
+          format: 'md',
+        },
+      });
+      mockPublishCompiled.mockRejectedValueOnce(new Error('net down'));
+      mockPublishCompiled.mockResolvedValueOnce({ label: 'v1' });
+      const view = await render(<StoryPublishScreen />);
+      await view.findByTestId('story-publish-status');
+      await view.findByText('publish_create_version');
+
+      await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+      await view.findByTestId('publish-manuscript-options-story-1');
+      await fireEvent.press(view.getByText('publish_create_version'));
+
+      // The failure stays past its toast, with another try; the fields are editable again.
+      const card = await view.findByTestId('story-publish-error');
+      expect(card).toBeTruthy();
+      expect(view.getByText('publish_upload_failed')).toBeTruthy();
+      expect(mockNotify).toHaveBeenCalledWith('publish_failed', 'error');
+      expect(
+        view.getByTestId('publish-manuscript-switch-story-1').props.accessibilityState,
+      ).toMatchObject({ disabled: false });
+
+      await fireEvent.press(view.getByTestId('story-publish-retry'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith(
+          'publish_version_created',
+          expect.any(String),
+          expect.any(Array),
+        ),
+      );
+      // The retry re-entered at the upload: the bytes compiled exactly once.
+      expect(mockCompilePublishArtifacts).toHaveBeenCalledTimes(1);
+      expect(mockPublishCompiled).toHaveBeenCalledTimes(2);
+      expect(view.queryByTestId('story-publish-error')).toBeNull();
+    });
+  });
+
+  it('rebuilds a failed compile from scratch on retry', async () => {
+    await withSilencedConsole(['log'], async () => {
+      mockSupportsCompiledUpload.mockResolvedValue(true);
+      mockCompilePublishArtifacts.mockRejectedValueOnce(new Error('could not draw'));
+      mockCompilePublishArtifacts.mockResolvedValueOnce({
+        manuscript: {
+          bytes: new Uint8Array([1, 2, 3]),
+          extension: 'md',
+          mimeType: 'text/markdown',
+          format: 'md',
+        },
+      });
+      const view = await render(<StoryPublishScreen />);
+      await view.findByTestId('story-publish-status');
+      await view.findByText('publish_create_version');
+
+      await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+      await view.findByTestId('publish-manuscript-options-story-1');
+      await fireEvent.press(view.getByText('publish_create_version'));
+
+      await view.findByTestId('story-publish-error');
+      expect(view.getByText('publish_compile_failed')).toBeTruthy();
+
+      await fireEvent.press(view.getByTestId('story-publish-retry'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith(
+          'publish_version_created',
+          expect.any(String),
+          expect.any(Array),
+        ),
+      );
+      // No bytes were kept: the retry compiled again.
+      expect(mockCompilePublishArtifacts).toHaveBeenCalledTimes(2);
+      expect(mockPublishCompiled).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('offers no retry for a refused upload, and none at rest or after success', async () => {
+    await withSilencedConsole(['log'], async () => {
+      mockSupportsCompiledUpload.mockResolvedValue(true);
+      mockCompilePublishArtifacts.mockResolvedValue({
+        manuscript: {
+          bytes: new Uint8Array([1, 2, 3]),
+          extension: 'md',
+          mimeType: 'text/markdown',
+          format: 'md',
+        },
+      });
+      mockPublishCompiled.mockRejectedValueOnce({ response: { status: 413 } });
+      const view = await render(<StoryPublishScreen />);
+      await view.findByTestId('story-publish-status');
+      await view.findByText('publish_create_version');
+
+      // At rest there is nothing to try again.
+      expect(view.queryByTestId('story-publish-retry')).toBeNull();
+
+      await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+      await view.findByTestId('publish-manuscript-options-story-1');
+      await fireEvent.press(view.getByText('publish_create_version'));
+
+      // Refused bytes fail again: the card says so, with no retry.
+      await view.findByTestId('story-publish-error');
+      expect(view.queryByTestId('story-publish-retry')).toBeNull();
+      expect(mockPublishCompiled).toHaveBeenCalledTimes(1);
+
+      // A fresh publish clears the card; its success leaves no retry behind.
+      mockPublishCompiled.mockResolvedValueOnce({ label: 'v1' });
+      await fireEvent.press(view.getByText('publish_create_version'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith(
+          'publish_version_created',
+          expect.any(String),
+          expect.any(Array),
+        ),
+      );
+      expect(view.queryByTestId('story-publish-error')).toBeNull();
+      expect(view.queryByTestId('story-publish-retry')).toBeNull();
+    });
   });
 });

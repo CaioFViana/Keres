@@ -19,8 +19,8 @@ describe('ManuscriptFormatSchema', () => {
 });
 
 describe('MAX_MANUSCRIPT_BYTES', () => {
-  it('is 50 MB', () => {
-    expect(MAX_MANUSCRIPT_BYTES).toBe(50 * 1024 * 1024);
+  it('is 100 MB', () => {
+    expect(MAX_MANUSCRIPT_BYTES).toBe(100 * 1024 * 1024);
   });
 });
 

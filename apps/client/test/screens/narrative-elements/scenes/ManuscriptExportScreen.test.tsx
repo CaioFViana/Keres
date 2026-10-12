@@ -379,7 +379,7 @@ describe('ManuscriptExportScreen size', () => {
 
     expect(mockOptionsProps?.sizeEstimate?.status).toBe('ok');
     expect(mockOptionsProps?.sizeEstimate?.bytes).toBeGreaterThan(1000);
-    expect(mockOptionsProps?.sizeEstimate?.limit).toBe(50 * 1024 * 1024);
+    expect(mockOptionsProps?.sizeEstimate?.limit).toBe(100 * 1024 * 1024);
   });
 
   it('counts a loose scene only when it is asked for, and a scene name only when it is shown', async () => {
@@ -405,9 +405,10 @@ describe('ManuscriptExportScreen size', () => {
   });
 
   it('calls a very large manuscript over the limit', async () => {
+    // Past the 100 MB cap: markdown grows by a tenth, so 96 MB of prose estimates over the limit.
     mockManuscriptData = {
       chapters: [makeChapter()],
-      scenes: [makeScene({ body: 'z'.repeat(60 * 1024 * 1024) })],
+      scenes: [makeScene({ body: 'z'.repeat(96 * 1024 * 1024) })],
       choices: [],
       loading: false,
     };

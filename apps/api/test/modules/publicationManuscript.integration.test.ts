@@ -376,9 +376,9 @@ describe('publishing with a manuscript', () => {
 
   it('refuses an oversized manuscript and writes no package', async () => {
     const story = await uploadTestStory(ana.token);
-    // 1800 scenes at the per-scene body cap: ~54 MB of prose, past the 50 MB manuscript cap.
+    // 3600 scenes at the per-scene body cap: ~108 MB of prose, past the 100 MB manuscript cap.
     const body = 'y'.repeat(30000);
-    const rows = Array.from({ length: 1800 }, (_, index) => ({
+    const rows = Array.from({ length: 3600 }, (_, index) => ({
       id: newId(),
       storyId: story.id,
       chapterId: null,
@@ -644,9 +644,10 @@ describe('publishing the pages of a comic', () => {
   it('refuses a book whose pictures alone would pass the limit, before reading them, and writes nothing', async () => {
     const story = await uploadTestStory(ana.token);
     await seedComicContent(story.id);
+    // A declared size past the 100 MB manuscript cap, so the pre-compile estimate refuses.
     await db
       .update(galleries)
-      .set({ sizeBytes: 60 * 1024 * 1024 })
+      .set({ sizeBytes: 120 * 1024 * 1024 })
       .where(eq(galleries.storyId, story.id));
 
     const { status, data } = await publish(ana.token, story.id, { manuscript: { format: 'epub' } });

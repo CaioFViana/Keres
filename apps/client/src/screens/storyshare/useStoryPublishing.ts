@@ -6,14 +6,17 @@ import { Linking } from 'react-native';
 import { useDrizzle } from '../../db';
 import * as schema from '../../db/schema';
 import type { ServerSelect, StorySelect } from '../../db/schema';
-import { isOfflineError } from '../../services/apiClient';
+import { isAbortError, isOfflineError } from '../../services/apiClient';
 import {
+  type CompiledPublishUpload,
   publicationApiService,
+  type PublishManuscriptOptions,
+  type PublishReaderOptions,
   type StoryShowcaseState,
 } from '../../services/PublicationApiService';
 import { createPublicationService } from '../../services/PublicationService';
 import { createServerService } from '../../services/ServerService';
-import { refreshStaleSketchSnapshots } from '../../services/storymanagement/ManuscriptPagesService';
+import { compilePublishArtifacts } from '../../services/storymanagement/PublishCompileService';
 import { fetchServerStoryPreviews } from '../../services/sync/StoryTransfer';
 import { useConnectivityStore } from '../../state/connectivityStore';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -40,6 +43,34 @@ export function buildStoryPublicUrl(serverUrl: string, storyId: string): string 
  * to its owner.
  */
 export type PublishBlocker = 'no-server' | 'not-owner';
+
+/**
+ * Where a publish stands, so the screen can tell compiling the bytes apart
+ * from uploading them: one `busy` cannot say which is happening.
+ */
+export type PublishPhase = 'idle' | 'compiling' | 'uploading';
+
+/**
+ * A publish that did not finish: the message already toasted (the card
+ * repeats it so it outlives the toast) and whether trying again can help. A
+ * refused upload (409/429/403/400/413/415) fails the same bytes again, so it
+ * offers no retry; a lost connection or an unknown failure does.
+ */
+export interface PublishError {
+  message: string;
+  kind: 'compile' | 'upload';
+  retryable: boolean;
+}
+
+/** The bytes a failed upload keeps: a retry re-enters at the upload with these. */
+interface CompiledPublishAttempt {
+  storyId: string;
+  operationVersion: number;
+  manuscriptOptions: PublishManuscriptOptions | undefined;
+  readerOptions: PublishReaderOptions | undefined;
+  arcId: string | undefined;
+  files: { manuscript?: CompiledPublishUpload; reader?: CompiledPublishUpload };
+}
 
 /**
  * Publishing the open story to its server's Showcase.
@@ -72,6 +103,12 @@ export function useStoryPublishing(storyId: string | undefined) {
   const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<PublishPhase>('idle');
+  /** 0–1 while bytes go up; null on the legacy call, whose body is only options. */
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [publishError, setPublishError] = useState<PublishError | null>(null);
+  /** The last compiled bytes, kept only for an upload retry; cleared everywhere else. */
+  const compiledAttempt = useRef<CompiledPublishAttempt | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -165,6 +202,11 @@ export function useStoryPublishing(storyId: string | undefined) {
         setUsePassword(remote?.visibility === 'password');
         setLabelMode(remote?.labelMode ?? 'both');
         setPassword('');
+        // Another story's bytes and failures stay with it: retrying them here would upload the wrong book.
+        compiledAttempt.current = null;
+        setPublishError(null);
+        setPhase('idle');
+        setUploadProgress(null);
         resetForStory(found);
       }
     } catch (loadError) {
@@ -191,36 +233,77 @@ export function useStoryPublishing(storyId: string | undefined) {
     return null;
   })();
 
-  const runPublish = useCallback(async () => {
-    if (!story || !server) return;
-    setBusy(true);
-    try {
-      // The server compiles the pages from what it was sent, so a Sketch changed since its snapshot is
-      // redrawn first. The new snapshot is a change like any other: it has to sync before it can be published.
-      const redrawn = userId ? await refreshStaleSketchSnapshots(drizzleDb, userId, story.id) : 0;
-      if (redrawn > 0) {
-        showNotification(t('publish_snapshots_redrawn', { count: redrawn }), 'warning');
-        await load();
-        return;
+  /** Cancels a publish in flight: the compile between its stages, or the upload. */
+  const publishController = useRef<AbortController | null>(null);
+
+  const cancelPublish = useCallback(() => {
+    publishController.current?.abort();
+  }, []);
+
+  /**
+   * Maps an upload failure to its message and its card: the toast stays what
+   * it always was, and a refusal (the same bytes fail again) offers no retry.
+   * A retry repeats the same words, so it pushes past the store's dedupe.
+   */
+  const reportUploadError = useCallback(
+    (uploadError: unknown, isRetry: boolean) => {
+      const notifyFailure = (message: string) => {
+        if (isRetry) showNotification(message, 'error', { force: true });
+        else showNotification(message, 'error');
+      };
+      const status = (uploadError as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        // The server disagrees with our counter: synchronizing is the only way.
+        // After an upload this still only means sync-then-retry, never success.
+        const message = t('publish_blocked_not_synced');
+        setPublishError({ message, kind: 'upload', retryable: false });
+        notifyFailure(message);
+      } else if (status === 429) {
+        // The plan's daily number of publications is used up, or the works it may show at once.
+        const message = t(
+          manuscript.releaseArcId ? 'publish_works_limit_reached' : 'publish_limit_reached',
+        );
+        setPublishError({ message, kind: 'upload', retryable: false });
+        notifyFailure(message);
+      } else if (status === 403) {
+        const message = t('publish_showcase_disabled');
+        setPublishError({ message, kind: 'upload', retryable: false });
+        notifyFailure(message);
+      } else if (status === 400 || status === 413 || status === 415) {
+        // A verdict on the bytes themselves (rejected options, over the
+        // ceiling, unsupported type): retrying the same bytes changes nothing,
+        // so it is told once and never retried blindly.
+        console.log('useStoryPublishing: publish refused.', uploadError);
+        const message = t('publish_failed');
+        setPublishError({ message, kind: 'upload', retryable: false });
+        notifyFailure(message);
+      } else if (isOfflineError(uploadError)) {
+        const message = t('publish_blocked_offline');
+        setPublishError({ message, kind: 'upload', retryable: true });
+        notifyFailure(message);
+      } else {
+        console.log('useStoryPublishing: publish failed.', uploadError);
+        const message = t('publish_failed');
+        setPublishError({ message, kind: 'upload', retryable: true });
+        notifyFailure(message);
       }
-      // Visibility travels with the publication, rather than in a second call only when there is a password:
-      // that way publishing with the padlock off really does make the story public, and does not silently
-      // leave an old password in force.
-      const manuscriptOptions = manuscript.buildOptions(story, t, i18n.language);
-      const readerOptions = manuscript.buildReaderOptions(story, t, i18n.language);
-      const published = await publicationApiService.publish(
-        server,
-        story.id,
-        // The server's sequence, as far as this device has read it - what the server checks against.
-        story.lastServerSyncedLog ?? 0,
-        labelMode,
-        usePassword ? 'password' : 'public',
-        usePassword ? password.trim() : undefined,
-        manuscriptOptions,
-        readerOptions,
-        manuscript.includePackage,
-        manuscript.releaseArcId ?? undefined,
-      );
+    },
+    [manuscript.releaseArcId, showNotification, t],
+  );
+
+  /**
+   * What a finished upload does, however it went up: the dropped-extras
+   * notice, the mirror sync, and the public address in hand.
+   */
+  const finishPublish = useCallback(
+    async (
+      serverValue: ServerSelect,
+      storyValue: StorySelect,
+      published: StoryPublication,
+      manuscriptOptions: PublishManuscriptOptions | undefined,
+      readerOptions: PublishReaderOptions | undefined,
+      passwordProtected: boolean,
+    ) => {
       // A server that predates these extras publishes the version and drops them without a word:
       // saying so beats a page that silently lacks the button.
       const droppedExtras =
@@ -229,15 +312,15 @@ export function useStoryPublishing(storyId: string | undefined) {
       if (droppedExtras) {
         showNotification(t('publish_extras_ignored'), 'error');
       }
-      await createPublicationService(drizzleDb).syncPublicationsWithServer(server);
+      await createPublicationService(drizzleDb).syncPublicationsWithServer(serverValue);
 
       // Publishing without saying where the story ended up leaves the person with nothing in hand - the
       // address is the action's result, so it appears immediately and stays on the screen.
-      const url = buildStoryPublicUrl(server.url, story.id);
+      const url = buildStoryPublicUrl(serverValue.url, storyValue.id);
       AppAlert.alert(
         t('publish_version_created'),
         `${t('publish_link_intro', { label: published.label })}\n\n${url}${
-          usePassword ? `\n\n${t('publish_link_password_reminder')}` : ''
+          passwordProtected ? `\n\n${t('publish_link_password_reminder')}` : ''
         }`,
         [
           { text: t('publish_open_link'), onPress: () => void Linking.openURL(url) },
@@ -246,41 +329,262 @@ export function useStoryPublishing(storyId: string | undefined) {
       );
       setPassword('');
       await load();
-    } catch (publishError) {
-      const status = (publishError as { response?: { status?: number } })?.response?.status;
-      if (status === 409) {
-        // The server disagrees with our counter: synchronizing is the only way.
-        showNotification(t('publish_blocked_not_synced'), 'error');
-      } else if (status === 429) {
-        // The plan's daily number of publications is used up, or the works it may show at once.
-        showNotification(
-          t(manuscript.releaseArcId ? 'publish_works_limit_reached' : 'publish_limit_reached'),
-          'error',
+    },
+    [drizzleDb, load, showNotification, t],
+  );
+
+  const runPublish = useCallback(async () => {
+    if (!story || !server) return;
+    // Said before the button is pressed, not as the server's refusal after
+    // it: a blocked publish compiles nothing and uploads nothing.
+    if (reason) {
+      showNotification(reason, 'error');
+      return;
+    }
+    if (busy) return;
+    const controller = new AbortController();
+    publishController.current = controller;
+    setBusy(true);
+    setPublishError(null);
+    setUploadProgress(null);
+    try {
+      // Visibility travels with the publication, rather than in a second call only when there is a password:
+      // that way publishing with the padlock off really does make the story public, and does not silently
+      // leave an old password in force.
+      const manuscriptOptions = manuscript.buildOptions(story, t, i18n.language);
+      const readerOptions = manuscript.buildReaderOptions(story, t, i18n.language);
+      // The server's sequence, as far as this device has read it - what the server checks against.
+      const operationVersion = story.lastServerSyncedLog ?? 0;
+      const visibility = usePassword ? 'password' : 'public';
+      const publishPassword = usePassword ? password.trim() : undefined;
+      const arcId = manuscript.releaseArcId ?? undefined;
+      // A fresh publish supersedes bytes kept for a retry: they belong to older choices.
+      compiledAttempt.current = null;
+      let published: Awaited<ReturnType<typeof publicationApiService.publish>>;
+      if (!manuscriptOptions && !readerOptions) {
+        // The story file alone: no bytes to compile, the legacy call as it always was.
+        setPhase('uploading');
+        published = await publicationApiService.publish(
+          server,
+          story.id,
+          operationVersion,
+          labelMode,
+          visibility,
+          publishPassword,
+          manuscriptOptions,
+          readerOptions,
+          manuscript.includePackage,
+          arcId,
         );
-      } else if (status === 403) {
-        showNotification(t('publish_showcase_disabled'), 'error');
-      } else if (isOfflineError(publishError)) {
-        showNotification(t('publish_blocked_offline'), 'error');
+      } else if (!(await publicationApiService.supportsCompiledUpload(server))) {
+        // An older server only speaks the legacy publication: the options go
+        // over and it compiles from its own copy, exactly as before.
+        setPhase('uploading');
+        published = await publicationApiService.publish(
+          server,
+          story.id,
+          operationVersion,
+          labelMode,
+          visibility,
+          publishPassword,
+          manuscriptOptions,
+          readerOptions,
+          manuscript.includePackage,
+          arcId,
+        );
       } else {
-        console.log('useStoryPublishing: publish failed.', publishError);
-        showNotification(t('publish_failed'), 'error');
+        // The manuscript and the reader are compiled on this device - drawn
+        // straight from their content, writing nothing to the Gallery - and
+        // ride up with the publication for the server to store as sent.
+        setPhase('compiling');
+        let compiled: Awaited<ReturnType<typeof compilePublishArtifacts>>;
+        try {
+          compiled = await compilePublishArtifacts(
+            drizzleDb,
+            story,
+            userId ?? '',
+            manuscriptOptions,
+            readerOptions,
+            t,
+            controller.signal,
+          );
+        } catch (compileError) {
+          // Cancelled mid-compile: stopping is the answer, not a notice.
+          if (isAbortError(compileError)) {
+            return;
+          }
+          // Nothing compiled, so there is nothing to upload and nothing to
+          // keep: a retry rebuilds from scratch.
+          console.log('useStoryPublishing: compile failed.', compileError);
+          const message = t('publish_compile_failed');
+          setPublishError({ message, kind: 'compile', retryable: true });
+          showNotification(message, 'error');
+          return;
+        }
+        const files = {
+          ...(compiled.manuscript
+            ? {
+                manuscript: {
+                  bytes: compiled.manuscript.bytes,
+                  filename: `manuscript.${compiled.manuscript.extension}`,
+                  mimeType: compiled.manuscript.mimeType,
+                },
+              }
+            : {}),
+          ...(compiled.reader
+            ? {
+                reader: {
+                  bytes: compiled.reader.bytes,
+                  filename: 'reader.html',
+                  mimeType: compiled.reader.mimeType,
+                },
+              }
+            : {}),
+        };
+        // The bytes for a retry: it re-enters at the upload with these.
+        compiledAttempt.current = {
+          storyId: story.id,
+          operationVersion,
+          manuscriptOptions,
+          readerOptions,
+          arcId,
+          files,
+        };
+        setPhase('uploading');
+        published = await publicationApiService.publishCompiled(
+          server,
+          story.id,
+          operationVersion,
+          labelMode,
+          visibility,
+          publishPassword,
+          manuscriptOptions,
+          readerOptions,
+          manuscript.includePackage,
+          arcId,
+          files,
+          {
+            signal: controller.signal,
+            onUploadProgress: (fraction) => setUploadProgress(fraction),
+          },
+        );
       }
+      await finishPublish(server, story, published, manuscriptOptions, readerOptions, usePassword);
+      compiledAttempt.current = null;
+    } catch (publishError) {
+      // Cancelled mid-compile or mid-upload: stopping is the answer, not a notice.
+      if (isAbortError(publishError)) {
+        return;
+      }
+      reportUploadError(publishError, false);
     } finally {
+      if (publishController.current === controller) {
+        publishController.current = null;
+      }
+      setPhase('idle');
+      setUploadProgress(null);
       setBusy(false);
     }
   }, [
+    busy,
     drizzleDb,
+    finishPublish,
     i18n,
     labelMode,
-    load,
     manuscript,
     password,
+    reason,
+    reportUploadError,
     server,
     showNotification,
     story,
     t,
     usePassword,
     userId,
+  ]);
+
+  /**
+   * Tries a failed publish again. A failed upload re-enters at the upload
+   * with the kept bytes, compiling nothing again; anything else (a failed
+   * compile kept no bytes, a legacy call never compiled) starts over.
+   */
+  const retryPublish = useCallback(async () => {
+    // Only a failed publish offers a retry, and only one attempt runs at a time.
+    if (busy || !publishError?.retryable) return;
+    const attempt = compiledAttempt.current;
+    if (!attempt || !story || !server || attempt.storyId !== story.id) {
+      await runPublish();
+      return;
+    }
+    if (reason) {
+      showNotification(reason, 'error');
+      return;
+    }
+    const controller = new AbortController();
+    publishController.current = controller;
+    setBusy(true);
+    setPublishError(null);
+    setUploadProgress(null);
+    setPhase('uploading');
+    try {
+      // The bytes (and the choices they were compiled from) are the attempt's;
+      // the label, the padlock and the package are the person's latest.
+      const visibility = usePassword ? 'password' : 'public';
+      const publishPassword = usePassword ? password.trim() : undefined;
+      const published = await publicationApiService.publishCompiled(
+        server,
+        attempt.storyId,
+        attempt.operationVersion,
+        labelMode,
+        visibility,
+        publishPassword,
+        attempt.manuscriptOptions,
+        attempt.readerOptions,
+        manuscript.includePackage,
+        attempt.arcId,
+        attempt.files,
+        {
+          signal: controller.signal,
+          onUploadProgress: (fraction) => setUploadProgress(fraction),
+        },
+      );
+      await finishPublish(
+        server,
+        story,
+        published,
+        attempt.manuscriptOptions,
+        attempt.readerOptions,
+        usePassword,
+      );
+      compiledAttempt.current = null;
+    } catch (uploadError) {
+      // Cancelled mid-upload: stopping is the answer, not a notice.
+      if (isAbortError(uploadError)) {
+        return;
+      }
+      reportUploadError(uploadError, true);
+    } finally {
+      if (publishController.current === controller) {
+        publishController.current = null;
+      }
+      setPhase('idle');
+      setUploadProgress(null);
+      setBusy(false);
+    }
+  }, [
+    busy,
+    finishPublish,
+    labelMode,
+    manuscript,
+    password,
+    publishError,
+    reason,
+    reportUploadError,
+    runPublish,
+    server,
+    showNotification,
+    story,
+    usePassword,
   ]);
 
   const publish = useCallback(() => {
@@ -387,8 +691,13 @@ export function useStoryPublishing(storyId: string | undefined) {
     password,
     setPassword,
     busy,
+    phase,
+    uploadProgress,
+    publishError,
     load,
     publish,
+    retryPublish,
+    cancelPublish,
     deleteVersion,
     unpublish,
   };

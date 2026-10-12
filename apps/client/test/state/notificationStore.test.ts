@@ -87,6 +87,13 @@ describe('showNotification', () => {
 
     expect(messages()[0]).toBe('Servidor inalcançável');
   });
+
+  it('repeats a message still on screen when forced, as a failed retry does', () => {
+    store().showNotification('Falhou', 'error');
+    store().showNotification('Falhou', 'error', { force: true });
+
+    expect(lanes().filter(Boolean)).toHaveLength(2);
+  });
 });
 
 describe('clearNotificationLane', () => {

@@ -29,6 +29,8 @@ import {
   parseManuscriptOptions,
   parseReaderOptions,
   readStoredMedia,
+  validateUploadedManuscript,
+  validateUploadedReader,
 } from './publicationCompile';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { StoryExportImportService } from './StoryExportImportService';
@@ -41,6 +43,23 @@ const compileGate = createExclusiveGate();
  * included - the full history belongs to the author, in the app; here it is only the showcase.
  */
 export const MAX_PUBLICATIONS_PER_STORY = 5;
+
+/** One client-compiled file of a multipart publication: the bytes plus what the sender called them. */
+export interface PublishUploadedFile {
+  bytes: Uint8Array;
+  filename?: string | null;
+  mimeType?: string | null;
+}
+
+/**
+ * The client-compiled artifacts of a multipart publication, per artifact. A present file selects
+ * the pre-compiled path for that artifact (validated, never compiled); an absent one compiles on
+ * the server from the options as before. Either, both, or neither may be present.
+ */
+export interface PublishUploadedArtifacts {
+  manuscript?: PublishUploadedFile;
+  reader?: PublishUploadedFile;
+}
 
 export class StoryPublicationService {
   constructor(private readonly exportImportService = new StoryExportImportService()) {}
@@ -166,6 +185,7 @@ export class StoryPublicationService {
     reader?: ReaderOptionsInput,
     includePackage = true,
     arcId?: string,
+    uploaded?: PublishUploadedArtifacts,
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
@@ -225,6 +245,24 @@ export class StoryPublicationService {
       throw error;
     }
 
+    // How many versions of a work (or of the whole story) the owner's plan keeps: `null` keeps
+    // them all, and without a tier the long-standing five stay. Zero refuses upfront instead of
+    // publishing a version only to delete it in the trim below.
+    const tier = await tierEnforcementService.getEffectiveTier(userId);
+    const versionsKept = tier ? tier.maxPublicationsPerStory : MAX_PUBLICATIONS_PER_STORY;
+    if (versionsKept === 0) {
+      throw new AppError(429, 'Your plan keeps no published versions of a story.');
+    }
+
+    // An upload without its options names no format, no work and no labels: the service could not
+    // even pick the file extension. Refused before any packaging or compiling, like the rest.
+    if (uploaded?.manuscript && manuscript === undefined) {
+      throw new AppError(400, 'An uploaded manuscript needs its manuscript options.');
+    }
+    if (uploaded?.reader && reader === undefined) {
+      throw new AppError(400, 'An uploaded reader needs its reader options.');
+    }
+
     let storyExport: FullStoryExportType | null = await this.exportImportService.exportStory(
       storyId,
       userId,
@@ -247,20 +285,39 @@ export class StoryPublicationService {
       manuscript === undefined
         ? null
         : parseManuscriptOptions(storyExport, { ...manuscript, ...(arcId ? { arcId } : {}) });
-    let compiledManuscript = manuscriptOptions
-      ? await compileGate(() => compileManuscript(storyExport!, manuscriptOptions, ownerHandle))
-      : null;
     const readerOptions =
       reader === undefined
         ? null
         : parseReaderOptions(storyExport, { ...reader, ...(arcId ? { arcId } : {}) });
+    // A file part selects the pre-compiled path for its artifact: the bytes are validated (cap,
+    // extension/MIME, magic bytes) but never compiled - the device already did. Either artifact may
+    // be pre-compiled while the other still compiles here.
+    let compiledManuscript = manuscriptOptions
+      ? uploaded?.manuscript
+        ? validateUploadedManuscript(
+            uploaded.manuscript.bytes,
+            manuscriptOptions.format,
+            uploaded.manuscript.filename,
+            uploaded.manuscript.mimeType,
+          )
+        : await compileGate(() => compileManuscript(storyExport!, manuscriptOptions, ownerHandle))
+      : null;
     let compiledReader = readerOptions
-      ? await compileGate(() => compileReader(storyExport!, readerOptions, ownerHandle))
+      ? uploaded?.reader
+        ? validateUploadedReader(
+            uploaded.reader.bytes,
+            uploaded.reader.filename,
+            uploaded.reader.mimeType,
+          )
+        : await compileGate(() => compileReader(storyExport!, readerOptions, ownerHandle))
       : null;
     // Explicit release between stages: the export fed every compile above and nothing below reads
     // it, so drop it now instead of carrying a whole book beside its compiled outputs.
     storyExport = null;
 
+    // Uploaded bytes are checked only against the publication cap at validation time, never
+    // against the gallery/storage ceilings: like server-compiled outputs, they are publication
+    // artifacts, not gallery media.
     // Bytes before the row: a row with no blob is a broken download exposed on the site, while a blob with
     // no row is invisible. If the transaction below fails, the files are removed in the `catch` - without
     // that, every refused publication would leave an orphaned .zip taking up disk.
@@ -334,8 +391,8 @@ export class StoryPublicationService {
           snapshot: this.snapshotOf(story, arcRow),
         });
 
-        // The trimming is done here rather than in SQL because `OFFSET` without `LIMIT` is invalid on SQLite,
-        // and there are at most six rows per story - not worth an artificial `LIMIT` just for that.
+        // The trimming is done here rather than in SQL because `OFFSET` without `LIMIT` is invalid on SQLite.
+        // `versionsKept` is never 0 here (refused above); `null` keeps everything, so no surplus.
         const existingIds = (
           await tx
             .select({
@@ -348,9 +405,9 @@ export class StoryPublicationService {
             .where(eq(storyPublications.storyId, storyId))
             .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id))
         )
-          // Each work keeps its own five versions; the universe's versions are a group of their own.
+          // Each work keeps its own versions; the universe's versions are a group of their own.
           .filter((row) => (row.arcId ?? null) === (arcId ?? null));
-        const surplus = existingIds.slice(MAX_PUBLICATIONS_PER_STORY);
+        const surplus = versionsKept === null ? [] : existingIds.slice(versionsKept);
 
         if (surplus.length > 0) {
           const ids = surplus.map((row) => row.id);

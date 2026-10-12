@@ -20,9 +20,12 @@ import type { PublishManuscriptState } from './usePublishManuscript';
 export function PublishManuscriptSection({
   story,
   manuscript,
+  disabled = false,
 }: {
   story: StorySelect;
   manuscript: PublishManuscriptState;
+  /** While a publish compiles or uploads: the choices stand as sent. */
+  disabled?: boolean;
 }) {
   const storyId = story.id;
   const storyType = story.type;
@@ -50,6 +53,7 @@ export function PublishManuscriptSection({
           <Text style={styles.label}>{t('publish_release_what')}</Text>
           <SingleSelectPill
             value={manuscript.releaseArcId ?? 'universe'}
+            disabled={disabled}
             onValueChange={(value) =>
               manuscript.setReleaseArcId(value && value !== 'universe' ? value : null, story)
             }
@@ -77,6 +81,7 @@ export function PublishManuscriptSection({
           <ThemedSwitch
             value={manuscript.includePackage}
             onValueChange={manuscript.setIncludePackage}
+            disabled={disabled}
             testID={`publish-package-switch-${storyId}`}
           />
         </View>
@@ -86,6 +91,7 @@ export function PublishManuscriptSection({
         <ThemedSwitch
           value={manuscript.attachManuscript}
           onValueChange={manuscript.setAttachManuscript}
+          disabled={disabled}
           testID={`publish-manuscript-switch-${storyId}`}
         />
       </View>
@@ -94,6 +100,7 @@ export function PublishManuscriptSection({
         <ThemedSwitch
           value={manuscript.publishReader}
           onValueChange={manuscript.setPublishReader}
+          disabled={disabled}
           testID={`publish-reader-switch-${storyId}`}
         />
       </View>
@@ -104,7 +111,11 @@ export function PublishManuscriptSection({
         </Text>
       )}
       {(manuscript.attachManuscript || manuscript.publishReader) && (
-        <View style={styles.options} testID={`publish-manuscript-options-${storyId}`}>
+        <View
+          style={[styles.options, disabled && styles.optionsDisabled]}
+          pointerEvents={disabled ? 'none' : 'auto'}
+          testID={`publish-manuscript-options-${storyId}`}
+        >
           <ManuscriptExportOptions
             settings={manuscript.settings}
             onChange={manuscript.setSettings}
@@ -139,5 +150,6 @@ const createStyles = (colors: ThemeColors) =>
     selectOneMissing: { color: colors.error },
     hint: { ...typography.caption, color: colors.textSecondary, marginTop: -4, marginBottom: 12 },
     options: { marginBottom: 16 },
+    optionsDisabled: { opacity: 0.5 },
     release: { marginBottom: 14 },
   });

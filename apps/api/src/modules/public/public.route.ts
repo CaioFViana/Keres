@@ -74,6 +74,9 @@ export const publicRoutes = new Elysia()
       const settings = await showcaseSettingsService.getOrCreate();
       return {
         showcaseEnabled: settings.isShowcaseEnabled,
+        // Absent on older servers: a client that finds no such field publishes the legacy way.
+        // A constant, not a setting: this server always takes client-compiled bytes.
+        compiledUpload: true,
         serverVersion: APP_RELEASE.version,
         siteName: settings.siteName,
         sitePalette: settings.sitePalette,
@@ -86,6 +89,7 @@ export const publicRoutes = new Elysia()
     {
       response: t.Object({
         showcaseEnabled: t.Boolean(),
+        compiledUpload: t.Boolean(),
         serverVersion: t.String(),
         siteName: t.String(),
         sitePalette: t.String(),

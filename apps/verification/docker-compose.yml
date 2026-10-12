@@ -1,0 +1,42 @@
+name: keres-verification
+
+# Production wiring for the reference age-verification service. It joins nothing of the Keres server compose: the
+# service runs on its own host/port (behind a reverse proxy, its own public address), and the Keres server points at
+# it with AGE_VERIFICATION_URL. Secrets come from a separate env file that never leaves this machine.
+#
+# Two named volumes, and they are not the same kind of thing:
+#   - verification-data: the encrypted images and the metadata. Back this one up (see README).
+#   - verification-keys: the data keys that make the images readable. NEVER backed up, on purpose: a backup of the
+#     data without the keys is a pile of ciphertext, and a destroyed key makes every copy unreadable. Losing this
+#     volume loses the pending submissions (people send again), not the decided results (those live on Keres).
+services:
+  verification:
+    # The Dockerfile copies the workspace root (bun.lock, packages/shared), so the context is the repo root.
+    build:
+      context: ../..
+      dockerfile: apps/verification/Dockerfile
+    image: ghcr.io/caiofviana/keres-verification:${VERIFICATION_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    stop_grace_period: 15s
+    env_file:
+      - ${VERIFICATION_ENV_FILE:-.env}
+    environment:
+      PORT: "3102"
+    # Loopback only: the outside world talks to the reverse proxy, never to this port directly.
+    ports:
+      - "${VERIFICATION_BIND_ADDRESS:-127.0.0.1}:${VERIFICATION_PORT:-3102}:3102"
+    volumes:
+      - verification-data:/app/apps/verification/data
+      - verification-keys:/app/apps/verification/keys
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3102/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  # Backed up (encrypted images and metadata; see README).
+  verification-data:
+  # Never backed up. Its contents are the keys of the data above.
+  verification-keys:

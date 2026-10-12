@@ -3,7 +3,7 @@ import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
 import { space, typography } from '@/src/theme/tokens';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -51,6 +51,9 @@ const TermsModal: React.FC<TermsModalProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [reachedEnd, setReachedEnd] = useState(false);
+  // What the scroll view measured: the end is only "reached" when the content is shorter than the window (it all fits)
+  // or the person scrolled to it. Unmeasured is not evidence of either.
+  const measured = useRef({ content: 0, layout: 0 });
 
   const handleScroll = useCallback(
     (contentHeight: number, layoutHeight: number, offsetY: number) => {
@@ -88,7 +91,15 @@ const TermsModal: React.FC<TermsModalProps> = ({
           const { contentSize, layoutMeasurement, contentOffset } = event.nativeEvent;
           handleScroll(contentSize.height, layoutMeasurement.height, contentOffset.y);
         }}
-        onContentSizeChange={(width, height) => handleScroll(height, height, 0)}
+        onLayout={(event) => {
+          measured.current.layout = event.nativeEvent.layout.height;
+          if (measured.current.layout > 0)
+            handleScroll(measured.current.content, measured.current.layout, 0);
+        }}
+        onContentSizeChange={(width, height) => {
+          measured.current.content = height;
+          if (measured.current.layout > 0) handleScroll(height, measured.current.layout, 0);
+        }}
         scrollEventThrottle={100}
       >
         {sections.map((section) => (
@@ -112,11 +123,7 @@ const TermsModal: React.FC<TermsModalProps> = ({
               {t('terms_scroll_to_accept')}
             </Text>
           ) : null}
-          <Button
-            onPress={() => onAccept?.()}
-            disabled={!canAccept}
-            testID={`${testID}-accept`}
-          >
+          <Button onPress={() => onAccept?.()} disabled={!canAccept} testID={`${testID}-accept`}>
             {acceptLabel ?? t('terms_accept')}
           </Button>
         </View>

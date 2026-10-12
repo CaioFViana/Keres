@@ -1,14 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { clientDistPath, showcaseDistPath } from '../../src/config/resourceRoot';
-import { eq } from 'drizzle-orm';
 import { env } from '../../src/config/env';
 import { db } from '../../src/db';
-import { showcaseSettings, tiers, userRecoveryCodes, users } from '../../src/db/schema';
+import { showcaseSettings, tiers, users } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
 import { userService } from '../../src/services/UserService';
 import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { hardDeleteUser, promoteToAdmin, truncateAll } from '../helpers/database';
 
 let admin: TestUser;
 let ana: TestUser;
@@ -245,8 +244,7 @@ describe('admin user routes', () => {
 
 describe('user routes and account service', () => {
   const hardDelete = async (userId: string) => {
-    await db.delete(userRecoveryCodes).where(eq(userRecoveryCodes.userId, userId));
-    await db.delete(users).where(eq(users.id, userId));
+    await hardDeleteUser(userId);
   };
 
   it('fails tag, profile and password writes for an account that is gone', async () => {

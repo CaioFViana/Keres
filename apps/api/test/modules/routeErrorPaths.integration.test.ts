@@ -10,7 +10,6 @@ import {
   stories,
   storyPublications,
   tiers,
-  userRecoveryCodes,
   users,
 } from '../../src/db/schema';
 import { showcaseSettings } from '../../src/db/schema';
@@ -26,7 +25,7 @@ import {
   uploadTestStory,
   type TestUser,
 } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { hardDeleteUser, promoteToAdmin, truncateAll } from '../helpers/database';
 
 installBunShim();
 
@@ -288,8 +287,7 @@ describe('auth routes', () => {
   });
 
   it('answers 401 for a session whose account is gone', async () => {
-    await db.delete(userRecoveryCodes).where(eq(userRecoveryCodes.userId, ana.userId));
-    await db.delete(users).where(eq(users.id, ana.userId));
+    await hardDeleteUser(ana.userId);
 
     expect((await request('GET', '/auth/me', { token: ana.token })).status).toBe(401);
   });

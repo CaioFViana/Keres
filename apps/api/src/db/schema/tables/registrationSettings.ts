@@ -21,6 +21,12 @@ export const registrationSettings = table('registration_settings', {
    * administrator's manual switch.
    */
   autoManage: boolean('auto_manage').notNull().default(false),
+  /**
+   * Whether stories may be flagged adults-only (+18) on this server. Off by default: a fresh
+   * server takes no mature content until its operator says so. Read live on every flag and
+   * publication, never trusted from the client.
+   */
+  allowNsfw: boolean('allow_nsfw').notNull().default(false),
   defaultTierId: text('default_tier_id').references(() => tiers.id),
   /** ISO-4217 code: the one currency tier prices are expressed in, system-wide. */
   currency: text('currency').notNull().default('BRL'),

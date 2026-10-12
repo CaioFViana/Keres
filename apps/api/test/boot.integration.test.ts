@@ -42,6 +42,7 @@ const exitCodes: number[] = [];
 /** The jobs are the timers `boot.ts` asks for (the rest of the app has long timers of its own): held, and run by hand. */
 const JOB_DELAYS = new Set([
   30_000,
+  40_000,
   45_000,
   50_000,
   60_000,
@@ -113,9 +114,9 @@ describe('starting the server', () => {
 
     await bootAndListen({ onListening });
 
-    // Four jobs, each with its first early run and its repeat.
-    expect(jobs.filter((job) => job.kind === 'timeout')).toHaveLength(4);
-    expect(jobs.filter((job) => job.kind === 'interval')).toHaveLength(4);
+    // Six jobs, each with its first early run and its repeat.
+    expect(jobs.filter((job) => job.kind === 'timeout')).toHaveLength(6);
+    expect(jobs.filter((job) => job.kind === 'interval')).toHaveLength(6);
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({ category: 'system', action: 'system.server_started' }),
     );
@@ -241,6 +242,8 @@ describe('the periodic jobs', () => {
     expect(intervals.sort((a, b) => a - b)).toEqual([
       15 * 60_000,
       60 * 60_000,
+      24 * 60 * 60_000,
+      24 * 60 * 60_000,
       24 * 60 * 60_000,
       24 * 60 * 60_000,
     ]);

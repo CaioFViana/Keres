@@ -1,4 +1,8 @@
-import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
+import {
+  createNavigationContainerRef,
+  NavigationContainer,
+  type NavigatorScreenParams,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
@@ -6,20 +10,23 @@ import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import SyncInitializer from '@/src/components/features/app/SyncInitializer';
 import { useDrizzle } from '../db';
 import { getClientSettings } from '../services/ClientSettingsService';
+import { VERIFICATION_PENDING_EVENT } from '../services/apiClient';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useThemeStore } from '../state/themeStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { readShowcaseRequest } from '../showcase/showcaseRequest';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
 import { buildNavigationTheme } from './navigationTheme';
-import StorySelectionStack from './StorySelectionStack';
+import { openServerVerification } from './openServerVerification';
+import StorySelectionStack, { type StorySelectionDrawerParamList } from './StorySelectionStack';
 import { attachWebHistoryBack, hasScreenBehind } from './webHistoryBack';
 
 export type RootStackParamList = {
   ColdInstall: undefined;
-  StorySelection: undefined;
+  StorySelection: NavigatorScreenParams<StorySelectionDrawerParamList> | undefined;
   MainSystem: undefined;
 };
 
@@ -64,6 +71,18 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
 
   // The web build's Back button goes back in the app (see webHistoryBack).
   useEffect(() => () => stopWebHistory.current?.(), []);
+
+  // A pending account's call refused by its server opens the age check, once (see openServerVerification). A refusal
+  // that comes before the navigation is ready waits for it, in `onReady`.
+  const verificationWaiting = useRef<string | null>(null);
+  useEffect(() => {
+    const onVerificationPending = (serverId: string) => {
+      if (navigationRef.isReady()) openServerVerification(navigationRef, serverId);
+      else verificationWaiting.current = serverId;
+    };
+    entityEventEmitter.on(VERIFICATION_PENDING_EVENT, onVerificationPending);
+    return () => entityEventEmitter.off(VERIFICATION_PENDING_EVENT, onVerificationPending);
+  }, []);
 
   const drizzleDb = useDrizzle();
   const { colors, isDarkMode } = useTheme();
@@ -136,6 +155,10 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
     <NavigationContainer
       ref={navigationRef}
       onReady={() => {
+        if (verificationWaiting.current) {
+          openServerVerification(navigationRef, verificationWaiting.current);
+          verificationWaiting.current = null;
+        }
         if (Platform.OS !== 'web' || typeof window === 'undefined' || stopWebHistory.current)
           return;
         stopWebHistory.current = attachWebHistoryBack(

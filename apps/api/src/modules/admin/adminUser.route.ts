@@ -116,6 +116,13 @@ export const adminUserRoutes = new Elysia()
           bio: t.Nullable(t.String()),
           isAdmin: t.Boolean(),
           isAdultVerified: t.Boolean(),
+          verificationStatus: t.Union([
+            t.Literal('active'),
+            t.Literal('pending'),
+            t.Literal('rejected'),
+          ]),
+          verifiedAt: t.Nullable(t.Date()),
+          verificationMethod: t.Nullable(t.String()),
           tierId: t.Nullable(t.String()),
           createdAt: t.Date(),
           updatedAt: t.Date(),
@@ -142,7 +149,7 @@ export const adminUserRoutes = new Elysia()
       }
 
       try {
-        const updated = await adminUserService.update(params.id, parsed.data);
+        const updated = await adminUserService.update(params.id, parsed.data, user?.userId ?? null);
         return updated;
       } catch (error) {
         if (error instanceof AdminUserNotFoundError) {
@@ -183,6 +190,13 @@ export const adminUserRoutes = new Elysia()
           bio: t.Nullable(t.String()),
           isAdmin: t.Boolean(),
           isAdultVerified: t.Boolean(),
+          verificationStatus: t.Union([
+            t.Literal('active'),
+            t.Literal('pending'),
+            t.Literal('rejected'),
+          ]),
+          verifiedAt: t.Nullable(t.Date()),
+          verificationMethod: t.Nullable(t.String()),
           tierId: t.Nullable(t.String()),
           createdAt: t.Date(),
           updatedAt: t.Date(),

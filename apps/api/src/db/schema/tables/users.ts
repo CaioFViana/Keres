@@ -5,6 +5,14 @@ import { stories } from './stories';
 import { storyPermissions } from './storyPermissions';
 import { tiers } from './tiers';
 
+/**
+ * Where an account stands in age verification (see `docs/age_verification.md`). `active` is every normal account -
+ * and every account where verification is off. `pending` waits for the service's decision on its first sending;
+ * `rejected` is an account whose last sending was refused or expired (it may send again, or be closed).
+ */
+export const USER_VERIFICATION_STATUSES = ['active', 'pending', 'rejected'] as const;
+export type UserVerificationStatus = (typeof USER_VERIFICATION_STATUSES)[number];
+
 export const users = table(
   'users',
   {
@@ -31,6 +39,14 @@ export const users = table(
      * showcase entries. Checked from the DB per request, never trusted from the JWT.
      */
     isAdultVerified: boolean('is_adult_verified').notNull().default(false),
+    /** Age-verification standing of the account itself (see `USER_VERIFICATION_STATUSES`). */
+    verificationStatus: text('verification_status', { enum: USER_VERIFICATION_STATUSES })
+      .notNull()
+      .default('active'),
+    /** When `isAdultVerified` was granted by the service's approval; null for accounts never verified that way. */
+    verifiedAt: timestamp('verified_at'),
+    /** How the approval was checked (the service's method name); null when there is none. */
+    verificationMethod: text('verification_method'),
     /** `null` = no tier assigned; TierEnforcementService falls back to the registration settings' default tier, then to unlimited. */
     tierId: text('tier_id').references(() => tiers.id),
     createdAt: timestampNow('created_at'),

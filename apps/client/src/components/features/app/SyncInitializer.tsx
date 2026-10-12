@@ -2,7 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { APP_RELEASE, canTalkToServer } from '@keres/shared';
 import { useDrizzle } from '../../../db';
-import apiClient, { apiUrl, isOfflineError } from '../../../services/apiClient';
+import apiClient, {
+  apiUrl,
+  isOfflineError,
+  isVerificationPendingError,
+} from '../../../services/apiClient';
 import { authTokenManager, setAuthDb } from '../../../services/AuthTokenManager';
 import { setEditorDraftDb } from '../../../services/EditorDraftService';
 import { createFriendshipService } from '../../../services/FriendshipService';
@@ -191,6 +195,8 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
                 sawUnreachableServer = true;
                 continue;
               }
+              // A pending account is sent to its age check (the navigator's listener): nothing to report here.
+              if (isVerificationPendingError(downloadError)) continue;
               console.log(
                 `Failed to download and import story ${storyPreview.storyId}:`,
                 (downloadError as Error)?.message || downloadError,
@@ -209,6 +215,11 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           // Server unreachable: expected in an offline-first app, retried on a shorter delay.
           console.log(`Server ${server.name} is unreachable, skipping this cycle.`);
           sawUnreachableServer = true;
+          continue;
+        }
+        // Refused for want of an age check: the app opens the verification instead of a generic sync failure.
+        if (isVerificationPendingError(error)) {
+          console.log(`Sync with ${server.name} held: the account awaits age verification.`);
           continue;
         }
         console.log(

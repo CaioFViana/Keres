@@ -17,9 +17,12 @@ import apiClientDefault, {
   createPlainAxiosInstance,
   getServerAccessToken,
   isOfflineError,
+  isVerificationPendingError,
   updateServerTokenCache,
+  VERIFICATION_PENDING_EVENT,
   type TokenProvider,
 } from '../../src/services/apiClient';
+import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
 const SERVER = { id: 'server-1', name: 'Casa', url: 'http://localhost:3000' } as any;
 
@@ -525,6 +528,43 @@ describe('request setup failures', () => {
       code: 'REQUEST_SETUP_ERROR',
     });
     expect(console.log).toHaveBeenCalledWith('API Request Setup Error:', 'boom');
+  });
+});
+
+describe('verification pending', () => {
+  const pendingReply = {
+    status: 403,
+    data: { message: 'Verify your age to use this account.', code: 'verification_pending' },
+  };
+
+  it('tells the app once that the bound server refuses a pending account, and keeps the refusal readable', async () => {
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    const { instance } = buildInstance([pendingReply]);
+
+    const error = await instance.get('/stories').catch((err) => err);
+
+    expect(emit).toHaveBeenCalledTimes(1);
+    expect(emit).toHaveBeenCalledWith(VERIFICATION_PENDING_EVENT, SERVER.id);
+    expect(isVerificationPendingError(error)).toBe(true);
+  });
+
+  it('does not take an ordinary 403 for the pending refusal', async () => {
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    const { instance } = buildInstance([{ status: 403, data: { message: 'Story limit reached' } }]);
+
+    const error = await instance.get('/stories').catch((err) => err);
+
+    expect(emit).not.toHaveBeenCalled();
+    expect(isVerificationPendingError(error)).toBe(false);
+  });
+
+  it('does not announce a refusal that came from another host', async () => {
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    const { instance } = buildInstance([pendingReply]);
+
+    await instance.get('https://other.example/api/stories').catch(() => undefined);
+
+    expect(emit).not.toHaveBeenCalled();
   });
 });
 

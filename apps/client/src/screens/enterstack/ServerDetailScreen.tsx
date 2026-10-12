@@ -9,7 +9,7 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +23,8 @@ import { serverCardStyleDefs } from '../../components/features/servers/serverCar
 import ServerStatusPill from '../../components/features/servers/ServerStatusPill';
 import { useDrizzle } from '../../db';
 import { useAccountPlan } from '../../hooks/useAccountPlan';
+import { useAccountVerificationNotice } from '../../hooks/useAccountVerificationNotice';
+import { useAgeVerificationInfo } from '../../hooks/useAgeVerificationInfo';
 import { formatDateTime } from '../../utils/formatDateTime';
 import { usePaymentOverview } from '../../hooks/usePaymentOverview';
 import { useServerDeletion } from '../../hooks/useServerDeletion';
@@ -31,6 +33,13 @@ import { useServerTagEditor } from '../../hooks/useServerTagEditor';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
 import { createServerService } from '../../services/ServerService';
+import {
+  acceptLegal,
+  fetchLegalStatus,
+  fetchServerPrivacy,
+  fetchServerTerms,
+  type ServerTerms,
+} from '../../services/ServerTermsService';
 import { authTokenManager } from '../../services/AuthTokenManager';
 import { isOfflineError } from '../../services/apiClient';
 import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
@@ -74,9 +83,16 @@ const ServerDetailScreen = () => {
   const deleteServer = useServerDeletion(serverService, () => navigation.goBack());
 
   const [termsVisible, setTermsVisible] = useState(false);
+  const [privacyVisible, setPrivacyVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleteWorking, setDeleteWorking] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  // A newer text than the account accepted: fetched only while it lags, accepted here.
+  const [legalUpdate, setLegalUpdate] = useState<
+    ({ kind: 'tos' | 'privacy' } & ServerTerms) | null
+  >(null);
+  const [legalUpdateVisible, setLegalUpdateVisible] = useState(false);
+  const [acceptWorking, setAcceptWorking] = useState(false);
 
   // Deleting the account ends it on the server; the local server entry stays so the address
   // can be registered again, but its tokens go with the account.
@@ -122,11 +138,75 @@ const ServerDetailScreen = () => {
     };
   }, [server, online, profile]);
 
+  // The documents move under the account: when the server serves a newer text than the account
+  // accepted (or the account predates acceptance records entirely), the fresh text is fetched
+  // and the update row below asks for agreement. Offline or predated servers simply skip this.
+  useEffect(() => {
+    if (!server || !online || legalUpdate || acceptWorking) return;
+    let cancelled = false;
+    void (async () => {
+      const status = await fetchLegalStatus(server);
+      if (cancelled || !status) return;
+      const laggingKind =
+        status.tos.accepted === null || status.tos.accepted < status.tos.current
+          ? ('tos' as const)
+          : status.privacy.accepted === null || status.privacy.accepted < status.privacy.current
+            ? ('privacy' as const)
+            : null;
+      if (!laggingKind) return;
+      const fresh =
+        laggingKind === 'tos'
+          ? await fetchServerTerms(server.url, i18n.language)
+          : await fetchServerPrivacy(server.url, i18n.language);
+      if (cancelled || !fresh) return;
+      setLegalUpdate({ kind: laggingKind, ...fresh });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [server, online, legalUpdate, acceptWorking, i18n.language]);
+
+  // Accepting records server-side first: only then is the local copy worth updating.
+  const handleAcceptLegalUpdate = async () => {
+    if (!server || !legalUpdate || acceptWorking) return;
+    setAcceptWorking(true);
+    try {
+      const status = await acceptLegal(server, legalUpdate.kind);
+      if (!status) {
+        AppAlert.alert(t('error'), t('server_legal_accept_failed'));
+        return;
+      }
+      const patch =
+        legalUpdate.kind === 'tos'
+          ? {
+              tosText: legalUpdate.text,
+              tosVersion: String(legalUpdate.version),
+              tosAcceptedAt: new Date(),
+            }
+          : {
+              privacyText: legalUpdate.text,
+              privacyVersion: String(legalUpdate.version),
+              privacyAcceptedAt: new Date(),
+            };
+      await serverService.updateServer(server.id, patch);
+      setLegalUpdate(null);
+      setLegalUpdateVisible(false);
+    } finally {
+      setAcceptWorking(false);
+    }
+  };
+
   // Plans and payment appear only while the server answers and only if it sells plans: a user working offline,
   // or on a server with no payment plugin, is never shown (or asked for) anything about payment.
   const { overview: payments } = usePaymentOverview(server, online);
   // The plan the person has - the free one included - and what it comes with, whether or not the server sells any.
   const { plan } = useAccountPlan(server, online);
+  // Whether this server checks ages, said in one line while it answers. A server with no check must never look verified.
+  const ageInfo = useAgeVerificationInfo(online ? server?.url : undefined, online);
+  // An account still waiting for (or refused in) its age check is sent back to it from here. Asked again when the
+  // screen comes back to the front, because the approval may have happened on the verification screen.
+  const focused = useIsFocused();
+  const verificationNotice = useAccountVerificationNotice(server, online && focused);
 
   const hasUnseenAdminMessage = useIsConversationUnseen(adminConversationKey(serverId));
 
@@ -229,6 +309,14 @@ const ServerDetailScreen = () => {
         )}
       </View>
 
+      {ageInfo ? (
+        <Text style={styles.ageLine} testID="server-age-verification">
+          {ageInfo.mode === 'required'
+            ? t('age_verification_line_required')
+            : t('age_verification_line_disabled')}
+        </Text>
+      ) : null}
+
       {plan || payments?.info.subscription ? (
         <>
           <Text style={styles.sectionTitle}>{t('server_plan_section')}</Text>
@@ -239,6 +327,15 @@ const ServerDetailScreen = () => {
         </>
       ) : null}
 
+      {verificationNotice ? (
+        <ServerActionRow
+          icon="shield-checkmark-outline"
+          title={t('finish_age_verification')}
+          description={t('finish_age_verification_hint')}
+          onPress={() => navigation.navigate('ServerVerification', { serverId })}
+          testID="server-action-verification"
+        />
+      ) : null}
       <Text style={styles.sectionTitle}>{t('server_detail_actions')}</Text>
       <ServerActionRow
         icon="chatbubbles-outline"
@@ -281,6 +378,19 @@ const ServerDetailScreen = () => {
         onPress={() => navigation.navigate('ChangePassword', { serverId })}
         testID="server-action-password"
       />
+      {legalUpdate ? (
+        <ServerActionRow
+          icon="alert-circle-outline"
+          title={
+            legalUpdate.kind === 'tos'
+              ? t('server_legal_update_terms_title')
+              : t('server_legal_update_privacy_title')
+          }
+          description={t('server_legal_update_hint')}
+          onPress={() => setLegalUpdateVisible(true)}
+          testID="server-action-legal-update"
+        />
+      ) : null}
       {server.tosText ? (
         <ServerActionRow
           icon="document-text-outline"
@@ -288,6 +398,15 @@ const ServerDetailScreen = () => {
           description={t('server_action_terms_hint', { version: server.tosVersion ?? '' })}
           onPress={() => setTermsVisible(true)}
           testID="server-action-terms"
+        />
+      ) : null}
+      {server.privacyText ? (
+        <ServerActionRow
+          icon="shield-checkmark-outline"
+          title={t('server_action_privacy')}
+          description={t('server_action_privacy_hint', { version: server.privacyVersion ?? '' })}
+          onPress={() => setPrivacyVisible(true)}
+          testID="server-action-privacy"
         />
       ) : null}
       <ServerActionRow
@@ -333,6 +452,43 @@ const ServerDetailScreen = () => {
           testID="server-terms-modal"
         />
       ) : null}
+      {legalUpdate ? (
+        <TermsModal
+          visible={legalUpdateVisible}
+          title={legalUpdate.kind === 'tos' ? t('server_terms_title') : t('server_privacy_title')}
+          subtitle={t(
+            legalUpdate.kind === 'tos' ? 'server_terms_version' : 'server_privacy_version',
+            {
+              version: legalUpdate.version,
+              date: legalUpdate.updatedAt,
+            },
+          )}
+          sections={legalUpdate.sections}
+          mode="accept"
+          acceptLabel={t('terms_accept')}
+          onAccept={() => void handleAcceptLegalUpdate()}
+          onClose={() => setLegalUpdateVisible(false)}
+          requireScrollToEnd
+          testID="server-legal-update-modal"
+        />
+      ) : null}
+      {server.privacyText ? (
+        <TermsModal
+          visible={privacyVisible}
+          title={t('server_privacy_title')}
+          subtitle={t('server_privacy_version', {
+            version: server.privacyVersion ?? '',
+            date:
+              server.privacyAcceptedAt != null
+                ? formatDateTime(server.privacyAcceptedAt, i18n.language)
+                : '',
+          })}
+          sections={[{ heading: t('server_privacy_title'), paragraphs: [server.privacyText] }]}
+          mode="read"
+          onClose={() => setPrivacyVisible(false)}
+          testID="server-privacy-modal"
+        />
+      ) : null}
       <DeleteAccountModal
         visible={deleteVisible}
         serverName={server.name}
@@ -351,6 +507,7 @@ const createStyles = (colors: ThemeColors) =>
     header: { alignItems: 'center', marginBottom: 20, gap: 8 },
     name: { fontSize: 22, fontWeight: 'bold', color: colors.text, textAlign: 'center' },
     url: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+    ageLine: { fontSize: 14, color: colors.text, textAlign: 'center', marginBottom: 16 },
     ...serverCardStyleDefs(colors),
     tagEditRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     tagAt: { fontSize: 14, color: colors.textSecondary },

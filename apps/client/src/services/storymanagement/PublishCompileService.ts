@@ -11,7 +11,7 @@ import { compileStoryManuscript } from '@keres/shared/manuscript/export';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../../db';
 import type { StorySelect } from '../../db/schema';
-import { pdfFontMatrices } from '../../components/features/manuscript/export/pdfFontAssets';
+import { pdfFontMatrices } from '../../utils/pdfFontAssets';
 import type { PublishManuscriptOptions, PublishReaderOptions } from '../PublicationApiService';
 import { createChapterService } from './ChapterService';
 import { createChoiceService } from './ChoiceService';

@@ -8,6 +8,7 @@ import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 import { storyNsfwService } from './StoryNsfwService';
 import { storyPermissionService } from './StoryPermissionService';
+import { ACTIVE_ACCOUNT } from './UserService';
 
 type PermissionType = 'reader' | 'writer';
 
@@ -76,7 +77,10 @@ export class StoryInvitationService {
       throw new AppError(400, 'The story owner cannot be invited to their own story.');
     }
     await this.requireOwner(ownerUserId, storyId);
-    const invitee = await db.query.users.findFirst({ where: eq(users.id, inviteeId) });
+    // Only an active account can be invited: a pending or refused one answers as a missing one.
+    const invitee = await db.query.users.findFirst({
+      where: and(eq(users.id, inviteeId), ACTIVE_ACCOUNT),
+    });
     if (!invitee || invitee.isDeleted) {
       throw new AppError(404, 'Target user not found.');
     }

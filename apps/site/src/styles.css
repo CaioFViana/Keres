@@ -1056,6 +1056,32 @@ code {
   text-align: center;
 }
 
+/* Legal. The two documents switch in tabs; the text itself reads like the FAQ -
+   headed sections with breathing room, capped in width so long lines stay readable. */
+.legal-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.legal-text {
+  display: grid;
+  gap: 24px;
+  max-width: 72ch;
+}
+
+.legal-section h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.legal-section p {
+  margin: 0 0 10px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
 /* Contact. On a wide screen the section is two columns - what this is for on the left, the form
    on the right - so the form never stretches across the whole width with its fields lost in it. On a
    narrow one the intro sits above the form. */

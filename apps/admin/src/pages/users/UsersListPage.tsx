@@ -179,6 +179,14 @@ export function UsersListPage() {
                       <span className="status-badge" title={t('users.verifiedTitle')}>
                         {t('users.verifiedShort')}
                       </span>
+                    ) : u.verificationStatus === 'pending' ? (
+                      <span className="status-badge" data-testid="standing-pending">
+                        {t('users.standingPending')}
+                      </span>
+                    ) : u.verificationStatus === 'rejected' ? (
+                      <span className="status-badge" data-testid="standing-rejected">
+                        {t('users.standingRejected')}
+                      </span>
                     ) : (
                       '-'
                     )}

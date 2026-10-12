@@ -7,6 +7,8 @@ import {
   tiers,
   users,
 } from '../db/schema';
+import { AppError } from '../utils/errors';
+import { isAgeVerificationRequired } from './ageVerification/ageVerificationMode';
 import { syncDefaultTierFlags } from './defaultTier';
 import { TierNotFoundError } from './TierService';
 
@@ -41,6 +43,13 @@ export class RegistrationSettingsService {
   }
 
   async update(patch: UpdateRegistrationSettings) {
+    // The adults-only area needs the verification that backs it: a server with none cannot switch it on.
+    if (patch.allowNsfw === true && !isAgeVerificationRequired()) {
+      throw new AppError(
+        400,
+        'This server has no age verification, so it has no adults-only area.',
+      );
+    }
     await this.getOrCreate();
     // Same guard as AdminUserService: a dangling default tier would fail on the foreign
     // key here - and worse, break every later registration - so it is refused up front.

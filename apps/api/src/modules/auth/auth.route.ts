@@ -1,6 +1,5 @@
 import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
-import type { Cookie } from 'elysia';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
 import { comparePassword, hashPassword } from '../../config/bcrypt';
@@ -14,10 +13,26 @@ import {
 import { createPersistentAttemptLimiter } from '../../services/AttemptLimitService';
 import { effectiveDefaultTierId } from '../../services/defaultTier';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
+import { termsAcceptanceService } from '../../services/TermsAcceptanceService';
 import { userService } from '../../services/UserService';
+import { ageVerificationService } from '../../services/ageVerification/AgeVerificationService';
+import {
+  createRegisteredAccount,
+  requestSendingFor,
+} from '../../services/ageVerification/accountRegistration';
+import { isAgeVerificationRequired } from '../../services/ageVerification/ageVerificationMode';
 import { AppError } from '../../utils/errors';
+import { clientAddress } from '../../plugins/requestAudit';
 import type { JWTPayload } from '../../index';
+import { languageOf } from '../payments/payment.route';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
+import {
+  AccountVerificationStatusResponseSchema,
+  CodedMessageResponseSchema,
+  MessageResponseSchema,
+} from './authSchemas';
+import { setSessionCookies } from './authSession';
+import { authVerificationRoutes } from './authVerification.route';
 
 /** Same window as /forgot-password's limiter (RecoveryCodeService); both keep their counters in the database. */
 const loginAttemptLimiter = createPersistentAttemptLimiter('login', {
@@ -25,8 +40,29 @@ const loginAttemptLimiter = createPersistentAttemptLimiter('login', {
   windowMs: 15 * 60 * 1000,
 });
 
-/** Every rejection branch across this file returns exactly this shape. */
-const MessageResponseSchema = t.Object({ message: t.String() });
+/**
+ * Registrations one client address may attempt an hour, in both modes. In `required` mode each one is a sending at the
+ * verification service and a pending account for the reviewers, so a script must not be able to fill that queue. Every
+ * attempt counts, successes included: the helper's atomic step counts calls, and a count of accounts made alone would be
+ * a read then a write that a burst gets past.
+ */
+const registrationLimiter = createPersistentAttemptLimiter('register', {
+  maxAttempts: 10,
+  windowMs: 60 * 60 * 1000,
+});
+
+/**
+ * The claim a session carries while its account is not active in age verification: the request pipeline refuses it
+ * everywhere except the verification routes (see `services/ageVerification/pendingAccess.ts`). An active account's
+ * session has no claim at all.
+ */
+const pendingClaim = (pending: boolean) => (pending ? { pending: true as const } : {});
+
+/** What the account accepted against what applies now - the client re-presents whatever lags. */
+const TermsStatusResponseSchema = t.Object({
+  tos: t.Object({ accepted: t.Union([t.Number(), t.Null()]), current: t.Number() }),
+  privacy: t.Object({ accepted: t.Union([t.Number(), t.Null()]), current: t.Number() }),
+});
 
 /** Success shape shared by /login and /forgot-password - both log the user in the same way. */
 const AuthSessionResponseSchema = t.Object({
@@ -36,34 +72,6 @@ const AuthSessionResponseSchema = t.Object({
   username: t.String(),
   tag: t.String(),
 });
-
-/**
- * Sets the hosted web client's session cookies: the access token for one hour, the refresh token for
- * seven days. Every route that starts a session uses this, so the flags cannot drift between them.
- */
-function setSessionCookies(
-  cookie: Record<string, Cookie<unknown>>,
-  accessToken: string,
-  refreshToken: string,
-) {
-  cookie['access_token'].set({
-    value: accessToken,
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 3600, // 1 hour
-  });
-
-  cookie['refresh_token'].set({
-    value: refreshToken,
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 7 * 24 * 3600, // 7 days
-  });
-}
 
 export const authRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -132,8 +140,18 @@ export const authRoutes = new Elysia()
 
       await loginAttemptLimiter.clearAttempts(username);
 
-      const accessToken = await jwt.sign({ userId: user.id, username: user.username });
-      const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });
+      // A pending account can sign in - that is how it finds its own verification - but its session is pending too.
+      const pending = user.verificationStatus !== 'active';
+      const accessToken = await jwt.sign({
+        userId: user.id,
+        username: user.username,
+        ...pendingClaim(pending),
+      });
+      const refreshToken = await jwtRefresh.sign({
+        userId: user.id,
+        username: user.username,
+        ...pendingClaim(pending),
+      });
 
       // The cookies belong to the web client this server hosts, and there is one pair per origin: the
       // admin panel and the public site keep their own token and ask for none, or signing in there
@@ -162,10 +180,68 @@ export const authRoutes = new Elysia()
       },
     },
   )
+  .get(
+    '/terms-status',
+    async ({ user }) => {
+      if (!user || !user.userId) {
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
+      }
+      return termsAcceptanceService.status(user.userId);
+    },
+    {
+      response: {
+        200: TermsStatusResponseSchema,
+        401: MessageResponseSchema,
+      },
+      detail: {
+        summary: 'Legal document acceptance status',
+        description:
+          'Which version of the terms and the privacy policy this account accepted, against the current ones. The client re-presents whatever is newer than the acceptance.',
+        tags: ['Auth'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .post(
+    '/terms-accept',
+    async ({ user, body }) => {
+      if (!user || !user.userId) {
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
+      }
+      // The version recorded is always the current one: the client shows the current text and
+      // the server names what it serves, so a claim about any other version has no meaning here.
+      await termsAcceptanceService.recordAcceptance(user.userId, body.kind, 'reaccept');
+      return termsAcceptanceService.status(user.userId);
+    },
+    {
+      body: t.Object({ kind: t.Union([t.Literal('tos'), t.Literal('privacy')]) }),
+      response: {
+        200: TermsStatusResponseSchema,
+        401: MessageResponseSchema,
+      },
+      detail: {
+        summary: 'Accept the current legal documents',
+        description:
+          'Records acceptance of the current terms or privacy policy after the client presented them. A version bump is a new row, never a rewrite.',
+        tags: ['Auth'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
   .post(
     '/register',
-    async ({ jwt, jwtRefresh, body, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie, request, server }) => {
       const { username, password } = body;
+
+      // The same address the audit records; behind a proxy that is the forwarded one, not the proxy's own.
+      const address =
+        clientAddress(
+          server?.requestIP(request)?.address ?? null,
+          request.headers.get('x-forwarded-for'),
+        ) ?? 'unknown';
+      if (!(await registrationLimiter.registerAttempt(address))) {
+        throw new AppError(429, 'Too many attempts. Try again later.');
+      }
 
       // Evaluated live on every attempt (see RegistrationSettingsService) rather than trusting a boolean
       // that would go stale as soon as the user ceiling was reached in automatic management mode.
@@ -178,8 +254,18 @@ export const authRoutes = new Elysia()
         throw new AppError(409, 'User already exists');
       }
 
-      const hashedPassword = await hashPassword(password);
+      // In `required` mode the service is asked for the sending first: no account exists unless it accepted one.
+      const verified = isAgeVerificationRequired();
       const newUserId = ulid();
+      const sending = verified
+        ? await requestSendingFor(
+            newUserId,
+            username,
+            languageOf(request.headers.get('accept-language')),
+          )
+        : null;
+
+      const hashedPassword = await hashPassword(password);
       const defaultTierId = await effectiveDefaultTierId();
 
       // Seed the @tag with the username so every account has a valid one from the
@@ -187,12 +273,10 @@ export const authRoutes = new Elysia()
       // chance someone already claimed this exact string as their tag (tags and
       // usernames share no uniqueness guarantee with each other), fall back to a
       // short unique suffix rather than failing registration outright.
-      const newUser = await userService.createAccount({
-        id: newUserId,
-        username,
-        hashedPassword,
-        defaultTierId,
-      });
+      const newUser = await createRegisteredAccount(
+        { id: newUserId, username, hashedPassword, defaultTierId },
+        sending,
+      );
 
       if (newUser === 'taken') {
         throw new AppError(409, 'User already exists');
@@ -202,13 +286,31 @@ export const authRoutes = new Elysia()
       // It is this user's only chance to save them.
       const recoveryCodes = await recoveryCodeService.generateCodes(newUser.id);
 
-      const accessToken = await jwt.sign({ userId: newUser.id, username: newUser.username });
+      // The account is born under the current texts: the gate on the client showed them, and
+      // this row is the server's own proof of who accepted which version when. Recorded here,
+      // not trusted from the request - a client could claim any version.
+      await termsAcceptanceService.recordAcceptance(newUser.id, 'tos', 'registration');
+      await termsAcceptanceService.recordAcceptance(newUser.id, 'privacy', 'registration');
+
+      // Pending exactly when the account is not active - read back, not assumed from the mode.
+      const pending = await userService.isPendingVerification(newUser.id);
+      const accessToken = await jwt.sign({
+        userId: newUser.id,
+        username: newUser.username,
+        ...pendingClaim(pending),
+      });
       const refreshToken = await jwtRefresh.sign({
         userId: newUser.id,
         username: newUser.username,
+        ...pendingClaim(pending),
       });
 
       setSessionCookies(cookie, accessToken, refreshToken);
+
+      // Where verification is off there is nothing to report: the response is the one it always was.
+      const verification = verified
+        ? await ageVerificationService.statusFor(newUser.id)
+        : undefined;
 
       return {
         accessToken,
@@ -217,6 +319,7 @@ export const authRoutes = new Elysia()
         username: newUser.username,
         tag: newUser.tag,
         recoveryCodes,
+        ...(verification ? { verification } : {}),
       };
     },
     {
@@ -227,11 +330,16 @@ export const authRoutes = new Elysia()
       response: {
         200: t.Composite([
           AuthSessionResponseSchema,
-          t.Object({ recoveryCodes: t.Array(t.String()) }),
+          t.Object({
+            recoveryCodes: t.Array(t.String()),
+            verification: t.Optional(AccountVerificationStatusResponseSchema),
+          }),
         ]),
         403: MessageResponseSchema,
         409: MessageResponseSchema,
+        429: MessageResponseSchema,
         500: MessageResponseSchema,
+        503: CodedMessageResponseSchema,
       },
       detail: {
         summary: 'User registration',
@@ -265,8 +373,17 @@ export const authRoutes = new Elysia()
 
       // The same response as /login: the person has just proved who they are as well as a password would,
       // so it makes no sense to ask them to log in again right afterwards.
-      const accessToken = await jwt.sign({ userId: user.id, username: user.username });
-      const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });
+      const pending = await userService.isPendingVerification(user.id);
+      const accessToken = await jwt.sign({
+        userId: user.id,
+        username: user.username,
+        ...pendingClaim(pending),
+      });
+      const refreshToken = await jwtRefresh.sign({
+        userId: user.id,
+        username: user.username,
+        ...pendingClaim(pending),
+      });
 
       setSessionCookies(cookie, accessToken, refreshToken);
 
@@ -320,10 +437,17 @@ export const authRoutes = new Elysia()
         throw new AppError(401, 'Invalid or expired refresh token');
       }
 
-      const newAccessToken = await jwt.sign({ userId: payload.userId, username: payload.username });
+      // Read now: a session stays pending until the account is active, and a pending one is renewed as pending.
+      const pending = await userService.isPendingVerification(payload.userId);
+      const newAccessToken = await jwt.sign({
+        userId: payload.userId,
+        username: payload.username,
+        ...pendingClaim(pending),
+      });
       const newRefreshToken = await jwtRefresh.sign({
         userId: payload.userId,
         username: payload.username,
+        ...pendingClaim(pending),
       });
 
       setSessionCookies(cookie, newAccessToken, newRefreshToken);
@@ -381,6 +505,7 @@ export const authRoutes = new Elysia()
       },
     },
   )
+  .use(authVerificationRoutes)
   .get(
     '/me',
     async ({ user }) => {

@@ -1,14 +1,15 @@
-import type { ChatMessage, ConversationSummary, MessagePage } from '@keres/shared';
-import { buildNsfwReportBody } from '@keres/shared';
+import type { ChatMessage, ConversationSummary, MessagePage, ReportType } from '@keres/shared';
+import { buildReportBody } from '@keres/shared';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { and, desc, eq, inArray, isNotNull, isNull, lt, max, or, sql, type SQL } from 'drizzle-orm';
 import { monotonicFactory } from 'ulid';
 import { db, withWriteTransaction } from '../db';
-import { friendships, messages, stories, users } from '../db/schema';
+import { friendships, messages, stories, storyPublications, users } from '../db/schema';
 import { lockUserPair } from '../db/sqlOperators';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 import { messageQuotaService, type MessageQuotaKind } from './MessageQuotaService';
+import { ACTIVE_ACCOUNT } from './UserService';
 import { TierLimitExceededError } from './TierEnforcementService';
 
 /** Strictly increasing within the process, so the id alone orders a conversation. */
@@ -206,7 +207,7 @@ export class MessageService {
       // the same moment must not let one more message through.
       await lockUserPair(tx, me, peerId);
       const peer = await tx.query.users.findFirst({
-        where: eq(users.id, peerId),
+        where: and(eq(users.id, peerId), ACTIVE_ACCOUNT),
         columns: { isDeleted: true },
       });
       if (!peer || peer.isDeleted) {
@@ -243,12 +244,13 @@ export class MessageService {
    * channel as an ordinary message to the administrators, so reports stay inside the abuse
    * limits of that channel.
    */
-  async sendStoryReport(me: string, storyId: string, reason: string): Promise<ChatMessage> {
-    return this.sendToAdmins(me, buildNsfwReportBody(storyId, reason));
-  }
-
   /** Reports a live story that is not the reporter's own; the route only carries the story id. */
-  async reportStory(me: string, storyId: string, reason: string): Promise<ChatMessage> {
+  async reportStory(
+    me: string,
+    storyId: string,
+    reason: string,
+    type: ReportType = 'other',
+  ): Promise<ChatMessage> {
     const story = await db.query.stories.findFirst({
       where: eq(stories.id, storyId),
       columns: { id: true, userId: true, isDeleted: true },
@@ -259,7 +261,75 @@ export class MessageService {
     if (story.userId === me) {
       throw new AppError(403, 'You cannot report your own story.');
     }
-    return this.sendStoryReport(me, story.id, reason);
+    return this.sendToAdmins(me, buildReportBody(type, 'story', story.id, reason));
+  }
+
+  /** Reports a live account that is not the reporter's own; the route only carries the user id. */
+  async reportUser(
+    me: string,
+    userId: string,
+    reason: string,
+    type: ReportType = 'other',
+  ): Promise<ChatMessage> {
+    if (userId === me) {
+      throw new AppError(403, 'You cannot report yourself.');
+    }
+    const target = await db.query.users.findFirst({
+      where: and(eq(users.id, userId), ACTIVE_ACCOUNT),
+      columns: { id: true, isDeleted: true },
+    });
+    if (!target || target.isDeleted) {
+      throw new AppError(404, 'User not found.');
+    }
+    return this.sendToAdmins(me, buildReportBody(type, 'user', target.id, reason));
+  }
+
+  /**
+   * Reports a message the reporter is a side of: sent or received by them. Anything else answers
+   * 404, so ids can neither be probed nor other people's conversations reported.
+   */
+  async reportMessage(
+    me: string,
+    messageId: string,
+    reason: string,
+    type: ReportType = 'other',
+  ): Promise<ChatMessage> {
+    const target = await db.query.messages.findFirst({
+      where: eq(messages.id, messageId),
+      columns: { id: true, channel: true, senderId: true, recipientId: true },
+    });
+    if (!target || (target.channel !== 'direct' && target.channel !== 'admin')) {
+      throw new AppError(404, 'Message not found.');
+    }
+    if (target.senderId !== me && target.recipientId !== me) {
+      throw new AppError(404, 'Message not found.');
+    }
+    return this.sendToAdmins(me, buildReportBody(type, 'message', target.id, reason));
+  }
+
+  /** Reports a published version of a live story; the route carries story and publication ids. */
+  async reportPublication(
+    me: string,
+    storyId: string,
+    publicationId: string,
+    reason: string,
+    type: ReportType = 'other',
+  ): Promise<ChatMessage> {
+    const publication = await db.query.storyPublications.findFirst({
+      where: and(eq(storyPublications.id, publicationId), eq(storyPublications.storyId, storyId)),
+      columns: { id: true, storyId: true },
+    });
+    if (!publication) {
+      throw new AppError(404, 'Publication not found.');
+    }
+    const story = await db.query.stories.findFirst({
+      where: eq(stories.id, storyId),
+      columns: { id: true, isDeleted: true },
+    });
+    if (!story || story.isDeleted) {
+      throw new AppError(404, 'Publication not found.');
+    }
+    return this.sendToAdmins(me, buildReportBody(type, 'publication', publication.id, reason));
   }
 
   async sendToAdmins(me: string, body: string): Promise<ChatMessage> {

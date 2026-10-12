@@ -1,0 +1,1 @@
+ALTER TABLE "registration_settings" ADD COLUMN "allow_nsfw" boolean DEFAULT false NOT NULL;

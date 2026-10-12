@@ -191,7 +191,9 @@
   "footer": {
     "tagline": "Um companheiro de escrita para planejar histórias.",
     "source": "Código aberto no GitHub",
-    "docs": "Documentação no repositório"
+    "docs": "Documentação no repositório",
+    "terms": "Termos",
+    "privacy": "Privacidade"
   },
   "hero": {
     "eyebrow": "Planejamento de histórias",
@@ -209,6 +211,20 @@
   "language": {
     "label": "Idioma"
   },
+  "legal": {
+    "title": "Termos e privacidade",
+    "lead": "As regras deste servidor e como ele trata seus dados, exatamente como o cadastro mostra.",
+    "tabs": {
+      "terms": "Termos de serviço",
+      "privacy": "Política de privacidade"
+    },
+    "loading": "Carregando os textos legais…",
+    "loadFailed": "Não foi possível carregar os textos legais.",
+    "retry": "Tentar de novo",
+    "unavailable": "Este servidor não tem textos legais públicos.",
+    "version": "Versão {{version}} · {{date}}",
+    "contactCta": "Dúvidas? Fale conosco"
+  },
   "meta": {
     "title": "Keres — Organize universos, conecte narrativas",
     "description": "Plataforma offline-first para planejar histórias no celular, no desktop e no navegador, servida pelo próprio servidor Keres.",
@@ -221,6 +237,7 @@
     "platforms": "Plataformas",
     "download": "Baixar",
     "contact": "Contato",
+    "legal": "Legal",
     "github": "GitHub",
     "menu": "Menu"
   },

@@ -23,8 +23,11 @@ export type StoryUploadResult =
   | { success: false; reason: 'already_exists' | 'error'; message?: string }
   /** The story was on this server before and unlinked; the server keeps the old data until the owner agrees to replace it. */
   | { success: false; reason: 'previously_on_server' }
-  /** The server said no on purpose (the plan's story limit, say) and gave the reason. */
-  | { success: false; reason: 'refused'; message: string };
+  /**
+   * The server said no on purpose and gave the reason. `planLimit` is true only when the refusal is a plan's ceiling
+   * (see `isPlanLimitMessage`): the plan hint must not be attached to any other refusal, such as the adults-only one.
+   */
+  | { success: false; reason: 'refused'; message: string; planLimit: boolean };
 
 /**
  * What the server lets this user read, or `null` when it could not be asked. The difference matters to
@@ -117,6 +120,12 @@ export async function downloadAndImportStory(
   }
 }
 
+/** The machine-readable code a 403 carried, when it carried one (the server names a plan ceiling `tier_limit`). */
+function serverRefusalCode(error: unknown): string | null {
+  const code = (error as { response?: { data?: { code?: unknown } } })?.response?.data?.code;
+  return typeof code === 'string' ? code : null;
+}
+
 /** What a 409 carries when the story being sent was unlinked from the server earlier (the API's `STORY_PREVIOUSLY_ON_SERVER`). */
 function wasPreviouslyOnServer(error: unknown): boolean {
   const response = (error as { response?: { status?: number; data?: { code?: unknown } } })
@@ -131,6 +140,16 @@ function serverRefusalMessage(error: unknown): string | null {
   if (response?.status !== 403) return null;
   const message = response.data?.message;
   return typeof message === 'string' && message.trim() ? message : null;
+}
+
+/**
+ * Whether a 403 message is a plan's ceiling. The API's tier refusals (`TierLimitExceededError`, re-thrown as a plain
+ * 403 by the story import) name the plan in their text ("Story limit reached for your plan (1)."), and the import
+ * route sends no machine-readable code for them. So the words are the only sign available: the check is strict on
+ * purpose, and a message that does not say "your plan" gets no plan hint. Other 403s (adults-only, showcase) never do.
+ */
+export function isPlanLimitMessage(message: string): boolean {
+  return /\byour plan\b/i.test(message);
 }
 
 export async function uploadNewStoryToServer(
@@ -191,7 +210,14 @@ export async function uploadNewStoryToServer(
     await createCommentService(db).migrateAuthorIdentity(storyId, server.idUser, userId);
     if (wasPreviouslyOnServer(error)) return { success: false, reason: 'previously_on_server' };
     const refusal = serverRefusalMessage(error);
-    if (refusal) return { success: false, reason: 'refused', message: refusal };
+    if (refusal)
+      return {
+        success: false,
+        reason: 'refused',
+        message: refusal,
+        // The server's own code first; the words only for a server that predates the code.
+        planLimit: serverRefusalCode(error) === 'tier_limit' || isPlanLimitMessage(refusal),
+      };
     return { success: false, reason: 'error', message: (error as Error)?.message };
   }
   await db

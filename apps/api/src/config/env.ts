@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+import { AGE_VERIFICATION_MODES } from '@keres/shared/age-verification/AgeVerificationConnector';
 
 // Independent of the directory `bun run` was called from; the API's `.env` lives in apps/api.
 const environmentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,15 @@ const connectorSecret = z.preprocess(
   (value) => (value === '' ? undefined : value),
   z.string().min(32, 'must have at least 32 characters').optional(),
 );
+
+/** A key shared with the age-verification service: the same rule as the payment connector's keys. */
+const verifierSecret = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.string().min(32, 'must have at least 32 characters').optional(),
+);
+
+/** Compose expands an unset variable to an empty string: for the age-verification keys that means "not set". */
+const unsetWhenEmpty = (value: unknown) => (value === '' ? undefined : value);
 
 const isLoopbackHost = (hostname: string) =>
   hostname === 'localhost' ||
@@ -91,6 +101,8 @@ const envSchema = z.object({
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
   /** How many days the admin's activity record keeps its lines; older ones are dropped once a day. */
   AUDIT_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(365),
+  /** How many days a landing-page contact message is kept; older ones are dropped once a day. */
+  CONTACT_MESSAGE_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(90),
   /**
    * How long a stopping server lets the requests already running finish before closing them, in
    * milliseconds. `docker stop` waits 10 s by default before killing, so the default leaves room for the
@@ -147,18 +159,105 @@ const envSchema = z.object({
   /**
    * How long after an account was closed its payment records are kept in a form that points at the person, in days.
    * After it the subscription, the attempts and the store claims of that account are deleted and the ledger keeps
-   * its lines (amounts, plans, dates) without the person or the provider's reference. Unset: kept as they are.
+   * its lines (amounts, plans, dates) without the person or the provider's reference. Default 1825 (five years,
+   * the consumer-claim prescription of CDC Art. 27); the final prescription basis is validated in D23.
    * At least 30, so a late refund or a dispute can still be tied to the account.
    */
   PAYMENT_RETENTION_DAYS: z.preprocess(
     (value) => (value === '' ? undefined : value),
-    z.coerce.number().int().min(30).max(3650).optional(),
+    z.coerce.number().int().min(30).max(3650).default(1825),
+  ),
+  /**
+   * How this server treats age (see docs/age_verification.md). `required`: an account is 18+ and verified, so boot
+   * refuses to start without the service's address and both keys, and a new registration waits for the service's
+   * approval. `disabled` (the default): no verification, no adults-only area, and the server says so at every start.
+   */
+  AGE_VERIFICATION_MODE: z.preprocess(
+    unsetWhenEmpty,
+    z.enum(AGE_VERIFICATION_MODES).optional().default('disabled'),
+  ),
+  /** The age-verification service: the address of a separate service that checks identity documents. Same rules as the payment connector's address. */
+  AGE_VERIFICATION_URL: z.preprocess(unsetWhenEmpty, z.url().optional()),
+  /** Signs what Keres sends the service, and is what Keres checks the service's answers with. At least 32 characters. */
+  AGE_VERIFICATION_SECRET: verifierSecret,
+  /** The key that was in use before, still accepted for the service's answers while a key is being replaced. */
+  AGE_VERIFICATION_SECRET_PREVIOUS: verifierSecret,
+  /** What Keres checks the service's events with: another key than the one above, on purpose. At least 32 characters. */
+  AGE_VERIFICATION_EVENTS_SECRET: verifierSecret,
+  /** The key that was in use before, still accepted for events while a key is being replaced. */
+  AGE_VERIFICATION_EVENTS_SECRET_PREVIOUS: verifierSecret,
+  /** How long a call to the service may take before it is given up on, in milliseconds. */
+  AGE_VERIFICATION_TIMEOUT_MS: z.preprocess(
+    unsetWhenEmpty,
+    z.coerce.number().int().min(1000).max(60_000).optional().default(10_000),
+  ),
+  /**
+   * Allows the service, or a page it sends the person to, at an address that is not `https` and not this machine. For a
+   * network that is trusted only: every message is signed whatever the transport, but only TLS keeps them private.
+   */
+  AGE_VERIFICATION_ALLOW_INSECURE: z.preprocess(
+    unsetWhenEmpty,
+    z
+      .enum(['true', 'false'])
+      .optional()
+      .default('false')
+      .transform((value) => value === 'true'),
+  ),
+  /** Days a pending account has to be verified before it is deleted completely (the service is told to destroy the submission). */
+  AGE_VERIFICATION_PENDING_DAYS: z.preprocess(
+    unsetWhenEmpty,
+    z.coerce.number().int().min(1).max(365).default(30),
+  ),
+  /** How many times a person may send a document for verification after a refusal or an expiry (`underage` has none). */
+  AGE_VERIFICATION_MAX_ATTEMPTS: z.preprocess(
+    unsetWhenEmpty,
+    z.coerce.number().int().min(1).max(10).default(3),
   ),
   SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).optional().default(7000),
 });
 
 export const env = envSchema
   .superRefine((value, context) => {
+    // Age verification: in `required` mode boot refuses to start without the service's address and both keys. A set
+    // address needs its keys in any mode, as the payment connector does below.
+    const ageIssue = (path: string, message: string) =>
+      context.addIssue({ code: 'custom', path: [path], message });
+    const ageRequired = value.AGE_VERIFICATION_MODE === 'required';
+    const ageMissing = ageRequired
+      ? 'is required when AGE_VERIFICATION_MODE=required'
+      : 'is required with AGE_VERIFICATION_URL';
+    if (ageRequired && !value.AGE_VERIFICATION_URL) {
+      ageIssue('AGE_VERIFICATION_URL', 'is required when AGE_VERIFICATION_MODE=required');
+    }
+    if (ageRequired || value.AGE_VERIFICATION_URL) {
+      if (!value.AGE_VERIFICATION_SECRET) ageIssue('AGE_VERIFICATION_SECRET', ageMissing);
+      if (!value.AGE_VERIFICATION_EVENTS_SECRET) {
+        ageIssue('AGE_VERIFICATION_EVENTS_SECRET', ageMissing);
+      }
+    }
+    if (
+      value.AGE_VERIFICATION_SECRET &&
+      value.AGE_VERIFICATION_SECRET === value.AGE_VERIFICATION_EVENTS_SECRET
+    ) {
+      ageIssue(
+        'AGE_VERIFICATION_EVENTS_SECRET',
+        'must differ from AGE_VERIFICATION_SECRET: one key per direction',
+      );
+    }
+    if (value.AGE_VERIFICATION_URL) {
+      const { protocol, hostname } = new URL(value.AGE_VERIFICATION_URL);
+      if (
+        protocol !== 'https:' &&
+        !isLoopbackHost(hostname) &&
+        !value.AGE_VERIFICATION_ALLOW_INSECURE
+      ) {
+        ageIssue(
+          'AGE_VERIFICATION_URL',
+          'must be https (or this machine); set AGE_VERIFICATION_ALLOW_INSECURE=true only for a network you trust',
+        );
+      }
+    }
+
     const url = value.PAYMENT_CONNECTOR_URL;
     if (!url) return;
     const issue = (path: string, message: string) =>

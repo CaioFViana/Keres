@@ -8,6 +8,7 @@ import {
 } from '@keres/shared';
 import { ulid } from 'ulid';
 import { db } from '../../db';
+import { storyNsfwService } from '../StoryNsfwService';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
 import { AppError, STORY_PREVIOUSLY_ON_SERVER } from '../../utils/errors';
 import { logger } from '../../utils/logger';
@@ -56,6 +57,13 @@ export class DatabaseStoryPackageImporter {
       );
     }
 
+    // Sending a story that is flagged adults-only is flagging it: the same privilege as turning the flag on by sync, so
+    // the server's allowance and the account's verification are read here too, before anything is written.
+    if (validatedFullStory.story.isNsfw) {
+      const refusal = await storyNsfwService.nsfwFlagRefusal(userId);
+      if (refusal) throw new AppError(403, refusal);
+    }
+
     // Fails fast before opening the transaction: importing a whole story and only then refusing it would
     // leave the user with no idea why nothing was saved, and would burn database work on an import that
     // was going to be discarded anyway.
@@ -67,7 +75,7 @@ export class DatabaseStoryPackageImporter {
       );
     } catch (error) {
       if (error instanceof TierLimitExceededError) {
-        throw new AppError(403, error.message);
+        throw new AppError(403, error.message, 'tier_limit');
       }
       throw error;
     }

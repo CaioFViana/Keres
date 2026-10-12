@@ -26,6 +26,9 @@ jest.mock('../../src/services/apiClient', () => ({
     return mockApiClient;
   },
   isOfflineError: (error: { isOffline?: boolean }) => error?.isOffline === true,
+  isVerificationPendingError: (error: {
+    response?: { status?: number; data?: { code?: string } };
+  }) => error?.response?.status === 403 && error.response.data?.code === 'verification_pending',
   apiUrl: (url: string, endpoint: string) => `${url}${endpoint}`,
 }));
 
@@ -350,6 +353,26 @@ describe('SyncInitializer', () => {
     });
     await flush();
     expect(mockShowNotification).toHaveBeenCalledWith('failed_to_sync_with_server: Home', 'error');
+  });
+
+  it('does not report a pending account as a failed sync: the app sends it to its verification', async () => {
+    mockGetAllServers.mockResolvedValue([server]);
+    mockSyncEngine.fetchServerStoryPreviews.mockRejectedValueOnce(
+      Object.assign(new Error('Request failed with status code 403'), {
+        response: {
+          status: 403,
+          data: { message: 'Verify your age', code: 'verification_pending' },
+        },
+      }),
+    );
+    await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
   it('skips a server whose sync protocol the app outgrew, with a clear message', async () => {

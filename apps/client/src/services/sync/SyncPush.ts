@@ -35,9 +35,20 @@ const detailOf = (error: unknown): unknown =>
 /** Rounds of push batches per cycle; a larger backlog continues on the next cycle. */
 export const PUSH_MAX_ROUNDS = 50;
 
+/**
+ * What the server refused in a push. `conflicts` counts the changes the person has to decide on (quarantined ones
+ * included); `refusals` are the server's conflicts that carry their reason, for the message to list. Automatic
+ * cycles never show it; a save made by hand reads it to say what did not reach the server.
+ */
+export interface PushOutcomeReport {
+  conflicts: number;
+  refusals: SharedSyncConflict[];
+}
+
 /** Builds and pushes local batches, then records the server's per-operation result. */
 export class SyncPush {
   private readonly maxRounds: number;
+  private outcome: PushOutcomeReport = { conflicts: 0, refusals: [] };
 
   public constructor(
     private readonly context: SyncContext,
@@ -46,10 +57,18 @@ export class SyncPush {
     this.maxRounds = options?.maxRounds ?? PUSH_MAX_ROUNDS;
   }
 
+  /** What the last push refused: read after `pushPendingOperations` by a save the person made by hand. */
+  public get lastOutcome(): PushOutcomeReport {
+    return this.outcome;
+  }
+
   public async pushPendingOperations(): Promise<{ offline: boolean }> {
     const notifier = this.context.notifier();
+    this.outcome = { conflicts: 0, refusals: [] };
     let totalApplied = 0;
     let totalConflicts = 0;
+    // The conflicts the server returned in this push, for a save the person made by hand (see `PushOutcomeReport`).
+    const refusals: SharedSyncConflict[] = [];
     const quarantinedEntities = new Set<string>();
     let roundsRun = 0;
     let lastRemaining = 0;
@@ -112,6 +131,7 @@ export class SyncPush {
       );
       totalApplied += summary.applied;
       totalConflicts += summary.conflicts;
+      if (summary.conflicts > 0) refusals.push(...(pushResponse.data.conflicts ?? []));
 
       const remaining = await this.getPushableOperations();
       lastRemaining = remaining.length;
@@ -144,6 +164,7 @@ export class SyncPush {
         detailOf(trimError),
       );
     }
+    this.outcome = { conflicts: totalConflicts, refusals };
     return { offline: false };
   }
 

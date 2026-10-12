@@ -61,6 +61,7 @@ import migration_57 from './0056_stiff_galactus';
 import migration_58 from './0057_colorful_warbound';
 import migration_59 from './0058_lethal_phantom_reporter';
 import migration_60 from './0059_terms_accepted_columns';
+import migration_61 from './0060_flawless_titania';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -123,6 +124,7 @@ const migrations = [
   { id: 58, name: '0057_colorful_warbound', run: migration_58 },
   { id: 59, name: '0058_lethal_phantom_reporter', run: migration_59 },
   { id: 60, name: '0059_terms_accepted_columns', run: migration_60 },
+  { id: 61, name: '0060_flawless_titania', run: migration_61 },
 ];
 
 export default migrations;

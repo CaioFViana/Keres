@@ -21,6 +21,7 @@ import { AppError } from '../utils/errors';
 import { createExclusiveGate } from '../utils/exclusive';
 import { publicationStorageService } from './PublicationStorageService';
 import { showcaseSettingsService } from './ShowcaseSettingsService';
+import { storyNsfwService } from './StoryNsfwService';
 import {
   assertArcBelongs,
   compileManuscript,
@@ -189,6 +190,10 @@ export class StoryPublicationService {
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
+
+    // An adults-only story goes out only where the server allows mature content, and from a verified adult.
+    const refusal = story.isNsfw ? await storyNsfwService.nsfwFlagRefusal(userId) : null;
+    if (refusal) throw new AppError(403, refusal);
 
     // A release of one work carries its manuscript and/or the online reader, never the package: the
     // package is the whole story, and publishing Book I must not hand over Book II.

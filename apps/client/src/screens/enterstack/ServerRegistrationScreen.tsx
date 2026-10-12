@@ -6,6 +6,8 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import AgeVerificationNotice from '@/src/components/features/servers/AgeVerificationNotice';
 import ServerRecoveryCodesPanel from '@/src/components/features/servers/ServerRecoveryCodesPanel';
 import ServerRegistrationFields, {
   type ServerAuthMode,
@@ -13,7 +15,9 @@ import ServerRegistrationFields, {
 import TermsModal, {
   type TermsSection,
 } from '@/src/components/features/servers/TermsModal/TermsModal';
+import { useAgeVerificationInfo } from '@/src/hooks/useAgeVerificationInfo';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   NativeStackNavigationProp,
@@ -25,6 +29,7 @@ import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
 import { redeemRecoveryCode } from '../../services/AuthApiService';
 import { authTokenManager } from '../../services/AuthTokenManager';
+import { fetchAgeVerificationInfo } from '../../services/AgeVerificationApiService';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from '../../services/browserCookieSession';
 import {
   createServerService,
@@ -38,12 +43,15 @@ import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { authenticateWithKeresServer, keresAuthAlertMessage } from '../../utils/keresServerAuth';
-import { fetchServerTerms } from '../../services/ServerTermsService';
+import { accountNeedsVerification } from '../../utils/ageVerificationRouting';
+import { blocksNewAccounts } from '../../utils/ageVerificationRules';
+import { fetchServerPrivacy, fetchServerTerms } from '../../services/ServerTermsService';
 import { isAllowedServerUrl, normalizeServerUrl } from '../../utils/serverUrl';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };
   ServerManagement: undefined;
+  ServerVerification: { serverId: string };
 };
 
 type ServerRegistrationScreenNavigationProp = NativeStackNavigationProp<
@@ -80,9 +88,13 @@ const ServerRegistrationScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [serverName, setServerName] = useState('');
+  // Accounts are 18+: confirmed on the form before the terms gate, which is about the server.
+  const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
+  // Set when the account must be verified first: the recovery codes panel leads there, not back.
+  const [verificationServerId, setVerificationServerId] = useState<string | null>(null);
   // Creating an account needs the server's terms first: offered once agreed, the agreed copy
   // travels into the saved server row so it reads offline later. A ref, not state: the agree
   // button continues straight into saving, and state would still read stale in that same tick.
@@ -93,9 +105,24 @@ const ServerRegistrationScreen = () => {
     text: string;
   } | null>(null);
   const agreedTermsRef = useRef<{ version: number; text: string } | null>(null);
+  // The privacy policy gates the same way, right after the terms: same shape, second modal.
+  const [pendingPrivacy, setPendingPrivacy] = useState<{
+    version: number;
+    updatedAt: string;
+    sections: TermsSection[];
+    text: string;
+  } | null>(null);
+  const agreedPrivacyRef = useRef<{ version: number; text: string } | null>(null);
 
   const hostedSameOrigin = usesHttpOnlyCookieSession();
   const lockedServerAddress = hostedSameOrigin ? hostedApiOrigin() : null;
+
+  // What the server says about age, read once the address stops changing: it sits beside the 18+ confirmation.
+  const checkedAddress = useDebouncedValue((lockedServerAddress ?? serverAddress).trim(), 500);
+  const ageInfo = useAgeVerificationInfo(
+    isAllowedServerUrl(checkedAddress) ? checkedAddress : undefined,
+    !serverId && mode === 'register',
+  );
 
   useEffect(() => {
     const loadServer = async () => {
@@ -154,13 +181,31 @@ const ServerRegistrationScreen = () => {
         AppAlert.alert(t('error'), t('passwords_do_not_match'));
         return;
       }
-      // The account is only created under the server's own terms: read them right after the
-      // address checked out, and pause for agreement before anything is written anywhere.
-      // A server predating the terms route simply has none to agree to.
+      if (!adultConfirmed) {
+        AppAlert.alert(t('error'), t('server_register_adult_required'));
+        return;
+      }
+      // The account is only created under the server's own terms and privacy policy: read
+      // them right after the address checked out, and pause for agreement before anything is
+      // written anywhere. A server predating either route simply has none to agree to.
       setLoading(true);
+      // A server that verifies ages but cannot right now creates no account at all: said before anything is sent.
+      if (blocksNewAccounts(await fetchAgeVerificationInfo(addressToSave))) {
+        const message = t('age_verification_unavailable');
+        setLoading(false);
+        setError(message);
+        AppAlert.alert(t('error'), message);
+        return;
+      }
       const terms = await fetchServerTerms(addressToSave, i18n.language);
       if (terms && agreedTermsRef.current?.version !== terms.version) {
         setPendingTerms(terms);
+        setLoading(false);
+        return;
+      }
+      const privacy = await fetchServerPrivacy(addressToSave, i18n.language);
+      if (privacy && agreedPrivacyRef.current?.version !== privacy.version) {
+        setPendingPrivacy(privacy);
         setLoading(false);
         return;
       }
@@ -206,6 +251,7 @@ const ServerRegistrationScreen = () => {
         urlChangedWithoutPassword: isUrlChanged && !isPasswordProvided,
         existingUserId: existingServer?.idUser || null,
         existingTag: existingServer?.tag ?? null,
+        language: i18n.language,
       });
       if (!auth.ok) {
         AppAlert.alert(t('error'), keresAuthAlertMessage(t, auth));
@@ -228,12 +274,20 @@ const ServerRegistrationScreen = () => {
         : await serverService.createServer({
             ...serverData,
             lastSyncDate: new Date(),
-            // The agreed copy, if the server served terms: it reads offline from here on.
+            // The agreed copies, if the server served terms and policy: they read offline
+            // from here on.
             ...(agreedTermsRef.current
               ? {
                   tosText: agreedTermsRef.current.text,
                   tosVersion: String(agreedTermsRef.current.version),
                   tosAcceptedAt: new Date(),
+                }
+              : {}),
+            ...(agreedPrivacyRef.current
+              ? {
+                  privacyText: agreedPrivacyRef.current.text,
+                  privacyVersion: String(agreedPrivacyRef.current.version),
+                  privacyAcceptedAt: new Date(),
                 }
               : {}),
           });
@@ -252,11 +306,21 @@ const ServerRegistrationScreen = () => {
             existingTokens.refreshToken,
           );
         }
-        setActiveServer(savedServer);
+      }
+      // A pending account is not used yet: its session only opens the verification, so the server is not made the
+      // active one (sync would only be refused) until the verification hands over the full session.
+      const verifyFirst = savedServer
+        ? await accountNeedsVerification(savedServer, auth, isRegistering)
+        : false;
+      if (savedServer) {
+        if (!verifyFirst) setActiveServer(savedServer);
         entityEventEmitter.emit('server_connection_changed');
       }
+      if (savedServer && verifyFirst) setVerificationServerId(savedServer.id);
       if (auth.recoveryCodes) {
         setRecoveryCodesToShow(auth.recoveryCodes);
+      } else if (savedServer && verifyFirst) {
+        navigation.replace('ServerVerification', { serverId: savedServer.id });
       } else {
         navigation.goBack();
       }
@@ -280,6 +344,7 @@ const ServerRegistrationScreen = () => {
     username,
     password,
     confirmPassword,
+    adultConfirmed,
     serverName,
     serverService,
     navigation,
@@ -297,6 +362,14 @@ const ServerRegistrationScreen = () => {
     // Continue straight into registration: the gate above now reads the agreement from the ref.
     void handleSave();
   }, [pendingTerms, handleSave]);
+
+  const handleAgreePrivacy = useCallback(() => {
+    if (!pendingPrivacy) return;
+    agreedPrivacyRef.current = { version: pendingPrivacy.version, text: pendingPrivacy.text };
+    setPendingPrivacy(null);
+    // Same as the terms: the gate above now reads the agreement from the ref.
+    void handleSave();
+  }, [pendingPrivacy, handleSave]);
 
   const handleRecover = useCallback(async () => {
     const addressToSave = (lockedServerAddress ?? serverAddress).trim();
@@ -426,7 +499,11 @@ const ServerRegistrationScreen = () => {
         codes={recoveryCodesToShow}
         onContinue={() => {
           setRecoveryCodesToShow(null);
-          navigation.goBack();
+          if (verificationServerId) {
+            navigation.replace('ServerVerification', { serverId: verificationServerId });
+          } else {
+            navigation.goBack();
+          }
         }}
       />
     );
@@ -481,6 +558,17 @@ const ServerRegistrationScreen = () => {
         onRecoveryCodeChange={setRecoveryCode}
         inputStyle={commonInputStyles.input}
       />
+      {!serverId && mode === 'register' ? (
+        <>
+          <FormSwitchField
+            label={t('server_register_adult_confirm')}
+            value={adultConfirmed}
+            onValueChange={setAdultConfirmed}
+            testID="server-register-adult-switch"
+          />
+          <AgeVerificationNotice info={ageInfo} testID="server-age-verification-notice" />
+        </>
+      ) : null}
       {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
       <TermsModal
         visible={pendingTerms !== null}
@@ -500,6 +588,25 @@ const ServerRegistrationScreen = () => {
         onClose={() => setPendingTerms(null)}
         requireScrollToEnd
         testID="server-terms-modal"
+      />
+      <TermsModal
+        visible={pendingPrivacy !== null}
+        title={t('server_privacy_title')}
+        subtitle={
+          pendingPrivacy
+            ? t('server_privacy_version', {
+                version: pendingPrivacy.version,
+                date: pendingPrivacy.updatedAt,
+              })
+            : undefined
+        }
+        sections={pendingPrivacy?.sections ?? []}
+        mode="accept"
+        acceptLabel={t('terms_accept')}
+        onAccept={handleAgreePrivacy}
+        onClose={() => setPendingPrivacy(null)}
+        requireScrollToEnd
+        testID="server-privacy-modal"
       />
     </EntityFormContainer>
   );

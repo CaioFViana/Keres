@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import { isOfflineError } from '../services/apiClient';
 import { createServerService } from '../services/ServerService';
+import type { ReportType } from '@keres/shared';
 import { storyReportApi } from '../services/StoryReportApiService';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryStore } from '../state/storyStore';
@@ -22,7 +23,7 @@ export function useStoryReport(storyId: string | undefined) {
   const [sending, setSending] = useState(false);
 
   const report = useCallback(
-    async (reason: string): Promise<boolean> => {
+    async (reason: string, type: ReportType = 'other'): Promise<boolean> => {
       if (!storyId || !selectedStory?.serverId) return false;
       const server = await createServerService(drizzleDb).getServerById(selectedStory.serverId);
       if (!server) {
@@ -31,7 +32,7 @@ export function useStoryReport(storyId: string | undefined) {
       }
       setSending(true);
       try {
-        await storyReportApi.report(server, storyId, reason);
+        await storyReportApi.report(server, storyId, reason, type);
         showNotification(t('report_story_sent'), 'success');
         return true;
       } catch (error) {

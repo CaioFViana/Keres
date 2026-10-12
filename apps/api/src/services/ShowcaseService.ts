@@ -9,6 +9,8 @@ import type {
 import { comparePassword } from '../config/bcrypt';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
+import { effectiveAdultVerified } from './ageVerification/ageVerificationMode';
+import { ACTIVE_ACCOUNT } from './UserService';
 import { galleries, stories, storyPublications, storyShowcaseEntries, users } from '../db/schema';
 
 /** What a cover may be to be served to a page: raster images only, nothing that runs. */
@@ -101,6 +103,7 @@ export class ShowcaseService {
           eq(storyShowcaseEntries.visibility, 'public'),
           eq(stories.isDeleted, false),
           eq(users.isDeleted, false),
+          ACTIVE_ACCOUNT,
           ...(includeNsfw ? [] : [eq(stories.isNsfw, false)]),
         ),
       );
@@ -133,6 +136,7 @@ export class ShowcaseService {
           eq(storyShowcaseEntries.visibility, 'public'),
           eq(stories.isDeleted, false),
           eq(users.isDeleted, false),
+          ACTIVE_ACCOUNT,
           ...(includeNsfw ? [] : [eq(stories.isNsfw, false)]),
         ),
       )
@@ -181,7 +185,7 @@ export class ShowcaseService {
       where: eq(users.id, user.userId),
       columns: { isDeleted: true, isAdultVerified: true },
     });
-    return !!row && !row.isDeleted && row.isAdultVerified;
+    return !!row && !row.isDeleted && effectiveAdultVerified(row.isAdultVerified);
   }
 
   /** The story's live NSFW flag (false when the story is gone - callers 404 on that anyway). */
@@ -206,13 +210,14 @@ export class ShowcaseService {
         isNsfw: stories.isNsfw,
         storyDeleted: stories.isDeleted,
         ownerDeleted: users.isDeleted,
+        ownerStatus: users.verificationStatus,
       })
       .from(storyShowcaseEntries)
       .innerJoin(stories, eq(stories.id, storyShowcaseEntries.storyId))
       .innerJoin(users, eq(storyShowcaseEntries.ownerUserId, users.id))
       .where(eq(storyShowcaseEntries.storyId, storyId))
       .limit(1);
-    if (!row || row.storyDeleted || row.ownerDeleted) {
+    if (!row || row.storyDeleted || row.ownerDeleted || row.ownerStatus !== 'active') {
       return false;
     }
     return includeNsfw || !row.isNsfw;

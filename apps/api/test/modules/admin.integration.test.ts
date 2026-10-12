@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { env } from '../../src/config/env';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { enterRequiredMode, leaveRequiredMode } from '../helpers/ageVerificationAccounts';
 import { promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
 
 let admin: TestUser;
@@ -697,5 +698,61 @@ describe('registration settings', () => {
       body: { currency: 'reais' },
     });
     expect(invalid.status).toBe(400);
+  });
+
+  describe('the age-verification mode the admin page reads', () => {
+    afterEach(() => {
+      leaveRequiredMode();
+    });
+
+    it('reports disabled on a server with no age verification, so the page can lock the adults-only switch', async () => {
+      env.AGE_VERIFICATION_MODE = 'disabled';
+
+      const { status, data } = await request('GET', '/admin/api/registration-settings', {
+        token: admin.token,
+      });
+
+      expect(status).toBe(200);
+      expect(data.ageVerificationMode).toBe('disabled');
+      expect(data.allowNsfw).toBe(false);
+    });
+
+    it('reports required on a server that verifies, with the row fields alongside it', async () => {
+      enterRequiredMode();
+
+      const { status, data } = await request('GET', '/admin/api/registration-settings', {
+        token: admin.token,
+      });
+
+      expect(status).toBe(200);
+      expect(data.ageVerificationMode).toBe('required');
+      expect(data).toMatchObject({ isRegistrationOpen: true, currency: 'BRL' });
+    });
+
+    it('is read-only: an update cannot change the mode, and the next read still reports the server’s', async () => {
+      enterRequiredMode();
+
+      const put = await request('PUT', '/admin/api/registration-settings', {
+        token: admin.token,
+        body: { ageVerificationMode: 'disabled', isRegistrationOpen: true },
+      });
+      const { data } = await request('GET', '/admin/api/registration-settings', {
+        token: admin.token,
+      });
+
+      expect(put.status).toBe(200);
+      expect(put.data).not.toHaveProperty('ageVerificationMode');
+      expect(env.AGE_VERIFICATION_MODE).toBe('required');
+      expect(data.ageVerificationMode).toBe('required');
+    });
+
+    it('is not answered to an ordinary user', async () => {
+      const { status, data } = await request('GET', '/admin/api/registration-settings', {
+        token: comum.token,
+      });
+
+      expect(status).toBe(403);
+      expect(data).not.toHaveProperty('ageVerificationMode');
+    });
   });
 });

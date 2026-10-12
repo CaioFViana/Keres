@@ -47,6 +47,15 @@ services:
       MEDIA_S3_SECRET_ACCESS_KEY: ${MEDIA_S3_SECRET_ACCESS_KEY:-}
       MEDIA_S3_PREFIX: ${MEDIA_S3_PREFIX:-keres}
       MEDIA_S3_FORCE_PATH_STYLE: ${MEDIA_S3_FORCE_PATH_STYLE:-false}
+      # Accounts are 18+ and verified (docs/age_verification.md). `required` is the Docker default and it
+      # refuses to boot without the service's address and keys. A home or LAN server with no public offer may
+      # set `disabled` in its .env: it then has no adults-only area and no verified account, and says so.
+      AGE_VERIFICATION_MODE: ${AGE_VERIFICATION_MODE:-required}
+      AGE_VERIFICATION_URL: ${AGE_VERIFICATION_URL:-}
+      AGE_VERIFICATION_SECRET: ${AGE_VERIFICATION_SECRET:-}
+      AGE_VERIFICATION_SECRET_PREVIOUS: ${AGE_VERIFICATION_SECRET_PREVIOUS:-}
+      AGE_VERIFICATION_EVENTS_SECRET: ${AGE_VERIFICATION_EVENTS_SECRET:-}
+      AGE_VERIFICATION_EVENTS_SECRET_PREVIOUS: ${AGE_VERIFICATION_EVENTS_SECRET_PREVIOUS:-}
     ports:
       - "${KERES_BIND_ADDRESS:-127.0.0.1}:${KERES_PORT:-3000}:3000"
     volumes:
@@ -63,6 +72,29 @@ services:
     networks:
       - backend
 
+  # Nightly pg_dump of the official Postgres, rotated to BACKUP_RETENTION_DAYS
+  # (default 90 days). The dumps live in the db_backups volume - back that volume
+  # up off the machine, onto encrypted storage with access limited to operators.
+  # See deploy/README.md.
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    command: ["sh", "/deploy/backup.sh"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-keres}
+      POSTGRES_USER: ${POSTGRES_USER:-keres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD no arquivo .env}
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-90}
+    volumes:
+      - ./deploy/backup.sh:/deploy/backup.sh:ro
+      - db_backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge
@@ -70,3 +102,4 @@ networks:
 volumes:
   db_data:
   media_storage:
+  db_backups:

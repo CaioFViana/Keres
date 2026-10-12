@@ -4,6 +4,8 @@ import {
   AdminUpdateUserSchema,
   AdminUserListQuerySchema,
   buildNsfwReportBody,
+  buildReportBody,
+  parseReportBody,
   CreateStoryDataSchema,
   ownerOnlyFieldsIn,
   parseNsfwReportBody,
@@ -69,7 +71,34 @@ describe('story report envelope', () => {
 
   it('accepts the report source and a reason-only request', () => {
     expect(AdminMessageListQuerySchema.parse({ source: 'report' }).source).toBe('report');
-    expect(StoryReportRequestSchema.parse({ reason: '  rude  ' })).toEqual({ reason: 'rude' });
+    expect(StoryReportRequestSchema.parse({ reason: '  rude  ' })).toEqual({
+      type: 'other',
+      reason: 'rude',
+    });
     expect(StoryReportRequestSchema.safeParse({ reason: '  ' }).success).toBe(false);
+  });
+
+  it('round-trips a typed report for every target', () => {
+    for (const target of ['story', 'user', 'message', 'publication'] as const) {
+      const body = buildReportBody('intimate', target, 'id01', 'please remove');
+      expect(body).toBe('[REPORT type:intimate ' + target + ':id01] please remove');
+      expect(parseReportBody(body)).toEqual({
+        type: 'intimate',
+        targetKind: target,
+        targetId: 'id01',
+        reason: 'please remove',
+      });
+    }
+  });
+
+  it('reads a legacy envelope as an untyped story report', () => {
+    expect(parseReportBody('[NSFW-REPORT story:story01] spam links')).toEqual({
+      type: 'other',
+      targetKind: 'story',
+      targetId: 'story01',
+      reason: 'spam links',
+    });
+    expect(parseReportBody('hello admin')).toBeNull();
+    expect(parseReportBody('[REPORT type:nope story:x] y')).toBeNull();
   });
 });

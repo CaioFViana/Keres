@@ -236,7 +236,13 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       } else if (result.reason === 'already_exists') {
         AppAlert.alert(t('error'), t('send_to_server_already_exists'));
       } else if (result.reason === 'refused') {
-        AppAlert.alert(t('error'), t('send_to_server_refused', { reason: result.message }));
+        // The plan hint points at the plan page, so it is only said for a plan's ceiling, never for another refusal.
+        AppAlert.alert(
+          t('error'),
+          t(result.planLimit ? 'send_to_server_refused_plan' : 'send_to_server_refused', {
+            reason: result.message,
+          }),
+        );
       } else {
         AppAlert.alert(t('error'), t('send_to_server_failed'));
       }

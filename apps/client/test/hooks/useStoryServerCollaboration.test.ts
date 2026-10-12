@@ -240,9 +240,27 @@ describe('useStoryServerCollaboration', () => {
     await act(async () => view.result.current.handleSendToServer());
     expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_already_exists');
 
-    mockUpload.mockResolvedValue({ success: false, reason: 'refused', message: 'Over the limit.' });
+    mockAlert.mockClear();
+    mockUpload.mockResolvedValue({
+      success: false,
+      reason: 'refused',
+      message: 'Story limit reached for your plan (1).',
+      planLimit: true,
+    });
+    await act(async () => view.result.current.handleSendToServer());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_refused_plan');
+
+    // Any other refusal (adults-only, say) gets the reason alone: the plan hint would send the person to the wrong place.
+    mockAlert.mockClear();
+    mockUpload.mockResolvedValue({
+      success: false,
+      reason: 'refused',
+      message: 'This server has no age verification, so it has no adults-only area.',
+      planLimit: false,
+    });
     await act(async () => view.result.current.handleSendToServer());
     expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_refused');
+    expect(mockAlert).not.toHaveBeenCalledWith('error', 'send_to_server_refused_plan');
 
     mockUpload.mockResolvedValue({ success: false, reason: 'other' });
     await act(async () => view.result.current.handleSendToServer());

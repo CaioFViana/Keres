@@ -4,6 +4,7 @@ import {
   UpdateUserPasswordSchema,
   UpdateUserProfileSchema,
   UpdateUserTagSchema,
+  UserReportRequestSchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
@@ -13,8 +14,10 @@ import {
   userService,
 } from '../../services/UserService';
 import { friendshipService } from '../../services/FriendshipService';
+import { messageService } from '../../services/MessageService';
 import { storyNsfwService } from '../../services/StoryNsfwService';
 import { tierEnforcementService } from '../../services/TierEnforcementService';
+import { userDataService } from '../../services/UserDataService';
 import { AppError, isUniqueViolation } from '../../utils/errors';
 
 const userResponseSchema = t.Object({
@@ -47,7 +50,8 @@ export const userRoutes = new Elysia()
 
       const foundUser = await userService.getUserById(userId);
 
-      if (!foundUser) {
+      // Another person's account is found only while it is active: a pending one answers as a missing one.
+      if (!foundUser || (userId !== user.userId && !(await userService.isActiveUser(userId)))) {
         throw new AppError(404, 'User not found');
       }
 
@@ -97,6 +101,37 @@ export const userRoutes = new Elysia()
     },
   )
   .get(
+    '/data',
+    async ({ user }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+      return userDataService.exportForUser(user.userId);
+    },
+    {
+      response: {
+        200: t.Object({
+          exportedAt: t.String(),
+          profile: t.Nullable(userResponseSchema),
+          legalAcceptances: t.Array(t.Any()),
+          friendships: t.Array(t.Any()),
+          conversations: t.Array(t.Any()),
+          publications: t.Array(t.Any()),
+          payments: t.Any(),
+          activity: t.Any(),
+        }),
+        401: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Export your data',
+        description:
+          'Everything the server holds about the authenticated account - profile, legal acceptances, friendships, conversations, publications, payments and activity lines - for the access and portability right. Story content itself lives on the device and exports from the app.',
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .get(
     '/by-tag/:tag',
     async ({ params, user }) => {
       if (!user) {
@@ -126,6 +161,63 @@ export const userRoutes = new Elysia()
         summary: 'Resolve a user by their @tag',
         description:
           'Looks up a user by their friend-discovery tag, for adding friends without sharing a raw ID. Case, accents, a leading "@" and spaces do not matter: "@Caio Viana" finds `caio_viana`.',
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .post(
+    '/:userId/report',
+    async ({ params, body, user, set }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+      if (!params.userId || params.userId.length !== 26) {
+        throw new AppError(400, 'Invalid userId format');
+      }
+      const parsed = UserReportRequestSchema.safeParse(body);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid report');
+      }
+      await messageService.reportUser(
+        user.userId,
+        params.userId,
+        parsed.data.reason,
+        parsed.data.type,
+      );
+      set.status = 201;
+      return { ok: true };
+    },
+    {
+      params: t.Object({
+        userId: t.String({
+          minLength: 26,
+          maxLength: 26,
+        }),
+      }),
+      body: t.Object({
+        reason: t.String(),
+        type: t.Optional(
+          t.Union([
+            t.Literal('intimate'),
+            t.Literal('copyright'),
+            t.Literal('spam_abuse'),
+            t.Literal('illegal'),
+            t.Literal('other'),
+          ]),
+        ),
+      }),
+      response: {
+        201: t.Object({ ok: t.Boolean() }),
+        400: t.Object({ message: t.String() }),
+        401: t.Object({ message: t.String() }),
+        403: t.Object({ message: t.String() }),
+        404: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Report a user to the administrators',
+        description:
+          'Sends the type and reason to the administrators as a message carrying this user id. Never your own account.',
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },

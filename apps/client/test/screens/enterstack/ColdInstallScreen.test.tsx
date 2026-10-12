@@ -183,6 +183,8 @@ jest.mock('../../../src/components/common', () => {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, configure, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler, Linking } from 'react-native';
+import { CLIENT_TERMS_VERSION } from '../../../src/legal/clientTerms';
+import { CLIENT_PRIVACY_VERSION } from '../../../src/legal/privacyPolicy';
 import ColdInstallScreen from '../../../src/screens/enterstack/ColdInstallScreen';
 
 /** The step on screen, as the dots report it (1-based). */
@@ -195,13 +197,37 @@ const goToNameStep = async (view: Awaited<ReturnType<typeof render>>) => {
   await fireEvent.press(view.getByText('enabled:welcome_next'));
 };
 
+// The scroll gate needs real measures: short content in tests never reaches the end alone.
+const scrollToEnd = async (view: Awaited<ReturnType<typeof render>>, testID: string) => {
+  await fireEvent.scroll(view.getByTestId(testID), {
+    nativeEvent: {
+      contentSize: { height: 2000, width: 400 },
+      layoutMeasurement: { height: 500, width: 400 },
+      contentOffset: { y: 1600, x: 0 },
+    },
+  });
+};
+
+const acceptLegal = async (view: Awaited<ReturnType<typeof render>>) => {
+  await fireEvent.press(view.getByTestId('welcome-terms-button'));
+  await view.findByTestId('welcome-terms-modal-scroll');
+  await scrollToEnd(view, 'welcome-terms-modal-scroll');
+  await fireEvent.press(view.getByTestId('welcome-terms-modal-accept'));
+  await fireEvent.press(view.getByTestId('welcome-privacy-button'));
+  await view.findByTestId('welcome-privacy-modal-scroll');
+  await scrollToEnd(view, 'welcome-privacy-modal-scroll');
+  await fireEvent.press(view.getByTestId('welcome-privacy-modal-accept'));
+};
+
 describe('ColdInstallScreen', () => {
   // Steps off screen are hidden from accessibility on purpose; the tests still look inside them.
   beforeAll(() => configure({ defaultIncludeHiddenElements: true }));
   afterAll(() => configure({ defaultIncludeHiddenElements: false }));
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    // Acceptance lives in the real storage mock: one test's agreement must not leak into the next.
+    await AsyncStorage.clear();
     mockFlavor.current = 'native';
     mockLayout.width = 600;
     mockTheme.darkMode = false;
@@ -317,6 +343,7 @@ describe('ColdInstallScreen', () => {
     await fireEvent.press(view.getByTestId('language-en'));
     await goToNameStep(view);
     await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
+    await acceptLegal(view);
     await fireEvent.press(view.getByText('enabled:proceed'));
     await waitFor(() => expect(mockCreateClientSettings).toHaveBeenCalled());
     expect(mockCreateClientSettings).toHaveBeenCalledWith(
@@ -391,12 +418,26 @@ describe('ColdInstallScreen', () => {
     expect(mockMigrate).not.toHaveBeenCalled();
   });
 
-  it('can proceed with just a name: the language already shown counts as chosen', async () => {
+  it('holds proceed until the name is there and both documents are accepted', async () => {
     const view = await render(<ColdInstallScreen />);
     await view.findByText('welcome');
     expect(view.getByTestId('language-value').props.children).toBe('select_language:en');
     await goToNameStep(view);
     await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
+
+    // A name alone no longer suffices: terms and privacy both gate the way forward.
+    expect(view.getByText('disabled:proceed')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('welcome-terms-button'));
+    await view.findByTestId('welcome-terms-modal-scroll');
+    await scrollToEnd(view, 'welcome-terms-modal-scroll');
+    await fireEvent.press(view.getByTestId('welcome-terms-modal-accept'));
+    expect(view.getByText('disabled:proceed')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('welcome-privacy-button'));
+    await view.findByTestId('welcome-privacy-modal-scroll');
+    await scrollToEnd(view, 'welcome-privacy-modal-scroll');
+    await fireEvent.press(view.getByTestId('welcome-privacy-modal-accept'));
     await fireEvent.press(view.getByText('enabled:proceed'));
     await waitFor(() => expect(mockCreateClientSettings).toHaveBeenCalled());
     expect(mockCreateClientSettings).toHaveBeenCalledWith(
@@ -416,7 +457,8 @@ describe('ColdInstallScreen', () => {
     await fireEvent.changeText(view.getByPlaceholderText('enter_username'), '   ');
     expect(view.getByText('disabled:proceed')).toBeTruthy();
     await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bo');
-    expect(view.getByText('enabled:proceed')).toBeTruthy();
+    // The name is there, but the documents are not: forward stays shut.
+    expect(view.getByText('disabled:proceed')).toBeTruthy();
   });
 
   it('provisions the install and opens story selection', async () => {
@@ -425,6 +467,7 @@ describe('ColdInstallScreen', () => {
     await fireEvent.press(view.getByTestId('language-en'));
     await goToNameStep(view);
     await fireEvent.changeText(view.getByPlaceholderText('enter_username'), '  Bob ');
+    await acceptLegal(view);
     await fireEvent.press(view.getByText('enabled:proceed'));
     await waitFor(() => expect(mockMigrate).toHaveBeenCalledWith(mockSqliteDb));
     expect(mockSetAuthDb).toHaveBeenCalledWith(mockDrizzle);
@@ -478,11 +521,41 @@ describe('ColdInstallScreen', () => {
     expect(view.getByText('welcome_terms_read')).toBeTruthy();
     await fireEvent.press(view.getByTestId('welcome-terms-button'));
     await view.findByTestId('welcome-terms-modal-scroll');
+    await scrollToEnd(view, 'welcome-terms-modal-scroll');
     await fireEvent.press(view.getByTestId('welcome-terms-modal-accept'));
 
     await waitFor(() =>
-      expect(setItem).toHaveBeenCalledWith('@keres/client-terms/accepted-version', '1'),
+      expect(setItem).toHaveBeenCalledWith(
+        '@keres/client-terms/accepted',
+        expect.stringContaining(`"version":${CLIENT_TERMS_VERSION}`),
+      ),
     );
+    const stored = JSON.parse(
+      setItem.mock.calls.find((call) => call[0] === '@keres/client-terms/accepted')?.[1] as string,
+    );
+    expect(stored).toMatchObject({ version: CLIENT_TERMS_VERSION, method: 'onboarding' });
+    expect(typeof stored.acceptedAt).toBe('string');
     expect(view.getByText('welcome_terms_accepted')).toBeTruthy();
+  });
+
+  it('reads the privacy policy from the last step and records the agreement', async () => {
+    const setItem = jest.spyOn(AsyncStorage, 'setItem');
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome');
+    await goToNameStep(view);
+
+    expect(view.getByText('welcome_privacy_read')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('welcome-privacy-button'));
+    await view.findByTestId('welcome-privacy-modal-scroll');
+    await scrollToEnd(view, 'welcome-privacy-modal-scroll');
+    await fireEvent.press(view.getByTestId('welcome-privacy-modal-accept'));
+
+    await waitFor(() =>
+      expect(setItem).toHaveBeenCalledWith(
+        '@keres/client-privacy/accepted',
+        expect.stringContaining(`"version":${CLIENT_PRIVACY_VERSION}`),
+      ),
+    );
+    expect(view.getByText('welcome_privacy_accepted')).toBeTruthy();
   });
 });

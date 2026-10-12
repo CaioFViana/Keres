@@ -3,6 +3,11 @@ import { db } from '../db';
 import { stories, storyInvitations, storyPermissions, users } from '../db/schema';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
+import {
+  effectiveAdultVerified,
+  isAgeVerificationRequired,
+} from './ageVerification/ageVerificationMode';
+import { registrationSettingsService } from './RegistrationSettingsService';
 
 export type NsfwRevocationReason =
   | 'nsfw-story'
@@ -19,12 +24,34 @@ export type NsfwRevocationReason =
  * invitations) are blocked and expelled.
  */
 export class StoryNsfwService {
+  /** Adults-only verified right now: the stored flag, counted only where verification is `required`. */
   async isAdultVerified(userId: string): Promise<boolean> {
     const row = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { isAdultVerified: true },
     });
-    return row?.isAdultVerified === true;
+    return effectiveAdultVerified(row?.isAdultVerified === true);
+  }
+
+  /**
+   * Why this account may not flag a story adults-only right now, or `null` when it may: the
+   * server has to verify its adults at all, allow mature content, and the account has to be age-verified. All are
+   * read live, never trusted from the client. Callers turn the reason into their own error shape
+   * (a sync conflict, an HTTP refusal) - the policy itself stays here.
+   */
+  async nsfwFlagRefusal(userId: string): Promise<string | null> {
+    // Without verification there is no adults-only area at all, whatever the stored setting says.
+    if (!isAgeVerificationRequired()) {
+      return 'This server has no age verification, so it has no adults-only area.';
+    }
+    const settings = await registrationSettingsService.getOrCreate();
+    if (!settings.allowNsfw) {
+      return 'This server does not allow adults-only (+18) content.';
+    }
+    if (!(await this.isAdultVerified(userId))) {
+      return 'Only age-verified (+18) users can flag stories adults-only.';
+    }
+    return null;
   }
 
   /**
@@ -71,7 +98,8 @@ export class StoryNsfwService {
         and(
           eq(storyPermissions.storyId, storyId),
           eq(storyPermissions.isDeleted, false),
-          eq(users.isAdultVerified, false),
+          // Where verification is off nobody is verified: every collaborator is unverified, whatever the column says.
+          ...(isAgeVerificationRequired() ? [eq(users.isAdultVerified, false)] : []),
         ),
       );
     return this.expel(story.id, story.title, story.userId, live, 'nsfw-story');

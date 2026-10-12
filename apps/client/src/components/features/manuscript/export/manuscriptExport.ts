@@ -13,7 +13,7 @@ import {
   type ExportDeliveryResult,
   type ExportFileLanguage,
 } from '../../../../utils/storyTransfer';
-import { pdfFontMatrices } from './pdfFontAssets';
+import { pdfFontMatrices } from '../../../../utils/pdfFontAssets';
 
 export type ManuscriptExportFormat = ManuscriptFormat;
 

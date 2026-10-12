@@ -12,6 +12,11 @@ import regularAsset from '@/assets/fonts/NotoSerif-Variable.ttf';
  * lazily and only for PDF exports - every other format never touches them -
  * and cached for the session. A null return means "fall back to the WinAnsi
  * Times path": the export must never break because a font failed to load.
+ *
+ * Lives in utils, not components or services: the compile service reads these
+ * without mounting anything (services must stay unaware that a UI exists), and
+ * the drawing layer may only fetch through the allowlisted bootstrap (so the
+ * export component reads them from here too).
  */
 let cached: PdfFontMatrices | null = null;
 

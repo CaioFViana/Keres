@@ -4,6 +4,8 @@ import type { NavigationProp } from '@react-navigation/native';
 import type { RefObject } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { syncEngine } from '../../services/sync/appSyncEngine';
+import { manualSyncRefusalText } from '../../services/sync/manualSyncMessage';
 import type { PackService } from '../../services/storymanagement/PackService';
 import type { StoryService } from '../../services/storymanagement/StoryService';
 import { AppAlert } from '../../utils/AppAlert';
@@ -76,7 +78,13 @@ export function useStoryFormActions({
             extraNotes: identity.extraNotes,
             ...(canManageStoryPolicy ? { favoriteBehavior: identity.favoriteBehavior } : {}),
           });
-          AppAlert.alert(t('success'), t('story_updated_successfully'));
+          // Success only once the server has taken the save: a refusal is said in the alert, not hidden behind it.
+          const refusals = manualSyncRefusalText(
+            await syncEngine.syncStoryNow(state.initialStoryId),
+            t,
+          );
+          if (refusals) AppAlert.alert(t('error'), refusals);
+          else AppAlert.alert(t('success'), t('story_updated_successfully'));
         } else {
           const storyData: Omit<
             Story,

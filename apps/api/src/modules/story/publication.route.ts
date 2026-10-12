@@ -3,6 +3,7 @@ import {
   ManuscriptFormatSchema,
   PAGE_FORMATS,
   PAGE_LAYOUTS,
+  PublicationReportRequestSchema,
   SONG_LANGUAGES,
   SONG_PLACEMENTS,
   SONG_REPEATS,
@@ -13,6 +14,7 @@ import {
 } from '@keres/shared';
 import { z } from 'zod';
 import type { JWTPayload } from '../../index';
+import { messageService } from '../../services/MessageService';
 import {
   type PublishUploadedArtifacts,
   type PublishUploadedFile,
@@ -329,6 +331,46 @@ export const publicationRoutes = new Elysia()
       detail: {
         summary: 'List the published versions of a story',
         description: 'Owner only. Includes the current showcase visibility and label style.',
+        tags: ['Showcase'],
+      },
+    },
+  )
+  .post(
+    '/:storyId/publications/:publicationId/report',
+    async ({ params, body, userId, set }) => {
+      const parsed = PublicationReportRequestSchema.safeParse(body);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid report');
+      }
+      await messageService.reportPublication(
+        userId,
+        params.storyId,
+        params.publicationId,
+        parsed.data.reason,
+        parsed.data.type,
+      );
+      set.status = 201;
+      return { ok: true };
+    },
+    {
+      params: t.Object({ storyId: t.String(), publicationId: t.String() }),
+      body: t.Object({
+        reason: t.String(),
+        type: t.Optional(
+          t.Union([
+            t.Literal('intimate'),
+            t.Literal('copyright'),
+            t.Literal('spam_abuse'),
+            t.Literal('illegal'),
+            t.Literal('other'),
+          ]),
+        ),
+      }),
+      response: { 201: t.Object({ ok: t.Boolean() }) },
+      detail: {
+        summary: 'Report a published version to the administrators',
+        description:
+          'Sends the type and reason to the administrators as a message carrying this publication id. Only published versions of live stories.',
         tags: ['Showcase'],
       },
     },

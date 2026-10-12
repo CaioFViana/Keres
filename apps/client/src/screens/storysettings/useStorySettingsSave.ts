@@ -4,6 +4,8 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../db';
 import { useAsyncOperation } from '../../hooks/useAsyncOperation';
+import { syncEngine } from '../../services/sync/appSyncEngine';
+import { manualSyncRefusalText } from '../../services/sync/manualSyncMessage';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -38,7 +40,10 @@ export function useStorySettingsSave() {
         try {
           await storyService.updateStory(userId, storyId, patch);
           setSelectedStory({ ...selectedStory, ...patch });
-          AppAlert.alert(t('success'), t('story_updated_successfully'));
+          // Success only once the server has taken the save: a refusal is said in the alert, not hidden behind it.
+          const refusals = manualSyncRefusalText(await syncEngine.syncStoryNow(storyId), t);
+          if (refusals) AppAlert.alert(t('error'), refusals);
+          else AppAlert.alert(t('success'), t('story_updated_successfully'));
           navigation.goBack();
         } catch (err) {
           console.error('Failed to save story settings:', err);

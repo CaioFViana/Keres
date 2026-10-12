@@ -91,6 +91,7 @@
       "account_tag_changed": "Tag changed",
       "account_profile_updated": "Profile updated",
       "account_password_changed": "Password changed",
+      "account_verification_revoked": "Age verification revoked",
       "account_recovery_codes_regenerated": "Recovery codes renewed",
       "friend_request_sent": "Friend request sent",
       "friend_request_accepted": "Friend request accepted",
@@ -272,6 +273,15 @@
     "searchPlaceholder": "Text, address, user or tag…",
     "searchAriaLabel": "Search messages",
     "filterSource": "Origin",
+    "filterReportType": "Report type",
+    "reportType": {
+      "all": "All types",
+      "intimate": "Non-consensual intimate",
+      "copyright": "Copyright",
+      "spam_abuse": "Spam or abuse",
+      "illegal": "Illegal",
+      "other": "Other"
+    },
     "filterRead": "Status",
     "filterArchived": "Archive",
     "sortBy": "Sort by",
@@ -483,6 +493,15 @@
     "registration": "Registration",
     "autoManage": "Auto-manage open/closed based on max users",
     "registrationOpen": "Registration open",
+    "allowNsfw": "Allow adults-only (+18) content",
+    "allowNsfwHint": "Verified adults may flag and publish +18 stories. Off keeps the server free of mature content.",
+    "allowNsfwVerifiedOnly": "Adults-only stories are open only to verified accounts.",
+    "allowNsfwNoVerification": "This server has no age verification, so it has no adults-only area. Set AGE_VERIFICATION_MODE=required and run an age-verification service to enable it.",
+    "ageVerificationLine": "Age verification: {{mode}}",
+    "ageVerificationModes": {
+      "required": "required",
+      "disabled": "disabled"
+    },
     "maxUsers": "Max users",
     "maxUsersHint": "(blank = no cap)",
     "defaultTier": "Default tier for new signups",
@@ -672,8 +691,16 @@
       "done": "Gave {{months}} month(s) of {{plan}} to {{username}}. It runs until {{date}}.",
       "failed": "Could not give the plan."
     },
-    "adultVerified": "Age-verified adult (+18)",
-    "adultVerifiedHint": "Gates NSFW stories: unverified members cannot be added to them, and lose access to the ones they are on."
+    "verificationTitle": "Age verification",
+    "verifiedWithMethod": "Verified 18+ ({{method}}, {{date}})",
+    "verifiedOn": "Verified 18+ on {{date}}",
+    "verifiedPlain": "Verified 18+",
+    "notVerified": "Not verified",
+    "verificationSource": "Verification comes only from the age-verification service: an administrator cannot mark an account verified, only revoke a verification.",
+    "revoke": "Revoke verification",
+    "revoking": "Revoking...",
+    "confirmRevoke": "Revoke {{username}}'s 18+ verification? They lose access to every adults-only story at once.",
+    "revokeFailed": "Could not revoke the verification."
   },
   "users": {
     "title": "Users",
@@ -695,6 +722,8 @@
     "verifiedOnly": "Verified +18 only",
     "columnVerified": "+18",
     "verifiedShort": "+18",
-    "verifiedTitle": "Age-verified adult (+18)"
+    "verifiedTitle": "Age-verified adult (+18)",
+    "standingPending": "Pending verification",
+    "standingRejected": "Verification refused"
   }
 }

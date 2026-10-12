@@ -18,8 +18,8 @@ const PER_RUN = 100;
  * Lets go of what points at a person once their account has been closed long enough. The ledger is the record of
  * what the server received, so it keeps its lines - what was paid, for which plan, when - but loses the person and
  * the provider's own reference; the subscription, the attempts and the store claims, which exist only to serve the
- * person, are deleted. Off unless `PAYMENT_RETENTION_DAYS` is set, and never touches an account that still has a
- * subscription the provider may charge.
+ * person, are deleted. Runs on `PAYMENT_RETENTION_DAYS` (default 1825 days), and never touches an account that
+ * still has a subscription the provider may charge.
  */
 export class PaymentRetentionService {
   async run(now = new Date(), days = env.PAYMENT_RETENTION_DAYS): Promise<{ accounts: number }> {

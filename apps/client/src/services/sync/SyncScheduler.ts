@@ -159,6 +159,24 @@ export class SyncScheduler {
     });
   }
 
+  /**
+   * Runs a cycle now for a caller that waits on it (a save the person just made by hand). It joins the cycle in
+   * flight when there is one: the follow-up it queues starts after the current cycle, so it carries the change
+   * the caller made. Resolves when the cycle covering the call has finished, or after `timeoutMs`.
+   */
+  public async runAndWait(timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS): Promise<void> {
+    const readiness = this.options.readiness();
+    if (this.suspended || !readiness.storyId || !readiness.hasDatabase || !readiness.hasServer) {
+      return;
+    }
+    if (!this.inFlight) {
+      await this.runExclusive();
+      return;
+    }
+    this.queued = true;
+    await this.waitForIdle(timeoutMs);
+  }
+
   public stop(): void {
     this.suspended = true;
     this.running = false;

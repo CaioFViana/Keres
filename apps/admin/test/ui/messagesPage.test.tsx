@@ -96,6 +96,35 @@ const buttonNamed = (root: Element, text: string) =>
 const lastQuery = () => mocks.list.mock.calls.at(-1)![0];
 
 describe('messages page', () => {
+  it('names the type and the target of a report in the list, not the raw envelope', async () => {
+    mocks.list.mockResolvedValue(
+      page([
+        userMessage({
+          id: 'r1',
+          body: '[REPORT type:illegal story:story-9] Looks illegal',
+          isRead: false,
+        }),
+        userMessage({
+          id: 'r2',
+          body: '[REPORT type:spam_abuse user:user-7] Spam again',
+          isRead: false,
+        }),
+      ]),
+    );
+    const view = await renderPage();
+    await flush();
+
+    const rows = view.container.querySelectorAll('tbody tr');
+    expect(rows[0].textContent).toContain('Looks illegal');
+    expect(rows[0].textContent).not.toContain('[REPORT');
+    const badges = Array.from(view.container.querySelectorAll('.status-badge.accent')).map(
+      (badge) => badge.textContent ?? '',
+    );
+    expect(badges.some((text) => /illegal/i.test(text))).toBe(true);
+    expect(badges.some((text) => /spam/i.test(text))).toBe(true);
+    await view.unmount();
+  });
+
   it('lists messages with their origin and sender, flagging the unread ones', async () => {
     const view = await renderPage();
     await flush();

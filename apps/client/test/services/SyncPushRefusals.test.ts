@@ -181,3 +181,75 @@ describe('an operation the server would refuse as malformed', () => {
     );
   });
 });
+
+describe('what a push reports to a save made by hand', () => {
+  it('lists the refusals the server gave, by reason, for the message to name', async () => {
+    await seedChapter();
+    const rename = operation('rename', 'update', {
+      payload: JSON.stringify({ name: 'Renamed', version: 2 }),
+    });
+    await database.db.insert(schema.operationLogs).values(rename);
+    post.mockResolvedValue({
+      data: {
+        applied: [],
+        conflicts: [
+          {
+            clientOperationId: 'rename',
+            entity: 'Chapter',
+            entityId: CHAPTER_ID,
+            type: 'update',
+            reason: 'unauthorized',
+            message: 'Only the owner may change this.',
+          },
+        ],
+      },
+    });
+
+    await push.pushPendingOperations();
+
+    expect(push.lastOutcome.conflicts).toBe(1);
+    expect(push.lastOutcome.refusals).toEqual([
+      expect.objectContaining({ reason: 'unauthorized', entity: 'Chapter' }),
+    ]);
+  });
+
+  it('counts a change it could not send as a conflict, with no refusal to name', async () => {
+    await database.db.insert(schema.operationLogs).values(
+      operation('odd', 'update', {
+        entityType: 'NotAnEntity',
+        entityId: 'odd-1',
+        payload: JSON.stringify({ name: 'x', version: 2 }),
+      }),
+    );
+
+    await push.pushPendingOperations();
+
+    expect(push.lastOutcome).toEqual({ conflicts: 1, refusals: [] });
+  });
+
+  it('reports nothing refused when the push is accepted', async () => {
+    await seedChapter();
+    const rename = operation('rename', 'update', {
+      payload: JSON.stringify({ name: 'Renamed', version: 2 }),
+    });
+    await database.db.insert(schema.operationLogs).values(rename);
+    post.mockResolvedValue({
+      data: {
+        applied: [
+          {
+            clientOperationId: 'rename',
+            operationVersion: 3,
+            entity: 'Chapter',
+            entityId: CHAPTER_ID,
+            entityVersion: 3,
+          },
+        ],
+        conflicts: [],
+      },
+    });
+
+    await push.pushPendingOperations();
+
+    expect(push.lastOutcome).toEqual({ conflicts: 0, refusals: [] });
+  });
+});

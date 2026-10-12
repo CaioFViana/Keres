@@ -91,6 +91,7 @@
       "account_tag_changed": "Tag alterada",
       "account_profile_updated": "Perfil atualizado",
       "account_password_changed": "Senha alterada",
+      "account_verification_revoked": "Verificação de idade revogada",
       "account_recovery_codes_regenerated": "Códigos de recuperação renovados",
       "friend_request_sent": "Pedido de amizade enviado",
       "friend_request_accepted": "Pedido de amizade aceito",
@@ -272,6 +273,15 @@
     "searchPlaceholder": "Texto, endereço, usuário ou tag…",
     "searchAriaLabel": "Buscar mensagens",
     "filterSource": "Origem",
+    "filterReportType": "Tipo de denúncia",
+    "reportType": {
+      "all": "Todos os tipos",
+      "intimate": "Íntimo não consentido",
+      "copyright": "Direitos autorais",
+      "spam_abuse": "Spam ou abuso",
+      "illegal": "Ilegal",
+      "other": "Outro"
+    },
     "filterRead": "Estado",
     "filterArchived": "Arquivo",
     "sortBy": "Ordenar por",
@@ -483,6 +493,15 @@
     "registration": "Cadastro",
     "autoManage": "Abrir/fechar automaticamente conforme o máximo de usuários",
     "registrationOpen": "Cadastro aberto",
+    "allowNsfw": "Permitir conteúdo adulto (+18)",
+    "allowNsfwHint": "Adultos verificados podem marcar e publicar histórias +18. Desligado mantém o servidor livre de conteúdo maduro.",
+    "allowNsfwVerifiedOnly": "Histórias para adultos ficam abertas apenas a contas verificadas.",
+    "allowNsfwNoVerification": "Este servidor não tem verificação de idade, então não tem área para adultos. Defina AGE_VERIFICATION_MODE=required e rode um serviço de verificação de idade para ativá-la.",
+    "ageVerificationLine": "Verificação de idade: {{mode}}",
+    "ageVerificationModes": {
+      "required": "obrigatória",
+      "disabled": "desativada"
+    },
     "maxUsers": "Máximo de usuários",
     "maxUsersHint": "(em branco = sem teto)",
     "defaultTier": "Plano padrão para novos cadastros",
@@ -672,8 +691,16 @@
       "done": "Dei {{months}} mês(es) do {{plan}} para {{username}}. Vale até {{date}}.",
       "failed": "Não foi possível dar o plano."
     },
-    "adultVerified": "Adulto verificado (+18)",
-    "adultVerifiedHint": "Controla histórias NSFW: não verificados não podem ser adicionados e perdem acesso às que participam."
+    "verificationTitle": "Verificação de idade",
+    "verifiedWithMethod": "Verificado como +18 ({{method}}, {{date}})",
+    "verifiedOn": "Verificado como +18 em {{date}}",
+    "verifiedPlain": "Verificado como +18",
+    "notVerified": "Não verificado",
+    "verificationSource": "A verificação vem apenas do serviço de verificação de idade: um administrador não pode marcar uma conta como verificada, só revogar uma verificação.",
+    "revoke": "Revogar verificação",
+    "revoking": "Revogando...",
+    "confirmRevoke": "Revogar a verificação +18 de {{username}}? A conta perde o acesso a todas as histórias para adultos de uma vez.",
+    "revokeFailed": "Não foi possível revogar a verificação."
   },
   "users": {
     "title": "Usuários",
@@ -695,6 +722,8 @@
     "verifiedOnly": "Só verificados +18",
     "columnVerified": "+18",
     "verifiedShort": "+18",
-    "verifiedTitle": "Adulto verificado (+18)"
+    "verifiedTitle": "Adulto verificado (+18)",
+    "standingPending": "Verificação pendente",
+    "standingRejected": "Verificação recusada"
   }
 }

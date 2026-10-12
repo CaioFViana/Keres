@@ -2,6 +2,7 @@
 export * from './schema/enums';
 
 // Tables
+export * from './schema/tables/ageVerifications';
 export * from './schema/tables/apiLogs';
 export * from './schema/tables/attemptLimits';
 export * from './schema/tables/auditEvents';
@@ -62,4 +63,5 @@ export * from './schema/tables/tags';
 export * from './schema/tables/tiers';
 export * from './schema/tables/users';
 export * from './schema/tables/userRecoveryCodes';
+export * from './schema/tables/termsAcceptances';
 export * from './schema/tables/worldRules';

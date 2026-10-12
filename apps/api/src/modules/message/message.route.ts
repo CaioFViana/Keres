@@ -1,4 +1,8 @@
-import { MessagePageQuerySchema, MessageSendSchema } from '@keres/shared';
+import {
+  MessagePageQuerySchema,
+  MessageReportRequestSchema,
+  MessageSendSchema,
+} from '@keres/shared';
 import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
@@ -153,5 +157,44 @@ export const messageRoutes = new Elysia()
       params: t.Object({ messageId: t.String() }),
       response: done,
       detail: { summary: 'Delete one message from this side only', tags: ['Messages'] },
+    },
+  )
+  .post(
+    '/:messageId/report',
+    async ({ userId, params, body, set }) => {
+      const parsed = MessageReportRequestSchema.safeParse(body);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid report');
+      }
+      await messageService.reportMessage(
+        userId,
+        params.messageId,
+        parsed.data.reason,
+        parsed.data.type,
+      );
+      set.status = 201;
+      return { ok: true };
+    },
+    {
+      params: t.Object({ messageId: t.String() }),
+      body: t.Object({
+        reason: t.String(),
+        type: t.Optional(
+          t.Union([
+            t.Literal('intimate'),
+            t.Literal('copyright'),
+            t.Literal('spam_abuse'),
+            t.Literal('illegal'),
+            t.Literal('other'),
+          ]),
+        ),
+      }),
+      response: { 201: done, 400: t.Object({ message: t.String() }) },
+      detail: {
+        summary: 'Report a message to the administrators',
+        description:
+          'Only a message sent or received by the reporter; anything else answers 404, so ids can neither be probed nor other conversations reported.',
+        tags: ['Messages'],
+      },
     },
   );

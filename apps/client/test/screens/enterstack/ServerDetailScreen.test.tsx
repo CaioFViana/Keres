@@ -20,6 +20,8 @@ const mockGetOwnProfile = jest.fn();
 const mockDeleteOwnAccount = jest.fn();
 const mockClearAuthForServer = jest.fn();
 const mockApiGet = jest.fn();
+const mockAuthedGet = jest.fn();
+const mockAuthedPost = jest.fn();
 const mockPaymentOverview = jest.fn();
 const mockAccountPlan = jest.fn();
 const mockColors = {
@@ -85,6 +87,13 @@ jest.mock('../../../src/hooks/usePaymentOverview', () => ({
 jest.mock('../../../src/hooks/useAccountPlan', () => ({
   useAccountPlan: (...args: unknown[]) => mockAccountPlan(...args),
 }));
+const mockFetchAgeInfo = jest.fn();
+const mockFetchVerificationStatus = jest.fn();
+jest.mock('../../../src/services/AgeVerificationApiService', () => ({
+  __esModule: true,
+  fetchAgeVerificationInfo: (...args: unknown[]) => mockFetchAgeInfo(...args),
+  fetchVerificationStatus: (...args: unknown[]) => mockFetchVerificationStatus(...args),
+}));
 jest.mock('../../../src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -113,6 +122,12 @@ jest.mock('../../../src/services/apiClient', () => ({
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,
   isOfflineError: (err: unknown) => !!(err as { isOffline?: boolean } | null)?.isOffline,
+  createKeresAxiosInstance: () => ({
+    get: (...args: unknown[]) => mockAuthedGet(...args),
+    post: (...args: unknown[]) => mockAuthedPost(...args),
+    setTokenProvider: jest.fn(),
+    setActiveServer: jest.fn(),
+  }),
 }));
 
 jest.mock('../../../src/services/UserApiService', () => ({
@@ -163,8 +178,15 @@ describe('ServerDetailScreen', () => {
     mockRoute.params = { serverId: 'srv-1' };
     mockPaymentOverview.mockReturnValue({ overview: null, loading: false, reload: jest.fn() });
     mockAccountPlan.mockReturnValue({ plan: null, reload: jest.fn() });
+    // A server that answers without saying anything about age, unless a test says so.
+    mockFetchAgeInfo.mockResolvedValue(null);
+    // An account that is through its age check, unless a test says otherwise.
+    mockFetchVerificationStatus.mockResolvedValue({ status: 'not_required' });
     mockGetAllServers.mockResolvedValue([server, { ...server, id: 'srv-2', name: 'Other' }]);
     mockApiGet.mockResolvedValue({ status: 200, data: { version: '1.2.3' } });
+    // A server predating the legal routes: no status, so no re-agreement is ever asked.
+    mockAuthedGet.mockResolvedValue({ status: 404, data: null });
+    mockAuthedPost.mockResolvedValue({ status: 200, data: null });
     mockGetOwnedStories.mockResolvedValue([]);
     mockDeleteServer.mockResolvedValue(undefined);
     mockUpdateServer.mockResolvedValue(undefined);
@@ -260,6 +282,154 @@ describe('ServerDetailScreen', () => {
     await view.findByText('Main');
 
     expect(view.queryByTestId('server-action-terms')).toBeNull();
+  });
+
+  it('reads the agreed privacy copy from the local row, offline', async () => {
+    mockGetAllServers.mockResolvedValue([
+      {
+        ...server,
+        privacyText: 'Privacy\nWe keep little.',
+        privacyVersion: '1',
+        privacyAcceptedAt: new Date('2026-10-01T10:00:00.000Z'),
+      },
+    ]);
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-privacy'));
+    await view.findByTestId('server-privacy-modal-scroll');
+    expect(mockApiGet).toHaveBeenCalledTimes(1);
+  });
+
+  it("titles the privacy copy's header as privacy, not as terms, with its own version", async () => {
+    mockGetAllServers.mockResolvedValue([
+      {
+        ...server,
+        privacyText: 'Privacy\nWe keep little.',
+        privacyVersion: '1',
+        privacyAcceptedAt: new Date('2026-10-01T10:00:00.000Z'),
+      },
+    ]);
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-privacy'));
+    await view.findByTestId('server-privacy-modal-scroll');
+
+    expect(view.getByText(/^server_privacy_version:\{"version":"1"/)).toBeTruthy();
+    expect(view.queryByText(/^server_terms_version:/)).toBeNull();
+  });
+
+  it('hides the privacy row when no copy was ever agreed to', async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    expect(view.queryByTestId('server-action-privacy')).toBeNull();
+    expect(view.queryByTestId('server-action-legal-update')).toBeNull();
+  });
+
+  describe('legal updates', () => {
+    // What the account agreed to, as the server reports it: accepting moves it forward,
+    // the way the real route would.
+    let acceptedTos = 1;
+    const freshSections = [{ heading: 'Rules', paragraphs: ['New rules.'] }];
+
+    beforeEach(() => {
+      acceptedTos = 1;
+      mockAuthedGet.mockImplementation(async () => ({
+        status: 200,
+        data: {
+          tos: { accepted: acceptedTos, current: 2 },
+          privacy: { accepted: 1, current: 1 },
+        },
+      }));
+      mockAuthedPost.mockImplementation(async (_url: unknown, body: unknown) => {
+        if ((body as { kind?: string }).kind === 'tos') acceptedTos = 2;
+        return {
+          status: 200,
+          data: {
+            tos: { accepted: acceptedTos, current: 2 },
+            privacy: { accepted: 1, current: 1 },
+          },
+        };
+      });
+      mockApiGet.mockImplementation(async (url: unknown) =>
+        String(url).endsWith('/keres-tos')
+          ? {
+              status: 200,
+              data: { version: 2, updatedAt: '2026-10-11', en: freshSections },
+            }
+          : { status: 200, data: { version: '1.2.3' } },
+      );
+      mockGetAllServers.mockResolvedValue([
+        {
+          ...server,
+          tosText: 'Rules\nOld.',
+          tosVersion: '1',
+          tosAcceptedAt: new Date('2026-10-01T10:00:00.000Z'),
+        },
+      ]);
+    });
+
+    it('asks to agree when the server terms moved on, and saves the new copy', async () => {
+      const view = await render(<ServerDetailScreen />);
+      await view.findByTestId('server-action-legal-update');
+
+      await fireEvent.press(view.getByTestId('server-action-legal-update'));
+      await view.findByTestId('server-legal-update-modal-scroll');
+      // Agreement is gated on reading to the end, as at registration.
+      await fireEvent.press(view.getByTestId('server-legal-update-modal-accept'));
+      expect(mockAuthedPost).not.toHaveBeenCalled();
+
+      await fireEvent(view.getByTestId('server-legal-update-modal-scroll'), 'onScroll', {
+        nativeEvent: {
+          contentSize: { height: 1000 },
+          layoutMeasurement: { height: 200 },
+          contentOffset: { y: 800 },
+        },
+      });
+      await fireEvent.press(view.getByTestId('server-legal-update-modal-accept'));
+
+      await waitFor(() =>
+        expect(mockAuthedPost).toHaveBeenCalledWith(
+          '/auth/terms-accept',
+          { kind: 'tos' },
+          expect.anything(),
+        ),
+      );
+      expect(mockUpdateServer).toHaveBeenCalledWith(
+        'srv-1',
+        expect.objectContaining({
+          tosText: 'Rules\nNew rules.',
+          tosVersion: '2',
+          tosAcceptedAt: expect.any(Date),
+        }),
+      );
+      await waitFor(() => expect(view.queryByTestId('server-action-legal-update')).toBeNull());
+    });
+
+    it('says so when agreement cannot be recorded', async () => {
+      mockAuthedPost.mockResolvedValue({ status: 500, data: null });
+      const view = await render(<ServerDetailScreen />);
+      await view.findByTestId('server-action-legal-update');
+
+      await fireEvent.press(view.getByTestId('server-action-legal-update'));
+      await view.findByTestId('server-legal-update-modal-scroll');
+      await fireEvent(view.getByTestId('server-legal-update-modal-scroll'), 'onScroll', {
+        nativeEvent: {
+          contentSize: { height: 1000 },
+          layoutMeasurement: { height: 200 },
+          contentOffset: { y: 800 },
+        },
+      });
+      await fireEvent.press(view.getByTestId('server-legal-update-modal-accept'));
+
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'server_legal_accept_failed'),
+      );
+      expect(mockUpdateServer).not.toHaveBeenCalled();
+      expect(view.getByTestId('server-action-legal-update')).toBeTruthy();
+    });
   });
 
   it('deletes the account with the current password, then forgets its tokens', async () => {
@@ -628,6 +798,88 @@ describe('ServerDetailScreen', () => {
       const view = await render(<ServerDetailScreen />);
 
       await view.findByText('failed_to_load_servers');
+    });
+  });
+
+  describe('age verification line', () => {
+    it('says a server that requires verification requires it for new accounts', async () => {
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'required', available: true });
+      const view = await render(<ServerDetailScreen />);
+
+      expect(await view.findByText('age_verification_line_required')).toBeTruthy();
+      expect(view.queryByText('age_verification_line_disabled')).toBeNull();
+    });
+
+    it('says a server without verification has none, so it never looks verified', async () => {
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'disabled', available: false });
+      const view = await render(<ServerDetailScreen />);
+
+      expect(await view.findByText('age_verification_line_disabled')).toBeTruthy();
+      expect(view.queryByText('age_verification_line_required')).toBeNull();
+    });
+
+    it('says nothing about age when the server does not say', async () => {
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+      await waitFor(() => expect(mockFetchAgeInfo).toHaveBeenCalledWith('https://a.example'));
+
+      expect(view.queryByTestId('server-age-verification')).toBeNull();
+    });
+
+    it('does not ask an offline server about its age', async () => {
+      mockApiGet.mockRejectedValue(new Error('down'));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('server_status_offline');
+
+      expect(mockFetchAgeInfo).not.toHaveBeenCalled();
+      expect(view.queryByTestId('server-age-verification')).toBeNull();
+    });
+  });
+  describe('finishing the age verification', () => {
+    const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+
+    it.each(['pending', 'rejected', 'expired'])(
+      'offers a way to finish the age check when the account is %s, and opens it',
+      async (status) => {
+        mockFetchVerificationStatus.mockResolvedValue({ status });
+        const view = await render(<ServerDetailScreen />);
+
+        const card = await view.findByTestId('server-action-verification');
+        await fireEvent.press(card);
+
+        expect(mockNavigate).toHaveBeenCalledWith('ServerVerification', { serverId: 'srv-1' });
+      },
+    );
+
+    it.each(['approved', 'not_required'])(
+      'offers nothing when the account is %s',
+      async (status) => {
+        mockFetchVerificationStatus.mockResolvedValue({ status });
+        const view = await render(<ServerDetailScreen />);
+        await waitFor(() => expect(mockFetchVerificationStatus).toHaveBeenCalled());
+        await settle();
+
+        expect(view.queryByTestId('server-action-verification')).toBeNull();
+      },
+    );
+
+    it('does not ask an offline server, and offers nothing', async () => {
+      mockApiGet.mockRejectedValue(new Error('down'));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('server_status_offline');
+      await settle();
+
+      expect(mockFetchVerificationStatus).not.toHaveBeenCalled();
+      expect(view.queryByTestId('server-action-verification')).toBeNull();
+    });
+
+    it('offers nothing when the server cannot say (an older server has no such route)', async () => {
+      mockFetchVerificationStatus.mockRejectedValue(new Error('not found'));
+      const view = await render(<ServerDetailScreen />);
+      await waitFor(() => expect(mockFetchVerificationStatus).toHaveBeenCalled());
+      await settle();
+
+      expect(view.queryByTestId('server-action-verification')).toBeNull();
     });
   });
 });

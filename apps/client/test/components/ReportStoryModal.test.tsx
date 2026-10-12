@@ -74,7 +74,7 @@ describe('ReportStoryModal', () => {
       fireEvent.press(view.getByTestId('report-send'));
     });
 
-    expect(onSend).toHaveBeenCalledWith('spam links');
+    expect(onSend).toHaveBeenCalledWith('spam links', 'other');
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -95,7 +95,24 @@ describe('ReportStoryModal', () => {
     await act(async () => {
       fireEvent.press(view.getByTestId('report-send'));
     });
-    expect(onSend).toHaveBeenCalledWith('rude');
+    expect(onSend).toHaveBeenCalledWith('rude', 'other');
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('sends the picked report type', async () => {
+    const onSend = jest.fn().mockResolvedValue(true);
+    const onClose = jest.fn();
+    const view = await render(
+      <ReportStoryModal {...baseProps} onSend={onSend} onClose={onClose} />,
+    );
+
+    await fireEvent.changeText(view.getByTestId('report-reason-input'), 'my chapter');
+    await fireEvent.press(view.getByTestId('report-type-copyright'));
+    await act(async () => {
+      fireEvent.press(view.getByTestId('report-send'));
+    });
+
+    expect(onSend).toHaveBeenCalledWith('my chapter', 'copyright');
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

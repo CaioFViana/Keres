@@ -21,6 +21,7 @@ import { useStoryFormActions } from '../../../src/screens/enterstack/useStoryFor
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 import type { StoryFormState } from '../../../src/screens/enterstack/useStoryFormState';
 import type { PackService } from '../../../src/services/storymanagement/PackService';
+import type { PushOutcomeReport } from '../../../src/services/sync/SyncPush';
 import type { StoryService } from '../../../src/services/storymanagement/StoryService';
 
 const createIdentity = (overrides: Record<string, unknown> = {}) =>
@@ -81,6 +82,15 @@ const packService = {
 const navigation = {
   goBack: jest.fn(),
 };
+
+// Every save of an existing story waits for the sync cycle that carries it; nothing is refused unless a test says so.
+const mockSyncStoryNow = jest.fn<Promise<PushOutcomeReport>, [string]>(async () => ({
+  conflicts: 0,
+  refusals: [],
+}));
+jest.mock('../../../src/services/sync/appSyncEngine', () => ({
+  syncEngine: { syncStoryNow: (storyId: string) => mockSyncStoryNow(storyId) },
+}));
 
 const renderActions = (
   state = createState(),
@@ -228,7 +238,34 @@ it('updates an existing story and navigates back', async () => {
     'story-1',
     expect.objectContaining({ title: 'Revised', favoriteBehavior: 'individual' }),
   );
+  expect(mockSyncStoryNow).toHaveBeenCalledWith('story-1');
   expect(mockAlert).toHaveBeenCalledWith('success', 'story_updated_successfully');
+  expect(navigation.goBack).toHaveBeenCalled();
+});
+
+it('says what the server refused instead of the success message when a save does not reach it', async () => {
+  mockSyncStoryNow.mockResolvedValueOnce({
+    conflicts: 1,
+    refusals: [
+      {
+        clientOperationId: 'op-1',
+        entity: 'Story',
+        entityId: 'story-1',
+        type: 'update' as const,
+        reason: 'unauthorized' as const,
+        message: 'Only the owner may change this.',
+      },
+    ],
+  });
+  const view = await renderActions(createState({ initialStoryId: 'story-1', isEditing: true }));
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledWith(
+    'error',
+    expect.stringContaining('conflict_reason_unauthorized'),
+  );
+  expect(mockAlert).not.toHaveBeenCalledWith('success', 'story_updated_successfully');
   expect(navigation.goBack).toHaveBeenCalled();
 });
 

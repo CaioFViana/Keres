@@ -65,6 +65,8 @@ let serverFailureOn: 'pull' | 'push' | null;
 let storyGoneOn: 'pull' | 'push' | null;
 /** When set, the adapter refuses the sync protocol version (HTTP 426) instead. */
 let protocolMismatchOn: 'pull' | 'push' | null;
+/** When set, the adapter refuses as a pending account does: 403 with the verification_pending code. */
+let verificationPendingOn: 'pull' | 'push' | null;
 /** When true, a push is acknowledged for every operation in the request body. */
 let echoPushApplied: boolean;
 /** When set, the adapter throws a raw string instead of an Error, to exercise message fallbacks. */
@@ -127,6 +129,21 @@ function installAdapter() {
       error.config = config;
       error.request = {};
       error.response = { status: 426, data: { message: 'update the app' }, config, headers: {} };
+      throw error;
+    }
+    if (
+      (isPull && verificationPendingOn === 'pull') ||
+      (!isPull && method === 'POST' && verificationPendingOn === 'push')
+    ) {
+      const error: any = new Error('Request failed with status code 403');
+      error.config = config;
+      error.request = {};
+      error.response = {
+        status: 403,
+        data: { message: 'Verify your age to use this account.', code: 'verification_pending' },
+        config,
+        headers: {},
+      };
       throw error;
     }
     if (
@@ -262,6 +279,7 @@ beforeEach(async () => {
   serverFailureOn = null;
   storyGoneOn = null;
   protocolMismatchOn = null;
+  verificationPendingOn = null;
   pullPages = null;
   pullPageIndex = 0;
   echoPushApplied = false;
@@ -956,6 +974,27 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     await runOneCycle();
 
     expect(await database.db.query.syncConflicts.findMany()).toHaveLength(1);
+  });
+});
+
+describe('when the account waits for its age verification', () => {
+  it('does not report the pull as a sync failure: the app sends the person to the verification', async () => {
+    await seedStory();
+    verificationPendingOn = 'pull';
+
+    await expect(runOneCycle()).resolves.toBe('failed');
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('does not report the push as a sync failure either', async () => {
+    await seedStory();
+    await seedPendingOperation();
+    verificationPendingOn = 'push';
+
+    await expect(runOneCycle()).resolves.toBe('failed');
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 });
 

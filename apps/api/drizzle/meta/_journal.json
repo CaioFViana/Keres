@@ -512,6 +512,27 @@
       "when": 1791766461705,
       "tag": "0072_worthless_the_liberteens",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1791820382515,
+      "tag": "0073_slippery_dracula",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1791822236971,
+      "tag": "0074_wandering_lockjaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1791831628825,
+      "tag": "0075_noisy_silk_fever",
+      "breakpoints": true
     }
   ]
 }

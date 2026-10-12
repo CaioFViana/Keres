@@ -1,13 +1,18 @@
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { stories, storyPublications, storyShowcaseEntries } from '../../src/db/schema';
+import { stories, storyPublications, storyShowcaseEntries, users } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
 import { showcaseSettings } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import { installBunShim } from '../helpers/bunShim';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { enterRequiredMode, leaveRequiredMode } from '../helpers/ageVerificationAccounts';
+
+// Publishing a version writes the .zip through the local blob backend, which uses `Bun.write`.
+installBunShim();
 
 let admin: TestUser;
 let ana: TestUser;
@@ -19,12 +24,28 @@ async function befriend(a: TestUser, b: TestUser) {
   await request('PUT', `/friend/accept/${a.userId}`, { token: b.token });
 }
 
+/**
+ * Grants or takes the +18 standing. A grant is what the verification service's approval leaves in the database: the
+ * administrator cannot grant it (the admin route refuses), so the test writes the row the way the approval does. A
+ * revocation goes through the admin route, which is the one revocation path.
+ */
 async function verify(userId: string, verified = true) {
-  const { status } = await request('PUT', `/admin/api/users/${userId}`, {
-    token: admin.token,
-    body: { isAdultVerified: verified },
-  });
-  expect(status).toBe(200);
+  if (!verified) {
+    const { status } = await request('PUT', `/admin/api/users/${userId}`, {
+      token: admin.token,
+      body: { isAdultVerified: false },
+    });
+    expect(status).toBe(200);
+    return;
+  }
+  await db
+    .update(users)
+    .set({
+      isAdultVerified: true,
+      verifiedAt: new Date(),
+      verificationMethod: 'manual-document-live-photo',
+    })
+    .where(eq(users.id, userId));
 }
 
 async function flagNsfw(id: string, value = true) {
@@ -50,6 +71,26 @@ const invite = (token: string, targetUserId: string, story: string) =>
 
 const push = (token: string, story: string, updates: unknown[]) =>
   request('POST', `/sync/${story}`, { token, body: updates });
+
+async function setAllowNsfw(value = true) {
+  const { status } = await request('PUT', '/admin/registration-settings', {
+    token: admin.token,
+    body: { allowNsfw: value },
+  });
+  expect(status).toBe(200);
+}
+
+/** The server refuses to publish out of sync, so the test needs the real counter. */
+async function serverOperationVersion(story: string): Promise<number> {
+  const row = await db.query.stories.findFirst({ where: eq(stories.id, story) });
+  return row!.lastOperationVersion;
+}
+
+const publishStory = async (token: string, story: string) =>
+  request('POST', `/stories/${story}/publications`, {
+    token,
+    body: { operationVersion: await serverOperationVersion(story), labelMode: 'both' },
+  });
 
 const report = (token: string | undefined, story: string, reason: unknown) =>
   request('POST', `/stories/${story}/report`, { token, body: { reason } });
@@ -103,8 +144,15 @@ beforeEach(async () => {
   await promoteToAdmin(admin.userId);
   ana = await registerUser('ana');
   bia = await registerUser('bia');
+  // The adults-only area exists only where verification is required: the server is put in that mode after its
+  // accounts are made (they are active, as they were before the mode existed).
+  enterRequiredMode();
   await befriend(ana, bia);
   storyId = (await uploadTestStory(ana.token, 'A Queda')).id;
+});
+
+afterEach(() => {
+  leaveRequiredMode();
 });
 
 describe('NSFW collaborator gating', () => {
@@ -160,6 +208,9 @@ describe('NSFW collaborator gating', () => {
     const cid = await registerUser('cid');
     await befriend(ana, cid);
     await verify(bia.userId);
+    // Flagging is a privilege: the server allows it and the owner is verified.
+    await setAllowNsfw();
+    await verify(ana.userId);
     for (const collaborator of [bia, cid]) {
       const { data } = await invite(ana.token, collaborator.userId, storyId);
       await request('PUT', `/friend/story-invitations/${data.id}/accept`, {
@@ -210,6 +261,94 @@ describe('NSFW collaborator gating', () => {
   });
 });
 
+describe('NSFW flag privilege', () => {
+  const flagOn = async (token: string) => {
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+    return push(token, storyId, [
+      {
+        type: 'update',
+        entity: 'Story',
+        id: storyId,
+        changes: { isNsfw: true, version: story!.version },
+        clientOperationId: `local-${newId()}`,
+      },
+    ]);
+  };
+
+  const conflictReasons = (pushed: { data: { conflicts: { reason: string }[] } }) =>
+    pushed.data.conflicts.map((conflict) => conflict.reason);
+
+  const flagIs = async () =>
+    (await db.query.stories.findFirst({ where: eq(stories.id, storyId) }))!.isNsfw;
+
+  it('refuses to turn the flag on via sync when the server disallows mature content', async () => {
+    await verify(ana.userId);
+
+    const pushed = await flagOn(ana.token);
+
+    expect(pushed.status).toBe(200);
+    expect(conflictReasons(pushed)).toEqual(['unauthorized']);
+    expect(await flagIs()).toBe(false);
+  });
+
+  it('refuses to turn the flag on via sync when the owner is not verified', async () => {
+    await setAllowNsfw();
+
+    const pushed = await flagOn(ana.token);
+
+    expect(pushed.status).toBe(200);
+    expect(conflictReasons(pushed)).toEqual(['unauthorized']);
+    expect(await flagIs()).toBe(false);
+  });
+
+  it('lets anyone turn the flag off', async () => {
+    await flagNsfw(storyId);
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+    const pushed = await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Story',
+        id: storyId,
+        changes: { isNsfw: false, version: story!.version },
+        clientOperationId: `local-${newId()}`,
+      },
+    ]);
+
+    expect(pushed.status).toBe(200);
+    expect(pushed.data.conflicts).toEqual([]);
+    expect(await flagIs()).toBe(false);
+  });
+
+  it('refuses to publish an NSFW story without allowance or verification', async () => {
+    await enableShowcase();
+    await flagNsfw(storyId);
+
+    expect((await publishStory(ana.token, storyId)).status).toBe(403);
+
+    await setAllowNsfw();
+    expect((await publishStory(ana.token, storyId)).status).toBe(403);
+
+    await verify(ana.userId);
+    expect((await publishStory(ana.token, storyId)).status).toBe(200);
+  });
+
+  it('toggles the server allowance from the admin panel', async () => {
+    await setAllowNsfw();
+
+    const { status, data } = await request('GET', '/admin/registration-settings', {
+      token: admin.token,
+    });
+    expect(status).toBe(200);
+    expect(data.allowNsfw).toBe(true);
+
+    await setAllowNsfw(false);
+    const { data: back } = await request('GET', '/admin/registration-settings', {
+      token: admin.token,
+    });
+    expect(back.allowNsfw).toBe(false);
+  });
+});
+
 describe('POST /stories/:storyId/report', () => {
   it('sends the reason to the administrators with the story id attached by the server', async () => {
     const { status, data } = await report(bia.token, storyId, 'spam links everywhere');
@@ -223,7 +362,9 @@ describe('POST /stories/:storyId/report', () => {
     });
     expect(inbox.status).toBe(200);
     expect(inbox.data.items).toHaveLength(1);
-    expect(inbox.data.items[0].body).toBe(`[NSFW-REPORT story:${storyId}] spam links everywhere`);
+    expect(inbox.data.items[0].body).toBe(
+      `[REPORT type:other story:${storyId}] spam links everywhere`,
+    );
   });
 
   it('refuses the owner, strangers without session and empty reasons', async () => {

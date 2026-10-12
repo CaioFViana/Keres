@@ -25,9 +25,11 @@ import {
   clientTermsFor,
 } from '../../legal/clientTerms';
 import {
-  getAcceptedClientTermsVersion,
-  setAcceptedClientTermsVersion,
-} from '../../legal/clientTermsAcceptance';
+  CLIENT_PRIVACY_UPDATED_AT,
+  CLIENT_PRIVACY_VERSION,
+  clientPrivacyFor,
+} from '../../legal/privacyPolicy';
+import { getAcceptedClientLegal, setAcceptedClientLegal } from '../../legal/clientTermsAcceptance';
 import WelcomePageView from '../../components/features/welcome/WelcomePageView';
 import WelcomeLanguagePicker from '../../components/features/welcome/WelcomeLanguagePicker';
 import WelcomePager, { useWelcomePager } from '../../components/features/welcome/WelcomePager';
@@ -89,12 +91,17 @@ const ColdInstallScreen = () => {
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [termsVisible, setTermsVisible] = useState(false);
+  const [privacyVisible, setPrivacyVisible] = useState(false);
   const [acceptedTermsVersion, setAcceptedTermsVersion] = useState<number | null>(null);
+  const [acceptedPrivacyVersion, setAcceptedPrivacyVersion] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void getAcceptedClientTermsVersion().then((version) => {
-      if (!cancelled) setAcceptedTermsVersion(version);
+    void getAcceptedClientLegal('terms').then((record) => {
+      if (!cancelled) setAcceptedTermsVersion(record?.version ?? null);
+    });
+    void getAcceptedClientLegal('privacy').then((record) => {
+      if (!cancelled) setAcceptedPrivacyVersion(record?.version ?? null);
     });
     return () => {
       cancelled = true;
@@ -102,10 +109,16 @@ const ColdInstallScreen = () => {
   }, []);
 
   const termsAccepted = acceptedTermsVersion === CLIENT_TERMS_VERSION;
+  const privacyAccepted = acceptedPrivacyVersion === CLIENT_PRIVACY_VERSION;
   const acceptTerms = () => {
     setAcceptedTermsVersion(CLIENT_TERMS_VERSION);
     setTermsVisible(false);
-    void setAcceptedClientTermsVersion(CLIENT_TERMS_VERSION);
+    void setAcceptedClientLegal('terms', CLIENT_TERMS_VERSION, 'onboarding');
+  };
+  const acceptPrivacy = () => {
+    setAcceptedPrivacyVersion(CLIENT_PRIVACY_VERSION);
+    setPrivacyVisible(false);
+    void setAcceptedClientLegal('privacy', CLIENT_PRIVACY_VERSION, 'onboarding');
   };
   const { t } = useTranslation();
   useDocumentTitle(t('welcome'));
@@ -225,9 +238,10 @@ const ColdInstallScreen = () => {
     // No need to call setStoreLanguage here, as it will be set during handleProceed
   };
 
-  // The terms read from here, whenever the person opens them; the server's own terms are
-  // what every account creation actually requires agreement to, at registration.
-  const isProceedDisabled = trimmedUsername.length === 0;
+  // The terms and the privacy policy read from here, whenever the person opens them; the
+  // server's own terms are what every account creation actually requires agreement to, at
+  // registration. Forward stays shut until both are accepted: this is the app's clickwrap.
+  const isProceedDisabled = trimmedUsername.length === 0 || !termsAccepted || !privacyAccepted;
 
   const metrics = useMemo<Metrics>(
     () => ({ insetTop: insets.top, pageWidth, footerBottom, isCompact }),
@@ -371,9 +385,16 @@ const ColdInstallScreen = () => {
                     testID="welcome-terms-button"
                   >
                     <Text style={styles.termsLink}>
-                      {termsAccepted
-                        ? t('welcome_terms_accepted')
-                        : t('welcome_terms_read')}
+                      {termsAccepted ? t('welcome_terms_accepted') : t('welcome_terms_read')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setPrivacyVisible(true)}
+                    accessibilityRole="button"
+                    testID="welcome-privacy-button"
+                  >
+                    <Text style={styles.termsLink}>
+                      {privacyAccepted ? t('welcome_privacy_accepted') : t('welcome_privacy_read')}
                     </Text>
                   </TouchableOpacity>
                 </>
@@ -394,7 +415,23 @@ const ColdInstallScreen = () => {
         acceptLabel={t('terms_accept')}
         onAccept={acceptTerms}
         onClose={() => setTermsVisible(false)}
+        requireScrollToEnd
         testID="welcome-terms-modal"
+      />
+      <TermsModal
+        visible={privacyVisible}
+        title={t('client_privacy_title')}
+        subtitle={t('client_privacy_version', {
+          version: CLIENT_PRIVACY_VERSION,
+          date: CLIENT_PRIVACY_UPDATED_AT,
+        })}
+        sections={clientPrivacyFor(selectedLanguage)}
+        mode="accept"
+        acceptLabel={t('terms_accept')}
+        onAccept={acceptPrivacy}
+        onClose={() => setPrivacyVisible(false)}
+        requireScrollToEnd
+        testID="welcome-privacy-modal"
       />
     </View>
   );

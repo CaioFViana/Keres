@@ -1,6 +1,10 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { hardDeleteUser, promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
+import { db } from '../../src/db';
+import { users } from '../../src/db/schema';
+import { hardDeleteUser, softDeleteUser, truncateAll } from '../helpers/database';
 import { newId, registerUser, request } from '../helpers/app';
+import { enterRequiredMode, leaveRequiredMode } from '../helpers/ageVerificationAccounts';
 
 beforeEach(truncateAll);
 
@@ -491,23 +495,23 @@ describe('GET /auth/me', () => {
       isAdultVerified: false,
     });
   });
-  it('reflects a later +18 verification', async () => {
+  it('reflects a later +18 verification, where verification is required', async () => {
     const user = await registerUser('bia');
-    const admin = await registerUser('root2');
-    await promoteToAdmin(admin.userId);
+    enterRequiredMode();
+    try {
+      // The approval of the verification service is what leaves the flag set (the administrator cannot set it).
+      await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, user.userId));
 
-    await request('PUT', `/admin/api/users/${user.userId}`, {
-      token: admin.token,
-      body: { isAdultVerified: true },
-    });
-
-    const { data } = await request('GET', '/auth/me', { token: user.token });
-    expect(data).toEqual({
-      userId: user.userId,
-      username: 'bia',
-      tag: 'bia',
-      isAdultVerified: true,
-    });
+      const { data } = await request('GET', '/auth/me', { token: user.token });
+      expect(data).toEqual({
+        userId: user.userId,
+        username: 'bia',
+        tag: 'bia',
+        isAdultVerified: true,
+      });
+    } finally {
+      leaveRequiredMode();
+    }
   });
 
   it('rejects a missing session', async () => {

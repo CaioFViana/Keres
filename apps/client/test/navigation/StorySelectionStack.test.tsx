@@ -162,6 +162,10 @@ jest.mock('../../src/screens/enterstack/ServerRegistrationScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/enterstack/ServerVerificationScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/enterstack/StoryFormScreen', () => ({
   __esModule: true,
   default: () => null,

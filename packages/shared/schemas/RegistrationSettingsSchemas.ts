@@ -15,6 +15,7 @@ export const RegistrationSettingsSchema = z.object({
   maxUsers: z.number().int().positive().nullable(),
   /** When true, `isRegistrationOpen` is recomputed on every signup from `maxUsers`. */
   autoManage: z.boolean(),
+  allowNsfw: z.boolean(),
   defaultTierId: UlidSchema.nullable(),
   currency: CurrencySchema,
   updatedAt: z.coerce.date(),
@@ -24,6 +25,7 @@ export const UpdateRegistrationSettingsSchema = z.object({
   isRegistrationOpen: z.boolean().optional(),
   maxUsers: z.number().int().positive().nullable().optional(),
   autoManage: z.boolean().optional(),
+  allowNsfw: z.boolean().optional(),
   defaultTierId: UlidSchema.nullable().optional(),
   currency: CurrencySchema.optional(),
 });

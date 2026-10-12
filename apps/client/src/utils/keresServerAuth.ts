@@ -1,4 +1,9 @@
-import { APP_RELEASE, canTalkToServer } from '@keres/shared';
+import {
+  APP_RELEASE,
+  AccountVerificationStatusSchema,
+  canTalkToServer,
+  type AccountVerificationStatus,
+} from '@keres/shared';
 import apiClient, { apiUrl } from '../services/apiClient';
 
 export type KeresAuthFailure = {
@@ -10,6 +15,7 @@ export type KeresAuthFailure = {
     | 'invalid_credentials'
     | 'user_already_exists'
     | 'registration_closed'
+    | 'age_verification_unavailable'
     | 'server_error'
     | 'user_not_identified_on_server';
   params?: { serverVersion: string; appVersion: string };
@@ -24,6 +30,8 @@ export type KeresAuthSuccess = {
   tag: string | null;
   recoveryCodes: string[] | null;
   tokensChanged: boolean;
+  /** Only a registration on a server that verifies ages says where the new account stands. */
+  verification?: AccountVerificationStatus;
 };
 
 /**
@@ -44,6 +52,8 @@ export async function authenticateWithKeresServer(input: {
   urlChangedWithoutPassword: boolean;
   existingUserId: string | null;
   existingTag: string | null;
+  /** The app's own language: the upload page a registration opens is written in it, not in the browser's. */
+  language: string;
 }): Promise<KeresAuthSuccess | KeresAuthFailure> {
   const checkResponse = await apiClient.get(apiUrl(input.address, '/kerescheck'), {
     timeout: 5000,
@@ -89,7 +99,11 @@ export async function authenticateWithKeresServer(input: {
   const authResponse = await apiClient.post(
     apiUrl(input.address, input.isRegistering ? '/auth/register' : '/auth/login'),
     { username: input.username, password: input.password },
-    { timeout: 5000, validateStatus: () => true },
+    {
+      timeout: 5000,
+      validateStatus: () => true,
+      headers: { 'Accept-Language': input.language || 'en' },
+    },
   );
 
   if (
@@ -102,8 +116,18 @@ export async function authenticateWithKeresServer(input: {
     if (authResponse.status === 401) return { ok: false, alertKey: 'invalid_credentials' };
     if (authResponse.status === 409) return { ok: false, alertKey: 'user_already_exists' };
     if (authResponse.status === 403) return { ok: false, alertKey: 'registration_closed' };
+    // The server verifies ages and its verification service is not there: no account is created at all.
+    if (authResponse.status === 503 && authResponse.data?.code === 'verification_unavailable') {
+      return { ok: false, alertKey: 'age_verification_unavailable' };
+    }
     return { ok: false, alertKey: 'server_error', status: authResponse.status };
   }
+
+  // A pending account comes with its verification (what to do next); anything else is read as before.
+  const verification =
+    input.isRegistering && authResponse.data.verification !== undefined
+      ? AccountVerificationStatusSchema.safeParse(authResponse.data.verification)
+      : null;
 
   return {
     ok: true,
@@ -116,6 +140,7 @@ export async function authenticateWithKeresServer(input: {
         ? authResponse.data.recoveryCodes
         : null,
     tokensChanged: true,
+    ...(verification?.success ? { verification: verification.data } : {}),
   };
 }
 

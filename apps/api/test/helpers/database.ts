@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../../src/db';
 import { usingSqlite } from '../../src/db/dialect';
-import { userRecoveryCodes, users } from '../../src/db/schema';
+import { termsAcceptances, userRecoveryCodes, users } from '../../src/db/schema';
 
 /**
  * Promotes a user to admin by writing straight to the table.
@@ -31,6 +31,7 @@ export async function softDeleteUser(userId: string): Promise<void> {
  */
 export async function hardDeleteUser(userId: string): Promise<void> {
   await db.delete(userRecoveryCodes).where(eq(userRecoveryCodes.userId, userId));
+  await db.delete(termsAcceptances).where(eq(termsAcceptances.userId, userId));
   await db.delete(users).where(eq(users.id, userId));
 }
 

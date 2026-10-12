@@ -528,3 +528,58 @@ describe('SyncScheduler', () => {
     });
   });
 });
+
+describe('SyncScheduler.runAndWait', () => {
+  let ready: { storyId: string | null; hasServer: boolean; hasDatabase: boolean };
+  let performSync: jest.Mock<Promise<SyncCycleOutcome>, [AbortSignal]>;
+  let scheduler: SyncScheduler;
+
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    ready = { storyId: 'story-1', hasServer: true, hasDatabase: true };
+    performSync = jest.fn(async (_signal: AbortSignal) => 'ok' as SyncCycleOutcome);
+    scheduler = new SyncScheduler({ readiness: () => ready, performSync });
+  });
+
+  afterEach(() => {
+    scheduler.stop();
+    jest.restoreAllMocks();
+  });
+
+  it('runs a cycle at once and resolves after it when none is in flight', async () => {
+    await scheduler.runAndWait();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves only after the follow-up cycle that carries the caller change', async () => {
+    let finishFirst!: (outcome: SyncCycleOutcome) => void;
+    performSync.mockImplementationOnce(
+      () => new Promise<SyncCycleOutcome>((resolve) => (finishFirst = resolve)),
+    );
+    scheduler.start();
+    await flush();
+
+    let resolved = false;
+    const waiting = scheduler.runAndWait().then(() => {
+      resolved = true;
+    });
+    await flush();
+    expect(resolved).toBe(false);
+
+    finishFirst('ok');
+    await waiting;
+
+    expect(performSync).toHaveBeenCalledTimes(2);
+    expect(resolved).toBe(true);
+  });
+
+  it('runs nothing while the story, server or database is not ready', async () => {
+    ready = { storyId: null, hasServer: true, hasDatabase: true };
+
+    await scheduler.runAndWait();
+
+    expect(performSync).not.toHaveBeenCalled();
+  });
+});

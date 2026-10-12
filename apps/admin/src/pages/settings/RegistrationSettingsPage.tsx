@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { RegistrationSettings, Tier } from '@keres/shared';
+import type { AgeVerificationMode, RegistrationSettings, Tier } from '@keres/shared';
 import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
 import { TierApiService } from '../../api/TierApiService';
 import { AppearanceCard } from './AppearanceCard';
@@ -11,6 +11,8 @@ const SECTION_IDS = ['settings-registration', 'settings-showcase', 'settings-app
 export function RegistrationSettingsPage() {
   const { t } = useTranslation('admin');
   const [settings, setSettings] = useState<RegistrationSettings | null>(null);
+  // Read-only: the server's age-verification mode. Undefined while loading, or on a server too old to say.
+  const [ageMode, setAgeMode] = useState<AgeVerificationMode | undefined>(undefined);
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [saving, setSaving] = useState(false);
@@ -22,8 +24,10 @@ export function RegistrationSettingsPage() {
   useEffect(() => {
     RegistrationSettingsApiService.get()
       .then((loaded) => {
-        setSettings(loaded);
-        setSavedSnapshot(JSON.stringify(loaded));
+        const { ageVerificationMode, ...row } = loaded;
+        setAgeMode(ageVerificationMode);
+        setSettings(row);
+        setSavedSnapshot(JSON.stringify(row));
       })
       .catch((err) => setError(err.message));
     TierApiService.list()
@@ -38,6 +42,9 @@ export function RegistrationSettingsPage() {
     { id: SECTION_IDS[1], label: t('showcaseSettings.title') },
     { id: SECTION_IDS[2], label: t('appearance.title') },
   ];
+
+  // Disabled verification means no adults-only area at all: the switch shows off and cannot be touched.
+  const adultsOnlyAvailable = ageMode !== 'disabled';
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +65,8 @@ export function RegistrationSettingsPage() {
         isRegistrationOpen: settings.isRegistrationOpen,
         maxUsers: settings.maxUsers,
         autoManage: settings.autoManage,
+        // Without verification there is no adults-only area: a stale "on" is sent as off, never refused.
+        allowNsfw: adultsOnlyAvailable && settings.allowNsfw,
         defaultTierId: settings.defaultTierId,
         currency: settings.currency,
       });
@@ -125,6 +134,33 @@ export function RegistrationSettingsPage() {
                   />
                   {t('settings.registrationOpen')}
                 </label>
+              )}
+
+              <label className="checkbox-label switch">
+                <input
+                  type="checkbox"
+                  checked={adultsOnlyAvailable && settings.allowNsfw}
+                  disabled={!adultsOnlyAvailable}
+                  onChange={(e) => setSettings({ ...settings, allowNsfw: e.target.checked })}
+                />
+                {t('settings.allowNsfw')}{' '}
+                <span className="hint">{t('settings.allowNsfwHint')}</span>
+              </label>
+              {adultsOnlyAvailable ? (
+                <p className="hint" data-testid="nsfw-verified-only-hint">
+                  {t('settings.allowNsfwVerifiedOnly')}
+                </p>
+              ) : (
+                <p className="hint" data-testid="nsfw-no-verification-hint">
+                  {t('settings.allowNsfwNoVerification')}
+                </p>
+              )}
+              {ageMode && (
+                <p className="hint" data-testid="age-verification-mode">
+                  {t('settings.ageVerificationLine', {
+                    mode: t(`settings.ageVerificationModes.${ageMode}`),
+                  })}
+                </p>
               )}
 
               <label>

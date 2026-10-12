@@ -34,7 +34,7 @@ vi.mock('../src/shutdown', () => ({
   installShutdownHandlers: mocks.installShutdownHandlers,
 }));
 vi.mock('../src/utils/logger', () => ({
-  logger: { info: mocks.loggerInfo },
+  logger: { info: mocks.loggerInfo, warn: vi.fn() },
   setLogSink: mocks.setLogSink,
 }));
 

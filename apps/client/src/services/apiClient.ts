@@ -4,11 +4,16 @@ import { AxiosError, create as createAxios, isAxiosError } from 'axios';
 import { Platform } from 'react-native';
 import type { ServerSelect } from '../db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '../state/connectivityStore';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import { canRefreshSessionWithCookie } from './browserCookieSession';
 
 export const NO_RESPONSE_ERROR = 'NO_RESPONSE';
 export const TIMEOUT_ERROR = 'TIMEOUT';
 export const API_PREFIX = '/api';
+/** The `code` of the 403 a pending account gets on every route but its verification (see the server's pendingAccess). */
+export const VERIFICATION_PENDING_CODE = 'verification_pending';
+/** Emitted with the server id when a bound server refuses a pending account; the app opens its verification screen. */
+export const VERIFICATION_PENDING_EVENT = 'verification_pending';
 
 /** The persisted server address is always its origin; HTTP calls belong below `/api`. */
 export function apiBaseUrl(serverUrl: string): string {
@@ -52,6 +57,22 @@ export function isProtocolMismatchError(error: unknown): boolean {
     return false;
   }
   return (error as AxiosError).response?.status === 426;
+}
+
+/**
+ * True when the server refused the request because the account behind it is still waiting for its age check: the
+ * account can do nothing but verify. Not an error of the connection or of the sync - the app sends the person to
+ * the verification instead of reporting a failure.
+ */
+export function isVerificationPendingError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const response = (error as AxiosError).response;
+  return (
+    response?.status === 403 &&
+    (response.data as { code?: unknown } | undefined)?.code === VERIFICATION_PENDING_CODE
+  );
 }
 
 /**
@@ -285,6 +306,17 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
         } else if (error.response) {
           useConnectivityStore.getState().reportReachable(currentServer.id, currentServer.name);
         }
+      }
+
+      // The central place every call of the app goes through: a pending account is sent to its verification once,
+      // here, whichever call hit the refusal. The listener decides whether a navigation is needed (it is not, while
+      // the verification screen is already in front).
+      if (
+        currentServer &&
+        targetsBoundServer(originalRequest) &&
+        isVerificationPendingError(error)
+      ) {
+        entityEventEmitter.emit(VERIFICATION_PENDING_EVENT, currentServer.id);
       }
 
       if (error.response?.status === 401 && tokenProvider && originalRequest && currentServer) {

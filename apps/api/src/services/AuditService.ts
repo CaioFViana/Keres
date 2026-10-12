@@ -409,6 +409,26 @@ export class AuditService {
       .returning({ id: auditEvents.id });
     return deleted.length;
   }
+
+  /**
+   * Detaches the activity record from an erased account: the lines stay (they are the server's
+   * own trail, kept as long as the retention says), but nothing in them points at who acted
+   * anymore. Called by `pruneDeletedAccounts` for every account it pseudonymizes. Returns how many
+   * lines changed.
+   */
+  async scrubUser(userId: string): Promise<number> {
+    const asActor = await db
+      .update(auditEvents)
+      .set({ actorUserId: null, actorUsername: 'deleted', ip: null, userAgent: null })
+      .where(eq(auditEvents.actorUserId, userId))
+      .returning({ id: auditEvents.id });
+    const asSubject = await db
+      .update(auditEvents)
+      .set({ subjectUserId: null })
+      .where(eq(auditEvents.subjectUserId, userId))
+      .returning({ id: auditEvents.id });
+    return asActor.length + asSubject.length;
+  }
 }
 
 /**

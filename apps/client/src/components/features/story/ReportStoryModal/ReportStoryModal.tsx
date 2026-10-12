@@ -1,7 +1,8 @@
 import { MESSAGE_BODY_MAX_LENGTH } from '@keres/shared/metadata/MessageLimits';
+import { REPORT_TYPES, type ReportType } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ThemeColors } from '../../../../theme';
 import { getCommonInputStyles, useTheme } from '../../../../theme';
 import { fontSize, space } from '../../../../theme/tokens';
@@ -16,11 +17,20 @@ export interface ReportStoryModalProps {
   sending: boolean;
   storyTitle: string;
   onClose: () => void;
-  /** Sends the reason; resolves to whether it went through (and so whether to close). */
-  onSend: (reason: string) => Promise<boolean>;
+  /** Sends the reason and type; resolves to whether it went through (and so whether to close). */
+  onSend: (reason: string, type: ReportType) => Promise<boolean>;
 }
 
-/** The reason behind a story report: a reason-only dialog, the story id travels server-side. */
+// Static label keys on purpose: the locale checker only sees literal `t('...')` calls.
+const TYPE_LABEL_KEYS = {
+  intimate: 'report_type_intimate',
+  copyright: 'report_type_copyright',
+  spam_abuse: 'report_type_spam_abuse',
+  illegal: 'report_type_illegal',
+  other: 'report_type_other',
+} as const satisfies Record<ReportType, string>;
+
+/** The reason and type behind a story report: the story id travels server-side. */
 const ReportStoryModal: React.FC<ReportStoryModalProps> = ({
   visible,
   sending,
@@ -33,12 +43,14 @@ const ReportStoryModal: React.FC<ReportStoryModalProps> = ({
   const styles = useThemedStyles(createStyles);
   const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
   const [reason, setReason] = useState('');
+  const [reportType, setReportType] = useState<ReportType>('other');
   const canSend = !sending && reason.trim().length > 0;
 
   const submit = async () => {
     if (!canSend) return;
-    if (await onSend(reason.trim())) {
+    if (await onSend(reason.trim(), reportType)) {
       setReason('');
+      setReportType('other');
       onClose();
     }
   };
@@ -56,6 +68,25 @@ const ReportStoryModal: React.FC<ReportStoryModalProps> = ({
         <Text style={styles.description}>
           {t('report_story_description', { title: storyTitle })}
         </Text>
+        <Text style={styles.typeLabel}>{t('report_type_label')}</Text>
+        {REPORT_TYPES.map((value) => {
+          const selected = reportType === value;
+          return (
+            <TouchableOpacity
+              key={value}
+              testID={`report-type-${value}`}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              onPress={() => setReportType(value)}
+              style={styles.typeRow}
+            >
+              <Text style={styles.typeText}>
+                {selected ? '● ' : '○ '}
+                {t(TYPE_LABEL_KEYS[value])}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
         <TextInput
           value={reason}
           onChangeText={(next) => setReason(next.slice(0, MESSAGE_BODY_MAX_LENGTH))}
@@ -87,6 +118,9 @@ const createStyles = (colors: ThemeColors) =>
     dialog: { maxWidth: 480 },
     body: { gap: space.lg },
     description: { fontSize: fontSize.base, color: colors.textSecondary, lineHeight: 20 },
+    typeLabel: { fontSize: fontSize.base, fontWeight: 'bold', color: colors.text },
+    typeRow: { paddingVertical: 4 },
+    typeText: { fontSize: fontSize.base, color: colors.text },
     input: { minHeight: 96, textAlignVertical: 'top' },
     counter: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: 'right' },
     actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.md },

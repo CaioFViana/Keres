@@ -48,5 +48,12 @@ coverage-sync/
 apps/payments/.env
 apps/payments/.env.*
 !apps/payments/.env.example
+
+# Serviço de verificação de idade: dados, chaves e segredos nunca vão para o git.
+apps/verification/data/
+apps/verification/keys/
+apps/verification/.env
+apps/verification/.env.*
+!apps/verification/.env.example
 .env.local
 apps/*/.env.local

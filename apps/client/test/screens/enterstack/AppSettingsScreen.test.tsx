@@ -281,6 +281,15 @@ describe('AppSettingsScreen', () => {
     expect(view.getByTestId('settings-terms-modal-accept')).toBeTruthy();
   });
 
+  it('reads the privacy policy from Settings', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByLabelText('settings_privacy');
+
+    await fireEvent.press(view.getByLabelText('settings_privacy'));
+    await view.findByTestId('settings-privacy-modal-scroll');
+    expect(view.getByTestId('settings-privacy-modal-accept')).toBeTruthy();
+  });
+
   it('opens the credits screen from the Keres emblem', async () => {
     const view = await render(<SettingsScreen />);
     await view.findByLabelText('credits_open_credits');

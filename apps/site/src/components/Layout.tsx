@@ -84,6 +84,16 @@ export function Layout({ children }: { children: ReactNode }) {
             <a href={GITHUB_README_URL} rel="noreferrer" target="_blank">
               {t('footer.docs')}
             </a>
+            {/* The legal page exists only on the landing: the project site presents
+                no server's policy as its own. */}
+            {isLandingBuild && (
+              <>
+                <span aria-hidden="true"> · </span>
+                <a href="#terms">{t('footer.terms')}</a>
+                <span aria-hidden="true"> · </span>
+                <a href="#privacy">{t('footer.privacy')}</a>
+              </>
+            )}
           </p>
         </div>
       </footer>

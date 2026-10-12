@@ -34,6 +34,9 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'isDeleted',
       'deletedAt',
       'isAdultVerified',
+      'verificationStatus',
+      'verifiedAt',
+      'verificationMethod',
     ],
   },
   AttributeValue: {
@@ -380,7 +383,13 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   RegistrationSettings: {
     documented: ['isRegistrationOpen', 'maxUsers', 'autoManage', 'defaultTierId', 'updatedAt'],
     // The sale currency is an admin-panel concern; the client never prices anything.
-    invisible: ['id', 'currency'],
+    // So is the adults-only gate: the client only obeys the server's refusal.
+    invisible: ['id', 'currency', 'allowNsfw'],
+  },
+  // What the admin panel reads: the settings plus the server's age-verification mode (an operator concern).
+  RegistrationSettingsView: {
+    documented: [],
+    invisible: ['ageVerificationMode'],
   },
   Scene: {
     documented: [

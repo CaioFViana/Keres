@@ -8,6 +8,8 @@ jest.mock('../../src/services/apiClient', () => ({
 }));
 jest.mock('@keres/shared', () => ({
   __esModule: true,
+  // The real verification schema: a registration's `verification` is read with it.
+  ...jest.requireActual('@keres/shared'),
   APP_RELEASE: { version: '9.9.9-test' },
   canTalkToServer: jest.fn(),
 }));
@@ -32,6 +34,7 @@ const baseInput = {
   urlChangedWithoutPassword: false,
   existingUserId: null,
   existingTag: null,
+  language: 'pt-BR',
 };
 
 const healthyCheck = { status: 200, data: { version: '2.0.0', syncProtocol: { current: 3 } } };
@@ -159,6 +162,19 @@ describe('login and registration', () => {
     );
   });
 
+  // The upload page the registration opens is written in the language the app speaks, not the browser's.
+  it('sends the app language with the registration, so the verification page follows it', async () => {
+    mockPost.mockResolvedValueOnce(tokens);
+
+    await authenticateWithKeresServer({ ...baseInput, isRegistering: true, language: 'en' });
+
+    expect(mockPost).toHaveBeenCalledWith(
+      'https://keres.example.com/api/auth/register',
+      expect.anything(),
+      expect.objectContaining({ headers: { 'Accept-Language': 'en' } }),
+    );
+  });
+
   it('falls back to the existing tag and null codes on odd payloads', async () => {
     mockPost.mockResolvedValueOnce({
       status: 200,
@@ -204,6 +220,46 @@ describe('login and registration', () => {
       alertKey: 'server_error',
       status: 200,
     });
+  });
+
+  it('passes on where a new account stands when the server verifies ages', async () => {
+    const verification = {
+      status: 'pending',
+      action: { kind: 'redirect', url: 'https://verify.example/v/token' },
+    };
+    mockPost.mockResolvedValueOnce({ status: 200, data: { ...tokens.data, verification } });
+
+    await expect(
+      authenticateWithKeresServer({ ...baseInput, isRegistering: true }),
+    ).resolves.toEqual(expect.objectContaining({ ok: true, verification }));
+  });
+
+  it('does not read a verification that a login carries', async () => {
+    const verification = { status: 'pending' };
+    mockPost.mockResolvedValueOnce({ status: 200, data: { ...tokens.data, verification } });
+
+    const result = await authenticateWithKeresServer(baseInput);
+    expect(result).toEqual(expect.objectContaining({ ok: true }));
+    expect(result).not.toHaveProperty('verification');
+  });
+
+  it('says when the server cannot verify ages right now, and creates nothing', async () => {
+    mockPost.mockResolvedValueOnce({
+      status: 503,
+      data: { message: 'unavailable', code: 'verification_unavailable' },
+    });
+
+    await expect(
+      authenticateWithKeresServer({ ...baseInput, isRegistering: true }),
+    ).resolves.toEqual({ ok: false, alertKey: 'age_verification_unavailable' });
+  });
+
+  it('keeps other 503 answers as plain server errors', async () => {
+    mockPost.mockResolvedValueOnce({ status: 503, data: { message: 'busy' } });
+
+    await expect(
+      authenticateWithKeresServer({ ...baseInput, isRegistering: true }),
+    ).resolves.toEqual({ ok: false, alertKey: 'server_error', status: 503 });
   });
 });
 

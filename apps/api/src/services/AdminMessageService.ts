@@ -6,7 +6,7 @@ import type {
   AdminMessagePatch,
 } from '@keres/shared';
 import { and, asc, count, desc, eq, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
-import { NSFW_REPORT_TAG } from '@keres/shared';
+import { NSFW_REPORT_TAG, REPORT_TAG } from '@keres/shared';
 import { db, withWriteTransaction } from '../db';
 import { messages, users } from '../db/schema';
 import { insensitiveLike } from '../db/sqlOperators';
@@ -54,6 +54,8 @@ function toAdminMessage(row: MessageRow, user: UserRow | null): AdminMessage {
 function orderFor(query: AdminMessageListQuery): SQL[] {
   const direction = query.order === 'asc' ? asc : desc;
   switch (query.sort) {
+    case 'date':
+      return [direction(messages.createdAt), desc(messages.id)];
     case 'sender':
       // A site message has no user: its address stands in, so the column sorts as one list.
       return [
@@ -78,9 +80,19 @@ export class AdminMessageService {
     if (query.source === 'user') conditions.push(eq(messages.channel, 'admin'));
     if (query.source === 'report') {
       // Reports travel as `admin`-channel messages with a machine-readable envelope (see
-      // `buildNsfwReportBody`): the filter matches the envelope, not free text.
+      // `buildReportBody`; older ones carry the legacy `NSFW-REPORT` envelope): the filter
+      // matches the envelopes, not free text.
       conditions.push(eq(messages.channel, 'admin'));
-      conditions.push(insensitiveLike(messages.body, `${NSFW_REPORT_TAG}%`));
+      conditions.push(
+        or(
+          insensitiveLike(messages.body, `${REPORT_TAG}%`),
+          insensitiveLike(messages.body, `${NSFW_REPORT_TAG}%`),
+        ) as SQL,
+      );
+    }
+    if (query.reportType) {
+      // Only typed reports carry a type: legacy untyped rows are excluded while filtering.
+      conditions.push(insensitiveLike(messages.body, `${REPORT_TAG} type:${query.reportType} %`));
     }
     if (query.read === 'unread') conditions.push(isNull(messages.adminReadAt));
     if (query.read === 'read') conditions.push(isNotNull(messages.adminReadAt));

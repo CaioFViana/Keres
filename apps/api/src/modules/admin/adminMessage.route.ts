@@ -34,6 +34,7 @@ export const adminMessageRoutes = new Elysia()
       query: t.Object({
         search: t.Optional(t.String()),
         source: t.Optional(t.String()),
+        reportType: t.Optional(t.String()),
         read: t.Optional(t.String()),
         archived: t.Optional(t.String()),
         sort: t.Optional(t.String()),

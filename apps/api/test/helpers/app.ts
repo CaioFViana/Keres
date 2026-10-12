@@ -143,10 +143,12 @@ export const newId = () => ulid();
  * the retired `POST /stories/` endpoint as a shortcut: a real Story reaches a server as a complete
  * export and preserves its locally generated ids.
  */
-export async function uploadTestStory(
+/** Sends a minimal story package to `POST /stories/import` and returns the answer as it is, refusals included. */
+export async function importTestStory(
   token: string,
   title = 'A Queda',
   type: 'linear' | 'branching' = 'linear',
+  storyFields: Record<string, unknown> = {},
 ) {
   const storyId = ulid();
   const arcId = ulid();
@@ -162,6 +164,7 @@ export async function uploadTestStory(
       version: 1,
       isDeleted: false,
       deletedAt: null,
+      ...storyFields,
     },
     chapters: [],
     scenes: [],
@@ -199,11 +202,20 @@ export async function uploadTestStory(
     serverLastOperationVersion: 0,
     formatVersion: CURRENT_STORY_FORMAT_VERSION,
   };
-  const { status, data } = await request<{ storyId: string }>('POST', '/stories/import', {
+  const answer = await request<{ storyId: string }>('POST', '/stories/import', {
     token,
     body: packageData,
     query: { storyId },
   });
+  return { ...answer, title, type };
+}
+
+export async function uploadTestStory(
+  token: string,
+  title = 'A Queda',
+  type: 'linear' | 'branching' = 'linear',
+) {
+  const { status, data } = await importTestStory(token, title, type);
   if (status !== 200) {
     throw new Error(`Could not upload test story (${status}): ${JSON.stringify(data)}`);
   }

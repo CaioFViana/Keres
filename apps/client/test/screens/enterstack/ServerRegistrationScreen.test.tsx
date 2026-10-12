@@ -5,9 +5,11 @@ const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
 const mockRoute: { params?: { serverId?: string } } = { params: {} };
+const mockReplace = jest.fn();
 const mockNavigation = {
   goBack: (...args: unknown[]) => mockGoBack(...args),
   navigate: (...args: unknown[]) => mockNavigate(...args),
+  replace: (...args: unknown[]) => mockReplace(...args),
 };
 const mockDrizzle = {};
 const mockServerService = {
@@ -114,6 +116,14 @@ jest.mock('../../../src/services/AuthApiService', () => ({
   redeemRecoveryCode: (...args: unknown[]) => mockRedeem(...args),
 }));
 
+const mockFetchAgeInfo = jest.fn();
+const mockFetchVerificationStatus = jest.fn();
+jest.mock('../../../src/services/AgeVerificationApiService', () => ({
+  __esModule: true,
+  fetchAgeVerificationInfo: (...args: unknown[]) => mockFetchAgeInfo(...args),
+  fetchVerificationStatus: (...args: unknown[]) => mockFetchVerificationStatus(...args),
+}));
+
 jest.mock('../../../src/services/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: () => mockCookie.hosted,
   hostedApiOrigin: () => mockCookie.origin,
@@ -125,8 +135,10 @@ jest.mock('../../../src/utils/keresServerAuth', () => ({
 }));
 
 const mockFetchServerTerms = jest.fn();
+const mockFetchServerPrivacy = jest.fn();
 jest.mock('../../../src/services/ServerTermsService', () => ({
   fetchServerTerms: (...args: unknown[]) => mockFetchServerTerms(...args),
+  fetchServerPrivacy: (...args: unknown[]) => mockFetchServerPrivacy(...args),
 }));
 
 jest.mock('../../../src/state/userSettingsStore', () => ({
@@ -256,6 +268,10 @@ describe('ServerRegistrationScreen', () => {
     mockRedeem.mockResolvedValue({ success: false, reason: 'invalid_code' });
     // Servers without the terms route simply have none to agree to.
     mockFetchServerTerms.mockResolvedValue(null);
+    mockFetchServerPrivacy.mockResolvedValue(null);
+    // A server that predates the age check, and a login that is not of a pending account.
+    mockFetchAgeInfo.mockResolvedValue(null);
+    mockFetchVerificationStatus.mockResolvedValue({ status: 'not_required' });
   });
 
   afterEach(() => {
@@ -342,6 +358,7 @@ describe('ServerRegistrationScreen', () => {
     await fillLogin(view);
     await fireEvent.press(view.getByTestId('set-password'));
     await fireEvent.press(view.getByTestId('set-confirm'));
+    await fireEvent.press(view.getByTestId('server-register-adult-switch'));
     await fireEvent.press(view.getByText('create_account'));
 
     // Nothing is written before agreement: no auth, no server row.
@@ -385,6 +402,64 @@ describe('ServerRegistrationScreen', () => {
     expect(mockAuthenticate).toHaveBeenCalledTimes(1);
   });
 
+  it('asks for the privacy policy after the terms, and saves the agreed copy', async () => {
+    mockFetchServerTerms.mockResolvedValue(null);
+    mockFetchServerPrivacy.mockResolvedValue({
+      version: 1,
+      updatedAt: '2026-10-12',
+      sections: [{ heading: 'Privacy', paragraphs: ['We keep little.'] }],
+      text: 'Privacy\nWe keep little.',
+    });
+    const view = await render(<ServerRegistrationScreen />);
+    await view.findByText('register_server');
+    await fireEvent.press(view.getByTestId('set-mode-register'));
+    await fillLogin(view);
+    await fireEvent.press(view.getByTestId('set-password'));
+    await fireEvent.press(view.getByTestId('set-confirm'));
+    await fireEvent.press(view.getByTestId('server-register-adult-switch'));
+    await fireEvent.press(view.getByText('create_account'));
+
+    await view.findByTestId('server-privacy-modal-scroll');
+    expect(mockServerService.createServer).not.toHaveBeenCalled();
+
+    await fireEvent(view.getByTestId('server-privacy-modal-scroll'), 'onScroll', {
+      nativeEvent: {
+        contentSize: { height: 1000 },
+        layoutMeasurement: { height: 200 },
+        contentOffset: { y: 800 },
+      },
+    });
+    await fireEvent.press(view.getByTestId('server-privacy-modal-accept'));
+
+    await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+    expect(mockServerService.createServer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        privacyText: 'Privacy\nWe keep little.',
+        privacyVersion: '1',
+        privacyAcceptedAt: expect.any(Date),
+      }),
+    );
+  });
+
+  it('requires confirming 18+ before creating an account', async () => {
+    const view = await render(<ServerRegistrationScreen />);
+    await view.findByText('register_server');
+    await fireEvent.press(view.getByTestId('set-mode-register'));
+    await fillLogin(view);
+    await fireEvent.press(view.getByTestId('set-password'));
+    await fireEvent.press(view.getByTestId('set-confirm'));
+    await fireEvent.press(view.getByText('create_account'));
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'server_register_adult_required');
+    expect(mockAuthenticate).not.toHaveBeenCalled();
+    expect(mockFetchServerTerms).not.toHaveBeenCalled();
+    expect(mockServerService.createServer).not.toHaveBeenCalled();
+
+    await fireEvent.press(view.getByTestId('server-register-adult-switch'));
+    await fireEvent.press(view.getByText('create_account'));
+    await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+  });
+
   it('registers without terms when the server predates the terms route', async () => {
     mockFetchServerTerms.mockResolvedValue(null);
     const view = await render(<ServerRegistrationScreen />);
@@ -393,6 +468,7 @@ describe('ServerRegistrationScreen', () => {
     await fillLogin(view);
     await fireEvent.press(view.getByTestId('set-password'));
     await fireEvent.press(view.getByTestId('set-confirm'));
+    await fireEvent.press(view.getByTestId('server-register-adult-switch'));
     await fireEvent.press(view.getByText('create_account'));
 
     await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
@@ -523,5 +599,165 @@ describe('ServerRegistrationScreen', () => {
     );
     expect(view.getByText('server_url_already_registered')).toBeTruthy();
     expect(mockGoBack).not.toHaveBeenCalled();
+  });
+
+  describe('age verification', () => {
+    const pendingVerification = {
+      status: 'pending',
+      action: { kind: 'redirect', url: 'https://verify.example/v/token' },
+    };
+
+    /** The registration form filled in and the 18+ confirmation on, ready to create the account. */
+    async function fillRegistration(view: Awaited<ReturnType<typeof render>>) {
+      await fireEvent.press(view.getByTestId('set-mode-register'));
+      await fillLogin(view);
+      await fireEvent.press(view.getByTestId('set-password'));
+      await fireEvent.press(view.getByTestId('set-confirm'));
+      await fireEvent.press(view.getByTestId('server-register-adult-switch'));
+    }
+
+    it('blocks the registration when the server requires verification and cannot run it', async () => {
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'required', available: false });
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillRegistration(view);
+      await fireEvent.press(view.getByText('create_account'));
+
+      expect(mockFetchAgeInfo).toHaveBeenCalledWith('https://s.example');
+      expect(mockAlert).toHaveBeenCalledWith('error', 'age_verification_unavailable');
+      expect(view.getAllByText('age_verification_unavailable').length).toBeGreaterThan(0);
+      expect(mockFetchServerTerms).not.toHaveBeenCalled();
+      expect(mockAuthenticate).not.toHaveBeenCalled();
+      expect(mockServerService.createServer).not.toHaveBeenCalled();
+    });
+
+    it('says where the documents go on a server that verifies, beside the 18+ confirmation', async () => {
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'required', available: true });
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillRegistration(view);
+
+      expect(await view.findByText('age_verification_required_notice')).toBeTruthy();
+      expect(mockAuthenticate).not.toHaveBeenCalled();
+    });
+
+    it('says a server without verification has none, without stopping the registration', async () => {
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'disabled', available: false });
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillRegistration(view);
+
+      expect(await view.findByText('age_verification_disabled_notice')).toBeTruthy();
+      await fireEvent.press(view.getByText('create_account'));
+      await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+      expect(mockAlert).not.toHaveBeenCalledWith('error', 'age_verification_unavailable');
+    });
+
+    it('does not stop the registration when the age check cannot be read', async () => {
+      mockFetchAgeInfo.mockResolvedValue(null);
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillRegistration(view);
+      await fireEvent.press(view.getByText('create_account'));
+
+      await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
+      expect(mockAuthenticate).toHaveBeenCalledTimes(1);
+    });
+
+    it("registers in the app's language, so the verification page follows the app and not the browser", async () => {
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'required', available: true });
+      mockI18n.i18n.language = 'pt-BR';
+      try {
+        const view = await render(<ServerRegistrationScreen />);
+        await view.findByText('register_server');
+        await fillRegistration(view);
+        await fireEvent.press(view.getByText('create_account'));
+
+        await waitFor(() => expect(mockAuthenticate).toHaveBeenCalledTimes(1));
+        expect(mockAuthenticate).toHaveBeenCalledWith(
+          expect.objectContaining({ isRegistering: true, language: 'pt-BR' }),
+        );
+      } finally {
+        mockI18n.i18n.language = 'en';
+      }
+    });
+
+    it('shows the recovery codes of a pending account first, then goes to the verification screen', async () => {
+      mockAuthenticate.mockResolvedValue({
+        ...authOk,
+        recoveryCodes: ['c1', 'c2'],
+        verification: pendingVerification,
+      });
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillRegistration(view);
+      await fireEvent.press(view.getByText('create_account'));
+
+      await view.findByTestId('recovery-panel');
+      expect(mockReplace).not.toHaveBeenCalled();
+      expect(mockGoBack).not.toHaveBeenCalled();
+      // A pending account is not made the active server: its session would only be refused by the sync.
+      expect(mockSetActiveServer).not.toHaveBeenCalled();
+      await fireEvent.press(view.getByTestId('recovery-continue'));
+      expect(mockReplace).toHaveBeenCalledWith('ServerVerification', { serverId: 'srv-new' });
+      expect(mockGoBack).not.toHaveBeenCalled();
+    });
+
+    it('keeps the old flow for a registration answer without verification', async () => {
+      mockAuthenticate.mockResolvedValue({ ...authOk, recoveryCodes: ['c1'] });
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillRegistration(view);
+      await fireEvent.press(view.getByText('create_account'));
+
+      await view.findByTestId('recovery-panel');
+      await fireEvent.press(view.getByTestId('recovery-continue'));
+      expect(mockGoBack).toHaveBeenCalled();
+      expect(mockReplace).not.toHaveBeenCalled();
+      expect(mockSetActiveServer).toHaveBeenCalledWith(expect.objectContaining({ id: 'srv-new' }));
+    });
+
+    it.each(['pending', 'rejected', 'expired'])(
+      'sends a login of an account that is %s to the verification screen, not as an active server',
+      async (status) => {
+        mockFetchVerificationStatus.mockResolvedValue({ status });
+        const view = await render(<ServerRegistrationScreen />);
+        await view.findByText('register_server');
+        await fillLogin(view);
+        await fireEvent.press(view.getByText('register_server'));
+
+        await waitFor(() =>
+          expect(mockReplace).toHaveBeenCalledWith('ServerVerification', { serverId: 'srv-new' }),
+        );
+        expect(mockFetchVerificationStatus).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'srv-new' }),
+        );
+        expect(mockGoBack).not.toHaveBeenCalled();
+        expect(mockSetActiveServer).not.toHaveBeenCalled();
+      },
+    );
+
+    it('keeps a login of an account that needs no verification as it was', async () => {
+      mockFetchVerificationStatus.mockResolvedValue({ status: 'not_required' });
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillLogin(view);
+      await fireEvent.press(view.getByText('register_server'));
+
+      await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+      expect(mockReplace).not.toHaveBeenCalled();
+      expect(mockSetActiveServer).toHaveBeenCalledWith(expect.objectContaining({ id: 'srv-new' }));
+    });
+
+    it('keeps a login going when the server has no verification route to ask', async () => {
+      mockFetchVerificationStatus.mockRejectedValue(new Error('not found'));
+      const view = await render(<ServerRegistrationScreen />);
+      await view.findByText('register_server');
+      await fillLogin(view);
+      await fireEvent.press(view.getByText('register_server'));
+
+      await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+      expect(mockReplace).not.toHaveBeenCalled();
+    });
   });
 });

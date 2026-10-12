@@ -12,7 +12,8 @@ import { hashPassword } from '../config/bcrypt';
 import { env } from '../config/env';
 import { db } from '../db';
 import { tiers, users } from '../db/schema';
-import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
+import { AppError, isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
+import { ageVerificationService } from './ageVerification/AgeVerificationService';
 import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierIds } from './payments/entitlement';
 import { accountClosureService } from './payments/AccountClosureService';
@@ -64,6 +65,9 @@ const ADMIN_USER_COLUMNS = {
   bio: true,
   isAdmin: true,
   isAdultVerified: true,
+  verificationStatus: true,
+  verifiedAt: true,
+  verificationMethod: true,
   tierId: true,
   createdAt: true,
   updatedAt: true,
@@ -80,6 +84,9 @@ const ADMIN_USER_RETURNING = {
   bio: users.bio,
   isAdmin: users.isAdmin,
   isAdultVerified: users.isAdultVerified,
+  verificationStatus: users.verificationStatus,
+  verifiedAt: users.verifiedAt,
+  verificationMethod: users.verificationMethod,
   tierId: users.tierId,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
@@ -262,7 +269,18 @@ export class AdminUserService {
     return recoveryCodeService.generateCodes(id);
   }
 
-  async update(id: string, patch: AdminUpdateUser) {
+  /**
+   * Edits an account for an administrator. Verification is never set by hand: an account is verified by the
+   * age-verification service only. Revoking it (`isAdultVerified: false`) goes through that service too, so there is
+   * one revocation path, with its audit line and the removal from adults-only stories.
+   */
+  async update(id: string, patch: AdminUpdateUser, actorId?: string | null) {
+    if (patch.isAdultVerified === true) {
+      throw new AppError(
+        400,
+        'Accounts are verified by the age-verification service, not by hand.',
+      );
+    }
     const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
     if (!existing) {
       throw new AdminUserNotFoundError();
@@ -274,7 +292,8 @@ export class AdminUserService {
       await this.assertTierExists(patch.tierId);
     }
 
-    const changes = { ...patch };
+    const changes: AdminUpdateUser = { ...patch };
+    delete changes.isAdultVerified;
     if (patch.tag !== undefined) {
       // Stored in the one shape lookups expect, and never one somebody else already holds.
       changes.tag = normalizeUserTag(patch.tag);
@@ -287,15 +306,15 @@ export class AdminUserService {
       }
     }
 
+    if (patch.isAdultVerified === false && existing.isAdultVerified) {
+      // Verification revoked: the user keeps every safe story, but leaves every NSFW one now.
+      await ageVerificationService.revoke(id, actorId ?? null);
+    }
     const [updated] = await db
       .update(users)
       .set({ ...changes, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
-    if (patch.isAdultVerified === false && existing.isAdultVerified) {
-      // Verification revoked: the user keeps every safe story, but leaves every NSFW one now.
-      await storyNsfwService.removeUserFromNsfwStories(id, 'verification-revoked');
-    }
     return updated;
   }
 

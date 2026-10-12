@@ -195,6 +195,23 @@
         "vitest": "^4.1.10",
       },
     },
+    "apps/verification": {
+      "name": "@keres/verification",
+      "version": "1.10.0",
+      "dependencies": {
+        "@keres/shared": "workspace:*",
+        "zod": "^4.1.12",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.1.6",
+        "@typescript-eslint/eslint-plugin": "^8.66.0",
+        "@typescript-eslint/parser": "^8.66.0",
+        "@vitest/coverage-v8": "^4.1.10",
+        "eslint": "^9.25.0",
+        "typescript": "^5.5.3",
+        "vitest": "^4.1.10",
+      },
+    },
     "packages/shared": {
       "name": "@keres/shared",
       "version": "1.10.0",
@@ -739,6 +756,8 @@
     "@keres/shared": ["@keres/shared@workspace:packages/shared"],
 
     "@keres/site": ["@keres/site@workspace:apps/site"],
+
+    "@keres/verification": ["@keres/verification@workspace:apps/verification"],
 
     "@libsql/client": ["@libsql/client@0.17.4", "", { "dependencies": { "@libsql/core": "^0.17.4", "@libsql/hrana-client": "^0.10.0", "js-base64": "^3.7.5", "libsql": "^0.5.28", "promise-limit": "^2.7.0" } }, "sha512-lYayFWasDV78A+TjlEhr6ubb3odBV6OHjb+wdp8VQcyWWAEIjuwbCHaraEUS4m4yWoo0BvZo96It4VdzZRmRWw=="],
 

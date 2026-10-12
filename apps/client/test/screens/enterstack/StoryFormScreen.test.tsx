@@ -42,7 +42,10 @@ const mockColors = {
 };
 
 jest.mock('react-i18next', () => ({
+  __esModule: true,
   useTranslation: () => mockI18n,
+  // The save path now reaches the sync engine, which loads the app's i18n setup.
+  initReactI18next: { type: '3rdParty', init: () => undefined },
 }));
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));

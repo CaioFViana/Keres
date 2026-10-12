@@ -9,6 +9,8 @@ export const jwtRefresh = jwt({
   schema: t.Object({
     userId: t.String(),
     username: t.String(), // Include username in refresh token payload for convenience
+    /** Set while the account is not active in age verification (see `pendingAccess.ts`). */
+    pending: t.Optional(t.Literal(true)),
   }),
 });
 

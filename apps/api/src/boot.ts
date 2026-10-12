@@ -6,6 +6,11 @@ import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
 import { pruneAttemptLimits } from './services/AttemptLimitService';
 import { auditService } from './services/AuditService';
+import { contactService } from './services/ContactService';
+import { ageVerificationService } from './services/ageVerification/AgeVerificationService';
+import { isAgeVerificationRequired } from './services/ageVerification/ageVerificationMode';
+import { startAgeVerifier } from './services/ageVerification/connector/startVerifier';
+import type { PruneOutcome } from './services/ageVerification/ageVerificationPrune';
 import { startPaymentConnector } from './services/payments/connector/startConnector';
 import { getPaymentConnector } from './services/payments/PaymentConnectorRegistry';
 import { paymentReconciliationService } from './services/payments/PaymentReconciliationService';
@@ -63,6 +68,20 @@ export async function warnIfPaymentsHaveNoDefaultPlan(): Promise<boolean> {
     'Payments are on but the server has no default plan: people whose paid period ends, and who have no plan assigned, will have NO limits. Mark a plan as the default in the admin panel (the "default" box of a plan, or Registration).',
   );
   return true;
+}
+
+/**
+ * Says, at every start, how this server treats age. With verification off the server must not look like an 18+ one:
+ * the warning says so in words, because nothing else makes it visible (see "Modes" in docs/age_verification.md).
+ */
+export function announceAgeVerification(): void {
+  if (isAgeVerificationRequired()) {
+    logger.info(`Age verification: REQUIRED (service ${env.AGE_VERIFICATION_URL}).`);
+    return;
+  }
+  logger.warn(
+    'AGE VERIFICATION IS DISABLED (AGE_VERIFICATION_MODE=disabled): this server started WITHOUT age verification. There is no adults-only (+18) area, no account is verified, and its terms say so. Do not present it as an 18+ server.',
+  );
 }
 
 /**
@@ -219,6 +238,61 @@ function startAttemptLimitPruneScheduler(): () => void {
   };
 }
 
+/** Drops landing-page contact messages past their retention: once at start and daily after. */
+function startContactMessagePruneScheduler(): () => void {
+  const prune = () => {
+    trackBackground(
+      contactService
+        .pruneSiteMessages()
+        .then((removed) => {
+          if (removed > 0) {
+            logger.info(
+              `Contact messages: dropped ${removed} line(s) older than ${env.CONTACT_MESSAGE_RETENTION_DAYS} days.`,
+            );
+          }
+        })
+        .catch((error: unknown) => {
+          logger.error('Contact message cleanup failed', error);
+        }),
+    );
+  };
+  const first = setTimeout(prune, 40_000);
+  const every = setInterval(prune, 24 * 60 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
+}
+
+/**
+ * One run of the abandoned-account cleanup, as the scheduler starts it: a failure is logged and never reaches the timer.
+ * Returns what it did, or null when it failed. Exported so the rule is tested without waiting for the clock.
+ */
+export async function runAgeVerificationPrune(): Promise<PruneOutcome | null> {
+  try {
+    return await ageVerificationService.pruneAbandoned();
+  } catch (error) {
+    logger.error('Age verification cleanup failed', error);
+    return null;
+  }
+}
+
+/**
+ * Accounts abandoned in verification (and the old refusals of active accounts): once after start, then every six hours.
+ * Only where verification is required - nothing else creates such accounts.
+ */
+function startAgeVerificationPruneScheduler(): () => void {
+  const prune = () => {
+    trackBackground(runAgeVerificationPrune());
+  };
+  const first = setTimeout(prune, 45_000);
+  const every = setInterval(prune, 6 * 60 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
+}
+
 export async function bootAndListen(options?: {
   onListening?: (address: ListeningAddress) => void;
 }): Promise<void> {
@@ -235,15 +309,20 @@ export async function bootAndListen(options?: {
   }
 
   const app = await createApp();
+  announceAgeVerification();
   const stopSchedulers = [
     // In the background, and again until it answers: a connector that starts after the server must not leave it without
     // payments. Once connected, the one thing that needs it is checked: that there is a default plan to fall back to.
     startPaymentConnector({ onConnected: () => void warnIfPaymentsHaveNoDefaultPlan() }),
+    // Only in `required` mode: the service is what lets a registration through, and nothing needs it otherwise.
+    ...(isAgeVerificationRequired() ? [startAgeVerifier()] : []),
     startPaymentsScheduler(),
     startMediaBlobSweepScheduler(),
     startAuditRetentionScheduler(),
     startAttemptLimitPruneScheduler(),
+    startContactMessagePruneScheduler(),
     startDeletedAccountPruneScheduler(),
+    ...(isAgeVerificationRequired() ? [startAgeVerificationPruneScheduler()] : []),
   ];
   const startedAt = Date.now();
   const shutdown = createShutdown({

@@ -11,7 +11,12 @@ import {
   CLIENT_TERMS_VERSION,
   clientTermsFor,
 } from '@/src/legal/clientTerms';
-import { setAcceptedClientTermsVersion } from '@/src/legal/clientTermsAcceptance';
+import {
+  CLIENT_PRIVACY_UPDATED_AT,
+  CLIENT_PRIVACY_VERSION,
+  clientPrivacyFor,
+} from '@/src/legal/privacyPolicy';
+import { setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
@@ -104,6 +109,7 @@ const SettingsScreen = () => {
   // field can pass through empty while it is being rewritten without ever saving that.
   const [usernameDraft, setUsernameDraft] = useState<string | null>(null);
   const [termsVisible, setTermsVisible] = useState(false);
+  const [privacyVisible, setPrivacyVisible] = useState(false);
   const usernameInvalid = usernameDraft !== null && normalizeLocalUsername(usernameDraft) === null;
   const handleUsernameChange = (newUsername: string) => {
     setUsernameDraft(newUsername);
@@ -424,6 +430,13 @@ const SettingsScreen = () => {
                 onPress={() => setTermsVisible(true)}
                 testID="settings-terms-row"
               />
+              <SettingsRow
+                icon="lock-closed-outline"
+                label={t('settings_privacy')}
+                hint={t('settings_privacy_hint')}
+                onPress={() => setPrivacyVisible(true)}
+                testID="settings-privacy-row"
+              />
               {/* A payment is due to a server: a build with no servers has none to warn about. */}
               {isServerless() ? null : (
                 <SettingsRow
@@ -504,15 +517,34 @@ const SettingsScreen = () => {
           version: CLIENT_TERMS_VERSION,
           date: CLIENT_TERMS_UPDATED_AT,
         })}
-        sections={clientTermsFor(i18n.language)}
+        sections={clientTermsFor(language ?? i18n.language)}
         mode="accept"
         acceptLabel={t('terms_accept')}
         onAccept={() => {
           setTermsVisible(false);
-          void setAcceptedClientTermsVersion(CLIENT_TERMS_VERSION);
+          void setAcceptedClientLegal('terms', CLIENT_TERMS_VERSION, 'settings');
         }}
         onClose={() => setTermsVisible(false)}
+        requireScrollToEnd
         testID="settings-terms-modal"
+      />
+      <TermsModal
+        visible={privacyVisible}
+        title={t('client_privacy_title')}
+        subtitle={t('client_privacy_version', {
+          version: CLIENT_PRIVACY_VERSION,
+          date: CLIENT_PRIVACY_UPDATED_AT,
+        })}
+        sections={clientPrivacyFor(language ?? i18n.language)}
+        mode="accept"
+        acceptLabel={t('terms_accept')}
+        onAccept={() => {
+          setPrivacyVisible(false);
+          void setAcceptedClientLegal('privacy', CLIENT_PRIVACY_VERSION, 'settings');
+        }}
+        onClose={() => setPrivacyVisible(false)}
+        requireScrollToEnd
+        testID="settings-privacy-modal"
       />
     </KeyboardAwareScreen>
   );

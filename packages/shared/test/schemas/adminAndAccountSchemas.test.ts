@@ -95,6 +95,7 @@ describe('administrative and account contracts', () => {
         isRegistrationOpen: true,
         maxUsers: null,
         autoManage: false,
+        allowNsfw: false,
         defaultTierId: null,
         currency: 'BRL',
         updatedAt: '2025-01-01',

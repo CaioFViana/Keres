@@ -12,7 +12,6 @@ import {
   showcaseDistPath as resolveShowcaseDistPath,
 } from './config/resourceRoot';
 import {
-  CLIENT_APP_ISOLATION_HEADERS,
   HOSTED_CLIENT_PATH_PREFIX,
   hostedClientRelativePath,
   isHostedClientPath,
@@ -26,9 +25,16 @@ import { sendStaticDelivery } from './services/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
 import { requestAudit } from './plugins/requestAudit';
+import { assertPendingSessionMayReach } from './services/ageVerification/pendingAccess';
 import { showcaseSettingsService } from './services/ShowcaseSettingsService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
+import {
+  applyAdminUiSecurityHeaders,
+  applyClientAppIsolationHeaders,
+} from './services/uiSecurityHeaders';
+import { isDatabaseConnectivityError } from './utils/databaseConnectivity';
+import type { JWTPayload } from './types/jwtPayload';
 
 /**
  * Co-hosting the admin panel: bringing the API up already serves the web app alongside it, in the
@@ -78,31 +84,6 @@ const landingFaviconPath = path.join(landingDistPath, 'favicon.ico');
 
 /** Fallback before an admin build exists — same PNG desktop uses, not copied into admin. */
 const desktopIconFilePath = desktopIconPath();
-
-/**
- * Headers for the co-hosted admin SPA and the public site (static assets + HTML fallback). Not applied to
- * `/api/admin/*`. `blob:` images are allowed because the public site draws a story's cover from a picture it fetched
- * with the viewer's own credentials (a protected or adults-only story answers only to them).
- */
-const ADMIN_UI_SECURITY_HEADERS: Record<string, string> = {
-  'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'no-referrer',
-  'X-Frame-Options': 'DENY',
-};
-
-function applyAdminUiSecurityHeaders(set: { headers: Record<string, string | number> }): void {
-  for (const [name, value] of Object.entries(ADMIN_UI_SECURITY_HEADERS)) {
-    set.headers[name] = value;
-  }
-}
-
-function applyClientAppIsolationHeaders(set: { headers: Record<string, string | number> }): void {
-  for (const [name, value] of Object.entries(CLIENT_APP_ISOLATION_HEADERS)) {
-    set.headers[name] = value;
-  }
-}
 
 /**
  * The admin panel: a file of its build, or - for a route of the panel that is not a file (say,
@@ -192,36 +173,9 @@ if (!clientUiAvailable) {
   );
 }
 
-/** pg/network error codes that mean "couldn't reach or lost the database", not an app bug. */
-const DB_CONNECTIVITY_ERROR_CODES = new Set([
-  'ECONNREFUSED',
-  'ENOTFOUND',
-  'ETIMEDOUT',
-  'EHOSTUNREACH',
-  'ENETUNREACH',
-  'EAI_AGAIN',
-  '57P03', // Postgres: cannot_connect_now
-]);
+export { isDatabaseConnectivityError };
 
-export function isDatabaseConnectivityError(error: unknown): boolean {
-  let current: unknown = error;
-  // drizzle/pg wrap the root network error in `.cause`, sometimes more than one layer deep.
-  for (let depth = 0; current && depth < 5; depth++) {
-    const code = (current as { code?: unknown }).code;
-    if (typeof code === 'string' && DB_CONNECTIVITY_ERROR_CODES.has(code)) {
-      return true;
-    }
-    current = (current as { cause?: unknown }).cause;
-  }
-  return false;
-}
-
-// Define a placeholder type for the JWT payload
-// In a real application, this would be derived from your User entity
-export interface JWTPayload {
-  userId: string;
-  username: string;
-}
+export type { JWTPayload };
 
 /** Creates the application without migrating the database, reconciling the admin or opening a port. */
 export async function createApp() {
@@ -237,6 +191,7 @@ export async function createApp() {
             // Define schema for JWT payload
             userId: t.String(),
             username: t.String(),
+            pending: t.Optional(t.Literal(true)),
           }),
         }),
       )
@@ -254,7 +209,7 @@ export async function createApp() {
           credentials: false,
         }),
       )
-      .derive(async ({ jwt, headers, cookie }) => {
+      .derive(async ({ jwt, headers, cookie, request }) => {
         // The showcase sends session and unlock comma-joined (`Bearer <s>, Showcase <u>`): only
         // the Bearer half is a session here, the Showcase half belongs to the public routes.
         const bearerHalf = headers['authorization']
@@ -280,12 +235,16 @@ export async function createApp() {
         // happened to carry a stale token; each route that actually requires auth already does
         // its own `if (!user) { 401 }` check right after this runs, so nothing is lost by
         // deferring the rejection to there instead.
+        let payload: JWTPayload | null;
         try {
-          const payload = await jwt.verify(token);
-          return { user: (payload || null) as JWTPayload | null };
+          payload = ((await jwt.verify(token)) || null) as JWTPayload | null;
         } catch {
           return { user: null };
         }
+        // A pending account's session reaches only the verification routes - refused here, before any route runs,
+        // with no database hit. Outside the try: the refusal is an answer, not an invalid token.
+        if (payload?.pending) assertPendingSessionMayReach(request);
+        return { user: payload };
       })
       // Who did what, for the administrators: after the session is known, before any route.
       .use(requestAudit)

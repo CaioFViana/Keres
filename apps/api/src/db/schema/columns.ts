@@ -118,6 +118,11 @@ export const unique = asPostgresCompatible<typeof pg.unique>(
   usingSqlite ? sqlite.unique : pg.unique,
 );
 
+/** A composite primary key, declared in the table's extra-config callback: `primaryKey({ columns: [...] })`. */
+export const primaryKey = asPostgresCompatible<typeof pg.primaryKey>(
+  usingSqlite ? sqlite.primaryKey : pg.primaryKey,
+);
+
 /**
  * One table under another name, so the same table can appear twice in a query.
  * `FriendshipService` uses it to join `users` with itself (who sent and who received).

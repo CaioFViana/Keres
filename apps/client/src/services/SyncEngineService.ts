@@ -10,6 +10,7 @@ import {
   isOfflineError,
   isProtocolMismatchError,
   isTransientServerError,
+  isVerificationPendingError,
 } from './apiClient';
 import type { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import type { ServerService } from './ServerService';
@@ -19,9 +20,10 @@ import { SyncScheduler, type SyncCycleOutcome } from './sync/SyncScheduler';
 import type { SyncContext } from './sync/SyncContext';
 import { SyncPull, type SyncPullRole } from './sync/SyncPull';
 import { SyncPullApply } from './sync/SyncPullApply';
-import { SyncPush } from './sync/SyncPush';
+import { SyncPush, type PushOutcomeReport } from './sync/SyncPush';
 import { SyncMedia } from './sync/SyncMedia';
 import type { SyncNotifier } from './sync/SyncNotifier';
+import { heldStorySaveReport } from './sync/heldStorySave';
 import { protectRemoteUpdate, throwIfSyncAborted } from './sync/syncPure';
 import { FAVORITE_TARGET_EVENTS } from './sync/syncEvents';
 
@@ -85,6 +87,8 @@ export class SyncEngineService {
   private pullApply: SyncPullApply;
   private contextTransition: Promise<void> = Promise.resolve();
   private pendingContextTransitions = 0;
+  /** What the server refused in the last push cycle; read only by a save made by hand (`syncStoryNow`). */
+  private lastPushReport: PushOutcomeReport = { conflicts: 0, refusals: [] };
   /**
    * Bindings captured at the start of an active cycle. Context switches after a
    * `stopAndWait` timeout must not redirect an in-flight cycle onto another story.
@@ -276,6 +280,28 @@ export class SyncEngineService {
     options?: { replaceOldCopy?: boolean },
   ): Promise<StoryUploadResult> {
     return this.dependencies.uploadNewStoryToServer(this._db, storyId, server, userId, options);
+  }
+
+  /**
+   * Runs a cycle for a save the person just made by hand, and reports what the server refused of it, so the save
+   * does not claim success over a change that never reached the server. Automatic cycles do not call this and stay
+   * quiet. Only the active story has a cycle to run: any other (unlinked, or not the one in use) reports nothing.
+   */
+  public async syncStoryNow(storyId: string): Promise<PushOutcomeReport> {
+    if (this.storyId !== storyId) return { conflicts: 0, refusals: [] };
+    // Cleared first: a report left by an earlier cycle must not answer for this save.
+    this.lastPushReport = { conflicts: 0, refusals: [] };
+    try {
+      await this.scheduler.runAndWait();
+    } catch (error) {
+      console.log(`Sync for story ${storyId} after a manual save failed:`, error);
+      return { conflicts: 0, refusals: [] };
+    }
+    if (this.storyId !== storyId) return { conflicts: 0, refusals: [] };
+    if (this.lastPushReport.conflicts > 0 || !this._db) return this.lastPushReport;
+    // Nothing refused in this push, but the save may have been held behind an open conflict of the story instead of
+    // being sent: that is not a success either (see `heldStorySaveReport`).
+    return heldStorySaveReport(this._db, storyId);
   }
 
   private get conflictService(): SyncConflictService {
@@ -544,6 +570,9 @@ export class SyncEngineService {
         if (isProtocolMismatchError(pullError)) {
           console.log(`Sync refused for story ${storyId}: the server needs a newer sync protocol.`);
           this.dependencies.notifier.protocolMismatch();
+        } else if (isVerificationPendingError(pullError)) {
+          // The app sends a pending account to its age check; that is not a sync failure to report.
+          console.log(`Pull held for story ${storyId}: the account awaits age verification.`);
         } else if (isTransientServerError(pullError)) {
           // Rate limited or restarting: the backoff retries, and there is nothing to tell the user.
           console.log(`Pull deferred for story ${storyId}: ${pullError?.message || pullError}`);
@@ -559,6 +588,7 @@ export class SyncEngineService {
       let pushFailed = false;
       try {
         await this.push.pushPendingOperations();
+        this.lastPushReport = this.push.lastOutcome;
       } catch (pushError: any) {
         if (isAbortError(pushError)) throw pushError;
         if (isOfflineError(pushError)) {
@@ -580,6 +610,8 @@ export class SyncEngineService {
         if (isProtocolMismatchError(pushError)) {
           console.log(`Push refused for story ${storyId}: the server needs a newer sync protocol.`);
           this.dependencies.notifier.protocolMismatch();
+        } else if (isVerificationPendingError(pushError)) {
+          console.log(`Push held for story ${storyId}: the account awaits age verification.`);
         } else if (isTransientServerError(pushError)) {
           // Rate limited or restarting: the operations stay queued and the backoff retries them.
           console.log(`Push deferred for story ${storyId}: ${pushError?.message || pushError}`);
@@ -625,6 +657,10 @@ export class SyncEngineService {
       if (isProtocolMismatchError(error)) {
         console.log(`Sync refused for story ${storyId}: the server needs a newer sync protocol.`);
         this.dependencies.notifier.protocolMismatch();
+        return 'failed';
+      }
+      if (isVerificationPendingError(error)) {
+        console.log(`Sync held for story ${storyId}: the account awaits age verification.`);
         return 'failed';
       }
       console.log('Error during sync operation:', error?.message || error);

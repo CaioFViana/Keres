@@ -1,6 +1,8 @@
 import type { ContactCreate } from '@keres/shared';
+import { and, eq, lt } from 'drizzle-orm';
 import { db } from '../db';
 import { messages } from '../db/schema';
+import { env } from '../config/env';
 import { newMessageId } from './MessageService';
 
 /**
@@ -23,6 +25,22 @@ export class ContactService {
       })
       .returning();
     return created;
+  }
+
+  /**
+   * Drops landing-page messages older than the retention: a visitor's address is kept only
+   * while the conversation may still be alive. Returns how many went.
+   */
+  async pruneSiteMessages(
+    now = new Date(),
+    days = env.CONTACT_MESSAGE_RETENTION_DAYS,
+  ): Promise<number> {
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60_000);
+    const dropped = await db
+      .delete(messages)
+      .where(and(eq(messages.channel, 'site'), lt(messages.createdAt, cutoff)))
+      .returning({ id: messages.id });
+    return dropped.length;
   }
 }
 

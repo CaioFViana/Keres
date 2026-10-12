@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AdminMessage, AdminMessageDetail, AdminMessageListQuery } from '@keres/shared';
 import { MESSAGE_BODY_MAX_LENGTH } from '@keres/shared/metadata/MessageLimits';
-import { parseNsfwReportBody } from '@keres/shared/utils/storyReport';
+import { REPORT_TYPES } from '@keres/shared/metadata/ReportTypes';
+import type { ReportType } from '@keres/shared/metadata/ReportTypes';
+import { parseReportBody } from '@keres/shared/utils/storyReport';
 import { announceMessagesChanged, MessagesApiService } from '../../api/MessagesApiService';
 import { Modal } from '../../components/Modal';
 import { Pagination } from '../../components/Pagination';
@@ -43,7 +45,7 @@ function Sender({ message }: { message: AdminMessage }) {
 
 function preview(message: AdminMessage): string {
   // A report's envelope is for the filter, not for reading: the list shows the reason.
-  const report = parseNsfwReportBody(message.body);
+  const report = parseReportBody(message.body);
   const text = report && !message.subject ? report.reason : (message.subject ?? message.body);
   return text.length > PREVIEW_LENGTH ? `${text.slice(0, PREVIEW_LENGTH)}…` : text;
 }
@@ -51,17 +53,37 @@ function preview(message: AdminMessage): string {
 /** A story report behind an admin message: badge with the reported story id, else nothing. */
 function ReportBadge({ body }: { body: string }) {
   const { t } = useTranslation('admin');
-  const report = parseNsfwReportBody(body);
+  const report = parseReportBody(body);
   if (!report) {
     return null;
   }
   return (
     <span
       className="status-badge accent"
-      title={t('messages.reportStoryId', { id: report.storyId })}
+      title={
+        report.targetKind === 'story'
+          ? t('messages.reportStoryId', { id: report.targetId })
+          : `${report.targetKind}: ${report.targetId}`
+      }
     >
-      {t('messages.reportBadge')}
+      {t('messages.reportBadge')} · {t(`messages.reportType.${report.type}`)}
     </span>
+  );
+}
+
+/** What a report points at: the story id for a story, else the kind of report and its target. */
+function ReportTarget({ body }: { body: string }) {
+  const { t } = useTranslation('admin');
+  const report = parseReportBody(body);
+  if (!report) {
+    return null;
+  }
+  return (
+    <p className="hint">
+      {report.targetKind === 'story'
+        ? t('messages.reportStoryId', { id: report.targetId })
+        : `${t(`messages.reportType.${report.type}`)} · ${report.targetKind}: ${report.targetId}`}
+    </p>
   );
 }
 
@@ -70,6 +92,7 @@ export function MessagesPage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [source, setSource] = useState<Source>('all');
+  const [reportType, setReportType] = useState<'all' | ReportType>('all');
   const [read, setRead] = useState<ReadFilter>('all');
   const [archived, setArchived] = useState<ArchiveFilter>('active');
   const [sort, setSort] = useState<Sort>('date');
@@ -99,6 +122,7 @@ export function MessagesPage() {
       MessagesApiService.list({
         search: search || undefined,
         source,
+        reportType: reportType === 'all' ? undefined : reportType,
         read,
         archived,
         sort,
@@ -106,7 +130,7 @@ export function MessagesPage() {
         page,
         pageSize: PAGE_SIZE,
       }),
-    [search, source, read, archived, sort, order, page],
+    [search, source, reportType, read, archived, sort, order, page],
   );
 
   const reload = () => {
@@ -227,11 +251,7 @@ export function MessagesPage() {
             {when(message.createdAt)}
             {message.isArchived ? ` · ${t('messages.archivedBadge')}` : ''}
           </p>
-          {parseNsfwReportBody(message.body) && (
-            <p className="hint">
-              {t('messages.reportStoryId', { id: parseNsfwReportBody(message.body)!.storyId })}
-            </p>
-          )}
+          <ReportTarget body={message.body} />
 
           {fromSite ? (
             <>
@@ -252,7 +272,7 @@ export function MessagesPage() {
                     {when(entry.createdAt)}
                   </div>
                   <p className="message-body">
-                    {parseNsfwReportBody(entry.body)?.reason ?? entry.body}
+                    {parseReportBody(entry.body)?.reason ?? entry.body}
                   </p>
                   {entry.fromAdmin && (
                     <button
@@ -356,6 +376,22 @@ export function MessagesPage() {
             ))}
           </select>
         </label>
+        {source === 'report' && (
+          <label>
+            {t('messages.filterReportType')}
+            <select
+              value={reportType}
+              onChange={(e) => filterChanged(setReportType)(e.target.value as 'all' | ReportType)}
+            >
+              <option value="all">{t('messages.reportType.all')}</option>
+              {REPORT_TYPES.map((value) => (
+                <option key={value} value={value}>
+                  {t(`messages.reportType.${value}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label>
           {t('messages.filterRead')}
           <select

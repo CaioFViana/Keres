@@ -15,6 +15,12 @@ export interface AdminUserInfo {
   isAdmin: boolean;
   /** Manual +18 verification, set by an administrator. Gates NSFW story access. */
   isAdultVerified: boolean;
+  /** Where the account stands in age verification: `pending` waits for the service, `rejected` may send again. */
+  verificationStatus: 'active' | 'pending' | 'rejected';
+  /** When the age-verification service approved the account; null when it never did. */
+  verifiedAt: Date | null;
+  /** How the approval was checked (the service's method name); null when there is none. */
+  verificationMethod: string | null;
   /** The plan an administrator assigned (or the one given at sign-up). A payment never changes it. */
   tierId: string | null;
   /**

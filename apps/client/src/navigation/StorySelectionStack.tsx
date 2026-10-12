@@ -29,6 +29,7 @@ import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen
 import ServerPaymentHistoryScreen from '../screens/enterstack/ServerPaymentHistoryScreen';
 import ServerPlanScreen from '../screens/enterstack/ServerPlanScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
+import ServerVerificationScreen from '../screens/enterstack/ServerVerificationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
@@ -51,6 +52,8 @@ export type ServerManagementStackParamList = {
   /** The same screen as the friendship stack's: opened from a server, back returns to the server. */
   Conversation: { serverId: string; peer: string; peerName?: string };
   ServerRegistration: { serverId?: string };
+  /** The age check of a pending account on this server; opened by registration or login, back returns to the server list. */
+  ServerVerification: { serverId: string };
   MyProfile: { serverId: string };
   ChangePassword: { serverId: string };
 };
@@ -180,6 +183,11 @@ const ServerManagementStackNavigator = () => {
         options={({ route }) => ({
           headerTitle: route.params?.serverId ? t('edit_server') : t('register_new_server'),
         })}
+      />
+      <ServerManagementStack.Screen
+        name="ServerVerification"
+        component={ServerVerificationScreen}
+        options={{ headerTitle: t('age_verification_title') }}
       />
       <ServerManagementStack.Screen
         name="MyProfile"

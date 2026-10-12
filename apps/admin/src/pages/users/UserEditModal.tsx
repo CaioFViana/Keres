@@ -1,13 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import type { Tier, UserTierSource } from '@keres/shared';
+import type { AdminUserInfo, Tier, UserTierSource } from '@keres/shared';
 import { slugifyUserTag } from '@keres/shared/utils/userTag';
 import { GiftPlanSection } from './GiftPlanSection';
 import { RecoveryCodesModal } from './RecoveryCodesModal';
 import { Modal } from '../../components/Modal';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
+
+/**
+ * What the age-verification service decided about the account. Read here, never set: an administrator can only
+ * revoke. Dates arrive as text over JSON, so they are formatted where they are shown.
+ */
+interface Verification {
+  isAdultVerified: boolean;
+  verificationStatus: AdminUserInfo['verificationStatus'] | undefined;
+  verifiedAt: AdminUserInfo['verifiedAt'] | undefined;
+  verificationMethod: AdminUserInfo['verificationMethod'] | undefined;
+}
+
+const verificationOf = (user: AdminUserInfo): Verification => ({
+  isAdultVerified: user.isAdultVerified,
+  verificationStatus: user.verificationStatus,
+  verifiedAt: user.verifiedAt,
+  verificationMethod: user.verificationMethod,
+});
 
 /**
  * Creating and editing an account happens in a dialog over the user list, so
@@ -22,7 +40,7 @@ export function UserEditModal({
   userId: string | null;
   onClose: () => void;
 }) {
-  const { t } = useTranslation('admin');
+  const { t, i18n } = useTranslation('admin');
   const isNew = userId === null;
 
   const [tiers, setTiers] = useState<Tier[]>([]);
@@ -31,7 +49,9 @@ export function UserEditModal({
   const [tag, setTag] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [initialIsAdmin, setInitialIsAdmin] = useState(false);
-  const [isAdultVerified, setIsAdultVerified] = useState(false);
+  // Null until the account is loaded, and for a new one (which has no verification yet).
+  const [verification, setVerification] = useState<Verification | null>(null);
+  const [revoking, setRevoking] = useState(false);
   const [tierId, setTierId] = useState<string>('');
   // The plan the person is on now, which is not the one assigned when they have paid for another.
   const [inUse, setInUse] = useState<{ tierId: string | null; source: UserTierSource } | null>(
@@ -66,7 +86,7 @@ export function UserEditModal({
         setTag(u.tag);
         setIsAdmin(u.isAdmin);
         setInitialIsAdmin(u.isAdmin);
-        setIsAdultVerified(u.isAdultVerified);
+        setVerification(verificationOf(u));
         setTierId(u.tierId ?? '');
         setInUse(u.tierSource ? { tierId: u.effectiveTierId ?? null, source: u.tierSource } : null);
         setBio(u.bio ?? '');
@@ -110,9 +130,9 @@ export function UserEditModal({
         setCreated({ id: createdUser.id, codes: createdUser.recoveryCodes });
         return;
       } else if (userId) {
+        // No verification field here: the age-verification service verifies, and the server refuses `true` by hand.
         await AdminUserApiService.update(userId, {
           isAdmin,
-          isAdultVerified,
           tierId: tierId || null,
           tag: tag || undefined,
           bio: bio || null,
@@ -125,6 +145,35 @@ export function UserEditModal({
       setSaving(false);
     }
   };
+
+  /** The one verification change an administrator can make. Revoking takes the account out of every +18 story. */
+  const onRevoke = async () => {
+    if (!userId || revoking) return;
+    if (!confirm(t('userForm.confirmRevoke', { username }))) return;
+    setRevoking(true);
+    setError(null);
+    try {
+      await AdminUserApiService.update(userId, { isAdultVerified: false });
+      setVerification((current) => current && { ...current, isAdultVerified: false });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('userForm.revokeFailed'));
+    } finally {
+      setRevoking(false);
+    }
+  };
+
+  const verifiedDate =
+    verification?.verifiedAt != null
+      ? new Date(verification.verifiedAt).toLocaleDateString(i18n.language)
+      : null;
+  const verifiedLine = verifiedDate
+    ? verification?.verificationMethod
+      ? t('userForm.verifiedWithMethod', {
+          method: verification.verificationMethod,
+          date: verifiedDate,
+        })
+      : t('userForm.verifiedOn', { date: verifiedDate })
+    : t('userForm.verifiedPlain');
 
   return (
     <Modal
@@ -202,15 +251,33 @@ export function UserEditModal({
               />
               {t('userForm.adminAccess')}
             </label>
-            <label className="checkbox-label switch">
-              <input
-                type="checkbox"
-                checked={isAdultVerified}
-                onChange={(e) => setIsAdultVerified(e.target.checked)}
-              />
-              {t('userForm.adultVerified')}
-            </label>
-            <p className="hint">{t('userForm.adultVerifiedHint')}</p>
+            {!isNew && verification && (
+              <div className="verification-card" data-testid="verification">
+                <p>
+                  <strong>{t('userForm.verificationTitle')}</strong>{' '}
+                  {verification.verificationStatus === 'pending' && (
+                    <span className="status-badge">{t('users.standingPending')}</span>
+                  )}
+                  {verification.verificationStatus === 'rejected' && (
+                    <span className="status-badge">{t('users.standingRejected')}</span>
+                  )}
+                </p>
+                <p data-testid="verification-state">
+                  {verification.isAdultVerified ? verifiedLine : t('userForm.notVerified')}
+                </p>
+                {verification.isAdultVerified && (
+                  <button
+                    type="button"
+                    className="button-danger"
+                    disabled={revoking || saving}
+                    onClick={() => void onRevoke()}
+                  >
+                    {revoking ? t('userForm.revoking') : t('userForm.revoke')}
+                  </button>
+                )}
+                <p className="hint">{t('userForm.verificationSource')}</p>
+              </div>
+            )}
             {error && <p className="error-text">{error}</p>}
             <div className="form-actions">
               <button type="submit" disabled={saving}>

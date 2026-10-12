@@ -22,6 +22,7 @@ import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler
 import { storyPermissionService } from '../StoryPermissionService';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
 import { readPushEnvelope, writtenPayload } from './pushEnvelope';
+import { storyNsfwRefusal } from './storyNsfwGuard';
 import { refuseTwin } from './pushTwins';
 import { movesArrangedRows, normalizeArrangedUpdate, renumberArranged } from './arrangedRanks';
 import { assertGalleryStorageQuota } from './pushGalleryQuota';
@@ -186,6 +187,12 @@ export class SyncPushService {
           'unauthorized',
           `Reader access does not permit changes to ${update.entity}.`,
         );
+        continue;
+      }
+
+      const nsfwRefusal = await storyNsfwRefusal(update, userId);
+      if (nsfwRefusal) {
+        recordConflict('unauthorized', nsfwRefusal);
         continue;
       }
 

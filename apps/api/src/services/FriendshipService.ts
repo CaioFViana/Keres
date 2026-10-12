@@ -9,6 +9,7 @@ import { users } from '../db/schema/tables/users';
 import { lockUserPair } from '../db/sqlOperators';
 import { AppError } from '../utils/errors';
 import { storyPermissionService } from './StoryPermissionService';
+import { ACTIVE_ACCOUNT } from './UserService';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 
 export class FriendshipService {
@@ -39,9 +40,10 @@ export class FriendshipService {
     );
     this.notifyChanged(userId, ...affectedUserIds);
   }
+  /** A pending or refused account is not a person one can befriend: it answers as a missing one. */
   private async checkUserExistence(userId: string): Promise<void> {
     const userExists = await db.query.users.findFirst({
-      where: eq(users.id, userId),
+      where: and(eq(users.id, userId), ACTIVE_ACCOUNT),
     });
     if (!userExists) {
       throw new AppError(404, `User with ID ${userId} not found.`);

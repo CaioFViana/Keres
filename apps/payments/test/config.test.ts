@@ -155,7 +155,7 @@ describe('configuration that loads but is half set', () => {
       problems({
         ...play,
         PLAY_NOTIFICATION_SECRET: 'push-secret-0123456789abcdef-0000',
-        PLAY_PACKAGE_NAME: 'me.keres.app',
+        PLAY_PACKAGE_NAME: 'me.keres.client',
       }).warnings,
     ).toEqual([]);
   });
@@ -170,7 +170,7 @@ describe('configuration that loads but is half set', () => {
     expect(
       problems({
         ...play,
-        PLAY_PACKAGE_NAME: 'me.keres.app',
+        PLAY_PACKAGE_NAME: 'me.keres.client',
         PLAY_ACCEPT_TEST_PURCHASES: 'true',
       }).warnings.join(' '),
     ).toContain('PLAY_ACCEPT_TEST_PURCHASES');

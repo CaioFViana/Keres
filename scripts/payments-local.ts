@@ -303,7 +303,7 @@ const store = await call('POST', `${API}/api/payments/play/verify`, {
     interval: 'monthly',
     productId: 'pro_monthly',
     purchaseToken: 'local-token-1',
-    packageName: 'me.keres.app',
+    packageName: 'me.keres.client',
   },
 });
 check(
@@ -327,7 +327,7 @@ const notice = {
     messageId: 'local-1',
     data: Buffer.from(
       JSON.stringify({
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         eventTimeMillis: String(Date.now()),
         subscriptionNotification: {
           notificationType: 3,

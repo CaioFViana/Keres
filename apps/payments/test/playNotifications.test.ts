@@ -28,7 +28,7 @@ const subscriptionNotice = (notificationType: number, messageId?: string) =>
   push(
     {
       version: '1.0',
-      packageName: 'me.keres.app',
+      packageName: 'me.keres.client',
       eventTimeMillis: String(EVENT_TIME),
       subscriptionNotification: {
         version: '1.0',
@@ -67,7 +67,7 @@ describe('Play: what Google charges per period', () => {
     const verification = await verifyPlayPurchase(
       live,
       {
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         productId: 'plus_monthly',
         purchaseToken: 'token-abc',
         purchaseKind: 'subscription',
@@ -99,7 +99,7 @@ describe('Play real-time notifications', () => {
 
   it('also reads a notification from before Google dropped the product id from it', async () => {
     const legacy = push({
-      packageName: 'me.keres.app',
+      packageName: 'me.keres.client',
       eventTimeMillis: String(EVENT_TIME),
       subscriptionNotification: {
         version: '1.0',
@@ -198,7 +198,7 @@ describe('Play real-time notifications', () => {
     expect(
       await playNotificationEvents(
         live,
-        push({ packageName: 'me.keres.app', testNotification: {} }),
+        push({ packageName: 'me.keres.client', testNotification: {} }),
         never,
       ),
     ).toEqual([]);

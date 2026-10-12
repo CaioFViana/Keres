@@ -260,7 +260,7 @@ describe('Play: whose purchase counts', () => {
     ...extra,
   });
   const lookup = {
-    packageName: 'me.keres.app',
+    packageName: 'me.keres.client',
     productId: 'plus_monthly',
     purchaseToken: 'token-abc',
     purchaseKind: 'subscription' as const,
@@ -294,7 +294,7 @@ describe('Play: whose purchase counts', () => {
     const calls: string[] = [];
 
     const verification = await verifyPlayPurchase(
-      live({ packageName: 'me.keres.app' }),
+      live({ packageName: 'me.keres.client' }),
       { ...lookup, packageName: 'com.other.app' },
       google(active, calls),
     );
@@ -312,7 +312,7 @@ describe('Play: stopping a store subscription from here', () => {
       private_key: privateKey.export({ type: 'pkcs8', format: 'pem' }),
     }),
     mock: false,
-    packageName: 'me.keres.app',
+    packageName: 'me.keres.client',
     ...extra,
   });
   function google(
@@ -341,7 +341,7 @@ describe('Play: stopping a store subscription from here', () => {
     const cancel = calls.at(-1)!;
     expect(cancel.method).toBe('POST');
     expect(cancel.url).toBe(
-      'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/me.keres.app/purchases/subscriptionsv2/tokens/token%2Fabc:cancel',
+      'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/me.keres.client/purchases/subscriptionsv2/tokens/token%2Fabc:cancel',
     );
     expect(JSON.parse(cancel.body as string)).toEqual({
       cancellationContext: { cancellationType: 'USER_REQUESTED_STOP_RENEWALS' },
@@ -442,13 +442,13 @@ describe('Play: stopping a store subscription from here', () => {
       expect(
         await info({ PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000' }),
       ).not.toContain('cancel');
-      expect(await info({ ...playEnv, PLAY_PACKAGE_NAME: 'me.keres.app' })).toContain('cancel');
+      expect(await info({ ...playEnv, PLAY_PACKAGE_NAME: 'me.keres.client' })).toContain('cancel');
       expect(await info(playEnv)).toContain('cancel');
     });
 
     it('sends a reference no provider owns to the store, and refuses it (400) when the package is not set', async () => {
       const withPackage = createApp(
-        createState(loadConfig(env({ ...playEnv, PLAY_PACKAGE_NAME: 'me.keres.app' })), {
+        createState(loadConfig(env({ ...playEnv, PLAY_PACKAGE_NAME: 'me.keres.client' })), {
           providers: [],
         }),
       );

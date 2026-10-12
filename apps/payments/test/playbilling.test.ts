@@ -20,7 +20,7 @@ describe('Play Billing verification', () => {
       { serviceAccountJson: '', mock: true },
       {
         userId: 'user-1',
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         productId: 'plus_monthly',
         purchaseToken: 'token-abc',
         purchaseKind: 'subscription',
@@ -47,7 +47,7 @@ describe('Play Billing verification', () => {
       { serviceAccountJson: serviceAccount, mock: false },
       {
         userId: 'user-1',
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         productId: 'plus_monthly',
         purchaseToken: 'token-abc',
         purchaseKind: 'inapp',
@@ -75,7 +75,7 @@ describe('Play Billing verification', () => {
       }) as typeof fetch;
     const request = {
       userId: 'user-1',
-      packageName: 'me.keres.app',
+      packageName: 'me.keres.client',
       productId: 'plus_monthly',
       purchaseToken: 'token-abc',
       purchaseKind: 'subscription' as const,
@@ -114,7 +114,7 @@ describe('Play Billing verification', () => {
       }) as typeof fetch;
     const request = {
       userId: 'user-1',
-      packageName: 'me.keres.app',
+      packageName: 'me.keres.client',
       productId: 'plus_monthly',
       purchaseToken: 'token-abc',
       purchaseKind: 'subscription' as const,
@@ -155,7 +155,7 @@ describe('Play Billing verification', () => {
     await verifyPlayPurchase(
       { serviceAccountJson: serviceAccount, mock: false },
       {
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         productId: 'plus_monthly',
         purchaseToken: 'token/abc',
         purchaseKind: 'subscription',
@@ -164,7 +164,7 @@ describe('Play Billing verification', () => {
     );
 
     expect(calls.at(-1)).toBe(
-      'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/me.keres.app/purchases/subscriptionsv2/tokens/token%2Fabc',
+      'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/me.keres.client/purchases/subscriptionsv2/tokens/token%2Fabc',
     );
   });
 
@@ -180,7 +180,7 @@ describe('Play Billing verification', () => {
               }),
             )) as typeof fetch;
     const lookup = {
-      packageName: 'me.keres.app',
+      packageName: 'me.keres.client',
       productId: 'plus_monthly',
       purchaseToken: 'token-abc',
       purchaseKind: 'subscription' as const,
@@ -210,7 +210,7 @@ describe('Play Billing verification', () => {
     const verification = await verifyPlayPurchase(
       { serviceAccountJson: serviceAccount, mock: false },
       {
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         productId: 'plus_monthly',
         purchaseToken: 'token-abc',
         purchaseKind: 'subscription',
@@ -233,7 +233,7 @@ describe('Play Billing verification', () => {
       { serviceAccountJson: serviceAccount, mock: false },
       {
         userId: 'user-1',
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         productId: 'plus_monthly',
         purchaseToken: 'token-gone',
         purchaseKind: 'inapp',
@@ -250,7 +250,7 @@ describe('Play Billing verification', () => {
     const event = playSucceededEvent(
       {
         userId: 'user-1',
-        packageName: 'me.keres.app',
+        packageName: 'me.keres.client',
         productId: 'plus_monthly',
         purchaseToken: 'token-abc',
         purchaseKind: 'subscription',

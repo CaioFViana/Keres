@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { accessRecords, auditEvents } from '../../src/db/schema';
 import { accessRecordService } from '../../src/services/AccessRecordService';
+import { drainBackground } from '../../src/utils/backgroundWork';
 import { getApp, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 
@@ -445,6 +446,16 @@ describe('the administrators read them', () => {
     expect(lines[0]).toBe('time,event,account,account_id,username_tried,ip');
     expect(lines).toHaveLength(2);
     expect(lines[1]).toContain(ADDRESS);
+  });
+
+  it('does not count a page of the admin panel as reading the records', async () => {
+    // The panel's own page lives at the same path the audit rule is written for (`/admin/access-records`).
+    const app = await getApp();
+    const page = await app.handle(new Request('http://localhost/admin/access-records'));
+    await drainBackground(5000);
+
+    expect(page.status).toBeLessThan(500);
+    expect(await activityOf('admin.access_records_viewed')).toEqual([]);
   });
 
   it('puts the reading on the activity record with the filters used, never the results or the address', async () => {

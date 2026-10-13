@@ -28,7 +28,9 @@ import { useAgeVerificationInfo } from '../../hooks/useAgeVerificationInfo';
 import { formatDateTime } from '../../utils/formatDateTime';
 import { usePaymentOverview } from '../../hooks/usePaymentOverview';
 import { useServerDeletion } from '../../hooks/useServerDeletion';
+import { useLiveLegalText } from '../../hooks/useLiveLegalText';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
+import { useStableServer } from '../../hooks/useStableServer';
 import { useServerTagEditor } from '../../hooks/useServerTagEditor';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
@@ -80,6 +82,26 @@ const ServerDetailScreen = () => {
   const [serverService] = useState(() => createServerService(drizzleDb));
   const { servers, loading, error, updateTag } = useServerStatuses(serverId);
   const server = servers[0];
+  // What the network hooks and effects below depend on: it changes when the server does, not on every re-read.
+  const stableServer = useStableServer(server);
+  const [termsVisible, setTermsVisible] = useState(false);
+  const [privacyVisible, setPrivacyVisible] = useState(false);
+  // The saved texts keep the language of the day they were saved: while one is open, the same version is read again
+  // in the language the app has now.
+  const liveTerms = useLiveLegalText(
+    'tos',
+    server?.url,
+    server?.tosVersion,
+    i18n.language,
+    termsVisible,
+  );
+  const livePrivacy = useLiveLegalText(
+    'privacy',
+    server?.url,
+    server?.privacyVersion,
+    i18n.language,
+    privacyVisible,
+  );
   const [profile, setProfile] = useState<OwnProfile | null>(null);
 
   useScreenHeader({ target: 'parent', title: server?.name ?? t('server_detail_title') });
@@ -87,8 +109,6 @@ const ServerDetailScreen = () => {
   const tagEditor = useServerTagEditor(server, serverService, updateTag);
   const deleteServer = useServerDeletion(serverService, () => navigation.goBack());
 
-  const [termsVisible, setTermsVisible] = useState(false);
-  const [privacyVisible, setPrivacyVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deleteWorking, setDeleteWorking] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -155,10 +175,10 @@ const ServerDetailScreen = () => {
   // generated one stands in until then (and when it never does).
   const online = server?.pingStatus === 'online';
   useEffect(() => {
-    if (!server || !online || profile) return;
+    if (!stableServer || !online || profile) return;
     let cancelled = false;
     userApiService
-      .getOwnProfile(server)
+      .getOwnProfile(stableServer)
       .then((own) => {
         if (!cancelled && own) setProfile(own);
       })
@@ -168,16 +188,16 @@ const ServerDetailScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, [server, online, profile]);
+  }, [stableServer, online, profile]);
 
   // The documents move under the account: when the server serves a newer text than the account
   // accepted (or the account predates acceptance records entirely), the fresh text is fetched
   // and the update row below asks for agreement. Offline or predated servers simply skip this.
   useEffect(() => {
-    if (!server || !online || legalUpdate || acceptWorking) return;
+    if (!stableServer || !online || legalUpdate || acceptWorking) return;
     let cancelled = false;
     void (async () => {
-      const status = await fetchLegalStatus(server);
+      const status = await fetchLegalStatus(stableServer);
       if (cancelled || !status) return;
       const laggingKind =
         status.tos.accepted === null || status.tos.accepted < status.tos.current
@@ -185,18 +205,41 @@ const ServerDetailScreen = () => {
           : status.privacy.accepted === null || status.privacy.accepted < status.privacy.current
             ? ('privacy' as const)
             : null;
-      if (!laggingKind) return;
+      if (!laggingKind) {
+        // Signing in to an account made elsewhere never went through this device's terms and privacy steps, so the
+        // texts were never kept here and the rows below would not exist. The account is up to date with the current
+        // texts (that is what "not lagging" says), so these are the ones it accepted: keep them to read offline.
+        const patch: Record<string, string> = {};
+        if (!stableServer.tosText) {
+          const terms = await fetchServerTerms(stableServer.url, i18n.language);
+          if (terms)
+            Object.assign(patch, { tosText: terms.text, tosVersion: String(terms.version) });
+        }
+        if (!stableServer.privacyText) {
+          const privacy = await fetchServerPrivacy(stableServer.url, i18n.language);
+          if (privacy) {
+            Object.assign(patch, {
+              privacyText: privacy.text,
+              privacyVersion: String(privacy.version),
+            });
+          }
+        }
+        if (!cancelled && Object.keys(patch).length > 0) {
+          await serverService.updateServer(stableServer.id, patch);
+        }
+        return;
+      }
       const fresh =
         laggingKind === 'tos'
-          ? await fetchServerTerms(server.url, i18n.language)
-          : await fetchServerPrivacy(server.url, i18n.language);
+          ? await fetchServerTerms(stableServer.url, i18n.language)
+          : await fetchServerPrivacy(stableServer.url, i18n.language);
       if (cancelled || !fresh) return;
       setLegalUpdate({ kind: laggingKind, ...fresh });
     })();
     return () => {
       cancelled = true;
     };
-  }, [server, online, legalUpdate, acceptWorking, i18n.language]);
+  }, [stableServer, online, legalUpdate, acceptWorking, i18n.language]);
 
   // Accepting records server-side first: only then is the local copy worth updating.
   const handleAcceptLegalUpdate = async () => {
@@ -230,15 +273,15 @@ const ServerDetailScreen = () => {
 
   // Plans and payment appear only while the server answers and only if it sells plans: a user working offline,
   // or on a server with no payment plugin, is never shown (or asked for) anything about payment.
-  const { overview: payments } = usePaymentOverview(server, online);
+  const { overview: payments } = usePaymentOverview(stableServer, online);
   // The plan the person has - the free one included - and what it comes with, whether or not the server sells any.
-  const { plan } = useAccountPlan(server, online);
+  const { plan } = useAccountPlan(stableServer, online);
   // Whether this server checks ages, said in one line while it answers. A server with no check must never look verified.
   const ageInfo = useAgeVerificationInfo(online ? server?.url : undefined, online);
   // An account still waiting for (or refused in) its age check is sent back to it from here. Asked again when the
   // screen comes back to the front, because the approval may have happened on the verification screen.
   const focused = useIsFocused();
-  const verificationNotice = useAccountVerificationNotice(server, online && focused);
+  const verificationNotice = useAccountVerificationNotice(stableServer, online && focused);
 
   const hasUnseenAdminMessage = useIsConversationUnseen(adminConversationKey(serverId));
 
@@ -247,6 +290,19 @@ const ServerDetailScreen = () => {
   };
 
   const styles = useThemedStyles(createStyles);
+
+  /** "Terms v3 · 13/10/2026": the day the account accepted it, else the day the text is dated, else just the version. */
+  const legalSubtitle = (
+    key: 'server_terms_version' | 'server_privacy_version',
+    version: string | null | undefined,
+    acceptedAt: Date | null | undefined,
+    dated: string | undefined,
+  ) => {
+    const date = acceptedAt != null ? formatDateTime(acceptedAt, i18n.language) : (dated ?? '');
+    return date
+      ? t(key, { version: version ?? '', date })
+      : t(`${key}_plain`, { version: version ?? '' });
+  };
 
   if (loading && !server) {
     return <ScreenLoading message={t('loading_servers')} />;
@@ -478,14 +534,17 @@ const ServerDetailScreen = () => {
         <TermsModal
           visible={termsVisible}
           title={t('server_terms_title')}
-          subtitle={t('server_terms_version', {
-            version: server.tosVersion ?? '',
-            date:
-              server.tosAcceptedAt != null
-                ? formatDateTime(server.tosAcceptedAt, i18n.language)
-                : '',
-          })}
-          sections={[{ heading: t('server_terms_title'), paragraphs: [server.tosText] }]}
+          subtitle={legalSubtitle(
+            'server_terms_version',
+            server.tosVersion,
+            server.tosAcceptedAt,
+            liveTerms?.updatedAt,
+          )}
+          sections={
+            liveTerms?.sections ?? [
+              { heading: t('server_terms_title'), paragraphs: [server.tosText] },
+            ]
+          }
           mode="read"
           onClose={() => setTermsVisible(false)}
           testID="server-terms-modal"
@@ -515,14 +574,17 @@ const ServerDetailScreen = () => {
         <TermsModal
           visible={privacyVisible}
           title={t('server_privacy_title')}
-          subtitle={t('server_privacy_version', {
-            version: server.privacyVersion ?? '',
-            date:
-              server.privacyAcceptedAt != null
-                ? formatDateTime(server.privacyAcceptedAt, i18n.language)
-                : '',
-          })}
-          sections={[{ heading: t('server_privacy_title'), paragraphs: [server.privacyText] }]}
+          subtitle={legalSubtitle(
+            'server_privacy_version',
+            server.privacyVersion,
+            server.privacyAcceptedAt,
+            livePrivacy?.updatedAt,
+          )}
+          sections={
+            livePrivacy?.sections ?? [
+              { heading: t('server_privacy_title'), paragraphs: [server.privacyText] },
+            ]
+          }
           mode="read"
           onClose={() => setPrivacyVisible(false)}
           testID="server-privacy-modal"

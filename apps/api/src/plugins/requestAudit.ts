@@ -192,6 +192,9 @@ export const requestAudit = new Elysia({ name: 'request-audit' })
   })
   .onAfterResponse({ as: 'global' }, (context) => {
     const { request, set, path } = context;
+    // Only the API is audited. The rules are written without the `/api` prefix, so a page of the admin panel or of the
+    // app that shares a path with a route (`/admin/access-records`) would otherwise count as that route being used.
+    if (!path.startsWith('/api/')) return;
     const user = (context as unknown as { user?: JWTPayload | null }).user ?? null;
     const body = (context as unknown as { body?: unknown }).body;
     const query = (context as unknown as { query?: unknown }).query;

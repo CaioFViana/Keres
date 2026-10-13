@@ -119,7 +119,11 @@ const envSchema = z.object({
    * every backup so that restoring a dump cannot bring an erased account back (see `ErasureLedger`). Unset: no
    * ledger. The deploy compose sets it on its own volume, which the backup service never mounts.
    */
-  ERASURE_LEDGER_PATH: z.string().trim().min(1).optional(),
+  ERASURE_LEDGER_PATH: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined),
   /**
    * How many days the ledger keeps its lines. It must outlive the oldest backup (93 days: 30 daily + 3 monthly),
    * or a restored copy could bring back an account the ledger has already forgotten.

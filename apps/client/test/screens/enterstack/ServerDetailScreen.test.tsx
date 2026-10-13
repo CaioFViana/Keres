@@ -283,7 +283,71 @@ describe('ServerDetailScreen', () => {
 
     await fireEvent.press(view.getByTestId('server-action-terms'));
     await view.findByTestId('server-terms-modal-scroll');
-    expect(mockApiGet).toHaveBeenCalledTimes(1);
+    // The saved copy is what shows, at once; a server that does not answer the re-read changes nothing.
+    expect(view.getByText(/Be kind/)).toBeTruthy();
+  });
+
+  it('shows the same version in the language the app has now, when the server answers', async () => {
+    mockGetAllServers.mockResolvedValue([
+      {
+        ...server,
+        tosText: 'Rules\nBe kind.',
+        tosVersion: '3',
+        tosAcceptedAt: new Date('2026-10-01T10:00:00.000Z'),
+      },
+    ]);
+    mockApiGet.mockImplementation(async (url: unknown) =>
+      String(url).endsWith('/keres-tos')
+        ? {
+            status: 200,
+            data: {
+              version: 3,
+              updatedAt: '2026-10-13',
+              en: [{ heading: 'Rules', paragraphs: ['Worded for today.'] }],
+            },
+          }
+        : { status: 200, data: { version: '1.2.3' } },
+    );
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-terms'));
+
+    expect(await view.findByText(/Worded for today/)).toBeTruthy();
+  });
+
+  it('ignores a newer version when reading: that is for the agreement flow, not for reading', async () => {
+    mockGetAllServers.mockResolvedValue([
+      {
+        ...server,
+        tosText: 'Rules\nBe kind.',
+        tosVersion: '3',
+        tosAcceptedAt: new Date('2026-10-01T10:00:00.000Z'),
+      },
+    ]);
+    mockApiGet.mockImplementation(async (url: unknown) =>
+      String(url).endsWith('/keres-tos')
+        ? {
+            status: 200,
+            data: {
+              version: 4,
+              updatedAt: '2026-10-20',
+              en: [{ heading: 'Rules', paragraphs: ['Brand new rules.'] }],
+            },
+          }
+        : { status: 200, data: { version: '1.2.3' } },
+    );
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-terms'));
+    await view.findByTestId('server-terms-modal-scroll');
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(view.queryByText(/Brand new rules/)).toBeNull();
+    expect(view.getByText(/Be kind/)).toBeTruthy();
   });
 
   it('hides the terms row when no copy was ever agreed to', async () => {
@@ -307,7 +371,7 @@ describe('ServerDetailScreen', () => {
 
     await fireEvent.press(view.getByTestId('server-action-privacy'));
     await view.findByTestId('server-privacy-modal-scroll');
-    expect(mockApiGet).toHaveBeenCalledTimes(1);
+    expect(view.getByText(/We keep little/)).toBeTruthy();
   });
 
   it("titles the privacy copy's header as privacy, not as terms, with its own version", async () => {
@@ -335,6 +399,37 @@ describe('ServerDetailScreen', () => {
 
     expect(view.queryByTestId('server-action-privacy')).toBeNull();
     expect(view.queryByTestId('server-action-legal-update')).toBeNull();
+  });
+
+  it('keeps the server texts on this device when the account came from elsewhere and is up to date', async () => {
+    mockAuthedGet.mockImplementation(async () => ({
+      status: 200,
+      data: { tos: { accepted: 3, current: 3 }, privacy: { accepted: 3, current: 3 } },
+    }));
+    mockApiGet.mockImplementation(async (url: unknown) =>
+      String(url).endsWith('/keres-tos') || String(url).endsWith('/keres-privacy')
+        ? {
+            status: 200,
+            data: {
+              version: 3,
+              updatedAt: '2026-10-13',
+              en: [{ heading: 'H', paragraphs: ['Body.'] }],
+            },
+          }
+        : { status: 200, data: { version: '1.2.3' } },
+    );
+    await render(<ServerDetailScreen />);
+
+    await waitFor(() => expect(mockUpdateServer).toHaveBeenCalled());
+    expect(mockUpdateServer).toHaveBeenCalledWith(
+      'srv-1',
+      expect.objectContaining({
+        tosText: expect.stringContaining('Body.'),
+        tosVersion: '3',
+        privacyText: expect.stringContaining('Body.'),
+        privacyVersion: '3',
+      }),
+    );
   });
 
   describe('legal updates', () => {

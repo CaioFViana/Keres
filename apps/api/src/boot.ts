@@ -5,6 +5,7 @@ import { clientDistPath } from './config/resourceRoot';
 import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
 import { pruneAttemptLimits } from './services/AttemptLimitService';
+import { accessRecordService } from './services/AccessRecordService';
 import { auditService } from './services/AuditService';
 import { contactService } from './services/ContactService';
 import { ageVerificationService } from './services/ageVerification/AgeVerificationService';
@@ -137,6 +138,35 @@ function startAuditRetentionScheduler(): () => void {
     );
   };
   const first = setTimeout(prune, 30_000);
+  const every = setInterval(prune, 24 * 60 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
+}
+
+/**
+ * Drops the access records past their retention (six months by default, Marco Civil art. 15): once at start and
+ * daily after, like the activity record. Best-effort - a failed run only leaves old records for the next one.
+ */
+function startAccessRecordPruneScheduler(): () => void {
+  const prune = () => {
+    trackBackground(
+      accessRecordService
+        .pruneExpired()
+        .then((removed) => {
+          if (removed > 0) {
+            logger.info(
+              `Access records: dropped ${removed} record(s) older than ${env.ACCESS_RECORD_RETENTION_DAYS} days.`,
+            );
+          }
+        })
+        .catch((error: unknown) => {
+          logger.error('Access record retention failed', error);
+        }),
+    );
+  };
+  const first = setTimeout(prune, 35_000);
   const every = setInterval(prune, 24 * 60 * 60_000);
   return () => {
     clearTimeout(first);
@@ -319,6 +349,7 @@ export async function bootAndListen(options?: {
     startPaymentsScheduler(),
     startMediaBlobSweepScheduler(),
     startAuditRetentionScheduler(),
+    startAccessRecordPruneScheduler(),
     startAttemptLimitPruneScheduler(),
     startContactMessagePruneScheduler(),
     startDeletedAccountPruneScheduler(),

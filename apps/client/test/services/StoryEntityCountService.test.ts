@@ -3,7 +3,7 @@
  */
 import {
   getTierCountedEntityTypes,
-  getTierRelationalEntityTypes,
+  getTierFreeEntityTypes,
   TIER_EXEMPT_ENTITY_TYPES,
 } from '@keres/shared';
 import { getTableColumns } from 'drizzle-orm';
@@ -40,7 +40,8 @@ describe('what the count covers', () => {
   it('names only types the local database can count, and never the exempt ones', () => {
     const counted = getTierCountedEntityTypes();
 
-    expect(counted.length).toBeGreaterThan(20);
+    // Nineteen, named in the shared test: a change to what the plan counts is made there on purpose.
+    expect(counted).toHaveLength(19);
     for (const type of counted) {
       const columns = Object.keys(getTableColumns(getEntityTable(type) as never));
       expect([type, columns.includes('storyId'), columns.includes('isDeleted')]).toEqual([
@@ -58,10 +59,10 @@ describe('what the count covers', () => {
 
 describe('what the second count covers', () => {
   it('names only types the local database can count, apart from the ones the plan counts', () => {
-    const relational = getTierRelationalEntityTypes();
+    const free = getTierFreeEntityTypes();
 
-    expect(relational.length).toBeGreaterThan(5);
-    for (const type of relational) {
+    expect(free).toHaveLength(22);
+    for (const type of free) {
       const columns = Object.keys(getTableColumns(getEntityTable(type) as never));
       expect([type, columns.includes('storyId'), columns.includes('isDeleted')]).toEqual([
         type,
@@ -70,6 +71,8 @@ describe('what the second count covers', () => {
       ]);
       expect(getTierCountedEntityTypes()).not.toContain(type);
     }
+    // The parts and the media files are shown here, not counted: the same rule the server applies.
+    expect(free).toEqual(expect.arrayContaining(['ScenePage', 'Effect', 'Gallery', 'TagRelation']));
   });
 });
 
@@ -108,7 +111,7 @@ describe('createStoryEntityCountService', () => {
   });
 });
 
-describe('countRelationsForStory', () => {
+describe('countFreeForStory', () => {
   const insertTagRelation = (
     id: string,
     over: Partial<typeof schema.tagRelations.$inferInsert> = {},
@@ -145,9 +148,35 @@ describe('countRelationsForStory', () => {
       total: 2,
       byType: { Character: 1, Tag: 1 },
     });
-    expect(await service.countRelationsForStory(TEST_STORY_ID)).toEqual({
+    expect(await service.countFreeForStory(TEST_STORY_ID)).toEqual({
       total: 2,
       byType: { TagRelation: 2 },
+    });
+  });
+
+  it('counts a media file apart: its bytes have their own quota, so the plan does not count the file', async () => {
+    await database.db.insert(schema.galleries).values({
+      id: 'gallery-1',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'map.png',
+      hash: 'a'.repeat(32),
+      sizeBytes: 10,
+      isFavorite: false,
+      ...entityBase,
+      deletedAt: null,
+    } as typeof schema.galleries.$inferInsert);
+    const service = createStoryEntityCountService(database.db);
+
+    // The tag seeded for this describe is counted; the media file is not.
+    expect(await service.countForStory(TEST_STORY_ID)).toEqual({
+      total: 1,
+      byType: { Tag: 1 },
+    });
+    expect(await service.countFreeForStory(TEST_STORY_ID)).toEqual({
+      total: 1,
+      byType: { Gallery: 1 },
     });
   });
 
@@ -158,11 +187,11 @@ describe('countRelationsForStory', () => {
     await insertTagRelation('rel-elsewhere', { storyId: 'other-story' });
     const service = createStoryEntityCountService(database.db);
 
-    expect(await service.countRelationsForStory(TEST_STORY_ID)).toEqual({
+    expect(await service.countFreeForStory(TEST_STORY_ID)).toEqual({
       total: 1,
       byType: { TagRelation: 1 },
     });
-    expect(await service.countRelationsForStory('story-with-nothing')).toEqual({
+    expect(await service.countFreeForStory('story-with-nothing')).toEqual({
       total: 0,
       byType: {},
     });

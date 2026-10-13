@@ -3,6 +3,7 @@ import { and, count, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import {
+  comments,
   galleries,
   mediaBlobs,
   publicationLog,
@@ -175,8 +176,8 @@ export class TierEnforcementService {
 
   /**
    * The live entities of these stories as the plan's entity ceilings count them. The rule is shared
-   * with the client, which reports the same count: the shared counted-types rule leaves out the Story, favorites and
-   * comments, and the rows that only link or fill in other entities (relations, custom field values).
+   * with the client, which reports the same count (`getTierCountedEntityTypes`): the Story, favorites and
+   * comments are left out, and so are the links, values, parts and media files that no plan counts.
    */
   private async countEntities(storyIds: string[]): Promise<number> {
     const counted = new Set<string>(getTierCountedEntityTypes());
@@ -185,6 +186,18 @@ export class TierEnforcementService {
     );
     const counts = await Promise.all(handlers.map((h) => h.countForStoryIds(storyIds)));
     return counts.reduce((sum, c) => sum + c, 0);
+  }
+
+  /**
+   * The live comments of one story, by anyone. Comments are not entities, so the entity ceilings never see them:
+   * this is what `maxCommentsPerStory` counts. A deleted comment frees its slot.
+   */
+  private async countComments(storyId: string): Promise<number> {
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(comments)
+      .where(and(eq(comments.storyId, storyId), eq(comments.isDeleted, false)));
+    return total;
   }
 
   /** What the person's own plan comes with and how much of it they use: the account-level view of `getEffectiveTier`. */
@@ -201,6 +214,7 @@ export class TierEnforcementService {
       maxEntitiesTotal: tier?.maxEntitiesTotal ?? null,
       maxPublicationsPerDay: tier?.maxPublicationsPerDay ?? null,
       maxPublishedArcs: tier?.maxPublishedArcs ?? null,
+      maxCommentsPerStory: tier?.maxCommentsPerStory ?? null,
       storiesUsed: liveStoryIds.length,
       entitiesUsedTotal,
     };
@@ -217,16 +231,66 @@ export class TierEnforcementService {
       tier && tier.maxEntitiesTotal !== null
         ? await this.countEntities(await this.liveStoryIdsOf(ownerId))
         : 0;
+    const commentsUsed =
+      tier && tier.maxCommentsPerStory !== null ? await this.countComments(storyId) : 0;
     return {
       tierName: tier?.name ?? null,
       maxEntitiesPerStory: tier?.maxEntitiesPerStory ?? null,
       maxEntitiesTotal: tier?.maxEntitiesTotal ?? null,
       entitiesUsedTotal,
+      maxCommentsPerStory: tier?.maxCommentsPerStory ?? null,
+      commentsUsed,
     };
   }
 
-  /** `storyId` is the story the entity is being created in; used for the per-story ceiling. */
-  async assertCanCreateEntity(actingUserId: string, storyId: string): Promise<void> {
+  /**
+   * Refuses one more comment on a story once its owner's plan has no room left. Comments are not entities, so
+   * the entity ceilings do not see them. The room belongs to the story owner, whoever writes: every author's
+   * live comments count against the owner's `maxCommentsPerStory`, not the acting user's.
+   */
+  async assertCanCreateComment(actingUserId: string, storyId: string): Promise<void> {
+    const userId = await this.payerOf(actingUserId, storyId);
+    const tier = await this.getEffectiveTier(userId);
+    if (!tier || tier.maxCommentsPerStory === null) {
+      return;
+    }
+    const total = await this.countComments(storyId);
+    if (total >= tier.maxCommentsPerStory) {
+      throw new TierLimitExceededError(
+        `Comment limit for this story reached for your plan (${tier.maxCommentsPerStory}).`,
+      );
+    }
+  }
+
+  /**
+   * Judges an uploaded package's comments against the per-story cap before anything is written, as
+   * `assertCanImportEntities` does for entities. The package is a new story of the importer, so the cap is the
+   * importer's plan and nothing is held already.
+   */
+  async assertCanImportComments(userId: string, incoming: number): Promise<void> {
+    const tier = await this.getEffectiveTier(userId);
+    if (!tier || tier.maxCommentsPerStory === null) {
+      return;
+    }
+    if (incoming > tier.maxCommentsPerStory) {
+      throw new TierLimitExceededError(
+        `This story has ${incoming} comments, more than your plan allows in one story (${tier.maxCommentsPerStory}).`,
+      );
+    }
+  }
+
+  /**
+   * `storyId` is the story the entity is being created in; used for the per-story ceiling. `entityType` is what
+   * is being created: a type no plan counts (a link, a value, a part, a media file) is never refused here.
+   */
+  async assertCanCreateEntity(
+    actingUserId: string,
+    storyId: string,
+    entityType: string,
+  ): Promise<void> {
+    if (!new Set<string>(getTierCountedEntityTypes()).has(entityType)) {
+      return;
+    }
     const userId = await this.payerOf(actingUserId, storyId);
     const tier = await this.getEffectiveTier(userId);
     if (!tier || (tier.maxEntitiesPerStory === null && tier.maxEntitiesTotal === null)) {

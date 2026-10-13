@@ -1,4 +1,35 @@
 {
+  "accessRecords": {
+    "title": "Access records",
+    "intro": "When somebody signed in, signed up, recovered an account or renewed a session, and from which address.",
+    "retentionNote": "Kept for {{months}} months as the law requires of application providers, under secrecy; delete after.",
+    "account": "Account",
+    "accountPlaceholder": "Name or id",
+    "address": "Address",
+    "addressPlaceholder": "e.g. 203.0.113.7",
+    "from": "From",
+    "to": "To",
+    "search": "Search",
+    "export": "Export CSV",
+    "exportFailed": "Could not export the access records.",
+    "loadFailed": "Could not load more access records.",
+    "exportTruncated": "The export holds the first {{count}} records only: narrow the dates to get the rest.",
+    "columnWhen": "When",
+    "columnEvent": "What",
+    "columnAccount": "Account",
+    "columnAddress": "Address",
+    "nameTried": "Name typed (no account)",
+    "loadMore": "Older records",
+    "empty": "Nothing recorded for these filters.",
+    "events": {
+      "login": "Signed in",
+      "login_failed": "Sign-in refused",
+      "register": "Account created",
+      "password_recovery": "Password reset with a recovery code",
+      "password_recovery_failed": "Recovery code refused",
+      "token_refresh": "Session renewed"
+    }
+  },
   "activity": {
     "title": "Activity",
     "summaryTitle": "Summary",
@@ -21,7 +52,6 @@
       "errorLogs": "Errors in the technical log"
     },
     "perDay": "Events per day (14 days)",
-    "topFailedIps": "Addresses with the most failed sign-ins",
     "system": {
       "title": "Server",
       "version": "Version",
@@ -36,7 +66,7 @@
       "retentionValue": "{{days}} days"
     },
     "recordTitle": "Record",
-    "privacyNote": "Who did what to whom, from where and how it ended. It never holds passwords, tokens, recovery codes or the text of messages.",
+    "privacyNote": "Who did what to whom and how it ended. It never holds passwords, tokens, recovery codes, the text of messages or addresses.",
     "filteredByUser": "Showing one user ({{id}}): what they did and what was done to them.",
     "clearUser": "Show everybody",
     "searchPlaceholder": "Action, name, tag, target, address…",
@@ -57,9 +87,7 @@
     "columnOutcome": "Outcome",
     "columnActor": "Who",
     "columnSubject": "To whom",
-    "columnIp": "Address",
     "target": "About",
-    "userAgent": "Client",
     "rawAction": "Action code",
     "deletedAccount": "(account closed)",
     "byPaymentService": "Payment service",
@@ -153,7 +181,9 @@
       "payment_subscription_canceled": "Subscription cancelled or ended",
       "payment_subscription_due": "Paid period ran out",
       "payment_events_rejected": "Connector notice refused",
-      "payment_gift_granted": "Gift subscription recorded"
+      "payment_gift_granted": "Gift subscription recorded",
+      "admin_access_records_viewed": "Access records read",
+      "admin_access_records_exported": "Access records exported"
     }
   },
   "appearance": {
@@ -352,6 +382,7 @@
     "users": "Users",
     "recovery": "Recovery",
     "activity": "Activity",
+    "accessRecords": "Access records",
     "payments": "Payments",
     "logs": "Logs",
     "tiers": "Tiers",
@@ -606,6 +637,8 @@
     "unitGigabytes": "Gigabytes",
     "maxPublicationsPerDay": "Max publications per day",
     "maxPublishedArcs": "Max works on show at once (per story)",
+    "maxCommentsPerStory": "Max comments per story",
+    "commentsNote": "Comments are not entities: this caps how many comments (by anyone) one story may hold; blank = unlimited",
     "maxMessagesPerDay": "Max messages to users per day",
     "priceMonthly": "Price per month",
     "priceYearly": "Price per year",
@@ -620,6 +653,7 @@
     "columnMaxStorageTotal": "Max storage total",
     "columnMaxPublicationsPerDay": "Publications/day",
     "columnMaxPublishedArcs": "Works on show",
+    "columnMaxCommentsPerStory": "Comments/story",
     "columnMaxMessagesPerDay": "Messages/day",
     "columnPriceMonthly": "Price/mo",
     "columnPriceYearly": "Price/yr",

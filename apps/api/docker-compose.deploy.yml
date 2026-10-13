@@ -72,10 +72,10 @@ services:
     networks:
       - backend
 
-  # Nightly pg_dump of the official Postgres, rotated to BACKUP_RETENTION_DAYS
-  # (default 90 days). The dumps live in the db_backups volume - back that volume
-  # up off the machine, onto encrypted storage with access limited to operators.
-  # See deploy/README.md.
+  # Nightly pg_dump of the official Postgres: 30 daily dumps (BACKUP_RETENTION_DAYS)
+  # and the first dump of each month kept too, the newest BACKUP_MONTHLY_KEEP (default
+  # 3, 0 to 3). The dumps live in the db_backups volume - back that volume up off the
+  # machine, onto encrypted storage with access limited to operators. See deploy/README.md.
   backup:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -85,7 +85,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-keres}
       PGPASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD no arquivo .env}
       BACKUP_DIR: /backups
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-90}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_MONTHLY_KEEP: ${BACKUP_MONTHLY_KEEP:-3}
     volumes:
       - ./deploy/backup.sh:/deploy/backup.sh:ro
       - db_backups:/backups

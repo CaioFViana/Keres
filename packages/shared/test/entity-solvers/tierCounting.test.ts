@@ -3,35 +3,96 @@ import {
   getStorySyncEntityTypes,
   countTierEntitiesInStoryPackage,
   getTierCountedEntityTypes,
-  getTierRelationalEntityTypes,
+  getTierFreeEntityTypes,
   TIER_EXEMPT_ENTITY_TYPES,
+  TIER_PART_ENTITY_TYPES,
   TIER_RELATIONAL_ENTITY_TYPES,
 } from '../../index';
 
 /**
  * A plan counts what the writer creates. Everything a story synchronizes is in exactly one of three
- * places: not counted at all (the story, favorites, comments), only linking or filling in other
- * entities (shown, never counted), or counted.
+ * places: not counted at all (the story, favorites, comments), free (links and values, parts and
+ * consequences, configuration, media files: shown, never counted), or counted.
  */
 describe('which entities a plan counts', () => {
   const synchronized = getStorySyncEntityTypes();
 
   it('names only types a story synchronizes', () => {
-    for (const type of [...TIER_EXEMPT_ENTITY_TYPES, ...TIER_RELATIONAL_ENTITY_TYPES]) {
+    for (const type of [
+      ...TIER_EXEMPT_ENTITY_TYPES,
+      ...TIER_RELATIONAL_ENTITY_TYPES,
+      ...TIER_PART_ENTITY_TYPES,
+    ]) {
       expect(synchronized).toContain(type);
     }
   });
 
   it('puts every synchronized type in exactly one of the three groups', () => {
     const counted = new Set<string>(getTierCountedEntityTypes());
-    const relational = new Set<string>(getTierRelationalEntityTypes());
+    const free = new Set<string>(getTierFreeEntityTypes());
     const exempt = new Set<string>(TIER_EXEMPT_ENTITY_TYPES);
 
     for (const type of synchronized) {
-      const groups = [counted.has(type), relational.has(type), exempt.has(type)].filter(Boolean);
+      const groups = [counted.has(type), free.has(type), exempt.has(type)].filter(Boolean);
       expect([type, groups.length]).toEqual([type, 1]);
     }
-    expect(counted.size + relational.size + exempt.size).toBe(synchronized.length);
+    expect(counted.size + free.size + exempt.size).toBe(synchronized.length);
+  });
+
+  it('counts exactly the nineteen types a plan has always meant by an entity', () => {
+    // Pinned by name on purpose: changing what a plan counts must be a deliberate edit of this list.
+    expect([...getTierCountedEntityTypes()].sort()).toEqual(
+      [
+        'Board',
+        'Character',
+        'Chapter',
+        'Item',
+        'Location',
+        'LocationMap',
+        'Mode',
+        'Note',
+        'Plot',
+        'Route',
+        'Scene',
+        'Sketch',
+        'Song',
+        'Stat',
+        'StoryArc',
+        'StoryCalendar',
+        'StorySchemaField',
+        'Tag',
+        'WorldRule',
+      ].sort(),
+    );
+  });
+
+  it('leaves the free types out of the count, by name', () => {
+    expect([...getTierFreeEntityTypes()].sort()).toEqual(
+      [
+        'AttributeValue',
+        'CharacterRelation',
+        'CharacterScene',
+        'Choice',
+        'ChoiceCheck',
+        'ChoiceCheckGroup',
+        'ChapterAnchor',
+        'Effect',
+        'Gallery',
+        'GalleryRelation',
+        'ItemJourney',
+        'LocationRelation',
+        'NoteRelation',
+        'PlotScene',
+        'RouteStep',
+        'SceneMusic',
+        'ScenePage',
+        'SeeAlsoRelation',
+        'StatRelation',
+        'StatStrength',
+        'Suggestion',
+        'TagRelation',
+      ].sort(),
+    );
   });
 
   it('does not count links between entities, nor the values of custom fields and stats', () => {
@@ -52,22 +113,34 @@ describe('which entities a plan counts', () => {
       'StatRelation',
     ]) {
       expect(counted).not.toContain(type);
-      expect(getTierRelationalEntityTypes()).toContain(type);
+      expect(getTierFreeEntityTypes()).toContain(type);
     }
   });
 
-  it('counts what the writer defines: custom fields and stats with their ladder levels', () => {
+  it('does not count the parts of an entity, its consequences, its configuration, nor media files', () => {
     const counted = getTierCountedEntityTypes();
 
     for (const type of [
-      'Character',
-      'Scene',
-      'Location',
-      'Chapter',
-      'StorySchemaField',
-      'Stat',
+      'ScenePage',
+      'SceneMusic',
+      'ChoiceCheckGroup',
+      'ChoiceCheck',
       'StatStrength',
+      'Effect',
+      'Choice',
+      'ChapterAnchor',
+      'Suggestion',
+      'Gallery',
     ]) {
+      expect(counted).not.toContain(type);
+      expect(getTierFreeEntityTypes()).toContain(type);
+    }
+  });
+
+  it('counts what the writer defines: characters, scenes, custom fields and stats', () => {
+    const counted = getTierCountedEntityTypes();
+
+    for (const type of ['Character', 'Scene', 'Location', 'Chapter', 'StorySchemaField', 'Stat']) {
       expect(counted).toContain(type);
     }
   });
@@ -75,30 +148,8 @@ describe('which entities a plan counts', () => {
   it('never counts the story, favorites and comments', () => {
     for (const type of TIER_EXEMPT_ENTITY_TYPES) {
       expect(getTierCountedEntityTypes()).not.toContain(type);
-      expect(getTierRelationalEntityTypes()).not.toContain(type);
+      expect(getTierFreeEntityTypes()).not.toContain(type);
     }
-  });
-});
-
-describe('scene pages and the plan', () => {
-  it('counts a scene page, as the plan counts what the writer creates', () => {
-    expect(getTierCountedEntityTypes()).toContain('ScenePage');
-    expect(getTierRelationalEntityTypes()).not.toContain('ScenePage');
-    expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('ScenePage');
-  });
-});
-
-describe('the music of a scene and the plan', () => {
-  it('counts the link of a scene to its music, as it counts a scene page', () => {
-    expect(getTierCountedEntityTypes()).toContain('SceneMusic');
-    expect(getTierRelationalEntityTypes()).not.toContain('SceneMusic');
-    expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('SceneMusic');
-  });
-
-  it('counts a song, as it counts what the writer creates', () => {
-    expect(getTierCountedEntityTypes()).toContain('Song');
-    expect(getTierRelationalEntityTypes()).not.toContain('Song');
-    expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('Song');
   });
 });
 
@@ -108,8 +159,10 @@ describe('the entities of an uploaded package', () => {
       story: { id: 's' },
       characters: [{ id: 'a' }, { id: 'b' }, { id: 'c', isDeleted: true }],
       scenes: [{ id: 'x' }],
-      // links between entities, favorites and comments are not counted by any plan
+      // links between entities, parts, media files, favorites and comments are not counted by any plan
       characterRelations: [{ id: 'r1' }, { id: 'r2' }],
+      scenePages: [{ id: 'p1' }, { id: 'p2' }],
+      galleryItems: [{ id: 'g1' }],
       favorites: [{ id: 'f' }],
       comments: [{ id: 'k' }],
     });

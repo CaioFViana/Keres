@@ -38,19 +38,19 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'How many things the story holds' },
     {
       type: 'paragraph',
-      text: 'The chart button at the top right opens a second screen that counts everything in the story, type by type: characters, scenes, choices, tags, media files, and custom fields and stats. Below that, a second card lists the links between them (a tag applied to a character, a character placed in a scene) and the values of custom fields and stats; it is only for information. Each type has its own icon, and the bar beside it shows how it compares with the biggest one.',
+      text: 'The chart button at the top right opens a second screen that counts everything in the story, type by type: characters, scenes, choices, tags, and custom fields and stats. Below that, a second card lists what no plan counts - the links between items (a tag applied to a character, a character placed in a scene), the values of custom fields and stats, the parts of an item (the pages and music of a scene, the checks and effects of a choice) and the media files; it is only for information. Each type has its own icon, and the bar beside it shows how it compares with the biggest one.',
     },
     {
       type: 'steps',
       items: [
         'Open the story analysis and tap the chart button at the top right.',
-        'Read the total at the top: it is every item of the story, except favorites and comments.',
+        'Read the total at the top: it is every item your plan counts, and nothing of the second card.',
         'Tap NAME or QUANTITY to sort the list; tap the same one again to reverse the order.',
       ],
     },
     {
       type: 'paragraph',
-      text: 'The first card is the same count a server plan uses to limit how much one story can hold: what you create, but not the links and values of the second card, nor the story itself, favorites and comments. For a story that is only on this device, nothing limits it and the screen just tells you what is there. For a story linked to a server, the screen also shows the plan name and how far you are from its limits, for example 251 / 500 for this story, and the total across all the stories the plan covers when it has one. The bar turns to a warning color from 90% of a limit, and to the alert color from 95%.',
+      text: 'The first card is the same count a server plan uses to limit how much one story can hold: what you create, but not the second card, nor the story itself or favorites. Comments are not counted as items either: a plan may cap how many comments a story holds, and that cap is shown with the story. For a story that is only on this device, nothing limits it and the screen just tells you what is there. For a story linked to a server, the screen also shows the plan name and how far you are from its limits, for example 251 / 500 for this story, and the total across all the stories the plan covers when it has one. The bar turns to a warning color from 90% of a limit, and to the alert color from 95%.',
     },
     {
       type: 'callout',

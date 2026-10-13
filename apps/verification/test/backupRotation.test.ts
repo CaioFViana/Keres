@@ -66,13 +66,33 @@ describe('rotateBackups', () => {
   });
 
   it('keeps a backup of exactly the retention age, and deletes one second older', async () => {
-    // T0 minus 90 days is 2026-07-14T12:00:00Z: the boundary is inclusive.
-    dir('verification-20260714T120000Z');
-    dir('verification-20260714T115959Z');
+    // T0 minus the 30-day default is 2026-09-12T12:00:00Z: the boundary is inclusive.
+    dir('verification-20260912T120000Z');
+    dir('verification-20260912T115959Z');
 
     await rotateBackups(config, T0);
 
+    expect(entries()).toEqual(['verification-20260912T120000Z']);
+  });
+
+  it('keeps the 90-day retention when the configuration asks for it', async () => {
+    const ninety = makeConfig({ BACKUP_RETENTION_DAYS: '90' });
+    dir('verification-20260714T120000Z'); // exactly 90 days old: kept
+    dir('verification-20260714T115959Z'); // one second older: removed
+
+    await rotateBackups(ninety, T0);
+
     expect(entries()).toEqual(['verification-20260714T120000Z']);
+  });
+
+  it('keeps every daily copy younger than 30 days, and removes the one of 31 days', async () => {
+    dir('verification-20260911T120000Z'); // 31 days old: removed
+    dir('verification-20260913T120000Z'); // 29 days old: kept
+    dir('verification-20260912T120000Z'); // 30 days old: kept
+
+    await rotateBackups(config, T0);
+
+    expect(entries()).toEqual(['verification-20260912T120000Z', 'verification-20260913T120000Z']);
   });
 
   it('leaves every entry that is not one of our backups, and deletes only our old temporary folders', async () => {

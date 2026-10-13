@@ -129,6 +129,13 @@ describe('startBackupScheduler', () => {
 });
 
 describe('runBackupRound', () => {
+  // The monthly steps are stubbed where a test is about something else; the real ones are in backupMonthly.test.ts.
+  const noMonthly = {
+    keepMonthlyCopy: async () => undefined,
+    rotateMonthlies: async () => [],
+    expireMonthlies: async () => [],
+  };
+
   it('rotates even when the backup of the same round failed', async () => {
     mkdirSync(join(config.backupDir as string, 'verification-20260101T000000Z'), {
       recursive: true,
@@ -139,6 +146,7 @@ describe('runBackupRound', () => {
       takeBackup: async () => {
         throw new BackupError('BACKUP_DIR is not set: backups are off.');
       },
+      ...noMonthly,
       rotateBackups,
     });
 
@@ -158,6 +166,7 @@ describe('runBackupRound', () => {
       takeBackup: async () => {
         throw fsError;
       },
+      ...noMonthly,
       rotateBackups: async () => {
         throw new Error('Ana Souza, /home/ana/private');
       },
@@ -181,6 +190,7 @@ describe('runBackupRound', () => {
         blobsCopied: 3,
         blobsGone: 1,
       }),
+      ...noMonthly,
       rotateBackups: async () => ['verification-20260101T000000Z'],
     });
 

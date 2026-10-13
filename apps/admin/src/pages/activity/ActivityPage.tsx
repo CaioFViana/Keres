@@ -106,9 +106,9 @@ function formatUptime(seconds: number): string {
 
 /**
  * The activity record, for the administrators to monitor the server: how it is doing and what happened in
- * the last hours, and below it the whole record - who did what to whom, from where, and how it ended -
- * filterable, followable per user (`?user=`), and exportable. It holds no content: never a password,
- * token or the text of a message.
+ * the last hours, and below it the whole record - who did what to whom, and how it ended - filterable,
+ * followable per user (`?user=`), and exportable. It holds no content and no address: never a password,
+ * token, the text of a message, or where a request came from (that is on the access records page).
  */
 export function ActivityPage() {
   const { t, i18n } = useTranslation('admin');
@@ -254,18 +254,6 @@ export function ActivityPage() {
                     </div>
                   ))}
                 </div>
-                {summary.topFailedLoginIps.length > 0 && (
-                  <>
-                    <h3>{t('activity.topFailedIps')}</h3>
-                    <ul className="plain-list">
-                      {summary.topFailedLoginIps.map((entry) => (
-                        <li key={entry.ip}>
-                          <code>{entry.ip}</code> · {entry.count}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
               </div>
 
               <div className="form-card">
@@ -409,7 +397,6 @@ export function ActivityPage() {
                   <th>{t('activity.columnAction')}</th>
                   <th>{t('activity.columnActor')}</th>
                   <th>{t('activity.columnSubject')}</th>
-                  <th>{t('activity.columnIp')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -447,12 +434,11 @@ export function ActivityPage() {
                     <td>
                       <UserCell user={entry.subject} />
                     </td>
-                    <td>{entry.ip ?? '-'}</td>
                   </tr>
                 ))}
                 {events.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="empty-state">
+                    <td colSpan={4} className="empty-state">
                       {t('activity.empty')}
                     </td>
                   </tr>
@@ -488,10 +474,6 @@ export function ActivityPage() {
                 <dd>
                   {selected.targetType ? `${selected.targetType} ${selected.targetId ?? ''}` : '-'}
                 </dd>
-                <dt>{t('activity.columnIp')}</dt>
-                <dd>{selected.ip ?? '-'}</dd>
-                <dt>{t('activity.userAgent')}</dt>
-                <dd>{selected.userAgent ?? '-'}</dd>
                 <dt>{t('activity.rawAction')}</dt>
                 <dd>
                   <code>{selected.action}</code>

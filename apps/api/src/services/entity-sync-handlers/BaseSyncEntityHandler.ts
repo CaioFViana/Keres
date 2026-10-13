@@ -182,7 +182,8 @@ export interface SyncEntityHandler {
     context: SyncEntityMutationPolicyContext,
     update: DeleteStoryUpdate,
   ): DeleteStoryUpdate;
-  tierLimitScope: 'story' | 'entity' | 'none';
+  /** Which plan ceiling a create (or restore) is held to: see `assertPlanRoomFor` in SyncPushService. */
+  tierLimitScope: 'story' | 'entity' | 'comment' | 'none';
   /** Deleted rows (tombstones), optionally restricted to one story. Used by AdminRecoveryService. */
   findDeleted(
     storyId?: string,
@@ -206,7 +207,7 @@ export abstract class BaseSyncEntityHandler<
 > implements SyncEntityHandler
 {
   abstract entityName: string;
-  tierLimitScope: 'story' | 'entity' | 'none' = 'entity';
+  tierLimitScope: 'story' | 'entity' | 'comment' | 'none' = 'entity';
   /**
    * Fields naming what a row is (a tag's name, a pair of related characters, one entity's value
    * for one field). Two devices can make the same thing offline; the second is refused as a

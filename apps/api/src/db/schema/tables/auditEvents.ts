@@ -3,8 +3,9 @@ import { desc } from 'drizzle-orm';
 import { index, json, table, text, timestampNow } from '../columns';
 
 /**
- * The activity record: who did what to whom, when, from where, and how it ended - for the administrators
- * to monitor the server. It is not `api_logs` (the technical log of handled errors and domain notes of
+ * The activity record: who did what to whom, when, and how it ended - for the administrators to monitor the
+ * server. It holds no address and no user agent: the sign-ins and their addresses are kept apart, in
+ * `access_records`, for the six months the law asks and no longer. It is not `api_logs` (the technical log of handled errors and domain notes of
  * the code); this is the audit trail, with a fixed shape that can be filtered and counted.
  *
  * What it keeps is deliberately little: never a password, token, recovery code, message text or any
@@ -31,8 +32,6 @@ export const auditEvents = table(
     subjectUserId: text('subject_user_id'),
     targetType: text('target_type'),
     targetId: text('target_id'),
-    ip: text('ip'),
-    userAgent: text('user_agent'),
     meta: json('meta'),
   },
   (table) => [

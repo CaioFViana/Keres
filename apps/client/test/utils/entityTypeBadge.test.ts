@@ -1,4 +1,4 @@
-import { getTierCountedEntityTypes, getTierRelationalEntityTypes } from '@keres/shared';
+import { getTierCountedEntityTypes, getTierFreeEntityTypes } from '@keres/shared';
 import { getEntityTypeBadge, isLinkEntityType } from '../../src/utils/entityTypeBadge';
 
 describe('getEntityTypeBadge', () => {
@@ -20,8 +20,8 @@ describe('getEntityTypeBadge', () => {
     expect(unknown).toEqual([]);
   });
 
-  it('leaves none of the links and values the second card lists with the placeholder icon', () => {
-    const unknown = getTierRelationalEntityTypes().filter(
+  it('leaves none of the types no plan counts (the second card) with the placeholder icon', () => {
+    const unknown = getTierFreeEntityTypes().filter(
       (type) => !isLinkEntityType(type) && getEntityTypeBadge(type, '#000').icon === 'ellipse',
     );
 

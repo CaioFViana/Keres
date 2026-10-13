@@ -25,7 +25,15 @@ export interface AuditRule {
   onlyFailures?: boolean;
   /** A 429 here is a plan limit being met, not rate limiting. */
   limitRoute?: boolean;
+  /**
+   * The query keys that go into the line as the filters used (never the results, never an address). Only the
+   * keys listed here are read from the query at all.
+   */
+  queryKeys?: readonly string[];
 }
+
+/** The filters of the access records that may be named in the activity record: no address, no page cursor. */
+const ACCESS_RECORD_FILTERS = ['userId', 'username', 'from', 'to'] as const;
 
 const id = '(?<id>[^/]+)';
 
@@ -359,6 +367,13 @@ export const AUDIT_RULES: readonly AuditRule[] = [
     },
   ),
   admin('GET', 'activity/export', 'admin.activity_exported'),
+  // Reading the access records is itself on the record (the filters only, never what they found).
+  admin('GET', 'access-records', 'admin.access_records_viewed', {
+    queryKeys: ACCESS_RECORD_FILTERS,
+  }),
+  admin('GET', 'access-records/export', 'admin.access_records_exported', {
+    queryKeys: ACCESS_RECORD_FILTERS,
+  }),
 ];
 
 export interface ClassifiedRequest {

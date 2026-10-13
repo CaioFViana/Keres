@@ -1,13 +1,14 @@
 import type { VerificationConfig } from '../config';
 import { rotateBackups } from './rotateBackups';
+import { expireMonthlies, keepMonthlyCopy, rotateMonthlies } from './monthly';
 import { takeBackup, type BackupResult } from './takeBackup';
 import { errorLabel, HOUR_MS } from './layout';
 
 /**
  * The backup timer of the service, the same shape as the outbox timer: started at boot, one round at a time, stopped on
- * shutdown after a round in progress has finished. A round is a backup and then a rotation; a failure in either is
- * logged by its label (a code or a fixed message, never the text of an error that might carry a name or a path) and
- * never stops the service.
+ * shutdown after a round in progress has finished. A round is a backup, then the monthly time limit (after every round),
+ * then the monthly copy and its count rotation (only when the backup succeeded), then the daily rotation. A failure in any step is logged by its label (a code or a fixed message,
+ * never the text of an error that might carry a name or a path) and never stops the service.
  */
 
 /** The first round runs shortly after boot, so a fresh deployment gets a copy without waiting a whole interval. */
@@ -15,24 +16,66 @@ export const FIRST_BACKUP_DELAY_MS = 60 * 1000;
 
 export interface BackupDeps {
   takeBackup: (config: VerificationConfig, now: number) => Promise<BackupResult>;
+  keepMonthlyCopy: (
+    config: VerificationConfig,
+    now: number,
+    dailyFolder: string,
+  ) => Promise<string | undefined>;
+  rotateMonthlies: (config: VerificationConfig) => Promise<string[]>;
+  expireMonthlies: (config: VerificationConfig, now: number) => Promise<string[]>;
   rotateBackups: (config: VerificationConfig, now: number) => Promise<string[]>;
 }
 
-const DEFAULT_DEPS: BackupDeps = { takeBackup, rotateBackups };
+const DEFAULT_DEPS: BackupDeps = {
+  takeBackup,
+  keepMonthlyCopy,
+  rotateMonthlies,
+  expireMonthlies,
+  rotateBackups,
+};
 
-/** One round at `now`: a backup, then the rotation. Both are attempted; neither failure is thrown. */
+/** One round at `now`: a backup, the monthly step, then the daily rotation. No step's failure is thrown. */
 export async function runBackupRound(
   config: VerificationConfig,
   now: number,
   deps: BackupDeps = DEFAULT_DEPS,
 ): Promise<void> {
+  let backup: BackupResult | undefined;
   try {
-    const result = await deps.takeBackup(config, now);
+    backup = await deps.takeBackup(config, now);
     console.log(
-      `Backup written: ${result.name} (${result.blobsCopied} image file(s), ${result.blobsGone} gone meanwhile).`,
+      `Backup written: ${backup.name} (${backup.blobsCopied} image file(s), ${backup.blobsGone} gone meanwhile).`,
     );
   } catch (error) {
     console.error(`Backup failed: ${errorLabel(error)}. The older backups are kept.`);
+  }
+  // The time limit on monthly copies applies after every round, failed or not: an outage must not keep one past it.
+  try {
+    const expired = await deps.expireMonthlies(config, now);
+    if (expired.length > 0) {
+      console.log(`Removed ${expired.length} monthly copy(ies) older than the limit.`);
+    }
+  } catch (error) {
+    console.error(`Monthly expiry failed: ${errorLabel(error)}.`);
+  }
+  // Creating a monthly copy, and the count rule, follow a successful daily only.
+  if (backup !== undefined) {
+    try {
+      const monthly = await deps.keepMonthlyCopy(config, now, backup.folder);
+      if (monthly !== undefined) console.log(`Monthly copy kept: ${monthly}.`);
+    } catch (error) {
+      console.error(`Monthly copy failed: ${errorLabel(error)}. The daily backup is kept.`);
+    }
+    try {
+      const removed = await deps.rotateMonthlies(config);
+      if (removed.length > 0) {
+        console.log(
+          `Rotated out ${removed.length} monthly copy(ies), keeping the newest ${config.backupMonthlyKeep}.`,
+        );
+      }
+    } catch (error) {
+      console.error(`Monthly rotation failed: ${errorLabel(error)}.`);
+    }
   }
   try {
     const removed = await deps.rotateBackups(config, now);

@@ -19,6 +19,7 @@ const emptyForm: TierCreateInput = {
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
   maxPublishedArcs: null,
+  maxCommentsPerStory: null,
   maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
@@ -97,6 +98,7 @@ export function TiersPage() {
       maxStorageBytesTotal: tier.maxStorageBytesTotal,
       maxPublicationsPerDay: tier.maxPublicationsPerDay,
       maxPublishedArcs: tier.maxPublishedArcs ?? null,
+      maxCommentsPerStory: tier.maxCommentsPerStory ?? null,
       maxMessagesPerDay: tier.maxMessagesPerDay,
       priceMonthlyCents: tier.priceMonthlyCents ?? null,
       priceYearlyCents: tier.priceYearlyCents ?? null,
@@ -131,6 +133,7 @@ export function TiersPage() {
       form.maxStorageBytesTotal,
       form.maxPublicationsPerDay,
       form.maxPublishedArcs,
+      form.maxCommentsPerStory,
       form.maxMessagesPerDay,
     ];
     if (
@@ -281,6 +284,10 @@ export function TiersPage() {
             />
             {limitInput(t('tiers.maxPublicationsPerDay'), 'maxPublicationsPerDay')}
             {limitInput(t('tiers.maxPublishedArcs'), 'maxPublishedArcs')}
+            {limitInput(t('tiers.maxCommentsPerStory'), 'maxCommentsPerStory')}
+            <p className="hint" data-testid="comments-note">
+              {t('tiers.commentsNote')}
+            </p>
             {limitInput(t('tiers.maxMessagesPerDay'), 'maxMessagesPerDay')}
             <label className="checkbox-label switch">
               <input
@@ -370,6 +377,7 @@ export function TiersPage() {
                   {fact(t('tiers.maxEntitiesTotal'), tier.maxEntitiesTotal ?? '∞')}
                   {fact(t('tiers.columnMaxPublicationsPerDay'), tier.maxPublicationsPerDay ?? '∞')}
                   {fact(t('tiers.columnMaxPublishedArcs'), tier.maxPublishedArcs ?? '∞')}
+                  {fact(t('tiers.columnMaxCommentsPerStory'), tier.maxCommentsPerStory ?? '∞')}
                   {fact(t('tiers.columnMaxMessagesPerDay'), tier.maxMessagesPerDay ?? '∞')}
                 </dl>
               </section>

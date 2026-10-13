@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PRIVACY_POLICY_VERSION } from '../../src/legal/privacyPolicy';
 import { SERVER_TERMS_VERSION } from '../../src/legal/serverTerms';
+import { accessRecordService } from '../../src/services/AccessRecordService';
 import { auditService } from '../../src/services/AuditService';
 import { contactService } from '../../src/services/ContactService';
 import { UserService } from '../../src/services/UserService';
@@ -37,8 +38,6 @@ describe('account prune legal carve-outs', () => {
       outcome: 'success',
       actorUserId: ana.userId,
       actorUsername: ana.username,
-      ip: '203.0.113.7',
-      userAgent: 'test-agent',
     });
 
     await request('DELETE', '/user/account', {
@@ -58,9 +57,24 @@ describe('account prune legal carve-outs', () => {
     for (const event of page.items) {
       expect(event.actor?.id).not.toBe(ana.userId);
       expect(event.subject?.id).not.toBe(ana.userId);
-      expect(event.ip).not.toBe('203.0.113.7');
-      expect(event.userAgent).not.toBe('test-agent');
     }
+  });
+
+  it('keeps the access records of an erased account until their retention ends', async () => {
+    const ana = await registerUser('ana');
+    const service = new UserService();
+    await accessRecordService.recordNow({ event: 'login', ip: '203.0.113.7', userId: ana.userId });
+
+    await request('DELETE', '/user/account', {
+      token: ana.token,
+      body: { currentPassword: ana.password },
+    });
+    expect(await service.pruneDeletedAccounts(0)).toBe(1);
+
+    // Marco Civil art. 15: six months whatever the account did; only the retention drops them.
+    const kept = await accessRecordService.search({ userId: ana.userId, limit: 50 });
+    expect(kept.items.map((record) => record.event)).toContain('login');
+    expect(kept.items.find((record) => record.event === 'login')?.ip).toBe('203.0.113.7');
   });
 });
 

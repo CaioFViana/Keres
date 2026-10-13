@@ -490,6 +490,37 @@ describe('tiers', () => {
     expect(updated.data).toMatchObject({ name: 'Pro Plus', maxStories: 10 });
   });
 
+  it('sets, zeroes and clears the comment cap of a story through the tier routes', async () => {
+    const { data: created } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Chatty', maxCommentsPerStory: 20 },
+    });
+    expect(created).toMatchObject({ maxCommentsPerStory: 20 });
+
+    const zeroed = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxCommentsPerStory: 0 },
+    });
+    expect(zeroed.status).toBe(200);
+    expect(zeroed.data).toMatchObject({ maxCommentsPerStory: 0 });
+
+    const cleared = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxCommentsPerStory: null },
+    });
+    expect(cleared.status).toBe(200);
+    expect(cleared.data).toMatchObject({ maxCommentsPerStory: null });
+
+    const read = await request('GET', `/admin/api/tiers/${created.id}`, { token: admin.token });
+    expect(read.data).toMatchObject({ maxCommentsPerStory: null });
+
+    const negative = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxCommentsPerStory: -1 },
+    });
+    expect(negative.status).toBe(400);
+  });
+
   it('rejects duplicate tier names on creation and rename', async () => {
     const first = await request('POST', '/admin/api/tiers', {
       token: admin.token,

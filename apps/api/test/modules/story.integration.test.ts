@@ -233,6 +233,8 @@ describe('GET /stories/:storyId/plan', () => {
       maxEntitiesPerStory: null,
       maxEntitiesTotal: null,
       entitiesUsedTotal: 0,
+      maxCommentsPerStory: null,
+      commentsUsed: 0,
     });
   });
 

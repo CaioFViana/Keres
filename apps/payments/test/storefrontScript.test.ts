@@ -49,7 +49,7 @@ const methods = [
   { id: 'playbilling', label: 'Google Play', flow: 'native', store: 'play' },
 ];
 
-async function openStore(payments: unknown, signedIn = true) {
+async function openStore(payments: unknown, signedIn = true, plans: unknown = tiers) {
   const app = createApp(createState(config(), { providers: [] }));
   const html = await (await app.fetch(new Request('http://127.0.0.1:3101/'))).text();
   const calls: string[] = [];
@@ -64,7 +64,7 @@ async function openStore(payments: unknown, signedIn = true) {
       ) => {
         const address = String(input);
         calls.push(address);
-        if (address.endsWith('/api/public/tiers')) return json(tiers);
+        if (address.endsWith('/api/public/tiers')) return json(plans);
         if (address.includes('/api/payments')) return json(payments);
         return json({}, 404);
       }) as typeof fetch;
@@ -139,6 +139,43 @@ describe('buy site script', () => {
     });
     expect(store.app.textContent).toContain('Paid until');
     expect(store.app.textContent).not.toContain('Stop renewing');
+  });
+
+  it('states the cap on comments per story for each plan, in words the app would use', async () => {
+    const plans = {
+      currency: 'BRL',
+      tiers: [
+        { ...tiers.tiers[0], maxCommentsPerStory: 0 },
+        { ...tiers.tiers[1], maxCommentsPerStory: 25 },
+        { id: 'tier-plus', name: 'Plus', priceMonthlyCents: 990, maxCommentsPerStory: null },
+      ],
+    };
+    const { app } = await openStore(
+      { enabled: true, currency: 'BRL', methods, subscription: null },
+      true,
+      plans,
+    );
+
+    // Each line sits on its own plan's card, not on a neighbour's.
+    const cardOf = (name: string) =>
+      [...app.querySelectorAll('.plans .card')].find((card) => card.textContent?.includes(name))
+        ?.textContent ?? '';
+    expect(cardOf('Free')).toContain('No comments per story');
+    expect(cardOf('Pro')).toContain('Up to 25 comments per story');
+    expect(cardOf('Plus')).toContain('Unlimited comments per story');
+  });
+
+  it('says nothing of comments for a server that sends no cap, rather than claiming one', async () => {
+    const { app } = await openStore({
+      enabled: true,
+      currency: 'BRL',
+      methods,
+      subscription: null,
+    });
+
+    expect(app.textContent).toContain('Pro');
+    expect(app.textContent).not.toContain('comments per story');
+    expect(app.textContent).not.toContain('Unlimited comments');
   });
 
   it('asks to sign in when there is no session', async () => {

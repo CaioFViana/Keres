@@ -1,4 +1,35 @@
 {
+  "accessRecords": {
+    "title": "Registros de acesso",
+    "intro": "Quando alguém entrou, criou conta, recuperou uma conta ou renovou a sessão, e de qual endereço.",
+    "retentionNote": "Guardados por {{months}} meses, como a lei exige dos provedores de aplicação, em sigilo; apague depois.",
+    "account": "Conta",
+    "accountPlaceholder": "Nome ou id",
+    "address": "Endereço",
+    "addressPlaceholder": "ex.: 203.0.113.7",
+    "from": "De",
+    "to": "Até",
+    "search": "Buscar",
+    "export": "Exportar CSV",
+    "exportFailed": "Não foi possível exportar os registros de acesso.",
+    "loadFailed": "Não foi possível carregar mais registros de acesso.",
+    "exportTruncated": "A exportação traz só os primeiros {{count}} registros: restrinja as datas para ver o resto.",
+    "columnWhen": "Quando",
+    "columnEvent": "O quê",
+    "columnAccount": "Conta",
+    "columnAddress": "Endereço",
+    "nameTried": "Nome digitado (sem conta)",
+    "loadMore": "Registros mais antigos",
+    "empty": "Nada registrado para estes filtros.",
+    "events": {
+      "login": "Entrou",
+      "login_failed": "Entrada recusada",
+      "register": "Conta criada",
+      "password_recovery": "Senha redefinida com código de recuperação",
+      "password_recovery_failed": "Código de recuperação recusado",
+      "token_refresh": "Sessão renovada"
+    }
+  },
   "activity": {
     "title": "Atividade",
     "summaryTitle": "Resumo",
@@ -21,7 +52,6 @@
       "errorLogs": "Erros no log técnico"
     },
     "perDay": "Eventos por dia (14 dias)",
-    "topFailedIps": "Endereços com mais entradas falhas",
     "system": {
       "title": "Servidor",
       "version": "Versão",
@@ -36,7 +66,7 @@
       "retentionValue": "{{days}} dias"
     },
     "recordTitle": "Registro",
-    "privacyNote": "Quem fez o quê com quem, de onde e como terminou. Nunca guarda senhas, tokens, códigos de recuperação nem o texto das mensagens.",
+    "privacyNote": "Quem fez o quê com quem e como terminou. Nunca guarda senhas, tokens, códigos de recuperação, o texto das mensagens nem endereços.",
     "filteredByUser": "Mostrando um usuário ({{id}}): o que fez e o que foi feito com ele.",
     "clearUser": "Mostrar todos",
     "searchPlaceholder": "Ação, nome, tag, alvo, endereço…",
@@ -57,9 +87,7 @@
     "columnOutcome": "Resultado",
     "columnActor": "Quem",
     "columnSubject": "Com quem",
-    "columnIp": "Endereço",
     "target": "Sobre",
-    "userAgent": "Cliente",
     "rawAction": "Código da ação",
     "deletedAccount": "(conta encerrada)",
     "byPaymentService": "Serviço de pagamentos",
@@ -153,7 +181,9 @@
       "payment_subscription_canceled": "Assinatura cancelada ou encerrada",
       "payment_subscription_due": "Período pago venceu",
       "payment_events_rejected": "Aviso do conector recusado",
-      "payment_gift_granted": "Cortesia registrada na assinatura"
+      "payment_gift_granted": "Cortesia registrada na assinatura",
+      "admin_access_records_viewed": "Registros de acesso consultados",
+      "admin_access_records_exported": "Registros de acesso exportados"
     }
   },
   "appearance": {
@@ -352,6 +382,7 @@
     "users": "Usuários",
     "recovery": "Recuperação",
     "activity": "Atividade",
+    "accessRecords": "Registros de acesso",
     "payments": "Pagamentos",
     "logs": "Registros",
     "tiers": "Planos",
@@ -606,6 +637,8 @@
     "unitGigabytes": "Gigabytes",
     "maxPublicationsPerDay": "Máximo de publicações por dia",
     "maxPublishedArcs": "Máximo de obras expostas ao mesmo tempo (por história)",
+    "maxCommentsPerStory": "Máximo de comentários por história",
+    "commentsNote": "Comentários não são entidades: isto limita quantos comentários (de qualquer pessoa) uma história pode ter; vazio = ilimitado",
     "maxMessagesPerDay": "Máximo de mensagens a usuários por dia",
     "priceMonthly": "Preço mensal",
     "priceYearly": "Preço anual",
@@ -620,6 +653,7 @@
     "columnMaxStorageTotal": "Armazenamento total",
     "columnMaxPublicationsPerDay": "Publicações/dia",
     "columnMaxPublishedArcs": "Obras expostas",
+    "columnMaxCommentsPerStory": "Comentários/história",
     "columnMaxMessagesPerDay": "Mensagens/dia",
     "columnPriceMonthly": "Preço/mês",
     "columnPriceYearly": "Preço/ano",

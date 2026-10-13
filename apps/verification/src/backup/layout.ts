@@ -9,6 +9,17 @@
 
 export const BACKUP_PREFIX = 'verification-';
 export const TEMP_PREFIX = '.tmp-verification-';
+/**
+ * The monthly copies: a copy of the first successful backup of each calendar month (UTC). They carry no day in the name,
+ * so the daily rotation never matches them, and the monthly rotation never matches a daily folder.
+ */
+export const MONTHLY_PREFIX = 'verification-monthly-';
+/**
+ * A monthly copy is removed once its month began more than this many days ago, whatever the rounds since did. A copy is
+ * made from a backup of its month, so measured from the first day of the month it is never kept past 93 days (plus at
+ * most one round interval). Measured from the month's first day, not from the copy, because the name carries no day.
+ */
+export const MONTHLY_MAX_AGE_DAYS = 93;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const HOUR_MS = 60 * 60 * 1000;
 /**
@@ -19,6 +30,7 @@ export const STALE_TEMP_MS = DAY_MS;
 
 const BACKUP_NAME_PATTERN = /^verification-(\d{8}T\d{6}Z)$/;
 const TEMP_NAME_PATTERN = /^\.tmp-verification-(\d{8}T\d{6}Z)-[0-9a-f]{8}$/;
+const MONTHLY_NAME_PATTERN = /^verification-monthly-(\d{4})(0[1-9]|1[0-2])$/;
 const STAMP_PATTERN = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/;
 
 /** The file of the data store inside a backup folder: gzipped `VACUUM INTO` copy. */
@@ -57,6 +69,22 @@ export function timeOfStamp(stamp: string): number | undefined {
 
 export function backupNameFor(now: number): string {
   return `${BACKUP_PREFIX}${stampOf(now)}`;
+}
+
+/** `verification-monthly-202610` for the calendar month (UTC) of the given instant. */
+export function monthlyNameFor(now: number): string {
+  return `${MONTHLY_PREFIX}${stampOf(now).slice(0, 6)}`;
+}
+
+/** The instant (UTC) a `YYYYMM` month begins. */
+export function monthStartOf(month: string): number {
+  return Date.UTC(Number(month.slice(0, 4)), Number(month.slice(4, 6)) - 1, 1);
+}
+
+/** The `YYYYMM` of a monthly copy's name, or `undefined` for anything else. Sorts in calendar order as text. */
+export function monthOfMonthly(name: string): string | undefined {
+  const match = MONTHLY_NAME_PATTERN.exec(name);
+  return match ? `${match[1]}${match[2]}` : undefined;
 }
 
 /**

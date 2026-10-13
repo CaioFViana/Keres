@@ -313,8 +313,10 @@ export class UserService {
    *
    * Kept on purpose (the law's exceptions to erasure): the terms-acceptance rows (minimal proof
    * of which version was accepted), financial records, and the activity record - whose lines are
-   * scrubbed of this account's ids, names, ips and agents by `scrubUser` but otherwise stay as
-   * long as the retention says.
+   * scrubbed of this account's ids and names by `scrubUser` but otherwise stay as long as the
+   * retention says. The access records (sign-ins and their addresses, Marco Civil art. 15) are
+   * not touched here at all: the law keeps them six months whatever the account did, and
+   * `AccessRecordService.pruneExpired` is what drops them.
    */
   async pruneDeletedAccounts(
     graceDays: number = ACCOUNT_DELETION_GRACE_DAYS,
@@ -348,8 +350,8 @@ export class UserService {
           updatedAt: new Date(),
         })
         .where(eq(users.id, row.id));
-      // The trail keeps its lines but loses who they speak of: ids, names, ips and agents go,
-      // the events stay as long as the retention says.
+      // The trail keeps its lines but loses who they speak of: ids and names go, the events stay
+      // as long as the retention says.
       await auditService.scrubUser(row.id);
     }
     return expired.length;

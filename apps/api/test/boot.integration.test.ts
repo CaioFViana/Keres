@@ -42,6 +42,7 @@ const exitCodes: number[] = [];
 /** The jobs are the timers `boot.ts` asks for (the rest of the app has long timers of its own): held, and run by hand. */
 const JOB_DELAYS = new Set([
   30_000,
+  35_000,
   40_000,
   45_000,
   50_000,
@@ -114,9 +115,9 @@ describe('starting the server', () => {
 
     await bootAndListen({ onListening });
 
-    // Six jobs, each with its first early run and its repeat.
-    expect(jobs.filter((job) => job.kind === 'timeout')).toHaveLength(6);
-    expect(jobs.filter((job) => job.kind === 'interval')).toHaveLength(6);
+    // Seven jobs, each with its first early run and its repeat.
+    expect(jobs.filter((job) => job.kind === 'timeout')).toHaveLength(7);
+    expect(jobs.filter((job) => job.kind === 'interval')).toHaveLength(7);
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({ category: 'system', action: 'system.server_started' }),
     );
@@ -191,6 +192,21 @@ describe('the periodic jobs', () => {
     expect(info).toHaveBeenCalledWith(expect.stringContaining('dropped 7 line(s)'));
   });
 
+  it('drops the access records past their retention, and says how many', async () => {
+    const { accessRecordService } = await import('../src/services/AccessRecordService');
+    const { logger } = await import('../src/utils/logger');
+    const info = spyOn(logger, 'info');
+    const prune = spyOn(accessRecordService, 'pruneExpired');
+
+    prune.mockResolvedValueOnce(0);
+    await run(35_000, 'timeout');
+    expect(info).not.toHaveBeenCalledWith(expect.stringContaining('Access records'));
+
+    prune.mockResolvedValueOnce(4);
+    await run(35_000, 'timeout');
+    expect(info).toHaveBeenCalledWith(expect.stringContaining('dropped 4 record(s)'));
+  });
+
   it('keeps going when the activity record cannot be pruned', async () => {
     const { auditService } = await import('../src/services/AuditService');
     const { logger } = await import('../src/utils/logger');
@@ -242,6 +258,7 @@ describe('the periodic jobs', () => {
     expect(intervals.sort((a, b) => a - b)).toEqual([
       15 * 60_000,
       60 * 60_000,
+      24 * 60 * 60_000,
       24 * 60 * 60_000,
       24 * 60 * 60_000,
       24 * 60 * 60_000,

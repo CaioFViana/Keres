@@ -43,6 +43,7 @@ export const publicLandingRoutes = new Elysia()
           maxPublicationsPerDay: tier.maxPublicationsPerDay,
           maxPublicationsPerStory: tier.maxPublicationsPerStory,
           maxPublishedArcs: tier.maxPublishedArcs,
+          maxCommentsPerStory: tier.maxCommentsPerStory,
           playMonthlyProductId: tier.playMonthlyProductId,
           playYearlyProductId: tier.playYearlyProductId,
           webMonthlyEnabled: tier.webMonthlyEnabled,

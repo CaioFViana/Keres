@@ -59,6 +59,8 @@ describe('EntityCountCard as the links and values card', () => {
           maxEntitiesPerStory: 500,
           maxEntitiesTotal: null,
           entitiesUsedTotal: 0,
+          maxCommentsPerStory: null,
+          commentsUsed: 0,
         }}
         onServer
       />,
@@ -130,6 +132,8 @@ describe('EntityCountCard', () => {
             maxEntitiesPerStory: 100,
             maxEntitiesTotal: null,
             entitiesUsedTotal: 0,
+            maxCommentsPerStory: null,
+            commentsUsed: 0,
           }}
           onServer
         />,
@@ -167,6 +171,8 @@ describe('EntityCountCard', () => {
           maxEntitiesPerStory: 500,
           maxEntitiesTotal: 900,
           entitiesUsedTotal: 640,
+          maxCommentsPerStory: null,
+          commentsUsed: 0,
         }}
         onServer
       />,
@@ -198,6 +204,8 @@ describe('EntityCountCard', () => {
           maxEntitiesPerStory: null,
           maxEntitiesTotal: null,
           entitiesUsedTotal: 0,
+          maxCommentsPerStory: null,
+          commentsUsed: 0,
         }}
         onServer
       />,
@@ -231,5 +239,47 @@ describe('EntityCountCard', () => {
       />,
     );
     expect(synced.getByText('entity_count_hint')).toBeTruthy();
+  });
+  it('shows the comments of the story against their own cap, when the plan caps them', async () => {
+    const view = await render(
+      <EntityCountCard
+        total={3}
+        byType={{ Character: 3 }}
+        labelFor={labelFor}
+        plan={{
+          tierName: 'Pro',
+          maxEntitiesPerStory: null,
+          maxEntitiesTotal: null,
+          entitiesUsedTotal: 0,
+          maxCommentsPerStory: 10,
+          commentsUsed: 4,
+        }}
+        onServer
+      />,
+    );
+
+    expect(view.getByTestId('entity-count-plan-comments')).toBeTruthy();
+    expect(view.getByText('4 / 10')).toBeTruthy();
+  });
+
+  it('leaves the comments out of the plan when the plan does not cap them', async () => {
+    const view = await render(
+      <EntityCountCard
+        total={3}
+        byType={{ Character: 3 }}
+        labelFor={labelFor}
+        plan={{
+          tierName: 'Pro',
+          maxEntitiesPerStory: 500,
+          maxEntitiesTotal: null,
+          entitiesUsedTotal: 0,
+          maxCommentsPerStory: null,
+          commentsUsed: 0,
+        }}
+        onServer
+      />,
+    );
+
+    expect(view.queryByTestId('entity-count-plan-comments')).toBeNull();
   });
 });

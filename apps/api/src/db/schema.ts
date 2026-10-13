@@ -6,6 +6,7 @@ export * from './schema/tables/ageVerifications';
 export * from './schema/tables/apiLogs';
 export * from './schema/tables/attemptLimits';
 export * from './schema/tables/auditEvents';
+export * from './schema/tables/accessRecords';
 export * from './schema/tables/attributeValues';
 export * from './schema/tables/boards';
 export * from './schema/tables/sketches';

@@ -21,6 +21,8 @@ export interface LandingTier {
   maxPublicationsPerDay: number | null;
   /** Absent from servers that predate it; null is unlimited. */
   maxPublishedArcs?: number | null;
+  /** Absent from servers that predate it; null is unlimited, zero allows no comment. */
+  maxCommentsPerStory?: number | null;
 }
 
 export interface LandingTiersResponse {

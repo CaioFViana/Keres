@@ -1,4 +1,4 @@
-import { getTierCountedEntityTypes, getTierRelationalEntityTypes } from '@keres/shared';
+import { getTierCountedEntityTypes, getTierFreeEntityTypes } from '@keres/shared';
 import { and, count, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import { getEntityTable } from '../entityTableRegistry';
@@ -45,8 +45,8 @@ async function countTypes(
 /**
  * How many entities a story has, counted as the server counts them for the plan (`maxEntitiesPerStory`):
  * one per live row of each type `getTierCountedEntityTypes` names - what the writer creates. The story
- * itself, favorites and comments are left out, and so are the rows that only link or fill in other entities
- * (relations, custom field and stat values). The list of types comes from the same shared rule the API
+ * itself, favorites and comments are left out, and so are the links and values, the parts and consequences of an
+ * item, and the media files (their bytes have their own quota). The list of types comes from the same shared rule the API
  * enforces, so a type added later is counted here the day it is counted there.
  *
  * Only information: nothing here blocks anything.
@@ -57,10 +57,10 @@ export const createStoryEntityCountService = (db: AppDrizzleClient) => ({
   },
 
   /**
-   * The links and values the plan does not count, for the screen to show apart. Counts toward no plan
-   * and no limit: it is only a look at how connected the story is.
+   * The rows no plan counts - links, values, parts and consequences, media files - for the screen to show
+   * apart. Counts toward no plan and no limit: it is only a look at how the story is put together.
    */
-  countRelationsForStory(storyId: string): Promise<StoryEntityCounts> {
-    return countTypes(db, storyId, getTierRelationalEntityTypes());
+  countFreeForStory(storyId: string): Promise<StoryEntityCounts> {
+    return countTypes(db, storyId, getTierFreeEntityTypes());
   },
 });

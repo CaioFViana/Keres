@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { RequireAdmin } from './auth/RequireAdmin';
 import { Layout } from './components/Layout';
+import { AccessRecordsPage } from './pages/accessRecords/AccessRecordsPage';
 import { ActivityPage } from './pages/activity/ActivityPage';
 import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { LogsPage } from './pages/logs/LogsPage';
@@ -30,6 +31,7 @@ export function App() {
               <Route path="/users/:id" element={<UserFormPage />} />
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/access-records" element={<AccessRecordsPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/tiers" element={<TiersPage />} />

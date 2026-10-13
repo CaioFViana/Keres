@@ -4,11 +4,15 @@ export interface PlanLimits {
   maxEntitiesTotal: number | null;
   maxPublicationsPerDay: number | null;
   maxPublishedArcs: number | null;
+  /**
+   * The cap on comments per story. Optional because a plan read from an older server may not carry it: no line then.
+   */
+  maxCommentsPerStory?: number | null;
 }
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
-/** `plan_limit_<what>_one` for 1, `_other` for any other number, `_unlimited` for no ceiling. */
+/** `plan_limit_<what>_<one|other>` for 1 or another number, `_unlimited` for no ceiling. */
 function line(t: Translate, what: string, limit: number | null): string {
   if (limit === null) return t(`plan_limit_${what}_unlimited`);
   return t(`plan_limit_${what}_${limit === 1 ? 'one' : 'other'}`, { count: limit });
@@ -16,10 +20,19 @@ function line(t: Translate, what: string, limit: number | null): string {
 
 /** A plan's ceilings as short lines; a ceiling the plan does not have reads "unlimited". */
 export function planLimitLines(limits: PlanLimits, t: Translate): string[] {
-  return [
+  const lines = [
     line(t, 'stories', limits.maxStories),
     line(t, 'entities', limits.maxEntitiesTotal),
     line(t, 'publications', limits.maxPublicationsPerDay),
     line(t, 'works', limits.maxPublishedArcs),
   ];
+  if (limits.maxCommentsPerStory !== undefined) {
+    // Zero is its own line: "Up to 0 comments per story" would read as a mistake, and no comments is the plain fact.
+    lines.push(
+      limits.maxCommentsPerStory === 0
+        ? t('plan_limit_comments_none')
+        : line(t, 'comments', limits.maxCommentsPerStory),
+    );
+  }
+  return lines;
 }

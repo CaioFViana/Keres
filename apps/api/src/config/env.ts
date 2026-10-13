@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { AGE_VERIFICATION_MODES } from '@keres/shared/age-verification/AgeVerificationConnector';
+import { ACCESS_RECORD_DEFAULT_RETENTION_DAYS } from '@keres/shared/metadata/AccessRecords';
 
 // Independent of the directory `bun run` was called from; the API's `.env` lives in apps/api.
 const environmentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -101,6 +102,18 @@ const envSchema = z.object({
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
   /** How many days the admin's activity record keeps its lines; older ones are dropped once a day. */
   AUDIT_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(365),
+  /**
+   * How many days the access records (sign-ins and their addresses) are kept: six months by default, what the
+   * Marco Civil da Internet asks of an application provider. Longer than that is kept only if the law says so;
+   * above two years is refused here.
+   */
+  ACCESS_RECORD_RETENTION_DAYS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(730)
+    .optional()
+    .default(ACCESS_RECORD_DEFAULT_RETENTION_DAYS),
   /** How many days a landing-page contact message is kept; older ones are dropped once a day. */
   CONTACT_MESSAGE_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(90),
   /**

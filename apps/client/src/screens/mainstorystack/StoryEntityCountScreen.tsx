@@ -104,7 +104,7 @@ const StoryEntityCountScreen = () => {
       const service = createStoryEntityCountService(drizzleDb);
       const [counted, linked] = await Promise.all([
         service.countForStory(storyId),
-        service.countRelationsForStory(storyId),
+        service.countFreeForStory(storyId),
       ]);
       setCounts(counted);
       setRelations(linked);

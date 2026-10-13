@@ -166,6 +166,14 @@ const EntityCountCard = ({
               plan.maxEntitiesTotal,
               'entity-count-plan-total',
             )}
+          {/* Comments are not entities: their own cap, shown next to them, with what the story holds. */}
+          {plan.maxCommentsPerStory !== null &&
+            usage(
+              t('entity_count_plan_comments'),
+              plan.commentsUsed,
+              plan.maxCommentsPerStory,
+              'entity-count-plan-comments',
+            )}
         </View>
       )}
 

@@ -23,8 +23,6 @@ export interface AuditEvent {
   subject: AuditUserRef | null;
   targetType: string | null;
   targetId: string | null;
-  ip: string | null;
-  userAgent: string | null;
   /** Never holds secrets or content: the status, the reason a refusal gave, names of what changed. */
   meta: Record<string, unknown> | null;
 }
@@ -64,8 +62,6 @@ export interface AuditSummary {
   messages: number;
   limitHits: number;
   adminActions: number;
-  /** The addresses with the most failed logins in the window, worst first. */
-  topFailedLoginIps: Array<{ ip: string; count: number }>;
   /** Events per day over the last fortnight, oldest first (UTC days). */
   perDay: Array<{ day: string; count: number }>;
   system: AuditSystemInfo;

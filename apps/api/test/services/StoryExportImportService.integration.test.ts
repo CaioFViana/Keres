@@ -747,3 +747,68 @@ describe('a story sent to a plan with entity ceilings', () => {
     });
   });
 });
+
+describe('a story sent to a plan with a comment cap', () => {
+  const comment = (id: string) => ({
+    id,
+    storyId: ORIGINAL_STORY_ID,
+    entityType: 'Scene',
+    entityId: ORIGINAL_SCENE_ID,
+    fieldId: null,
+    fieldKey: null,
+    contentSnapshot: null,
+    excerptText: null,
+    authorUserId: OWNER_ID,
+    commentText: 'Rever esta cena',
+    criticality: 1,
+    createdAt: OLD,
+    updatedAt: OLD,
+    version: 1,
+    isDeleted: false,
+    deletedAt: null,
+  });
+
+  const planOf = async (maxCommentsPerStory: number | null) => {
+    const tierId = newId();
+    await db.insert(tiers).values({
+      id: tierId,
+      name: `Tier ${tierId}`,
+      isDefault: false,
+      maxStories: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: null,
+      maxStorageBytesTotal: null,
+      maxCommentsPerStory,
+    } as never);
+    await db.update(users).set({ tierId }).where(eq(users.id, IMPORTER_ID));
+  };
+
+  it('refuses a package with more live comments than one story may hold, as tier_limit, and writes nothing', async () => {
+    await planOf(1);
+    const pkg = buildExport({ comments: [comment(newId()), comment(newId())] });
+
+    await expect(service.importStory(IMPORTER_ID, pkg)).rejects.toMatchObject({
+      status: 403,
+      code: 'tier_limit',
+      message: 'This story has 2 comments, more than your plan allows in one story (1).',
+    });
+    expect(await db.select().from(stories).where(eq(stories.userId, IMPORTER_ID))).toHaveLength(0);
+  });
+
+  it('takes a package with exactly as many comments as the cap', async () => {
+    await planOf(1);
+    const pkg = buildExport({ comments: [comment(newId())] });
+
+    const storyId = await service.importStory(IMPORTER_ID, pkg);
+
+    expect((await storyRow(storyId))!.userId).toBe(IMPORTER_ID);
+  });
+
+  it('is unlimited when the cap is blank', async () => {
+    await planOf(null);
+    const pkg = buildExport({ comments: [comment(newId()), comment(newId()), comment(newId())] });
+
+    await expect(service.importStory(IMPORTER_ID, pkg)).resolves.toEqual(expect.any(String));
+  });
+});

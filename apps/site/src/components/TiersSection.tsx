@@ -81,6 +81,13 @@ function TierCard({ tier, currency }: { tier: LandingTier; currency: string }) {
         ) : (
           limit(t('tiers.publishedArcs'), tier.maxPublishedArcs)
         )}
+        {tier.maxCommentsPerStory === undefined ? null : tier.maxCommentsPerStory === 0 ? (
+          <li>
+            <span>{t('tiers.commentsPerStory')}</span> <strong>{t('tiers.none')}</strong>
+          </li>
+        ) : (
+          limit(t('tiers.commentsPerStory'), tier.maxCommentsPerStory)
+        )}
       </ul>
     </article>
   );

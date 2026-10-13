@@ -5,7 +5,12 @@ import {
   isAdminApiPath,
   outcomeOf,
 } from '../../src/audit/requestAuditRules';
-import { clientAddress, decideAudit, type FinishedRequest } from '../../src/plugins/requestAudit';
+import {
+  clientAddress,
+  decideAudit,
+  type FinishedRequest,
+  requestAddress,
+} from '../../src/plugins/requestAudit';
 import { csvCell } from '../../src/services/AuditService';
 
 const ULID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
@@ -15,8 +20,6 @@ const finished = (over: Partial<FinishedRequest> = {}): FinishedRequest => ({
   status: 200,
   user: null,
   body: undefined,
-  ip: '203.0.113.9',
-  userAgent: 'test-agent',
   ...over,
 });
 const ana = { userId: 'user-ana', username: 'ana' };
@@ -163,10 +166,29 @@ describe('decideAudit', () => {
       action: 'auth.login',
       outcome: 'failure',
       actorUsername: 'ana',
-      ip: '203.0.113.9',
       meta: { status: 401, reason: 'Invalid credentials' },
     });
     expect(JSON.stringify(decision)).not.toContain('hunter2');
+  });
+
+  it('never puts an address or a user agent on the activity record', () => {
+    const decisions = [
+      decideAudit(
+        finished({
+          method: 'POST',
+          path: '/api/auth/login',
+          status: 401,
+          body: { username: 'ana' },
+        }),
+      ),
+      decideAudit(finished({ method: 'PUT', path: '/api/user/password', user: ana, status: 200 })),
+      decideAudit(finished({ method: 'GET', path: '/api/admin/users', status: 403, user: ana })),
+    ];
+    for (const decision of decisions) {
+      expect(decision?.input).not.toHaveProperty('ip');
+      expect(decision?.input).not.toHaveProperty('userAgent');
+      expect(JSON.stringify(decision)).not.toMatch(/203\.0\.113|test-agent/);
+    }
   });
 
   it("records a login by the name typed, even when the browser still carries another account's session", () => {
@@ -339,6 +361,94 @@ describe('clientAddress', () => {
     expect(clientAddress('192.168.1.5', '2001:db8::1')).toBe('2001:db8::1');
     expect(clientAddress('10.0.0.2', 'not an address <script>')).toBe('10.0.0.2');
     expect(clientAddress('127.0.0.1', null)).toBe('127.0.0.1');
+  });
+
+  it('takes the address the proxy appended, and ignores the one a client forged in front of it', () => {
+    // The client wrote `1.2.3.4`; the proxy saw the real client at `198.51.100.1` and appended it.
+    expect(clientAddress('127.0.0.1', '1.2.3.4, 198.51.100.1')).toBe('198.51.100.1');
+    expect(clientAddress('10.0.0.2', '9.9.9.9, 8.8.8.8, 198.51.100.1')).toBe('198.51.100.1');
+    // A forged address that is the only one, from a request that did not come through the proxy, is never read.
+    expect(clientAddress('203.0.113.9', '1.2.3.4, 198.51.100.1')).toBe('203.0.113.9');
+  });
+
+  it('skips the private hops between the proxies, and keeps the client behind them', () => {
+    expect(clientAddress('127.0.0.1', '198.51.100.1, 10.0.0.5, 172.16.0.9')).toBe('198.51.100.1');
+  });
+
+  it("takes a client on the proxy's own private network when every hop is private", () => {
+    expect(clientAddress('127.0.0.1', '10.0.0.5')).toBe('10.0.0.5');
+  });
+
+  it('reads the address of a request through the server the request came in on', () => {
+    const through = (remote: string, forwarded?: string) =>
+      requestAddress(
+        new Request('http://keres.test/api/auth/login', {
+          method: 'POST',
+          headers: forwarded ? { 'x-forwarded-for': forwarded } : {},
+        }),
+        { requestIP: () => ({ address: remote }) },
+      );
+
+    expect(through('127.0.0.1', '1.2.3.4, 198.51.100.1')).toBe('198.51.100.1');
+    expect(through('203.0.113.9', '1.2.3.4')).toBe('203.0.113.9');
+    expect(requestAddress(new Request('http://keres.test/'), null)).toBeNull();
+  });
+});
+
+describe('access records in the activity record', () => {
+  it('lists the access records as a page of the admins to read, with the filters and not the results', () => {
+    const viewed = decideAudit(
+      finished({
+        method: 'GET',
+        path: '/api/admin/access-records',
+        status: 200,
+        user: ana,
+        query: { userId: 'user-bia', ip: '198.51.100.7', from: '2026-01-01', cursor: '1_x' },
+      }),
+    );
+
+    expect(viewed?.input).toMatchObject({
+      category: 'admin',
+      action: 'admin.access_records_viewed',
+      outcome: 'success',
+      actorUserId: 'user-ana',
+      meta: { status: 200, filters: { userId: 'user-bia', from: '2026-01-01' } },
+    });
+    // The address searched for is not on the line, nor the page cursor.
+    expect(JSON.stringify(viewed)).not.toContain('198.51.100.7');
+    expect(JSON.stringify(viewed)).not.toContain('cursor');
+  });
+
+  it('records an export of them the same way', () => {
+    const exported = decideAudit(
+      finished({
+        method: 'GET',
+        path: '/api/admin/access-records/export',
+        status: 200,
+        user: ana,
+        query: { username: 'bia' },
+      }),
+    );
+
+    expect(exported?.input).toMatchObject({
+      action: 'admin.access_records_exported',
+      meta: { status: 200, filters: { username: 'bia' } },
+    });
+  });
+
+  it("leaves a non-administrator's attempt at them to the refusal line only", () => {
+    const refused = decideAudit(
+      finished({
+        method: 'GET',
+        path: '/api/admin/access-records',
+        status: 403,
+        user: ana,
+        query: { userId: 'user-bia' },
+      }),
+    );
+
+    expect(refused?.input.action).toBe('security.admin_access_denied');
+    expect(JSON.stringify(refused)).not.toContain('user-bia');
   });
 });
 

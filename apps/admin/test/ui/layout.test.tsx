@@ -59,6 +59,7 @@ describe('panel layout', () => {
       'Tiers',
       'Messages',
       'Activity',
+      'Access records',
       'Payments',
       'Settings',
     ]) {

@@ -4,6 +4,7 @@ import {
   CurrencySchema,
   PartialTierSchema,
   PublicTiersResponseSchema,
+  StoryPlanSchema,
   TierCreateInputSchema,
   UpdateRegistrationSettingsSchema,
   yearlyDiscountPercent,
@@ -86,6 +87,40 @@ describe('public tier and contact contracts', () => {
     });
     expect(parsed.tiers).toHaveLength(1);
     expect(PublicTiersResponseSchema.parse({ currency: 'BRL', tiers: [] }).tiers).toEqual([]);
+  });
+
+  it('carries the cap on comments per story to the landing page, and reads a server without it as unlimited', () => {
+    const tier = {
+      id,
+      name: 'Pro',
+      isDefault: false,
+      priceMonthlyCents: 1990,
+      priceYearlyCents: null,
+      maxStories: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: null,
+      maxStorageBytesTotal: null,
+      maxPublicationsPerDay: null,
+      playMonthlyProductId: null,
+      playYearlyProductId: null,
+      webMonthlyEnabled: true,
+      webYearlyEnabled: true,
+    };
+    const parse = (value: unknown) =>
+      PublicTiersResponseSchema.parse({ currency: 'BRL', tiers: [value] }).tiers[0];
+
+    expect(parse({ ...tier, maxCommentsPerStory: 0 }).maxCommentsPerStory).toBe(0);
+    expect(parse({ ...tier, maxCommentsPerStory: 25 }).maxCommentsPerStory).toBe(25);
+    expect(parse({ ...tier, maxCommentsPerStory: null }).maxCommentsPerStory).toBeNull();
+    // An older server sends no field: no cap is what it enforced, so null, not a missing value.
+    expect(parse(tier).maxCommentsPerStory).toBeNull();
+    expect(
+      PublicTiersResponseSchema.safeParse({
+        currency: 'BRL',
+        tiers: [{ ...tier, maxCommentsPerStory: -1 }],
+      }).success,
+    ).toBe(false);
   });
 
   it('derives the yearly discount instead of storing it', () => {
@@ -180,5 +215,46 @@ describe('what a tier update may carry', () => {
       isPublicForSale: false,
       sortOrder: 0,
     });
+  });
+
+  it('caps the comments of a story: zero allows none, blank is unlimited, and a negative is refused', () => {
+    expect(TierCreateInputSchema.parse({ name: 'T', maxCommentsPerStory: 0 })).toMatchObject({
+      maxCommentsPerStory: 0,
+    });
+    expect(TierCreateInputSchema.parse({ name: 'T', maxCommentsPerStory: null })).toMatchObject({
+      maxCommentsPerStory: null,
+    });
+    expect(TierCreateInputSchema.parse({ name: 'T' }).maxCommentsPerStory).toBeUndefined();
+    expect(TierCreateInputSchema.safeParse({ name: 'T', maxCommentsPerStory: -1 }).success).toBe(
+      false,
+    );
+    // An update that says nothing of it leaves it as it was.
+    expect(PartialTierSchema.parse({ maxStories: 3 })).not.toHaveProperty('maxCommentsPerStory');
+    expect(PartialTierSchema.parse({ maxCommentsPerStory: null })).toEqual({
+      maxCommentsPerStory: null,
+    });
+  });
+});
+
+describe('what a story and an account are told of their plan', () => {
+  it('carries the comment cap and how many comments the story holds', () => {
+    const story = StoryPlanSchema.parse({
+      tierName: 'Plus',
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      entitiesUsedTotal: 0,
+      maxCommentsPerStory: 20,
+      commentsUsed: 7,
+    });
+    expect(story).toMatchObject({ maxCommentsPerStory: 20, commentsUsed: 7 });
+    // Both are required: a server that did not say them is not read as unlimited.
+    expect(
+      StoryPlanSchema.safeParse({
+        tierName: null,
+        maxEntitiesPerStory: null,
+        maxEntitiesTotal: null,
+        entitiesUsedTotal: 0,
+      }).success,
+    ).toBe(false);
   });
 });

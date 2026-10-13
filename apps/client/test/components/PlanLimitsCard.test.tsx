@@ -22,6 +22,7 @@ const plan = (over: Record<string, unknown> = {}) =>
     maxEntitiesTotal: 500,
     maxPublicationsPerDay: 1,
     maxPublishedArcs: null,
+    maxCommentsPerStory: 50,
     storiesUsed: 2,
     entitiesUsedTotal: 480,
     ...over,
@@ -37,6 +38,7 @@ describe('PlanLimitsCard', () => {
     expect(view.getByText('plan_limit_entities_other:{"count":500}')).toBeTruthy();
     expect(view.getByText('plan_limit_publications_one:{"count":1}')).toBeTruthy();
     expect(view.getByText('plan_limit_works_unlimited')).toBeTruthy();
+    expect(view.getByText('plan_limit_comments_other:{"count":50}')).toBeTruthy();
   });
 
   it('shows how much of the stories and of the total items is in use', async () => {

@@ -9,7 +9,7 @@ import type {
 } from '@keres/shared';
 import { APP_RELEASE } from '@keres/shared';
 import { AUDIT_ACTIONS, AUDIT_EXPORT_MAX_ROWS } from '@keres/shared/metadata/AuditEvents';
-import { and, asc, count, desc, eq, gte, isNotNull, lt, lte, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, lt, lte, or, type SQL } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { env } from '../config/env';
 import { db } from '../db';
@@ -20,7 +20,7 @@ import { trackBackground } from '../utils/backgroundWork';
 
 const STARTED_AT = new Date();
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** Longest a stored user agent or free text goes: the record is not a place for what a client sends at will. */
+/** Longest a stored name or free text goes: the record is not a place for what a client sends at will. */
 const MAX_TEXT = 200;
 
 export interface AuditInput {
@@ -33,8 +33,6 @@ export interface AuditInput {
   subjectUserId?: string | null;
   targetType?: string | null;
   targetId?: string | null;
-  ip?: string | null;
-  userAgent?: string | null;
   /** Never secrets or content: the status, the reason a refusal gave, names of what changed. */
   meta?: Record<string, unknown> | null;
 }
@@ -89,8 +87,6 @@ export class AuditService {
       subjectUserId: input.subjectUserId ?? null,
       targetType: clip(input.targetType),
       targetId: clip(input.targetId),
-      ip: clip(input.ip),
-      userAgent: clip(input.userAgent),
       meta: input.meta ?? null,
     });
   }
@@ -130,7 +126,6 @@ export class AuditService {
           insensitiveLike(auditEvents.action, pattern),
           insensitiveLike(auditEvents.actorUsername, pattern),
           insensitiveLike(auditEvents.targetId, pattern),
-          insensitiveLike(auditEvents.ip, pattern),
           insensitiveLike(actor.username, pattern),
           insensitiveLike(actor.tag, pattern),
           insensitiveLike(subject.username, pattern),
@@ -202,8 +197,6 @@ export class AuditService {
       subject: subjectRef,
       targetType: event.targetType,
       targetId: event.targetId,
-      ip: event.ip,
-      userAgent: event.userAgent,
       meta: (event.meta as Record<string, unknown> | null) ?? null,
     };
   }
@@ -244,8 +237,6 @@ export class AuditService {
       'subject_id',
       'target_type',
       'target_id',
-      'ip',
-      'user_agent',
       'meta',
     ];
     const lines = rows.map((row) => {
@@ -261,8 +252,6 @@ export class AuditService {
         event.subject?.id ?? '',
         event.targetType ?? '',
         event.targetId ?? '',
-        event.ip ?? '',
-        event.userAgent ?? '',
         event.meta ? JSON.stringify(event.meta) : '',
       ]
         .map(csvCell)
@@ -274,7 +263,7 @@ export class AuditService {
   /** What happened in the last `hours`, and how the server is doing. */
   async summary(hours: number, now = new Date()): Promise<AuditSummary> {
     const since = new Date(now.getTime() - hours * 60 * 60 * 1000);
-    const [grouped, failedIps, perDay, system] = await Promise.all([
+    const [grouped, perDay, system] = await Promise.all([
       db
         .select({
           category: auditEvents.category,
@@ -285,20 +274,6 @@ export class AuditService {
         .from(auditEvents)
         .where(gte(auditEvents.createdAt, since))
         .groupBy(auditEvents.category, auditEvents.action, auditEvents.outcome),
-      db
-        .select({ ip: auditEvents.ip, total: count() })
-        .from(auditEvents)
-        .where(
-          and(
-            gte(auditEvents.createdAt, since),
-            eq(auditEvents.action, AUDIT_ACTIONS.login),
-            sql`${auditEvents.outcome} <> 'success'`,
-            isNotNull(auditEvents.ip),
-          ),
-        )
-        .groupBy(auditEvents.ip)
-        .orderBy(desc(count()))
-        .limit(5),
       this.perDay(now),
       this.systemInfo(since),
     ]);
@@ -315,9 +290,6 @@ export class AuditService {
       messages: 0,
       limitHits: 0,
       adminActions: 0,
-      topFailedLoginIps: failedIps
-        .filter((row): row is { ip: string; total: number } => row.ip !== null)
-        .map((row) => ({ ip: row.ip, count: row.total })),
       perDay,
       system,
     };
@@ -414,12 +386,13 @@ export class AuditService {
    * Detaches the activity record from an erased account: the lines stay (they are the server's
    * own trail, kept as long as the retention says), but nothing in them points at who acted
    * anymore. Called by `pruneDeletedAccounts` for every account it pseudonymizes. Returns how many
-   * lines changed.
+   * lines changed. The access records are not touched here: they are kept for the law's six
+   * months whatever happens to the account (see `AccessRecordService`).
    */
   async scrubUser(userId: string): Promise<number> {
     const asActor = await db
       .update(auditEvents)
-      .set({ actorUserId: null, actorUsername: 'deleted', ip: null, userAgent: null })
+      .set({ actorUserId: null, actorUsername: 'deleted' })
       .where(eq(auditEvents.actorUserId, userId))
       .returning({ id: auditEvents.id });
     const asSubject = await db

@@ -22,7 +22,8 @@ import {
 } from '../../services/ageVerification/accountRegistration';
 import { isAgeVerificationRequired } from '../../services/ageVerification/ageVerificationMode';
 import { AppError } from '../../utils/errors';
-import { clientAddress } from '../../plugins/requestAudit';
+import { requestAddress } from '../../plugins/requestAudit';
+import { accessRecordService } from '../../services/AccessRecordService';
 import type { JWTPayload } from '../../index';
 import { languageOf } from '../payments/payment.route';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
@@ -116,10 +117,14 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/login',
-    async ({ jwt, jwtRefresh, body, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie, request, server }) => {
       const { username, password } = body;
+      // Every sign-in that succeeds or is refused is on the access record: the time, the address, and the account
+      // (or the name tried, when no account has it). Written after the answer, so it never holds the request up.
+      const ip = requestAddress(request, server);
 
       if (!(await loginAttemptLimiter.registerAttempt(username))) {
+        accessRecordService.record({ event: 'login_failed', ip, username });
         throw new AppError(401, 'Invalid credentials');
       }
 
@@ -129,12 +134,14 @@ export const authRoutes = new Elysia()
       const user = await userService.findLiveByUsername(username);
 
       if (!user) {
+        accessRecordService.record({ event: 'login_failed', ip, username });
         throw new AppError(401, 'Invalid credentials');
       }
 
       const isPasswordValid = await comparePassword(password, user.password);
 
       if (!isPasswordValid) {
+        accessRecordService.record({ event: 'login_failed', ip, userId: user.id });
         throw new AppError(401, 'Invalid credentials');
       }
 
@@ -160,6 +167,7 @@ export const authRoutes = new Elysia()
         setSessionCookies(cookie, accessToken, refreshToken);
       }
 
+      accessRecordService.record({ event: 'login', ip, userId: user.id });
       return { accessToken, refreshToken, userId: user.id, username: user.username, tag: user.tag };
     },
     {
@@ -233,13 +241,9 @@ export const authRoutes = new Elysia()
     async ({ jwt, jwtRefresh, body, cookie, request, server }) => {
       const { username, password } = body;
 
-      // The same address the audit records; behind a proxy that is the forwarded one, not the proxy's own.
-      const address =
-        clientAddress(
-          server?.requestIP(request)?.address ?? null,
-          request.headers.get('x-forwarded-for'),
-        ) ?? 'unknown';
-      if (!(await registrationLimiter.registerAttempt(address))) {
+      // The same address the access record keeps; behind a proxy that is the forwarded one, not the proxy's own.
+      const ip = requestAddress(request, server);
+      if (!(await registrationLimiter.registerAttempt(ip ?? 'unknown'))) {
         throw new AppError(429, 'Too many attempts. Try again later.');
       }
 
@@ -306,6 +310,7 @@ export const authRoutes = new Elysia()
       });
 
       setSessionCookies(cookie, accessToken, refreshToken);
+      accessRecordService.record({ event: 'register', ip, userId: newUser.id });
 
       // Where verification is off there is nothing to report: the response is the one it always was.
       const verification = verified
@@ -351,17 +356,24 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/forgot-password',
-    async ({ jwt, jwtRefresh, body, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie, request, server }) => {
       const parsedBody = ForgotPasswordSchema.safeParse(body);
       if (!parsedBody.success) {
         throw new AppError(400, parsedBody.error.issues[0]?.message || 'Invalid request');
       }
       const { username, recoveryCode, newPassword } = parsedBody.data;
+      const ip = requestAddress(request, server);
 
       let user: { id: string; username: string; tag: string };
       try {
         user = await recoveryCodeService.redeemCode(username, recoveryCode, newPassword);
       } catch (error) {
+        if (
+          error instanceof InvalidRecoveryCodeError ||
+          error instanceof RecoveryAttemptsLockedError
+        ) {
+          accessRecordService.record({ event: 'password_recovery_failed', ip, username });
+        }
         if (error instanceof InvalidRecoveryCodeError) {
           throw new AppError(401, error.message);
         }
@@ -386,6 +398,7 @@ export const authRoutes = new Elysia()
       });
 
       setSessionCookies(cookie, accessToken, refreshToken);
+      accessRecordService.record({ event: 'password_recovery', ip, userId: user.id });
 
       return { accessToken, refreshToken, userId: user.id, username: user.username, tag: user.tag };
     },
@@ -411,7 +424,7 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/refresh',
-    async ({ jwt, jwtRefresh, body, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie, request, server }) => {
       // Destructure jwtRefresh and cookie
       let refreshToken: string | undefined = body.refreshToken;
 
@@ -451,6 +464,12 @@ export const authRoutes = new Elysia()
       });
 
       setSessionCookies(cookie, newAccessToken, newRefreshToken);
+      // Only a renewal that went through is on the record: a refused one established nothing.
+      accessRecordService.record({
+        event: 'token_refresh',
+        ip: requestAddress(request, server),
+        userId: payload.userId,
+      });
 
       return {
         accessToken: newAccessToken,

@@ -13,7 +13,7 @@ export const AuditEventListQuerySchema = z.object({
   /** A part of the action name (`login`, `message.`, `friend`...). */
   action: z.string().trim().optional(),
   userId: z.string().trim().optional(),
-  /** Text in the action, the user names, the target and the address. */
+  /** Text in the action, the user names and the target. */
   search: z.string().trim().optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),

@@ -73,6 +73,11 @@ export class DatabaseStoryPackageImporter {
         userId,
         countTierEntitiesInStoryPackage(validatedFullStory),
       );
+      // Comments are not entities: the package's live ones answer to the per-story cap of their own.
+      const liveComments = (validatedFullStory.comments ?? []).filter(
+        (comment) => !comment.isDeleted,
+      ).length;
+      await tierEnforcementService.assertCanImportComments(userId, liveComments);
     } catch (error) {
       if (error instanceof TierLimitExceededError) {
         throw new AppError(403, error.message, 'tier_limit');

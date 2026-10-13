@@ -379,11 +379,6 @@ describe('the summary', () => {
     await eventsOf('message.sent_admin');
     await eventsOf('auth.register');
     await eventsOf('auth.login', 2);
-    // The sender's address, as a reverse proxy would have passed it on.
-    await db
-      .update(auditEvents)
-      .set({ ip: '198.51.100.7' })
-      .where(eq(auditEvents.action, 'auth.login'));
 
     const { status, data } = await request('GET', '/admin/api/activity/summary', {
       token: admin.token,
@@ -396,8 +391,9 @@ describe('the summary', () => {
       newAccounts: 1,
       messages: 1,
       denied: 1,
-      topFailedLoginIps: [{ ip: '198.51.100.7', count: 2 }],
     });
+    // No addresses in the activity summary: they are on the access records, not here.
+    expect(data).not.toHaveProperty('topFailedLoginIps');
     expect(data.byCategory.auth).toBeGreaterThanOrEqual(3);
     expect(data.byCategory.security).toBe(1);
     expect(data.perDay).toHaveLength(14);
@@ -468,7 +464,7 @@ describe('the export', () => {
     );
     const lines = (response.data as string).trim().split('\r\n');
     expect(lines[0]).toBe(
-      'time,category,action,outcome,actor,actor_id,subject,subject_id,target_type,target_id,ip,user_agent,meta',
+      'time,category,action,outcome,actor,actor_id,subject,subject_id,target_type,target_id,meta',
     );
     expect(lines).toHaveLength(2);
     // What was typed as a name is text in a spreadsheet, not a formula.
@@ -496,6 +492,20 @@ describe('the retention', () => {
 });
 
 describe('what the record never holds', () => {
+  it('has no address and no user agent in its columns, and none of them in what it writes', async () => {
+    // Every sign-in is on the access record, with its address; the activity record keeps only the who and what.
+    await request('POST', '/auth/login', { body: { username: 'ana', password: 'wrong-one-1' } });
+    await request('GET', '/admin/api/users', { token: ana.token });
+    await eventsOf('auth.login');
+    await settle();
+
+    const columns = Object.keys((await allEvents())[0] ?? {});
+    expect(columns).not.toContain('ip');
+    expect(columns).not.toContain('userAgent');
+    const { data } = await request('GET', '/admin/api/activity', { token: admin.token });
+    expect(JSON.stringify(data)).not.toMatch(/"ip"|"userAgent"|"user_agent"/);
+  });
+
   it('has no password, token or text of a message anywhere, whatever was done', async () => {
     await befriend(ana, bia);
     await request('POST', '/auth/login', { body: { username: 'ana', password: 'SuperSecretPw9' } });

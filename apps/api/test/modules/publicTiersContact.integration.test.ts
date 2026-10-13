@@ -17,6 +17,7 @@ async function seedTier(input: {
   isDefault?: boolean;
   maxStories?: number | null;
   maxPublicationsPerDay?: number | null;
+  maxCommentsPerStory?: number | null;
   isDeleted?: boolean;
   playMonthlyProductId?: string | null;
   playYearlyProductId?: string | null;
@@ -38,6 +39,7 @@ async function seedTier(input: {
     maxStorageBytesPerStory: null,
     maxStorageBytesTotal: null,
     maxPublicationsPerDay: input.maxPublicationsPerDay ?? null,
+    maxCommentsPerStory: input.maxCommentsPerStory ?? null,
     isDeleted: input.isDeleted ?? false,
   });
   return id;
@@ -119,6 +121,24 @@ describe('GET /public/tiers', () => {
       webMonthlyEnabled: true,
       webYearlyEnabled: true,
     });
+    expect(PublicTiersResponseSchema.safeParse(data).success).toBe(true);
+  });
+
+  it('exposes the cap on comments per story, so every plan list states it: zero, a cap and unlimited', async () => {
+    await seedTier({ name: 'Silent', isPublicForSale: true, sortOrder: 1, maxCommentsPerStory: 0 });
+    await seedTier({
+      name: 'Chatty',
+      isPublicForSale: true,
+      sortOrder: 2,
+      maxCommentsPerStory: 40,
+    });
+    await seedTier({ name: 'Open', isPublicForSale: true, sortOrder: 3 });
+
+    const { data } = await request('GET', '/public/tiers');
+
+    expect(
+      data.tiers.map((tier: { maxCommentsPerStory: unknown }) => tier.maxCommentsPerStory),
+    ).toEqual([0, 40, null]);
     expect(PublicTiersResponseSchema.safeParse(data).success).toBe(true);
   });
 

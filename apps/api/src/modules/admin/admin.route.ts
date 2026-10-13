@@ -1,4 +1,5 @@
 import { Elysia } from 'elysia';
+import { adminAccessRecordsRoutes } from './adminAccessRecords.route';
 import { adminActivityRoutes } from './adminActivity.route';
 import { adminApiLogRoutes } from './adminApiLog.route';
 import { adminMessageRoutes } from './adminMessage.route';
@@ -29,4 +30,5 @@ export const adminRoutes = new Elysia()
   .group('/messages', (app) => app.use(adminMessageRoutes))
   .group('/payments', (app) => app.use(adminPaymentRoutes))
   .group('/logs', (app) => app.use(adminApiLogRoutes))
-  .group('/activity', (app) => app.use(adminActivityRoutes));
+  .group('/activity', (app) => app.use(adminActivityRoutes))
+  .group('/access-records', (app) => app.use(adminAccessRecordsRoutes));

@@ -74,7 +74,7 @@ jest.mock('../../../src/utils/paymentMethodVisibility', () => {
   return { ...actual, devicePaymentCapabilities: jest.fn() };
 });
 
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, within } from '@testing-library/react-native';
 import ServerPlanScreen from '../../../src/screens/enterstack/ServerPlanScreen';
 import { devicePaymentCapabilities } from '../../../src/utils/paymentMethodVisibility';
 
@@ -93,6 +93,7 @@ const tier = (over: Record<string, unknown>) => ({
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  maxCommentsPerStory: null,
   ...over,
 });
 const subscription = (over: Record<string, unknown> = {}) => ({
@@ -227,6 +228,29 @@ describe('ServerPlanScreen: the plans', () => {
     expect(view.getByText('plan_limit_stories_other:{"count":50}')).toBeTruthy();
     expect(view.getByText('plan_limit_stories_unlimited')).toBeTruthy();
     expect(view.getAllByText('plan_limit_entities_other:{"count":5000}')).toHaveLength(2);
+    // Every plan on sale says its cap on comments per story, next to the other per-story lines.
+    expect(view.getAllByText('plan_limit_comments_unlimited')).toHaveLength(2);
+  });
+
+  it('says a plan that allows no comments per story, and a cap of some', async () => {
+    setup({
+      overviewValue: overview({}, null, {
+        tiers: [
+          tier({ maxCommentsPerStory: 0 }),
+          tier({ id: 'tier-plus', name: 'Plus', maxCommentsPerStory: 20 }),
+        ],
+      }),
+    });
+    const view = await render(<ServerPlanScreen />);
+
+    expect(
+      within(view.getByTestId('plan-offer-tier-pro')).getByText('plan_limit_comments_none'),
+    ).toBeTruthy();
+    expect(
+      within(view.getByTestId('plan-offer-tier-plus')).getByText(
+        'plan_limit_comments_other:{"count":20}',
+      ),
+    ).toBeTruthy();
   });
 
   it('says so when no plan is on sale', async () => {

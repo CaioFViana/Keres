@@ -31,8 +31,6 @@ const event = (over: Record<string, unknown> = {}) => ({
   subject: bia,
   targetType: 'user',
   targetId: 'user-2',
-  ip: '203.0.113.9',
-  userAgent: 'Keres/1.0',
   meta: { status: 201 },
   ...over,
 });
@@ -51,7 +49,6 @@ const summary = (over: Record<string, unknown> = {}) => ({
   messages: 7,
   limitHits: 0,
   adminActions: 4,
-  topFailedLoginIps: [{ ip: '198.51.100.7', count: 5 }],
   perDay: Array.from({ length: 14 }, (_, index) => ({ day: `2026-01-${index + 1}`, count: index })),
   system: {
     version: '1.9.0',
@@ -103,7 +100,7 @@ describe('activity page: the summary', () => {
     expect(mocks.summary).toHaveBeenCalledWith(24);
   });
 
-  it('says how the server is doing, and which addresses fail to sign in most', async () => {
+  it('says how the server is doing, and shows no address anywhere', async () => {
     const view = await renderPage();
     await flush();
 
@@ -114,16 +111,15 @@ describe('activity page: the summary', () => {
     expect(system).toContain('120 MB');
     expect(system).toContain('10 active, 2 deleted, 1 admins');
     expect(system).toContain('365 days');
-    expect(view.container.textContent).toContain('198.51.100.7');
+    expect(view.container.textContent).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
     expect(view.container.querySelectorAll('.bar-chart .bar')).toHaveLength(14);
   });
 
-  it('has no warning marks when nothing is wrong, and hides the addresses list when there are none', async () => {
+  it('has no warning marks when nothing is wrong', async () => {
     mocks.summary.mockResolvedValue(
       summary({
         failedLogins: 0,
         denied: 0,
-        topFailedLoginIps: [],
         system: { ...summary().system, errorLogs: 0, uptimeSeconds: 600 },
       }),
     );
@@ -132,7 +128,6 @@ describe('activity page: the summary', () => {
 
     expect(view.container.querySelector('.stat-card.is-warn')).toBeNull();
     expect(view.container.querySelector('.stat-card.is-bad')).toBeNull();
-    expect(view.container.textContent).not.toContain('Addresses with the most');
     expect(view.container.querySelector('.system-info')!.textContent).toContain('10m');
   });
 
@@ -178,7 +173,9 @@ describe('activity page: the record', () => {
     expect(row.querySelector('.outcome-success')?.getAttribute('aria-label')).toBe('Succeeded');
     expect(row.textContent).toContain('@ana_s');
     expect(row.textContent).toContain('@bia');
-    expect(row.textContent).toContain('203.0.113.9');
+    // The record keeps no address: the row has no column for one.
+    expect(row.textContent).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
+    expect(view.container.querySelector('thead')!.textContent).not.toContain('Address');
     expect(row.querySelector('a')!.getAttribute('href')).toBe('/users/user-1');
   });
 
@@ -193,7 +190,7 @@ describe('activity page: the record', () => {
   it('shows an event without an actor, an address or a subject as blanks, and a closed account as such', async () => {
     mocks.list.mockResolvedValue(
       page([
-        event({ id: 'a', actor: null, subject: null, ip: null }),
+        event({ id: 'a', actor: null, subject: null }),
         event({ id: 'b', actor: { ...ana, isDeleted: true } }),
         event({ id: 'c', actor: { id: null, username: 'ghost', tag: null, isDeleted: false } }),
       ]),
@@ -246,7 +243,8 @@ describe('activity page: the record', () => {
     const panel = view.container.querySelector('.detail-panel')!;
     expect(panel.querySelector('h3')!.textContent).toBe('Message to a friend');
     expect(panel.textContent).toContain('user user-2');
-    expect(panel.textContent).toContain('Keres/1.0');
+    expect(panel.textContent).not.toContain('Client');
+    expect(panel.textContent).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
     expect(panel.querySelector('code')!.textContent).toBe('message.sent_direct');
     expect(panel.querySelector('pre')!.textContent).toContain('"status": 201');
   });
@@ -279,9 +277,7 @@ describe('activity page: the record', () => {
   });
 
   it('shows an event with no target as a dash', async () => {
-    mocks.list.mockResolvedValue(
-      page([event({ targetType: null, targetId: null, userAgent: null, ip: null })]),
-    );
+    mocks.list.mockResolvedValue(page([event({ targetType: null, targetId: null })]));
     const view = await renderPage();
     await flush();
     await click(view.container.querySelector('tbody tr')!);

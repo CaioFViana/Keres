@@ -16,10 +16,16 @@ export const DEFAULT_SUBMISSION_TTL_DAYS = 30;
 /** One image (a document side or the live photo). Generous for a phone photo, small enough to refuse abuse. */
 export const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_UPLOAD_BYTES_LIMIT = 64 * 1024 * 1024;
-/** The ceiling of the backup retention, as for the Postgres dumps: longer needs a written justification. */
-export const DEFAULT_BACKUP_RETENTION_DAYS = 90;
+/**
+ * Daily copies are kept this many days. A monthly copy is removed 93 days after its month began (MONTHLY_MAX_AGE_DAYS).
+ * 90 is the ceiling, as for the Postgres dumps: longer needs a written justification.
+ */
+export const DEFAULT_BACKUP_RETENTION_DAYS = 30;
 export const MAX_BACKUP_RETENTION_DAYS = 90;
 const MAX_BACKUP_RETENTION_DAYS_LIMIT = 3650;
+/** The newest monthly copies kept (one per calendar month). 0 keeps none; more than 3 is refused. */
+export const DEFAULT_BACKUP_MONTHLY_KEEP = 3;
+export const MAX_BACKUP_MONTHLY_KEEP = 3;
 export const DEFAULT_BACKUP_INTERVAL_HOURS = 24;
 /** Node's timers overflow past about 24.8 days: a longer interval would fire at once instead of waiting. */
 const MAX_BACKUP_INTERVAL_HOURS = 480;
@@ -49,6 +55,8 @@ export interface VerificationConfig {
   /** Where the backups go. Unset means backups are off. Never inside or around DATA_DIR or KEY_DIR. */
   backupDir: string | undefined;
   backupRetentionDays: number;
+  /** How many monthly copies (one per calendar month) are kept, newest first. 0 means none. */
+  backupMonthlyKeep: number;
   /** Lets the retention go past the 90-day ceiling. Set only with a written justification. */
   backupAllowLongerRetention: boolean;
   backupIntervalHours: number;
@@ -231,6 +239,12 @@ export function loadConfig(env: Env = process.env): VerificationConfig {
     allowInsecure,
     backupDir,
     backupRetentionDays,
+    backupMonthlyKeep: integer(
+      'BACKUP_MONTHLY_KEEP',
+      DEFAULT_BACKUP_MONTHLY_KEEP,
+      0,
+      MAX_BACKUP_MONTHLY_KEEP,
+    ),
     backupAllowLongerRetention,
     backupIntervalHours: integer(
       'BACKUP_INTERVAL_HOURS',

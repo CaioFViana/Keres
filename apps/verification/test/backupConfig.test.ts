@@ -25,10 +25,11 @@ const withBackups = (backupEnv: Record<string, string | undefined>): NodeJS.Proc
 };
 
 describe('backup configuration', () => {
-  it('is off when BACKUP_DIR is unset, with the 90-day default retention and a 24-hour interval', () => {
+  it('is off when BACKUP_DIR is unset, with the 30-day default retention, 3 monthly copies and a 24-hour interval', () => {
     const config = loadConfig(withBackups({}));
     expect(config.backupDir).toBeUndefined();
-    expect(config.backupRetentionDays).toBe(90);
+    expect(config.backupRetentionDays).toBe(30);
+    expect(config.backupMonthlyKeep).toBe(3);
     expect(config.backupAllowLongerRetention).toBe(false);
     expect(config.backupIntervalHours).toBe(24);
     expect(configWarnings(config)).toContain(
@@ -98,6 +99,22 @@ describe('backup configuration', () => {
   it('accepts exactly 90 days without the flag, and a shorter retention', () => {
     expect(loadConfig(withBackups({ BACKUP_RETENTION_DAYS: '90' })).backupRetentionDays).toBe(90);
     expect(loadConfig(withBackups({ BACKUP_RETENTION_DAYS: '30' })).backupRetentionDays).toBe(30);
+    expect(loadConfig(withBackups({ BACKUP_RETENTION_DAYS: '7' })).backupRetentionDays).toBe(7);
+  });
+
+  it('reads BACKUP_MONTHLY_KEEP from 0 to 3, and refuses anything else', () => {
+    expect(loadConfig(withBackups({ BACKUP_MONTHLY_KEEP: '0' })).backupMonthlyKeep).toBe(0);
+    expect(loadConfig(withBackups({ BACKUP_MONTHLY_KEEP: '1' })).backupMonthlyKeep).toBe(1);
+    expect(loadConfig(withBackups({ BACKUP_MONTHLY_KEEP: '3' })).backupMonthlyKeep).toBe(3);
+    expect(problemsOf(withBackups({ BACKUP_MONTHLY_KEEP: '4' }))).toContain(
+      'BACKUP_MONTHLY_KEEP must be a whole number from 0 to 3.',
+    );
+    expect(problemsOf(withBackups({ BACKUP_MONTHLY_KEEP: '-1' }))).toContain(
+      'BACKUP_MONTHLY_KEEP must be a whole number from 0 to 3.',
+    );
+    expect(problemsOf(withBackups({ BACKUP_MONTHLY_KEEP: 'three' }))).toContain(
+      'BACKUP_MONTHLY_KEEP must be a whole number from 0 to 3.',
+    );
   });
 
   it('refuses a retention or an interval that is not a whole number in range', () => {

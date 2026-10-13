@@ -53,7 +53,7 @@ jest.mock('../../../src/services/storymanagement/StoryEntityCountService', () =>
   __esModule: true,
   createStoryEntityCountService: () => ({
     countForStory: mockCountForStory,
-    countRelationsForStory: mockCountRelations,
+    countFreeForStory: mockCountRelations,
   }),
 }));
 jest.mock('../../../src/services/StoryPlanService', () => ({

@@ -30,6 +30,11 @@ export const tiers = table('tiers', {
   maxPublicationsPerStory: integer('max_publications_per_story'),
   /** Works (arcs) of one story that may be live on the showcase at once; `null` is unlimited, 0 forbids arc releases. */
   maxPublishedArcs: integer('max_published_arcs'),
+  /**
+   * Live comments one story may hold, by anyone: comments are not entities, so the entity ceilings leave them
+   * out and this is their own cap, held against the story owner's plan. `null` is unlimited, 0 allows none.
+   */
+  maxCommentsPerStory: integer('max_comments_per_story'),
   /** Messages to other users in any rolling 24 hours (see `message_log`); 0 silences the user. */
   maxMessagesPerDay: integer('max_messages_per_day'),
   /** Monthly price in the system's currency minor units; `null` = not priced monthly, 0 = free. */

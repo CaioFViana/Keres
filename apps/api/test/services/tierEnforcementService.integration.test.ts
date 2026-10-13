@@ -182,7 +182,7 @@ describe('TierEnforcementService story limits', () => {
 describe('TierEnforcementService entity limits', () => {
   it('lets an unlimited user create entities', async () => {
     await expect(
-      tierEnforcementService.assertCanCreateEntity(userId, storyId),
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
     ).resolves.toBeUndefined();
   });
 
@@ -190,39 +190,39 @@ describe('TierEnforcementService entity limits', () => {
     await assignTier(await seedTier({ maxStories: 1 }));
 
     await expect(
-      tierEnforcementService.assertCanCreateEntity(userId, storyId),
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
     ).resolves.toBeUndefined();
   });
 
   it('refuses an entity when the story is at its ceiling', async () => {
     await assignTier(await seedTier({ maxEntitiesPerStory: 0 }));
 
-    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
-      /Entity limit for this story reached for your plan \(0\)/,
-    );
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
+    ).rejects.toThrow(/Entity limit for this story reached for your plan \(0\)/);
   });
 
   it('allows an entity below the per-story ceiling', async () => {
     await assignTier(await seedTier({ maxEntitiesPerStory: 100 }));
 
     await expect(
-      tierEnforcementService.assertCanCreateEntity(userId, storyId),
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
     ).resolves.toBeUndefined();
   });
 
   it('refuses an entity when the account total is at its ceiling', async () => {
     await assignTier(await seedTier({ maxEntitiesTotal: 0 }));
 
-    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
-      /Total entity limit reached for your plan \(0\)/,
-    );
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
+    ).rejects.toThrow(/Total entity limit reached for your plan \(0\)/);
   });
 
   it('allows an entity below the total ceiling', async () => {
     await assignTier(await seedTier({ maxEntitiesTotal: 100 }));
 
     await expect(
-      tierEnforcementService.assertCanCreateEntity(userId, storyId),
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
     ).resolves.toBeUndefined();
   });
 
@@ -230,9 +230,9 @@ describe('TierEnforcementService entity limits', () => {
     await assignTier(await seedTier({ maxEntitiesPerStory: 1 }));
     await db.insert(characters).values({ id: newId(), storyId, name: 'Nyx' } as never);
 
-    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
-      /Entity limit for this story reached for your plan \(1\)/,
-    );
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
+    ).rejects.toThrow(/Entity limit for this story reached for your plan \(1\)/);
   });
 });
 
@@ -296,7 +296,7 @@ describe('TierEnforcementService what counts as an entity', () => {
     await seedTagWithRelations(5);
 
     await expect(
-      tierEnforcementService.assertCanCreateEntity(userId, storyId),
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
     ).resolves.toBeUndefined();
   });
 
@@ -304,9 +304,9 @@ describe('TierEnforcementService what counts as an entity', () => {
     await assignTier(await seedTier({ maxEntitiesPerStory: 1 }));
     await seedTagWithRelations(5);
 
-    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
-      /Entity limit for this story reached for your plan \(1\)/,
-    );
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
+    ).rejects.toThrow(/Entity limit for this story reached for your plan \(1\)/);
   });
 
   it('leaves the links out of what the owner has used of the total ceiling', async () => {
@@ -430,7 +430,7 @@ describe('TierEnforcementService honest storage ledger', () => {
     await assignTier(await seedTier({ maxEntitiesPerStory: 0 }));
     // The writer has no tier at all (unlimited) - it must not matter in the owner's story.
     await expect(
-      tierEnforcementService.assertCanCreateEntity(writerId, storyId),
+      tierEnforcementService.assertCanCreateEntity(writerId, storyId, 'Character'),
     ).rejects.toBeInstanceOf(TierLimitExceededError);
   });
 });
@@ -442,6 +442,8 @@ describe('TierEnforcementService getStoryPlan', () => {
       maxEntitiesPerStory: null,
       maxEntitiesTotal: null,
       entitiesUsedTotal: 0,
+      maxCommentsPerStory: null,
+      commentsUsed: 0,
     });
   });
 
@@ -466,6 +468,8 @@ describe('TierEnforcementService getStoryPlan', () => {
       maxEntitiesPerStory: 500,
       maxEntitiesTotal: 900,
       entitiesUsedTotal: 3,
+      maxCommentsPerStory: null,
+      commentsUsed: 0,
     });
   });
 
@@ -489,6 +493,7 @@ describe('TierEnforcementService getAccountPlan', () => {
       maxEntitiesTotal: null,
       maxPublicationsPerDay: null,
       maxPublishedArcs: null,
+      maxCommentsPerStory: null,
       storiesUsed: 1,
       entitiesUsedTotal: 0,
     });
@@ -512,6 +517,7 @@ describe('TierEnforcementService getAccountPlan', () => {
       maxEntitiesTotal: 900,
       maxPublicationsPerDay: 2,
       maxPublishedArcs: 1,
+      maxCommentsPerStory: null,
       storiesUsed: 1,
       entitiesUsedTotal: 0,
     });
@@ -547,9 +553,9 @@ describe('a free plan with every ceiling at 0', () => {
     await expect(tierEnforcementService.assertCanCreateStory(userId)).rejects.toThrow(
       /Story limit reached for your plan \(0\)/,
     );
-    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
-      /limit/i,
-    );
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
+    ).rejects.toThrow(/limit/i);
     await expect(tierEnforcementService.assertCanUploadMedia(userId, storyId, 1)).rejects.toThrow(
       TierLimitExceededError,
     );
@@ -572,8 +578,8 @@ describe('a free plan with every ceiling at 0', () => {
     await assignTier(await seedTier({ ...everythingAtZero, maxStories: null }));
 
     await expect(tierEnforcementService.assertCanCreateStory(userId)).resolves.toBeUndefined();
-    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
-      /limit/i,
-    );
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(userId, storyId, 'Character'),
+    ).rejects.toThrow(/limit/i);
   });
 });

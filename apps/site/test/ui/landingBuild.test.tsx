@@ -139,6 +139,40 @@ describe('landing build', () => {
     await unmount();
   });
 
+  it('states the cap on comments per story on each card: a number, unlimited, none, or no row from an older server', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        currency: 'BRL',
+        tiers: [
+          { ...freeTier, maxCommentsPerStory: 0 },
+          { ...paidTier, maxCommentsPerStory: 30 },
+          {
+            ...paidTier,
+            id: '01ARZ3NDEKTSV4RRFFQ69G5FDW',
+            name: 'Open',
+            maxCommentsPerStory: null,
+          },
+          { ...paidTier, id: '01ARZ3NDEKTSV4RRFFQ69G5FEW', name: 'Legacy' },
+        ],
+      }),
+    );
+    const { container, unmount } = await renderLanding();
+    await flush();
+
+    // The value beside the label, on one card; undefined when that card has no such row.
+    const commentsValue = (card: Element) =>
+      [...card.querySelectorAll('.tier-limits li')]
+        .find((row) => row.querySelector('span')?.textContent === siteEn.tiers.commentsPerStory)
+        ?.querySelector('strong')?.textContent;
+    const [none, counted, open, legacy] = [...container.querySelectorAll('#tiers .tier-card')];
+    expect(commentsValue(none)).toBe(siteEn.tiers.none);
+    expect(commentsValue(counted)).toBe('30');
+    expect(commentsValue(open)).toBe(siteEn.tiers.unlimited);
+    expect(commentsValue(legacy)).toBeUndefined();
+
+    await unmount();
+  });
+
   it('lays every tier card out on the same rows', async () => {
     const unpriced = {
       ...paidTier,

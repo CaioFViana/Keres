@@ -394,6 +394,7 @@
     "storageTotal": "Storage total",
     "publicationsPerDay": "Publications per day",
     "publishedArcs": "Works on show per story",
+    "commentsPerStory": "Comments per story",
     "unlimited": "Unlimited",
     "none": "None"
   }

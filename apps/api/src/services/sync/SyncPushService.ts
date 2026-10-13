@@ -20,8 +20,9 @@ import type {
 } from '../entity-sync-handlers/BaseSyncEntityHandler';
 import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler';
 import { storyPermissionService } from '../StoryPermissionService';
-import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
+import { TierLimitExceededError } from '../TierEnforcementService';
 import { readPushEnvelope, writtenPayload } from './pushEnvelope';
+import { assertPlanRoomFor } from './pushPlanRoom';
 import { storyNsfwRefusal } from './storyNsfwGuard';
 import { refuseTwin } from './pushTwins';
 import { movesArrangedRows, normalizeArrangedUpdate, renumberArranged } from './arrangedRanks';
@@ -326,11 +327,7 @@ export class SyncPushService {
               // recorded row exists (the row came from outside sync): no pull ever carries 0.
               alreadyAppliedVersion = recordedCreate?.operationVersion ?? 0;
             } else {
-              if (handler.tierLimitScope === 'story') {
-                await tierEnforcementService.assertCanCreateStory(userId);
-              } else if (handler.tierLimitScope === 'entity') {
-                await tierEnforcementService.assertCanCreateEntity(userId, storyId);
-              }
+              await assertPlanRoomFor(handler, update.entity, userId, storyId);
               await assertGalleryStorageQuota(update, currentEntity, userId, storyId);
               await refuseTwin(
                 handler,
@@ -356,11 +353,7 @@ export class SyncPushService {
               handler.isDeletedRow(currentEntity) &&
               (update as UpdateStoryUpdate).changes?.isDeleted === false
             ) {
-              if (handler.tierLimitScope === 'story') {
-                await tierEnforcementService.assertCanCreateStory(userId);
-              } else if (handler.tierLimitScope === 'entity') {
-                await tierEnforcementService.assertCanCreateEntity(userId, storyId);
-              }
+              await assertPlanRoomFor(handler, update.entity, userId, storyId);
             }
             // Restored, or re-keyed, a row may become what a live row of another id already is.
             const changes = ((update as UpdateStoryUpdate).changes ?? {}) as Record<

@@ -435,6 +435,20 @@
       "when": 1791831630362,
       "tag": "0061_careful_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "6",
+      "when": 1791852656880,
+      "tag": "0062_rare_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "6",
+      "when": 1791855229367,
+      "tag": "0063_pretty_red_ghost",
+      "breakpoints": true
     }
   ]
 }

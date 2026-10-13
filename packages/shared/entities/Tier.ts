@@ -12,6 +12,8 @@ export interface Tier {
   maxPublicationsPerDay: number | null;
   /** Works (arcs) of one story that may be on the showcase at once; `0` forbids releasing one. */
   maxPublishedArcs: number | null;
+  /** Live comments one story may hold, by anyone (comments are not entities); `0` allows none. */
+  maxCommentsPerStory: number | null;
   /** Messages the user may send to other users in any 24 hours (the cap for administrators is fixed). */
   maxMessagesPerDay: number | null;
   /** Monthly price in the system's currency minor units (`null` = not priced monthly). */

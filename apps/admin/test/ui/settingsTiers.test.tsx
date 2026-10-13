@@ -70,6 +70,7 @@ const tier = (over: Record<string, unknown> = {}) => ({
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  maxCommentsPerStory: null,
   maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
@@ -603,6 +604,48 @@ describe('tiers page', () => {
 
     expect(mocks.createTier).toHaveBeenCalledWith(
       expect.objectContaining({ maxStories: 25, maxEntitiesPerStory: null }),
+    );
+    await view.unmount();
+  });
+
+  it('asks for the comments per story, says what a comment is, and keeps 0 apart from empty (unlimited)', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxCommentsPerStory: 5 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Comments/story');
+    expect(card.textContent).toContain('5');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    expect(view.container.querySelector('[data-testid="comments-note"]')!.textContent).toContain(
+      'Comments are not entities: this caps how many comments (by anyone) one story may hold; blank = unlimited',
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max comments per story'),
+    )!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Chatty');
+    await changeInput(label.querySelector('input')!, '0');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxCommentsPerStory: 0 }),
+    );
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('.form-card input')!, 'Open');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxCommentsPerStory: null }),
     );
     await view.unmount();
   });

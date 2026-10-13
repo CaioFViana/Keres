@@ -116,6 +116,12 @@ export function storefrontPage(options: StorefrontOptions): string {
     if (cents === null || cents === undefined) return null;
     return (cents / 100).toFixed(2) + ' ' + currency;
   }
+  // The cap on comments per story, worded as the app words it. This page has no language switch, so it is English.
+  function commentsLine(limit) {
+    if (limit === null) return 'Unlimited comments per story';
+    if (limit === 0) return 'No comments per story';
+    return limit === 1 ? 'Up to 1 comment per story' : 'Up to ' + limit + ' comments per story';
+  }
   function show() {
     app.textContent = '';
     for (var i = 0; i < arguments.length; i++) if (arguments[i]) app.appendChild(arguments[i]);
@@ -203,6 +209,8 @@ export function storefrontPage(options: StorefrontOptions): string {
           current ? h('span', { class: 'tag current', text: 'current' }) : null),
         monthly !== null ? h('p', {}, h('span', { class: 'price', text: monthly }), ' / month') : null,
         yearly !== null ? h('p', { class: 'muted', text: yearly + ' / year' }) : null,
+        // An older server sends no cap: no line, rather than a claim it never made.
+        tier.maxCommentsPerStory === undefined ? null : h('p', { class: 'muted', text: commentsLine(tier.maxCommentsPerStory) }),
         h('div', { class: 'field' }, h('label', { text: 'How often' }, interval)),
         h('div', { class: 'field' }, h('label', { text: 'How' }, method)),
         error,

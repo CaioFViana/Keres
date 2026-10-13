@@ -139,6 +139,15 @@ jest.mock('../../../src/services/AuthTokenManager', () => ({
   setAuthDb: (...args: unknown[]) => mockSetAuthDb(...args),
 }));
 
+// The screen reads the real font pack state; only what the reset deletes is replaced.
+jest.mock('../../../src/services/cjkFontPack', () => ({
+  ...jest.requireActual('../../../src/services/cjkFontPack'),
+  deleteCjkPack: jest.fn(async () => undefined),
+}));
+jest.mock('../../../src/services/SongAudioService', () => ({
+  ...jest.requireActual('../../../src/services/SongAudioService'),
+  defaultSongAudioStore: () => ({ prune: jest.fn(async () => undefined) }),
+}));
 jest.mock('../../../src/services/MediaFileService', () => ({
   mediaFileService: {
     deleteAllMedia: (...args: unknown[]) => mockDeleteAllMedia(...args),

@@ -16,10 +16,8 @@ import {
   CLIENT_PRIVACY_VERSION,
   clientPrivacyFor,
 } from '@/src/legal/privacyPolicy';
-import {
-  clearAcceptedClientLegal,
-  setAcceptedClientLegal,
-} from '@/src/legal/clientTermsAcceptance';
+import { setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import { clearEverythingOutsideDatabase } from '@/src/services/LocalDataReset';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
@@ -247,13 +245,13 @@ const SettingsScreen = () => {
 
               await resetDatabase(db);
               console.log('Database reset complete.');
-              // What was accepted lives outside the database: left behind, the welcome would open with both texts
-              // already accepted and let the person on without opening either.
-              await clearAcceptedClientLegal();
 
               // Reset every in-memory store that can retain rows from the deleted database.
               resetAllClientStores();
               resetTheme();
+              // Last: the stores above may write their own entries while they reset. What was accepted, the drafts and
+              // the downloaded files live outside the database too, and a full reset leaves none of them behind.
+              await clearEverythingOutsideDatabase();
               console.log('Credentials, media, stores and synchronization services reset.');
 
               // Navigate to ColdInstallScreen and reset navigation stack

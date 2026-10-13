@@ -78,16 +78,3 @@ export async function setAcceptedClientLegal(
     // Acceptance is a nicety next to the account-level records: a missed write only asks again.
   }
 }
-
-/**
- * Forgets what this device accepted of every document, the old terms-version key included. The application reset
- * calls it: a reset that left the acceptances behind opened the welcome with both texts already "accepted", and
- * the person walked past them without opening either.
- */
-export async function clearAcceptedClientLegal(): Promise<void> {
-  try {
-    await AsyncStorage.multiRemove([...Object.values(KEYS), LEGACY_TERMS_VERSION_KEY]);
-  } catch {
-    // Nothing to forget, or storage that will not answer: the welcome asks again either way.
-  }
-}

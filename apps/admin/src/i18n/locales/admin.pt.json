@@ -183,7 +183,11 @@
       "payment_events_rejected": "Aviso do conector recusado",
       "payment_gift_granted": "Cortesia registrada na assinatura",
       "admin_access_records_viewed": "Registros de acesso consultados",
-      "admin_access_records_exported": "Registros de acesso exportados"
+      "admin_access_records_exported": "Registros de acesso exportados",
+      "admin_evidence_hold_created": "Preservação de provas criada",
+      "admin_evidence_hold_viewed": "Preservação de provas consultada",
+      "admin_evidence_hold_extended": "Preservação de provas prorrogada",
+      "admin_evidence_hold_released": "Preservação de provas liberada"
     }
   },
   "appearance": {
@@ -269,6 +273,44 @@
     "StatStrength": "Valor do atributo",
     "StatRelation": "Vínculo de atributo",
     "Mode": "Modo"
+  },
+  "evidenceHolds": {
+    "title": "Preservação de provas",
+    "intro": "Cópias de conteúdos denunciados, e dos dados da conta responsável por eles, guardadas em sigilo pelo tempo que a lei exige (Lei 15.211/2025, art. 27).",
+    "retentionNote": "Cada preservação dura {{days}} dias (seis meses) a partir da criação, e depois deixa de ser guardada. Libere uma só quando a denúncia não tiver fundamento.",
+    "showExpired": "Mostrar vencidas",
+    "keepTitle": "Preservar um item",
+    "keepTargetKind": "Tipo",
+    "keepTargetId": "Id do item",
+    "keepReportMessageId": "Id da mensagem da denúncia (opcional)",
+    "keepNote": "Observação (opcional)",
+    "keepSubmit": "Preservar",
+    "columnCreated": "Criada em",
+    "columnExpires": "Vence em",
+    "columnTarget": "Item",
+    "columnSubject": "Conta",
+    "columnReports": "Denúncias",
+    "columnMadeBy": "Feita por",
+    "columnNote": "Observação",
+    "view": "Ver",
+    "automatic": "Automática",
+    "byAdmin": "Por um administrador",
+    "expiredBadge": "Vencida",
+    "empty": "Nenhuma preservação para estes filtros.",
+    "targets": {
+      "story": "História",
+      "user": "Conta",
+      "message": "Mensagem",
+      "publication": "Publicação"
+    },
+    "dialogTitle": "Preservação de prova",
+    "copyTitle": "Cópia como estava quando foi denunciado",
+    "extendLabel": "Prorrogar por (dias)",
+    "extendHint": "Contados a partir de hoje. Uma prorrogação nunca encurta a preservação.",
+    "extend": "Prorrogar",
+    "daysRange": "Os dias devem ficar entre 1 e {{max}}.",
+    "letGo": "Liberar",
+    "confirmRelease": "Liberar esta preservação agora? Ela deixa de ser guardada."
   },
   "language": {
     "label": "Idioma"
@@ -383,6 +425,7 @@
     "recovery": "Recuperação",
     "activity": "Atividade",
     "accessRecords": "Registros de acesso",
+    "evidenceHolds": "Preservação de provas",
     "payments": "Pagamentos",
     "logs": "Registros",
     "tiers": "Planos",

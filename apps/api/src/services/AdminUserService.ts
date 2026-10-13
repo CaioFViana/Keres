@@ -18,6 +18,7 @@ import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierIds } from './payments/entitlement';
 import { accountClosureService } from './payments/AccountClosureService';
 import { recoveryCodeService } from './RecoveryCodeService';
+import { erasureLedger } from './ErasureLedger';
 import { storyNsfwService } from './StoryNsfwService';
 import { TierNotFoundError } from './TierService';
 import { TagAlreadyTakenError } from './UserService';
@@ -335,6 +336,7 @@ export class AdminUserService {
       .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
+    erasureLedger.record('account_deleted', id);
     // A deactivated account leaves every NSFW story now - it must not linger on adults-only
     // content while banned, and the showcase shadowban (ShowcaseService) hides its publications.
     await storyNsfwService.removeUserFromNsfwStories(id, 'account-deactivated');
@@ -352,6 +354,7 @@ export class AdminUserService {
       .set({ isDeleted: false, deletedAt: null, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
+    erasureLedger.record('account_restored', id);
     return updated;
   }
 }

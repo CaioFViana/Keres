@@ -183,7 +183,11 @@
       "payment_events_rejected": "Connector notice refused",
       "payment_gift_granted": "Gift subscription recorded",
       "admin_access_records_viewed": "Access records read",
-      "admin_access_records_exported": "Access records exported"
+      "admin_access_records_exported": "Access records exported",
+      "admin_evidence_hold_created": "Evidence hold created",
+      "admin_evidence_hold_viewed": "Evidence hold viewed",
+      "admin_evidence_hold_extended": "Evidence hold extended",
+      "admin_evidence_hold_released": "Evidence hold released"
     }
   },
   "appearance": {
@@ -269,6 +273,44 @@
     "StatStrength": "Stat strength",
     "StatRelation": "Stat link",
     "Mode": "Mode"
+  },
+  "evidenceHolds": {
+    "title": "Evidence holds",
+    "intro": "Copies of reported items, and of the data of the account responsible for them, kept under secrecy for the time the law asks (Lei 15.211/2025, art. 27).",
+    "retentionNote": "Each hold lasts {{days}} days (six months) from when it is made, then it stops being kept. Let one go only when the report was unfounded.",
+    "showExpired": "Show expired",
+    "keepTitle": "Keep an item",
+    "keepTargetKind": "Kind",
+    "keepTargetId": "Item id",
+    "keepReportMessageId": "Report message id (optional)",
+    "keepNote": "Note (optional)",
+    "keepSubmit": "Keep",
+    "columnCreated": "Created",
+    "columnExpires": "Expires",
+    "columnTarget": "Item",
+    "columnSubject": "Account",
+    "columnReports": "Reports",
+    "columnMadeBy": "Made by",
+    "columnNote": "Note",
+    "view": "View",
+    "automatic": "Automatic",
+    "byAdmin": "By an admin",
+    "expiredBadge": "Expired",
+    "empty": "No holds for these filters.",
+    "targets": {
+      "story": "Story",
+      "user": "Account",
+      "message": "Message",
+      "publication": "Publication"
+    },
+    "dialogTitle": "Evidence hold",
+    "copyTitle": "Copy as it was when reported",
+    "extendLabel": "Extend by (days)",
+    "extendHint": "Counted from today. An extension never shortens a hold.",
+    "extend": "Extend",
+    "daysRange": "Days must be between 1 and {{max}}.",
+    "letGo": "Let go",
+    "confirmRelease": "Let this hold go now? It stops being kept."
   },
   "language": {
     "label": "Language"
@@ -383,6 +425,7 @@
     "recovery": "Recovery",
     "activity": "Activity",
     "accessRecords": "Access records",
+    "evidenceHolds": "Evidence holds",
     "payments": "Payments",
     "logs": "Logs",
     "tiers": "Tiers",

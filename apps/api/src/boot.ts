@@ -1,6 +1,9 @@
 import { env } from './config/env';
 import { closeDatabase } from './db';
 import { runMigrations } from './db/migrate';
+import { erasureLedger } from './services/ErasureLedger';
+import { evidenceHoldService } from './services/EvidenceHoldService';
+import { applyErasureLedger } from './services/ErasureReplayService';
 import { clientDistPath } from './config/resourceRoot';
 import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
@@ -48,6 +51,31 @@ export async function preparePersistence(): Promise<void> {
   // Before the root admin: its own tag, when it already exists, is one of those that may need it.
   await normalizeStoredUserTags();
   await reconcileRootAdmin();
+  await reapplyErasures();
+}
+
+/**
+ * Applies the erasure ledger to the database (see `ErasureLedger`): after a restore it re-deletes the accounts
+ * the dump brought back. A server with no ledger configured says so once, because a restore there cannot be
+ * made safe by the server itself. A failure never stops the boot - it is said and the erasure retried next start.
+ */
+async function reapplyErasures(): Promise<void> {
+  if (!erasureLedger.enabled) {
+    logger.warn(
+      'No erasure ledger (ERASURE_LEDGER_PATH): after restoring a backup, re-process the deletions received since the dump by hand.',
+    );
+    return;
+  }
+  try {
+    const outcome = await applyErasureLedger();
+    if (outcome.redeleted + outcome.reerased + outcome.restored > 0) {
+      logger.warn(
+        `Erasure ledger applied: ${outcome.redeleted} account(s) deleted again, ${outcome.reerased} erased again, ${outcome.restored} restored again.`,
+      );
+    }
+  } catch (error) {
+    logger.error('Applying the erasure ledger failed', error);
+  }
 }
 
 /**
@@ -228,6 +256,15 @@ function startDeletedAccountPruneScheduler(): () => void {
     trackBackground(
       userService.pruneDeletedAccounts().then(
         (erased) => {
+          erasureLedger.trim();
+          trackBackground(
+            evidenceHoldService.pruneExpired().then(
+              (dropped) => {
+                if (dropped > 0) logger.info(`Evidence holds: dropped ${dropped} expired hold(s).`);
+              },
+              (error: unknown) => logger.error('Evidence hold cleanup failed', error),
+            ),
+          );
           if (erased > 0) {
             logger.info(
               `Accounts: erased ${erased} account(s) deleted over ${ACCOUNT_DELETION_GRACE_DAYS} days ago.`,

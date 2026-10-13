@@ -47,6 +47,10 @@ services:
       MEDIA_S3_SECRET_ACCESS_KEY: ${MEDIA_S3_SECRET_ACCESS_KEY:-}
       MEDIA_S3_PREFIX: ${MEDIA_S3_PREFIX:-keres}
       MEDIA_S3_FORCE_PATH_STYLE: ${MEDIA_S3_FORCE_PATH_STYLE:-false}
+      # Erasure ledger (account ids and dates only): lives on its own volume, which the backup service never
+      # mounts, so restoring a dump cannot bring an erased account back. See deploy/README.md.
+      ERASURE_LEDGER_PATH: /app/apps/api/erasure-ledger/ledger.ndjson
+      ERASURE_LEDGER_RETENTION_DAYS: ${ERASURE_LEDGER_RETENTION_DAYS:-100}
       # Accounts are 18+ and verified (docs/age_verification.md). `required` is the Docker default and it
       # refuses to boot without the service's address and keys. A home or LAN server with no public offer may
       # set `disabled` in its .env: it then has no adults-only area and no verified account, and says so.
@@ -60,6 +64,7 @@ services:
       - "${KERES_BIND_ADDRESS:-127.0.0.1}:${KERES_PORT:-3000}:3000"
     volumes:
       - media_storage:/app/apps/api/media-storage
+      - erasure_ledger:/app/apps/api/erasure-ledger
     depends_on:
       db:
         condition: service_healthy
@@ -104,3 +109,4 @@ volumes:
   db_data:
   media_storage:
   db_backups:
+  erasure_ledger:

@@ -5,6 +5,7 @@ import { RequireAdmin } from './auth/RequireAdmin';
 import { Layout } from './components/Layout';
 import { AccessRecordsPage } from './pages/accessRecords/AccessRecordsPage';
 import { ActivityPage } from './pages/activity/ActivityPage';
+import { EvidenceHoldsPage } from './pages/evidenceHolds/EvidenceHoldsPage';
 import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { LogsPage } from './pages/logs/LogsPage';
 import { MessagesPage } from './pages/messages/MessagesPage';
@@ -32,6 +33,7 @@ export function App() {
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/activity" element={<ActivityPage />} />
               <Route path="/access-records" element={<AccessRecordsPage />} />
+              <Route path="/evidence-holds" element={<EvidenceHoldsPage />} />
               <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/tiers" element={<TiersPage />} />

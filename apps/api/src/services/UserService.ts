@@ -7,6 +7,7 @@ import { db } from '../db';
 import { users, type UserVerificationStatus } from '../db/schema/tables/users';
 import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { auditService } from './AuditService';
+import { erasureLedger } from './ErasureLedger';
 import { effectiveAdultVerified } from './ageVerification/ageVerificationMode';
 import { recoveryCodeService } from './RecoveryCodeService';
 
@@ -301,6 +302,7 @@ export class UserService {
       .update(users)
       .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
       .where(eq(users.id, userId));
+    erasureLedger.record('account_deleted', userId);
   }
 
   /**
@@ -336,25 +338,34 @@ export class UserService {
       );
 
     for (const row of expired) {
-      await db
-        .update(users)
-        .set({
-          username: `deleted:${row.id}`,
-          tag: `deleted_${row.id.toLowerCase()}`,
-          password: await hashPassword(`deleted:${randomUUID()}`),
-          avatarColor: null,
-          avatarIcon: null,
-          bio: null,
-          tierId: null,
-          isAdultVerified: false,
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, row.id));
-      // The trail keeps its lines but loses who they speak of: ids and names go, the events stay
-      // as long as the retention says.
-      await auditService.scrubUser(row.id);
+      await this.eraseAccount(row.id);
     }
     return expired.length;
+  }
+
+  /**
+   * The erasure itself, for one account: the scrub `pruneDeletedAccounts` does once the grace is over, and what the
+   * erasure ledger replays after a restore. Written to the ledger first, so a crash in between cannot lose it.
+   */
+  async eraseAccount(userId: string): Promise<void> {
+    erasureLedger.record('account_erased', userId);
+    await db
+      .update(users)
+      .set({
+        username: `deleted:${userId}`,
+        tag: `deleted_${userId.toLowerCase()}`,
+        password: await hashPassword(`deleted:${randomUUID()}`),
+        avatarColor: null,
+        avatarIcon: null,
+        bio: null,
+        tierId: null,
+        isAdultVerified: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+    // The trail keeps its lines but loses who they speak of: ids and names go, the events stay
+    // as long as the retention says.
+    await auditService.scrubUser(userId);
   }
 }
 

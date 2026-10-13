@@ -1,4 +1,10 @@
-import type { ChatMessage, ConversationSummary, MessagePage, ReportType } from '@keres/shared';
+import type {
+  ChatMessage,
+  ConversationSummary,
+  MessagePage,
+  ReportTarget,
+  ReportType,
+} from '@keres/shared';
 import { buildReportBody } from '@keres/shared';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { and, desc, eq, inArray, isNotNull, isNull, lt, max, or, sql, type SQL } from 'drizzle-orm';
@@ -8,6 +14,7 @@ import { friendships, messages, stories, storyPublications, users } from '../db/
 import { lockUserPair } from '../db/sqlOperators';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
+import { evidenceHoldService } from './EvidenceHoldService';
 import { messageQuotaService, type MessageQuotaKind } from './MessageQuotaService';
 import { ACTIVE_ACCOUNT } from './UserService';
 import { TierLimitExceededError } from './TierEnforcementService';
@@ -261,7 +268,7 @@ export class MessageService {
     if (story.userId === me) {
       throw new AppError(403, 'You cannot report your own story.');
     }
-    return this.sendToAdmins(me, buildReportBody(type, 'story', story.id, reason));
+    return this.fileReport(me, type, 'story', story.id, reason);
   }
 
   /** Reports a live account that is not the reporter's own; the route only carries the user id. */
@@ -281,7 +288,7 @@ export class MessageService {
     if (!target || target.isDeleted) {
       throw new AppError(404, 'User not found.');
     }
-    return this.sendToAdmins(me, buildReportBody(type, 'user', target.id, reason));
+    return this.fileReport(me, type, 'user', target.id, reason);
   }
 
   /**
@@ -304,7 +311,7 @@ export class MessageService {
     if (target.senderId !== me && target.recipientId !== me) {
       throw new AppError(404, 'Message not found.');
     }
-    return this.sendToAdmins(me, buildReportBody(type, 'message', target.id, reason));
+    return this.fileReport(me, type, 'message', target.id, reason);
   }
 
   /** Reports a published version of a live story; the route carries story and publication ids. */
@@ -329,7 +336,23 @@ export class MessageService {
     if (!story || story.isDeleted) {
       throw new AppError(404, 'Publication not found.');
     }
-    return this.sendToAdmins(me, buildReportBody(type, 'publication', publication.id, reason));
+    return this.fileReport(me, type, 'publication', publication.id, reason);
+  }
+
+  /**
+   * Sends a report to the administrators. One of the type `illegal` - the one that covers abuse material - also
+   * makes the evidence hold the law asks for (Lei 15.211/2025 art. 27), so the item survives its owner deleting it.
+   */
+  private async fileReport(
+    me: string,
+    type: ReportType,
+    targetKind: ReportTarget,
+    targetId: string,
+    reason: string,
+  ): Promise<ChatMessage> {
+    const report = await this.sendToAdmins(me, buildReportBody(type, targetKind, targetId, reason));
+    if (type === 'illegal') evidenceHoldService.holdForReport(targetKind, targetId, report.id);
+    return report;
   }
 
   async sendToAdmins(me: string, body: string): Promise<ChatMessage> {

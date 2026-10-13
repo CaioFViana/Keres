@@ -60,6 +60,7 @@ describe('panel layout', () => {
       'Messages',
       'Activity',
       'Access records',
+      'Evidence holds',
       'Payments',
       'Settings',
     ]) {

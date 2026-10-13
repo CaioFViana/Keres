@@ -105,6 +105,9 @@ export function Layout() {
             <NavLink to="/access-records" className={({ isActive }) => (isActive ? 'active' : '')}>
               {t('nav.accessRecords')}
             </NavLink>
+            <NavLink to="/evidence-holds" className={({ isActive }) => (isActive ? 'active' : '')}>
+              {t('nav.evidenceHolds')}
+            </NavLink>
             <NavLink to="/messages" className={({ isActive }) => (isActive ? 'active' : '')}>
               {t('nav.messages')}
               {unread > 0 && (

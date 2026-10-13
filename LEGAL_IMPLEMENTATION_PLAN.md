@@ -372,9 +372,15 @@ Pendências desta frente (nenhuma é código obrigatório para o lançamento):
   "Baixar meus dados" nos detalhes do servidor (`AccountDataExportService`), que entrega um `.json`.
   Atenção: o schema de resposta da rota descarta campo que ele não lista; campo novo no export exige
   entrada em `user.route.ts`.
-- [ ] Opcional: livro de apagamentos fora dos dumps, para reaplicar exclusões depois de restaurar um
-  backup; dever de preservar o conteúdo de uma denúncia de abuso sexual infantil pelo prazo da Lei
-  15.211 art. 27 §2º (D23).
+- [x] **Livro de apagamentos** (13/10/2026): `ErasureLedger` grava id + tipo + data de cada exclusão,
+  restauração e apagamento definitivo de conta num arquivo em volume próprio (`erasure_ledger`), que o
+  serviço de backup não monta; `applyErasureLedger` reaplica no boot, então um restore não ressuscita
+  conta excluída. 100 dias. Sem ledger configurado o servidor avisa e vale o procedimento manual.
+- [x] **Preservação de denúncia** (13/10/2026, Lei 15.211 art. 27 §2º/§3º): denúncia do tipo `illegal`
+  gera uma cópia do item e dos dados/registros de acesso de quem o publicou (`EvidenceHoldService`,
+  tabela `evidence_holds`), 183 dias, prorrogável a pedido de autoridade, liberável pelo admin; a
+  exclusão da conta não a toca; página no admin. Fora da exportação do próprio usuário: a pergunta
+  de conflito com o direito de acesso da LGPD vai ao D23.
 - Decidido **não fazer**: transferência de dono de história entre contas (o caminho é exportar a
   história; o novo dono envia de novo e convida quem quiser).
 

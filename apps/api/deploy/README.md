@@ -54,7 +54,17 @@ Replace `keres`/`keres` with `POSTGRES_USER`/`POSTGRES_DB` when they differ.
 ## After a restore: re-apply erasures
 
 A dump is the past: accounts deleted after the dump date come back with it.
-After every restore, before reopening the server:
+
+**Account deletions are re-applied for you.** The server writes every deletion, restoration and final erasure of
+an account (id, kind and date, nothing else) to the *erasure ledger*, a file on its own volume
+(`erasure_ledger`) that the backup service never mounts. At every start the server reads the ledger and, on a
+restored database, deletes again the accounts the dump brought back (the grace period keeps counting from the day
+the person asked) and erases again the ones already past it. The log says how many (`Erasure ledger applied`).
+The ledger keeps 100 days (`ERASURE_LEDGER_RETENTION_DAYS`, more than the oldest backup). It is tiny: copy it off
+the machine now and then, apart from the dumps, or a restore onto a new machine starts without it. Without a
+ledger configured the server warns at start and you do the steps below by hand.
+
+What the ledger does **not** cover is the rest of the list below. After every restore, before reopening the server:
 
 1. Note the dump date (it is in the dump's filename). Restoring any copy, daily or
    monthly, brings back the accounts erased since it was taken. For a monthly copy

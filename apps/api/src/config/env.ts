@@ -114,6 +114,22 @@ const envSchema = z.object({
     .max(730)
     .optional()
     .default(ACCESS_RECORD_DEFAULT_RETENTION_DAYS),
+  /**
+   * Where the erasure ledger is written: an append-only file of account ids and dates (nothing else), kept OUTSIDE
+   * every backup so that restoring a dump cannot bring an erased account back (see `ErasureLedger`). Unset: no
+   * ledger. The deploy compose sets it on its own volume, which the backup service never mounts.
+   */
+  ERASURE_LEDGER_PATH: z.string().trim().min(1).optional(),
+  /**
+   * How many days the ledger keeps its lines. It must outlive the oldest backup (93 days: 30 daily + 3 monthly),
+   * or a restored copy could bring back an account the ledger has already forgotten.
+   */
+  ERASURE_LEDGER_RETENTION_DAYS: z.coerce.number().int().min(94).max(730).optional().default(100),
+  /**
+   * How many days an evidence hold (a reported item kept as it was, for Lei 15.211/2025 art. 27) lasts: the Marco
+   * Civil art. 15 period, six months, and never fewer. An authority's request to keep one longer is made on the hold.
+   */
+  EVIDENCE_HOLD_DAYS: z.coerce.number().int().min(183).max(3650).optional().default(183),
   /** How many days a landing-page contact message is kept; older ones are dropped once a day. */
   CONTACT_MESSAGE_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(90),
   /**

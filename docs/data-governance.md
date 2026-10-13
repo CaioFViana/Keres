@@ -41,6 +41,8 @@ number: it receives a signed result only.
 | Security audit (admin and abuse-relevant activity) | who did what, outcome, app version. **No IP and no user agent** | legitimate interest / fraud prevention (Art. 7, IX/X) | scrubbed audit, up to 1 year |
 | Access records (Marco Civil Art. 15) | table `access_records`: login, failed login, sign-up, password recovery, session renewal. IP, account (when there is one), the name tried, time. No user agent | legal obligation, when the operator is a company that runs the application with an economic purpose; otherwise legitimate interest / fraud prevention | 6 months (`ACCESS_RECORD_RETENTION_DAYS`, 183 days), kept after the account is deleted until the term ends |
 | Site contact messages | visitor address + text | consent / legitimate interest | 90 days (`CONTACT_MESSAGE_RETENTION_DAYS`) |
+| Erasure ledger | id of an account that was deleted, restored or erased, and the date. No name, no content | legitimate interest / protection of rights (Art. 7, IX; Art. 16): honouring an erasure after a backup restore | its own volume, outside every backup; 100 days (`ERASURE_LEDGER_RETENTION_DAYS`) |
+| Evidence holds (reported item kept as it was) | the item reported as illegal, the account responsible (data and sign-in records with IP). Media files are not copied | legal obligation (Lei 15.211/2025 art. 27, par. 2) | Postgres table `evidence_holds`, not touched by account erasure; 183 days (`EVIDENCE_HOLD_DAYS`), longer on an authority's request |
 | Backups | point-in-time copies of the above | same bases | 30 daily + 3 monthly, rotated out; nothing older than 93 days |
 | Age verification: document image (front, optional back) and live photo | the document and a photo of the person, taken in the upload page | legal obligation (Art. 7, II), Lei 15.211/2025 | verification service only, until the decision |
 | Age verification: name, kind and number of the document, date of birth | typed by the reviewer | same as above | nowhere: used for the commitment and the age check, discarded at submit, never stored |
@@ -72,6 +74,8 @@ for the account check only, never for content.
 | Security audit entries | scrubbed of user link after 1 year | `AuditService.scrubUser` |
 | Access records (IP + account) | 6 months (`ACCESS_RECORD_RETENTION_DAYS`, default 183); they stay after the account is deleted until the term ends. Viewing or exporting them in the admin is itself written to the audit | `AccessRecordService` prune |
 | Payment records of closed accounts | `PAYMENT_RETENTION_DAYS` after closure (default 1825 days) | payments retention job |
+| Erasure ledger | 100 days from each line (`ERASURE_LEDGER_RETENTION_DAYS`, never under 94: it must outlive the oldest backup) | `ErasureLedger.trim`, daily with the account prune |
+| Evidence holds | 183 days from the report (`EVIDENCE_HOLD_DAYS`); an administrator extends one when an authority asks (par. 3), or lets it go when the report was unfounded. Account erasure does not shorten it | `EvidenceHoldService.pruneExpired`, daily with the account prune |
 | Postgres dumps | the newest 30 daily dumps (`BACKUP_RETENTION_DAYS`, default 30) plus the first dump of each month, newest 3 kept (`BACKUP_MONTHLY_KEEP`, default 3, 0 to 3). Hard cap of 93 days | `apps/api/deploy/backup.sh` rotation |
 | Age verification: document images and live photo | at the decision (approved, refused or expired), or at cancel; the per-sending key is destroyed with them (crypto-shredding). An undecided sending expires after `AGE_VERIFICATION_PENDING_DAYS` (default 30 days) | verification service decision and expiry jobs |
 | Age verification: typed fields (name, kind, number, date of birth) | at submit: never stored | verification service |
@@ -83,7 +87,24 @@ for the account check only, never for content.
 | Age verification: pending account nobody completed | after `AGE_VERIFICATION_PENDING_DAYS` (default 30): the account is deleted completely and the service is told to destroy the submission | pending-account prune job, `cancel` |
 | Age verification: reviewer access log | same period as the security audit: up to 1 year | verification service audit |
 
-Kept by law: terms-acceptance proof, fiscal records, the scrubbed audit above.
+Kept by law: terms-acceptance proof, fiscal records, the scrubbed audit above, and the
+evidence holds below.
+
+**Evidence holds.** Lei 15.211/2025 (art. 27, par. 2) makes a provider keep, for the Marco
+Civil art. 15 period (six months), the content named in a report of child sexual abuse
+material and the data of the user responsible for it, with their metadata; par. 3 lets an
+authority ask for longer. The server makes the hold itself when a report of the type
+`illegal` is filed (`MessageService.fileReport`), because the owner can delete the item or the
+account right after; an administrator can make one for any other report, extend one on an
+authority's request, or let one go when the report was unfounded. The hold copies the item
+(a story with its entities, but not its media files), the account data of the person
+responsible and their access records. Account erasure does not reach it; it is dropped at its
+end. Only administrators read it, and each read is on the activity record. It is **not** part
+of the user's own data export (`/user/data`): handing the copy to the person under
+investigation would defeat its purpose; whether that holds against the LGPD right of access is
+a question for D23. Reports are filed by the reporter's choice of type, so some holds will be
+of items that turn out to be fine: that is why an administrator can release one, and why the
+hold lasts no longer than the law asks.
 The acceptance proof and fiscal records carry a prescription-bound end (five
 years, CDC Art. 27, by default for payments) that the legal review validates
 before release (D23) - no carve-out is indefinite. The approved age verification
@@ -127,7 +148,7 @@ crosses to the server.
 | Someone else's document or face | The face in the live photo must match the document; a retry goes to a different reviewer | See residual risk below |
 | Images kept longer than needed | The deadlines in the retention table; abandoned sendings expire | Low |
 | Service down | New registrations fail closed (503 `verification_unavailable`). Existing accounts are untouched | Availability, not privacy |
-| Restore brings back stale state | Keys are not in backups, so pending sendings expire after a restore; erasures are re-applied (`apps/api/deploy/README.md`) | Low |
+| Restore brings back stale state | Keys are not in backups, so pending sendings expire after a restore; account erasures are re-applied from the erasure ledger at every start (`apps/api/deploy/README.md`) | Low, for account deletions. The other time-based erasures re-run by themselves; anything else is on the restore checklist |
 | Key volume lost | Pending sendings are lost and expire. Commitments cannot be recomputed without the key, so the duplicate check against past approvals stops working. It is not recoverable from backup, by design | Medium: the key volume is the most critical volume and must be kept |
 
 **Residual risk, assumed in writing.** A manual look at an image does not

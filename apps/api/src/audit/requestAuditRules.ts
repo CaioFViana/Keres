@@ -374,6 +374,20 @@ export const AUDIT_RULES: readonly AuditRule[] = [
   admin('GET', 'access-records/export', 'admin.access_records_exported', {
     queryKeys: ACCESS_RECORD_FILTERS,
   }),
+  // The evidence holds (reported items kept for the law): who made, read, extended or let go of one is on the record.
+  admin('POST', 'evidence-holds', 'admin.evidence_hold_created', { targetType: 'evidence_hold' }),
+  admin('GET', `evidence-holds/${id}`, 'admin.evidence_hold_viewed', {
+    targetType: 'evidence_hold',
+    targetGroup: 'id',
+  }),
+  admin('POST', `evidence-holds/${id}/extend`, 'admin.evidence_hold_extended', {
+    targetType: 'evidence_hold',
+    targetGroup: 'id',
+  }),
+  admin('DELETE', `evidence-holds/${id}`, 'admin.evidence_hold_released', {
+    targetType: 'evidence_hold',
+    targetGroup: 'id',
+  }),
 ];
 
 export interface ClassifiedRequest {

@@ -66,3 +66,4 @@ export * from './schema/tables/users';
 export * from './schema/tables/userRecoveryCodes';
 export * from './schema/tables/termsAcceptances';
 export * from './schema/tables/worldRules';
+export * from './schema/tables/evidenceHolds';

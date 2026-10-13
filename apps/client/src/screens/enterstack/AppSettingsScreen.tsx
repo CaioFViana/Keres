@@ -16,7 +16,10 @@ import {
   CLIENT_PRIVACY_VERSION,
   clientPrivacyFor,
 } from '@/src/legal/privacyPolicy';
-import { setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import {
+  clearAcceptedClientLegal,
+  setAcceptedClientLegal,
+} from '@/src/legal/clientTermsAcceptance';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
@@ -244,6 +247,9 @@ const SettingsScreen = () => {
 
               await resetDatabase(db);
               console.log('Database reset complete.');
+              // What was accepted lives outside the database: left behind, the welcome would open with both texts
+              // already accepted and let the person on without opening either.
+              await clearAcceptedClientLegal();
 
               // Reset every in-memory store that can retain rows from the deleted database.
               resetAllClientStores();

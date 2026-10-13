@@ -220,6 +220,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 import SettingsScreen from '../../../src/screens/enterstack/AppSettingsScreen';
+import {
+  getAcceptedClientLegal,
+  setAcceptedClientLegal,
+} from '../../../src/legal/clientTermsAcceptance';
 import { useMusicToolsStore } from '../../../src/state/musicToolsStore';
 
 type AlertButton = { text: string; onPress?: () => void | Promise<void> };
@@ -447,6 +451,24 @@ describe('AppSettingsScreen', () => {
     expect(mockResetAllClientStores).toHaveBeenCalled();
     expect(mockResetTheme).toHaveBeenCalled();
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'REPLACE', name: 'ColdInstall' });
+  });
+
+  it('forgets the accepted terms and privacy policy, so the welcome asks for both again', async () => {
+    await setAcceptedClientLegal('terms', 3, 'onboarding');
+    await setAcceptedClientLegal('privacy', 2, 'onboarding');
+    expect(await getAcceptedClientLegal('terms')).not.toBeNull();
+
+    const view = await render(<SettingsScreen />);
+    await view.findByText('reset_application');
+    await fireEvent.press(view.getByText('reset_application'));
+    const reset = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'reset');
+    await act(async () => {
+      await reset?.onPress?.();
+    });
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+
+    expect(await getAcceptedClientLegal('terms')).toBeNull();
+    expect(await getAcceptedClientLegal('privacy')).toBeNull();
   });
 
   it('reports reset failures', async () => {

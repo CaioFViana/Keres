@@ -119,6 +119,8 @@ export const userRoutes = new Elysia()
           publications: t.Array(t.Any()),
           payments: t.Any(),
           activity: t.Any(),
+          accessRecords: t.Any(),
+          ageVerification: t.Array(t.Any()),
         }),
         401: t.Object({ message: t.String() }),
       },

@@ -38,10 +38,10 @@ number: it receives a signed result only.
 | Accepted terms/privacy proof | user id, version, text hash, timestamp | legal obligation / rights protection (Art. 7, II/VI; Art. 16, I) | `terms_acceptances`, kept |
 | Stories, messages, publications, reports | content the user sends | contract | Postgres, until deletion + 30 days |
 | Payments | order ids, purchase-token hashes (never card data) | legal obligation (fiscal) | Postgres + providers (Stripe, PayPal, Google Play) |
-| Security audit | IPs, app version on abuse-relevant events | legitimate interest / fraud prevention (Art. 7, IX/X) | scrubbed audit, up to 1 year |
-| Access logs (Marco Civil Art. 15) | connection records | legal obligation | 6 months |
+| Security audit (admin and abuse-relevant activity) | who did what, outcome, app version. **No IP and no user agent** | legitimate interest / fraud prevention (Art. 7, IX/X) | scrubbed audit, up to 1 year |
+| Access records (Marco Civil Art. 15) | table `access_records`: login, failed login, sign-up, password recovery, session renewal. IP, account (when there is one), the name tried, time. No user agent | legal obligation, when the operator is a company that runs the application with an economic purpose; otherwise legitimate interest / fraud prevention | 6 months (`ACCESS_RECORD_RETENTION_DAYS`, 183 days), kept after the account is deleted until the term ends |
 | Site contact messages | visitor address + text | consent / legitimate interest | 90 days (`CONTACT_MESSAGE_RETENTION_DAYS`) |
-| Backups | point-in-time copies of the above | same bases | rotated out, 90 days max |
+| Backups | point-in-time copies of the above | same bases | 30 daily + 3 monthly, rotated out; nothing older than 93 days |
 | Age verification: document image (front, optional back) and live photo | the document and a photo of the person, taken in the upload page | legal obligation (Art. 7, II), Lei 15.211/2025 | verification service only, until the decision |
 | Age verification: name, kind and number of the document, date of birth | typed by the reviewer | same as above | nowhere: used for the commitment and the age check, discarded at submit, never stored |
 | Age verification: record | result, method, dates, opaque reference of the service | same as above | Postgres, with the account (see retention) |
@@ -70,12 +70,12 @@ for the account check only, never for content.
 | Account + content on self-deletion | personal data within 30 days (`ACCOUNT_DELETION_GRACE_DAYS`) | prune job, keeps contributions to others' stories anonymized |
 | Contact `site` messages | 90 days | `startContactMessagePruneScheduler` (daily) |
 | Security audit entries | scrubbed of user link after 1 year | `AuditService.scrubUser` |
-| Access logs | 6 months | log rotation |
+| Access records (IP + account) | 6 months (`ACCESS_RECORD_RETENTION_DAYS`, default 183); they stay after the account is deleted until the term ends. Viewing or exporting them in the admin is itself written to the audit | `AccessRecordService` prune |
 | Payment records of closed accounts | `PAYMENT_RETENTION_DAYS` after closure (default 1825 days) | payments retention job |
-| Postgres dumps | `BACKUP_RETENTION_DAYS` (default 90 days, ceiling) | `apps/api/deploy/backup.sh` rotation |
+| Postgres dumps | the newest 30 daily dumps (`BACKUP_RETENTION_DAYS`, default 30) plus the first dump of each month, newest 3 kept (`BACKUP_MONTHLY_KEEP`, default 3, 0 to 3). Hard cap of 93 days | `apps/api/deploy/backup.sh` rotation |
 | Age verification: document images and live photo | at the decision (approved, refused or expired), or at cancel; the per-sending key is destroyed with them (crypto-shredding). An undecided sending expires after `AGE_VERIFICATION_PENDING_DAYS` (default 30 days) | verification service decision and expiry jobs |
 | Age verification: typed fields (name, kind, number, date of birth) | at submit: never stored | verification service |
-| Age verification: backups of the data store (`verification-backups`: snapshot of the metadata and the encrypted images) | `BACKUP_RETENTION_DAYS`, 90 days as a ceiling; each backup is removed by rotation. Ciphertext and metadata only, never the keys | verification service backup rotation (`apps/verification/src/backup`) |
+| Age verification: backups of the data store (`verification-backups`: snapshot of the metadata and the encrypted images) | same rule as the dumps: 30 daily + the first successful backup of each UTC month (newest 3 kept), hard cap of 93 days; each backup is removed by rotation. The monthly one is a real byte copy, never a link to the live files. Ciphertext and metadata only, never the keys | verification service backup rotation (`apps/verification/src/backup`) |
 | Age verification: per-sending encryption keys | with each sending; never backed up | key volume, outside every backup |
 | Age verification: commitment key (`COMMITMENT_KEY`) | while the service runs; a secret in the operator's secret store, never in a database or a data backup; its own protected copy, kept apart from the data | operator |
 | Age verification: approved record (result, method, dates, reference, commitment) | with the account; after account deletion kept pseudonymised as proof for the prescription period (to validate in D23) | account deletion, prune job |
@@ -91,7 +91,9 @@ record and its identity commitment join that list, with the same open point: the
 end is validated in D23. A commitment exists only for approved records. Backups
 may hold already-erased data until they rotate out - the policy says so plainly,
 and the rotation is the control. Dumps carry the verification records too, so
-the 90-day rotation covers them. After any restore, re-apply erasures received
+the rotation (30 days, and at most 93 for the monthly copies) covers them. No
+law read for this review (LGPD, Marco Civil, Lei 15.211) sets a backup period or
+a number of copies: the figures are our choice, as short as the operation allows. After any restore, re-apply erasures received
 since the dump date (see `apps/api/deploy/README.md`).
 
 ## Age verification: impact assessment (RIPD)

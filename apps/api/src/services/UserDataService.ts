@@ -1,3 +1,6 @@
+import { env } from '../config/env';
+import { accessRecordService } from './AccessRecordService';
+import { ageVerificationService } from './ageVerification/AgeVerificationService';
 import { auditService } from './AuditService';
 import { friendshipService } from './FriendshipService';
 import { messageService } from './MessageService';
@@ -11,6 +14,10 @@ import { paymentHistoryService } from './payments/PaymentHistoryService';
  * right (Art. 18, II and V). Story content itself is not listed - it already lives on the
  * person's device, offline-first, and exports from the app to open formats. Message bodies ride
  * along in the conversation summaries the same way the inbox shows them.
+ *
+ * `accessRecords` are the account's own sign-in records (the address included) the server keeps by law; the
+ * `ageVerification` list is what happened to each sending, never the document (the verification service
+ * destroys it at the decision) nor the identity commitment.
  */
 export class UserDataService {
   async exportForUser(userId: string) {
@@ -22,6 +29,8 @@ export class UserDataService {
       publications,
       payments,
       activity,
+      accessRecords,
+      ageVerification,
     ] = await Promise.all([
       userService.getUserById(userId),
       termsAcceptanceService.history(userId),
@@ -37,6 +46,8 @@ export class UserDataService {
         page: 1,
         pageSize: 200,
       }),
+      accessRecordService.listOwn(userId),
+      ageVerificationService.historyFor(userId),
     ]);
     return {
       exportedAt: new Date().toISOString(),
@@ -47,6 +58,8 @@ export class UserDataService {
       publications,
       payments,
       activity,
+      accessRecords: { keptDays: env.ACCESS_RECORD_RETENTION_DAYS, items: accessRecords },
+      ageVerification,
     };
   }
 }

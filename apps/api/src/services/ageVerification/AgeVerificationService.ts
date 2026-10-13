@@ -4,7 +4,7 @@ import type {
   VerificationEvent,
   VerificationRejectionReason,
 } from '@keres/shared/age-verification/AgeVerificationConnector';
-import { and, desc, eq, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { env } from '../../config/env';
 import { type CompatibleDb, db, withWriteTransaction } from '../../db';
@@ -291,6 +291,26 @@ export class AgeVerificationService {
       );
     }
     return outcome;
+  }
+
+  /**
+   * An account's own sendings, oldest first, for the data export. What happened and when: never the identity
+   * commitment (it says nothing to the person) nor the service's reference.
+   */
+  async historyFor(userId: string) {
+    const rows = await db.query.ageVerifications.findMany({
+      where: eq(ageVerifications.userId, userId),
+      orderBy: [asc(ageVerifications.createdAt), asc(ageVerifications.id)],
+    });
+    return rows.map((row) => ({
+      attempt: row.attempt,
+      status: row.status,
+      method: row.method,
+      rejectionReason: row.rejectionReason,
+      sentAt: row.createdAt.toISOString(),
+      decidedAt: row.decidedAt?.toISOString() ?? null,
+      documentDiscardedAt: row.discardedAt?.toISOString() ?? null,
+    }));
   }
 
   private async latestSending(userId: string): Promise<AgeVerificationRow | undefined> {

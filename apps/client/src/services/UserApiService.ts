@@ -60,6 +60,12 @@ export class UserApiService {
     await this.clientFor(server).delete('/user/account', { data: { currentPassword } });
   }
 
+  /** Everything `server` holds about the current user (LGPD access and portability), exactly as it answered. */
+  async getOwnData(server: ServerSelect): Promise<Record<string, unknown>> {
+    const response = await this.clientFor(server).get<Record<string, unknown>>('/user/data');
+    return response.data;
+  }
+
   /** The plan the current user has on `server`, or `undefined` from a server older than this route. */
   async getOwnPlan(server: ServerSelect): Promise<AccountPlan | null> {
     try {

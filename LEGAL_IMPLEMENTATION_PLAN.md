@@ -80,7 +80,7 @@ Isto não é parecer jurídico: a validação final é o D23.
   (íntimo, copyright, spam/abuso, ilegal, outro × história, usuário, mensagem, publicação),
   fila no admin. Testes. (A fundamentação legal do copyright foi corrigida em F25.)
 - [x] **B13.** Backups automáticos do Postgres oficial — rotina (`apps/api/deploy/backup.sh`,
-  serviço `backup` no compose) com retenção padrão de **90 dias** (teto, F27), volume
+  serviço `backup` no compose) com retenção de **30 diários + 3 mensais** (teto de 93 dias, F27), volume
   isolado no serviço de backup, cópia externa em armazenamento criptografado e
   procedimento de reaplicar apagamentos pós-restauração (`deploy/README.md`).
 
@@ -114,7 +114,7 @@ Isto não é parecer jurídico: a validação final é o D23.
   (Res. CD/ANPD 2/2022, agentes de pequeno porte). Não é código.
 - [x] **D24.** Governança em `docs/data-governance.md`: registro de tratamento + plano de
   resposta a incidentes (comunicação à ANPD e aos titulares em **3 dias úteis**) +
-  tabela de retenção com prazo por categoria (auditoria 365d, logs 6 meses, backups 90d,
+  tabela de retenção com prazo por categoria (auditoria 365d sem IP, registros de acesso 6 meses, backups 30 diários + 3 mensais,
   contato 90d, pagamentos 1825d por padrão, prova de aceite com fim prescricional a
   validar no D23).
 
@@ -140,7 +140,11 @@ Isto não é parecer jurídico: a validação final é o D23.
 - [x] **F27. Backup de 1–2 anos anula a promessa de apagar em 30 dias.** Rotação reduzida
   a 90 dias (teto) no script, no compose e na política; volume isolado no serviço de
   backup, cópia externa em armazenamento criptografado com acesso só de operadores, e
-  expurgo pós-restauração documentado (`deploy/README.md`).
+  expurgo pós-restauração documentado (`deploy/README.md`). **Revisado (12/10/2026):**
+  nenhuma das leis lidas (LGPD, Marco Civil, Lei 15.211) fixa prazo de backup, então o
+  prazo é escolha nossa: 30 diários + 3 mensais (o primeiro backup de cada mês), teto
+  estrito de 93 dias, nos dois serviços. O texto da política ainda diz 90 dias e precisa
+  ser atualizado (ver abaixo).
 - [x] **F28. O "+18 verificado" ainda não existe como verificação — e os textos se contradizem.**
   (a) A premissa é "gate no servidor, nunca offline", mas `clientTerms` §8 proíbe menor de
   **usar o app** (inclusive escrever offline) e o §3 proíbe **criar** conteúdo explícito no
@@ -290,7 +294,7 @@ G34 → G35/G36 → G37 → G38 → D21/D23.
   self-hoster (seção E) ganha a escolha de modo (`required` × `disabled`), a escolha
   caminho 1 × 2 de conteúdo e o dever de operar o próprio serviço antes de ligar
   o +18.
-- [ ] **G40. Retenções — já fechadas, só conferir na publicação.** Backups em 90 dias
+- [ ] **G40. Retenções — já fechadas, só conferir na publicação.** Backups em 30 diários + 3 mensais
   (F27/B13) e `PAYMENT_RETENTION_DAYS` com default de 1825 dias (F29) estão prontos;
   na virada, confirmar os valores em produção e o fim prescricional da prova de aceite
   e do compromisso HMAC com o D23. Nenhum código novo previsto aqui. (Documento de
@@ -339,10 +343,40 @@ Pendências desta frente:
   câmera); só o envio por arquivo foi exercitado. A revisão achou e corrigiu um erro que só um
   navegador pega (`Referrer-Policy: no-referrer` faz o form mandar `Origin: null`).
 - **Postgres não foi rodado** (migrações geradas e exercitadas só em sqlite).
-- [x] **Rotina de backup do volume de dados do serviço** feita: o próprio serviço copia o banco de dados e as imagens cifradas para `BACKUP_DIR` (volume `verification-backups`), sem chaves, com retenção de 90 dias como teto, comando manual `backup:now` e restauração no README do serviço.
+- [x] **Rotina de backup do volume de dados do serviço** feita: o próprio serviço copia o banco de dados e as imagens cifradas para `BACKUP_DIR` (volume `verification-backups`), sem chaves, com a mesma regra do Postgres (30 diários + 3 mensais, teto de 93 dias), comando manual `backup:now` e restauração no README do serviço.
 - **Manual do revisor em português** antes de operar (hoje só em inglês).
 - Fila do revisor sem "soltar a reivindicação" (quem assume e some segura o envio até expirar).
 - F31 (dados do operador), D21, D23, G40 (conferir valores em produção), G41 e o commit da árvore (G42).
+
+## Retenção, logs de acesso e direito de acesso (2026-10-12)
+
+Decisões do dono (a conferir com o D23):
+
+- **Backups:** nenhuma lei lida (LGPD art. 16, Marco Civil, Lei 15.211) fixa prazo ou número de cópias.
+  Ficam 30 diários + 3 mensais (teto de 93 dias), no Postgres e no serviço de verificação.
+- **Registros de acesso (Marco Civil art. 15):** tabela `access_records` com IP e conta, 6 meses
+  (`ACCESS_RECORD_RETENTION_DAYS`), mantidos após a exclusão da conta até o fim do prazo. A obrigação
+  vale para provedor organizado como empresa e com fim econômico: se o operador for pessoa física
+  sem atividade econômica, a base passa a ser o legítimo interesse (prevenção a fraude). Depende do F31.
+- **Auditoria de administração:** sem IP e sem user agent, 1 ano.
+
+Pendências desta frente (nenhuma é código obrigatório para o lançamento):
+
+- [x] **Texto da política de privacidade** (`apps/api/src/legal/privacyPolicy.ts`, en e pt) atualizado
+  em 13/10/2026 e versão subida para 3: backups 30 diários + 1 por mês por 3 meses; IP só nos
+  registros de acesso (6 meses, mesmo após excluir a conta); auditoria sem IP (1 ano); registros de
+  acesso como dever legal "quando a lei exigir do operador"; a exportação inclui registros de acesso e
+  histórico da verificação de idade.
+- [x] **Pedir meus dados:** `GET /user/data` agora inclui os registros de acesso da própria conta
+  (momento, tipo, IP) e o histórico da verificação de idade (sem o compromisso HMAC); o app tem
+  "Baixar meus dados" nos detalhes do servidor (`AccountDataExportService`), que entrega um `.json`.
+  Atenção: o schema de resposta da rota descarta campo que ele não lista; campo novo no export exige
+  entrada em `user.route.ts`.
+- [ ] Opcional: livro de apagamentos fora dos dumps, para reaplicar exclusões depois de restaurar um
+  backup; dever de preservar o conteúdo de uma denúncia de abuso sexual infantil pelo prazo da Lei
+  15.211 art. 27 §2º (D23).
+- Decidido **não fazer**: transferência de dono de história entre contas (o caminho é exportar a
+  história; o novo dono envia de novo e convida quem quiser).
 
 ## Ordem sugerida (restante)
 

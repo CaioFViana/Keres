@@ -165,6 +165,28 @@ export class AccessRecordService {
   }
 
   /**
+   * An account's own records, newest first, for the data export (the person's right of access): the moment, what
+   * it was and the address. Only the records that name the account; the names tried by others are not its own.
+   */
+  async listOwn(userId: string) {
+    const rows = await db
+      .select({
+        occurredAt: accessRecords.occurredAt,
+        event: accessRecords.event,
+        ip: accessRecords.ip,
+      })
+      .from(accessRecords)
+      .where(eq(accessRecords.userId, userId))
+      .orderBy(desc(accessRecords.occurredAt), desc(accessRecords.id))
+      .limit(ACCESS_RECORD_EXPORT_MAX_ROWS);
+    return rows.map((row) => ({
+      occurredAt: row.occurredAt.toISOString(),
+      event: row.event,
+      ip: row.ip,
+    }));
+  }
+
+  /**
    * The filtered records as CSV, newest first, at most `ACCESS_RECORD_EXPORT_MAX_ROWS` lines. `truncated` says the
    * filters selected more than that, so the export is not the whole of what was asked for.
    */

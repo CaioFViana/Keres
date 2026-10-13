@@ -32,6 +32,7 @@ import { useServerStatuses } from '../../hooks/useServerStatuses';
 import { useServerTagEditor } from '../../hooks/useServerTagEditor';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
+import { exportAccountData } from '../../services/AccountDataExportService';
 import { createServerService } from '../../services/ServerService';
 import {
   acceptLegal,
@@ -129,6 +130,24 @@ const ServerDetailScreen = () => {
       }
     } finally {
       setDeleteWorking(false);
+    }
+  };
+
+  // "Download my data": the server's answer goes to the person as a file; nothing is kept here.
+  const [exportWorking, setExportWorking] = useState(false);
+  const handleExportData = async () => {
+    if (!server || exportWorking) return;
+    setExportWorking(true);
+    try {
+      const result = await exportAccountData(server);
+      if (!result.delivered) AppAlert.alert(t('error'), t('export_data_not_shared'));
+    } catch (err) {
+      AppAlert.alert(
+        t('error'),
+        isOfflineError(err) ? t('server_unreachable') : t('export_data_failed'),
+      );
+    } finally {
+      setExportWorking(false);
     }
   };
 
@@ -422,6 +441,13 @@ const ServerDetailScreen = () => {
           testID="server-action-privacy"
         />
       ) : null}
+      <ServerActionRow
+        icon="download-outline"
+        title={t('server_action_export_data')}
+        description={t('server_action_export_data_hint')}
+        onPress={() => void handleExportData()}
+        testID="server-action-export-data"
+      />
       <ServerActionRow
         icon="person-remove-outline"
         title={t('delete_account')}

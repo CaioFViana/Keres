@@ -12,8 +12,8 @@ import type { AgeVerificationMode } from '@keres/shared';
  * Only the age-verification section depends on the mode (`AGE_VERIFICATION_MODE`): a `disabled`
  * server collects no verification data at all, and says so. Both modes share the version number.
  */
-export const PRIVACY_POLICY_VERSION = 2;
-export const PRIVACY_POLICY_UPDATED_AT = '2026-10-12';
+export const PRIVACY_POLICY_VERSION = 3;
+export const PRIVACY_POLICY_UPDATED_AT = '2026-10-13';
 
 export interface PrivacyPolicySection {
   heading: string;
@@ -64,7 +64,7 @@ const en: PrivacyPolicyText = {
       'Account: your username, a tag, and your password and recovery codes in hashed form only - we never store them readable.',
       'Content you send us: synchronized stories, messages, publications and reports. Direct messages live on the server in readable form so they can be delivered; administrators may inspect content when moderating.',
       'Payments: order identifiers and purchase-token hashes. Card data never touches our servers; it stays with the device store or the payment provider.',
-      'Technical data: IP address and app version in the security audit and access logs, used to stop abuse.',
+      'Technical data: when you sign in, sign up, recover your password or renew your session, we record the moment, the kind of event, your account and your IP address (access records). The security audit of actions on the server keeps what was done, by which account, with what outcome and the app version, but no IP address. Both are used to stop abuse and, for the access records, to meet the law.',
       'Contact form: the address a visitor writes to, so we can reply.',
       'Age verification, on servers that run it: see section 10.',
     ],
@@ -78,7 +78,7 @@ const en: PrivacyPolicyText = {
   why: {
     heading: '4. Why we process it',
     paragraphs: [
-      'To run your account and the service you asked for; to comply with legal duties (financial records, access logs); to keep the service secure; and to defend rights in disputes. These are the legal bases of Brazil General Data Protection Law (contract, legal obligation, legitimate interest, protection of rights).',
+      'To run your account and the service you asked for; to comply with legal duties (financial records and, where the law requires it of the operator, access records); to keep the service secure; and to defend rights in disputes. These are the legal bases of Brazil General Data Protection Law (contract, legal obligation, legitimate interest, protection of rights).',
     ],
   },
   share: {
@@ -90,13 +90,13 @@ const en: PrivacyPolicyText = {
   keep: {
     heading: '6. How long we keep it',
     paragraphs: [
-      'Account data lives until you delete the account, then personal data is erased within 30 days. Kept longer, as the law requires: minimal proof that the terms were accepted, financial records, security audit (up to one year) and access logs (six months). Contact messages from visitors are erased after 90 days. Server backups rotate on a 90-day cycle and may hold point-in-time copies until they rotate out. Age verification records follow section 10.',
+      'Account data lives until you delete the account, then personal data is erased within 30 days. Kept longer, as the law requires: minimal proof that the terms were accepted, financial records, security audit (up to one year, without IP address) and access records with your IP address (six months, counted from each record, even if you delete the account). Contact messages from visitors are erased after 90 days. Server backups keep the last 30 daily copies plus one copy per month for three months, so a copy of data you already deleted can survive until it rotates out, for about three months at most. Age verification records follow section 10.',
     ],
   },
   rights: {
     heading: '7. Your rights',
     paragraphs: [
-      'Confirm, access, correct, export, anonymize, block, limit or delete your data, and ask who we shared it with: write to privacy@keres.me. Deleting the account and exporting your data are also available inside the app. Deletion has the legal exceptions of the previous section.',
+      'Confirm, access, correct, export, anonymize, block, limit or delete your data, and ask who we shared it with: write to privacy@keres.me. Deleting the account and exporting your data are also available inside the app, in the server details. The export includes your access records and the history of your age verification, but not your stories, which are already on your device. Deletion has the legal exceptions of the previous section.',
     ],
   },
   security: {
@@ -151,7 +151,7 @@ const pt: PrivacyPolicyText = {
       'Conta: seu nome de usuário, uma tag, e sua senha e códigos de recuperação somente em forma de hash — nunca os guardamos legíveis.',
       'Conteúdo que você nos envia: histórias sincronizadas, mensagens, publicações e denúncias. Mensagens diretas vivem no servidor em forma legível para poderem ser entregues; administradores podem inspecionar conteúdo ao moderar.',
       'Pagamentos: identificadores de pedido e hashes de token de compra. Dados de cartão nunca tocam nossos servidores; ficam com a loja do dispositivo ou o provedor de pagamento.',
-      'Dados técnicos: endereço IP e versão do aplicativo na auditoria de segurança e nos logs de acesso, usados para conter abuso.',
+      'Dados técnicos: quando você entra, cria a conta, recupera a senha ou renova a sessão, registramos o momento, o tipo de evento, sua conta e seu endereço IP (registros de acesso). A auditoria de segurança das ações no servidor guarda o que foi feito, por qual conta, com que resultado e a versão do aplicativo, mas não o endereço IP. Ambos servem para conter abuso e, no caso dos registros de acesso, para cumprir a lei.',
       'Formulário de contato: o endereço que o visitante escreve, para podermos responder.',
       'Verificação de idade, nos servidores que a fazem: veja a seção 10.',
     ],
@@ -165,7 +165,7 @@ const pt: PrivacyPolicyText = {
   why: {
     heading: '4. Por que tratamos',
     paragraphs: [
-      'Para operar sua conta e o serviço que você pediu; para cumprir deveres legais (registros financeiros, logs de acesso); para manter o serviço seguro; e para defender direitos em disputas. Estas são as bases legais da Lei Geral de Proteção de Dados (contrato, obrigação legal, legítimo interesse, proteção de direitos).',
+      'Para operar sua conta e o serviço que você pediu; para cumprir deveres legais (registros financeiros e, quando a lei exigir do operador, registros de acesso); para manter o serviço seguro; e para defender direitos em disputas. Estas são as bases legais da Lei Geral de Proteção de Dados (contrato, obrigação legal, legítimo interesse, proteção de direitos).',
     ],
   },
   share: {
@@ -177,13 +177,13 @@ const pt: PrivacyPolicyText = {
   keep: {
     heading: '6. Por quanto tempo guardamos',
     paragraphs: [
-      'Dados da conta vivem até você excluir a conta; então os dados pessoais são apagados em até 30 dias. Guardados por mais tempo, como a lei exige: prova mínima do aceite dos termos, registros financeiros, auditoria de segurança (até um ano) e logs de acesso (seis meses). Mensagens de contato de visitantes são apagadas após 90 dias. Backups do servidor giram num ciclo de 90 dias e podem conter cópias pontuais até girarem para fora. Registros de verificação de idade seguem a seção 10.',
+      'Dados da conta vivem até você excluir a conta; então os dados pessoais são apagados em até 30 dias. Guardados por mais tempo, como a lei exige: prova mínima do aceite dos termos, registros financeiros, auditoria de segurança (até um ano, sem endereço IP) e registros de acesso com seu endereço IP (seis meses, contados de cada registro, mesmo que você exclua a conta). Mensagens de contato de visitantes são apagadas após 90 dias. Os backups do servidor guardam as últimas 30 cópias diárias mais uma cópia por mês durante três meses; assim, uma cópia de dados que você já excluiu pode sobreviver até girar para fora, por cerca de três meses no máximo. Registros de verificação de idade seguem a seção 10.',
     ],
   },
   rights: {
     heading: '7. Seus direitos',
     paragraphs: [
-      'Confirmar, acessar, corrigir, exportar, anonimizar, bloquear, limitar ou excluir seus dados, e saber com quem os compartilhamos: escreva para privacy@keres.me. Excluir a conta e exportar seus dados também estão disponíveis dentro do aplicativo. A exclusão tem as exceções legais da seção anterior.',
+      'Confirmar, acessar, corrigir, exportar, anonimizar, bloquear, limitar ou excluir seus dados, e saber com quem os compartilhamos: escreva para privacy@keres.me. Excluir a conta e exportar seus dados também estão disponíveis dentro do aplicativo, nos detalhes do servidor. A exportação inclui seus registros de acesso e o histórico da verificação de idade, mas não suas histórias, que já estão no seu aparelho. A exclusão tem as exceções legais da seção anterior.',
     ],
   },
   security: {

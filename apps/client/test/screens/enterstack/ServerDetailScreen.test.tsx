@@ -18,6 +18,7 @@ const mockDeleteServer = jest.fn();
 const mockUpdateOwnTag = jest.fn();
 const mockGetOwnProfile = jest.fn();
 const mockDeleteServerAccount = jest.fn();
+const mockExportAccountData = jest.fn();
 const mockApiGet = jest.fn();
 const mockAuthedGet = jest.fn();
 const mockAuthedPost = jest.fn();
@@ -124,6 +125,11 @@ jest.mock('../../../src/services/DeleteAccountService', () => {
   };
 });
 
+jest.mock('../../../src/services/AccountDataExportService', () => ({
+  __esModule: true,
+  exportAccountData: (...args: unknown[]) => mockExportAccountData(...args),
+}));
+
 jest.mock('../../../src/services/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
@@ -195,6 +201,7 @@ describe('ServerDetailScreen', () => {
     mockUpdateOwnTag.mockResolvedValue({ tag: 'newtag' });
     mockGetOwnProfile.mockResolvedValue({ avatarColor: '#abcdef', avatarIcon: 'ion:star' });
     mockDeleteServerAccount.mockResolvedValue(undefined);
+    mockExportAccountData.mockResolvedValue({ delivered: true, fileName: 'main-my-data.json' });
     useUserSettingsStore.setState({ userId: 'local-me' });
   });
 
@@ -444,6 +451,30 @@ describe('ServerDetailScreen', () => {
     await fireEvent.press(view.getByTestId('delete-account-modal-confirm'));
     return view;
   };
+
+  it('hands the account data to the person as a file, with no alert when it was delivered', async () => {
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-export-data'));
+
+    await waitFor(() => expect(mockExportAccountData).toHaveBeenCalledTimes(1));
+    expect(mockExportAccountData).toHaveBeenCalledWith(expect.objectContaining({ id: 'srv-1' }));
+    expect(mockAlert).not.toHaveBeenCalled();
+  });
+
+  it('says so when the data could not be fetched, and when the device cannot share the file', async () => {
+    mockExportAccountData.mockRejectedValueOnce(new Error('boom'));
+    const view = await render(<ServerDetailScreen />);
+    await view.findByText('Main');
+
+    await fireEvent.press(view.getByTestId('server-action-export-data'));
+    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'export_data_failed'));
+
+    mockExportAccountData.mockResolvedValueOnce({ delivered: false, fileName: 'x.json' });
+    await fireEvent.press(view.getByTestId('server-action-export-data'));
+    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'export_data_not_shared'));
+  });
 
   it('deletes the account and the server with it, then goes back with the success alert', async () => {
     await confirmDeleteAccount('password123');

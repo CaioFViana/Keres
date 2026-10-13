@@ -3,6 +3,7 @@ import { closeDatabase } from './db';
 import { runMigrations } from './db/migrate';
 import { erasureLedger } from './services/ErasureLedger';
 import { evidenceHoldService } from './services/EvidenceHoldService';
+import { storyRetentionService } from './services/StoryRetentionService';
 import { applyErasureLedger } from './services/ErasureReplayService';
 import { clientDistPath } from './config/resourceRoot';
 import { createApp } from './index';
@@ -257,6 +258,18 @@ function startDeletedAccountPruneScheduler(): () => void {
       userService.pruneDeletedAccounts().then(
         (erased) => {
           erasureLedger.trim();
+          trackBackground(
+            storyRetentionService.purgeExpired().then(
+              (stats) => {
+                if (stats.deleted + stats.orphaned + stats.failed > 0) {
+                  logger.info(
+                    `Stories: erased ${stats.deleted} deleted and ${stats.orphaned} orphaned story(ies), ${stats.failed} failed.`,
+                  );
+                }
+              },
+              (error: unknown) => logger.error('Story retention failed', error),
+            ),
+          );
           trackBackground(
             evidenceHoldService.pruneExpired().then(
               (dropped) => {

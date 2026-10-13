@@ -130,6 +130,16 @@ const envSchema = z.object({
    * Civil art. 15 period, six months, and never fewer. An authority's request to keep one longer is made on the hold.
    */
   EVIDENCE_HOLD_DAYS: z.coerce.number().int().min(183).max(3650).optional().default(183),
+  /**
+   * Sync history squash (see `SyncHistoryCompaction`): an entity's updates older than `SYNC_SQUASH_AGE_DAYS` collapse
+   * into one, except its newest `SYNC_SQUASH_KEEP_RECENT`. The heavy types (scenes, sketches, boards, maps, songs)
+   * follow the stricter pair: older than `SYNC_SQUASH_HEAVY_AGE_HOURS`, newest `SYNC_SQUASH_HEAVY_KEEP_RECENT` kept.
+   * A device that stays offline longer than the age may see an edit conflict it would not otherwise have had.
+   */
+  SYNC_SQUASH_AGE_DAYS: z.coerce.number().int().min(1).max(365).optional().default(7),
+  SYNC_SQUASH_KEEP_RECENT: z.coerce.number().int().min(1).max(1000).optional().default(20),
+  SYNC_SQUASH_HEAVY_AGE_HOURS: z.coerce.number().int().min(1).max(8760).optional().default(48),
+  SYNC_SQUASH_HEAVY_KEEP_RECENT: z.coerce.number().int().min(1).max(1000).optional().default(3),
   /** How many days a landing-page contact message is kept; older ones are dropped once a day. */
   CONTACT_MESSAGE_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(90),
   /**

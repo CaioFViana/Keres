@@ -69,6 +69,8 @@ for the account check only, never for content.
 
 | Data | Erased | Control |
 |---|---|---|
+| Stories (all their entities, history, comments, permissions, publications) | a story deleted by its owner, or whose owner's account was erased: erased for good `STORY_DELETION_GRACE_DAYS` (30) after the deletion, row included. Media files follow the media sweep | `StoryRetentionService.purgeExpired`, daily right after the account prune |
+| Sync history of a live story | updates older than 7 days collapse into one, except the newest 20 per entity; the heavy types (scene, sketch, board, location map, song) after 48 hours, except the newest 3 (`SYNC_SQUASH_*`). Creates and deletes are never squashed | `SyncHistoryCompaction`, after pushes (at most hourly per story) |
 | Account + content on self-deletion | personal data within 30 days (`ACCOUNT_DELETION_GRACE_DAYS`) | prune job, keeps contributions to others' stories anonymized |
 | Contact `site` messages | 90 days | `startContactMessagePruneScheduler` (daily) |
 | Security audit entries | scrubbed of user link after 1 year | `AuditService.scrubUser` |

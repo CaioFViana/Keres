@@ -56,25 +56,31 @@ After every restore, before reopening the server:
    and abandoned accounts) so anything that aged out while the dump sat on disk
    is erased, not resurrected indefinitely.
 
-## Age verification service (planned)
+## Age verification service
 
 The verification service described in [`docs/age_verification.md`](../../../docs/age_verification.md)
-is **not in this compose yet**. The maintainer adds it later as its own service,
-with its own image and port. Until it lands, this compose sets no
-`AGE_VERIFICATION_*` values: an unset mode boots `disabled`, and `required`
-cannot boot without a service to point at. The official server must not open
-registrations in that state.
+(`apps/verification`) runs from its **own** compose file, image and port, behind its own reverse proxy. This compose
+carries only the Keres server's side: the `AGE_VERIFICATION_*` values below. `required` cannot boot without a service
+to point at, and the official server must not open registrations without one.
+
+Its backups are written by the service itself, not by the `backup` service above (which dumps only Postgres): a nightly
+copy of its data store, with a 90-day retention ceiling, into its own `verification-backups` volume. Copy that volume off
+the machine to encrypted storage with access limited to operators. See
+[`apps/verification/README.md`](../../verification/README.md), "Backups", for the manual backup and the restore steps.
 
 - **Two volumes, two rules.** The service keeps:
   - the **data volume**: the encrypted images and metadata of open sendings, the
     reviewer accounts, the reviewer access log and the outbox of events not yet
     confirmed by Keres;
   - the **key volume**: the per-sending data keys (nothing else).
-- **Backup rule: data yes, keys never.** Back up the data volume like the
-  database (encrypted, operators only, same 90-day ceiling). **Never** back up
-  the key volume: not in any rotation, not in any copy off the machine. The
-  `backup` service above dumps only Postgres and mounts only `db_backups`; a
-  backup routine for the verification data volume is planned, not written yet.
+- **Backup rule: data yes, keys never.** The service's backups hold its data
+  store (a consistent snapshot of the metadata, and the encrypted image files it
+  names) and no key: the key store is never opened or copied, and no secret of
+  the service is written. The backups carry the same 90-day ceiling as the
+  dumps. **Never** back up the key volume: not in any rotation, not in any copy
+  off the machine. Once a sending is decided, expired or cancelled its key is
+  gone, so every backup copy of its images is unreadable from then on, including
+  the copies taken before that.
 - **Restore consequence.** After restoring the data volume, the open sendings
   whose keys were not restored are unreadable. The service cannot decide them,
   so they expire and the people send again. The Keres side keeps those accounts
@@ -101,7 +107,6 @@ registrations in that state.
 
   In `required` mode the URL and both secrets are mandatory, and the API refuses
   to boot without them. Secrets are at least 32 characters.
-- **Mode.** `AGE_VERIFICATION_MODE=required` is the Docker default: the compose
-  sets it once the service lands. Outside Docker an unset mode means `disabled`,
-  so check the line in the `.env` when you deploy by hand. `disabled` on the
-  official server is not an option.
+- **Mode.** `AGE_VERIFICATION_MODE=required` is the Docker default. Outside
+  Docker an unset mode means `disabled`, so check the line in the `.env` when you
+  deploy by hand. `disabled` on the official server is not an option.

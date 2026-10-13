@@ -75,6 +75,7 @@ for the account check only, never for content.
 | Postgres dumps | `BACKUP_RETENTION_DAYS` (default 90 days, ceiling) | `apps/api/deploy/backup.sh` rotation |
 | Age verification: document images and live photo | at the decision (approved, refused or expired), or at cancel; the per-sending key is destroyed with them (crypto-shredding). An undecided sending expires after `AGE_VERIFICATION_PENDING_DAYS` (default 30 days) | verification service decision and expiry jobs |
 | Age verification: typed fields (name, kind, number, date of birth) | at submit: never stored | verification service |
+| Age verification: backups of the data store (`verification-backups`: snapshot of the metadata and the encrypted images) | `BACKUP_RETENTION_DAYS`, 90 days as a ceiling; each backup is removed by rotation. Ciphertext and metadata only, never the keys | verification service backup rotation (`apps/verification/src/backup`) |
 | Age verification: per-sending encryption keys | with each sending; never backed up | key volume, outside every backup |
 | Age verification: commitment key (`COMMITMENT_KEY`) | while the service runs; a secret in the operator's secret store, never in a database or a data backup; its own protected copy, kept apart from the data | operator |
 | Age verification: approved record (result, method, dates, reference, commitment) | with the account; after account deletion kept pseudonymised as proof for the prescription period (to validate in D23) | account deletion, prune job |
@@ -190,9 +191,10 @@ the server opens. The reviewer handbook is `docs/age_verification_reviewer.md`.
    Keres team does not fill this in for you.
 5. **Secrets and keys**: at least 32 characters each; the events secret must differ
    from the other. Rotate with the `_PREVIOUS` keys, never by editing in place.
-6. **Backups**: back up the data volume of the verification service and your
-   Postgres dumps, encrypted, with access limited to operators. **Never back up
-   the key volume.** After any restore, expect the pending sendings to expire,
+6. **Backups**: copy the `verification-backups` volume of the verification
+   service (its own nightly backups, `apps/verification/README.md`) and your
+   Postgres dumps off the machine, encrypted, with access limited to operators.
+   **Never back up the key volume.** After any restore, expect the pending sendings to expire,
    and re-apply your erasures.
 7. **Retention**: keep the windows above, or shorter. The defaults are
    `AGE_VERIFICATION_PENDING_DAYS=30` and `AGE_VERIFICATION_MAX_ATTEMPTS=3`.

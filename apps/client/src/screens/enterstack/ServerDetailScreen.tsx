@@ -40,9 +40,13 @@ import {
   fetchServerTerms,
   type ServerTerms,
 } from '../../services/ServerTermsService';
-import { authTokenManager } from '../../services/AuthTokenManager';
+import {
+  AccountDeletionCleanupError,
+  deleteServerAccount,
+} from '../../services/DeleteAccountService';
 import { isOfflineError } from '../../services/apiClient';
 import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { userApiService } from '../../services/UserApiService';
 import { AppAlert } from '../../utils/AppAlert';
 import { type ThemeColors, useTheme } from '../../theme';
@@ -94,20 +98,29 @@ const ServerDetailScreen = () => {
   const [legalUpdateVisible, setLegalUpdateVisible] = useState(false);
   const [acceptWorking, setAcceptWorking] = useState(false);
 
-  // Deleting the account ends it on the server; the local server entry stays so the address
-  // can be registered again, but its tokens go with the account.
+  // One operation: the account is deleted on the server, its owned stories stay here as local
+  // stories, and the server entry is removed from this device (see deleteServerAccount).
   const handleDeleteAccount = async (currentPassword: string) => {
+    const currentUserId = useUserSettingsStore.getState().userId;
     if (!server) return;
+    if (!currentUserId) {
+      setDeleteError(t('failed_to_delete_account'));
+      return;
+    }
     setDeleteWorking(true);
     setDeleteError(null);
     try {
-      await userApiService.deleteOwnAccount(server, currentPassword);
-      await authTokenManager.clearAuthForServer(server.id);
+      await deleteServerAccount(drizzleDb, server, currentPassword, currentUserId);
       setDeleteVisible(false);
       AppAlert.alert(t('success'), t('delete_account_done'));
       navigation.goBack();
     } catch (err) {
-      if (isOfflineError(err)) {
+      if (err instanceof AccountDeletionCleanupError) {
+        // The account is gone and the tokens with it: the server stays listed so the person can finish
+        // with "Remove this server", here on this screen.
+        setDeleteVisible(false);
+        AppAlert.alert(t('error'), t('delete_account_cleanup_failed'));
+      } else if (isOfflineError(err)) {
         setDeleteError(t('server_unreachable'));
       } else if ((err as { response?: { status?: number } })?.response?.status === 401) {
         setDeleteError(t('incorrect_current_password'));

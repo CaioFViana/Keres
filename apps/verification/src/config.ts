@@ -16,6 +16,13 @@ export const DEFAULT_SUBMISSION_TTL_DAYS = 30;
 /** One image (a document side or the live photo). Generous for a phone photo, small enough to refuse abuse. */
 export const DEFAULT_MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_UPLOAD_BYTES_LIMIT = 64 * 1024 * 1024;
+/** The ceiling of the backup retention, as for the Postgres dumps: longer needs a written justification. */
+export const DEFAULT_BACKUP_RETENTION_DAYS = 90;
+export const MAX_BACKUP_RETENTION_DAYS = 90;
+const MAX_BACKUP_RETENTION_DAYS_LIMIT = 3650;
+export const DEFAULT_BACKUP_INTERVAL_HOURS = 24;
+/** Node's timers overflow past about 24.8 days: a longer interval would fire at once instead of waiting. */
+const MAX_BACKUP_INTERVAL_HOURS = 480;
 
 export interface VerificationConfig {
   port: number;
@@ -39,6 +46,12 @@ export interface VerificationConfig {
   maxUploadBytes: number;
   /** Allows plain http for the public address and the Keres events address when they are not loopback. */
   allowInsecure: boolean;
+  /** Where the backups go. Unset means backups are off. Never inside or around DATA_DIR or KEY_DIR. */
+  backupDir: string | undefined;
+  backupRetentionDays: number;
+  /** Lets the retention go past the 90-day ceiling. Set only with a written justification. */
+  backupAllowLongerRetention: boolean;
+  backupIntervalHours: number;
 }
 
 /** The configuration does not load. `problems` lists every reason, one per entry. */
@@ -168,6 +181,34 @@ export function loadConfig(env: Env = process.env): VerificationConfig {
     problems.push('DISPLAY_NAME must be 1-80 characters.');
   }
 
+  // Backups copy the data store (never the keys) to a folder of their own. A backup folder beside or inside the data
+  // or the keys would be one more place the keys could be swept up with, so it may not touch either directory.
+  const backupDir = env['BACKUP_DIR'] ? resolve(env['BACKUP_DIR']) : undefined;
+  if (backupDir !== undefined) {
+    for (const [name, dir] of [
+      ['DATA_DIR', dataDir],
+      ['KEY_DIR', keyDir],
+    ] as const) {
+      if (isSameOrInside(backupDir, dir) || isSameOrInside(dir, backupDir)) {
+        problems.push(
+          `BACKUP_DIR must not be, contain or be inside ${name}: backups must stay apart from the data and the keys.`,
+        );
+      }
+    }
+  }
+  const backupAllowLongerRetention = env['BACKUP_ALLOW_LONGER_RETENTION'] === 'true';
+  const backupRetentionDays = integer(
+    'BACKUP_RETENTION_DAYS',
+    DEFAULT_BACKUP_RETENTION_DAYS,
+    1,
+    MAX_BACKUP_RETENTION_DAYS_LIMIT,
+  );
+  if (backupRetentionDays > MAX_BACKUP_RETENTION_DAYS && !backupAllowLongerRetention) {
+    problems.push(
+      `BACKUP_RETENTION_DAYS must be at most ${MAX_BACKUP_RETENTION_DAYS}: a longer retention needs BACKUP_ALLOW_LONGER_RETENTION=true and a written justification.`,
+    );
+  }
+
   const config: VerificationConfig = {
     port: integer('PORT', DEFAULT_PORT, 1, 65535),
     host: env['HOST'] || '127.0.0.1',
@@ -188,6 +229,15 @@ export function loadConfig(env: Env = process.env): VerificationConfig {
       MAX_UPLOAD_BYTES_LIMIT,
     ),
     allowInsecure,
+    backupDir,
+    backupRetentionDays,
+    backupAllowLongerRetention,
+    backupIntervalHours: integer(
+      'BACKUP_INTERVAL_HOURS',
+      DEFAULT_BACKUP_INTERVAL_HOURS,
+      1,
+      MAX_BACKUP_INTERVAL_HOURS,
+    ),
   };
   if (problems.length > 0) throw new ConfigError(problems);
   return config;
@@ -202,6 +252,14 @@ export function configWarnings(config: VerificationConfig): string[] {
   if (config.keresSecrets.length > 1) {
     warnings.push(
       'AGE_VERIFICATION_SECRET_PREVIOUS is set: remove it once every Keres server has the new key.',
+    );
+  }
+  if (config.backupDir === undefined) {
+    warnings.push('BACKUP_DIR is not set: backups are off. The data store is not backed up.');
+  }
+  if (config.backupRetentionDays > MAX_BACKUP_RETENTION_DAYS) {
+    warnings.push(
+      `BACKUP_RETENTION_DAYS is ${config.backupRetentionDays}, past the ${MAX_BACKUP_RETENTION_DAYS}-day ceiling (BACKUP_ALLOW_LONGER_RETENTION=true).`,
     );
   }
   return warnings;

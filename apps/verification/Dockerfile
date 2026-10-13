@@ -21,9 +21,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY packages/shared packages/shared
 COPY apps/verification/package.json apps/verification/tsconfig.json ./apps/verification/
 COPY apps/verification/src ./apps/verification/src
-# The two directories the service writes: the data (encrypted images, metadata) and the keys. They are created here,
+# The directories the service writes: the data (encrypted images, metadata), the keys and the backups of the data. They are created here,
 # owned by the service user, so the named volumes of docker-compose.yml start with the right owner.
-RUN mkdir -p /app/apps/verification/data /app/apps/verification/keys \
+RUN mkdir -p /app/apps/verification/data /app/apps/verification/keys /app/apps/verification/backups \
   && chown -R bun:bun /app
 
 # The port the service listens on inside the container. Publish it only to loopback (see docker-compose.yml) and let

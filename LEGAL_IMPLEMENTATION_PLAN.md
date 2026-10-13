@@ -339,7 +339,7 @@ Pendências desta frente:
   câmera); só o envio por arquivo foi exercitado. A revisão achou e corrigiu um erro que só um
   navegador pega (`Referrer-Policy: no-referrer` faz o form mandar `Origin: null`).
 - **Postgres não foi rodado** (migrações geradas e exercitadas só em sqlite).
-- **Rotina de backup do volume de dados do serviço** não existe (README diz "planejado").
+- [x] **Rotina de backup do volume de dados do serviço** feita: o próprio serviço copia o banco de dados e as imagens cifradas para `BACKUP_DIR` (volume `verification-backups`), sem chaves, com retenção de 90 dias como teto, comando manual `backup:now` e restauração no README do serviço.
 - **Manual do revisor em português** antes de operar (hoje só em inglês).
 - Fila do revisor sem "soltar a reivindicação" (quem assume e some segura o envio até expirar).
 - F31 (dados do operador), D21, D23, G40 (conferir valores em produção), G41 e o commit da árvore (G42).

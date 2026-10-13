@@ -4,7 +4,17 @@ import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryInsert, StorySelect } from '../../db/schema';
 import type { ServerSelect } from '../../db/schemas/servers';
-import { choices, comments, favorites, plots, servers, stories } from '../../db/schema';
+import {
+  choices,
+  comments,
+  favorites,
+  operationLogs,
+  plots,
+  servers,
+  stories,
+  storyPermissions,
+  syncConflicts,
+} from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -92,6 +102,13 @@ export interface StoryService {
     targetType: 'linear' | 'branching',
   ): Promise<void>;
   unlinkFromServer(currentUserId: string, storyId: string): Promise<void>;
+  /**
+   * Detaches an owned story from its server WITHOUT any server call: the story stays on this device as a
+   * local story, its unsent operations and conflicts are dropped so nothing pushes it later, and the server's
+   * copy is left to the server's own rules. Used when the account itself is being deleted, where the session
+   * may already be gone and a server-side delete would also take the story away from collaborators.
+   */
+  detachFromServerLocally(currentUserId: string, storyId: string): Promise<void>;
   /**
    * Removes this device's copy of a story somebody else owns, once the caller has left it on the server.
    * Refuses the owner's story and a story never linked to a server: those are deleted, not left.
@@ -598,6 +615,39 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // identity after unlinking, and authorship checks stop recognising them as theirs.
       await commentService.migrateAuthorIdentity(storyId, server.idUser, currentUserId);
       await this.updateStory(currentUserId, storyId, { serverId: null, lastPublicFavoriteLog: 0 });
+    },
+
+    async detachFromServerLocally(currentUserId: string, storyId: string): Promise<void> {
+      const story = await this.getStoryById(storyId);
+      if (!story) {
+        throw new Error(`Story with ID ${storyId} not found.`);
+      }
+      if (!story.serverId) {
+        return; // Already fully local.
+      }
+      await assertStoryIsOwned(db, storyId);
+
+      // Same identity move as unlinking: the owner's favourites and comments were filed under the
+      // account's id on that server, which means nothing once the account is gone.
+      const server = await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) });
+      if (server?.idUser) {
+        await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
+        await commentService.migrateAuthorIdentity(storyId, server.idUser, currentUserId);
+      }
+
+      // One unit under the story's op-log lock: the link is cleared and nothing that could still
+      // reach the server survives it - unsent operations, conflicts held for review, and the
+      // story's permission cache (the server owns collaborators). No server call is made here.
+      await runLocalWrite(db, storyId, () => {
+        db.update(stories)
+          .set({ serverId: null, lastPublicFavoriteLog: 0, updatedAt: new Date() })
+          .where(eq(stories.id, storyId))
+          .run();
+        db.delete(operationLogs).where(eq(operationLogs.storyId, storyId)).run();
+        db.delete(syncConflicts).where(eq(syncConflicts.storyId, storyId)).run();
+        db.delete(storyPermissions).where(eq(storyPermissions.storyId, storyId)).run();
+      });
+      entityEventEmitter.emit('story_changed', storyId);
     },
 
     async exportFullStory(storyId: string): Promise<FullStoryExportType> {

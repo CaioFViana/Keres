@@ -8,6 +8,7 @@
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "reviewer:add": "bun run src/cli/addReviewer.ts",
+    "backup:now": "bun run src/cli/backupNow.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src test vitest.config.ts",
     "test": "vitest run",

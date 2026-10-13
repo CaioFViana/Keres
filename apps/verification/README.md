@@ -45,7 +45,9 @@ bun run --cwd apps/verification dev
 ```
 
 The service refuses to start, and lists every problem, when a required variable is missing or short, when two keys
-are equal, when `KEY_DIR` is `DATA_DIR` or inside it, or when a public address is plain http outside loopback.
+are equal, when `KEY_DIR` is `DATA_DIR` or inside it, when `BACKUP_DIR` is, contains or is inside either of them, when the backup
+retention is past 90 days without `BACKUP_ALLOW_LONGER_RETENTION=true`, or when a public address is plain http outside
+loopback.
 
 ## Reviewer accounts
 
@@ -59,13 +61,47 @@ and is not kept anywhere in plain text. Passwords are scrypt-hashed with a per-p
 
 ## Backups
 
-- **Back up `verification-data`** (the `DATA_DIR`): the encrypted images, the metadata, the audit log, the reviewers.
-- **NEVER back up `verification-keys`** (the `KEY_DIR`). Its rows are the data keys. A backup with the keys would make
-  every encrypted image in it readable, and the whole point of the design is that a destroyed key makes every copy
-  unreadable. Losing `verification-keys` loses the pending submissions (their images cannot be read again, so people
-  send again); decided results are on the Keres server and are not affected.
-- Never put `KEY_DIR` inside `DATA_DIR`: the service refuses to start in that layout, because a backup of the data
-  would carry the keys.
+The service copies its data store into `BACKUP_DIR` every `BACKUP_INTERVAL_HOURS` (default 24). When `BACKUP_DIR` is
+unset, backups are off and the boot log says so. The first round runs a minute after boot. The compose file mounts the
+`verification-backups` volume at `BACKUP_DIR` and nowhere else.
+
+- **What a backup holds.** `verification-<UTC stamp>/` with `data.sqlite.gz` (a consistent copy of the data store, taken
+  with `VACUUM INTO` while the service keeps writing: submissions, audit log, reviewers, sessions, outbox) and `blobs/`,
+  a byte-for-byte copy of the encrypted image files that snapshot names. Nothing is decrypted.
+- **What it never holds.** The key store (`keys.sqlite`) is never opened, read or copied. `COMMITMENT_KEY` and the
+  secrets are environment only and are never written. Once a sending is decided, expired or cancelled its key is gone,
+  and every copy of its images is unreadable from then on, including copies taken before that.
+- **Written whole or not at all.** The folder is written under a temporary name and renamed when complete. A run that
+  stops halfway leaves no `verification-*` folder; a temporary folder is removed by a rotation once it is a day old.
+- **Retention.** `BACKUP_RETENTION_DAYS`, default **90**, is a ceiling, as for the Postgres dumps and the privacy policy.
+  A longer value is refused at boot unless `BACKUP_ALLOW_LONGER_RETENTION=true` with a written justification. Rotation runs
+  after every round, even when that round's backup failed, and deletes only folders named like ours that are older than
+  the retention. It never touches anything else in `BACKUP_DIR`.
+- **Where.** `BACKUP_DIR` must not be, contain or be inside `DATA_DIR` or `KEY_DIR`: the service refuses to start otherwise.
+- **Copy it off the machine.** Copy the `verification-backups` volume to encrypted storage with access limited to
+  operators. A backup is personal data too. **Never** copy or back up `verification-keys`, and never mount the keys
+  anywhere near a backup.
+- **Manual backup.** One backup and one rotation, with the service's own configuration, while the service keeps running:
+
+  ```
+  docker compose -f apps/verification/docker-compose.yml exec verification bun run backup:now
+  bun run --cwd apps/verification backup:now        # outside Docker
+  ```
+
+- **Restore.** Restoring brings back the data store, not the keys.
+  1. Stop the service: `docker compose -f apps/verification/docker-compose.yml stop verification`.
+  2. Pick a `verification-<stamp>` folder from the backups volume (`ls` inside the container, under `BACKUP_DIR`).
+  3. In `DATA_DIR`, remove `data.sqlite`, `data.sqlite-wal` and `data.sqlite-shm` (the old copy's side files would be
+     applied to the restored one), then gunzip the folder's snapshot into `data.sqlite`:
+     `gunzip -c <folder>/data.sqlite.gz > <DATA_DIR>/data.sqlite`.
+  4. Empty `DATA_DIR/blobs/` and copy the folder's `blobs/*` into it.
+  5. Leave `KEY_DIR` exactly as it is. Do not restore keys from anywhere.
+  6. Start the service again.
+
+  The consequence: an open sending whose key is not in `KEY_DIR` is unreadable. The service cannot decide it, so it expires
+  and the person sends again. Events that were already delivered to Keres may be pushed again; Keres applies each event
+  once. Losing `verification-keys` loses the pending submissions the same way; decided results are on the Keres server
+  and are not affected.
 
 ## Environment
 
@@ -85,6 +121,10 @@ and is not kept anywhere in plain text. Passwords are scrypt-hashed with a per-p
 | `MAX_UPLOAD_BYTES` | `8388608` | The largest accepted image. |
 | `ALLOW_INSECURE` | `false` | Allows plain http for non-loopback addresses. Private test networks only. |
 | `HOST` / `PORT` | `127.0.0.1` / `3102` | Listen address; the container image sets `HOST=0.0.0.0`. |
+| `BACKUP_DIR` | unset (backups off) | Where the backups go. Never inside or around `DATA_DIR` or `KEY_DIR`. |
+| `BACKUP_RETENTION_DAYS` | `90` | How long a backup is kept. 90 is the ceiling. |
+| `BACKUP_ALLOW_LONGER_RETENTION` | `false` | `true` allows a retention past 90 days, with a written justification. |
+| `BACKUP_INTERVAL_HOURS` | `24` | Hours between two backups (1 to 480). |
 
 ## Tests
 

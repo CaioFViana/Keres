@@ -17,8 +17,7 @@ const mockUpdateServer = jest.fn();
 const mockDeleteServer = jest.fn();
 const mockUpdateOwnTag = jest.fn();
 const mockGetOwnProfile = jest.fn();
-const mockDeleteOwnAccount = jest.fn();
-const mockClearAuthForServer = jest.fn();
+const mockDeleteServerAccount = jest.fn();
 const mockApiGet = jest.fn();
 const mockAuthedGet = jest.fn();
 const mockAuthedPost = jest.fn();
@@ -117,6 +116,14 @@ jest.mock('../../../src/services/ServerService', () => {
   };
 });
 
+jest.mock('../../../src/services/DeleteAccountService', () => {
+  class AccountDeletionCleanupError extends Error {}
+  return {
+    AccountDeletionCleanupError,
+    deleteServerAccount: (...args: unknown[]) => mockDeleteServerAccount(...args),
+  };
+});
+
 jest.mock('../../../src/services/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
@@ -134,13 +141,6 @@ jest.mock('../../../src/services/UserApiService', () => ({
   userApiService: {
     updateOwnTag: (...args: unknown[]) => mockUpdateOwnTag(...args),
     getOwnProfile: (...args: unknown[]) => mockGetOwnProfile(...args),
-    deleteOwnAccount: (...args: unknown[]) => mockDeleteOwnAccount(...args),
-  },
-}));
-
-jest.mock('../../../src/services/AuthTokenManager', () => ({
-  authTokenManager: {
-    clearAuthForServer: (...args: unknown[]) => mockClearAuthForServer(...args),
   },
 }));
 
@@ -154,6 +154,8 @@ jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import ServerDetailScreen from '../../../src/screens/enterstack/ServerDetailScreen';
+import { AccountDeletionCleanupError } from '../../../src/services/DeleteAccountService';
+import { useUserSettingsStore } from '../../../src/state/userSettingsStore';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const server = {
@@ -192,8 +194,8 @@ describe('ServerDetailScreen', () => {
     mockUpdateServer.mockResolvedValue(undefined);
     mockUpdateOwnTag.mockResolvedValue({ tag: 'newtag' });
     mockGetOwnProfile.mockResolvedValue({ avatarColor: '#abcdef', avatarIcon: 'ion:star' });
-    mockDeleteOwnAccount.mockResolvedValue(undefined);
-    mockClearAuthForServer.mockResolvedValue(undefined);
+    mockDeleteServerAccount.mockResolvedValue(undefined);
+    useUserSettingsStore.setState({ userId: 'local-me' });
   });
 
   afterEach(() => {
@@ -432,35 +434,58 @@ describe('ServerDetailScreen', () => {
     });
   });
 
-  it('deletes the account with the current password, then forgets its tokens', async () => {
+  // Deleting the account and removing the server from this device is one operation (its service
+  // has the tests); the screen's part is the alert it shows and where it takes the person.
+  const confirmDeleteAccount = async (password: string) => {
     const view = await render(<ServerDetailScreen />);
     await view.findByText('Main');
-
     await fireEvent.press(view.getByTestId('server-action-delete-account'));
-    await fireEvent.changeText(view.getByTestId('delete-account-modal-password'), 'password123');
+    await fireEvent.changeText(view.getByTestId('delete-account-modal-password'), password);
     await fireEvent.press(view.getByTestId('delete-account-modal-confirm'));
+    return view;
+  };
 
-    await waitFor(() => expect(mockDeleteOwnAccount).toHaveBeenCalledTimes(1));
-    expect(mockDeleteOwnAccount).toHaveBeenCalledWith(
+  it('deletes the account and the server with it, then goes back with the success alert', async () => {
+    await confirmDeleteAccount('password123');
+
+    await waitFor(() => expect(mockDeleteServerAccount).toHaveBeenCalledTimes(1));
+    expect(mockDeleteServerAccount).toHaveBeenCalledWith(
+      mockDrizzle,
       expect.objectContaining({ id: 'srv-1' }),
       'password123',
+      'local-me',
     );
-    expect(mockClearAuthForServer).toHaveBeenCalledWith('srv-1');
     expect(mockAlert).toHaveBeenCalledWith('success', 'delete_account_done');
     expect(mockGoBack).toHaveBeenCalled();
   });
 
-  it('says why deleting the account failed', async () => {
-    mockDeleteOwnAccount.mockRejectedValue({ response: { status: 401 } });
-    const view = await render(<ServerDetailScreen />);
-    await view.findByText('Main');
-
-    await fireEvent.press(view.getByTestId('server-action-delete-account'));
-    await fireEvent.changeText(view.getByTestId('delete-account-modal-password'), 'wrong');
-    await fireEvent.press(view.getByTestId('delete-account-modal-confirm'));
+  it('says why deleting the account failed, and stays with the server', async () => {
+    mockDeleteServerAccount.mockRejectedValue({ response: { status: 401 } });
+    const view = await confirmDeleteAccount('wrong');
 
     await view.findByText('incorrect_current_password');
-    expect(mockClearAuthForServer).not.toHaveBeenCalled();
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockGoBack).not.toHaveBeenCalled();
+  });
+
+  it('says the server is unreachable when the device is offline, and stays', async () => {
+    mockDeleteServerAccount.mockRejectedValue({ isOffline: true });
+    const view = await confirmDeleteAccount('password123');
+
+    await view.findByText('server_unreachable');
+    expect(mockGoBack).not.toHaveBeenCalled();
+  });
+
+  it('says the account is gone but the removal is unfinished, and stays on this screen to finish it', async () => {
+    mockDeleteServerAccount.mockRejectedValue(
+      new AccountDeletionCleanupError(new Error('socket hang up')),
+    );
+    await confirmDeleteAccount('password123');
+
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith('error', 'delete_account_cleanup_failed'),
+    );
+    expect(mockAlert).not.toHaveBeenCalledWith('success', expect.anything());
     expect(mockGoBack).not.toHaveBeenCalled();
   });
 

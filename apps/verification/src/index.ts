@@ -1,3 +1,4 @@
+import { startBackupScheduler } from './backup/scheduler';
 import { ConfigError, configWarnings, loadConfig } from './config';
 import { startOutbox } from './outbox';
 import { createApp, createState } from './routes';
@@ -25,6 +26,14 @@ const state = createState(config);
 const loop = startOutbox(state);
 const pending = state.stores.outbox.undeliveredCount();
 if (pending > 0) console.log(`${pending} event(s) waiting to be delivered to Keres.`);
+// Backups run only when BACKUP_DIR is set (the boot log says so when it is not). A failed backup is logged and the
+// service goes on; the rotation runs in the same round.
+const backups = config.backupDir !== undefined ? startBackupScheduler(config) : undefined;
+if (backups) {
+  console.log(
+    `Backups every ${config.backupIntervalHours} hour(s), keeping ${config.backupRetentionDays} day(s).`,
+  );
+}
 
 const app = createApp(state);
 
@@ -43,9 +52,10 @@ console.log(
   `Keres verification service "${config.serviceId}" listening on ${config.host}:${config.port}.`,
 );
 
-// A stop signal waits for a delivery round in progress, then closes the databases: no event is half written.
+// A stop signal waits for a delivery round in progress, then closes the databases: no event is half written. A backup
+// in progress is waited for too; a temporary folder left by a run cut short is removed by a rotation once it is a day old.
 const shutdown = (): void => {
-  void loop.stop().then(() => {
+  void Promise.all([loop.stop(), backups?.stop()]).then(() => {
     state.stores.close();
     process.exit(0);
   });

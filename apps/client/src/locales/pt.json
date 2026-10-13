@@ -3177,6 +3177,7 @@
   "tags_empty_title": "Nenhuma tag ainda",
   "tags_title": "Tags",
   "terms_accept": "Concordo",
+  "terms_read_wait": "Continue lendo: você poderá concordar em {{seconds}} s",
   "terms_scroll_to_accept": "Role até o fim para concordar",
   "text": "Texto",
   "text_placeholder": "Digite o texto",

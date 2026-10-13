@@ -1,9 +1,10 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import { MIN_READ_SECONDS } from '@/src/legal/readingGate';
 import { useTheme } from '@/src/theme';
 import { space, typography } from '@/src/theme/tokens';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -23,7 +24,10 @@ interface TermsModalProps {
   acceptLabel?: string;
   onAccept?: () => void;
   onClose: () => void;
-  /** The agree button stays disabled until the end is scrolled into view. */
+  /**
+   * The agree button stays disabled until the end is scrolled into view AND the text has been open for
+   * `MIN_READ_SECONDS`: a text that fits the window needs no scrolling, but it still has to be looked at.
+   */
   requireScrollToEnd?: boolean;
   testID?: string;
 }
@@ -34,7 +38,7 @@ const END_THRESHOLD = 24;
 /**
  * Terms of service, app or server, on a fullscreen-capable surface with the shared header
  * and close button. Acceptance mode optionally refuses agreement until the text was scrolled
- * to the end; text short enough to fit without scrolling agrees at once.
+ * to the end (text short enough to fit counts as seen) and has stayed open for a minimum time.
  */
 const TermsModal: React.FC<TermsModalProps> = ({
   visible,
@@ -65,7 +69,16 @@ const TermsModal: React.FC<TermsModalProps> = ({
     [],
   );
 
-  const canAccept = !requireScrollToEnd || reachedEnd;
+  // Seconds the text has been on screen: it keeps counting only while visible, and a reopened text goes on from there.
+  const [secondsOpen, setSecondsOpen] = useState(0);
+  useEffect(() => {
+    if (!visible || !requireScrollToEnd || MIN_READ_SECONDS <= 0) return;
+    const timer = setInterval(() => setSecondsOpen((seconds) => seconds + 1), 1000);
+    return () => clearInterval(timer);
+  }, [visible, requireScrollToEnd]);
+  const secondsLeft = Math.max(0, MIN_READ_SECONDS - secondsOpen);
+
+  const canAccept = !requireScrollToEnd || (reachedEnd && secondsLeft === 0);
 
   return (
     <ResponsiveModal
@@ -121,6 +134,11 @@ const TermsModal: React.FC<TermsModalProps> = ({
           {requireScrollToEnd && !reachedEnd ? (
             <Text style={[typography.caption, { color: colors.textSecondary }]}>
               {t('terms_scroll_to_accept')}
+            </Text>
+          ) : null}
+          {requireScrollToEnd && reachedEnd && secondsLeft > 0 ? (
+            <Text style={[typography.caption, { color: colors.textSecondary }]}>
+              {t('terms_read_wait', { seconds: secondsLeft })}
             </Text>
           ) : null}
           <Button onPress={() => onAccept?.()} disabled={!canAccept} testID={`${testID}-accept`}>

@@ -3177,6 +3177,7 @@
   "tags_empty_title": "No tags yet",
   "tags_title": "Tags",
   "terms_accept": "I agree",
+  "terms_read_wait": "Keep reading: you can agree in {{seconds}} s",
   "terms_scroll_to_accept": "Scroll to the end to agree",
   "text": "Text",
   "text_placeholder": "Enter text",

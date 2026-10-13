@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import TermsModal from '../../src/components/features/servers/TermsModal/TermsModal';
 
@@ -75,11 +75,25 @@ const scrollTo = async (offsetY: number, contentHeight: number) => {
 const isAcceptDisabled = () =>
   Boolean(screen.getByTestId('terms-modal-accept').props.accessibilityState?.disabled);
 
+// The real minimum: the setup file zeroes it for every other suite.
+jest.mock('../../src/legal/readingGate', () => ({ __esModule: true, MIN_READ_SECONDS: 12 }));
+const MIN_READ_SECONDS = 12;
+
 describe('TermsModal scroll gate', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('keeps accept disabled with long content until the person scrolls to the end', async () => {
     const onAccept = jest.fn();
     await renderAccept({ onAccept });
     await measure(VIEWPORT, LONG_CONTENT);
+    await act(async () => {
+      jest.advanceTimersByTime(MIN_READ_SECONDS * 1000);
+    });
 
     expect(isAcceptDisabled()).toBe(true);
     expect(screen.getByText('terms_scroll_to_accept')).toBeTruthy();
@@ -97,9 +111,12 @@ describe('TermsModal scroll gate', () => {
     expect(onAccept).toHaveBeenCalledTimes(1);
   });
 
-  it('enables accept at once when the content fits the window without scrolling', async () => {
+  it('counts a text that fits the window as seen, once the time is up', async () => {
     await renderAccept();
     await measure(VIEWPORT, SHORT_CONTENT);
+    await act(async () => {
+      jest.advanceTimersByTime(MIN_READ_SECONDS * 1000);
+    });
 
     expect(isAcceptDisabled()).toBe(false);
     expect(screen.queryByText('terms_scroll_to_accept')).toBeNull();
@@ -123,5 +140,88 @@ describe('TermsModal scroll gate', () => {
     expect(screen.queryByTestId('terms-modal-accept')).toBeNull();
     expect(screen.queryByText('terms_scroll_to_accept')).toBeNull();
     expect(screen.getByText('Scope')).toBeTruthy();
+  });
+});
+
+describe('TermsModal minimum reading time', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  const pass = async (seconds: number) => {
+    await act(async () => {
+      jest.advanceTimersByTime(seconds * 1000);
+    });
+  };
+
+  it('keeps accept shut for a text that fits the window until it has stayed open long enough', async () => {
+    await renderAccept();
+    await measure(VIEWPORT, SHORT_CONTENT);
+
+    // Nothing to scroll, but it was not looked at yet.
+    expect(isAcceptDisabled()).toBe(true);
+    expect(screen.getByText('terms_read_wait')).toBeTruthy();
+
+    await pass(MIN_READ_SECONDS - 1);
+    expect(isAcceptDisabled()).toBe(true);
+
+    await pass(1);
+    expect(isAcceptDisabled()).toBe(false);
+    expect(screen.queryByText('terms_read_wait')).toBeNull();
+  });
+
+  it('needs both: time without reaching the end, and the end without the time, are not enough', async () => {
+    await renderAccept();
+    await measure(VIEWPORT, LONG_CONTENT);
+
+    await pass(MIN_READ_SECONDS + 5);
+    expect(isAcceptDisabled()).toBe(true);
+    expect(screen.getByText('terms_scroll_to_accept')).toBeTruthy();
+
+    await scrollTo(LONG_CONTENT - VIEWPORT, LONG_CONTENT);
+    expect(isAcceptDisabled()).toBe(false);
+  });
+
+  it('does not let a flick to the end open it before the time', async () => {
+    await renderAccept();
+    await measure(VIEWPORT, LONG_CONTENT);
+
+    await scrollTo(LONG_CONTENT - VIEWPORT, LONG_CONTENT);
+    expect(isAcceptDisabled()).toBe(true);
+
+    await pass(MIN_READ_SECONDS);
+    expect(isAcceptDisabled()).toBe(false);
+  });
+
+  it('counts only while the text is on screen, and goes on from there when it is opened again', async () => {
+    const element = (visible: boolean) => (
+      <TermsModal
+        visible={visible}
+        title="Terms"
+        sections={SECTIONS}
+        mode="accept"
+        requireScrollToEnd
+        onAccept={jest.fn()}
+        onClose={jest.fn()}
+      />
+    );
+    const view = await render(element(true));
+    await measure(VIEWPORT, SHORT_CONTENT);
+    await pass(5);
+
+    await view.rerender(element(false));
+    await pass(MIN_READ_SECONDS * 10);
+    await view.rerender(element(true));
+    await measure(VIEWPORT, SHORT_CONTENT);
+
+    // 5 s counted before, none while it was closed: 7 s are still missing.
+    expect(isAcceptDisabled()).toBe(true);
+    await pass(MIN_READ_SECONDS - 5 - 1);
+    expect(isAcceptDisabled()).toBe(true);
+    await pass(1);
+    expect(isAcceptDisabled()).toBe(false);
   });
 });

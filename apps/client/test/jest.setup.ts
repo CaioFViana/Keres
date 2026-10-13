@@ -265,3 +265,10 @@ jest.mock('../src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: () => undefined,
 }));
+
+// The minimum time a legal text must stay open before "I agree" works would make every suite that accepts one wait; the
+// suites of the gate itself (`TermsModal.test.tsx`) bring the real value back.
+jest.mock('../src/legal/readingGate', () => ({
+  __esModule: true,
+  MIN_READ_SECONDS: 0,
+}));

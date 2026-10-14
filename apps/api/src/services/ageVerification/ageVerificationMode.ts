@@ -3,21 +3,22 @@ import { env } from '../../config/env';
 
 /**
  * How this server treats age (see `docs/age_verification.md`): `required` makes every new account wait for the
- * service's approval, `disabled` has no verification at all and therefore no adults-only area and no verified account.
+ * external service's approval; `manual` has no service, starts accounts active and not verified, and lets an
+ * administrator mark them verified by hand.
  */
 export function ageVerificationMode(): AgeVerificationMode {
   return env.AGE_VERIFICATION_MODE;
 }
 
+/** True only for `required`: the external service decides verification and boot runs its verifier and prune jobs. */
 export function isAgeVerificationRequired(): boolean {
   return ageVerificationMode() === 'required';
 }
 
 /**
- * The one answer to "is this account adults-only verified?" for every place that decides access. The stored flag
- * only counts where verification is `required`: in `disabled` nobody is verified, whatever the column says (a server
- * that was switched off after approvals were given must not keep handing out the adults-only area).
+ * The one answer to "is this account adults-only verified?" for every place that decides access. In both modes the
+ * stored flag is the answer: `required` sets it on approval, `manual` sets it when an administrator grants it.
  */
 export function effectiveAdultVerified(flag: boolean): boolean {
-  return isAgeVerificationRequired() && flag;
+  return flag;
 }

@@ -35,7 +35,7 @@ describe('GET /api/keres-privacy', () => {
 });
 
 const required = privacyPolicyFor('required');
-const disabled = privacyPolicyFor('disabled');
+const manual = privacyPolicyFor('manual');
 const NUMBERS = Array.from({ length: 11 }, (_, index) => String(index + 1));
 
 const textOf = (sections: PrivacyPolicySection[]) =>
@@ -48,14 +48,14 @@ describe('the server privacy policy by age-verification mode', () => {
   });
 
   it('keeps the same sections, in the same order, in both languages and in both modes', () => {
-    for (const document of [required, disabled]) {
+    for (const document of [required, manual]) {
       expect(document.en.map(numberOf)).toEqual(NUMBERS);
       expect(document.pt.map(numberOf)).toEqual(NUMBERS);
     }
   });
 
   it('files the age verification category under section 10 in both languages and modes', () => {
-    for (const document of [required, disabled]) {
+    for (const document of [required, manual]) {
       expect(document.en[9]?.heading).toBe('10. Age verification');
       expect(document.pt[9]?.heading).toBe('10. Verificação de idade');
     }
@@ -65,23 +65,23 @@ describe('the server privacy policy by age-verification mode', () => {
     expect(PRIVACY_POLICY).toEqual(required);
   });
 
-  it('gives a disabled server a different policy, and a different digest for the acceptances', () => {
-    expect(textOf(disabled.en)).not.toBe(textOf(required.en));
-    expect(textOf(disabled.pt)).not.toBe(textOf(required.pt));
-    expect(privacyPolicyDigest('disabled')).not.toBe(privacyPolicyDigest('required'));
+  it('gives a manual server a different policy, and a different digest for the acceptances', () => {
+    expect(textOf(manual.en)).not.toBe(textOf(required.en));
+    expect(textOf(manual.pt)).not.toBe(textOf(required.pt));
+    expect(privacyPolicyDigest('manual')).not.toBe(privacyPolicyDigest('required'));
     expect(privacyPolicyDigest()).toBe(privacyPolicyDigest('required'));
   });
 
-  it('says that a disabled server collects no verification data', () => {
-    expect(textOf(disabled.en)).toMatch(/No age verification on this server/);
-    expect(textOf(disabled.en)).toMatch(/No verification data is collected on this server/);
-    expect(textOf(disabled.pt)).toMatch(/Sem verificação de idade neste servidor/);
-    expect(textOf(disabled.pt)).toMatch(/Nenhum dado de verificação é coletado neste servidor/);
+  it('says that a manual server collects no verification data', () => {
+    expect(textOf(manual.en)).toMatch(/No age verification on this server/);
+    expect(textOf(manual.en)).toMatch(/No verification data is collected on this server/);
+    expect(textOf(manual.pt)).toMatch(/Sem verificação de idade neste servidor/);
+    expect(textOf(manual.pt)).toMatch(/Nenhum dado de verificação é coletado neste servidor/);
   });
 
-  it('keeps every verification-only mechanism out of a disabled server', () => {
-    expect(textOf(disabled.en)).not.toMatch(/HMAC|governance record|Lei 15\.211|destroys them/);
-    expect(textOf(disabled.pt)).not.toMatch(
+  it('keeps every verification-only mechanism out of a manual server', () => {
+    expect(textOf(manual.en)).not.toMatch(/HMAC|governance record|Lei 15\.211|destroys them/);
+    expect(textOf(manual.pt)).not.toMatch(
       /HMAC|registro de governança|Lei 15\.211|apaga o documento/,
     );
   });

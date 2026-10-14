@@ -18,11 +18,11 @@ afterEach(() => {
 });
 
 describe('GET /api/age-verification/info', () => {
-  it('says disabled and unavailable on a server that has no verification (the default)', async () => {
+  it('says manual and unavailable on a server that has no verification service (the default)', async () => {
     const { status, data } = await request('GET', '/age-verification/info');
 
     expect(status).toBe(200);
-    expect(data).toEqual({ mode: 'disabled', available: false });
+    expect(data).toEqual({ mode: 'manual', available: false });
   });
 
   it('is public: it answers without a session', async () => {
@@ -31,13 +31,13 @@ describe('GET /api/age-verification/info', () => {
     expect(status).toBe(200);
   });
 
-  it('says disabled and unavailable even with a service connected: nobody is verified in this mode', async () => {
+  it('says manual and unavailable even with a service connected: manual never calls one', async () => {
     setAgeVerifier(createFakeAgeVerifier().verifier);
-    env.AGE_VERIFICATION_MODE = 'disabled';
+    env.AGE_VERIFICATION_MODE = 'manual';
 
     const { data } = await request('GET', '/age-verification/info');
 
-    expect(data).toEqual({ mode: 'disabled', available: false });
+    expect(data).toEqual({ mode: 'manual', available: false });
   });
 
   it('says required and unavailable when the server should verify but no service answers', async () => {

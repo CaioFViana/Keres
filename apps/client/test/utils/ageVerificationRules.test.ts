@@ -8,7 +8,7 @@ describe('blocksNewAccounts', () => {
   it('blocks only a server that requires verification and cannot run it right now', () => {
     expect(blocksNewAccounts({ mode: 'required', available: false })).toBe(true);
     expect(blocksNewAccounts({ mode: 'required', available: true })).toBe(false);
-    expect(blocksNewAccounts({ mode: 'disabled', available: false })).toBe(false);
+    expect(blocksNewAccounts({ mode: 'manual', available: false })).toBe(false);
   });
 
   it('never blocks on an unreadable answer: the server itself decides then', () => {

@@ -642,7 +642,7 @@ describe('ServerRegistrationScreen', () => {
     });
 
     it('says a server without verification has none, without stopping the registration', async () => {
-      mockFetchAgeInfo.mockResolvedValue({ mode: 'disabled', available: false });
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'manual', available: false });
       const view = await render(<ServerRegistrationScreen />);
       await view.findByText('register_server');
       await fillRegistration(view);

@@ -14,6 +14,8 @@ import { db } from '../db';
 import { tiers, users } from '../db/schema';
 import { AppError, isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { ageVerificationService } from './ageVerification/AgeVerificationService';
+import { isAgeVerificationRequired } from './ageVerification/ageVerificationMode';
+import { auditService } from './AuditService';
 import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierIds } from './payments/entitlement';
 import { accountClosureService } from './payments/AccountClosureService';
@@ -271,12 +273,15 @@ export class AdminUserService {
   }
 
   /**
-   * Edits an account for an administrator. Verification is never set by hand: an account is verified by the
-   * age-verification service only. Revoking it (`isAdultVerified: false`) goes through that service too, so there is
-   * one revocation path, with its audit line and the removal from adults-only stories.
+   * Edits an account for an administrator. Verification:
+   * - `manual` mode: granting it (`isAdultVerified: true`) is done here by hand - the flag, the time, the method
+   *   `manual` and the account made active - with an audit line. Revoking goes through the same path as always.
+   * - `required` mode: the external service is the only one that verifies, so granting is refused. Revoking
+   *   (`isAdultVerified: false`) goes through that service, so there is one revocation path, with its audit line and
+   *   the removal from adults-only stories.
    */
   async update(id: string, patch: AdminUpdateUser, actorId?: string | null) {
-    if (patch.isAdultVerified === true) {
+    if (patch.isAdultVerified === true && isAgeVerificationRequired()) {
       throw new AppError(
         400,
         'Accounts are verified by the age-verification service, not by hand.',
@@ -295,6 +300,18 @@ export class AdminUserService {
 
     const changes: AdminUpdateUser = { ...patch };
     delete changes.isAdultVerified;
+    const grantedNow = new Date();
+    // Granting by hand (manual mode only, see above): the account is active too, so one left pending by an earlier
+    // `required` setting is not stuck behind a verification that will never come.
+    const grant =
+      patch.isAdultVerified === true
+        ? {
+            isAdultVerified: true,
+            verifiedAt: grantedNow,
+            verificationMethod: 'manual',
+            verificationStatus: 'active' as const,
+          }
+        : {};
     if (patch.tag !== undefined) {
       // Stored in the one shape lookups expect, and never one somebody else already holds.
       changes.tag = normalizeUserTag(patch.tag);
@@ -313,9 +330,18 @@ export class AdminUserService {
     }
     const [updated] = await db
       .update(users)
-      .set({ ...changes, updatedAt: new Date() })
+      .set({ ...changes, ...grant, updatedAt: grantedNow })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
+    if (patch.isAdultVerified === true) {
+      auditService.record({
+        category: 'account',
+        action: 'account.verification_granted',
+        outcome: 'success',
+        actorUserId: actorId ?? null,
+        subjectUserId: id,
+      });
+    }
     return updated;
   }
 

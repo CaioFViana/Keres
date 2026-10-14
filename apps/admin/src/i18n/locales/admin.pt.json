@@ -120,6 +120,7 @@
       "account_profile_updated": "Perfil atualizado",
       "account_password_changed": "Senha alterada",
       "account_verification_revoked": "Verificação de idade revogada",
+      "account_verification_granted": "Verificação de idade concedida à mão",
       "account_recovery_codes_regenerated": "Códigos de recuperação renovados",
       "friend_request_sent": "Pedido de amizade enviado",
       "friend_request_accepted": "Pedido de amizade aceito",
@@ -570,11 +571,10 @@
     "allowNsfw": "Permitir conteúdo adulto (+18)",
     "allowNsfwHint": "Adultos verificados podem marcar e publicar histórias +18. Desligado mantém o servidor livre de conteúdo maduro.",
     "allowNsfwVerifiedOnly": "Histórias para adultos ficam abertas apenas a contas verificadas.",
-    "allowNsfwNoVerification": "Este servidor não tem verificação de idade, então não tem área para adultos. Defina AGE_VERIFICATION_MODE=required e rode um serviço de verificação de idade para ativá-la.",
     "ageVerificationLine": "Verificação de idade: {{mode}}",
     "ageVerificationModes": {
       "required": "obrigatória",
-      "disabled": "desativada"
+      "manual": "manual (administradores verificam as contas à mão)"
     },
     "maxUsers": "Máximo de usuários",
     "maxUsersHint": "(em branco = sem teto)",

@@ -28,11 +28,12 @@ export const VERIFIER_CAPABILITIES = ['status', 'cancel'] as const;
 export type VerifierCapability = (typeof VERIFIER_CAPABILITIES)[number];
 
 /**
- * How the server treats age. `required`: every new account is created pending and only activates when the service
- * approves it. `disabled`: no verification at all - and then no adult area, no verified account (see G37 in
- * `docs/age_verification.md`).
+ * How the server treats age (see `docs/age_verification.md`). `required`: every new account is created pending and only
+ * activates when the external service approves it. `manual`: no external service; new accounts are active at once and
+ * start not verified, an administrator marks or revokes the verified flag by hand, and the adults-only area can be on.
+ * The legacy value `disabled` is read as `manual` (normalised in `apps/api/src/config/env.ts`).
  */
-export const AGE_VERIFICATION_MODES = ['required', 'disabled'] as const;
+export const AGE_VERIFICATION_MODES = ['required', 'manual'] as const;
 export type AgeVerificationMode = (typeof AGE_VERIFICATION_MODES)[number];
 
 /** Why a verification was refused. Fixed codes, so the app can say it in the person's language. */

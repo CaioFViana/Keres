@@ -74,7 +74,7 @@ describe('fetchAgeVerificationInfo', () => {
   it.each([
     ['an unknown mode', { mode: 'maybe', available: true }],
     ['a missing flag', { mode: 'required' }],
-    ['a text flag', { mode: 'disabled', available: 'yes' }],
+    ['a text flag', { mode: 'manual', available: 'yes' }],
     ['an empty answer', null],
   ])('rejects garbage (%s) instead of trusting it', async (_label, data) => {
     mockGet.mockResolvedValueOnce({ status: 200, data });

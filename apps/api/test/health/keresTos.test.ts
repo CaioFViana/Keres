@@ -34,7 +34,7 @@ describe('GET /api/keres-tos', () => {
 });
 
 const required = serverTermsFor('required');
-const disabled = serverTermsFor('disabled');
+const manual = serverTermsFor('manual');
 const NUMBERS = Array.from({ length: 11 }, (_, index) => String(index + 1));
 
 const textOf = (sections: ServerTermsSection[]) =>
@@ -47,7 +47,7 @@ describe('the server terms by age-verification mode', () => {
   });
 
   it('keeps the same sections, in the same order, in both languages and in both modes', () => {
-    for (const document of [required, disabled]) {
+    for (const document of [required, manual]) {
       expect(document.en.map(numberOf)).toEqual(NUMBERS);
       expect(document.pt.map(numberOf)).toEqual(NUMBERS);
     }
@@ -57,25 +57,25 @@ describe('the server terms by age-verification mode', () => {
     expect(SERVER_TERMS).toEqual(required);
   });
 
-  it('gives a disabled server a different text, and a different digest for the acceptances', () => {
-    expect(textOf(disabled.en)).not.toBe(textOf(required.en));
-    expect(textOf(disabled.pt)).not.toBe(textOf(required.pt));
-    expect(serverTermsDigest('disabled')).not.toBe(serverTermsDigest('required'));
+  it('gives a manual server a different text, and a different digest for the acceptances', () => {
+    expect(textOf(manual.en)).not.toBe(textOf(required.en));
+    expect(textOf(manual.pt)).not.toBe(textOf(required.pt));
+    expect(serverTermsDigest('manual')).not.toBe(serverTermsDigest('required'));
     expect(serverTermsDigest()).toBe(serverTermsDigest('required'));
   });
 
-  it('states plainly that a disabled server has no age verification, no adults-only area and no verified account', () => {
-    expect(textOf(disabled.en)).toMatch(/No age verification on this server/);
-    expect(textOf(disabled.en)).toMatch(/no adults-only area exists/);
-    expect(textOf(disabled.en)).toMatch(/no account is verified/);
-    expect(textOf(disabled.pt)).toMatch(/Sem verificação de idade neste servidor/);
-    expect(textOf(disabled.pt)).toMatch(/não existe área adulta/);
-    expect(textOf(disabled.pt)).toMatch(/nenhuma conta é verificada/);
+  it('states plainly that a manual server has no age verification, no adults-only area and no verified account', () => {
+    expect(textOf(manual.en)).toMatch(/No age verification on this server/);
+    expect(textOf(manual.en)).toMatch(/no adults-only area exists/);
+    expect(textOf(manual.en)).toMatch(/no account is verified/);
+    expect(textOf(manual.pt)).toMatch(/Sem verificação de idade neste servidor/);
+    expect(textOf(manual.pt)).toMatch(/não existe área adulta/);
+    expect(textOf(manual.pt)).toMatch(/nenhuma conta é verificada/);
   });
 
-  it('leaves out, in a disabled server, every clause that presupposes a verification', () => {
-    expect(textOf(disabled.en)).not.toMatch(/becomes active|only after|pending|is approved|revok/i);
-    expect(textOf(disabled.pt)).not.toMatch(/fica ativa|pendente|depois que a verificação|revog/i);
+  it('leaves out, in a manual server, every clause that presupposes a verification', () => {
+    expect(textOf(manual.en)).not.toMatch(/becomes active|only after|pending|is approved|revok/i);
+    expect(textOf(manual.pt)).not.toMatch(/fica ativa|pendente|depois que a verificação|revog/i);
   });
 
   it('does not claim "no age verification" in a required server', () => {

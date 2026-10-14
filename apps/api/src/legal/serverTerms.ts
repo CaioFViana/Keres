@@ -9,7 +9,7 @@ import type { AgeVerificationMode } from '@keres/shared';
  * always serves *this* server's rules, whatever they are.
  *
  * The text depends on the age-verification mode (`AGE_VERIFICATION_MODE`, see
- * `docs/age_verification.md`): a `required` server verifies its accounts, a `disabled` one says
+ * `docs/age_verification.md`): a `required` server verifies its accounts, a `manual` one says
  * plainly that it verifies nobody and has no adults-only area. Both share the version number, so
  * the digest (the hash recorded with each acceptance) is what tells the two texts apart.
  * The privacy policy (`privacyPolicy.ts`, served at `keres-privacy`) details data handling.
@@ -25,7 +25,7 @@ export interface ServerTermsSection {
 /** A section whose wording depends on the mode. Every other section reads the same in both. */
 interface ModeSection {
   required: ServerTermsSection;
-  disabled: ServerTermsSection;
+  manual: ServerTermsSection;
 }
 
 interface ServerTermsText {
@@ -44,7 +44,7 @@ interface ServerTermsText {
 
 /**
  * The hash of the text a server in `mode` shows. A server that is not `required` must pass its
- * mode: the default is the `required` text, so a `disabled` server's acceptances would be
+ * mode: the default is the `required` text, so a `manual` server's acceptances would be
  * recorded against the wrong hash.
  */
 export function serverTermsDigest(mode: AgeVerificationMode = 'required'): string {
@@ -74,7 +74,7 @@ const en: ServerTermsText = {
         'Reports from other users are reviewed, and abusive accounts are blocked or removed.',
       ],
     },
-    disabled: {
+    manual: {
       heading: '3. Acceptable conduct',
       paragraphs: [
         'Do not publish or share sexually explicit content, spam, abuse, harassment, or anything illegal. This server does not accept adults-only (+18) content: stories sent or published with the +18 flag are refused. Other servers decide for themselves in their own terms.',
@@ -118,7 +118,7 @@ const en: ServerTermsText = {
         "After you delete your account, the proof of its verification is kept pseudonymised for the prescription period defined in the operator's governance record, as the privacy policy explains.",
       ],
     },
-    disabled: {
+    manual: {
       heading: '8. Age',
       paragraphs: [
         'Accounts are meant for people 18 or older. No age verification on this server: no adults-only area exists and no account is verified. Accounts are active as soon as they are created.',
@@ -167,7 +167,7 @@ const pt: ServerTermsText = {
         'Denúncias de outros usuários são avaliadas, e contas abusivas são bloqueadas ou removidas.',
       ],
     },
-    disabled: {
+    manual: {
       heading: '3. Conduta aceitável',
       paragraphs: [
         'Não publique nem compartilhe conteúdo sexualmente explícito, spam, abuso, assédio ou qualquer coisa ilegal. Este servidor não aceita conteúdo adulto (+18): histórias enviadas ou publicadas com a flag +18 são recusadas. Outros servidores decidem por conta própria em seus termos.',
@@ -211,7 +211,7 @@ const pt: ServerTermsText = {
         'Depois que você excluir sua conta, a prova da verificação dela fica guardada de forma pseudonimizada pelo prazo prescricional definido no registro de governança do operador, como explica a política de privacidade.',
       ],
     },
-    disabled: {
+    manual: {
       heading: '8. Idade',
       paragraphs: [
         'Contas são para pessoas de 18 anos ou mais. Sem verificação de idade neste servidor: não existe área adulta e nenhuma conta é verificada. As contas ficam ativas assim que são criadas.',

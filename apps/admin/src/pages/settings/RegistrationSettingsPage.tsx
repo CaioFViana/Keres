@@ -43,9 +43,6 @@ export function RegistrationSettingsPage() {
     { id: SECTION_IDS[2], label: t('appearance.title') },
   ];
 
-  // Disabled verification means no adults-only area at all: the switch shows off and cannot be touched.
-  const adultsOnlyAvailable = ageMode !== 'disabled';
-
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -65,8 +62,7 @@ export function RegistrationSettingsPage() {
         isRegistrationOpen: settings.isRegistrationOpen,
         maxUsers: settings.maxUsers,
         autoManage: settings.autoManage,
-        // Without verification there is no adults-only area: a stale "on" is sent as off, never refused.
-        allowNsfw: adultsOnlyAvailable && settings.allowNsfw,
+        allowNsfw: settings.allowNsfw,
         defaultTierId: settings.defaultTierId,
         currency: settings.currency,
       });
@@ -139,22 +135,15 @@ export function RegistrationSettingsPage() {
               <label className="checkbox-label switch">
                 <input
                   type="checkbox"
-                  checked={adultsOnlyAvailable && settings.allowNsfw}
-                  disabled={!adultsOnlyAvailable}
+                  checked={settings.allowNsfw}
                   onChange={(e) => setSettings({ ...settings, allowNsfw: e.target.checked })}
                 />
                 {t('settings.allowNsfw')}{' '}
                 <span className="hint">{t('settings.allowNsfwHint')}</span>
               </label>
-              {adultsOnlyAvailable ? (
-                <p className="hint" data-testid="nsfw-verified-only-hint">
-                  {t('settings.allowNsfwVerifiedOnly')}
-                </p>
-              ) : (
-                <p className="hint" data-testid="nsfw-no-verification-hint">
-                  {t('settings.allowNsfwNoVerification')}
-                </p>
-              )}
+              <p className="hint" data-testid="nsfw-verified-only-hint">
+                {t('settings.allowNsfwVerifiedOnly')}
+              </p>
               {ageMode && (
                 <p className="hint" data-testid="age-verification-mode">
                   {t('settings.ageVerificationLine', {

@@ -23,7 +23,7 @@ const AgeVerificationNotice: FC<AgeVerificationNoticeProps> = ({ info, testID })
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (!info) return null;
-  if (info.mode === 'disabled') {
+  if (info.mode !== 'required') {
     return (
       <Text style={styles.text} testID={testID}>
         {t('age_verification_disabled_notice')}

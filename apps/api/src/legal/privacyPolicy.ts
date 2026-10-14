@@ -9,7 +9,7 @@ import type { AgeVerificationMode } from '@keres/shared';
  * always serves *this* server's policy, whatever it is. Every claim below was verified
  * against the codebase; keep it that way when the code changes.
  *
- * Only the age-verification section depends on the mode (`AGE_VERIFICATION_MODE`): a `disabled`
+ * Only the age-verification section depends on the mode (`AGE_VERIFICATION_MODE`): a `manual`
  * server collects no verification data at all, and says so. Both modes share the version number.
  */
 export const PRIVACY_POLICY_VERSION = 3;
@@ -23,7 +23,7 @@ export interface PrivacyPolicySection {
 /** A section whose wording depends on the mode. Every other section reads the same in both. */
 interface ModeSection {
   required: PrivacyPolicySection;
-  disabled: PrivacyPolicySection;
+  manual: PrivacyPolicySection;
 }
 
 interface PrivacyPolicyText {
@@ -41,7 +41,7 @@ interface PrivacyPolicyText {
 }
 
 /**
- * The hash of the policy a server in `mode` shows, recorded with each acceptance. A `disabled`
+ * The hash of the policy a server in `mode` shows, recorded with each acceptance. A `manual`
  * server must pass its mode: the default is the `required` text.
  */
 export function privacyPolicyDigest(mode: AgeVerificationMode = 'required'): string {
@@ -122,7 +122,7 @@ const en: PrivacyPolicyText = {
         'Verification data is used only to verify age (Lei 15.211/2025, Art. 13) and is never used to profile anyone (Art. 26).',
       ],
     },
-    disabled: {
+    manual: {
       heading: '10. Age verification',
       paragraphs: [
         'No age verification on this server. No verification data is collected on this server: no identity document, photo or date of birth is kept, and no account is verified. This server has no adults-only area.',
@@ -209,7 +209,7 @@ const pt: PrivacyPolicyText = {
         'Dados de verificação são usados somente para conferir a idade (Lei 15.211/2025, Art. 13) e nunca para perfilar alguém (Art. 26).',
       ],
     },
-    disabled: {
+    manual: {
       heading: '10. Verificação de idade',
       paragraphs: [
         'Sem verificação de idade neste servidor. Nenhum dado de verificação é coletado neste servidor: nenhum documento de identidade, foto ou data de nascimento é guardado, e nenhuma conta é verificada. Este servidor não tem área adulta.',

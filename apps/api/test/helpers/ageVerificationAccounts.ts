@@ -24,7 +24,7 @@ export function enterRequiredMode(options: FakeVerifierOptions = {}) {
 }
 
 export function leaveRequiredMode(): void {
-  env.AGE_VERIFICATION_MODE = 'disabled';
+  env.AGE_VERIFICATION_MODE = 'manual';
   resetAgeVerifier();
 }
 

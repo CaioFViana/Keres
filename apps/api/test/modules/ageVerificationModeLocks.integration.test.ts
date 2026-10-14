@@ -34,13 +34,12 @@ import {
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 
 /**
- * Where verification is off, nobody is verified and there is no adults-only area, whatever the stored values say; and
- * an administrator cannot verify anybody by hand (`docs/age_verification.md`, "Modes").
+ * How the two modes differ once an account exists (`docs/age_verification.md`, "Modes"): in `manual` an administrator
+ * marks and revokes the verified flag by hand and the adults-only area can be on; in `required` the external service
+ * is the only one that verifies, so granting by hand is refused (revoking still goes through the service).
  */
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const NO_VERIFICATION_MESSAGE =
-  'This server has no age verification, so it has no adults-only area.';
 
 let admin: TestUser;
 
@@ -74,20 +73,51 @@ async function livePermission(userId: string, storyId: string) {
   });
 }
 
-describe('an administrator cannot verify an account by hand', () => {
-  it('refuses to set the flag where verification is disabled, and leaves the account as it was', async () => {
+async function allowAdultsOnly() {
+  await registrationSettingsService.getOrCreate();
+  await db
+    .update(registrationSettings)
+    .set({ allowNsfw: true })
+    .where(eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID));
+}
+
+describe('in manual mode an administrator verifies and revokes by hand', () => {
+  it('marks the account verified: the flag, the time, the method "manual", the account active, and an audit line', async () => {
     const ana = await registerUser('ana');
 
     const { status, data } = await adminPut(ana.userId, { isAdultVerified: true });
 
-    expect(status).toBe(400);
-    expect(data.message).toBe(
-      'Accounts are verified by the age-verification service, not by hand.',
-    );
-    expect(await userRow(ana.userId)).toMatchObject({ isAdultVerified: false });
+    expect(status).toBe(200);
+    expect(data.isAdultVerified).toBe(true);
+    const row = await userRow(ana.userId);
+    expect(row).toMatchObject({
+      isAdultVerified: true,
+      verificationMethod: 'manual',
+      verificationStatus: 'active',
+    });
+    expect(row?.verifiedAt).toBeInstanceOf(Date);
+    const lines = await db
+      .select()
+      .from(auditEvents)
+      .where(eq(auditEvents.action, 'account.verification_granted'));
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({ subjectUserId: ana.userId, actorUserId: admin.userId });
   });
 
-  it('refuses the same where verification is required', async () => {
+  it('keeps an account that is already verified verified when the grant is repeated', async () => {
+    const ana = await registerUser('ana');
+    await adminPut(ana.userId, { isAdultVerified: true });
+
+    const { status } = await adminPut(ana.userId, { isAdultVerified: true });
+
+    expect(status).toBe(200);
+    expect(await userRow(ana.userId)).toMatchObject({
+      isAdultVerified: true,
+      verificationMethod: 'manual',
+    });
+  });
+
+  it('refuses the grant in required mode, and leaves the account as it was', async () => {
     const ana = await registerUser('ana');
     enterRequiredMode();
 
@@ -98,13 +128,17 @@ describe('an administrator cannot verify an account by hand', () => {
       'Accounts are verified by the age-verification service, not by hand.',
     );
     expect(await userRow(ana.userId)).toMatchObject({ isAdultVerified: false });
+    const lines = await db
+      .select()
+      .from(auditEvents)
+      .where(eq(auditEvents.action, 'account.verification_granted'));
+    expect(lines).toHaveLength(0);
   });
 
-  it('revokes through the service: the flag goes, the account leaves the adults-only stories, and it is recorded', async () => {
+  it('revokes: the flag goes, the account leaves the adults-only stories, and it is recorded', async () => {
     const ana = await registerUser('ana');
     const bia = await registerUser('bia');
-    enterRequiredMode();
-    await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, bia.userId));
+    await adminPut(bia.userId, { isAdultVerified: true });
     await befriend(ana, bia);
     const storyId = (await uploadTestStory(ana.token, 'Noite')).id;
     await db.update(stories).set({ isNsfw: true }).where(eq(stories.id, storyId));
@@ -135,8 +169,21 @@ describe('an administrator cannot verify an account by hand', () => {
   });
 });
 
-describe('where verification is disabled, a stored "verified" reads as unverified', () => {
-  it('does not show the flag to the account or to another person, and refuses the adults-only story', async () => {
+describe('in manual mode a new account is active at once and not verified', () => {
+  it('registers an account that can use the server, with no verification pending', async () => {
+    const ana = await registerUser('ana');
+
+    expect(await userRow(ana.userId)).toMatchObject({
+      isAdultVerified: false,
+      verificationStatus: 'active',
+    });
+    const plan = await request('GET', '/user/plan', { token: ana.token });
+    expect(plan.status).toBe(200);
+  });
+});
+
+describe('in manual mode a stored verified flag counts', () => {
+  it('shows the flag to the account and to another person, and admits them to an adults-only story', async () => {
     const ana = await registerUser('ana');
     const bia = await registerUser('bia');
     await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, bia.userId));
@@ -145,34 +192,27 @@ describe('where verification is disabled, a stored "verified" reads as unverifie
     await db.update(stories).set({ isNsfw: true }).where(eq(stories.id, storyId));
 
     expect((await request('GET', '/auth/me', { token: bia.token })).data.isAdultVerified).toBe(
-      false,
+      true,
     );
     expect(
       (await request('GET', `/user/details/${bia.userId}`, { token: ana.token })).data
         .isAdultVerified,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       (await request('GET', `/user/by-tag/bia`, { token: ana.token })).data.isAdultVerified,
-    ).toBe(false);
+    ).toBe(true);
 
     const invited = await request('POST', '/friend/story-invitations/', {
       token: ana.token,
       body: { storyId, targetUserId: bia.userId, permissionType: 'reader' },
     });
-    expect(invited.status).toBe(403);
-    expect(invited.data.message).toBe('Only age-verified (+18) users can join NSFW stories.');
+    expect(invited.status).toBe(200);
   });
 
-  it('refuses a sync that flags a story adults-only where verification is disabled', async () => {
-    // Found in a real run: the app flagged a story +18 and the server applied it. The refusal has to hold on the sync
-    // path itself (the path the app uses), not only in the service.
+  it('accepts a sync that flags a story adults-only once the allowance is on and the owner is verified', async () => {
     const ana = await registerUser('ana');
     const storyId = (await uploadTestStory(ana.token, 'Noite')).id;
-    await registrationSettingsService.getOrCreate();
-    await db
-      .update(registrationSettings)
-      .set({ allowNsfw: true })
-      .where(eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID));
+    await allowAdultsOnly();
     await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, ana.userId));
     const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
 
@@ -190,6 +230,32 @@ describe('where verification is disabled, a stored "verified" reads as unverifie
     });
 
     expect(pushed.status).toBe(200);
+    expect(pushed.data.conflicts).toEqual([]);
+    expect((await db.query.stories.findFirst({ where: eq(stories.id, storyId) }))!.isNsfw).toBe(
+      true,
+    );
+  });
+
+  it('refuses a sync that flags a story adults-only when the owner is not verified', async () => {
+    const ana = await registerUser('ana');
+    const storyId = (await uploadTestStory(ana.token, 'Noite')).id;
+    await allowAdultsOnly();
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+
+    const pushed = await request('POST', `/sync/${storyId}`, {
+      token: ana.token,
+      body: [
+        {
+          type: 'update',
+          entity: 'Story',
+          id: storyId,
+          changes: { isNsfw: true, version: story!.version },
+          clientOperationId: 'local-flag-2',
+        },
+      ],
+    });
+
+    expect(pushed.status).toBe(200);
     expect(pushed.data.conflicts.map((conflict: { reason: string }) => conflict.reason)).toEqual([
       'unauthorized',
     ]);
@@ -198,65 +264,65 @@ describe('where verification is disabled, a stored "verified" reads as unverifie
     );
   });
 
-  it('refuses to import a story package that arrives flagged adults-only where verification is disabled', async () => {
-    // Found in a real run: "send to server" imports the whole story, and the flag went in with it.
+  it('imports a story flagged adults-only once the allowance is on and the owner is verified', async () => {
     const ana = await registerUser('ana');
-    await registrationSettingsService.getOrCreate();
-    await db
-      .update(registrationSettings)
-      .set({ allowNsfw: true })
-      .where(eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID));
+    await allowAdultsOnly();
     await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, ana.userId));
 
     const flagged = await importTestStory(ana.token, 'Noite', 'linear', { isNsfw: true });
-    const refusal = flagged.data as { message?: string; code?: string };
-    expect(flagged.status).toBe(403);
-    expect(refusal.message).toBe(NO_VERIFICATION_MESSAGE);
-    // Not a plan ceiling, so no tier_limit code: the app must not show a plan hint for it.
-    expect(refusal.code).toBeUndefined();
-    expect(await db.query.stories.findMany()).toEqual([]);
 
-    // The same story without the flag is an ordinary upload.
-    const plain = await importTestStory(ana.token, 'Noite');
-    expect(plain.status).toBe(200);
+    expect(flagged.status).toBe(200);
+    expect(
+      (await db.query.stories.findFirst({ where: eq(stories.id, flagged.data.storyId) }))!.isNsfw,
+    ).toBe(true);
   });
 
-  it('refuses the flag on a story, whatever the stored allowance says', async () => {
+  it('refuses the flag on a story when the allowance is off, whatever the verification says', async () => {
     const ana = await registerUser('ana');
-    await registrationSettingsService.getOrCreate();
-    await db
-      .update(registrationSettings)
-      .set({ allowNsfw: true })
-      .where(eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID));
     await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, ana.userId));
 
-    expect(await storyNsfwService.isAdultVerified(ana.userId)).toBe(false);
-    expect(await storyNsfwService.nsfwFlagRefusal(ana.userId)).toBe(NO_VERIFICATION_MESSAGE);
+    expect(await storyNsfwService.isAdultVerified(ana.userId)).toBe(true);
+    expect(await storyNsfwService.nsfwFlagRefusal(ana.userId)).toBe(
+      'This server does not allow adults-only (+18) content.',
+    );
+  });
+
+  it('refuses the flag on a story from an account that is not verified, and allows it once verified', async () => {
+    const ana = await registerUser('ana');
+    await allowAdultsOnly();
+
+    expect(await storyNsfwService.nsfwFlagRefusal(ana.userId)).toBe(
+      'Only age-verified (+18) users can flag stories adults-only.',
+    );
+    await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, ana.userId));
+    expect(await storyNsfwService.nsfwFlagRefusal(ana.userId)).toBeNull();
   });
 });
 
-describe('the adults-only area exists only where verification is required', () => {
-  it('refuses to switch the allowance on where verification is disabled, and stores nothing', async () => {
-    const { status, data } = await request('PUT', '/admin/registration-settings', {
+describe('in manual mode the adults-only area can be switched on', () => {
+  it('switches the allowance on, and it is stored', async () => {
+    const { status } = await request('PUT', '/admin/registration-settings', {
       token: admin.token,
       body: { allowNsfw: true },
     });
 
-    expect(status).toBe(400);
-    expect(data.message).toBe(NO_VERIFICATION_MESSAGE);
-    expect((await registrationSettingsService.getOrCreate()).allowNsfw).toBe(false);
+    expect(status).toBe(200);
+    expect((await registrationSettingsService.getOrCreate()).allowNsfw).toBe(true);
   });
 
-  it('allows switching it off where verification is disabled', async () => {
+  it('switches it off again', async () => {
+    await allowAdultsOnly();
+
     const { status } = await request('PUT', '/admin/registration-settings', {
       token: admin.token,
       body: { allowNsfw: false },
     });
 
     expect(status).toBe(200);
+    expect((await registrationSettingsService.getOrCreate()).allowNsfw).toBe(false);
   });
 
-  it('allows the switch where verification is required', async () => {
+  it('allows the switch in required mode too', async () => {
     enterRequiredMode();
 
     const { status } = await request('PUT', '/admin/registration-settings', {
@@ -271,15 +337,15 @@ describe('the adults-only area exists only where verification is required', () =
 
 describe('the terms and the policy say what this server is', () => {
   it('serves the text of the mode the server runs in, from /keres-tos and /keres-privacy', async () => {
-    const disabledTerms = serverTermsFor('disabled');
+    const manualTerms = serverTermsFor('manual');
     const requiredTerms = serverTermsFor('required');
-    expect(disabledTerms.en).not.toEqual(requiredTerms.en);
+    expect(manualTerms.en).not.toEqual(requiredTerms.en);
 
-    const disabledTos = await request('GET', '/keres-tos');
-    expect(disabledTos.data.en).toEqual(disabledTerms.en);
-    expect(disabledTos.data.pt).toEqual(disabledTerms.pt);
-    const disabledPrivacy = await request('GET', '/keres-privacy');
-    expect(disabledPrivacy.data.en).toEqual(privacyPolicyFor('disabled').en);
+    const manualTos = await request('GET', '/keres-tos');
+    expect(manualTos.data.en).toEqual(manualTerms.en);
+    expect(manualTos.data.pt).toEqual(manualTerms.pt);
+    const manualPrivacy = await request('GET', '/keres-privacy');
+    expect(manualPrivacy.data.en).toEqual(privacyPolicyFor('manual').en);
 
     enterRequiredMode();
 
@@ -291,7 +357,7 @@ describe('the terms and the policy say what this server is', () => {
   });
 
   it('records each acceptance against the digest of the text this server shows', async () => {
-    const disabledUser = await registerUser('ana');
+    const manualUser = await registerUser('ana');
     enterRequiredMode();
     const requiredUser = await pendingAccount('bia');
 
@@ -302,15 +368,15 @@ describe('the terms and the policy say what this server is', () => {
       return Object.fromEntries(rows.map((row) => [row.kind, row.textHash]));
     };
 
-    expect(await digestsOf(disabledUser.userId)).toEqual({
-      tos: serverTermsDigest('disabled'),
-      privacy: privacyPolicyDigest('disabled'),
+    expect(await digestsOf(manualUser.userId)).toEqual({
+      tos: serverTermsDigest('manual'),
+      privacy: privacyPolicyDigest('manual'),
     });
     expect(await digestsOf(requiredUser.user.userId)).toEqual({
       tos: serverTermsDigest('required'),
       privacy: privacyPolicyDigest('required'),
     });
-    expect(serverTermsDigest('disabled')).not.toBe(serverTermsDigest('required'));
+    expect(serverTermsDigest('manual')).not.toBe(serverTermsDigest('required'));
   });
 });
 

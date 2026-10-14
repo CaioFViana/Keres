@@ -59,26 +59,33 @@ const REQUIRED = {
 };
 
 describe('age verification settings', () => {
-  it('is disabled when nothing is set, and an empty value (as Compose gives) counts as unset', async () => {
+  it('is manual when nothing is set, and an empty value (as Compose gives) counts as unset', async () => {
     const unset = await loadEnv();
     const empty = await loadEnv({ AGE_VERIFICATION_MODE: '', AGE_VERIFICATION_URL: '' });
 
     expect(unset).toMatchObject({
-      AGE_VERIFICATION_MODE: 'disabled',
+      AGE_VERIFICATION_MODE: 'manual',
       AGE_VERIFICATION_ALLOW_INSECURE: false,
       AGE_VERIFICATION_PENDING_DAYS: 30,
       AGE_VERIFICATION_MAX_ATTEMPTS: 3,
       AGE_VERIFICATION_TIMEOUT_MS: 10_000,
     });
     expect(unset.AGE_VERIFICATION_URL).toBeUndefined();
-    expect(empty.AGE_VERIFICATION_MODE).toBe('disabled');
+    expect(empty.AGE_VERIFICATION_MODE).toBe('manual');
     expect(empty.AGE_VERIFICATION_URL).toBeUndefined();
   });
 
-  it('starts in disabled mode with no service at all', async () => {
+  it('starts in manual mode with no service at all', async () => {
+    const env = await loadEnv({ AGE_VERIFICATION_MODE: 'manual' });
+
+    expect(env.AGE_VERIFICATION_MODE).toBe('manual');
+    expect(env.AGE_VERIFICATION_SECRET).toBeUndefined();
+  });
+
+  it('reads the legacy value disabled as manual, so an existing .env keeps booting', async () => {
     const env = await loadEnv({ AGE_VERIFICATION_MODE: 'disabled' });
 
-    expect(env.AGE_VERIFICATION_MODE).toBe('disabled');
+    expect(env.AGE_VERIFICATION_MODE).toBe('manual');
     expect(env.AGE_VERIFICATION_SECRET).toBeUndefined();
   });
 
@@ -120,7 +127,7 @@ describe('age verification settings', () => {
     ).rejects.toThrow('must differ from AGE_VERIFICATION_SECRET');
   });
 
-  it('refuses a service address with no keys even when the mode is disabled, as the payment connector does', async () => {
+  it('refuses a service address with no keys even when the mode is manual, as the payment connector does', async () => {
     await expect(loadEnv({ AGE_VERIFICATION_URL: URL_HTTPS })).rejects.toThrow(
       'is required with AGE_VERIFICATION_URL',
     );

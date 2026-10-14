@@ -188,11 +188,11 @@ describe('POST /api/age-verification/events: applying the facts', () => {
     expect((await userRow(user.userId))?.isAdultVerified).toBe(false);
   });
 
-  it('ignores an approval while verification is disabled, whatever the service says', async () => {
+  it('ignores an approval while verification is manual, whatever the service says', async () => {
     enterRequiredMode();
     const { row, user } = await pendingAccount('ana');
-    // The service is still connected, but the server is in disabled mode: nobody counts as verified in this mode.
-    env.AGE_VERIFICATION_MODE = 'disabled';
+    // The service is still connected, but the server is in manual mode: its events are not read in this mode.
+    env.AGE_VERIFICATION_MODE = 'manual';
 
     const answer = await postVerifierEvents([approvedEvent(row)]);
 

@@ -101,16 +101,16 @@ export async function warnIfPaymentsHaveNoDefaultPlan(): Promise<boolean> {
 }
 
 /**
- * Says, at every start, how this server treats age. With verification off the server must not look like an 18+ one:
- * the warning says so in words, because nothing else makes it visible (see "Modes" in docs/age_verification.md).
+ * Says, at every start, how this server treats age. In `manual` no external service checks anyone: the server says so,
+ * since accounts start unverified and only an administrator can mark them (see "Modes" in docs/age_verification.md).
  */
 export function announceAgeVerification(): void {
   if (isAgeVerificationRequired()) {
     logger.info(`Age verification: REQUIRED (service ${env.AGE_VERIFICATION_URL}).`);
     return;
   }
-  logger.warn(
-    'AGE VERIFICATION IS DISABLED (AGE_VERIFICATION_MODE=disabled): this server started WITHOUT age verification. There is no adults-only (+18) area, no account is verified, and its terms say so. Do not present it as an 18+ server.',
+  logger.info(
+    'Age verification: MANUAL (AGE_VERIFICATION_MODE=manual). No external service checks anyone: new accounts start active and NOT verified; administrators mark accounts as +18 by hand, and the adults-only area is on only where an administrator turns it on.',
   );
 }
 

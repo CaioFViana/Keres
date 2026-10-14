@@ -17,26 +17,36 @@ payment connector (`docs/payment_connectors.md`) - and the same care, with one d
 
 ## Modes (`AGE_VERIFICATION_MODE`)
 
-| | `required` | `disabled` (default when unset) |
+| | `required` | `manual` (default when unset) |
 |---|---|---|
-| Who | the official server, Docker deployments (the compose sets it) | home / LAN / friends servers, development, tests |
-| Registration | an account is created **pending** and activates only on the service's `approved` event | as before: the account is active at once |
-| Service down / not configured | **new registrations answer "unavailable on this server"** (503, code `verification_unavailable`); existing accounts are untouched | n/a |
-| Adults-only (+18) area | exists for verified accounts only | **does not exist**: `allowNsfw` cannot be turned on, and nobody counts as verified |
+| Who | the official server's external service, Docker deployments that run one | home / LAN / friends servers, development, tests, and any server with no verification service |
+| Registration | an account is created **pending** and activates only on the service's `approved` event | the account is **active at once** and **not verified** |
+| Who verifies | the service's `approved` event sets the flag; an administrator can only **revoke** it | an administrator **marks and revokes** the flag by hand (`isAdultVerified` on `PUT /admin/api/users/:id`), each one audited |
+| Service down / not configured | **new registrations answer "unavailable on this server"** (503, code `verification_unavailable`); existing accounts are untouched | n/a: no service is called |
+| Adults-only (+18) area | exists; `allowNsfw` can be turned on; verified accounts only | exists; `allowNsfw` can be turned on; verified accounts only |
+
+`disabled`, the legacy value, is still accepted and read as `manual`, so an existing `.env` keeps booting.
 
 Unlike payments - where "no connector" is a safe default (nothing is sold) - here "no service" must never mean "register
-without checking". So `required` is fail-closed for **new registrations only**. `disabled` is safe because the code
+without checking". So `required` is fail-closed for **new registrations only**. `manual` is safe because the code
 imposes, with no exception:
 
-1. `allowNsfw` cannot be switched on, and no account can be marked verified, while verification is disabled. Anything
-   that gates on "adult verified" reads the mode too: in `disabled` mode the answer is always *not verified*.
-2. The terms and the privacy policy served by the server, and the server screen in the app, say **"no age verification on
-   this server"** - a `disabled` server cannot present itself as verified.
-3. The boot logs, loudly, that the server started with verification disabled (and the mode it is in, either way).
+1. **Nothing is verified automatically in `manual`.** A new account is never marked verified. The flag changes only by an
+   administrator's hand (grant or revoke), and each change is written to the audit record (`account.verification_granted`,
+   `account.verification_revoked`).
+2. An administrator can grant verification **only in `manual`**. In `required` a grant is refused (400); only the service
+   approves there. Revoking goes through `AgeVerificationService.revoke` in both modes, so there is one revocation path.
+3. `allowNsfw` can be turned on in both modes. A story is still flagged adults-only only by its owner, only where the server
+   allows it, and only while the owner is verified (`StoryNsfwService.nsfwFlagRefusal`).
+4. Anything that gates on "adult verified" reads the stored flag (`effectiveAdultVerified`). The mode does not hide it and
+   does not invent it.
+5. The boot logs the mode at every start. In `manual` it says that no service checks anyone, that accounts start not
+   verified, and that administrators mark them by hand.
 
-Opening a `disabled` server to the public presenting it as 18+ is a violation by its operator; the product supplied
-neither the seal nor the adult area (Arts. 9, 14 and 15: the chain answers jointly, and Keres' part is delivering these
-defaults and locks).
+A `manual` server is 18+ only as far as its operator marks its adults by hand and checks them. The product supplies the
+marking, the adults-only area and the record, not the check. Opening a `manual` server to the public presenting it as 18+
+without that check is a violation by its operator (Arts. 9, 14 and 15: the chain answers jointly, and Keres' part is
+delivering these defaults and locks).
 
 ## Keys on the Keres server
 
@@ -117,7 +127,7 @@ to profile (Art. 26).
 
 Registration is limited to 10 attempts an hour per client address, in both modes (429 past that), so a script cannot flood the review queue.
 
-An administrator **cannot mark an account verified** in `required` mode (only revoke); in `disabled` mode neither.
+An administrator **marks an account verified only in `manual` mode**; in `required` only the service grants, and an administrator can only revoke.
 
 ## The reference service (`apps/verification`)
 
@@ -159,7 +169,7 @@ sees both images and approves an adult; the approval reaches the server and the 
 old token stays refused; a second account with the same document is refused as `document_reused` and not verified;
 a third is refused as `underage`, gets no retry and cannot sign in.
 
-`bun scripts/age-verification-local.ts --mode=disabled` starts only the API with verification off (no service, no reviewer), and with `--drive` checks that it answers as a `disabled` server does: accounts work at once and no account can be verified.
+`bun scripts/age-verification-local.ts --mode=manual` starts only the API in `manual` mode (no service, no reviewer), and with `--drive` checks that it answers as a `manual` server does: accounts work at once and start not verified, an administrator can mark and revoke an account, and the adults-only switch can be turned on. (`--mode=disabled` is accepted as an alias.)
 
 It does not test the camera in the upload page or a real browser: the page's script is checked only by its
 fallback (a plain multipart post). Open the link the register answer gives, in a browser, to try the camera.

@@ -5,9 +5,10 @@
  *   bun run verification:local            start both, create a reviewer, stay up (Ctrl+C stops both)
  *   bun run verification:local --drive    start both, drive the whole flow over HTTP, print PASS/FAIL per step,
  *                                         stop both and exit non-zero on the first failed step
- *   bun scripts/age-verification-local.ts --mode=disabled
- *                                         start only the API, with verification off (no service, no reviewer);
- *                                         with --drive, checks the answers a disabled server gives, then stops.
+ *   bun scripts/age-verification-local.ts --mode=manual
+ *                                         start only the API, in manual mode (no service, no reviewer);
+ *                                         with --drive, checks the answers a manual server gives, then stops.
+ *                                         `--mode=disabled` is accepted as an alias of `--mode=manual`.
  *                                         `--mode=required` is the default.
  *
  * What it sets up (see docs/age_verification.md, "Trying it locally"):
@@ -33,14 +34,15 @@ import { fileURLToPath } from 'node:url';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const drive = process.argv.includes('--drive');
-// `disabled` runs the API alone, as a server with no age verification runs (see "Modes" in docs/age_verification.md).
+// `manual` runs the API alone, with no external service (see "Modes" in docs/age_verification.md). `disabled` is the legacy name.
 const modeArgument = process.argv.find((argument) => argument.startsWith('--mode='));
-const mode = modeArgument ? modeArgument.slice('--mode='.length) : 'required';
-if (mode !== 'required' && mode !== 'disabled') {
-  console.error(`--mode must be required or disabled, not ${mode}.`);
+const requestedMode = modeArgument ? modeArgument.slice('--mode='.length) : 'required';
+const mode = requestedMode === 'disabled' ? 'manual' : requestedMode;
+if (mode !== 'required' && mode !== 'manual') {
+  console.error(`--mode must be required or manual, not ${requestedMode}.`);
   process.exit(1);
 }
-const disabled = mode === 'disabled';
+const manual = mode === 'manual';
 // In the drive, the children's logs stay quiet; they are printed only when a step fails.
 const verbose = !drive;
 
@@ -275,7 +277,7 @@ async function waitFor(url: string, what: string, child: Child): Promise<void> {
 const workDir = mkdtempSync(join(tmpdir(), 'keres-age-local-'));
 
 interface Urls {
-  /** Empty in `disabled` mode: there is no verification service to address. */
+  /** Empty in `manual` mode: there is no verification service to address. */
   verify: string;
   api: string;
 }
@@ -552,21 +554,21 @@ async function runSteps(urls: Urls): Promise<void> {
 }
 
 /**
- * The drive of a `disabled` server: there is no service, so the steps check that the server says so and acts on it.
- * A new account gets its session at once (no pending claim), the terms say there is no age verification, and nobody
- * can be marked verified or switch the adults-only area on.
+ * The drive of a `manual` server: there is no service, so the steps check that the server says so and acts on it.
+ * A new account gets its session at once (no pending claim), and an administrator can mark it verified, revoke it and
+ * switch the adults-only area on.
  */
-async function runDisabledSteps(api: string): Promise<void> {
+async function runManualSteps(api: string): Promise<void> {
   let token = '';
   let userId = '';
   let adminToken = '';
 
-  await step(1, 'the server says verification is disabled and not available', async () => {
+  await step(1, 'the server says verification is manual and not available', async () => {
     const info = await send('GET', `${api}/api/age-verification/info`);
     expect(info.status === 200, `the info answered ${info.status}`);
-    expect(dig(info.body, 'mode') === 'disabled', `mode is ${String(dig(info.body, 'mode'))}`);
+    expect(dig(info.body, 'mode') === 'manual', `mode is ${String(dig(info.body, 'mode'))}`);
     expect(dig(info.body, 'available') === false, 'the server says verification is available');
-    return 'mode disabled, not available';
+    return 'mode manual, not available';
   });
 
   await step(2, 'registering gives a session at once, with no pending token', async () => {
@@ -617,23 +619,34 @@ async function runDisabledSteps(api: string): Promise<void> {
     return '';
   });
 
-  // The admin routes take PUT (there is no PATCH); both refusals come before any write.
-  await step(6, 'an administrator cannot mark an account verified', async () => {
+  // The admin routes take PUT (there is no PATCH).
+  await step(6, 'an administrator marks the account verified by hand', async () => {
     const answer = await send('PUT', `${api}/api/admin/users/${userId}`, {
       token: adminToken,
       json: { isAdultVerified: true },
     });
-    expect(answer.status === 400, `the change answered ${answer.status}`);
-    return 'refused 400';
+    expect(answer.status === 200, `the change answered ${answer.status}`);
+    expect(dig(answer.body, 'isAdultVerified') === true, 'the account is not verified');
+    return 'verified by hand';
   });
 
-  await step(7, 'the adults-only area cannot be switched on', async () => {
+  await step(7, 'the adults-only area can be switched on', async () => {
     const answer = await send('PUT', `${api}/api/admin/registration-settings`, {
       token: adminToken,
       json: { allowNsfw: true },
     });
-    expect(answer.status === 400, `the change answered ${answer.status}`);
-    return 'refused 400';
+    expect(answer.status === 200, `the change answered ${answer.status}`);
+    return 'allowNsfw on';
+  });
+
+  await step(8, 'the administrator revokes the verification', async () => {
+    const answer = await send('PUT', `${api}/api/admin/users/${userId}`, {
+      token: adminToken,
+      json: { isAdultVerified: false },
+    });
+    expect(answer.status === 200, `the change answered ${answer.status}`);
+    expect(dig(answer.body, 'isAdultVerified') === false, 'the account is still verified');
+    return 'revoked';
   });
 }
 
@@ -658,7 +671,7 @@ async function createReviewer(env: Record<string, string>): Promise<void> {
 
 async function main(): Promise<void> {
   // The service takes a port only in `required` mode; the API takes the first free one from 3301 in both modes.
-  const verifyPort = disabled ? undefined : await pickPort('LOCAL_VERIFY_PORT', 3102, []);
+  const verifyPort = manual ? undefined : await pickPort('LOCAL_VERIFY_PORT', 3102, []);
   const apiPort = await pickPort(
     'LOCAL_API_PORT',
     3301,
@@ -673,9 +686,9 @@ async function main(): Promise<void> {
   const commitmentKey = secret();
 
   // What the service reads. The same block is used for its CLI, so the reviewer lands in the database it reads.
-  // Only in `required` mode: a `disabled` server has no service to start and no reviewer to create.
+  // Only in `required` mode: a `manual` server has no service to start and no reviewer to create.
   let verifierEnv: Record<string, string> = {};
-  if (!disabled)
+  if (!manual)
     verifierEnv = {
       HOST: '127.0.0.1',
       PORT: String(verifyPort),
@@ -691,11 +704,11 @@ async function main(): Promise<void> {
       KEY_DIR: join(workDir, 'verification-keys'),
       ALLOW_INSECURE: 'false',
     };
-  // The age-verification keys of the server. In `disabled` mode they are empty, not absent: an empty value wins over
+  // The age-verification keys of the server. In `manual` mode they are empty, not absent: an empty value wins over
   // the developer's apps/api/.env, so a service configured there cannot switch on in this run.
-  const ageVerificationEnv: Record<string, string> = disabled
+  const ageVerificationEnv: Record<string, string> = manual
     ? {
-        AGE_VERIFICATION_MODE: 'disabled',
+        AGE_VERIFICATION_MODE: 'manual',
         AGE_VERIFICATION_URL: '',
         AGE_VERIFICATION_SECRET: '',
         AGE_VERIFICATION_SECRET_PREVIOUS: '',
@@ -736,28 +749,28 @@ async function main(): Promise<void> {
     PAYMENT_PLAY_ENDPOINT_SECRET: '',
   };
 
-  if (!disabled) {
+  if (!manual) {
     const verifier = launch('verify', 'apps/verification', ['src/index.ts'], verifierEnv);
     await waitFor(`${urls.verify}/health`, 'The verification service', verifier);
   }
   const api = launch('api', 'apps/api', ['src/server.ts'], apiEnv);
   await waitFor(`${urls.api}/api/public/tiers`, 'The Keres API', api);
-  if (!disabled) await createReviewer(verifierEnv);
+  if (!manual) await createReviewer(verifierEnv);
 
   if (drive) {
-    if (disabled) await runDisabledSteps(urls.api);
+    if (manual) await runManualSteps(urls.api);
     else await runSteps(urls);
     console.log('All steps passed.');
     await stopAll(0);
   }
 
-  if (disabled) {
+  if (manual) {
     console.log(`
-Keres API (verification disabled)
+Keres API (manual verification)
   Keres API             ${urls.api}      (register: POST ${urls.api}/api/auth/register)
   Hosted client         ${urls.api}/client/
   Admin panel           ${urls.api}/admin   (${ROOT_USERNAME} / ${ROOT_PASSWORD})
-disabled: accounts are active at once, no adults-only area
+manual: accounts are active at once and not verified; an administrator marks them by hand
 To register in the app: Manage Servers -> + -> Create Account, with the address ${urls.api}
 Ctrl+C stops it and deletes the temporary folder.`);
   } else {

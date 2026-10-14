@@ -5,8 +5,8 @@ import { ThemeProvider } from '../../src/theme/ThemeProvider';
 import { changeInput, click, flush, render, submit } from '../helpers/react';
 
 /**
- * The adults-only switch tells the truth about the server's age-verification mode: where verification is disabled
- * there is no adults-only area, so the switch is off and cannot be touched.
+ * The adults-only switch works in both age-verification modes: `manual` (no service, an administrator verifies by
+ * hand) and `required` (the external service verifies). Its state is the stored value in either.
  */
 
 const mocks = vi.hoisted(() => ({
@@ -72,42 +72,40 @@ beforeEach(() => {
   );
 });
 
-describe('the adults-only switch with verification disabled', () => {
+describe('the adults-only switch with manual verification', () => {
   beforeEach(() => {
     mocks.getSettings.mockResolvedValue(
-      settings({ ageVerificationMode: 'disabled', allowNsfw: true }),
+      settings({ ageVerificationMode: 'manual', allowNsfw: true }),
     );
   });
 
-  it('is disabled and off, even when the stored value says on', async () => {
+  it('is enabled and follows the stored value', async () => {
     const view = await renderPage();
 
-    expect(nsfwSwitch(view.container).disabled).toBe(true);
-    expect(nsfwSwitch(view.container).checked).toBe(false);
+    expect(nsfwSwitch(view.container).disabled).toBe(false);
+    expect(nsfwSwitch(view.container).checked).toBe(true);
     await view.unmount();
   });
 
-  it('explains that the server has no adults-only area and how to enable it', async () => {
+  it('says that adults-only stories are open only to verified accounts', async () => {
     const view = await renderPage();
 
-    const note = view.container.querySelector('[data-testid="nsfw-no-verification-hint"]');
-    expect(note?.textContent).toBe(
-      'This server has no age verification, so it has no adults-only area. Set AGE_VERIFICATION_MODE=required and run an age-verification service to enable it.',
-    );
-    expect(view.container.querySelector('[data-testid="nsfw-verified-only-hint"]')).toBeNull();
+    expect(
+      view.container.querySelector('[data-testid="nsfw-verified-only-hint"]')?.textContent,
+    ).toBe('Adults-only stories are open only to verified accounts.');
     await view.unmount();
   });
 
-  it('says the mode is disabled', async () => {
+  it('says the mode is manual', async () => {
     const view = await renderPage();
 
     expect(view.container.querySelector('[data-testid="age-verification-mode"]')?.textContent).toBe(
-      'Age verification: disabled',
+      'Age verification: Manual: administrators verify accounts by hand',
     );
     await view.unmount();
   });
 
-  it('saves the switch as off, never as on, so a stale value cannot refuse the whole save', async () => {
+  it('saves the stored switch value along with the rest of the form', async () => {
     const view = await renderPage();
 
     await changeInput(maxUsersInput(view.container), '40');
@@ -115,7 +113,7 @@ describe('the adults-only switch with verification disabled', () => {
     await flush();
 
     expect(mocks.updateSettings).toHaveBeenCalledTimes(1);
-    expect(mocks.updateSettings.mock.calls[0][0]).toMatchObject({ allowNsfw: false, maxUsers: 40 });
+    expect(mocks.updateSettings.mock.calls[0][0]).toMatchObject({ allowNsfw: true, maxUsers: 40 });
     await view.unmount();
   });
 });
@@ -139,7 +137,6 @@ describe('the adults-only switch with verification required', () => {
     expect(
       view.container.querySelector('[data-testid="nsfw-verified-only-hint"]')?.textContent,
     ).toBe('Adults-only stories are open only to verified accounts.');
-    expect(view.container.querySelector('[data-testid="nsfw-no-verification-hint"]')).toBeNull();
     expect(view.container.querySelector('[data-testid="age-verification-mode"]')?.textContent).toBe(
       'Age verification: required',
     );

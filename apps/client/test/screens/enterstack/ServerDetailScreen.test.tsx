@@ -962,7 +962,7 @@ describe('ServerDetailScreen', () => {
     });
 
     it('says a server without verification has none, so it never looks verified', async () => {
-      mockFetchAgeInfo.mockResolvedValue({ mode: 'disabled', available: false });
+      mockFetchAgeInfo.mockResolvedValue({ mode: 'manual', available: false });
       const view = await render(<ServerDetailScreen />);
 
       expect(await view.findByText('age_verification_line_disabled')).toBeTruthy();

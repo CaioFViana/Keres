@@ -736,15 +736,15 @@ describe('registration settings', () => {
       leaveRequiredMode();
     });
 
-    it('reports disabled on a server with no age verification, so the page can lock the adults-only switch', async () => {
-      env.AGE_VERIFICATION_MODE = 'disabled';
+    it('reports manual on a server with no verification service, with the adults-only switch free to turn on', async () => {
+      env.AGE_VERIFICATION_MODE = 'manual';
 
       const { status, data } = await request('GET', '/admin/api/registration-settings', {
         token: admin.token,
       });
 
       expect(status).toBe(200);
-      expect(data.ageVerificationMode).toBe('disabled');
+      expect(data.ageVerificationMode).toBe('manual');
       expect(data.allowNsfw).toBe(false);
     });
 
@@ -765,7 +765,7 @@ describe('registration settings', () => {
 
       const put = await request('PUT', '/admin/api/registration-settings', {
         token: admin.token,
-        body: { ageVerificationMode: 'disabled', isRegistrationOpen: true },
+        body: { ageVerificationMode: 'manual', isRegistrationOpen: true },
       });
       const { data } = await request('GET', '/admin/api/registration-settings', {
         token: admin.token,

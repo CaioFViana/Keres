@@ -641,13 +641,13 @@ describe('ServerRegistrationScreen', () => {
       expect(mockAuthenticate).not.toHaveBeenCalled();
     });
 
-    it('says a server without verification has none, without stopping the registration', async () => {
+    it('says a manual server has no automated check, without stopping the registration', async () => {
       mockFetchAgeInfo.mockResolvedValue({ mode: 'manual', available: false });
       const view = await render(<ServerRegistrationScreen />);
       await view.findByText('register_server');
       await fillRegistration(view);
 
-      expect(await view.findByText('age_verification_disabled_notice')).toBeTruthy();
+      expect(await view.findByText('age_verification_manual_notice')).toBeTruthy();
       await fireEvent.press(view.getByText('create_account'));
       await waitFor(() => expect(mockServerService.createServer).toHaveBeenCalled());
       expect(mockAlert).not.toHaveBeenCalledWith('error', 'age_verification_unavailable');

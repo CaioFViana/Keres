@@ -6,8 +6,9 @@ import { ThemeProvider } from '../../src/theme/ThemeProvider';
 import { changeInput, click, flush, render, submit } from '../helpers/react';
 
 /**
- * The age-verification part of the user pages: the account's standing and the one verification action an
- * administrator has, revoking. Verifying by hand is not offered, and the save never sends `true`.
+ * The age-verification part of the user pages: the account's standing and the verification actions. In `manual`
+ * mode an administrator marks an unverified account by hand and can revoke it; in `required` only the service
+ * verifies, so the administrator can only revoke. The save never sends a verification flag.
  */
 
 const mocks = vi.hoisted(() => ({
@@ -16,6 +17,11 @@ const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(),
   listTiers: vi.fn(),
   userSubscription: vi.fn(),
+  getRegistrationSettings: vi.fn(),
+}));
+
+vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+  RegistrationSettingsApiService: { get: mocks.getRegistrationSettings },
 }));
 
 vi.mock('../../src/api/AdminUserApiService', () => ({
@@ -103,6 +109,7 @@ beforeEach(() => {
   mocks.userSubscription.mockResolvedValue({ subscription: null, canCancelAtProvider: false });
   mocks.getUser.mockResolvedValue(user());
   mocks.updateUser.mockResolvedValue({});
+  mocks.getRegistrationSettings.mockResolvedValue({ ageVerificationMode: 'required' });
   vi.stubGlobal(
     'confirm',
     vi.fn(() => true),
@@ -122,6 +129,7 @@ describe('a verified account in the edit dialog', () => {
     const state = view.container.querySelector('[data-testid="verification-state"]')?.textContent;
     expect(state).toContain('Verified 18+ (manual-document-live-photo, ');
     expect(dialogButton(view.container, 'Revoke verification')).toBeDefined();
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeUndefined();
     await view.unmount();
   });
 
@@ -177,8 +185,8 @@ describe('a verified account in the edit dialog', () => {
   });
 });
 
-describe('an account that is not verified', () => {
-  it('says so, with no checkbox and no way to verify it', async () => {
+describe('an account that is not verified in required mode', () => {
+  it('says so, with no checkbox and no way to verify it by hand', async () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
@@ -191,6 +199,17 @@ describe('an account that is not verified', () => {
     );
     expect(labels.filter((text) => /verif|\+18/i.test(text))).toEqual([]);
     expect(dialogButton(view.container, 'Revoke verification')).toBeUndefined();
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeUndefined();
+    await view.unmount();
+  });
+
+  it('explains that only the service verifies, and that an administrator can only revoke', async () => {
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    expect(view.container.querySelector('[data-testid="verification-source"]')?.textContent).toBe(
+      'Verified by the age-verification service: an administrator can only revoke a verification, not mark one.',
+    );
     await view.unmount();
   });
 
@@ -228,6 +247,85 @@ describe('an account that is not verified', () => {
     expect(dialog(view.container).querySelector('.status-badge')?.textContent).toBe(
       'Verification refused',
     );
+    await view.unmount();
+  });
+});
+
+describe('an account that is not verified in manual mode', () => {
+  beforeEach(() => {
+    mocks.getRegistrationSettings.mockResolvedValue({ ageVerificationMode: 'manual' });
+  });
+
+  it('offers marking it verified, and says how the mark is made and removed', async () => {
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeDefined();
+    expect(dialogButton(view.container, 'Revoke verification')).toBeUndefined();
+    expect(view.container.querySelector('[data-testid="verification-source"]')?.textContent).toBe(
+      'Accounts start unverified. Verify the person by other means, then mark the account here; you can remove the mark at any time.',
+    );
+    await view.unmount();
+  });
+
+  it('confirms, sends exactly the grant, and then shows the account as verified by hand', async () => {
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    vi.mocked(confirm).mockReturnValueOnce(false);
+    await click(dialogButton(view.container, 'Mark as verified +18')!);
+    await flush();
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+
+    await click(dialogButton(view.container, 'Mark as verified +18')!);
+    await flush();
+    expect(confirm).toHaveBeenLastCalledWith(expect.stringContaining('ana'));
+    expect(mocks.updateUser).toHaveBeenCalledTimes(1);
+    expect(mocks.updateUser).toHaveBeenCalledWith('user-1', { isAdultVerified: true });
+
+    const state = view.container.querySelector('[data-testid="verification-state"]')?.textContent;
+    expect(state).toMatch(/^Verified 18\+ \(manual, /);
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeUndefined();
+    expect(dialogButton(view.container, 'Revoke verification')).toBeDefined();
+    await view.unmount();
+  });
+
+  it('shows the reason and keeps the account unverified when the grant fails', async () => {
+    mocks.updateUser.mockRejectedValue(new Error('server down'));
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    await click(dialogButton(view.container, 'Mark as verified +18')!);
+    await flush();
+
+    expect(view.container.querySelector('.error-text')?.textContent).toBe('server down');
+    expect(view.container.querySelector('[data-testid="verification-state"]')?.textContent).toBe(
+      'Not verified',
+    );
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeDefined();
+    await view.unmount();
+  });
+
+  it('does not offer the grant to an account that is already verified', async () => {
+    mocks.getUser.mockResolvedValue(user(verified));
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeUndefined();
+    expect(dialogButton(view.container, 'Revoke verification')).toBeDefined();
+    await view.unmount();
+  });
+
+  it('offers no grant while the mode cannot be read', async () => {
+    mocks.getRegistrationSettings.mockRejectedValue(new Error('offline'));
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    expect(view.container.querySelector('[data-testid="verification-state"]')?.textContent).toBe(
+      'Not verified',
+    );
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeUndefined();
+    expect(view.container.querySelector('[data-testid="verification-source"]')).toBeNull();
     await view.unmount();
   });
 });

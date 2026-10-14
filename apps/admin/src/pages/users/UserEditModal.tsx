@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import type { AdminUserInfo, Tier, UserTierSource } from '@keres/shared';
+import type { AdminUserInfo, AgeVerificationMode, Tier, UserTierSource } from '@keres/shared';
 import { slugifyUserTag } from '@keres/shared/utils/userTag';
 import { GiftPlanSection } from './GiftPlanSection';
 import { RecoveryCodesModal } from './RecoveryCodesModal';
 import { Modal } from '../../components/Modal';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
+import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
 import { TierApiService } from '../../api/TierApiService';
 
 /**
- * What the age-verification service decided about the account. Read here, never set: an administrator can only
- * revoke. Dates arrive as text over JSON, so they are formatted where they are shown.
+ * The age-verification standing of the account. Dates arrive as text over JSON, so they are formatted where they are
+ * shown. An administrator marks or revokes it here, and only the server's mode says which of the two is allowed.
  */
 interface Verification {
   isAdultVerified: boolean;
@@ -52,6 +53,9 @@ export function UserEditModal({
   // Null until the account is loaded, and for a new one (which has no verification yet).
   const [verification, setVerification] = useState<Verification | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [granting, setGranting] = useState(false);
+  // The server's age-verification mode. Null while loading, and when it cannot be read: then no grant is offered.
+  const [ageMode, setAgeMode] = useState<AgeVerificationMode | null>(null);
   const [tierId, setTierId] = useState<string>('');
   // The plan the person is on now, which is not the one assigned when they have paid for another.
   const [inUse, setInUse] = useState<{ tierId: string | null; source: UserTierSource } | null>(
@@ -74,6 +78,21 @@ export function UserEditModal({
         setTierError(err instanceof Error ? err.message : t('userForm.loadTiersFailed')),
       );
   }, [t]);
+
+  useEffect(() => {
+    if (isNew) return;
+    let ignore = false;
+    RegistrationSettingsApiService.get()
+      .then((loaded) => {
+        if (!ignore) setAgeMode(loaded.ageVerificationMode ?? null);
+      })
+      .catch(() => {
+        if (!ignore) setAgeMode(null);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [isNew]);
 
   useEffect(() => {
     if (isNew || !userId) return;
@@ -130,7 +149,7 @@ export function UserEditModal({
         setCreated({ id: createdUser.id, codes: createdUser.recoveryCodes });
         return;
       } else if (userId) {
-        // No verification field here: the age-verification service verifies, and the server refuses `true` by hand.
+        // No verification field here: it changes only through its own buttons (mark and revoke), never on save.
         await AdminUserApiService.update(userId, {
           isAdmin,
           tierId: tierId || null,
@@ -159,6 +178,31 @@ export function UserEditModal({
       setError(err instanceof Error ? err.message : t('userForm.revokeFailed'));
     } finally {
       setRevoking(false);
+    }
+  };
+
+  /** Manual mode only: the server refuses a grant in `required`, where the service alone verifies. */
+  const onGrant = async () => {
+    if (!userId || granting) return;
+    if (!confirm(t('userForm.confirmGrant', { username }))) return;
+    setGranting(true);
+    setError(null);
+    try {
+      await AdminUserApiService.update(userId, { isAdultVerified: true });
+      setVerification(
+        (current) =>
+          current && {
+            ...current,
+            isAdultVerified: true,
+            verificationStatus: 'active',
+            verifiedAt: new Date(),
+            verificationMethod: 'manual',
+          },
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('userForm.grantFailed'));
+    } finally {
+      setGranting(false);
     }
   };
 
@@ -275,7 +319,24 @@ export function UserEditModal({
                     {revoking ? t('userForm.revoking') : t('userForm.revoke')}
                   </button>
                 )}
-                <p className="hint">{t('userForm.verificationSource')}</p>
+                {!verification.isAdultVerified && ageMode === 'manual' && (
+                  <button
+                    type="button"
+                    disabled={granting || saving}
+                    onClick={() => void onGrant()}
+                  >
+                    {granting ? t('userForm.granting') : t('userForm.grant')}
+                  </button>
+                )}
+                {ageMode && (
+                  <p className="hint" data-testid="verification-source">
+                    {t(
+                      ageMode === 'manual'
+                        ? 'userForm.verificationSourceManual'
+                        : 'userForm.verificationSourceRequired',
+                    )}
+                  </p>
+                )}
               </div>
             )}
             {error && <p className="error-text">{error}</p>}

@@ -958,14 +958,14 @@ describe('ServerDetailScreen', () => {
       const view = await render(<ServerDetailScreen />);
 
       expect(await view.findByText('age_verification_line_required')).toBeTruthy();
-      expect(view.queryByText('age_verification_line_disabled')).toBeNull();
+      expect(view.queryByText('age_verification_line_manual')).toBeNull();
     });
 
-    it('says a server without verification has none, so it never looks verified', async () => {
+    it('says a manual server has no automated check, so it never looks verified', async () => {
       mockFetchAgeInfo.mockResolvedValue({ mode: 'manual', available: false });
       const view = await render(<ServerDetailScreen />);
 
-      expect(await view.findByText('age_verification_line_disabled')).toBeTruthy();
+      expect(await view.findByText('age_verification_line_manual')).toBeTruthy();
       expect(view.queryByText('age_verification_line_required')).toBeNull();
     });
 

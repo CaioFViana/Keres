@@ -26,7 +26,7 @@ const AgeVerificationNotice: FC<AgeVerificationNoticeProps> = ({ info, testID })
   if (info.mode !== 'required') {
     return (
       <Text style={styles.text} testID={testID}>
-        {t('age_verification_disabled_notice')}
+        {t('age_verification_manual_notice')}
       </Text>
     );
   }

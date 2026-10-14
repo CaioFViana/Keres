@@ -401,7 +401,7 @@ const ServerDetailScreen = () => {
         <Text style={styles.ageLine} testID="server-age-verification">
           {ageInfo.mode === 'required'
             ? t('age_verification_line_required')
-            : t('age_verification_line_disabled')}
+            : t('age_verification_line_manual')}
         </Text>
       ) : null}
 

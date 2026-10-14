@@ -443,7 +443,9 @@ describe('TierEnforcementService getStoryPlan', () => {
       maxEntitiesTotal: null,
       entitiesUsedTotal: 0,
       maxCommentsPerStory: null,
+      maxContributorsPerStory: null,
       commentsUsed: 0,
+      contributorsUsed: 0,
     });
   });
 
@@ -469,7 +471,9 @@ describe('TierEnforcementService getStoryPlan', () => {
       maxEntitiesTotal: 900,
       entitiesUsedTotal: 3,
       maxCommentsPerStory: null,
+      maxContributorsPerStory: null,
       commentsUsed: 0,
+      contributorsUsed: 0,
     });
   });
 
@@ -494,6 +498,7 @@ describe('TierEnforcementService getAccountPlan', () => {
       maxPublicationsPerDay: null,
       maxPublishedArcs: null,
       maxCommentsPerStory: null,
+      maxContributorsPerStory: null,
       storiesUsed: 1,
       entitiesUsedTotal: 0,
     });
@@ -518,6 +523,7 @@ describe('TierEnforcementService getAccountPlan', () => {
       maxPublicationsPerDay: 2,
       maxPublishedArcs: 1,
       maxCommentsPerStory: null,
+      maxContributorsPerStory: null,
       storiesUsed: 1,
       entitiesUsedTotal: 0,
     });

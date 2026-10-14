@@ -18,6 +18,7 @@ async function seedTier(input: {
   maxStories?: number | null;
   maxPublicationsPerDay?: number | null;
   maxCommentsPerStory?: number | null;
+  maxContributorsPerStory?: number | null;
   isDeleted?: boolean;
   playMonthlyProductId?: string | null;
   playYearlyProductId?: string | null;
@@ -40,6 +41,7 @@ async function seedTier(input: {
     maxStorageBytesTotal: null,
     maxPublicationsPerDay: input.maxPublicationsPerDay ?? null,
     maxCommentsPerStory: input.maxCommentsPerStory ?? null,
+    maxContributorsPerStory: input.maxContributorsPerStory ?? null,
     isDeleted: input.isDeleted ?? false,
   });
   return id;
@@ -139,6 +141,29 @@ describe('GET /public/tiers', () => {
     expect(
       data.tiers.map((tier: { maxCommentsPerStory: unknown }) => tier.maxCommentsPerStory),
     ).toEqual([0, 40, null]);
+    expect(PublicTiersResponseSchema.safeParse(data).success).toBe(true);
+  });
+
+  it('exposes the cap on collaborators per story, zero, a cap and unlimited', async () => {
+    await seedTier({
+      name: 'Solo',
+      isPublicForSale: true,
+      sortOrder: 1,
+      maxContributorsPerStory: 0,
+    });
+    await seedTier({
+      name: 'Team',
+      isPublicForSale: true,
+      sortOrder: 2,
+      maxContributorsPerStory: 8,
+    });
+    await seedTier({ name: 'Open', isPublicForSale: true, sortOrder: 3 });
+
+    const { data } = await request('GET', '/public/tiers');
+
+    expect(
+      data.tiers.map((tier: { maxContributorsPerStory: unknown }) => tier.maxContributorsPerStory),
+    ).toEqual([0, 8, null]);
     expect(PublicTiersResponseSchema.safeParse(data).success).toBe(true);
   });
 

@@ -71,6 +71,7 @@ const tier = (over: Record<string, unknown> = {}) => ({
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
   maxCommentsPerStory: null,
+  maxContributorsPerStory: null,
   maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
@@ -646,6 +647,48 @@ describe('tiers page', () => {
     await flush();
     expect(mocks.createTier).toHaveBeenLastCalledWith(
       expect.objectContaining({ maxCommentsPerStory: null }),
+    );
+    await view.unmount();
+  });
+
+  it('asks for the collaborators per story, says whom it counts, and keeps 0 (nobody) apart from empty (unlimited)', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxContributorsPerStory: 4 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Collaborators/story');
+    expect(card.textContent).toContain('4');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    expect(
+      view.container.querySelector('[data-testid="contributors-note"]')!.textContent,
+    ).toContain('Readers and writers both count, the owner does not');
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max collaborators per story'),
+    )!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Solo');
+    await changeInput(label.querySelector('input')!, '0');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxContributorsPerStory: 0 }),
+    );
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('.form-card input')!, 'Open');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxContributorsPerStory: null }),
     );
     await view.unmount();
   });

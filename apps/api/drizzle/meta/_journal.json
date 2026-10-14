@@ -561,6 +561,13 @@
       "when": 1791990101667,
       "tag": "0079_user_show_nsfw",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1791991142936,
+      "tag": "0080_tier_max_contributors",
+      "breakpoints": true
     }
   ]
 }

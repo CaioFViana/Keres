@@ -23,6 +23,7 @@ const plan = (over: Record<string, unknown> = {}) =>
     maxPublicationsPerDay: 1,
     maxPublishedArcs: null,
     maxCommentsPerStory: 50,
+    maxContributorsPerStory: null,
     storiesUsed: 2,
     entitiesUsedTotal: 480,
     ...over,
@@ -39,6 +40,18 @@ describe('PlanLimitsCard', () => {
     expect(view.getByText('plan_limit_publications_one:{"count":1}')).toBeTruthy();
     expect(view.getByText('plan_limit_works_unlimited')).toBeTruthy();
     expect(view.getByText('plan_limit_comments_other:{"count":50}')).toBeTruthy();
+  });
+
+  it('lists the cap on collaborators per story', async () => {
+    const view = await render(<PlanLimitsCard plan={plan({ maxContributorsPerStory: 2 })} />);
+
+    expect(view.getByText('plan_limit_contributors_other:{"count":2}')).toBeTruthy();
+  });
+
+  it('says a plan with no collaborators per story allows none', async () => {
+    const view = await render(<PlanLimitsCard plan={plan({ maxContributorsPerStory: 0 })} />);
+
+    expect(view.getByText('plan_limit_contributors_none')).toBeTruthy();
   });
 
   it('shows how much of the stories and of the total items is in use', async () => {

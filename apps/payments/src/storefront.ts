@@ -122,6 +122,12 @@ export function storefrontPage(options: StorefrontOptions): string {
     if (limit === 0) return 'No comments per story';
     return limit === 1 ? 'Up to 1 comment per story' : 'Up to ' + limit + ' comments per story';
   }
+  // The cap on collaborators per story (readers and writers; the owner is not counted), in the same words.
+  function contributorsLine(limit) {
+    if (limit === null) return 'Unlimited collaborators per story';
+    if (limit === 0) return 'No collaborators per story';
+    return limit === 1 ? 'Up to 1 collaborator per story' : 'Up to ' + limit + ' collaborators per story';
+  }
   function show() {
     app.textContent = '';
     for (var i = 0; i < arguments.length; i++) if (arguments[i]) app.appendChild(arguments[i]);
@@ -211,6 +217,7 @@ export function storefrontPage(options: StorefrontOptions): string {
         yearly !== null ? h('p', { class: 'muted', text: yearly + ' / year' }) : null,
         // An older server sends no cap: no line, rather than a claim it never made.
         tier.maxCommentsPerStory === undefined ? null : h('p', { class: 'muted', text: commentsLine(tier.maxCommentsPerStory) }),
+        tier.maxContributorsPerStory === undefined ? null : h('p', { class: 'muted', text: contributorsLine(tier.maxContributorsPerStory) }),
         h('div', { class: 'field' }, h('label', { text: 'How often' }, interval)),
         h('div', { class: 'field' }, h('label', { text: 'How' }, method)),
         error,

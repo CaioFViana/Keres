@@ -395,6 +395,7 @@
     "publicationsPerDay": "Publications per day",
     "publishedArcs": "Works on show per story",
     "commentsPerStory": "Comments per story",
+    "contributorsPerStory": "Collaborators per story",
     "unlimited": "Unlimited",
     "none": "None"
   }

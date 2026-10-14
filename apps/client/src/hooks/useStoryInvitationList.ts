@@ -31,6 +31,8 @@ export function useStoryInvitationList(serverFor: StoryInvitationServerLookup) {
     [title, message]: [string, string],
     action: (server: ServerSelect) => Promise<void>,
     successKey: string,
+    /** What a 429 says for this action, when the action can be refused by a plan limit. */
+    limitKey?: string,
   ) =>
     AppAlert.alert(
       title,
@@ -48,7 +50,10 @@ export function useStoryInvitationList(serverFor: StoryInvitationServerLookup) {
               showNotification(t(successKey, { story: invitation.storyTitle }), 'success');
             } catch (error) {
               console.log('useStoryInvitationList: invitation action failed.', error);
-              showNotification(t('story_invitation_failed'), 'error');
+              const status = (error as { response?: { status?: number } })?.response?.status;
+              // The invitation stays open on a 429, so the owner can raise the limit and it can be accepted later.
+              const key = status === 429 && limitKey ? limitKey : 'story_invitation_failed';
+              showNotification(t(key), 'error');
             } finally {
               setBusyId(null);
             }
@@ -68,6 +73,7 @@ export function useStoryInvitationList(serverFor: StoryInvitationServerLookup) {
         [t('story_invitation_accept'), t('story_invitation_accept_message')],
         (server) => acceptStoryInvitation(db, server, invitation),
         'story_invitation_accepted',
+        'accept_invitation_limit_reached',
       ),
     decline: (invitation: ServerStoryInvitation) =>
       confirmThenRun(

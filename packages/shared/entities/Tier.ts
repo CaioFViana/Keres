@@ -14,6 +14,8 @@ export interface Tier {
   maxPublishedArcs: number | null;
   /** Live comments one story may hold, by anyone (comments are not entities); `0` allows none. */
   maxCommentsPerStory: number | null;
+  /** Collaborators one story may have, readers and writers alike, not counting its owner; `0` allows none. */
+  maxContributorsPerStory: number | null;
   /** Messages the user may send to other users in any 24 hours (the cap for administrators is fixed). */
   maxMessagesPerDay: number | null;
   /** Monthly price in the system's currency minor units (`null` = not priced monthly). */

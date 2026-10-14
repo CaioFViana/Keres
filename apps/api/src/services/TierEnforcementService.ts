@@ -8,6 +8,8 @@ import {
   mediaBlobs,
   publicationLog,
   stories,
+  storyInvitations,
+  storyPermissions,
   storyPublications,
   tiers,
   users,
@@ -200,6 +202,27 @@ export class TierEnforcementService {
     return total;
   }
 
+  /**
+   * The live collaborators of one story, readers and writers alike. The owner has no permission row, so the owner
+   * is not counted here; a pending invitation is not a collaborator yet (see `assertCanAddContributor`).
+   */
+  private async countContributors(storyId: string): Promise<number> {
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(storyPermissions)
+      .where(and(eq(storyPermissions.storyId, storyId), eq(storyPermissions.isDeleted, false)));
+    return total;
+  }
+
+  /** The open invitations of one story: each one takes a collaborator slot as soon as it is sent. */
+  private async countPendingInvitations(storyId: string): Promise<number> {
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(storyInvitations)
+      .where(eq(storyInvitations.storyId, storyId));
+    return total;
+  }
+
   /** What the person's own plan comes with and how much of it they use: the account-level view of `getEffectiveTier`. */
   async getAccountPlan(userId: string): Promise<AccountPlan> {
     const tier = await this.getEffectiveTier(userId);
@@ -215,6 +238,7 @@ export class TierEnforcementService {
       maxPublicationsPerDay: tier?.maxPublicationsPerDay ?? null,
       maxPublishedArcs: tier?.maxPublishedArcs ?? null,
       maxCommentsPerStory: tier?.maxCommentsPerStory ?? null,
+      maxContributorsPerStory: tier?.maxContributorsPerStory ?? null,
       storiesUsed: liveStoryIds.length,
       entitiesUsedTotal,
     };
@@ -233,6 +257,8 @@ export class TierEnforcementService {
         : 0;
     const commentsUsed =
       tier && tier.maxCommentsPerStory !== null ? await this.countComments(storyId) : 0;
+    const contributorsUsed =
+      tier && tier.maxContributorsPerStory !== null ? await this.countContributors(storyId) : 0;
     return {
       tierName: tier?.name ?? null,
       maxEntitiesPerStory: tier?.maxEntitiesPerStory ?? null,
@@ -240,6 +266,8 @@ export class TierEnforcementService {
       entitiesUsedTotal,
       maxCommentsPerStory: tier?.maxCommentsPerStory ?? null,
       commentsUsed,
+      maxContributorsPerStory: tier?.maxContributorsPerStory ?? null,
+      contributorsUsed,
     };
   }
 
@@ -258,6 +286,33 @@ export class TierEnforcementService {
     if (total >= tier.maxCommentsPerStory) {
       throw new TierLimitExceededError(
         `Comment limit for this story reached for your plan (${tier.maxCommentsPerStory}).`,
+      );
+    }
+  }
+
+  /**
+   * Refuses one more collaborator on a story once its owner's plan has no room left. Readers and writers count
+   * alike, the owner does not, and the room belongs to the story owner whoever sends the invitation or accepts
+   * it. With `countPending` the open invitations count as taken too: sending one is what spends the room. An
+   * accepted invitation is itself pending, so accepting counts the live collaborators only.
+   */
+  async assertCanAddContributor(
+    actingUserId: string,
+    storyId: string,
+    options: { countPending: boolean },
+  ): Promise<void> {
+    const userId = await this.payerOf(actingUserId, storyId);
+    const tier = await this.getEffectiveTier(userId);
+    if (!tier || tier.maxContributorsPerStory === null) {
+      return;
+    }
+    let total = await this.countContributors(storyId);
+    if (options.countPending) {
+      total += await this.countPendingInvitations(storyId);
+    }
+    if (total >= tier.maxContributorsPerStory) {
+      throw new TierLimitExceededError(
+        `Collaborator limit for this story reached for your plan (${tier.maxContributorsPerStory}).`,
       );
     }
   }

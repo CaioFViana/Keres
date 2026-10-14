@@ -8,6 +8,7 @@ import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 import { storyNsfwService } from './StoryNsfwService';
 import { storyPermissionService } from './StoryPermissionService';
+import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { ACTIVE_ACCOUNT } from './UserService';
 
 type PermissionType = 'reader' | 'writer';
@@ -93,6 +94,14 @@ export class StoryInvitationService {
         'This user already collaborates on the story; change their role instead.',
       );
     }
+    // Only a new invitation takes a collaborator slot: changing the role of a pending one does not.
+    const alreadyInvited = await db.query.storyInvitations.findFirst({
+      where: and(eq(storyInvitations.storyId, storyId), eq(storyInvitations.inviteeId, inviteeId)),
+      columns: { id: true },
+    });
+    if (!alreadyInvited) {
+      await this.assertCanAddContributor(ownerUserId, storyId, { countPending: true });
+    }
     // Adults-only stories are closed to whoever is not age-verified, at invitation time.
     await storyNsfwService.assertNsfwAccessAllowed(storyId, inviteeId);
 
@@ -153,7 +162,12 @@ export class StoryInvitationService {
       throw error;
     }
 
+    // A refusal here rolls the transaction back and keeps the invitation: the owner can raise the limit and the
+    // invitee accepts again. The invitation itself is pending, so only the live collaborators count.
     await withWriteTransaction(async (tx) => {
+      await this.assertCanAddContributor(invitation.inviterId, invitation.storyId, {
+        countPending: false,
+      });
       await storyPermissionService.grantAccess(
         invitation.storyId,
         userId,
@@ -198,6 +212,25 @@ export class StoryInvitationService {
     });
     if (!invitation) throw new AppError(404, 'Invitation not found.');
     return invitation;
+  }
+
+  /**
+   * The owner's plan's collaborator cap, as a 429 (not 403: the client reads 403 as "adults-only story").
+   * Kept apart from the `TierLimitExceededError` the enforcement service throws, so the route sees an AppError.
+   */
+  private async assertCanAddContributor(
+    actingUserId: string,
+    storyId: string,
+    options: { countPending: boolean },
+  ): Promise<void> {
+    try {
+      await tierEnforcementService.assertCanAddContributor(actingUserId, storyId, options);
+    } catch (error) {
+      if (error instanceof TierLimitExceededError) {
+        throw new AppError(429, error.message, 'tier_limit');
+      }
+      throw error;
+    }
   }
 
   private async requireOwner(userId: string, storyId: string): Promise<void> {

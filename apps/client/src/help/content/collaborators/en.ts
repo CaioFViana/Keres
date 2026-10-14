@@ -32,7 +32,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Writers can change content according to story access; readers cannot edit. Comments, public favorites, and synchronization show collaborator data when their corresponding features are active.',
+      text: 'Writers can change content according to story access; readers cannot edit. Comments, public favorites, and synchronization show collaborator data when their corresponding features are active. A plan may cap how many collaborators a story has, readers and writers alike, the owner not counted: an invitation past that cap waits for the owner to raise it or for someone to leave.',
     },
     {
       type: 'callout',

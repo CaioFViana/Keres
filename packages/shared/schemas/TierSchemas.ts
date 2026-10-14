@@ -36,6 +36,8 @@ const tierFields = {
   maxPublishedArcs: z.number().int().nonnegative().nullable().optional(),
   // Comments are not entities: this caps how many comments (by anyone) one story may hold. Zero allows none.
   maxCommentsPerStory: z.number().int().nonnegative().nullable().optional(),
+  // Collaborators of one story, readers and writers alike; the owner is not counted. Zero allows none.
+  maxContributorsPerStory: z.number().int().nonnegative().nullable().optional(),
   // Zero silences the user; messages to the administrators have a fixed cap of their own.
   maxMessagesPerDay: z.number().int().nonnegative().nullable().optional(),
   /**
@@ -114,6 +116,10 @@ export const StoryPlanSchema = z.object({
   maxCommentsPerStory: z.number().int().nullable(),
   /** The story's live comments, by anyone; only worked out when the plan caps comments (else `0`). */
   commentsUsed: z.number().int(),
+  /** The per-story cap on collaborators (readers and writers; the owner is not counted); `null` is unlimited. */
+  maxContributorsPerStory: z.number().int().nullable(),
+  /** The story's live collaborators; only worked out when the plan caps them (else `0`). */
+  contributorsUsed: z.number().int(),
 });
 export type StoryPlan = z.infer<typeof StoryPlanSchema>;
 
@@ -134,6 +140,8 @@ export const AccountPlanSchema = z.object({
   maxPublishedArcs: z.number().int().nullable(),
   /** Per story, so it is the ceiling a story of this plan holds, not a count the account has. */
   maxCommentsPerStory: z.number().int().nullable(),
+  /** Per story, like the comments cap: the ceiling a story of this plan holds, not a count the account has. */
+  maxContributorsPerStory: z.number().int().nullable(),
   storiesUsed: z.number().int(),
   /** Counted the way the total ceiling counts; only worked out when the plan has a total ceiling. */
   entitiesUsedTotal: z.number().int(),
@@ -161,6 +169,8 @@ export const PublicTierSchema = z.object({
   maxPublishedArcs: z.number().int().nonnegative().nullable().default(null),
   // A server predating the ceiling caps no comments, which is what null (unlimited) says; zero allows none.
   maxCommentsPerStory: z.number().int().nonnegative().nullable().default(null),
+  // A server predating the ceiling caps no collaborators, which is what null (unlimited) says; zero allows none.
+  maxContributorsPerStory: z.number().int().nonnegative().nullable().default(null),
   /**
    * The store product ids that sell this tier on each period (`null` = not sold there). Catalog data,
    * not secrets: the app needs the id to open the purchase sheet, so it travels on the public tier.

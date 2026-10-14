@@ -23,6 +23,8 @@ export interface LandingTier {
   maxPublishedArcs?: number | null;
   /** Absent from servers that predate it; null is unlimited, zero allows no comment. */
   maxCommentsPerStory?: number | null;
+  /** Absent from servers that predate it; null is unlimited, zero allows no collaborator. */
+  maxContributorsPerStory?: number | null;
 }
 
 export interface LandingTiersResponse {

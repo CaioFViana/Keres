@@ -581,6 +581,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'maxPublicationsPerDay',
       'maxPublishedArcs',
       'maxCommentsPerStory',
+      'maxContributorsPerStory',
       'maxMessagesPerDay',
       'createdAt',
       'updatedAt',

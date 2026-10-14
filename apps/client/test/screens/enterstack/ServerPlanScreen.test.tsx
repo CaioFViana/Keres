@@ -94,6 +94,7 @@ const tier = (over: Record<string, unknown>) => ({
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
   maxCommentsPerStory: null,
+  maxContributorsPerStory: null,
   ...over,
 });
 const subscription = (over: Record<string, unknown> = {}) => ({
@@ -249,6 +250,27 @@ describe('ServerPlanScreen: the plans', () => {
     expect(
       within(view.getByTestId('plan-offer-tier-plus')).getByText(
         'plan_limit_comments_other:{"count":20}',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('says a plan that allows no collaborators per story, and a cap of some', async () => {
+    setup({
+      overviewValue: overview({}, null, {
+        tiers: [
+          tier({ maxContributorsPerStory: 0 }),
+          tier({ id: 'tier-plus', name: 'Plus', maxContributorsPerStory: 4 }),
+        ],
+      }),
+    });
+    const view = await render(<ServerPlanScreen />);
+
+    expect(
+      within(view.getByTestId('plan-offer-tier-pro')).getByText('plan_limit_contributors_none'),
+    ).toBeTruthy();
+    expect(
+      within(view.getByTestId('plan-offer-tier-plus')).getByText(
+        'plan_limit_contributors_other:{"count":4}',
       ),
     ).toBeTruthy();
   });

@@ -79,10 +79,14 @@ export function useInviteFriendToStory({
         console.error('Failed to invite a friend to a story:', error);
         // The server refuses whoever is not age-verified on an adults-only story, with the friendship intact.
         const status = (error as { response?: { status?: number } })?.response?.status;
-        AppAlert.alert(
-          t('error'),
-          t(status === 403 ? 'invite_nsfw_blocked' : 'invite_collaborator_failed'),
-        );
+        // 429: the owner's plan has no room left for another collaborator on this story.
+        const key =
+          status === 403
+            ? 'invite_nsfw_blocked'
+            : status === 429
+              ? 'invite_collaborator_limit_reached'
+              : 'invite_collaborator_failed';
+        AppAlert.alert(t('error'), t(key));
         return false;
       } finally {
         setBusy(false);

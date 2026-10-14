@@ -309,6 +309,19 @@ describe('useStoryServerCollaboration', () => {
     });
   });
 
+  it('says the plan has no room for another collaborator when adding one is refused with 429', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    mockInvite.mockRejectedValue({ response: { status: 429 } });
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
+
+    await act(async () => view.result.current.setSelectedFriendId('friend-2'));
+    await act(async () => view.result.current.handleAddCollaborator());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'invite_collaborator_limit_reached');
+  });
+
   it('reports collaborator failures instead of failing silently', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };

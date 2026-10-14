@@ -1,0 +1,1 @@
+ALTER TABLE `tiers` ADD `max_contributors_per_story` integer;

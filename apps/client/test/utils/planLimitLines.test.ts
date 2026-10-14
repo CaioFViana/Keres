@@ -53,6 +53,26 @@ describe('planLimitLines', () => {
     expect(planLimitLines(unlimited, t)).toHaveLength(4);
   });
 
+  it('adds the cap on collaborators per story when the plan states it: unlimited, a count, and none for zero', () => {
+    expect(planLimitLines({ ...unlimited, maxContributorsPerStory: null }, t).at(-1)).toBe(
+      'plan_limit_contributors_unlimited',
+    );
+    expect(planLimitLines({ ...unlimited, maxContributorsPerStory: 1 }, t).at(-1)).toBe(
+      'plan_limit_contributors_one:1',
+    );
+    expect(planLimitLines({ ...unlimited, maxContributorsPerStory: 6 }, t).at(-1)).toBe(
+      'plan_limit_contributors_other:6',
+    );
+    expect(planLimitLines({ ...unlimited, maxContributorsPerStory: 0 }, t).at(-1)).toBe(
+      'plan_limit_contributors_none',
+    );
+  });
+
+  it('leaves the collaborator line out when the plan does not state the cap (an older server)', () => {
+    expect(planLimitLines(unlimited, t)).toHaveLength(4);
+    expect(planLimitLines({ ...unlimited, maxCommentsPerStory: 3 }, t)).toHaveLength(5);
+  });
+
   it('shows the comment line for a plan on sale, next to the other per-story lines', () => {
     const onSale = { ...unlimited, maxStories: 3, maxCommentsPerStory: 10 };
     expect(planLimitLines(onSale, t)).toEqual([

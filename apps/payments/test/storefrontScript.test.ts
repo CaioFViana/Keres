@@ -165,6 +165,31 @@ describe('buy site script', () => {
     expect(cardOf('Plus')).toContain('Unlimited comments per story');
   });
 
+  it('states the cap on collaborators per story for each plan, and says nothing for a server that sends none', async () => {
+    const plans = {
+      currency: 'BRL',
+      tiers: [
+        { ...tiers.tiers[0], maxContributorsPerStory: 0 },
+        { ...tiers.tiers[1], maxContributorsPerStory: 1 },
+        { id: 'tier-plus', name: 'Plus', priceMonthlyCents: 990, maxContributorsPerStory: null },
+        { id: 'tier-old', name: 'Old', priceMonthlyCents: 500 },
+      ],
+    };
+    const { app } = await openStore(
+      { enabled: true, currency: 'BRL', methods, subscription: null },
+      true,
+      plans,
+    );
+
+    const cardOf = (name: string) =>
+      [...app.querySelectorAll('.plans .card')].find((card) => card.textContent?.includes(name))
+        ?.textContent ?? '';
+    expect(cardOf('Free')).toContain('No collaborators per story');
+    expect(cardOf('Pro')).toContain('Up to 1 collaborator per story');
+    expect(cardOf('Plus')).toContain('Unlimited collaborators per story');
+    expect(cardOf('Old')).not.toContain('collaborators per story');
+  });
+
   it('says nothing of comments for a server that sends no cap, rather than claiming one', async () => {
     const { app } = await openStore({
       enabled: true,

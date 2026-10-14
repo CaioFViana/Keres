@@ -8,6 +8,11 @@ export interface PlanLimits {
    * The cap on comments per story. Optional because a plan read from an older server may not carry it: no line then.
    */
   maxCommentsPerStory?: number | null;
+  /**
+   * The cap on collaborators per story (readers and writers, not the owner). Optional for the same reason: no line
+   * from a server that predates it.
+   */
+  maxContributorsPerStory?: number | null;
 }
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -32,6 +37,14 @@ export function planLimitLines(limits: PlanLimits, t: Translate): string[] {
       limits.maxCommentsPerStory === 0
         ? t('plan_limit_comments_none')
         : line(t, 'comments', limits.maxCommentsPerStory),
+    );
+  }
+  if (limits.maxContributorsPerStory !== undefined) {
+    // Zero is its own line for the same reason: nobody may be invited is the plain fact.
+    lines.push(
+      limits.maxContributorsPerStory === 0
+        ? t('plan_limit_contributors_none')
+        : line(t, 'contributors', limits.maxContributorsPerStory),
     );
   }
   return lines;

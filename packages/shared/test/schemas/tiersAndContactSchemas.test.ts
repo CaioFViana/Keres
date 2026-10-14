@@ -123,6 +123,39 @@ describe('public tier and contact contracts', () => {
     ).toBe(false);
   });
 
+  it('carries the cap on collaborators per story to the landing page, and reads a server without it as unlimited', () => {
+    const tier = {
+      id,
+      name: 'Pro',
+      isDefault: false,
+      priceMonthlyCents: 1990,
+      priceYearlyCents: null,
+      maxStories: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: null,
+      maxStorageBytesTotal: null,
+      maxPublicationsPerDay: null,
+      playMonthlyProductId: null,
+      playYearlyProductId: null,
+      webMonthlyEnabled: true,
+      webYearlyEnabled: true,
+    };
+    const parse = (value: unknown) =>
+      PublicTiersResponseSchema.parse({ currency: 'BRL', tiers: [value] }).tiers[0];
+
+    expect(parse({ ...tier, maxContributorsPerStory: 0 }).maxContributorsPerStory).toBe(0);
+    expect(parse({ ...tier, maxContributorsPerStory: 5 }).maxContributorsPerStory).toBe(5);
+    expect(parse({ ...tier, maxContributorsPerStory: null }).maxContributorsPerStory).toBeNull();
+    expect(parse(tier).maxContributorsPerStory).toBeNull();
+    expect(
+      PublicTiersResponseSchema.safeParse({
+        currency: 'BRL',
+        tiers: [{ ...tier, maxContributorsPerStory: -1 }],
+      }).success,
+    ).toBe(false);
+  });
+
   it('derives the yearly discount instead of storing it', () => {
     expect(yearlyDiscountPercent(1000, 9600)).toBe(20);
     // 100*12 = 1200, (1 - 1000/1200) rounds to 17.
@@ -217,6 +250,27 @@ describe('what a tier update may carry', () => {
     });
   });
 
+  it('caps the collaborators of a story: zero allows none, blank is unlimited, and a negative is refused', () => {
+    expect(TierCreateInputSchema.parse({ name: 'T', maxContributorsPerStory: 0 })).toMatchObject({
+      maxContributorsPerStory: 0,
+    });
+    expect(TierCreateInputSchema.parse({ name: 'T', maxContributorsPerStory: null })).toMatchObject(
+      {
+        maxContributorsPerStory: null,
+      },
+    );
+    expect(TierCreateInputSchema.parse({ name: 'T' }).maxContributorsPerStory).toBeUndefined();
+    expect(
+      TierCreateInputSchema.safeParse({ name: 'T', maxContributorsPerStory: -1 }).success,
+    ).toBe(false);
+    expect(PartialTierSchema.parse({ maxStories: 3 })).not.toHaveProperty(
+      'maxContributorsPerStory',
+    );
+    expect(PartialTierSchema.parse({ maxContributorsPerStory: 0 })).toEqual({
+      maxContributorsPerStory: 0,
+    });
+  });
+
   it('caps the comments of a story: zero allows none, blank is unlimited, and a negative is refused', () => {
     expect(TierCreateInputSchema.parse({ name: 'T', maxCommentsPerStory: 0 })).toMatchObject({
       maxCommentsPerStory: 0,
@@ -245,8 +299,32 @@ describe('what a story and an account are told of their plan', () => {
       entitiesUsedTotal: 0,
       maxCommentsPerStory: 20,
       commentsUsed: 7,
+      maxContributorsPerStory: null,
+      contributorsUsed: 0,
     });
     expect(story).toMatchObject({ maxCommentsPerStory: 20, commentsUsed: 7 });
+    expect(
+      StoryPlanSchema.parse({
+        tierName: 'Plus',
+        maxEntitiesPerStory: null,
+        maxEntitiesTotal: null,
+        entitiesUsedTotal: 0,
+        maxCommentsPerStory: null,
+        commentsUsed: 0,
+        maxContributorsPerStory: 3,
+        contributorsUsed: 2,
+      }),
+    ).toMatchObject({ maxContributorsPerStory: 3, contributorsUsed: 2 });
+    expect(
+      StoryPlanSchema.safeParse({
+        tierName: null,
+        maxEntitiesPerStory: null,
+        maxEntitiesTotal: null,
+        entitiesUsedTotal: 0,
+        maxCommentsPerStory: null,
+        commentsUsed: 0,
+      }).success,
+    ).toBe(false);
     // Both are required: a server that did not say them is not read as unlimited.
     expect(
       StoryPlanSchema.safeParse({

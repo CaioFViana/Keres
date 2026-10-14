@@ -277,10 +277,14 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       // The server refuses whoever is not age-verified on an NSFW story (403 with the
       // friendship intact): say so instead of the generic failure.
       const status = (err as { response?: { status?: number } })?.response?.status;
-      AppAlert.alert(
-        t('error'),
-        t(status === 403 ? 'invite_nsfw_blocked' : 'invite_collaborator_failed'),
-      );
+      // 429: the owner's plan has no room left for another collaborator on this story.
+      const key =
+        status === 403
+          ? 'invite_nsfw_blocked'
+          : status === 429
+            ? 'invite_collaborator_limit_reached'
+            : 'invite_collaborator_failed';
+      AppAlert.alert(t('error'), t(key));
     } finally {
       setServerActionLoading(false);
     }

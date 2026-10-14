@@ -32,7 +32,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Escritores podem alterar o conteúdo conforme o acesso da história; leitores não editam. Comentários, favoritos públicos e sincronização mostram dados dos colaboradores quando os recursos correspondentes estão ativos.',
+      text: 'Escritores podem alterar o conteúdo conforme o acesso da história; leitores não editam. Comentários, favoritos públicos e sincronização mostram dados dos colaboradores quando os recursos correspondentes estão ativos. Um plano pode limitar quantos colaboradores uma história tem, leitores e escritores igualmente, sem contar o dono: um convite além desse limite espera o dono aumentá-lo ou alguém sair.',
     },
     {
       type: 'callout',

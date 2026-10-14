@@ -112,6 +112,23 @@ describe('useInviteFriendToStory', () => {
     error.mockRestore();
   });
 
+  it('says the plan has no room for another collaborator when the server answers 429', async () => {
+    mockInvite.mockRejectedValue({ response: { status: 429 } });
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { hook, onInvited } = setup();
+    const { result } = await hook;
+
+    let sent = true;
+    await act(async () => {
+      sent = await result.current.invite('s1', 'reader');
+    });
+
+    expect(sent).toBe(false);
+    expect(mockAlert).toHaveBeenCalledWith('error', 'invite_collaborator_limit_reached');
+    expect(onInvited).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
   it('gives the plain failure for any other refusal', async () => {
     mockInvite.mockRejectedValue(new Error('boom'));
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});

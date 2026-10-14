@@ -20,6 +20,7 @@ const emptyForm: TierCreateInput = {
   maxPublicationsPerDay: null,
   maxPublishedArcs: null,
   maxCommentsPerStory: null,
+  maxContributorsPerStory: null,
   maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
@@ -99,6 +100,7 @@ export function TiersPage() {
       maxPublicationsPerDay: tier.maxPublicationsPerDay,
       maxPublishedArcs: tier.maxPublishedArcs ?? null,
       maxCommentsPerStory: tier.maxCommentsPerStory ?? null,
+      maxContributorsPerStory: tier.maxContributorsPerStory ?? null,
       maxMessagesPerDay: tier.maxMessagesPerDay,
       priceMonthlyCents: tier.priceMonthlyCents ?? null,
       priceYearlyCents: tier.priceYearlyCents ?? null,
@@ -134,6 +136,7 @@ export function TiersPage() {
       form.maxPublicationsPerDay,
       form.maxPublishedArcs,
       form.maxCommentsPerStory,
+      form.maxContributorsPerStory,
       form.maxMessagesPerDay,
     ];
     if (
@@ -288,6 +291,10 @@ export function TiersPage() {
             <p className="hint" data-testid="comments-note">
               {t('tiers.commentsNote')}
             </p>
+            {limitInput(t('tiers.maxContributorsPerStory'), 'maxContributorsPerStory')}
+            <p className="hint" data-testid="contributors-note">
+              {t('tiers.contributorsNote')}
+            </p>
             {limitInput(t('tiers.maxMessagesPerDay'), 'maxMessagesPerDay')}
             <label className="checkbox-label switch">
               <input
@@ -378,6 +385,10 @@ export function TiersPage() {
                   {fact(t('tiers.columnMaxPublicationsPerDay'), tier.maxPublicationsPerDay ?? '∞')}
                   {fact(t('tiers.columnMaxPublishedArcs'), tier.maxPublishedArcs ?? '∞')}
                   {fact(t('tiers.columnMaxCommentsPerStory'), tier.maxCommentsPerStory ?? '∞')}
+                  {fact(
+                    t('tiers.columnMaxContributorsPerStory'),
+                    tier.maxContributorsPerStory ?? '∞',
+                  )}
                   {fact(t('tiers.columnMaxMessagesPerDay'), tier.maxMessagesPerDay ?? '∞')}
                 </dl>
               </section>

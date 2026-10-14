@@ -159,6 +159,18 @@ describe('StoryInvitationList', () => {
     expect(mockNotify).toHaveBeenCalledWith('story_invitation_failed', 'error');
   });
 
+  it('says the plan has no room left when accepting is refused with 429, and keeps the invitation', async () => {
+    mockAccept.mockRejectedValue({ response: { status: 429 } });
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    const view = await render(<StoryInvitationList serverFor={serverFor} />);
+
+    await fireEvent.press(view.getByTestId('story-invitation-accept-inv-1'));
+    await confirmLastAlert();
+
+    expect(mockNotify).toHaveBeenCalledWith('accept_invitation_limit_reached', 'error');
+    expect(mockClose).not.toHaveBeenCalled();
+  });
+
   it('hides invitations of servers this device no longer knows', async () => {
     mockInvitations = [{ ...received, serverId: 'server-9' }];
     const view = await render(<StoryInvitationList serverFor={serverFor} />);

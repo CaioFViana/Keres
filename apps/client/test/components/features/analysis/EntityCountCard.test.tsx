@@ -61,6 +61,8 @@ describe('EntityCountCard as the links and values card', () => {
           entitiesUsedTotal: 0,
           maxCommentsPerStory: null,
           commentsUsed: 0,
+          maxContributorsPerStory: null,
+          contributorsUsed: 0,
         }}
         onServer
       />,
@@ -134,6 +136,8 @@ describe('EntityCountCard', () => {
             entitiesUsedTotal: 0,
             maxCommentsPerStory: null,
             commentsUsed: 0,
+            maxContributorsPerStory: null,
+            contributorsUsed: 0,
           }}
           onServer
         />,
@@ -173,6 +177,8 @@ describe('EntityCountCard', () => {
           entitiesUsedTotal: 640,
           maxCommentsPerStory: null,
           commentsUsed: 0,
+          maxContributorsPerStory: null,
+          contributorsUsed: 0,
         }}
         onServer
       />,
@@ -206,6 +212,8 @@ describe('EntityCountCard', () => {
           entitiesUsedTotal: 0,
           maxCommentsPerStory: null,
           commentsUsed: 0,
+          maxContributorsPerStory: null,
+          contributorsUsed: 0,
         }}
         onServer
       />,
@@ -253,6 +261,8 @@ describe('EntityCountCard', () => {
           entitiesUsedTotal: 0,
           maxCommentsPerStory: 10,
           commentsUsed: 4,
+          maxContributorsPerStory: null,
+          contributorsUsed: 0,
         }}
         onServer
       />,
@@ -260,6 +270,53 @@ describe('EntityCountCard', () => {
 
     expect(view.getByTestId('entity-count-plan-comments')).toBeTruthy();
     expect(view.getByText('4 / 10')).toBeTruthy();
+  });
+
+  it('shows the collaborators of the story against their own cap, when the plan caps them', async () => {
+    const view = await render(
+      <EntityCountCard
+        total={3}
+        byType={{ Character: 3 }}
+        labelFor={labelFor}
+        plan={{
+          tierName: 'Pro',
+          maxEntitiesPerStory: null,
+          maxEntitiesTotal: null,
+          entitiesUsedTotal: 0,
+          maxCommentsPerStory: null,
+          commentsUsed: 0,
+          maxContributorsPerStory: 5,
+          contributorsUsed: 3,
+        }}
+        onServer
+      />,
+    );
+
+    expect(view.getByTestId('entity-count-plan-contributors')).toBeTruthy();
+    expect(view.getByText('3 / 5')).toBeTruthy();
+  });
+
+  it('leaves the collaborators out of the plan when the plan does not cap them', async () => {
+    const view = await render(
+      <EntityCountCard
+        total={3}
+        byType={{ Character: 3 }}
+        labelFor={labelFor}
+        plan={{
+          tierName: 'Pro',
+          maxEntitiesPerStory: 500,
+          maxEntitiesTotal: null,
+          entitiesUsedTotal: 0,
+          maxCommentsPerStory: null,
+          commentsUsed: 0,
+          maxContributorsPerStory: null,
+          contributorsUsed: 0,
+        }}
+        onServer
+      />,
+    );
+
+    expect(view.queryByTestId('entity-count-plan-contributors')).toBeNull();
   });
 
   it('leaves the comments out of the plan when the plan does not cap them', async () => {
@@ -275,6 +332,8 @@ describe('EntityCountCard', () => {
           entitiesUsedTotal: 0,
           maxCommentsPerStory: null,
           commentsUsed: 0,
+          maxContributorsPerStory: null,
+          contributorsUsed: 0,
         }}
         onServer
       />,

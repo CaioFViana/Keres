@@ -173,6 +173,39 @@ describe('landing build', () => {
     await unmount();
   });
 
+  it('states the cap on collaborators per story on each card: a number, unlimited, none, or no row from an older server', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        currency: 'BRL',
+        tiers: [
+          { ...freeTier, maxContributorsPerStory: 0 },
+          { ...paidTier, maxContributorsPerStory: 5 },
+          {
+            ...paidTier,
+            id: '01ARZ3NDEKTSV4RRFFQ69G5FDW',
+            name: 'Open',
+            maxContributorsPerStory: null,
+          },
+          { ...paidTier, id: '01ARZ3NDEKTSV4RRFFQ69G5FEW', name: 'Legacy' },
+        ],
+      }),
+    );
+    const { container, unmount } = await renderLanding();
+    await flush();
+
+    const contributorsValue = (card: Element) =>
+      [...card.querySelectorAll('.tier-limits li')]
+        .find((row) => row.querySelector('span')?.textContent === siteEn.tiers.contributorsPerStory)
+        ?.querySelector('strong')?.textContent;
+    const [none, counted, open, legacy] = [...container.querySelectorAll('#tiers .tier-card')];
+    expect(contributorsValue(none)).toBe(siteEn.tiers.none);
+    expect(contributorsValue(counted)).toBe('5');
+    expect(contributorsValue(open)).toBe(siteEn.tiers.unlimited);
+    expect(contributorsValue(legacy)).toBeUndefined();
+
+    await unmount();
+  });
+
   it('lays every tier card out on the same rows', async () => {
     const unpriced = {
       ...paidTier,

@@ -174,6 +174,14 @@ const EntityCountCard = ({
               plan.maxCommentsPerStory,
               'entity-count-plan-comments',
             )}
+          {/* Collaborators are not entities either: their own cap, held against the owner's plan, with the live ones. */}
+          {plan.maxContributorsPerStory !== null &&
+            usage(
+              t('entity_count_plan_contributors'),
+              plan.contributorsUsed,
+              plan.maxContributorsPerStory,
+              'entity-count-plan-contributors',
+            )}
         </View>
       )}
 

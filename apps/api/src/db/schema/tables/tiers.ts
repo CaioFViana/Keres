@@ -35,6 +35,12 @@ export const tiers = table('tiers', {
    * out and this is their own cap, held against the story owner's plan. `null` is unlimited, 0 allows none.
    */
   maxCommentsPerStory: integer('max_comments_per_story'),
+  /**
+   * Collaborators one story may have, readers and writers alike, held against the story owner's plan (the owner
+   * is not counted). Pending invitations count too, so an invitation cannot be sent past the cap. `null` is
+   * unlimited, 0 allows no collaborator at all. Lowering it never removes the collaborators already there.
+   */
+  maxContributorsPerStory: integer('max_contributors_per_story'),
   /** Messages to other users in any rolling 24 hours (see `message_log`); 0 silences the user. */
   maxMessagesPerDay: integer('max_messages_per_day'),
   /** Monthly price in the system's currency minor units; `null` = not priced monthly, 0 = free. */

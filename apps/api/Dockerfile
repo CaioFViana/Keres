@@ -135,6 +135,13 @@ COPY --from=client-web-build /app/apps/client/dist-hosted ./apps/client/dist-hos
 # publica, feito para `/Keres/`. Sem este estágio a raiz cai na cadeia de redirects.
 COPY --from=site-landing-build /app/apps/site/dist-landing ./apps/site/dist-landing
 
+# Each static file gets a brotli and a gzip copy beside it, and a manifest lists them (see
+# apps/api/scripts/precompress-dist.ts). The server then answers from those copies: it does not compress
+# 25 MB of web bundles at every boot, and it does not keep compressed copies of them in memory. It runs here, as
+# root and before the chown below, so the copies belong to the same user as the files they sit next to.
+COPY apps/api/scripts/precompress-dist.ts ./apps/api/scripts/precompress-dist.ts
+RUN bun apps/api/scripts/precompress-dist.ts apps/admin/dist apps/admin/dist-showcase apps/client/dist-hosted apps/site/dist-landing
+
 WORKDIR /app/apps/api
 
 # Local media storage (the default driver) writes here at runtime - created ahead of time so

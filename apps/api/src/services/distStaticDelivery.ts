@@ -1,6 +1,7 @@
 import { readFileSync, statSync } from 'node:fs';
 import * as path from 'node:path';
 import { hostedClientMimeType } from './hostedClient';
+import { precompressedFor } from './precompressedAssets';
 import { StaticDelivery, type StaticDeliveryResult } from './staticDelivery';
 
 /** One delivery cache for the static trees of the admin panel, the showcase and the landing page. */
@@ -58,6 +59,7 @@ export async function deliverDistFile(
     contentType: hostedClientMimeType(filePath),
     cacheControl: distFileCacheControl(relativePath),
     load: () => new Uint8Array(readFileSync(filePath)),
+    precompressed: precompressedFor(dist, filePath),
     request: {
       acceptEncoding: request.headers.get('accept-encoding'),
       ifNoneMatch: request.headers.get('if-none-match'),

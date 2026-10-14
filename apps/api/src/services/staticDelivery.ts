@@ -7,6 +7,11 @@ const gzipAsync = promisify(gzip);
 
 export type ContentEncoding = 'br' | 'gzip';
 
+/** The fingerprint of a file's bytes: the `ETag` is built from it, and a build step's manifest records the same one. */
+export function contentHash(bytes: Uint8Array): string {
+  return createHash('sha1').update(bytes).digest('base64url');
+}
+
 /**
  * Text and binary formats that shrink; not the ones already compressed (PNG, JPEG, WOFF/WOFF2), where
  * a second pass costs CPU for nothing.
@@ -61,6 +66,13 @@ export interface StaticDeliveryInput {
   cacheControl: string;
   /** The bytes as they are on disk, read only when needed. */
   load: () => Uint8Array;
+  /**
+   * What a build step already compressed for this file (see `precompressedAssets.ts`): given the hash of the
+   * file as it is now and an encoding, a reader of the compressed bytes - or `null` when there is none, or when it
+   * was made for other bytes. Asking is cheap; the bytes are read only by calling the reader. Without one (or
+   * with `null`), the file is compressed here, on the first request.
+   */
+  precompressed?: (hash: string, encoding: ContentEncoding) => (() => Uint8Array) | null;
   request: { acceptEncoding?: string | null; ifNoneMatch?: string | null };
 }
 
@@ -110,7 +122,7 @@ export class StaticDelivery {
     const raw = input.load();
     const entry: Entry = {
       version: input.version,
-      hash: createHash('sha1').update(raw).digest('base64url'),
+      hash: contentHash(raw),
       size: raw.length,
       variants: new Map(),
     };
@@ -122,10 +134,14 @@ export class StaticDelivery {
     entry: Entry,
     encoding: ContentEncoding,
     load: () => Uint8Array,
+    precompressed?: StaticDeliveryInput['precompressed'],
   ): Promise<Uint8Array | null> {
     let pending = entry.variants.get(encoding);
     if (!pending) {
       pending = (async () => {
+        // Made at build time for exactly these bytes: no CPU spent, no raw copy held for the compressor.
+        const ready = precompressed?.(entry.hash, encoding);
+        if (ready) return new Uint8Array(ready());
         const raw = load();
         const compressed =
           encoding === 'br'
@@ -154,7 +170,9 @@ export class StaticDelivery {
       compressible && entry.size >= this.minBytes
         ? negotiateContentEncoding(input.request.acceptEncoding)
         : null;
-    const compressed = wanted ? await this.variant(entry, wanted, input.load) : null;
+    const compressed = wanted
+      ? await this.variant(entry, wanted, input.load, input.precompressed)
+      : null;
     const encoding = compressed ? wanted : null;
 
     // An entity tag per representation: the brotli bytes and the gzip bytes are not the same resource.
@@ -181,8 +199,10 @@ export class StaticDelivery {
     if (!isCompressibleContentType(input.contentType)) return;
     const entry = this.entryFor(input);
     if (entry.size < this.minBytes) return;
-    await this.variant(entry, 'br', input.load);
-    await this.variant(entry, 'gzip', input.load);
+    // Nothing to do for a file the build already compressed: it is read from disk when somebody asks for it.
+    if (input.precompressed?.(entry.hash, 'br') && input.precompressed(entry.hash, 'gzip')) return;
+    await this.variant(entry, 'br', input.load, input.precompressed);
+    await this.variant(entry, 'gzip', input.load, input.precompressed);
   }
 }
 

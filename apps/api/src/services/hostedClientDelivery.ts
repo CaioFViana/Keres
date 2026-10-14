@@ -6,6 +6,7 @@ import {
   hostedClientMimeType,
   rewriteHostedClientHtml,
 } from './hostedClient';
+import { precompressedFor } from './precompressedAssets';
 import {
   isCompressibleContentType,
   StaticDelivery,
@@ -35,6 +36,9 @@ export function hostedClientDeliveryInput(
     load: html
       ? () => new TextEncoder().encode(rewriteHostedClientHtml(readFileSync(filePath, 'utf8')))
       : () => new Uint8Array(readFileSync(filePath)),
+    // The entry page is rewritten at request time, so it is compressed here; every other file of the export is
+    // compressed once, at build time, when the build ran the precompression step.
+    ...(html ? {} : { precompressed: precompressedFor(clientDist, filePath) }),
   };
 }
 

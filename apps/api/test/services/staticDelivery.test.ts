@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto';
-import { brotliDecompressSync, gunzipSync } from 'node:zlib';
+import { brotliCompressSync, brotliDecompressSync, gunzipSync, gzipSync } from 'node:zlib';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  contentHash,
   isCompressibleContentType,
   matchesEntityTag,
   negotiateContentEncoding,
@@ -189,5 +190,87 @@ describe('StaticDelivery', () => {
     await delivery.deliver(input({ load, request: { acceptEncoding: 'gzip' } }));
 
     expect(load.mock.calls.length).toBe(loadsAfterWarm);
+  });
+});
+
+describe('StaticDelivery with copies made at build time', () => {
+  // Level 1 on purpose: the server's own compression (level 9, brotli 9) would give other bytes, so seeing these
+  // exact bytes in the answer proves they came from the build and not from the server.
+  const builtBrotli = new Uint8Array(brotliCompressSync(source, { params: { 1: 1 } }));
+  const builtGzip = new Uint8Array(gzipSync(source, { level: 1 }));
+  const copies = (hash: string, encoding: 'br' | 'gzip') => {
+    if (hash !== contentHash(source)) return null;
+    const bytes = encoding === 'br' ? builtBrotli : builtGzip;
+    return () => bytes;
+  };
+
+  it('answers with the copy the build made, and spends no compression on it', async () => {
+    const load = vi.fn(() => source);
+
+    const delivery = await new StaticDelivery().deliver(input({ load, precompressed: copies }));
+
+    expect(delivery.headers['Content-Encoding']).toBe('br');
+    expect(delivery.body).toEqual(builtBrotli);
+    expect(text(brotliDecompressSync(delivery.body!))).toBe(text(source));
+    // Only the one read that the entity tag needs: the compressor never asked for the file again.
+    expect(load.mock.calls.length).toBe(1);
+  });
+
+  it('answers a browser on plain HTTP with the gzip copy', async () => {
+    const delivery = await new StaticDelivery().deliver(
+      input({ precompressed: copies, request: { acceptEncoding: 'gzip, deflate' } }),
+    );
+
+    expect(delivery.headers['Content-Encoding']).toBe('gzip');
+    expect(delivery.body).toEqual(builtGzip);
+  });
+
+  it('keeps the entity tags it would have given without copies', async () => {
+    const built = await new StaticDelivery().deliver(input({ precompressed: copies }));
+    const onTheFly = await new StaticDelivery().deliver(input());
+
+    expect(built.headers.ETag).toBe(onTheFly.headers.ETag);
+  });
+
+  it('compresses on the spot a file the build copies were not made for', async () => {
+    const other = new TextEncoder().encode('const other = 1;\n'.repeat(400));
+
+    const delivery = await new StaticDelivery().deliver(
+      input({ load: () => other, precompressed: copies }),
+    );
+
+    expect(delivery.headers['Content-Encoding']).toBe('br');
+    expect(delivery.body).not.toEqual(builtBrotli);
+    expect(text(brotliDecompressSync(delivery.body!))).toBe(text(other));
+  });
+
+  it('compresses on the spot an encoding the build did not make', async () => {
+    const onlyBrotli = (hash: string, encoding: 'br' | 'gzip') =>
+      encoding === 'br' ? copies(hash, 'br') : null;
+
+    const delivery = await new StaticDelivery().deliver(
+      input({ precompressed: onlyBrotli, request: { acceptEncoding: 'gzip' } }),
+    );
+
+    expect(delivery.headers['Content-Encoding']).toBe('gzip');
+    expect(delivery.body).not.toEqual(builtGzip);
+    expect(text(gunzipSync(delivery.body!))).toBe(text(source));
+  });
+
+  it('does not warm what the build already compressed', async () => {
+    const reader = vi.fn(() => builtBrotli);
+    const delivery = new StaticDelivery();
+    const load = vi.fn(() => source);
+
+    await delivery.warm({
+      ...input({
+        load,
+        precompressed: (hash, encoding) => (copies(hash, encoding) ? reader : null),
+      }),
+    });
+
+    // Read for the entity tag, never read back for compression, and no copy was loaded ahead of its first request.
+    expect(load.mock.calls.length).toBe(1);
+    expect(reader).not.toHaveBeenCalled();
   });
 });

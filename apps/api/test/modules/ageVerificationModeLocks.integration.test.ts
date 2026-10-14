@@ -108,6 +108,8 @@ describe('in manual mode an administrator verifies and revokes by hand', () => {
     const ana = await registerUser('ana');
     await adminPut(ana.userId, { isAdultVerified: true });
 
+    const firstGrant = (await userRow(ana.userId))?.verifiedAt;
+
     const { status } = await adminPut(ana.userId, { isAdultVerified: true });
 
     expect(status).toBe(200);
@@ -115,6 +117,24 @@ describe('in manual mode an administrator verifies and revokes by hand', () => {
       isAdultVerified: true,
       verificationMethod: 'manual',
     });
+    // Nothing changed, so there is no new date and no second audit line.
+    expect((await userRow(ana.userId))?.verifiedAt).toEqual(firstGrant);
+    const lines = await db
+      .select()
+      .from(auditEvents)
+      .where(eq(auditEvents.action, 'account.verification_granted'));
+    expect(lines).toHaveLength(1);
+  });
+
+  it('refuses to verify a deleted account', async () => {
+    const ana = await registerUser('ana');
+    await db.update(users).set({ isDeleted: true }).where(eq(users.id, ana.userId));
+
+    const { status, data } = await adminPut(ana.userId, { isAdultVerified: true });
+
+    expect(status).toBe(409);
+    expect(data.message).toBe('This account is deleted, so it cannot be verified.');
+    expect(await userRow(ana.userId)).toMatchObject({ isAdultVerified: false });
   });
 
   it('refuses the grant in required mode, and leaves the account as it was', async () => {

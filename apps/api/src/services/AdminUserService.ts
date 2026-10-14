@@ -294,6 +294,10 @@ export class AdminUserService {
     if (this.isRootUsername(existing.username) && patch.isAdmin === false) {
       throw new RootAdminProtectedError();
     }
+    // A deleted account cannot sign in, so there is nothing to verify.
+    if (patch.isAdultVerified === true && existing.isDeleted) {
+      throw new AppError(409, 'This account is deleted, so it cannot be verified.');
+    }
     if (patch.tierId) {
       await this.assertTierExists(patch.tierId);
     }
@@ -303,15 +307,16 @@ export class AdminUserService {
     const grantedNow = new Date();
     // Granting by hand (manual mode only, see above): the account is active too, so one left pending by an earlier
     // `required` setting is not stuck behind a verification that will never come.
-    const grant =
-      patch.isAdultVerified === true
-        ? {
-            isAdultVerified: true,
-            verifiedAt: grantedNow,
-            verificationMethod: 'manual',
-            verificationStatus: 'active' as const,
-          }
-        : {};
+    // Granting what is already granted changes nothing: no new date, no second audit line.
+    const grantsNow = patch.isAdultVerified === true && !existing.isAdultVerified;
+    const grant = grantsNow
+      ? {
+          isAdultVerified: true,
+          verifiedAt: grantedNow,
+          verificationMethod: 'manual',
+          verificationStatus: 'active' as const,
+        }
+      : {};
     if (patch.tag !== undefined) {
       // Stored in the one shape lookups expect, and never one somebody else already holds.
       changes.tag = normalizeUserTag(patch.tag);
@@ -333,7 +338,7 @@ export class AdminUserService {
       .set({ ...changes, ...grant, updatedAt: grantedNow })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
-    if (patch.isAdultVerified === true) {
+    if (grantsNow) {
       auditService.record({
         category: 'account',
         action: 'account.verification_granted',

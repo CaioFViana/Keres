@@ -89,8 +89,10 @@ describe('contact message retention', () => {
     const created = await request('POST', '/public/contact', { body: visitor });
     expect(created.status).toBe(201);
 
-    expect(await contactService.pruneSiteMessages(new Date(), 0)).toBe(1);
-    expect(await contactService.pruneSiteMessages(new Date(), 0)).toBe(0);
+    // A second ahead: sqlite keeps whole seconds, so "now" can tie with a message sent in the same second.
+    const later = new Date(Date.now() + 1000);
+    expect(await contactService.pruneSiteMessages(later, 0)).toBe(1);
+    expect(await contactService.pruneSiteMessages(later, 0)).toBe(0);
   });
 
   it('keeps recent messages', async () => {

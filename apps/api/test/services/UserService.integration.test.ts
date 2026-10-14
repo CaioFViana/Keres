@@ -52,8 +52,11 @@ describe('UserService', () => {
 
     // Login stops at once, while the username stays taken through the grace period.
     expect(
-      (await request('POST', '/auth/login', { body: { username: ana.username, password: ana.password } }))
-        .status,
+      (
+        await request('POST', '/auth/login', {
+          body: { username: ana.username, password: ana.password },
+        })
+      ).status,
     ).toBe(401);
     await expect(service.deleteOwnAccount(ana.userId, ana.password)).rejects.toThrow();
     expect(await service.pruneDeletedAccounts(30)).toBe(0);

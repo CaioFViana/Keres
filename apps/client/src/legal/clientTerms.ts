@@ -60,7 +60,7 @@ const en: ClientTermsSection[] = [
   {
     heading: '8. Age',
     paragraphs: [
-      "The app does not verify your age and keeps no identity document. Writing offline needs no age gate. Minors are not allowed on servers by default: creating an account on a server requires being 18 or older. A server may verify its accounts through its own verification service (the document and photo go straight to that service, never to the app or to us), or may leave it to an administrator to mark accounts as verified by other means, as the official server does. Each server answers for its own verification and its own rules. A verified account chooses, in its profile, whether it sees adults-only (+18) content in public listings, and can change that at any time.",
+      'The app does not verify your age and keeps no identity document. Writing offline needs no age gate. Minors are not allowed on servers by default: creating an account on a server requires being 18 or older. A server may verify its accounts through its own verification service (the document and photo go straight to that service, never to the app or to us), or may leave it to an administrator to mark accounts as verified by other means, as the official server does. Each server answers for its own verification and its own rules. A verified account chooses, in its profile, whether it sees adults-only (+18) content in public listings, and can change that at any time.',
     ],
   },
   {

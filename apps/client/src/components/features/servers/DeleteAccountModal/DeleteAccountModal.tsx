@@ -73,20 +73,14 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
           testID={`${testID}-password`}
           accessibilityLabel={t('current_password')}
         />
-        {error ? (
-          <Text style={[typography.body, { color: colors.error }]}>{error}</Text>
-        ) : null}
+        {error ? <Text style={[typography.body, { color: colors.error }]}>{error}</Text> : null}
         <Button
           variant="destructive"
           onPress={() => onConfirm(password)}
           disabled={working || password.length === 0}
           testID={`${testID}-confirm`}
         >
-          {working ? (
-            <ActivityIndicator color={colors.onPrimary} />
-          ) : (
-            t('delete_account_confirm')
-          )}
+          {working ? <ActivityIndicator color={colors.onPrimary} /> : t('delete_account_confirm')}
         </Button>
       </View>
     </ResponsiveModal>

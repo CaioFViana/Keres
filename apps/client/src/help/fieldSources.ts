@@ -384,7 +384,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     documented: ['isRegistrationOpen', 'maxUsers', 'autoManage', 'defaultTierId', 'updatedAt'],
     // The sale currency is an admin-panel concern; the client never prices anything.
     // So is the adults-only gate: the client only obeys the server's refusal.
-    invisible: ['id', 'currency', 'allowNsfw'],
+    // And how the public landing page shows the plans (sale or information only).
+    invisible: ['id', 'currency', 'allowNsfw', 'tiersDisplay'],
   },
   // What the admin panel reads: the settings plus the server's age-verification mode (an operator concern).
   RegistrationSettingsView: {

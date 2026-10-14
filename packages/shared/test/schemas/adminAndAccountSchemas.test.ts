@@ -98,6 +98,7 @@ describe('administrative and account contracts', () => {
         allowNsfw: false,
         defaultTierId: null,
         currency: 'BRL',
+        tiersDisplay: 'sale',
         updatedAt: '2025-01-01',
       }).updatedAt,
     ).toBeInstanceOf(Date);

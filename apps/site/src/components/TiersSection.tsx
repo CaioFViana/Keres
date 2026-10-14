@@ -9,7 +9,15 @@ type TiersState =
   | { status: 'error' }
   | { status: 'ready'; data: LandingTiersResponse };
 
-function TierCard({ tier, currency }: { tier: LandingTier; currency: string }) {
+function TierCard({
+  tier,
+  currency,
+  infoOnly,
+}: {
+  tier: LandingTier;
+  currency: string;
+  infoOnly: boolean;
+}) {
   const { t, i18n } = useTranslation();
 
   const limit = (label: string, value: number | null, format: (n: number) => string = String) => (
@@ -23,7 +31,7 @@ function TierCard({ tier, currency }: { tier: LandingTier; currency: string }) {
   const discount = yearlyDiscountPercent(monthly, yearly);
   // Every card renders the same two price rows - a hero and a sub-line - so the limits lists
   // below start at the same height on every card. A missing second row is a spacer, never
-  // a missing element.
+  // a missing element. In `info` mode there are no prices at all, so there are no rows either.
   const hero = monthly ?? yearly;
   const heroPeriod = monthly !== null ? t('tiers.perMonth') : t('tiers.perYear');
   const showYearlyLine = monthly !== null && yearly !== null && !(monthly === 0 && yearly === 0);
@@ -43,24 +51,28 @@ function TierCard({ tier, currency }: { tier: LandingTier; currency: string }) {
         {tier.name}
         {tier.isDefault && <span className="tier-badge">{t('tiers.defaultBadge')}</span>}
       </h3>
-      <div className="tier-prices">
-        <p className="tier-price">{heroPrice ?? <a href="#contact">{t('tiers.customPrice')}</a>}</p>
-        <p className="tier-subprice">
-          {showYearlyLine ? (
-            <>
-              {formatPrice(yearly as number, currency, i18n.language)}
-              <span className="tier-period">{t('tiers.perYear')}</span>
-              {discount !== null && (
-                <span className="tier-badge">
-                  {t('tiers.yearlyDiscount', { percent: discount })}
-                </span>
-              )}
-            </>
-          ) : (
-            ' '
-          )}
-        </p>
-      </div>
+      {!infoOnly && (
+        <div className="tier-prices">
+          <p className="tier-price">
+            {heroPrice ?? <a href="#contact">{t('tiers.customPrice')}</a>}
+          </p>
+          <p className="tier-subprice">
+            {showYearlyLine ? (
+              <>
+                {formatPrice(yearly as number, currency, i18n.language)}
+                <span className="tier-period">{t('tiers.perYear')}</span>
+                {discount !== null && (
+                  <span className="tier-badge">
+                    {t('tiers.yearlyDiscount', { percent: discount })}
+                  </span>
+                )}
+              </>
+            ) : (
+              ' '
+            )}
+          </p>
+        </div>
+      )}
       <ul className="tier-limits">
         {limit(t('tiers.stories'), tier.maxStories)}
         {limit(t('tiers.entitiesPerStory'), tier.maxEntitiesPerStory)}
@@ -112,12 +124,15 @@ export function TiersSection() {
   };
   useEffect(load, []);
 
+  // The server lists its plans for information only: neutral words, no prices, no way to buy.
+  const infoOnly = state.status === 'ready' && state.data.display === 'info';
+
   return (
     <section className="band" id="tiers">
       <div className="section-inner">
         <header className="section-head">
-          <h2>{t('tiers.title')}</h2>
-          <p>{t('tiers.lead', { context: SITE_TEXT_CONTEXT })}</p>
+          <h2>{infoOnly ? t('tiers.infoTitle') : t('tiers.title')}</h2>
+          <p>{infoOnly ? t('tiers.infoLead') : t('tiers.lead', { context: SITE_TEXT_CONTEXT })}</p>
         </header>
         {state.status === 'loading' && <p className="muted">{t('tiers.loading')}</p>}
         {state.status === 'error' && (
@@ -130,19 +145,28 @@ export function TiersSection() {
         )}
         {state.status === 'ready' &&
           (state.data.tiers.length === 0 ? (
-            <p className="muted">{t('tiers.empty', { context: SITE_TEXT_CONTEXT })}</p>
+            <p className="muted">
+              {infoOnly ? t('tiers.infoEmpty') : t('tiers.empty', { context: SITE_TEXT_CONTEXT })}
+            </p>
           ) : (
             <>
               <div className="tiers-grid">
                 {state.data.tiers.map((tier) => (
-                  <TierCard key={tier.id} tier={tier} currency={state.data.currency} />
+                  <TierCard
+                    key={tier.id}
+                    tier={tier}
+                    currency={state.data.currency}
+                    infoOnly={infoOnly}
+                  />
                 ))}
               </div>
-              <p className="tiers-contact">
-                <a className="button button-primary" href="#contact">
-                  {t('tiers.contactCta')}
-                </a>
-              </p>
+              {!infoOnly && (
+                <p className="tiers-contact">
+                  <a className="button button-primary" href="#contact">
+                    {t('tiers.contactCta')}
+                  </a>
+                </p>
+              )}
             </>
           ))}
       </div>

@@ -178,7 +178,9 @@ export function storefrontPage(options: StorefrontOptions): string {
   }
 
   function renderPlans(token, tiersPayload, info) {
-    var tiers = (tiersPayload && tiersPayload.tiers) || tiersPayload || [];
+    // A server that shows its plans for information only (display 'info') sells none here.
+    var forSale = !(tiersPayload && tiersPayload.display === 'info');
+    var tiers = forSale ? (tiersPayload && tiersPayload.tiers) || tiersPayload || [] : [];
     // A store method is bought inside the mobile app; only redirect methods are bought here.
     var methods = (info.methods || []).filter(function (m) { return (m.flow || 'redirect') === 'redirect'; });
     var subscription = info.subscription || null;

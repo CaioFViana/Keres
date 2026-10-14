@@ -1068,7 +1068,7 @@ describe('tiers page', () => {
     await changeInput(view.container.querySelector('.form-card input')!, 'Pro');
     await changeInput(byText('Price per month'), '19.90');
     await changeInput(byText('Price per year'), '199');
-    await click(byText('Available for sale'));
+    await click(byText('Show on the public site'));
     await changeInput(byText('Display order'), '2');
 
     // 199.00 against 12 × 19.90: −17%.

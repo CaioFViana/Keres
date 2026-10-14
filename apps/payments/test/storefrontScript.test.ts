@@ -203,6 +203,29 @@ describe('buy site script', () => {
     expect(app.textContent).not.toContain('Unlimited comments');
   });
 
+  it('sells nothing on a server whose plans are for information only', async () => {
+    const info = {
+      currency: 'BRL',
+      display: 'info',
+      tiers: tiers.tiers.map((tier) => ({
+        ...tier,
+        priceMonthlyCents: null,
+        priceYearlyCents: null,
+        webMonthlyEnabled: false,
+        webYearlyEnabled: false,
+      })),
+    };
+    const { app } = await openStore(
+      { enabled: true, currency: 'BRL', methods, subscription: null },
+      true,
+      info,
+    );
+
+    expect(app.textContent).toContain('No plans on sale.');
+    expect(app.querySelectorAll('select').length).toBe(0);
+    expect(app.textContent).not.toContain('Pro');
+  });
+
   it('asks to sign in when there is no session', async () => {
     const { app, calls } = await openStore({ enabled: true }, false);
 

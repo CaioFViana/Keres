@@ -58,7 +58,7 @@ describe('GET /public/tiers', () => {
     const { status, data } = await request('GET', '/public/tiers');
 
     expect(status).toBe(200);
-    expect(data).toEqual({ currency: 'BRL', tiers: [] });
+    expect(data).toEqual({ currency: 'BRL', display: 'sale', tiers: [] });
     expect(PublicTiersResponseSchema.safeParse(data).success).toBe(true);
   });
 

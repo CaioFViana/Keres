@@ -29,6 +29,8 @@ export interface LandingTier {
 
 export interface LandingTiersResponse {
   currency: string;
+  /** `info`: the plans are listed with their limits only, nothing is for sale. Absent from an older server, which sells. */
+  display?: 'sale' | 'info';
   tiers: LandingTier[];
 }
 

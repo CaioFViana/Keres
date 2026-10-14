@@ -372,6 +372,9 @@
     "dark": "Theme: Dark"
   },
   "tiers": {
+    "infoTitle": "Plans",
+    "infoLead": "The plans this server offers and what each one includes. They are granted by the team; nothing is sold here.",
+    "infoEmpty": "No plans are listed yet.",
     "title": "Plans for syncing",
     "lead": "Everything local is free forever. A plan only matters when you sync, collaborate, or publish on this server.",
     "lead_official": "Everything local is free forever. A plan only matters when you sync, collaborate, or publish on Keres.",

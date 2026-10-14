@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AgeVerificationMode, RegistrationSettings, Tier } from '@keres/shared';
+import type { AgeVerificationMode, RegistrationSettings, Tier, TiersDisplay } from '@keres/shared';
 import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
 import { TierApiService } from '../../api/TierApiService';
 import { AppearanceCard } from './AppearanceCard';
@@ -65,6 +65,7 @@ export function RegistrationSettingsPage() {
         allowNsfw: settings.allowNsfw,
         defaultTierId: settings.defaultTierId,
         currency: settings.currency,
+        tiersDisplay: settings.tiersDisplay,
       });
       setSettings(updated);
       setSavedSnapshot(JSON.stringify(updated));
@@ -198,6 +199,22 @@ export function RegistrationSettingsPage() {
                   }
                 />
               </label>
+
+              <label>
+                {t('settings.tiersDisplay')}
+                <select
+                  value={settings.tiersDisplay}
+                  onChange={(e) =>
+                    setSettings({ ...settings, tiersDisplay: e.target.value as TiersDisplay })
+                  }
+                >
+                  <option value="sale">{t('settings.tiersDisplaySale')}</option>
+                  <option value="info">{t('settings.tiersDisplayInfo')}</option>
+                </select>
+              </label>
+              <p className="hint" data-testid="tiers-display-hint">
+                {t('settings.tiersDisplayHint')}
+              </p>
 
               {tierError && <p className="error-text">{tierError}</p>}
               {error && <p className="error-text">{error}</p>}

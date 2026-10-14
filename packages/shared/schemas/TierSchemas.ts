@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { CurrencySchema } from './RegistrationSettingsSchemas';
+import { DEFAULT_TIERS_DISPLAY } from '../metadata/TiersDisplay';
+import { CurrencySchema, TiersDisplaySchema } from './RegistrationSettingsSchemas';
 import { UlidSchema } from './SyncSchemas';
 
 /**
@@ -185,6 +186,11 @@ export type PublicTier = z.infer<typeof PublicTierSchema>;
 
 export const PublicTiersResponseSchema = z.object({
   currency: CurrencySchema,
+  /**
+   * `info`: the tiers carry their limits only (prices and store/web sale nulled or false), and the landing
+   * page says nothing is sold. A server predating the mode sells its plans, so an absent field reads `sale`.
+   */
+  display: TiersDisplaySchema.default(DEFAULT_TIERS_DISPLAY),
   tiers: z.array(PublicTierSchema),
 });
 export type PublicTiersResponse = z.infer<typeof PublicTiersResponseSchema>;

@@ -1,4 +1,5 @@
 import type { AgeVerificationMode } from '../age-verification/AgeVerificationConnector';
+import type { TiersDisplay } from '../metadata/TiersDisplay';
 
 export interface RegistrationSettings {
   id: string;
@@ -9,6 +10,8 @@ export interface RegistrationSettings {
   defaultTierId: string | null;
   /** ISO-4217 code (`BRL`): the one currency tier prices are expressed in. */
   currency: string;
+  /** How the landing page presents the plans: `sale` (priced) or `info` (no prices, nothing for sale). */
+  tiersDisplay: TiersDisplay;
   updatedAt: Date;
 }
 

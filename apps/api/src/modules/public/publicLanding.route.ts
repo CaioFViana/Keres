@@ -27,14 +27,17 @@ export const publicLandingRoutes = new Elysia()
         registrationSettingsService.getOrCreate(),
         tierService.listPublicForSale(),
       ]);
+      // `info`: the same plans, listed with their limits only - no prices, no store or web sale.
+      const infoOnly = settings.tiersDisplay === 'info';
       const payload = {
         currency: settings.currency,
+        display: settings.tiersDisplay,
         tiers: tiers.map((tier) => ({
           id: tier.id,
           name: tier.name,
           isDefault: tier.isDefault,
-          priceMonthlyCents: tier.priceMonthlyCents,
-          priceYearlyCents: tier.priceYearlyCents,
+          priceMonthlyCents: infoOnly ? null : tier.priceMonthlyCents,
+          priceYearlyCents: infoOnly ? null : tier.priceYearlyCents,
           maxStories: tier.maxStories,
           maxEntitiesPerStory: tier.maxEntitiesPerStory,
           maxEntitiesTotal: tier.maxEntitiesTotal,
@@ -45,10 +48,10 @@ export const publicLandingRoutes = new Elysia()
           maxPublishedArcs: tier.maxPublishedArcs,
           maxCommentsPerStory: tier.maxCommentsPerStory,
           maxContributorsPerStory: tier.maxContributorsPerStory,
-          playMonthlyProductId: tier.playMonthlyProductId,
-          playYearlyProductId: tier.playYearlyProductId,
-          webMonthlyEnabled: tier.webMonthlyEnabled,
-          webYearlyEnabled: tier.webYearlyEnabled,
+          playMonthlyProductId: infoOnly ? null : tier.playMonthlyProductId,
+          playYearlyProductId: infoOnly ? null : tier.playYearlyProductId,
+          webMonthlyEnabled: infoOnly ? false : tier.webMonthlyEnabled,
+          webYearlyEnabled: infoOnly ? false : tier.webYearlyEnabled,
         })),
       };
       // The list is tiny (a handful of tiers), so hashing the payload itself is the cheapest
@@ -70,9 +73,9 @@ export const publicLandingRoutes = new Elysia()
       // rejects at the type level (same reason `/stories` declares none). The payload shape is
       // `PublicTiersResponseSchema` in `@keres/shared`, asserted by the integration tests.
       detail: {
-        summary: 'Tiers available for sale',
+        summary: 'Tiers the server offers',
         description:
-          'The currency and the tiers this server offers, with prices and limits, for the landing page. Answers while the showcase is disabled.',
+          'The currency and the tiers this server offers, for the landing page: with prices and limits when `display` is `sale`, with limits only when it is `info`. Answers while the showcase is disabled.',
         tags: ['Showcase'],
       },
     },

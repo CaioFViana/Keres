@@ -58,6 +58,8 @@ export const adminRegistrationRoutes = new Elysia()
         allowNsfw: t.Optional(t.Boolean()),
         defaultTierId: t.Optional(t.Nullable(t.String())),
         currency: t.Optional(t.String()),
+        // A string, not a union: the Zod schema is the gate, and an unknown mode answers 400 like the other fields.
+        tiersDisplay: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Update registration settings',

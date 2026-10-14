@@ -123,6 +123,7 @@ export * from './schemas/UserSchemas';
 export * from './schemas/PublicationSchemas';
 export * from './metadata/OperationLogEntityType';
 export * from './metadata/recoverableEntityTypes';
+export * from './metadata/TiersDisplay';
 export * from './metadata/entityDisplayName';
 export * from './entity-solvers/contracts';
 export * from './entity-solvers/boardEntitySummary';

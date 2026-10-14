@@ -1,4 +1,5 @@
 import { relations } from 'drizzle-orm';
+import { TIERS_DISPLAYS } from '@keres/shared/metadata/TiersDisplay';
 import { boolean, integer, table, text, timestampNow } from '../columns';
 import { tiers } from './tiers';
 
@@ -30,6 +31,8 @@ export const registrationSettings = table('registration_settings', {
   defaultTierId: text('default_tier_id').references(() => tiers.id),
   /** ISO-4217 code: the one currency tier prices are expressed in, system-wide. */
   currency: text('currency').notNull().default('BRL'),
+  /** How the public landing page presents the plans: priced for `sale`, or `info` only (no prices). */
+  tiersDisplay: text('tiers_display', { enum: TIERS_DISPLAYS }).notNull().default('sale'),
   updatedAt: timestampNow('updated_at'),
 });
 

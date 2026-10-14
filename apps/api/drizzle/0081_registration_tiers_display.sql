@@ -1,0 +1,1 @@
+ALTER TABLE "registration_settings" ADD COLUMN "tiers_display" text DEFAULT 'sale' NOT NULL;

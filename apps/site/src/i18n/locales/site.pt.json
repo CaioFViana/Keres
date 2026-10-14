@@ -372,6 +372,9 @@
     "dark": "Tema: Escuro"
   },
   "tiers": {
+    "infoTitle": "Planos",
+    "infoLead": "Os planos que este servidor oferece e o que cada um inclui. São concedidos pela equipe; nada é vendido aqui.",
+    "infoEmpty": "Nenhum plano listado ainda.",
     "title": "Planos para sincronizar",
     "lead": "Tudo que é local é grátis para sempre. Um plano só importa quando você sincroniza, colabora ou publica neste servidor.",
     "lead_official": "Tudo que é local é grátis para sempre. Um plano só importa quando você sincroniza, colabora ou publica no Keres.",

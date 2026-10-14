@@ -470,6 +470,13 @@
       "when": 1791991147830,
       "tag": "0066_tier_max_contributors",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "6",
+      "when": 1791992288707,
+      "tag": "0067_registration_tiers_display",
+      "breakpoints": true
     }
   ]
 }

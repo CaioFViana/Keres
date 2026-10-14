@@ -601,11 +601,14 @@ async function runManualSteps(api: string): Promise<void> {
     return 'plan 200';
   });
 
-  await step(4, "the server's terms say there is no age verification", async () => {
+  await step(4, "the server's terms say minors are not allowed by default", async () => {
     const terms = await send('GET', `${api}/api/keres-tos`);
     expect(terms.status === 200, `the terms answered ${terms.status}`);
-    expect(terms.text.includes('No age verification on this server'), 'the terms do not say so');
-    return 'terms say no age verification';
+    expect(
+      terms.text.includes('Minors are not allowed on this server by default'),
+      'the terms do not say so',
+    );
+    return 'terms say minors are not allowed by default';
   });
 
   await step(5, 'the root administrator signs in', async () => {

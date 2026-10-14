@@ -33,8 +33,8 @@ describe('the client privacy policy', () => {
     expect(clientPrivacyFor(undefined)).toBe(CLIENT_PRIVACY.en);
   });
 
-  it('is at the version that carries the age-verification flow', () => {
-    expect(CLIENT_PRIVACY_VERSION).toBeGreaterThanOrEqual(2);
+  it('is at the version that carries the current age-verification flow', () => {
+    expect(CLIENT_PRIVACY_VERSION).toBeGreaterThanOrEqual(1);
   });
 
   it('files the age verification flow under section 7 in both languages, in step with each other', () => {
@@ -46,20 +46,42 @@ describe('the client privacy policy', () => {
     );
   });
 
-  it('says the app collects no identity document and keeps no copy of the one sent to a server', () => {
+  it('says the app collects no identity document, keeps no copy of the one sent to a server, and lets an administrator verify instead', () => {
     const section = (sections: typeof CLIENT_PRIVACY.en) =>
       (sections.find((s) => s.heading.startsWith('7.'))?.paragraphs ?? []).join(' ');
 
     const en = section(CLIENT_PRIVACY.en);
-    expect(en).toMatch(/collects no identity document/);
-    expect(en).toMatch(/go straight from the device to that server's verification service/);
-    expect(en).toMatch(/No copy stays on the device or on Keres servers/);
-    expect(en).toMatch(/governed by the privacy policy of that server, not by this one/);
+    for (const clause of [
+      /collects no identity document/,
+      /go straight from the device to that server's verification service/,
+      /No copy stays on the device or on Keres servers/,
+      /governed by the privacy policy of that server, not by this one/,
+      /leave verification to an administrator/,
+    ]) {
+      expect(en).toMatch(clause);
+    }
 
     const pt = section(CLIENT_PRIVACY.pt);
-    expect(pt).toMatch(/não coleta nenhum documento de identidade/);
-    expect(pt).toMatch(/diretamente para o serviço de verificação daquele servidor/);
-    expect(pt).toMatch(/Nenhuma cópia fica no dispositivo nem nos servidores da Keres/);
-    expect(pt).toMatch(/regido pela política de privacidade daquele servidor, e não por esta/);
+    for (const clause of [
+      /não coleta nenhum documento de identidade/,
+      /diretamente para o serviço de verificação daquele servidor/,
+      /Nenhuma cópia fica no dispositivo nem nos servidores da Keres/,
+      /regido pela política de privacidade daquele servidor, e não por esta/,
+      /deixar a verificação a cargo de um administrador/,
+    ]) {
+      expect(pt).toMatch(clause);
+    }
+  });
+
+  it('points to the contact form on keres.me and names no email address', () => {
+    const rights = (sections: typeof CLIENT_PRIVACY.en) =>
+      (sections.find((s) => s.heading.startsWith('5.'))?.paragraphs ?? []).join(' ');
+
+    expect(rights(CLIENT_PRIVACY.en)).toMatch(/contact form on keres\.me/);
+    expect(rights(CLIENT_PRIVACY.pt)).toMatch(/formulário de contato em keres\.me/);
+    for (const sections of [CLIENT_PRIVACY.en, CLIENT_PRIVACY.pt]) {
+      const all = sections.flatMap((s) => [s.heading, ...s.paragraphs]).join('\n');
+      expect(all).not.toMatch(/privacy@|@keres\.me/);
+    }
   });
 });

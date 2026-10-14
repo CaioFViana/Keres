@@ -12,7 +12,7 @@ operational companion behind them.
 ## Controller and contact
 
 - Controller: the Keres team (keres.me).
-- Data protection contact (encarregado): privacy@keres.me. Name a person here
+- Data protection contact (encarregado): the contact form on keres.me. Name a person here
   before the Play release (D23).
 
 ## Roles in age verification

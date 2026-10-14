@@ -9,13 +9,15 @@ import type { AgeVerificationMode } from '@keres/shared';
  * always serves *this* server's rules, whatever they are.
  *
  * The text depends on the age-verification mode (`AGE_VERIFICATION_MODE`, see
- * `docs/age_verification.md`): a `required` server verifies its accounts, a `manual` one says
- * plainly that it verifies nobody and has no adults-only area. Both share the version number, so
- * the digest (the hash recorded with each acceptance) is what tells the two texts apart.
+ * `docs/age_verification.md`): a `required` server verifies its accounts through a verification
+ * service; a `manual` one says plainly that it runs no automated check, that minors are not
+ * allowed by default, that an administrator marks verified accounts by hand, and that it takes no
+ * payments (plans are granted by its team). Both share the version number, so the digest (the hash
+ * recorded with each acceptance) is what tells the two texts apart.
  * The privacy policy (`privacyPolicy.ts`, served at `keres-privacy`) details data handling.
  */
-export const SERVER_TERMS_VERSION = 3;
-export const SERVER_TERMS_UPDATED_AT = '2026-10-12';
+export const SERVER_TERMS_VERSION = 1;
+export const SERVER_TERMS_UPDATED_AT = '2026-10-14';
 
 export interface ServerTermsSection {
   heading: string;
@@ -28,18 +30,20 @@ interface ModeSection {
   manual: ServerTermsSection;
 }
 
+type Section = ServerTermsSection | ModeSection;
+
 interface ServerTermsText {
-  what: ServerTermsSection;
-  accounts: ServerTermsSection;
-  conduct: ModeSection;
-  moderation: ServerTermsSection;
-  plans: ServerTermsSection;
-  deleting: ServerTermsSection;
-  changes: ServerTermsSection;
-  age: ModeSection;
-  refunds: ServerTermsSection;
-  reports: ServerTermsSection;
-  operator: ServerTermsSection;
+  what: Section;
+  accounts: Section;
+  conduct: Section;
+  moderation: Section;
+  plans: Section;
+  deleting: Section;
+  changes: Section;
+  age: Section;
+  refunds: Section;
+  reports: Section;
+  operator: Section;
 }
 
 /**
@@ -77,7 +81,7 @@ const en: ServerTermsText = {
     manual: {
       heading: '3. Acceptable conduct',
       paragraphs: [
-        'Do not publish or share sexually explicit content, spam, abuse, harassment, or anything illegal. This server does not accept adults-only (+18) content: stories sent or published with the +18 flag are refused. Other servers decide for themselves in their own terms.',
+        'Do not publish or share sexually explicit content, spam, abuse, harassment, or anything illegal. Adults-only (+18) stories are accepted on this server only if its settings allow them (the server screen in the app says so); where they are allowed, they are open only to accounts verified as adults (section 8). Where they are not allowed, stories sent or published with the +18 flag are refused. Marking a story +18 on your own device is always possible: only sending it to this server is refused.',
         'Reports from other users are reviewed, and abusive accounts are blocked or removed.',
       ],
     },
@@ -89,22 +93,46 @@ const en: ServerTermsText = {
     ],
   },
   plans: {
-    heading: '5. Plans and payments',
-    paragraphs: [
-      'Paid plans extend storage, publishing and collaboration ceilings. Purchases made through the device store follow that store refund policy and the applicable law. Server-side charges are not refunded except as required by law.',
-    ],
+    required: {
+      heading: '5. Plans and payments',
+      paragraphs: [
+        'Paid plans extend storage, publishing and collaboration ceilings. Purchases made through the device store follow that store refund policy and the applicable law. Server-side charges are not refunded except as required by law.',
+      ],
+    },
+    manual: {
+      heading: '5. Plans',
+      paragraphs: [
+        'This server takes no payments and sells nothing. The limits on storage, publishing and collaboration that apply to your account come from the plan the server team assigns to it, and the team may grant plans to accounts at its discretion. The plan that applies to you, and its limits, are shown in the server details screen.',
+      ],
+    },
   },
   deleting: {
-    heading: '6. Deleting your account',
-    paragraphs: [
-      'You may delete your account at any time from the server details screen. Deletion deactivates the account immediately and erases personal data within 30 days. Content you contributed to stories owned by others remains, attributed to a removed account. Financial records are kept as long as the law requires.',
-    ],
+    required: {
+      heading: '6. Deleting your account',
+      paragraphs: [
+        'You may delete your account at any time from the server details screen. Deletion deactivates the account immediately and erases personal data within 30 days. Content you contributed to stories owned by others remains, attributed to a removed account. Financial records are kept as long as the law requires.',
+      ],
+    },
+    manual: {
+      heading: '6. Deleting your account',
+      paragraphs: [
+        'You may delete your account at any time from the server details screen. Deletion deactivates the account immediately and erases personal data within 30 days. Content you contributed to stories owned by others remains, attributed to a removed account.',
+      ],
+    },
   },
   changes: {
-    heading: '7. Changes to these terms',
-    paragraphs: [
-      'We may update these terms as the service and the law change. Material changes are announced in advance, in the app and on the site, and asked again before they apply to you. If you disagree, cancel your plan and stop using the server.',
-    ],
+    required: {
+      heading: '7. Changes to these terms',
+      paragraphs: [
+        'We may update these terms as the service and the law change. Material changes are announced in advance, in the app and on the site, and asked again before they apply to you. If you disagree, cancel your plan and stop using the server.',
+      ],
+    },
+    manual: {
+      heading: '7. Changes to these terms',
+      paragraphs: [
+        'We may update these terms as the service and the law change. Material changes are announced in advance, in the app and on the site, and asked again before they apply to you. If you disagree, delete your account and stop using the server.',
+      ],
+    },
   },
   age: {
     required: {
@@ -119,18 +147,28 @@ const en: ServerTermsText = {
       ],
     },
     manual: {
-      heading: '8. Age',
+      heading: '8. Age and verification',
       paragraphs: [
-        'Accounts are meant for people 18 or older. No age verification on this server: no adults-only area exists and no account is verified. Accounts are active as soon as they are created.',
-        'Other servers that allow mature themes say so in their own terms and verify age themselves.',
+        'Minors are not allowed on this server by default. Accounts are for people 18 or older, and every account starts unverified.',
+        'This server runs no automated age check and never receives an identity document, a photo or a date of birth. When an account is verified, it happens by other means, outside the app and outside this server, and an administrator then marks the account as verified by hand. An administrator may remove that mark at any time.',
+        "Where this server allows adults-only (+18) stories, they are open only to verified accounts: if the verification is removed, or the account is found to be a minor's, the account is removed from every adults-only story at once and loses access to them. Seeing adults-only stories in public listings is also your choice: a verified account can turn it on or off at any time in its profile in the app.",
+        'An account found to belong to a minor is closed.',
       ],
     },
   },
   refunds: {
-    heading: '9. Refunds',
-    paragraphs: [
-      'Purchases made through the device store follow that store refund policy, plus your statutory rights. Charges made directly by the server can be cancelled within 7 days of contracting for a full, updated refund, as the Consumer Defense Code requires. After that, server-side charges are not refunded except as required by law.',
-    ],
+    required: {
+      heading: '9. Refunds',
+      paragraphs: [
+        'Purchases made through the device store follow that store refund policy, plus your statutory rights. Charges made directly by the server can be cancelled within 7 days of contracting for a full, updated refund, as the Consumer Defense Code requires. After that, server-side charges are not refunded except as required by law.',
+      ],
+    },
+    manual: {
+      heading: '9. Refunds',
+      paragraphs: [
+        'This server takes no payments, so it charges nothing and has nothing to refund.',
+      ],
+    },
   },
   reports: {
     heading: '10. Reports',
@@ -141,7 +179,7 @@ const en: ServerTermsText = {
   operator: {
     heading: '11. Operator, privacy and law',
     paragraphs: [
-      'How your data is handled is in the privacy policy, readable before registration and in the server details. Operator: [legal name, CNPJ and address - to be published before release]. Questions about privacy, your data or these terms: privacy@keres.me. These terms follow Brazilian law.',
+      "How your data is handled is in the privacy policy, readable before registration and in the server details. Operator: [legal name, CNPJ and address - to be published before release]. Questions about privacy, your data or these terms: use the contact form this server's operator publishes (on the official server, the contact form on keres.me). These terms follow Brazilian law.",
     ],
   },
 };
@@ -170,7 +208,7 @@ const pt: ServerTermsText = {
     manual: {
       heading: '3. Conduta aceitável',
       paragraphs: [
-        'Não publique nem compartilhe conteúdo sexualmente explícito, spam, abuso, assédio ou qualquer coisa ilegal. Este servidor não aceita conteúdo adulto (+18): histórias enviadas ou publicadas com a flag +18 são recusadas. Outros servidores decidem por conta própria em seus termos.',
+        'Não publique nem compartilhe conteúdo sexualmente explícito, spam, abuso, assédio ou qualquer coisa ilegal. Histórias de conteúdo adulto (+18) só são aceitas neste servidor se as configurações dele permitirem (a tela do servidor no app informa); onde são permitidas, ficam abertas somente a contas verificadas como de adultos (seção 8). Onde não são permitidas, histórias enviadas ou publicadas com a flag +18 são recusadas. Marcar uma história como +18 no seu próprio aparelho é sempre possível: só enviá-la a este servidor é recusado.',
         'Denúncias de outros usuários são avaliadas, e contas abusivas são bloqueadas ou removidas.',
       ],
     },
@@ -182,22 +220,46 @@ const pt: ServerTermsText = {
     ],
   },
   plans: {
-    heading: '5. Planos e pagamentos',
-    paragraphs: [
-      'Planos pagos ampliam armazenamento, publicação e limites de colaboração. Compras feitas pela loja do dispositivo seguem a política de reembolso da loja e a lei aplicável. Cobranças feitas direto no servidor não são reembolsadas, exceto quando exigido por lei.',
-    ],
+    required: {
+      heading: '5. Planos e pagamentos',
+      paragraphs: [
+        'Planos pagos ampliam armazenamento, publicação e limites de colaboração. Compras feitas pela loja do dispositivo seguem a política de reembolso da loja e a lei aplicável. Cobranças feitas direto no servidor não são reembolsadas, exceto quando exigido por lei.',
+      ],
+    },
+    manual: {
+      heading: '5. Planos',
+      paragraphs: [
+        'Este servidor não recebe pagamentos e não vende nada. Os limites de armazenamento, publicação e colaboração da sua conta vêm do plano que a equipe do servidor atribui a ela, e a equipe pode conceder planos a contas a seu critério. O plano que vale para você, e seus limites, aparecem na tela de detalhes do servidor.',
+      ],
+    },
   },
   deleting: {
-    heading: '6. Excluir sua conta',
-    paragraphs: [
-      'Você pode excluir sua conta a qualquer momento na tela de detalhes do servidor. A exclusão desativa a conta de imediato e apaga os dados pessoais em até 30 dias. Conteúdo que você contribuiu em histórias de outros permanece, atribuído a uma conta removida. Registros financeiros são guardados pelo tempo exigido por lei.',
-    ],
+    required: {
+      heading: '6. Excluir sua conta',
+      paragraphs: [
+        'Você pode excluir sua conta a qualquer momento na tela de detalhes do servidor. A exclusão desativa a conta de imediato e apaga os dados pessoais em até 30 dias. Conteúdo que você contribuiu em histórias de outros permanece, atribuído a uma conta removida. Registros financeiros são guardados pelo tempo exigido por lei.',
+      ],
+    },
+    manual: {
+      heading: '6. Excluir sua conta',
+      paragraphs: [
+        'Você pode excluir sua conta a qualquer momento na tela de detalhes do servidor. A exclusão desativa a conta de imediato e apaga os dados pessoais em até 30 dias. Conteúdo que você contribuiu em histórias de outros permanece, atribuído a uma conta removida.',
+      ],
+    },
   },
   changes: {
-    heading: '7. Alterações destes termos',
-    paragraphs: [
-      'Podemos atualizar estes termos conforme o serviço e a lei mudam. Mudanças relevantes são avisadas com antecedência, no aplicativo e no site, e pedidas de novo antes de valerem para você. Se discordar, cancele seu plano e pare de usar o servidor.',
-    ],
+    required: {
+      heading: '7. Alterações destes termos',
+      paragraphs: [
+        'Podemos atualizar estes termos conforme o serviço e a lei mudam. Mudanças relevantes são avisadas com antecedência, no aplicativo e no site, e pedidas de novo antes de valerem para você. Se discordar, cancele seu plano e pare de usar o servidor.',
+      ],
+    },
+    manual: {
+      heading: '7. Alterações destes termos',
+      paragraphs: [
+        'Podemos atualizar estes termos conforme o serviço e a lei mudam. Mudanças relevantes são avisadas com antecedência, no aplicativo e no site, e pedidas de novo antes de valerem para você. Se discordar, exclua sua conta e pare de usar o servidor.',
+      ],
+    },
   },
   age: {
     required: {
@@ -212,18 +274,28 @@ const pt: ServerTermsText = {
       ],
     },
     manual: {
-      heading: '8. Idade',
+      heading: '8. Idade e verificação',
       paragraphs: [
-        'Contas são para pessoas de 18 anos ou mais. Sem verificação de idade neste servidor: não existe área adulta e nenhuma conta é verificada. As contas ficam ativas assim que são criadas.',
-        'Outros servidores que permitem temas maduros dizem isso em seus próprios termos e verificam a idade por conta própria.',
+        'Menores não são permitidos neste servidor por padrão. Contas são para pessoas de 18 anos ou mais, e toda conta começa não verificada.',
+        'Este servidor não faz nenhuma checagem automática de idade e nunca recebe documento de identidade, foto nem data de nascimento. Quando uma conta é verificada, isso acontece por outros meios, fora do aplicativo e fora deste servidor, e um administrador então marca a conta como verificada à mão. Um administrador pode retirar essa marca a qualquer momento.',
+        'Onde este servidor permite histórias +18, elas são abertas somente a contas verificadas: se a verificação for retirada, ou se a conta for descoberta como sendo de menor, ela sai de todas as histórias +18 de imediato e perde o acesso a elas. Ver histórias +18 nas listagens públicas também é uma escolha sua: uma conta verificada pode ligar ou desligar isso a qualquer momento no perfil dentro do aplicativo.',
+        'Conta descoberta como sendo de menor é encerrada.',
       ],
     },
   },
   refunds: {
-    heading: '9. Reembolsos',
-    paragraphs: [
-      'Compras feitas pela loja do dispositivo seguem a política de reembolso da loja, além dos seus direitos legais. Cobranças feitas diretamente pelo servidor podem ser canceladas em até 7 dias da contratação com reembolso integral e atualizado, como exige o Código de Defesa do Consumidor. Depois disso, cobranças feitas direto no servidor não são reembolsadas, exceto quando exigido por lei.',
-    ],
+    required: {
+      heading: '9. Reembolsos',
+      paragraphs: [
+        'Compras feitas pela loja do dispositivo seguem a política de reembolso da loja, além dos seus direitos legais. Cobranças feitas diretamente pelo servidor podem ser canceladas em até 7 dias da contratação com reembolso integral e atualizado, como exige o Código de Defesa do Consumidor. Depois disso, cobranças feitas direto no servidor não são reembolsadas, exceto quando exigido por lei.',
+      ],
+    },
+    manual: {
+      heading: '9. Reembolsos',
+      paragraphs: [
+        'Este servidor não recebe pagamentos, então não cobra nada e não há o que reembolsar.',
+      ],
+    },
   },
   reports: {
     heading: '10. Denúncias',
@@ -234,26 +306,30 @@ const pt: ServerTermsText = {
   operator: {
     heading: '11. Operador, privacidade e lei',
     paragraphs: [
-      'Como seus dados são tratados está na política de privacidade, legível antes do cadastro e nos detalhes do servidor. Operador: [razão social, CNPJ e endereço — a publicar antes do lançamento]. Dúvidas sobre privacidade, seus dados ou estes termos: privacy@keres.me. Estes termos seguem a lei brasileira.',
+      'Como seus dados são tratados está na política de privacidade, legível antes do cadastro e nos detalhes do servidor. Operador: [razão social, CNPJ e endereço — a publicar antes do lançamento]. Dúvidas sobre privacidade, seus dados ou estes termos: use o formulário de contato que o operador deste servidor publica (no servidor oficial, o formulário de contato em keres.me). Estes termos seguem a lei brasileira.',
     ],
   },
 };
+
+function pick(section: Section, mode: AgeVerificationMode): ServerTermsSection {
+  return 'heading' in section ? section : section[mode];
+}
 
 /** The sections in document order, for one mode. Both languages keep the same order and count. */
 function sectionsOf(text: ServerTermsText, mode: AgeVerificationMode): ServerTermsSection[] {
   return [
     text.what,
     text.accounts,
-    text.conduct[mode],
+    text.conduct,
     text.moderation,
     text.plans,
     text.deleting,
     text.changes,
-    text.age[mode],
+    text.age,
     text.refunds,
     text.reports,
     text.operator,
-  ];
+  ].map((section) => pick(section, mode));
 }
 
 /** The terms a server running in `mode` serves, in both languages. */

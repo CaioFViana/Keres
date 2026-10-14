@@ -43,8 +43,8 @@ const textOf = (sections: PrivacyPolicySection[]) =>
 const numberOf = (section: PrivacyPolicySection) => section.heading.split('.')[0];
 
 describe('the server privacy policy by age-verification mode', () => {
-  it('bumps the version past the one clients may have accepted', () => {
-    expect(PRIVACY_POLICY_VERSION).toBeGreaterThanOrEqual(2);
+  it('is versioned, at the version both modes share', () => {
+    expect(PRIVACY_POLICY_VERSION).toBeGreaterThanOrEqual(1);
   });
 
   it('keeps the same sections, in the same order, in both languages and in both modes', () => {
@@ -72,18 +72,43 @@ describe('the server privacy policy by age-verification mode', () => {
     expect(privacyPolicyDigest()).toBe(privacyPolicyDigest('required'));
   });
 
-  it('says that a manual server collects no verification data', () => {
-    expect(textOf(manual.en)).toMatch(/No age verification on this server/);
-    expect(textOf(manual.en)).toMatch(/No verification data is collected on this server/);
-    expect(textOf(manual.pt)).toMatch(/Sem verificação de idade neste servidor/);
-    expect(textOf(manual.pt)).toMatch(/Nenhum dado de verificação é coletado neste servidor/);
+  it('says that a manual server runs no verification service and collects no verification data', () => {
+    const en = textOf(manual.en);
+    for (const clause of [
+      /runs no age-verification service and collects no verification data/,
+      /marks the account as verified by hand/,
+      /uses no payment provider/,
+      /Minors are not allowed on this server by default/,
+      /use the contact form on keres\.me/,
+    ]) {
+      expect(en).toMatch(clause);
+    }
+    const pt = textOf(manual.pt);
+    for (const clause of [
+      /não tem serviço de verificação de idade e não coleta dados de verificação/,
+      /marca a conta como verificada à mão/,
+      /não usa provedor de pagamento/,
+      /Menores não são permitidos neste servidor por padrão/,
+      /use o formulário de contato em keres\.me/,
+    ]) {
+      expect(pt).toMatch(clause);
+    }
   });
 
-  it('keeps every verification-only mechanism out of a manual server', () => {
-    expect(textOf(manual.en)).not.toMatch(/HMAC|governance record|Lei 15\.211|destroys them/);
-    expect(textOf(manual.pt)).not.toMatch(
-      /HMAC|registro de governança|Lei 15\.211|apaga o documento/,
+  it('keeps every verification-only mechanism and payment provider out of a manual server', () => {
+    expect(textOf(manual.en)).not.toMatch(
+      /HMAC|governance record|Lei 15\.211|destroys them|Stripe|PayPal|Google Play|purchase-token|financial records/i,
     );
+    expect(textOf(manual.pt)).not.toMatch(
+      /HMAC|registro de governança|Lei 15\.211|apaga o documento|Stripe|PayPal|Google Play|token de compra|registros financeiros/i,
+    );
+  });
+
+  it('names no email address in either mode: the contact form on keres.me is the way to ask', () => {
+    for (const document of [required, manual]) {
+      expect(textOf(document.en)).not.toMatch(/privacy@|@keres\.me/);
+      expect(textOf(document.pt)).not.toMatch(/privacy@|@keres\.me/);
+    }
   });
 
   it('states, for a required server, where the document goes, that it is destroyed, and what is kept', () => {

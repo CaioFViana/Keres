@@ -5,8 +5,8 @@
  * showing it again. This policy covers the software; every server has its own policy for
  * accounts and hosting (served at `keres-privacy`, read before creating an account there).
  */
-export const CLIENT_PRIVACY_VERSION = 2;
-export const CLIENT_PRIVACY_UPDATED_AT = '2026-10-12';
+export const CLIENT_PRIVACY_VERSION = 1;
+export const CLIENT_PRIVACY_UPDATED_AT = '2026-10-14';
 
 export interface ClientPrivacySection {
   heading: string;
@@ -29,7 +29,7 @@ const en: ClientPrivacySection[] = [
   {
     heading: '3. What leaves the device',
     paragraphs: [
-      'Only what you choose, and only to servers you connect: the account you create there, the content you synchronize or publish, and purchases, which are processed by the device store or the payment provider - card data never passes through the app servers from us. Age verification documents and photos leave the device only when you ask for an account on a server that requires them: see section 7.',
+      'Only what you choose, and only to servers you connect: the account you create there, the content you synchronize or publish, and, on servers that sell plans, purchases, which are processed by the device store or the payment provider - card data never passes through the app servers from us. Age verification documents and photos leave the device only when you ask for an account on a server that requires them: see section 7.',
     ],
   },
   {
@@ -41,7 +41,7 @@ const en: ClientPrivacySection[] = [
   {
     heading: '5. Your rights',
     paragraphs: [
-      'Your work is already yours and portable: stories export to open formats from the app. Data held by a server follows that server policy, including deleting the account and exporting your data. Questions: privacy@keres.me.',
+      'Your work is already yours and portable: stories export to open formats from the app. Data held by a server follows that server policy, including deleting the account and exporting your data. Questions: use the contact form on keres.me.',
     ],
   },
   {
@@ -55,12 +55,13 @@ const en: ClientPrivacySection[] = [
     paragraphs: [
       "The app collects no identity document and holds no age data of its own. When you ask for an account on a server that requires verification, the app opens that server's verification page, and your document and live photo go straight from the device to that server's verification service.",
       'No copy stays on the device or on Keres servers. From the moment they are sent, the processing is governed by the privacy policy of that server, not by this one.',
+      'A server may instead leave verification to an administrator, who marks the account as verified by other means, as the official server does. Then nothing is sent from the app: no document, no photo, no date of birth. A verified account can also choose, in its profile, whether it sees adults-only (+18) content in public listings; that choice is kept on the server of that account.',
     ],
   },
   {
     heading: '8. Minors',
     paragraphs: [
-      'Writing offline has no age gate. Creating an account on a server requires being 18 or older, and a server may also require proof of age, as section 7 describes.',
+      'Writing offline has no age gate. Minors are not allowed on servers by default: creating an account on a server requires being 18 or older, and a server may also require proof of age, as section 7 describes.',
     ],
   },
   {
@@ -87,7 +88,7 @@ const pt: ClientPrivacySection[] = [
   {
     heading: '3. O que sai do dispositivo',
     paragraphs: [
-      'Somente o que você escolher, e somente para servidores que você conectar: a conta que você criar lá, o conteúdo que você sincronizar ou publicar, e compras, processadas pela loja do dispositivo ou pelo provedor de pagamento — dados de cartão nunca passam pelos nossos servidores a partir do aplicativo. Documentos e fotos para verificação de idade saem do dispositivo somente quando você pede uma conta num servidor que os exige: veja a seção 7.',
+      'Somente o que você escolher, e somente para servidores que você conectar: a conta que você criar lá, o conteúdo que você sincronizar ou publicar, e, nos servidores que vendem planos, compras, processadas pela loja do dispositivo ou pelo provedor de pagamento — dados de cartão nunca passam pelos nossos servidores a partir do aplicativo. Documentos e fotos para verificação de idade saem do dispositivo somente quando você pede uma conta num servidor que os exige: veja a seção 7.',
     ],
   },
   {
@@ -99,7 +100,7 @@ const pt: ClientPrivacySection[] = [
   {
     heading: '5. Seus direitos',
     paragraphs: [
-      'Seu trabalho já é seu e portátil: histórias exportam para formatos abertos no aplicativo. Dados guardados por um servidor seguem a política daquele servidor, incluindo excluir a conta e exportar seus dados. Dúvidas: privacy@keres.me.',
+      'Seu trabalho já é seu e portátil: histórias exportam para formatos abertos no aplicativo. Dados guardados por um servidor seguem a política daquele servidor, incluindo excluir a conta e exportar seus dados. Dúvidas: use o formulário de contato em keres.me.',
     ],
   },
   {
@@ -113,12 +114,13 @@ const pt: ClientPrivacySection[] = [
     paragraphs: [
       'O aplicativo não coleta nenhum documento de identidade e não guarda dado de idade próprio. Quando você pede uma conta num servidor que exige verificação, o aplicativo abre a página de verificação daquele servidor, e seu documento e sua foto ao vivo saem do dispositivo diretamente para o serviço de verificação daquele servidor.',
       'Nenhuma cópia fica no dispositivo nem nos servidores da Keres. A partir do envio, o tratamento é regido pela política de privacidade daquele servidor, e não por esta.',
+      'Um servidor pode, em vez disso, deixar a verificação a cargo de um administrador, que marca a conta como verificada por outros meios, como faz o servidor oficial. Nesse caso nada sai do aplicativo: nem documento, nem foto, nem data de nascimento. Uma conta verificada também pode escolher, no perfil, se vê conteúdo adulto (+18) nas listagens públicas; essa escolha fica guardada no servidor daquela conta.',
     ],
   },
   {
     heading: '8. Menores',
     paragraphs: [
-      'Escrever offline não tem verificação de idade. Criar uma conta num servidor exige 18 anos ou mais, e o servidor pode também exigir prova de idade, como descreve a seção 7.',
+      'Escrever offline não tem verificação de idade. Menores não são permitidos nos servidores por padrão: criar uma conta num servidor exige 18 anos ou mais, e o servidor pode também exigir prova de idade, como descreve a seção 7.',
     ],
   },
   {

@@ -6,8 +6,8 @@
  * the official one included - has its own terms for accounts and hosting (see `keres-tos`).
  * The privacy policy (`privacyPolicy.ts`) details how data is handled.
  */
-export const CLIENT_TERMS_VERSION = 3;
-export const CLIENT_TERMS_UPDATED_AT = '2026-10-12';
+export const CLIENT_TERMS_VERSION = 1;
+export const CLIENT_TERMS_UPDATED_AT = '2026-10-14';
 
 export interface ClientTermsSection {
   heading: string;
@@ -30,7 +30,7 @@ const en: ClientTermsSection[] = [
   {
     heading: '3. Acceptable conduct',
     paragraphs: [
-      'What you write for yourself stays yours: these conduct rules bind what you share, send or publish through a server. Do not share or publish sexually explicit content involving others without their consent, spam, abuse, harassment, or anything illegal. Stories flagged adults-only (+18) hold mature themes; servers gate them to verified adults and may remove collaborators who are not verified. Reports are reviewed and abusive accounts are blocked or removed.',
+      'What you write for yourself stays yours: these conduct rules bind what you share, send or publish through a server. Do not share or publish sexually explicit content involving others without their consent, spam, abuse, harassment, or anything illegal. Stories flagged adults-only (+18) hold mature themes. Flagging a story on your own device is always allowed; a server may refuse to receive it, opens it only to accounts it has verified as adults, and may remove collaborators who are not verified. Reports are reviewed and abusive accounts are blocked or removed.',
     ],
   },
   {
@@ -42,7 +42,7 @@ const en: ClientTermsSection[] = [
   {
     heading: '5. Plans and payments',
     paragraphs: [
-      'Paid plans extend what servers offer. Purchases made through the device store follow that store refund policy and the applicable law.',
+      'Plans extend what servers offer. Some servers sell paid plans and others, like the official server, take no payments and grant plans themselves. Purchases made through the device store follow that store refund policy and the applicable law.',
     ],
   },
   {
@@ -60,13 +60,13 @@ const en: ClientTermsSection[] = [
   {
     heading: '8. Age',
     paragraphs: [
-      "The app does not verify your age and keeps no identity document. Writing offline needs no age gate. Creating an account on a server requires being 18 or older, and that server may require its own age verification before the account is activated: the document and photo go straight to that server's verification service, never to the app or to us. Each server answers for its own verification and its own rules, and a server without verification offers no adults-only (+18) area.",
+      "The app does not verify your age and keeps no identity document. Writing offline needs no age gate. Minors are not allowed on servers by default: creating an account on a server requires being 18 or older. A server may verify its accounts through its own verification service (the document and photo go straight to that service, never to the app or to us), or may leave it to an administrator to mark accounts as verified by other means, as the official server does. Each server answers for its own verification and its own rules. A verified account chooses, in its profile, whether it sees adults-only (+18) content in public listings, and can change that at any time.",
     ],
   },
   {
     heading: '9. Privacy and contact',
     paragraphs: [
-      'How your data is handled is in the privacy policy, readable in App Settings. Questions about privacy or these terms: privacy@keres.me. These terms follow Brazilian law.',
+      'How your data is handled is in the privacy policy, readable in App Settings. Questions about privacy or these terms: use the contact form on keres.me. These terms follow Brazilian law.',
     ],
   },
 ];
@@ -87,7 +87,7 @@ const pt: ClientTermsSection[] = [
   {
     heading: '3. Conduta aceitável',
     paragraphs: [
-      'O que você escreve para si mesmo continua seu: estas regras de conduta valem para o que você compartilha, envia ou publica por um servidor. Não compartilhe nem publique conteúdo sexualmente explícito envolvendo terceiros sem o consentimento deles, spam, abuso, assédio ou qualquer coisa ilegal. Histórias marcadas como adultas (+18) tratam de temas maduros; servidores as restringem a adultos verificados e podem remover colaboradores não verificados. Denúncias são avaliadas e contas abusivas são bloqueadas ou removidas.',
+      'O que você escreve para si mesmo continua seu: estas regras de conduta valem para o que você compartilha, envia ou publica por um servidor. Não compartilhe nem publique conteúdo sexualmente explícito envolvendo terceiros sem o consentimento deles, spam, abuso, assédio ou qualquer coisa ilegal. Histórias marcadas como adultas (+18) tratam de temas maduros. Marcar uma história no seu próprio aparelho é sempre permitido; um servidor pode recusar recebê-la, a abre somente a contas que verificou como de adultos e pode remover colaboradores não verificados. Denúncias são avaliadas e contas abusivas são bloqueadas ou removidas.',
     ],
   },
   {
@@ -99,7 +99,7 @@ const pt: ClientTermsSection[] = [
   {
     heading: '5. Planos e pagamentos',
     paragraphs: [
-      'Planos pagos ampliam o que os servidores oferecem. Compras feitas pela loja do dispositivo seguem a política de reembolso da loja e a lei aplicável.',
+      'Planos ampliam o que os servidores oferecem. Alguns servidores vendem planos pagos e outros, como o servidor oficial, não recebem pagamentos e concedem os planos por conta própria. Compras feitas pela loja do dispositivo seguem a política de reembolso da loja e a lei aplicável.',
     ],
   },
   {
@@ -117,13 +117,13 @@ const pt: ClientTermsSection[] = [
   {
     heading: '8. Idade',
     paragraphs: [
-      'O aplicativo não verifica sua idade e não guarda nenhum documento de identidade. Escrever offline não tem barreira de idade. Criar uma conta num servidor exige 18 anos ou mais, e esse servidor pode exigir a própria verificação de idade antes de ativar a conta: o documento e a foto vão direto ao serviço de verificação daquele servidor, nunca ao aplicativo nem a nós. Cada servidor responde pela sua verificação e pelas suas regras, e um servidor sem verificação não oferece área adulta (+18).',
+      'O aplicativo não verifica sua idade e não guarda nenhum documento de identidade. Escrever offline não tem barreira de idade. Menores não são permitidos nos servidores por padrão: criar uma conta num servidor exige 18 anos ou mais. Um servidor pode verificar suas contas pelo próprio serviço de verificação (o documento e a foto vão direto a esse serviço, nunca ao aplicativo nem a nós) ou deixar que um administrador marque contas como verificadas por outros meios, como faz o servidor oficial. Cada servidor responde pela sua verificação e pelas suas regras. Uma conta verificada escolhe, no perfil, se vê conteúdo adulto (+18) nas listagens públicas, e pode mudar isso a qualquer momento.',
     ],
   },
   {
     heading: '9. Privacidade e contato',
     paragraphs: [
-      'Como seus dados são tratados está na política de privacidade, legível nos Ajustes do aplicativo. Dúvidas sobre privacidade ou estes termos: privacy@keres.me. Estes termos seguem a lei brasileira.',
+      'Como seus dados são tratados está na política de privacidade, legível nos Ajustes do aplicativo. Dúvidas sobre privacidade ou estes termos: use o formulário de contato em keres.me. Estes termos seguem a lei brasileira.',
     ],
   },
 ];

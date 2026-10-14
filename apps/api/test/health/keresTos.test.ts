@@ -42,8 +42,8 @@ const textOf = (sections: ServerTermsSection[]) =>
 const numberOf = (section: ServerTermsSection) => section.heading.split('.')[0];
 
 describe('the server terms by age-verification mode', () => {
-  it('bumps the version past the one clients may have accepted', () => {
-    expect(SERVER_TERMS_VERSION).toBeGreaterThanOrEqual(3);
+  it('is versioned, at the version both modes share', () => {
+    expect(SERVER_TERMS_VERSION).toBeGreaterThanOrEqual(1);
   });
 
   it('keeps the same sections, in the same order, in both languages and in both modes', () => {
@@ -64,13 +64,31 @@ describe('the server terms by age-verification mode', () => {
     expect(serverTermsDigest()).toBe(serverTermsDigest('required'));
   });
 
-  it('states plainly that a manual server has no age verification, no adults-only area and no verified account', () => {
-    expect(textOf(manual.en)).toMatch(/No age verification on this server/);
-    expect(textOf(manual.en)).toMatch(/no adults-only area exists/);
-    expect(textOf(manual.en)).toMatch(/no account is verified/);
-    expect(textOf(manual.pt)).toMatch(/Sem verificação de idade neste servidor/);
-    expect(textOf(manual.pt)).toMatch(/não existe área adulta/);
-    expect(textOf(manual.pt)).toMatch(/nenhuma conta é verificada/);
+  it('states plainly that a manual server admits no minors, starts every account unverified and takes no payments', () => {
+    const en = textOf(manual.en);
+    for (const clause of [
+      /Minors are not allowed on this server by default/,
+      /every account starts unverified/,
+      /marks the account as verified by hand/,
+      /takes no payments/,
+      /nothing to refund/,
+      /turn it on or off at any time in its profile/,
+      /Marking a story \+18 on your own device is always possible/,
+    ]) {
+      expect(en).toMatch(clause);
+    }
+    const pt = textOf(manual.pt);
+    for (const clause of [
+      /Menores não são permitidos neste servidor por padrão/,
+      /toda conta começa não verificada/,
+      /marca a conta como verificada à mão/,
+      /não recebe pagamentos/,
+      /não há o que reembolsar/,
+      /ligar ou desligar isso a qualquer momento no perfil/,
+      /Marcar uma história como \+18 no seu próprio aparelho é sempre possível/,
+    ]) {
+      expect(pt).toMatch(clause);
+    }
   });
 
   it('leaves out, in a manual server, every clause that presupposes a verification', () => {
@@ -78,9 +96,31 @@ describe('the server terms by age-verification mode', () => {
     expect(textOf(manual.pt)).not.toMatch(/fica ativa|pendente|depois que a verificação|revog/i);
   });
 
-  it('does not claim "no age verification" in a required server', () => {
-    expect(textOf(required.en)).not.toMatch(/no age verification/i);
-    expect(textOf(required.pt)).not.toMatch(/sem verificação de idade/i);
+  it('leaves out, in a manual server, the refund and payment-provider wording', () => {
+    expect(textOf(manual.en)).not.toMatch(
+      /refund policy|Consumer Defense Code|Stripe|PayPal|Financial records/i,
+    );
+    expect(textOf(manual.pt)).not.toMatch(
+      /política de reembolso|Código de Defesa do Consumidor|Stripe|PayPal|Registros financeiros/i,
+    );
+  });
+
+  it('names no email address in either mode: the contact form on keres.me is the way to ask', () => {
+    for (const document of [required, manual]) {
+      expect(textOf(document.en)).not.toMatch(/privacy@|@keres\.me/);
+      expect(textOf(document.pt)).not.toMatch(/privacy@|@keres\.me/);
+    }
+  });
+
+  it('keeps the manual-only statements out of a required server', () => {
+    const en = textOf(required.en);
+    expect(en).not.toMatch(/no age verification/i);
+    expect(en).not.toMatch(/Minors are not allowed on this server by default/);
+    expect(en).not.toMatch(/marks the account as verified by hand/);
+    const pt = textOf(required.pt);
+    expect(pt).not.toMatch(/sem verificação de idade/i);
+    expect(pt).not.toMatch(/Menores não são permitidos neste servidor por padrão/);
+    expect(pt).not.toMatch(/marca a conta como verificada à mão/);
   });
 
   it('says that in a required server the account becomes active only after the verification', () => {

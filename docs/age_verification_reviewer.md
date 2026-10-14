@@ -118,4 +118,4 @@ submit.
   your own refusal.
 
 Report anything about data, images or access to your operator. On the official
-server that is the Keres team's data protection contact, privacy@keres.me.
+server that is the Keres team's data protection contact, through the contact form on keres.me.

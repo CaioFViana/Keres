@@ -16,7 +16,8 @@ import {
   sceneSeparatorText,
   utf8ByteLength,
 } from '@keres/shared';
-import { containsCjk } from '@keres/shared/manuscript/export';
+// From the module that holds it, not from `manuscript/export`: that one brings `docx` and `jszip` along.
+import { containsCjk } from '@keres/shared/manuscript/compile/export/manuscriptPdfFonts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppAlert } from '../../../utils/AppAlert';

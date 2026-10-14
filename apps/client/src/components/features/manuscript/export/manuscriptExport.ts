@@ -6,7 +6,6 @@ import type {
 } from '@keres/shared';
 import { presentManuscript, renderOptionsOf } from '@keres/shared';
 import type { ManuscriptEpubMetadata } from '@keres/shared/manuscript/export';
-import { renderManuscript } from '@keres/shared/manuscript/export';
 import {
   buildManuscriptFileName,
   deliverFile,
@@ -122,6 +121,8 @@ export async function exportManuscript({
   const base = format === 'pdf' ? await pdfFontMatrices() : null;
   const fonts =
     format === 'pdf' && base ? { ...base, ...(cjkMatrix ? { cjk: cjkMatrix } : {}) } : undefined;
+  // The renderers carry `docx` and `jszip` (about half a megabyte): they load when an export runs, not at app start.
+  const { renderManuscript } = await import('@keres/shared/manuscript/export');
   const rendered = await renderManuscript(
     presented,
     format,

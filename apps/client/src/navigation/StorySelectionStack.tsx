@@ -34,7 +34,7 @@ import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
 import StorySelectionScreen from '../screens/enterstack/StorySelectionScreen';
 import ExampleStoriesScreen from '../screens/examplestories/ExampleStoriesScreen';
 import type { HelpStackParamList } from './HelpStack';
-import HelpStackNavigator from './HelpStack';
+import { HelpStackNavigator } from './lazyStacks';
 import { drawerScreenOptions, readDrawerHeaderRoute, useDrawerChrome } from './drawerHeaderOptions';
 import { drawerItemListeners } from './drawerInteraction';
 

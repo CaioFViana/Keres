@@ -7,7 +7,6 @@ import {
   type ReaderOptionsInput,
   sceneMatchesArc,
 } from '@keres/shared';
-import { compileStoryManuscript } from '@keres/shared/manuscript/export';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../../db';
 import type { StorySelect } from '../../db/schema';
@@ -82,6 +81,8 @@ export async function renderPublishManuscript(
   signal?: AbortSignal,
 ): Promise<CompiledPublishManuscript> {
   signal?.throwIfAborted();
+  // Loaded when a publication compiles: the renderers bring `docx` and `jszip`, which the app start does not need.
+  const { compileStoryManuscript } = await import('@keres/shared/manuscript/export');
   const compiled = await compileStoryManuscript(
     input,
     options,

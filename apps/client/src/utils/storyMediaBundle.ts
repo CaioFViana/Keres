@@ -1,9 +1,4 @@
 import type { FullStoryExportType } from '@keres/shared';
-import {
-  buildStoryZipBytes as buildSharedStoryZipBytes,
-  extractStoryZip as extractSharedStoryZip,
-  StoryZipReadError,
-} from '@keres/shared/utils/storyZip';
 import type {
   BuildStoryZipResult,
   ExtractedStoryZip,
@@ -15,6 +10,9 @@ import { StoryImportError } from './StoryImportError';
 
 export type BuildZipResult = BuildStoryZipResult;
 export type ExtractedZipMedia = ExtractedStoryZipMedia;
+
+/** The archive code carries `jszip`: it loads when a story is packaged or opened, not when the app starts. */
+const storyZip = () => import('@keres/shared/utils/storyZip');
 
 /**
  * Packages a story with the gallery's media and adapts shared archive errors to client errors.
@@ -36,6 +34,7 @@ export async function buildStoryZipBytes(
   storyExport: FullStoryExportType,
   storyId: string,
 ): Promise<BuildZipResult> {
+  const { buildStoryZipBytes: buildSharedStoryZipBytes } = await storyZip();
   return buildSharedStoryZipBytes(storyExport, async (item) => {
     const localPath = mediaFileService.localPathFor(storyId, item.hash, item.mimeType);
     if (!mediaFileService.exists(localPath)) {
@@ -50,6 +49,7 @@ export async function extractStoryZip(
   bytes: Uint8Array,
   sourceName: string,
 ): Promise<ExtractedStoryZip> {
+  const { extractStoryZip: extractSharedStoryZip, StoryZipReadError } = await storyZip();
   try {
     return await extractSharedStoryZip(bytes, sourceName);
   } catch (error) {

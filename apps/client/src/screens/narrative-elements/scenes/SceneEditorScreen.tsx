@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
@@ -13,7 +13,6 @@ import type { HeaderAction } from '../../../components/common/navigation/HeaderA
 import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
-import { RichBodyEditor } from '../../../components/features/manuscript/RichBodyEditor/RichBodyEditor';
 import { SceneBodyFooter } from '../../../components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
 import { SceneBodyToolbar } from '../../../components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
 import {
@@ -52,6 +51,16 @@ type SceneEditorNavigation = NativeStackNavigationProp<
   'SceneEditor'
 >;
 type EditorMode = 'write' | 'read' | 'review';
+
+/**
+ * The rich editor brings the web editor engine (TipTap and ProseMirror, a few hundred KB): it loads when a
+ * scene is opened for writing, not when the app starts.
+ */
+const RichBodyEditor = lazy(() =>
+  import('../../../components/features/manuscript/RichBodyEditor/RichBodyEditor').then(
+    (module) => ({ default: module.RichBodyEditor }),
+  ),
+);
 
 const MODES: {
   mode: EditorMode;
@@ -259,15 +268,21 @@ function SceneEditorContent({
           // last on web and wipes both the visual and the doc. The placeholder
           // holds the layout for the (millisecond) wait.
           restoreSettled ? (
-            <RichBodyEditor
-              testID="scene-body-editor"
-              defaultHtml={initialHtml}
-              onHtmlChange={onHtmlChange}
-              onMarksChange={onMarksChange}
-              editable={canEdit && !saving}
-              canEdit={canEdit}
-              inputRef={editorRef}
-            />
+            <Suspense
+              fallback={
+                <View style={styles.editorPlaceholder} testID="scene-body-editor-loading" />
+              }
+            >
+              <RichBodyEditor
+                testID="scene-body-editor"
+                defaultHtml={initialHtml}
+                onHtmlChange={onHtmlChange}
+                onMarksChange={onMarksChange}
+                editable={canEdit && !saving}
+                canEdit={canEdit}
+                inputRef={editorRef}
+              />
+            </Suspense>
           ) : (
             <View style={styles.editorPlaceholder} testID="scene-body-editor-loading" />
           )

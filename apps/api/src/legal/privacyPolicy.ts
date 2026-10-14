@@ -57,7 +57,7 @@ const en: PrivacyPolicyText = {
   who: {
     heading: '1. Who we are',
     paragraphs: [
-      'This server is operated by the Keres team (keres.me). Operator identity (legal name, CNPJ, address): to be published before release. Questions about privacy, your data or these terms: use the contact form on keres.me.',
+      'This server is operated by the Keres team (keres.me). Questions about privacy, your data or these terms: use the contact form on keres.me.',
       'The Keres app works with any server. Every other server is its own data controller with its own policy; we answer only for this one.',
     ],
   },
@@ -189,7 +189,7 @@ const pt: PrivacyPolicyText = {
   who: {
     heading: '1. Quem somos',
     paragraphs: [
-      'Este servidor é operado pela equipe Keres (keres.me). Identidade do operador (razão social, CNPJ, endereço): a publicar antes do lançamento. Dúvidas sobre privacidade, seus dados ou estes termos: use o formulário de contato em keres.me.',
+      'Este servidor é operado pela equipe Keres (keres.me). Dúvidas sobre privacidade, seus dados ou estes termos: use o formulário de contato em keres.me.',
       'O aplicativo Keres funciona com qualquer servidor. Cada outro servidor é seu próprio controlador de dados, com sua própria política; respondemos somente por este.',
     ],
   },

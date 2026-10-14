@@ -15,7 +15,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { GallerySelect } from '@/src/db/schema';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useGalleryThumbnailUri } from '@/src/hooks/useGalleryThumbnailUri';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
@@ -35,7 +35,7 @@ interface Props {
 const GalleryAttachmentPreview: React.FC<{ item: GallerySelect }> = ({ item }) => {
   const { colors } = useTheme();
   const mediaType = item.mediaType as MediaType;
-  const uri = useResolvedMediaUri(mediaType === 'video' ? item.thumbnailPath : item.localPath);
+  const uri = useGalleryThumbnailUri(item);
   const [failedToLoad, setFailedToLoad] = useState(false);
   const isPreviewable = (mediaType === 'image' || mediaType === 'video') && !!uri && !failedToLoad;
   const styles = useThemedStyles(createPreviewStyles);

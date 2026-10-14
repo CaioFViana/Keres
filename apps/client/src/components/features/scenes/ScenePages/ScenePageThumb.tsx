@@ -4,7 +4,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
 import { useGalleryRow } from '@/src/hooks/useGalleryMedia';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useGalleryThumbnailUri } from '@/src/hooks/useGalleryThumbnailUri';
 import { useTheme } from '@/src/theme';
 import type { ScenePageView } from '@/src/hooks/useScenePages';
 
@@ -33,7 +33,7 @@ const ScenePageThumb: React.FC<ScenePageThumbProps> = ({
 }) => {
   const { colors } = useTheme();
   const shown = useGalleryRow(sketch ? null : galleryId);
-  const uri = useResolvedMediaUri(shown?.localPath);
+  const uri = useGalleryThumbnailUri(shown);
   const frame = { width, height, borderRadius: 6, backgroundColor: colors.border };
 
   if (sketch) {

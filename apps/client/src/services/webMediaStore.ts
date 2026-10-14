@@ -31,6 +31,16 @@ declare global {
   }
 }
 
+/**
+ * What a backend may offer on top of the bytes. The Electron bridge speaks bytes only (they cross an IPC channel); the
+ * browser's own file system can hand over and take a `Blob` without the bytes ever entering the JavaScript heap, which
+ * is what keeps a video or a 12-megapixel photo from being copied into memory more than once.
+ */
+interface MediaBackend extends KeresMediaBridge {
+  readBlob?(relativePath: string): Promise<Blob>;
+  writeBlob?(relativePath: string, blob: Blob): Promise<void>;
+}
+
 function electronBridge(): KeresMediaBridge | undefined {
   return typeof window === 'undefined' ? undefined : window.keresMedia;
 }
@@ -82,7 +92,7 @@ async function opfsList(directory: FileSystemDirectoryHandle, prefix: string): P
   return paths;
 }
 
-const opfsBackend: KeresMediaBridge = {
+const opfsBackend: MediaBackend = {
   async writeBytes(relativePath, bytes) {
     const { dirParts, fileName } = splitRelativePath(relativePath);
     const directory = await opfsDirectory(await opfsRoot(), dirParts, true);
@@ -97,6 +107,21 @@ const opfsBackend: KeresMediaBridge = {
     const file = await directory.getFileHandle(fileName);
     const blob = await file.getFile();
     return new Uint8Array(await blob.arrayBuffer());
+  },
+  async writeBlob(relativePath, blob) {
+    const { dirParts, fileName } = splitRelativePath(relativePath);
+    const directory = await opfsDirectory(await opfsRoot(), dirParts, true);
+    const file = await directory.getFileHandle(fileName, { create: true });
+    const writable = await file.createWritable();
+    await writable.write(blob);
+    await writable.close();
+  },
+  async readBlob(relativePath) {
+    const { dirParts, fileName } = splitRelativePath(relativePath);
+    const directory = await opfsDirectory(await opfsRoot(), dirParts, false);
+    const file = await directory.getFileHandle(fileName);
+    // A `File` is a `Blob` backed by the file on disk: nothing is read until something asks for the bytes.
+    return file.getFile();
   },
   async deleteFile(relativePath) {
     const { dirParts, fileName } = splitRelativePath(relativePath);
@@ -124,7 +149,7 @@ const opfsBackend: KeresMediaBridge = {
   },
 };
 
-function backend(): KeresMediaBridge {
+function backend(): MediaBackend {
   return electronBridge() ?? opfsBackend;
 }
 
@@ -172,6 +197,29 @@ export async function readBytes(relativePath: string): Promise<Uint8Array> {
   return backend().readBytes(relativePath);
 }
 
+/**
+ * The stored file as a `Blob`. In the browser it is backed by the file on disk; under Electron the bytes come over the
+ * bridge and are wrapped.
+ */
+export async function readBlob(relativePath: string): Promise<Blob> {
+  const store = backend();
+  if (store.readBlob) {
+    return store.readBlob(relativePath);
+  }
+  return new Blob([(await store.readBytes(relativePath)) as BlobPart]);
+}
+
+/** Stores a `Blob` without reading it into the heap first, where the backend allows it. */
+export async function writeBlob(relativePath: string, blob: Blob): Promise<void> {
+  const store = backend();
+  if (store.writeBlob) {
+    await store.writeBlob(relativePath, blob);
+  } else {
+    await store.writeBytes(relativePath, new Uint8Array(await blob.arrayBuffer()));
+  }
+  knownPaths.add(relativePath);
+}
+
 export async function deleteFile(relativePath: string): Promise<void> {
   knownPaths.delete(relativePath);
   const blobUrl = blobUrlCache.get(relativePath);
@@ -217,7 +265,41 @@ export function md5Hex(bytes: Uint8Array): string {
   return SparkMD5.ArrayBuffer.hash(bytes.buffer as ArrayBuffer);
 }
 
+/**
+ * `md5Hex` for a `Blob`, a few megabytes at a time: the whole file is never in memory, so hashing a long video costs
+ * the same as hashing a small picture. Same algorithm, same digest.
+ */
+const MD5_CHUNK_BYTES = 4 * 1024 * 1024;
+
+export async function md5OfBlob(blob: Blob): Promise<string> {
+  const hasher = new SparkMD5.ArrayBuffer();
+  for (let offset = 0; offset < blob.size; offset += MD5_CHUNK_BYTES) {
+    hasher.append(await blob.slice(offset, offset + MD5_CHUNK_BYTES).arrayBuffer());
+  }
+  return hasher.end();
+}
+
+/**
+ * The `blob:` URLs handed out, most recently used last. A session that scrolls through a big gallery would otherwise
+ * keep one for every file it ever showed; past the limit the least recently used are released. A released URL is
+ * revoked a little later, not at once: an element may be about to load it.
+ */
+export const BLOB_URL_CACHE_LIMIT = 120;
+const BLOB_URL_REVOKE_DELAY_MS = 30_000;
 const blobUrlCache = new Map<string, string>();
+const blobUrlPending = new Map<string, Promise<string>>();
+
+function rememberBlobUrl(relativePath: string, url: string): void {
+  blobUrlCache.set(relativePath, url);
+  while (blobUrlCache.size > BLOB_URL_CACHE_LIMIT) {
+    const oldest = blobUrlCache.keys().next().value as string;
+    const evicted = blobUrlCache.get(oldest) as string;
+    blobUrlCache.delete(oldest);
+    const timer = setTimeout(() => URL.revokeObjectURL(evicted), BLOB_URL_REVOKE_DELAY_MS);
+    // A pending revocation must not hold a Node process (a test, a script) open.
+    (timer as { unref?: () => void }).unref?.();
+  }
+}
 
 /**
  * Resolves a media path into a `blob:` URL renderable by `<Image>`/`<video>`/`<audio>`.
@@ -230,11 +312,21 @@ export async function resolveBlobUri(mediaUri: string): Promise<string> {
   const relativePath = mediaUri.slice(DESKTOP_MEDIA_URI_PREFIX.length);
   const cached = blobUrlCache.get(relativePath);
   if (cached) {
+    // Used again: it becomes the most recent.
+    blobUrlCache.delete(relativePath);
+    blobUrlCache.set(relativePath, cached);
     return cached;
   }
-  const bytes = await readBytes(relativePath);
-  const blob = new Blob([bytes as BlobPart]);
-  const url = URL.createObjectURL(blob);
-  blobUrlCache.set(relativePath, url);
-  return url;
+  // Two screens asking for the same file at once share one URL instead of making two.
+  const inFlight = blobUrlPending.get(relativePath);
+  if (inFlight) {
+    return inFlight;
+  }
+  const pending = (async () => {
+    const url = URL.createObjectURL(await readBlob(relativePath));
+    rememberBlobUrl(relativePath, url);
+    return url;
+  })().finally(() => blobUrlPending.delete(relativePath));
+  blobUrlPending.set(relativePath, pending);
+  return pending;
 }

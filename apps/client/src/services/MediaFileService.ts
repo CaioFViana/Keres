@@ -18,6 +18,7 @@ import SparkMD5 from 'spark-md5';
 import { Platform } from 'react-native';
 import { decodeFileUriOnce } from '../utils/fileUri';
 import * as webMediaStore from './webMediaStore';
+import { captureImageThumbnail, wantsImageThumbnail } from './webImageThumbnail';
 import { captureVideoThumbnail } from './webVideoThumbnail';
 
 const isWeb = Platform.OS === 'web';
@@ -237,6 +238,37 @@ async function generateWebVideoThumbnail(
   }
 }
 
+/**
+ * The thumbnail of a picture on web, written beside it. `undefined` when the picture needs none (it is small, or of a
+ * format a canvas cannot redraw) or the browser cannot make one: the list then shows the picture itself.
+ */
+async function generateWebImageThumbnail(
+  storyId: string,
+  hash: string,
+  source: Blob,
+): Promise<string | undefined> {
+  try {
+    const bytes = await captureImageThumbnail(source);
+    if (!bytes) {
+      return undefined;
+    }
+    const thumbnailRelativePath = webThumbnailRelativePath(storyId, hash);
+    await webMediaStore.writeBytes(thumbnailRelativePath, bytes);
+    return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + thumbnailRelativePath;
+  } catch (error) {
+    console.warn('Could not generate picture thumbnail:', error);
+    return undefined;
+  }
+}
+
+/** Pictures with no thumbnail to make (small ones, or ones that failed), so a list does not ask again this session. */
+const pictureWithoutThumbnail = new Set<string>();
+/**
+ * Backfilled thumbnails are made one at a time: each one decodes a picture at full size, and a grid of forty photos
+ * asking at once would put forty full decodes in memory together.
+ */
+let thumbnailQueue: Promise<unknown> = Promise.resolve();
+
 async function generateVideoThumbnail(
   storyId: string,
   hash: string,
@@ -306,6 +338,53 @@ export const mediaFileService = {
     videoUri: string,
   ): Promise<string | undefined> {
     return generateVideoThumbnail(storyId, hash, videoUri);
+  },
+
+  /**
+   * The thumbnail of a picture already stored on web, made now when it is missing (pictures imported before thumbnails
+   * existed, or downloaded from a server). `undefined` when there is none to make - the caller shows the picture. Native
+   * builds never need it: the image component there decodes to the size it is shown at.
+   */
+  async ensureImageThumbnail(
+    storyId: string,
+    hash: string,
+    localPath: string,
+    mimeType: string,
+  ): Promise<string | undefined> {
+    if (!isWeb || !localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
+      return undefined;
+    }
+    const thumbnailRelativePath = webThumbnailRelativePath(storyId, hash);
+    if (webMediaStore.existsSync(thumbnailRelativePath)) {
+      return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + thumbnailRelativePath;
+    }
+    const key = `${storyId}/${hash}`;
+    if (pictureWithoutThumbnail.has(key)) {
+      return undefined;
+    }
+    const made = thumbnailQueue.then(async () => {
+      // Another request for the same picture may have finished while this one waited.
+      if (webMediaStore.existsSync(thumbnailRelativePath)) {
+        return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + thumbnailRelativePath;
+      }
+      try {
+        const source = await webMediaStore.readBlob(
+          localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length),
+        );
+        const thumbnail = wantsImageThumbnail(mimeType, source.size)
+          ? await generateWebImageThumbnail(storyId, hash, source)
+          : undefined;
+        if (!thumbnail) {
+          pictureWithoutThumbnail.add(key);
+        }
+        return thumbnail;
+      } catch {
+        pictureWithoutThumbnail.add(key);
+        return undefined;
+      }
+    });
+    thumbnailQueue = made.catch(() => undefined);
+    return made;
   },
 
   exists(localPath: string | null | undefined): boolean {
@@ -413,26 +492,32 @@ export const mediaFileService = {
       if (!asset.file) {
         throw new Error(`No file data available for "${asset.name}".`);
       }
-      const bytes = new Uint8Array(await asset.file.arrayBuffer());
-      const hash = webMediaStore.md5Hex(bytes);
+      // The chosen file is hashed and stored as a Blob, a few megabytes at a time: a long video is never copied into
+      // memory whole.
+      const chosen = asset.file;
+      const hash = await webMediaStore.md5OfBlob(chosen);
       const relativePath = webMediaRelativePath(storyId, hash, mimeType);
 
       // If it already exists, the bytes are the same by definition of the addressing: rewriting would only
       // waste time and I/O.
       if (!webMediaStore.existsSync(relativePath)) {
-        await webMediaStore.writeBytes(relativePath, bytes);
+        await webMediaStore.writeBlob(relativePath, chosen);
       }
 
       const localPath = webMediaStore.DESKTOP_MEDIA_URI_PREFIX + relativePath;
-      const thumbnailPath =
-        mediaType === 'video' ? await generateVideoThumbnail(storyId, hash, localPath) : undefined;
+      let thumbnailPath: string | undefined;
+      if (mediaType === 'video') {
+        thumbnailPath = await generateVideoThumbnail(storyId, hash, localPath);
+      } else if (mediaType === 'image' && wantsImageThumbnail(mimeType, chosen.size)) {
+        thumbnailPath = await generateWebImageThumbnail(storyId, hash, chosen);
+      }
 
       return {
         mediaType,
         mimeType,
         fileName: asset.name || `${hash}.${extensionForMimeType(mimeType)}`,
         hash,
-        sizeBytes: asset.size ?? bytes.byteLength,
+        sizeBytes: asset.size ?? chosen.size,
         localPath,
         thumbnailPath,
       };
@@ -558,10 +643,11 @@ export const mediaFileService = {
         if (!localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
           return null;
         }
-        const bytes = await webMediaStore.readBytes(
-          localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length),
+        return await webMediaStore.md5OfBlob(
+          await webMediaStore.readBlob(
+            localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length),
+          ),
         );
-        return webMediaStore.md5Hex(bytes);
       } catch {
         return null;
       }
@@ -598,9 +684,19 @@ export const mediaFileService = {
     }
     if (isWeb) {
       if (localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
+        const relativePath = localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length);
         webMediaStore
-          .deleteFile(localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length))
+          .deleteFile(relativePath)
           .catch((error) => console.warn('Could not delete local media file:', localPath, error));
+        // `media/<story>/<hash>.<ext>` has its thumbnail at `media/<story>/<hash>_thumb.jpg`; there is none
+        // for most files, so a missing one is the normal case.
+        const thumbnailRelativePath = relativePath.replace(/\.[^./]+$/, '_thumb.jpg');
+        if (
+          thumbnailRelativePath !== relativePath &&
+          webMediaStore.existsSync(thumbnailRelativePath)
+        ) {
+          webMediaStore.deleteFile(thumbnailRelativePath).catch(() => undefined);
+        }
       }
       return;
     }

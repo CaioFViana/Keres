@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import type { GallerySelect } from '../../../../db/schema';
 import { useEntityGalleryMedia } from '../../../../hooks/useEntityGalleryMedia';
-import { useResolvedMediaUri } from '../../../../hooks/useResolvedMediaUri';
+import { useGalleryThumbnailUri } from '../../../../hooks/useGalleryThumbnailUri';
 import { useNotificationStore } from '../../../../state/notificationStore';
 import { type ThemeColors, useTheme } from '../../../../theme';
 import { useThemedStyles } from '../../../../theme/useThemedStyles';
@@ -52,7 +52,7 @@ interface GalleryThumbnailProps {
 }
 
 /**
- * Extracted from `renderThumb`'s `.map()` because resolving the URI (`useResolvedMediaUri`) is a hook -
+ * Extracted from `renderThumb`'s `.map()` because resolving the URI (`useGalleryThumbnailUri`) is a hook -
  * it needs a component of its own per item, it cannot be called inside a loop.
  */
 const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
@@ -65,9 +65,7 @@ const GalleryThumbnail: React.FC<GalleryThumbnailProps> = ({
   editable,
 }) => {
   const mediaType = item.mediaType as MediaType;
-  const resolvedUri = useResolvedMediaUri(
-    mediaType === 'video' ? item.thumbnailPath : item.localPath,
-  );
+  const resolvedUri = useGalleryThumbnailUri(item);
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
 

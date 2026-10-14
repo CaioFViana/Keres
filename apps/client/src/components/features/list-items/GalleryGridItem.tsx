@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HighlightedText from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
 import type { GallerySelect } from '../../../db/schemas/galleries';
-import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
+import { useGalleryThumbnailUri } from '../../../hooks/useGalleryThumbnailUri';
 import { useTheme, type ThemeColors } from '../../../theme';
 import { useThemedStyles } from '../../../theme/useThemedStyles';
 
@@ -63,9 +63,9 @@ function formatSize(bytes: number): string {
 /**
  * A cell of the gallery's grid.
  *
- * An image uses the file itself as its thumbnail; a video uses a frame extracted and persisted in
- * `thumbnailPath` (see `MediaFileService.generateVideoThumbnail`), because generating that at render
- * time would stall the scrolling of a whole grid. Audio has no frame to show and is left with the
+ * A video uses a frame extracted and persisted in `thumbnailPath` (see `MediaFileService.generateVideoThumbnail`),
+ * because generating that at render time would stall the scrolling of a whole grid. A big picture on web uses a
+ * thumbnail made once beside it (`useGalleryThumbnailUri`); any other picture is its own thumbnail. Audio has no frame to show and is left with the
  * type's icon alone.
  */
 const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
@@ -78,9 +78,7 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
   const { t } = useTranslation();
 
   const mediaType = media.mediaType as MediaType;
-  const resolvedUri = useResolvedMediaUri(
-    mediaType === 'video' ? media.thumbnailPath : media.localPath,
-  );
+  const resolvedUri = useGalleryThumbnailUri(media);
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
   // Without a thumbnail the type's icon is already the preview, so the corner badge would repeat it.

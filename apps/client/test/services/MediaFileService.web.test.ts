@@ -20,17 +20,26 @@ jest.mock('../../src/services/webMediaStore', () => ({
   deleteFile: jest.fn(),
   existsSync: jest.fn(),
   md5Hex: jest.fn(),
+  md5OfBlob: jest.fn(),
+  readBlob: jest.fn(),
   readBytes: jest.fn(),
   resolveBlobUri: jest.fn(),
+  writeBlob: jest.fn(),
   writeBytes: jest.fn(),
 }));
 // The `<video>` capture itself is covered by webVideoThumbnail.test.ts; here only the wiring.
 jest.mock('../../src/services/webVideoThumbnail', () => ({ captureVideoThumbnail: jest.fn() }));
+// Likewise the picture capture (webImageThumbnail.test.ts); the size rule stays the real one.
+jest.mock('../../src/services/webImageThumbnail', () => ({
+  ...jest.requireActual('../../src/services/webImageThumbnail'),
+  captureImageThumbnail: jest.fn(),
+}));
 
 import { ImageManipulator } from 'expo-image-manipulator';
 import { createVideoPlayer } from 'expo-video';
 import { mediaFileService, UnsupportedMediaError } from '../../src/services/MediaFileService';
 import * as webMediaStore from '../../src/services/webMediaStore';
+import { captureImageThumbnail } from '../../src/services/webImageThumbnail';
 import { captureVideoThumbnail } from '../../src/services/webVideoThumbnail';
 
 const store = webMediaStore as jest.Mocked<typeof webMediaStore>;
@@ -80,15 +89,19 @@ it('uses desktop-media paths and delegates web file operations through the Elect
 });
 
 it('hashes a stored web file for verification, or answers null when unreadable', async () => {
-  store.readBytes.mockResolvedValue(new Uint8Array([1, 2]));
-  store.md5Hex.mockReturnValue('web-hash');
+  const stored = new Blob(['ab']);
+  store.readBlob.mockResolvedValue(stored);
+  store.md5OfBlob.mockResolvedValue('web-hash');
 
   await expect(mediaFileService.md5OfLocalFile('desktop-media:media/story/hash.png')).resolves.toBe(
     'web-hash',
   );
-  expect(store.readBytes).toHaveBeenCalledWith('media/story/hash.png');
+  expect(store.readBlob).toHaveBeenCalledWith('media/story/hash.png');
+  expect(store.md5OfBlob).toHaveBeenCalledWith(stored);
+  // Never the whole file in memory.
+  expect(store.readBytes).not.toHaveBeenCalled();
 
-  store.readBytes.mockRejectedValueOnce(new Error('gone'));
+  store.readBlob.mockRejectedValueOnce(new Error('gone'));
   await expect(mediaFileService.md5OfLocalFile('desktop-media:media/story/hash.png')).resolves.toBe(
     null,
   );
@@ -96,7 +109,7 @@ it('hashes a stored web file for verification, or answers null when unreadable',
 });
 
 it('imports a picked blob once, skips the rewrite when the hash is already stored', async () => {
-  store.md5Hex.mockReturnValue('web-hash');
+  store.md5OfBlob.mockResolvedValue('web-hash');
   store.existsSync.mockReturnValue(false);
   const file = new File(['hello'], 'map.png', { type: 'image/png' });
 
@@ -114,7 +127,11 @@ it('imports a picked blob once, skips the rewrite when the hash is already store
     hash: 'web-hash',
     localPath: 'desktop-media:media/story/web-hash.png',
   });
-  expect(store.writeBytes).toHaveBeenCalledTimes(1);
+  // Stored as the Blob that was picked: the bytes never pass through the heap.
+  expect(store.writeBlob).toHaveBeenCalledTimes(1);
+  expect(store.writeBlob).toHaveBeenCalledWith('media/story/web-hash.png', file);
+  expect(store.md5OfBlob).toHaveBeenCalledWith(file);
+  expect(store.writeBytes).not.toHaveBeenCalled();
 
   store.existsSync.mockReturnValue(true);
   await mediaFileService.importAsset('story', {
@@ -125,11 +142,11 @@ it('imports a picked blob once, skips the rewrite when the hash is already store
     file,
   } as any);
   // Same bytes by definition of the addressing: no rewrite.
-  expect(store.writeBytes).toHaveBeenCalledTimes(1);
+  expect(store.writeBlob).toHaveBeenCalledTimes(1);
 });
 
 it('refuses a web import without blob data or without a recognizable type', async () => {
-  store.md5Hex.mockReturnValue('web-hash');
+  store.md5OfBlob.mockResolvedValue('web-hash');
 
   await expect(
     mediaFileService.importAsset('story', {
@@ -148,7 +165,7 @@ it('refuses a web import without blob data or without a recognizable type', asyn
 });
 
 it('writes a captured web frame beside the video without touching the native chain', async () => {
-  store.md5Hex.mockReturnValue('web-hash');
+  store.md5OfBlob.mockResolvedValue('web-hash');
   store.existsSync.mockReturnValue(false);
   store.resolveBlobUri.mockResolvedValue('blob:video');
   (captureVideoThumbnail as jest.Mock).mockResolvedValue(new Uint8Array([9]));
@@ -172,7 +189,7 @@ it('writes a captured web frame beside the video without touching the native cha
 });
 
 it('identifies an extensionless web asset from its bytes when the picker says nothing', async () => {
-  store.md5Hex.mockReturnValue('sniffed-hash');
+  store.md5OfBlob.mockResolvedValue('sniffed-hash');
   store.existsSync.mockReturnValue(false);
 
   const jpegHeader = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00]);
@@ -191,7 +208,7 @@ it('identifies an extensionless web asset from its bytes when the picker says no
 });
 
 it('leaves web videos without a thumbnail when no frame is captured and logs cleanup failures instead of throwing', async () => {
-  store.md5Hex.mockReturnValue('web-hash');
+  store.md5OfBlob.mockResolvedValue('web-hash');
   store.existsSync.mockReturnValue(true);
   store.resolveBlobUri.mockResolvedValue('blob:video');
   (captureVideoThumbnail as jest.Mock).mockResolvedValue(undefined);
@@ -206,6 +223,7 @@ it('leaves web videos without a thumbnail when no frame is captured and logs cle
   } as any);
 
   expect(imported.thumbnailPath).toBeUndefined();
+  expect(store.writeBlob).not.toHaveBeenCalled();
   expect(store.writeBytes).not.toHaveBeenCalled();
   expect(createVideoPlayer).not.toHaveBeenCalled();
   expect(ImageManipulator.manipulate).not.toHaveBeenCalled();
@@ -224,4 +242,136 @@ it('leaves web videos without a thumbnail when no frame is captured and logs cle
     'story',
     expect.any(Error),
   );
+});
+
+describe('picture thumbnails on web', () => {
+  const big = () => new File([new Uint8Array(300 * 1024)], 'photo.jpg', { type: 'image/jpeg' });
+
+  it('makes a thumbnail beside a big picture when it is imported', async () => {
+    store.md5OfBlob.mockResolvedValue('photo-hash');
+    store.existsSync.mockReturnValue(false);
+    (captureImageThumbnail as jest.Mock).mockResolvedValue(new Uint8Array([7]));
+    const file = big();
+
+    const imported = await mediaFileService.importAsset('story', {
+      name: 'photo.jpg',
+      uri: 'blob:picked',
+      mimeType: 'image/jpeg',
+      file,
+    } as any);
+
+    expect(captureImageThumbnail).toHaveBeenCalledWith(file);
+    expect(imported.thumbnailPath).toBe('desktop-media:media/story/photo-hash_thumb.jpg');
+    expect(imported.sizeBytes).toBe(file.size);
+    expect(store.writeBytes).toHaveBeenCalledWith(
+      'media/story/photo-hash_thumb.jpg',
+      new Uint8Array([7]),
+    );
+  });
+
+  it('makes none for a small picture, and the import still succeeds when the browser cannot', async () => {
+    store.md5OfBlob.mockResolvedValue('small-hash');
+    store.existsSync.mockReturnValue(false);
+
+    const small = await mediaFileService.importAsset('story', {
+      name: 'icon.png',
+      uri: 'blob:picked',
+      mimeType: 'image/png',
+      file: new File(['tiny'], 'icon.png', { type: 'image/png' }),
+    } as any);
+    expect(captureImageThumbnail).not.toHaveBeenCalled();
+    expect(small.thumbnailPath).toBeUndefined();
+
+    (captureImageThumbnail as jest.Mock).mockResolvedValue(undefined);
+    const unreadable = await mediaFileService.importAsset('story', {
+      name: 'photo.jpg',
+      uri: 'blob:picked',
+      mimeType: 'image/jpeg',
+      file: big(),
+    } as any);
+    expect(unreadable.thumbnailPath).toBeUndefined();
+    expect(store.writeBytes).not.toHaveBeenCalled();
+  });
+
+  it('backfills the thumbnail of a stored picture, once, and remembers one that needs none', async () => {
+    store.existsSync.mockReturnValue(false);
+    store.readBlob.mockResolvedValue(new Blob([new Uint8Array(300 * 1024)]));
+    (captureImageThumbnail as jest.Mock).mockResolvedValue(new Uint8Array([5]));
+    const path = 'desktop-media:media/story/old.jpg';
+
+    await expect(
+      mediaFileService.ensureImageThumbnail('story', 'old', path, 'image/jpeg'),
+    ).resolves.toBe('desktop-media:media/story/old_thumb.jpg');
+    expect(store.writeBytes).toHaveBeenCalledWith('media/story/old_thumb.jpg', new Uint8Array([5]));
+
+    // Already there: answered at once, nothing read.
+    store.readBlob.mockClear();
+    store.existsSync.mockReturnValue(true);
+    await expect(
+      mediaFileService.ensureImageThumbnail('story', 'old', path, 'image/jpeg'),
+    ).resolves.toBe('desktop-media:media/story/old_thumb.jpg');
+    expect(store.readBlob).not.toHaveBeenCalled();
+
+    // A small picture has none to make, and is not looked at again.
+    store.existsSync.mockReturnValue(false);
+    store.readBlob.mockResolvedValue(new Blob(['tiny']));
+    const smallPath = 'desktop-media:media/story/small.png';
+    await expect(
+      mediaFileService.ensureImageThumbnail('story', 'small', smallPath, 'image/png'),
+    ).resolves.toBeUndefined();
+    store.readBlob.mockClear();
+    await expect(
+      mediaFileService.ensureImageThumbnail('story', 'small', smallPath, 'image/png'),
+    ).resolves.toBeUndefined();
+    expect(store.readBlob).not.toHaveBeenCalled();
+  });
+
+  it('makes one thumbnail at a time, so a grid does not hold many full decodes together', async () => {
+    store.existsSync.mockReturnValue(false);
+    store.readBlob.mockResolvedValue(new Blob([new Uint8Array(300 * 1024)]));
+    let running = 0;
+    let peak = 0;
+    (captureImageThumbnail as jest.Mock).mockImplementation(async () => {
+      running += 1;
+      peak = Math.max(peak, running);
+      await flush();
+      running -= 1;
+      return new Uint8Array([1]);
+    });
+
+    await Promise.all(
+      ['a', 'b', 'c', 'd'].map((hash) =>
+        mediaFileService.ensureImageThumbnail(
+          'story',
+          hash,
+          `desktop-media:media/story/${hash}.jpg`,
+          'image/jpeg',
+        ),
+      ),
+    );
+
+    expect(captureImageThumbnail).toHaveBeenCalledTimes(4);
+    expect(peak).toBe(1);
+  });
+
+  it('does nothing for a path that is not a web media path, nor off the web', async () => {
+    await expect(
+      mediaFileService.ensureImageThumbnail('story', 'x', 'file://native/x.jpg', 'image/jpeg'),
+    ).resolves.toBeUndefined();
+    expect(store.readBlob).not.toHaveBeenCalled();
+  });
+
+  it('deletes the thumbnail of a picture with the picture, and only when there is one', async () => {
+    store.deleteFile.mockResolvedValue(undefined);
+    store.existsSync.mockImplementation((path: string) => path === 'media/story/with_thumb.jpg');
+
+    mediaFileService.deleteLocal('desktop-media:media/story/with.jpg');
+    mediaFileService.deleteLocal('desktop-media:media/story/without.jpg');
+    await flush();
+
+    expect(store.deleteFile).toHaveBeenCalledWith('media/story/with.jpg');
+    expect(store.deleteFile).toHaveBeenCalledWith('media/story/with_thumb.jpg');
+    expect(store.deleteFile).toHaveBeenCalledWith('media/story/without.jpg');
+    expect(store.deleteFile).not.toHaveBeenCalledWith('media/story/without_thumb.jpg');
+  });
 });

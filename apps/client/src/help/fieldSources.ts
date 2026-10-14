@@ -1,6 +1,6 @@
+import { serverFieldClassifications } from './serverFieldClassifications';
 import { fieldSources } from './visibleFieldSources';
 export { entityMetadataHelpPages, fieldSources } from './visibleFieldSources';
-import { serverFieldClassifications } from './serverFieldClassifications';
 
 export const visibleEntityProperties = fieldSources;
 

@@ -270,7 +270,8 @@ export class AgeVerificationService {
     if (!user) throw new AgeVerificationUserNotFoundError();
     await db
       .update(users)
-      .set({ isAdultVerified: false, updatedAt: new Date() })
+      // The private adults-only preference goes with the verification: it never outlives it.
+      .set({ isAdultVerified: false, showNsfw: false, updatedAt: new Date() })
       .where(eq(users.id, userId));
     await storyNsfwService.removeUserFromNsfwStories(userId, 'verification-revoked');
     auditService.record({

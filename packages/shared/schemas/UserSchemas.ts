@@ -34,3 +34,22 @@ export const RegenerateRecoveryCodesSchema = z.object({
 });
 
 export type RegenerateRecoveryCodesType = z.infer<typeof RegenerateRecoveryCodesSchema>;
+
+/**
+ * The account's private preferences (`GET /user/preferences`). `showNsfw` is the owner's choice to see adults-only
+ * stories in the public showcase and reader; it takes effect only while `isAdultVerified` holds, which the response
+ * carries so the client can offer the choice at all. Never part of the public profile shape.
+ */
+export const UserPreferencesSchema = z.object({
+  showNsfw: z.boolean(),
+  isAdultVerified: z.boolean(),
+});
+
+export type UserPreferencesType = z.infer<typeof UserPreferencesSchema>;
+
+/** Payload for `PUT /user/preferences`. Only the flag is accepted; setting it true needs a verified account. */
+export const UpdateUserPreferencesSchema = z.object({
+  showNsfw: z.boolean(),
+});
+
+export type UpdateUserPreferencesType = z.infer<typeof UpdateUserPreferencesSchema>;

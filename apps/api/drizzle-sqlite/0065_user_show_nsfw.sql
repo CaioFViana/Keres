@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `show_nsfw` integer DEFAULT false NOT NULL;

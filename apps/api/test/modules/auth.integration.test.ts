@@ -477,6 +477,7 @@ describe('GET /auth/me', () => {
       username: 'ana',
       tag: 'ana',
       isAdultVerified: false,
+      showNsfw: false,
     });
   });
 
@@ -493,6 +494,7 @@ describe('GET /auth/me', () => {
       username: 'ana',
       tag: 'ana',
       isAdultVerified: false,
+      showNsfw: false,
     });
   });
   it('reflects a later +18 verification, where verification is required', async () => {
@@ -508,6 +510,7 @@ describe('GET /auth/me', () => {
         username: 'bia',
         tag: 'bia',
         isAdultVerified: true,
+        showNsfw: false,
       });
     } finally {
       leaveRequiredMode();

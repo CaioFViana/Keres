@@ -13,7 +13,7 @@ export type ShowcaseAuthStatus = 'loading' | 'anonymous' | 'signed-in';
 interface ShowcaseAuth {
   status: ShowcaseAuthStatus;
   viewer: ShowcaseViewer | null;
-  /** Whether adults-only entries are visible: signed in AND age-verified. */
+  /** Whether adults-only entries are visible: signed in, age-verified AND opted in (`showNsfw`, set in the app profile). */
   seesNsfw: boolean;
   login: (username: string, password: string) => Promise<ShowcaseViewer>;
   logout: () => Promise<void>;
@@ -21,6 +21,11 @@ interface ShowcaseAuth {
 }
 
 const ShowcaseAuthContext = createContext<ShowcaseAuth | null>(null);
+
+/** Adults-only entries show only to a verified viewer who chose to see them (the owner's preference, see the server). */
+export function seesNsfwOf(viewer: ShowcaseViewer | null): boolean {
+  return viewer?.isAdultVerified === true && viewer.showNsfw === true;
+}
 
 export function ShowcaseAuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ShowcaseAuthStatus>('loading');
@@ -62,7 +67,7 @@ export function ShowcaseAuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <ShowcaseAuthContext.Provider
-      value={{ status, viewer, seesNsfw: viewer?.isAdultVerified === true, login, logout, refresh }}
+      value={{ status, viewer, seesNsfw: seesNsfwOf(viewer), login, logout, refresh }}
     >
       {children}
     </ShowcaseAuthContext.Provider>

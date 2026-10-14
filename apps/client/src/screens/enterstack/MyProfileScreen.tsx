@@ -1,4 +1,6 @@
+import type { UserPreferencesType } from '@keres/shared';
 import FormField from '@/src/components/common/forms/FormField/FormField';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
@@ -55,6 +57,9 @@ const MyProfileScreen = () => {
   const [avatarColor, setAvatarColor] = useState<string | null>(null);
   const [avatarIcon, setAvatarIcon] = useState<string | null>(null);
   const [bio, setBio] = useState('');
+  // The owner's private adults-only choice. Loaded from the server, shown only when the account is verified there.
+  const [preferences, setPreferences] = useState<UserPreferencesType | null>(null);
+  const [showNsfw, setShowNsfw] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +85,11 @@ const MyProfileScreen = () => {
           setAvatarIcon(profile.avatarIcon);
           setBio(profile.bio || '');
         }
+
+        const loaded = await userApiService.getPreferences(fetchedServer);
+        if (cancelled) return;
+        setPreferences(loaded);
+        setShowNsfw(loaded?.showNsfw ?? false);
       } catch (err) {
         if (!cancelled) {
           console.error('Failed to load profile:', err);
@@ -103,6 +113,18 @@ const MyProfileScreen = () => {
     if (!server) return;
     setSaving(true);
     try {
+      // Refused before anything is saved: an unverified account cannot turn the adults-only choice on.
+      if (preferences?.isAdultVerified && showNsfw !== preferences.showNsfw) {
+        try {
+          await userApiService.updatePreferences(server, { showNsfw });
+        } catch (err) {
+          if ((err as { response?: { status?: number } })?.response?.status === 403) {
+            AppAlert.alert(t('error'), t('profile_show_nsfw_refused'));
+            return;
+          }
+          throw err;
+        }
+      }
       await userApiService.updateProfile(server, {
         avatarColor,
         avatarIcon,
@@ -158,6 +180,18 @@ const MyProfileScreen = () => {
         />
       </FormField>
 
+      {preferences?.isAdultVerified ? (
+        <>
+          <FormSwitchField
+            label={t('profile_show_nsfw')}
+            value={showNsfw}
+            onValueChange={setShowNsfw}
+            testID="profile-show-nsfw-switch"
+          />
+          <Text style={styles.switchHint}>{t('profile_show_nsfw_hint')}</Text>
+        </>
+      ) : null}
+
       <FormField label={t('bio')}>
         {(fieldAccessibility) => (
           <TextInput
@@ -191,6 +225,11 @@ const createStyles = (colors: ThemeColors, [scrollBottomPadding]: [number]) =>
       color: colors.textSecondary,
       textAlign: 'right',
       marginTop: -2,
+      marginBottom: 10,
+    },
+    switchHint: {
+      ...typography.caption,
+      color: colors.textSecondary,
       marginBottom: 10,
     },
     saveButton: { marginTop: 20 },

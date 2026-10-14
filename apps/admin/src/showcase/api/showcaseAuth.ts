@@ -1,7 +1,8 @@
 /**
  * The showcase's own session, deliberately separate from everything else.
  *
- * Adults-only stories are visible only to signed-in age-verified readers, so the public site has
+ * Adults-only stories are visible only to signed-in age-verified readers who turned them on in their
+ * app profile, so the public site has
  * a sign-in of its own: username + password against `/api/auth/login`, with the token in
  * `sessionStorage` (gone when the tab closes). It never touches the panel's axios token in
  * `localStorage` nor the story unlock tokens - a visitor's login must not leak into (or out of)
@@ -14,7 +15,10 @@ export interface ShowcaseViewer {
   userId: string;
   username: string;
   tag: string;
+  /** Age-verified by an administrator (see the server's docs/age_verification.md). */
   isAdultVerified: boolean;
+  /** The account's own choice to see adults-only stories here. Counts only while `isAdultVerified` holds. */
+  showNsfw: boolean;
 }
 
 export function readSessionToken(): string | null {

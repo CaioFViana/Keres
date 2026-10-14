@@ -535,11 +535,14 @@ export const authRoutes = new Elysia()
       if (!found || found.id !== user.userId) {
         throw new AppError(401, 'Unauthorized');
       }
+      // Read apart from the public shape: the owner's private preference, never shown to anybody else.
+      const preferences = await userService.getPreferences(user.userId);
       return {
         userId: found.id,
         username: found.username,
         tag: found.tag,
         isAdultVerified: found.isAdultVerified,
+        showNsfw: preferences?.showNsfw ?? false,
       };
     },
     {
@@ -549,6 +552,7 @@ export const authRoutes = new Elysia()
           username: t.String(),
           tag: t.String(),
           isAdultVerified: t.Boolean(),
+          showNsfw: t.Boolean(),
         }),
         401: MessageResponseSchema,
       },

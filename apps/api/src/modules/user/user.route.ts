@@ -2,13 +2,16 @@ import {
   AccountPlanSchema,
   RegenerateRecoveryCodesSchema,
   UpdateUserPasswordSchema,
+  UpdateUserPreferencesSchema,
   UpdateUserProfileSchema,
   UpdateUserTagSchema,
+  UserPreferencesSchema,
   UserReportRequestSchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import {
+  AdultVerificationRequiredError,
   InvalidCurrentPasswordError,
   TagAlreadyTakenError,
   userService,
@@ -101,6 +104,32 @@ export const userRoutes = new Elysia()
     },
   )
   .get(
+    '/preferences',
+    async ({ user }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+      const preferences = await userService.getPreferences(user.userId);
+      if (!preferences) {
+        throw new AppError(401, 'Unauthorized');
+      }
+      return preferences;
+    },
+    {
+      response: {
+        200: UserPreferencesSchema,
+        401: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Your private preferences',
+        description:
+          'The owner-only preferences: whether to show adults-only (+18) stories in the public showcase and reader, and whether the account is age-verified (the choice has no effect until it is). Not part of the public profile.',
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .get(
     '/data',
     async ({ user }) => {
       if (!user) {
@@ -121,6 +150,7 @@ export const userRoutes = new Elysia()
           activity: t.Any(),
           accessRecords: t.Any(),
           ageVerification: t.Array(t.Any()),
+          preferences: t.Nullable(t.Object({ showNsfw: t.Boolean() })),
         }),
         401: t.Object({ message: t.String() }),
       },
@@ -300,6 +330,46 @@ export const userRoutes = new Elysia()
         summary: 'Update your own avatar/bio',
         description:
           "Updates the current user's avatar color, avatar icon, and/or bio. Omitted fields are left unchanged; explicit `null` clears a field.",
+        tags: ['User'],
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+  .put(
+    '/preferences',
+    async ({ body, user }) => {
+      if (!user) {
+        throw new AppError(401, 'Unauthorized');
+      }
+
+      const parsed = UpdateUserPreferencesSchema.safeParse(body);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid preferences');
+      }
+
+      try {
+        return await userService.updatePreferences(user.userId, parsed.data);
+      } catch (error) {
+        if (error instanceof AdultVerificationRequiredError) {
+          throw new AppError(403, error.message);
+        }
+        throw error;
+      }
+    },
+    {
+      body: t.Object({
+        showNsfw: t.Boolean(),
+      }),
+      response: {
+        200: UserPreferencesSchema,
+        400: t.Object({ message: t.String() }),
+        401: t.Object({ message: t.String() }),
+        403: t.Object({ message: t.String() }),
+      },
+      detail: {
+        summary: 'Change your private preferences',
+        description:
+          'Sets whether to show adults-only (+18) stories in the public showcase and reader. Turning it on is refused with 403 unless the account is age-verified; turning it off is always allowed. Only the flag is read from the body.',
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },

@@ -174,8 +174,10 @@ export class ShowcaseService {
 
   /**
    * Whether the session (already resolved by the global derive, from Bearer or cookie) belongs to
-   * a live age-verified adult. Anything else - anonymous, stale token, unverified - sees only the
-   * safe catalog. Never throws: a bad token is exactly like no token.
+   * a live age-verified adult who has chosen to see adults-only stories in the public showcase
+   * (`showNsfw`, the owner's private preference). Anything else - anonymous, stale token, unverified,
+   * or verified but opted out - sees only the safe catalog. Never throws: a bad token is exactly like
+   * no token. Collaboration on +18 stories does not read this: it keeps depending on verification alone.
    */
   async viewerIncludesNsfw(user: { userId?: string } | null): Promise<boolean> {
     if (!user?.userId) {
@@ -183,9 +185,14 @@ export class ShowcaseService {
     }
     const row = await db.query.users.findFirst({
       where: eq(users.id, user.userId),
-      columns: { isDeleted: true, isAdultVerified: true },
+      columns: { isDeleted: true, isAdultVerified: true, showNsfw: true },
     });
-    return !!row && !row.isDeleted && effectiveAdultVerified(row.isAdultVerified);
+    return (
+      !!row &&
+      !row.isDeleted &&
+      effectiveAdultVerified(row.isAdultVerified) &&
+      row.showNsfw === true
+    );
   }
 
   /** The story's live NSFW flag (false when the story is gone - callers 404 on that anyway). */

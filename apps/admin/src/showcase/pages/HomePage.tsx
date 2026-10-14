@@ -12,7 +12,7 @@ const POLL_INTERVAL_MS = 30_000;
 export function HomePage() {
   const { t } = useTranslation('showcase');
   const config = useShowcaseConfig();
-  const { status: authStatus, seesNsfw } = useShowcaseAuth();
+  const { status: authStatus, seesNsfw, viewer } = useShowcaseAuth();
   const [stories, setStories] = useState<ShowcaseStoryCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const etagRef = useRef<string | null>(null);
@@ -80,7 +80,11 @@ export function HomePage() {
 
         {!stories && !error && <p className="muted">{t('home.loading')}</p>}
 
-        {!seesNsfw && <p className="muted">{t('home.adultHint')}</p>}
+        {!seesNsfw && (
+          <p className="muted">
+            {t(viewer?.isAdultVerified ? 'home.adultHintOptIn' : 'home.adultHint')}
+          </p>
+        )}
 
         {stories && stories.length === 0 && <p className="empty">{t('home.empty')}</p>}
 

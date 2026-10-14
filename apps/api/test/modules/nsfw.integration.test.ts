@@ -380,7 +380,7 @@ describe('showcase NSFW gating and shadowban', () => {
     await enableShowcase();
   });
 
-  it('hides NSFW stories from anonymous and unverified viewers, showing them to verified adults', async () => {
+  it('hides NSFW stories from anonymous and unverified viewers, showing them to verified adults who chose it', async () => {
     await seedPublication(ana.userId, storyId);
     await flagNsfw(storyId);
 
@@ -388,7 +388,16 @@ describe('showcase NSFW gating and shadowban', () => {
     expect((await detailShowcase(undefined, storyId)).status).toBe(404);
     expect((await detailShowcase(bia.token, storyId)).status).toBe(404);
 
+    // Verified, but the adults-only showcase is also the owner's own choice: until it is on, nothing changes.
     await verify(bia.userId);
+    expect((await listShowcase(bia.token)).data).toEqual([]);
+    expect((await detailShowcase(bia.token, storyId)).status).toBe(404);
+
+    const chosen = await request('PUT', '/user/preferences', {
+      token: bia.token,
+      body: { showNsfw: true },
+    });
+    expect(chosen.status).toBe(200);
     const listed = await listShowcase(bia.token);
     expect(listed.data.map((card: { storyId: string }) => card.storyId)).toEqual([storyId]);
     expect((await detailShowcase(bia.token, storyId)).status).toBe(200);

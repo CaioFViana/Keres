@@ -39,6 +39,12 @@ export const users = table(
      * showcase entries. Checked from the DB per request, never trusted from the JWT.
      */
     isAdultVerified: boolean('is_adult_verified').notNull().default(false),
+    /**
+     * The account's own, private choice to see adults-only stories in the public showcase and reader. It counts only
+     * while `isAdultVerified` holds (see `ShowcaseService.viewerIncludesNsfw`); revoking the verification resets it.
+     * Collaboration on +18 stories does not read it.
+     */
+    showNsfw: boolean('show_nsfw').notNull().default(false),
     /** Age-verification standing of the account itself (see `USER_VERIFICATION_STATUSES`). */
     verificationStatus: text('verification_status', { enum: USER_VERIFICATION_STATUSES })
       .notNull()

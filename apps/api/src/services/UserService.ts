@@ -1,4 +1,9 @@
-import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
+import type {
+  UpdateUserPreferencesType,
+  UpdateUserProfileType,
+  UserPreferencesType,
+  UserPublicInfo,
+} from '@keres/shared';
 import { ACCOUNT_DELETION_GRACE_DAYS, deriveUserTag, normalizeUserTag } from '@keres/shared';
 import { randomUUID } from 'node:crypto';
 import { and, eq, lt, notLike, sql } from 'drizzle-orm';
@@ -15,6 +20,14 @@ export class TagAlreadyTakenError extends Error {
   constructor() {
     super('Tag is already taken.');
     this.name = 'TagAlreadyTakenError';
+  }
+}
+
+/** Setting the adults-only preference needs a verified account; clearing it never does. */
+export class AdultVerificationRequiredError extends Error {
+  constructor() {
+    super('Only age-verified (+18) accounts can show adults-only content.');
+    this.name = 'AdultVerificationRequiredError';
   }
 }
 
@@ -234,6 +247,52 @@ export class UserService {
     return publicInfoOf(updated);
   }
 
+  /**
+   * The owner's private preferences, with the verification they depend on. Undefined when there is no such account.
+   * Never part of the public shape (`PUBLIC_INFO_COLUMNS`).
+   */
+  async getPreferences(userId: string): Promise<UserPreferencesType | undefined> {
+    const row = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { showNsfw: true, isAdultVerified: true },
+    });
+    if (!row) return undefined;
+    return {
+      showNsfw: row.showNsfw,
+      isAdultVerified: effectiveAdultVerified(row.isAdultVerified),
+    };
+  }
+
+  /**
+   * Sets the adults-only preference. Turning it on is refused unless the account is verified; the condition is part of
+   * the UPDATE itself, so a revocation that lands in between cannot leave the flag on.
+   */
+  async updatePreferences(
+    userId: string,
+    preferences: UpdateUserPreferencesType,
+  ): Promise<UserPreferencesType> {
+    const [updated] = await db
+      .update(users)
+      .set({ showNsfw: preferences.showNsfw, updatedAt: new Date() })
+      .where(
+        preferences.showNsfw
+          ? and(eq(users.id, userId), eq(users.isAdultVerified, true))
+          : eq(users.id, userId),
+      )
+      .returning({ showNsfw: users.showNsfw, isAdultVerified: users.isAdultVerified });
+
+    if (!updated) {
+      if (preferences.showNsfw) {
+        throw new AdultVerificationRequiredError();
+      }
+      throw new Error('User not found.');
+    }
+    return {
+      showNsfw: updated.showNsfw,
+      isAdultVerified: effectiveAdultVerified(updated.isAdultVerified),
+    };
+  }
+
   /** Self-service: it requires the current password, unlike the admin panel's reset, which ignores it. */
   async changeOwnPassword(
     userId: string,
@@ -360,6 +419,7 @@ export class UserService {
         bio: null,
         tierId: null,
         isAdultVerified: false,
+        showNsfw: false,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));

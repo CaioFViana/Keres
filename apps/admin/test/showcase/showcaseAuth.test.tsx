@@ -7,7 +7,7 @@ import {
   logout,
   readSessionToken,
 } from '../../src/showcase/api/showcaseAuth';
-import { ShowcaseAuthProvider } from '../../src/showcase/auth/ShowcaseAuthProvider';
+import { ShowcaseAuthProvider, seesNsfwOf } from '../../src/showcase/auth/ShowcaseAuthProvider';
 import { Layout } from '../../src/showcase/components/Layout';
 import { ShowcaseThemeProvider } from '../../src/showcase/theme/ShowcaseThemeProvider';
 import { changeInput, click, flush, render, submit } from '../helpers/react';
@@ -17,7 +17,18 @@ const viewer = {
   username: 'ana',
   tag: 'ana#1',
   isAdultVerified: true,
+  showNsfw: true,
 };
+
+describe('adults-only visibility of the showcase viewer', () => {
+  it('needs a verified viewer who chose to see adults-only content', () => {
+    expect(seesNsfwOf(null)).toBe(false);
+    expect(seesNsfwOf({ ...viewer, isAdultVerified: false, showNsfw: false })).toBe(false);
+    // Verified, but the choice is off in the app profile: still the safe catalog.
+    expect(seesNsfwOf({ ...viewer, isAdultVerified: true, showNsfw: false })).toBe(false);
+    expect(seesNsfwOf({ ...viewer, isAdultVerified: true, showNsfw: true })).toBe(true);
+  });
+});
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -185,7 +196,7 @@ describe('showcase header sign-in', () => {
 
   it('restores a session of this tab, marking an account that is not age-verified', async () => {
     sessionStorage.setItem('keres_showcase_session', 'abc');
-    fetchMock.mockResolvedValueOnce(json({ ...viewer, isAdultVerified: false }));
+    fetchMock.mockResolvedValueOnce(json({ ...viewer, isAdultVerified: false, showNsfw: false }));
     const view = await renderHeader();
     await flush();
 

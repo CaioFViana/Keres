@@ -21,7 +21,7 @@ export function StoryPage() {
   const { storyId = '' } = useParams();
   const { resolved } = useShowcaseTheme();
   const { t } = useTranslation('showcase');
-  const { status: authStatus, seesNsfw } = useShowcaseAuth();
+  const { status: authStatus, seesNsfw, viewer } = useShowcaseAuth();
 
   const [detail, setDetail] = useState<ShowcaseStoryDetail | null>(null);
   const [locked, setLocked] = useState(false);
@@ -91,7 +91,7 @@ export function StoryPage() {
             not signed in as a verified adult gets the sign-in offer, not the distinction. */}
         {!seesNsfw && (
           <p className="muted">
-            {t('story.gatedHint')}{' '}
+            {t(viewer?.isAdultVerified ? 'story.gatedOptInHint' : 'story.gatedHint')}{' '}
             <button type="button" className="button-secondary" onClick={() => setLoginOpen(true)}>
               {t('auth.signIn')}
             </button>

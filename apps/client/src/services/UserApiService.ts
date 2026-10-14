@@ -1,4 +1,10 @@
-import type { AccountPlan, UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
+import type {
+  AccountPlan,
+  UpdateUserPreferencesType,
+  UpdateUserProfileType,
+  UserPreferencesType,
+  UserPublicInfo,
+} from '@keres/shared';
 import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -75,6 +81,32 @@ export class UserApiService {
       if ((error as { response?: { status?: number } })?.response?.status === 404) return null;
       throw error;
     }
+  }
+
+  /**
+   * The owner's private preferences on `server` (the adults-only choice and whether the account is verified), or
+   * `null` from a server older than this route.
+   */
+  async getPreferences(server: ServerSelect): Promise<UserPreferencesType | null> {
+    try {
+      const response = await this.clientFor(server).get<UserPreferencesType>('/user/preferences');
+      return response.data;
+    } catch (error: unknown) {
+      if ((error as { response?: { status?: number } })?.response?.status === 404) return null;
+      throw error;
+    }
+  }
+
+  /** Sets the adults-only choice on `server`. A 403 means the account is not age-verified there. */
+  async updatePreferences(
+    server: ServerSelect,
+    preferences: UpdateUserPreferencesType,
+  ): Promise<UserPreferencesType> {
+    const response = await this.clientFor(server).put<UserPreferencesType>(
+      '/user/preferences',
+      preferences,
+    );
+    return response.data;
   }
 
   /** The current user's own profile on `server`, including avatar/bio - `server.idUser` is

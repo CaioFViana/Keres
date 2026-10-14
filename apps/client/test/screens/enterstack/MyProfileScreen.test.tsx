@@ -8,6 +8,8 @@ const mockDrizzle = {};
 const mockGetServerById = jest.fn();
 const mockGetOwnProfile = jest.fn();
 const mockUpdateProfile = jest.fn();
+const mockGetPreferences = jest.fn();
+const mockUpdatePreferences = jest.fn();
 const mockSetTheme = jest.fn();
 const mockColors = {
   primary: '#0000ff',
@@ -86,6 +88,8 @@ jest.mock('../../../src/services/UserApiService', () => ({
   userApiService: {
     getOwnProfile: (...args: unknown[]) => mockGetOwnProfile(...args),
     updateProfile: (...args: unknown[]) => mockUpdateProfile(...args),
+    getPreferences: (...args: unknown[]) => mockGetPreferences(...args),
+    updatePreferences: (...args: unknown[]) => mockUpdatePreferences(...args),
   },
 }));
 
@@ -152,6 +156,8 @@ describe('MyProfileScreen', () => {
       bio: 'hello',
     });
     mockUpdateProfile.mockResolvedValue(undefined);
+    mockGetPreferences.mockResolvedValue({ showNsfw: false, isAdultVerified: false });
+    mockUpdatePreferences.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -252,5 +258,80 @@ describe('MyProfileScreen', () => {
         expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_update_profile'),
       );
     });
+  });
+});
+
+describe('MyProfileScreen adults-only choice', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockRoute.params = { serverId: 'srv-1' };
+    mockGetServerById.mockResolvedValue(server);
+    mockGetOwnProfile.mockResolvedValue({ avatarColor: null, avatarIcon: null, bio: null });
+    mockUpdateProfile.mockResolvedValue(undefined);
+    mockUpdatePreferences.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('is not offered to an account that is not age-verified', async () => {
+    mockGetPreferences.mockResolvedValue({ showNsfw: false, isAdultVerified: false });
+    const view = await render(<MyProfileScreen />);
+    await view.findByText('save');
+
+    expect(view.queryByTestId('profile-show-nsfw-switch')).toBeNull();
+  });
+
+  it('is offered to a verified account, with the saved choice', async () => {
+    mockGetPreferences.mockResolvedValue({ showNsfw: true, isAdultVerified: true });
+    const view = await render(<MyProfileScreen />);
+    await view.findByText('save');
+
+    expect(view.getByTestId('profile-show-nsfw-switch').props.accessibilityState).toEqual({
+      checked: true,
+      disabled: false,
+    });
+    expect(view.getByText('profile_show_nsfw_hint')).toBeTruthy();
+  });
+
+  it('saves a changed choice with the profile, then goes back', async () => {
+    mockGetPreferences.mockResolvedValue({ showNsfw: false, isAdultVerified: true });
+    const view = await render(<MyProfileScreen />);
+    await view.findByText('save');
+
+    await fireEvent.press(view.getByTestId('profile-show-nsfw-switch'));
+    await fireEvent.press(view.getByText('save'));
+
+    await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+    expect(mockUpdatePreferences).toHaveBeenCalledWith(server, { showNsfw: true });
+    expect(mockUpdateProfile).toHaveBeenCalled();
+  });
+
+  it('does not send the choice again when it is unchanged', async () => {
+    mockGetPreferences.mockResolvedValue({ showNsfw: true, isAdultVerified: true });
+    const view = await render(<MyProfileScreen />);
+    await view.findByText('save');
+
+    await fireEvent.press(view.getByText('save'));
+
+    await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+    expect(mockUpdatePreferences).not.toHaveBeenCalled();
+  });
+
+  it('shows the refusal and keeps the form when the server refuses the choice', async () => {
+    mockGetPreferences.mockResolvedValue({ showNsfw: false, isAdultVerified: true });
+    mockUpdatePreferences.mockRejectedValueOnce({ response: { status: 403 } });
+    const view = await render(<MyProfileScreen />);
+    await view.findByText('save');
+
+    await fireEvent.press(view.getByTestId('profile-show-nsfw-switch'));
+    await fireEvent.press(view.getByText('save'));
+
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith('error', 'profile_show_nsfw_refused'),
+    );
+    expect(mockUpdateProfile).not.toHaveBeenCalled();
+    expect(mockGoBack).not.toHaveBeenCalled();
   });
 });

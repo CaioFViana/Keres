@@ -9,6 +9,9 @@ import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 import SyncInitializer from '@/src/components/features/app/SyncInitializer';
 import { useDrizzle } from '../db';
+import { legalIsBehind } from '../legal/clientLegalStatus';
+import { getAcceptedClientLegal } from '../legal/clientTermsAcceptance';
+import LegalUpdateScreen from '../screens/enterstack/LegalUpdateScreen';
 import { getClientSettings } from '../services/ClientSettingsService';
 import { VERIFICATION_PENDING_EVENT } from '../services/apiClient';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
@@ -26,11 +29,30 @@ import { attachWebHistoryBack, hasScreenBehind } from './webHistoryBack';
 
 export type RootStackParamList = {
   ColdInstall: undefined;
+  LegalUpdate: undefined;
   StorySelection: NavigatorScreenParams<StorySelectionDrawerParamList> | undefined;
   MainSystem: undefined;
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
+
+/**
+ * Whether the Terms or the Privacy Policy is behind the text shipped now. A record that cannot be read asks nothing:
+ * the app opens the way it always did rather than being held back by its own storage.
+ */
+async function isLegalUpdateNeeded(): Promise<boolean> {
+  try {
+    const [terms, privacy] = await Promise.all([
+      getAcceptedClientLegal('terms'),
+      getAcceptedClientLegal('privacy'),
+    ]);
+    const behind = legalIsBehind(terms?.version ?? null, privacy?.version ?? null);
+    return behind.terms || behind.privacy;
+  } catch {
+    return false;
+  }
+}
+
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 /** What the browser's Back button does: what the header's back arrow does on the screen in front. */
@@ -66,6 +88,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isColdInstallNeeded, setIsColdInstallNeeded] = useState(false);
   const [showcaseReady, setShowcaseReady] = useState(false);
+  const [legalUpdateNeeded, setLegalUpdateNeeded] = useState(false);
   const showcase = readShowcaseRequest();
   const stopWebHistory = useRef<(() => void) | null>(null);
 
@@ -119,6 +142,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
         } else {
           await initializeUserSettings(drizzleDb);
           await initializeThemeSettings(drizzleDb);
+          setLegalUpdateNeeded(await isLegalUpdateNeeded());
           setIsColdInstallNeeded(false);
         }
       } catch (error) {
@@ -146,7 +170,9 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
       ? // The showcase has already chosen the story; going through the selection would only show a screen the
         // capture does not want.
         'MainSystem'
-      : 'StorySelection';
+      : legalUpdateNeeded
+        ? 'LegalUpdate'
+        : 'StorySelection';
 
   // expo-router/entry used to wrap the whole app in its own navigation container;
   // with the entry registering <App /> directly, the container lives here, owning
@@ -185,6 +211,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
           initialRouteName={initialRouteName}
         >
           <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
+          <RootStack.Screen name="LegalUpdate" component={LegalUpdateScreen} />
           <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
           <RootStack.Screen name="MainSystem" component={MainSystemStack} />
         </RootStack.Navigator>

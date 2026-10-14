@@ -97,12 +97,16 @@ const ColdInstallScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    void getAcceptedClientLegal('terms').then((record) => {
-      if (!cancelled) setAcceptedTermsVersion(record?.version ?? null);
-    });
-    void getAcceptedClientLegal('privacy').then((record) => {
-      if (!cancelled) setAcceptedPrivacyVersion(record?.version ?? null);
-    });
+    void getAcceptedClientLegal('terms')
+      .catch(() => null)
+      .then((record) => {
+        if (!cancelled) setAcceptedTermsVersion(record?.version ?? null);
+      });
+    void getAcceptedClientLegal('privacy')
+      .catch(() => null)
+      .then((record) => {
+        if (!cancelled) setAcceptedPrivacyVersion(record?.version ?? null);
+      });
     return () => {
       cancelled = true;
     };

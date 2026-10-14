@@ -40,26 +40,23 @@ function parseAcceptance(raw: string | null): ClientLegalAcceptance | null {
 
 /**
  * What this device accepted of a document, if anything. Corrupt or missing reads as never
- * accepted - the welcome asks again rather than assuming.
+ * accepted - the welcome asks again rather than assuming. A storage read that fails rejects, so
+ * the caller can tell 'never accepted' from 'could not tell'.
  */
 export async function getAcceptedClientLegal(
   document: ClientLegalDocument,
 ): Promise<ClientLegalAcceptance | null> {
-  try {
-    const stored = parseAcceptance(await AsyncStorage.getItem(KEYS[document]));
-    if (stored) return stored;
-    // Fallback for installs that recorded only the terms version, before records existed.
-    if (document === 'terms') {
-      const raw = await AsyncStorage.getItem(LEGACY_TERMS_VERSION_KEY);
-      const version = raw === null ? NaN : Number.parseInt(raw, 10);
-      if (Number.isInteger(version)) {
-        return { version, acceptedAt: '', method: 'onboarding' };
-      }
+  const stored = parseAcceptance(await AsyncStorage.getItem(KEYS[document]));
+  if (stored) return stored;
+  // Fallback for installs that recorded only the terms version, before records existed.
+  if (document === 'terms') {
+    const raw = await AsyncStorage.getItem(LEGACY_TERMS_VERSION_KEY);
+    const version = raw === null ? NaN : Number.parseInt(raw, 10);
+    if (Number.isInteger(version)) {
+      return { version, acceptedAt: '', method: 'onboarding' };
     }
-    return null;
-  } catch {
-    return null;
   }
+  return null;
 }
 
 export async function setAcceptedClientLegal(

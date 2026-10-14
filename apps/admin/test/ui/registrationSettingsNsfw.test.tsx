@@ -100,7 +100,7 @@ describe('the adults-only switch with manual verification', () => {
     const view = await renderPage();
 
     expect(view.container.querySelector('[data-testid="age-verification-mode"]')?.textContent).toBe(
-      'Age verification: Manual: administrators verify accounts by hand',
+      'Age verification: manual (administrators verify accounts by hand)',
     );
     await view.unmount();
   });

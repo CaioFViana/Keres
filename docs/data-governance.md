@@ -197,16 +197,18 @@ the server opens. The reviewer handbook is `docs/age_verification_reviewer.md`.
      the verification service approves them. You need the service's URL and both
      secrets. While the service is down, new registrations stop; existing
      accounts keep working. Use it for any server open to people you do not know.
-   - `disabled`: no verification at all. The server cannot allow adult content,
-     no account is marked verified, the terms and the server screen say "no age
-     verification on this server", and the boot log says so. Use it only for a
-     server limited to people you know (home network, friends). Never present a
-     `disabled` server to the public as 18+.
+   - `manual` (the default; the legacy value `disabled` is read as `manual`): no
+     verification service. Accounts start unverified and an administrator marks
+     verified accounts by hand, after checking the person by other means; the
+     terms say minors are not allowed by default and that verification is manual.
+     You answer for that check. Use it for a server limited to people you know,
+     or when your own process outside the server is solid enough to stand behind.
 2. **Choose the content path**:
-   - Path 1: no adults-only area. Works with either mode.
-   - Path 2: an adults-only area that exists only for verified accounts. Only
-     with `required`. With `disabled` the area does not exist.
-3. **Run your own verification service before you turn the adults-only area on.**
+   - Path 1: no adults-only area (leave `allowNsfw` off). Works with either mode.
+   - Path 2: an adults-only area that exists only for verified accounts (turn
+     `allowNsfw` on). With `manual` the verified flag is yours to give and to
+     withdraw; with `required` the service gives it.
+3. **With `required`, run your own verification service before you turn the adults-only area on.**
    Do not point `AGE_VERIFICATION_URL` at a service someone else operates for
    you. The reference service (`apps/verification`) is planned; another service
    must follow `KERES-AGE-V1` and be run under your own responsibility. Test the

@@ -81,7 +81,8 @@ What the ledger does **not** cover is the rest of the list below. After every re
 The verification service described in [`docs/age_verification.md`](../../../docs/age_verification.md)
 (`apps/verification`) runs from its **own** compose file, image and port, behind its own reverse proxy. This compose
 carries only the Keres server's side: the `AGE_VERIFICATION_*` values below. `required` cannot boot without a service
-to point at, and the official server must not open registrations without one.
+to point at. The official server runs `manual` (the default): no service, accounts start unverified, and an
+administrator marks verified accounts by hand in the admin panel (Users).
 
 Its backups are written by the service itself, not by the `backup` service above (which dumps only Postgres): a nightly
 copy of its data store, kept as 30 daily and 3 monthly copies (none older than 93 days), into its own
@@ -115,7 +116,7 @@ the machine to encrypted storage with access limited to operators. See
   sendings become unreadable and expire.
 - **Keres server keys** (names only; values live in the deploy `.env`, never in
   the repository):
-  - `AGE_VERIFICATION_MODE` - `required` or `disabled`;
+  - `AGE_VERIFICATION_MODE` - `manual` (default) or `required` (`disabled` is still read as `manual`);
   - `AGE_VERIFICATION_URL` - the service's address; `https`, unless loopback with
     `AGE_VERIFICATION_ALLOW_INSECURE`;
   - `AGE_VERIFICATION_SECRET` (and `_PREVIOUS` while rotating) - Keres to service;
@@ -128,6 +129,7 @@ the machine to encrypted storage with access limited to operators. See
 
   In `required` mode the URL and both secrets are mandatory, and the API refuses
   to boot without them. Secrets are at least 32 characters.
-- **Mode.** `AGE_VERIFICATION_MODE=required` is the Docker default. Outside
-  Docker an unset mode means `disabled`, so check the line in the `.env` when you
-  deploy by hand. `disabled` on the official server is not an option.
+- **Mode.** `AGE_VERIFICATION_MODE=manual` is the default, in Docker and outside it. Set `required`
+  only together with a running verification service. Turn on the adults-only area in the admin
+  settings (`allowNsfw`) and mark verified accounts in the admin Users page; a verified account then
+  chooses, in its profile, whether it sees adults-only stories in the public showcase.

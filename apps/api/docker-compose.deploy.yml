@@ -51,10 +51,10 @@ services:
       # mounts, so restoring a dump cannot bring an erased account back. See deploy/README.md.
       ERASURE_LEDGER_PATH: /app/apps/api/erasure-ledger/ledger.ndjson
       ERASURE_LEDGER_RETENTION_DAYS: ${ERASURE_LEDGER_RETENTION_DAYS:-100}
-      # Accounts are 18+ and verified (docs/age_verification.md). `required` is the Docker default and it
-      # refuses to boot without the service's address and keys. A home or LAN server with no public offer may
-      # set `disabled` in its .env: it then has no adults-only area and no verified account, and says so.
-      AGE_VERIFICATION_MODE: ${AGE_VERIFICATION_MODE:-required}
+      # Accounts are 18+ (docs/age_verification.md). `manual` is the Docker default: no verification service,
+      # accounts start unverified and an administrator marks them by hand. `required` sends every new account
+      # through a verification service and refuses to boot without the service's address and keys.
+      AGE_VERIFICATION_MODE: ${AGE_VERIFICATION_MODE:-manual}
       AGE_VERIFICATION_URL: ${AGE_VERIFICATION_URL:-}
       AGE_VERIFICATION_SECRET: ${AGE_VERIFICATION_SECRET:-}
       AGE_VERIFICATION_SECRET_PREVIOUS: ${AGE_VERIFICATION_SECRET_PREVIOUS:-}

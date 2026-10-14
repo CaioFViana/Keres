@@ -40,6 +40,11 @@ imposes, with no exception:
    allows it, and only while the owner is verified (`StoryNsfwService.nsfwFlagRefusal`).
 4. Anything that gates on "adult verified" reads the stored flag (`effectiveAdultVerified`). The mode does not hide it and
    does not invent it.
+5. **Seeing adults-only stories in the public showcase is the verified account's own choice** (`users.show_nsfw`, default
+   off, `GET/PUT /api/user/preferences`, the switch in the profile screen of the app). The showcase shows a +18 story to
+   a viewer who is verified **and** turned it on; revoking the verification resets the choice. Collaboration on +18
+   stories (invitations, sync, flagging) depends on verification only and never reads the choice. Marking a story +18 on
+   the device is never blocked: the server refuses only to receive, publish or import it where it does not allow it.
 5. The boot logs the mode at every start. In `manual` it says that no service checks anyone, that accounts start not
    verified, and that administrators mark them by hand.
 

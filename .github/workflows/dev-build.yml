@@ -223,7 +223,7 @@ jobs:
         run: bunx expo prebuild --platform android --non-interactive
       - name: Set Android versionCode/versionName
         working-directory: apps/client
-        run: bun ../../scripts/ci/set-android-version.ts ${{ needs.version.outputs.version }}
+        run: bun ../../scripts/ci/set-android-version.ts ${{ needs.version.outputs.version }} --allow-prerelease
       - name: Wire up release signing
         working-directory: apps/client
         run: bun ../../scripts/ci/patch-android-release-signing.ts

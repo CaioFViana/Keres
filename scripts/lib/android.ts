@@ -8,17 +8,29 @@
 export const ANDROID_PACKAGE = 'me.keres.client';
 export const ANDROID_BUILD_GRADLE = 'apps/client/android/app/build.gradle';
 
+export interface VersionOptions {
+  /**
+   * Accept `1.2.3-dev1`-style tags. Only the dev-build workflow sets it: its artifacts are
+   * sideloaded from the run page and never go to a store track, so sharing the core's
+   * versionCode costs nothing there. The release workflow leaves it off.
+   */
+  allowPrerelease?: boolean;
+}
+
 /**
  * A Play versionCode from the tag: MAJOR·1.000.000 + MINOR·1.000 + PATCH. Plain
  * arithmetic, so any newer tag is always a bigger number - which is the only
- * thing the Play Console demands. Pre-releases are refused: a `-dev1` tag would
- * otherwise stamp the same code as its release and collide on upload.
+ * thing the Play Console demands. Pre-releases are refused by default: a `-dev1`
+ * tag would otherwise stamp the same code as its release and collide on upload,
+ * so a release workflow fed one by mistake stops instead of shipping it. With
+ * `allowPrerelease` the suffix is ignored for the code (it stays in versionName).
  */
-export function versionCodeFor(version: string): number {
-  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
-  if (!match) {
+export function versionCodeFor(version: string, options: VersionOptions = {}): number {
+  const match = /^(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(version);
+  if (!match || (match[4] && !options.allowPrerelease)) {
     throw new Error(
-      `Android versionCode needs a plain MAJOR.MINOR.PATCH version, got ${JSON.stringify(version)}.`,
+      `Android versionCode needs a plain MAJOR.MINOR.PATCH version, got ${JSON.stringify(version)}` +
+        `${match ? ' (a pre-release would share the code of its release; dev builds pass --allow-prerelease)' : ''}.`,
     );
   }
   const code = Number(match[1]) * 1_000_000 + Number(match[2]) * 1_000 + Number(match[3]);
@@ -33,7 +45,11 @@ export function versionCodeFor(version: string): number {
  * emitted. Fails loudly when the package is not ours or the anchors are gone, so
  * a template change breaks the release instead of shipping a store reject.
  */
-export function patchGradleVersion(source: string, version: string): string {
+export function patchGradleVersion(
+  source: string,
+  version: string,
+  options: VersionOptions = {},
+): string {
   if (!source.includes(ANDROID_PACKAGE)) {
     throw new Error(
       `Expected the Android package ${ANDROID_PACKAGE} in ${ANDROID_BUILD_GRADLE}; refusing to stamp a foreign project.`,
@@ -45,7 +61,7 @@ export function patchGradleVersion(source: string, version: string): string {
     );
   }
   return source
-    .replace(/versionCode \d+/, `versionCode ${versionCodeFor(version)}`)
+    .replace(/versionCode \d+/, `versionCode ${versionCodeFor(version, options)}`)
     .replace(/versionName "[^"]*"/, `versionName "${version}"`);
 }
 

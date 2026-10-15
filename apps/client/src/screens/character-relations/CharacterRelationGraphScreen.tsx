@@ -22,7 +22,7 @@ import type { CharacterRelationGraphCanvasHandle } from '@/src/components/featur
 import CharacterRelationGraphCanvas from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
-import type { Character } from '@keres/shared/entities/Character';
+import type { Character } from '@keres/shared/entities/narrative/Character';
 import { useDrizzle } from '@/src/db';
 import type { CharacterSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
@@ -35,15 +35,18 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
-import type { RelationGraphEdge } from '@keres/shared/graphs/characterRelationGraphLayout';
-import { limitFocusSelection, MAX_FOCUS_SELECTION } from '@keres/shared/graphs/graphNeighborhood';
+import type { RelationGraphEdge } from '@keres/shared/graphs/character-relations/characterRelationGraphLayout';
+import {
+  limitFocusSelection,
+  MAX_FOCUS_SELECTION,
+} from '@keres/shared/graphs/common/graphNeighborhood';
 import {
   assignRelationTypeColors,
   foldRelationType,
-} from '@keres/shared/graphs/relationTypeColors';
-import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
-import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
-import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
+} from '@keres/shared/graphs/character-relations/relationTypeColors';
+import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/character-relations/characterRelationGraphLayout';
+import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/character-relations/characterRelationGraphSvg';
+import { filterCharacterRelationGraph } from '@keres/shared/graphs/character-relations/characterRelationGraphFilter';
 import { buildCharacterRelationMapFileName } from '@/src/utils/io/storyTransfer';
 import { useCharacterRelationEditor } from './useCharacterRelationEditor';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';

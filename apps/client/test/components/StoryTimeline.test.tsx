@@ -10,7 +10,7 @@ import {
   TIMELINE_PADDING,
   TIMELINE_ROW_HEIGHT,
   type StoryTimelineLayout,
-} from '@keres/shared/graphs/storyTimelineLayout';
+} from '@keres/shared/graphs/timeline/storyTimelineLayout';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

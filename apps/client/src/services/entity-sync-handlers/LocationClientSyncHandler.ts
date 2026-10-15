@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { Location } from '@keres/shared/entities/Location'; // Import the Location entity interface
+import type { Location } from '@keres/shared/entities/narrative/Location'; // Import the Location entity interface
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';

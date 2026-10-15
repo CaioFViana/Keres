@@ -3,7 +3,7 @@ import {
   type GrammaticalGender,
   type StoryVocabulary,
   type StoryVocabularyEntityType,
-} from '@keres/shared/entities/Story';
+} from '@keres/shared/entities/story/Story';
 import type { TFunction } from 'i18next';
 
 const DEFAULT_TERM_KEYS: Record<StoryVocabularyEntityType, { singular: string; plural: string }> = {

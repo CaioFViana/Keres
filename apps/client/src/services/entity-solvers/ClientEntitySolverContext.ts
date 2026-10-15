@@ -1,6 +1,6 @@
 import type { EntitySolverContext, EntitySolverRow } from '@keres/shared';
 import { OperationLogEntityType } from '@keres/shared';
-import type { StoryVocabularyEntityType } from '@keres/shared/entities/Story';
+import type { StoryVocabularyEntityType } from '@keres/shared/entities/story/Story';
 import { and, eq } from 'drizzle-orm';
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { TFunction } from 'i18next';

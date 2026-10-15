@@ -18,9 +18,9 @@ import CommentableDetailField from '@/src/components/features/comments/Commentab
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import type { Effect } from '@keres/shared/entities/Effect';
+import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

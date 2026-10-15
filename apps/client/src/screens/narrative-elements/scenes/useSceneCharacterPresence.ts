@@ -1,4 +1,4 @@
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';

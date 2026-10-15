@@ -1,4 +1,4 @@
-import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
+import type { MapExportFormat } from '@keres/shared/entities/accounts/ClientSettings';
 import { useExportFormatPromptStore } from '@/src/state/ui/exportFormatPromptStore';
 
 /**

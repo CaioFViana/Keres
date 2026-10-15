@@ -4,7 +4,7 @@ import {
   getWorldPieceSectionAppearance,
   WORLD_PIECE_SECTIONS,
 } from '@keres/shared';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 
 export interface BoardCardAppearance {
   color: string;

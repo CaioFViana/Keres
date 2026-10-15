@@ -10,7 +10,7 @@ import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCa
 import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport';
 import { useGraphCanvasViewport } from '@/src/hooks/graph/useGraphCanvasViewport';
 import { useTheme } from '@/src/theme';
-import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 
 /**
  * The interactive drawing of the story map.

@@ -8,7 +8,7 @@ import {
 } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { StatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
+import type { StatRadarLayout } from '@keres/shared/graphs/stats/statRadarLayout';
 import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
 import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';

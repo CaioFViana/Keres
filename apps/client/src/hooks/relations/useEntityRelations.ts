@@ -1,5 +1,9 @@
-import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
-import type { TagRelationEntities } from '@keres/shared/entities/Tag';
+import type {
+  Note,
+  NoteRelation,
+  NoteRelationEntities,
+} from '@keres/shared/entities/narrative/Note';
+import type { TagRelationEntities } from '@keres/shared/entities/narrative/Tag';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';

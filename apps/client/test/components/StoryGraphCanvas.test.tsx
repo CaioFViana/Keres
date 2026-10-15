@@ -1,6 +1,6 @@
 import { act, render, type RenderResult } from '@testing-library/react-native';
 import * as SkiaMock from '@shopify/react-native-skia';
-import type { StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type { StoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import StoryGraphCanvas, {

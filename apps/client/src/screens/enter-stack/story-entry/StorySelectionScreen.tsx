@@ -4,7 +4,7 @@ import FirstStoryStart from '@/src/components/features/story/FirstStoryStart';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';

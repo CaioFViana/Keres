@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emptySketchContent, validateSketchContent } from '../../schemas/SketchSchemas';
+import { emptySketchContent, validateSketchContent } from '../../schemas/narrative/SketchSchemas';
 import {
   addLayer,
   appendStroke,

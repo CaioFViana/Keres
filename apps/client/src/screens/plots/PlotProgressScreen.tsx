@@ -1,8 +1,8 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
-import { buildPlotCoverage } from '@keres/shared/graphs/plotCoverageLayout';
-import { renderPlotCoverageSvg } from '@keres/shared/graphs/plotCoverageSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import { buildPlotCoverage } from '@keres/shared/graphs/plot-coverage/plotCoverageLayout';
+import { renderPlotCoverageSvg } from '@keres/shared/graphs/plot-coverage/plotCoverageSvg';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

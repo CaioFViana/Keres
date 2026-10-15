@@ -33,7 +33,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import { useCharacterFormAssociations } from '@/src/screens/characters/useCharacterFormAssociations';
 
 const stubRelations = () => ({

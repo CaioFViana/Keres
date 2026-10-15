@@ -12,7 +12,7 @@ live photo **to that service**; a human reviewer there decides; the service tell
 server never sees a document, a photo, a date of birth or a document number.
 
 The contract is `packages/shared/age-verification/AgeVerificationConnector.ts` (types) plus the wire schemas in
-`packages/shared/schemas/AgeVerificationSchemas.ts`. A service imports nothing of Keres. It has the same shape as the
+`packages/shared/schemas/accounts/AgeVerificationSchemas.ts`. A service imports nothing of Keres. It has the same shape as the
 payment connector (`docs/payment_connectors.md`) - and the same care, with one deliberate difference, below.
 
 ## Modes (`AGE_VERIFICATION_MODE`)

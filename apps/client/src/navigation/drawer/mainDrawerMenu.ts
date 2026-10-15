@@ -1,5 +1,5 @@
 import { getEntityAppearance } from '@keres/shared';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 import type { MenuGroup, MenuIconName, MenuLeaf } from './drawerMenuModel';
 
 type IconName = MenuIconName;

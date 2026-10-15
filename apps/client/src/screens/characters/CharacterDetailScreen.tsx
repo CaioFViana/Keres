@@ -7,10 +7,10 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
-import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
-import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation'; // Import CharacterRelation
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene'; // Entity type
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item'; // Import Item and ItemJourney entities
+import type { Location } from '@keres/shared/entities/narrative/Location'; // Import Location entity
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

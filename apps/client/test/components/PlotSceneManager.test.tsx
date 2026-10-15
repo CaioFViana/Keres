@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import PlotSceneManager from '@/src/components/features/plots/PlotSceneManager/PlotSceneManager';
 import type { SceneSelect } from '@/src/db/schema';
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/narrative/PlotScene';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

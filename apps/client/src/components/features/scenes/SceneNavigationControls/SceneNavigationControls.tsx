@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
-import type { Choice } from '@keres/shared/entities/Choice';
+import type { Choice } from '@keres/shared/entities/narrative/Choice';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';

@@ -3,7 +3,7 @@ import {
   MessageReportRequestSchema,
   MessageSendSchema,
 } from '@keres/shared';
-import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
+import { UserTargetIdParam } from '@keres/shared/schemas/social/FriendshipRouteSchemas';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
 import { messageQuotaService } from '@/services/messages/MessageQuotaService';

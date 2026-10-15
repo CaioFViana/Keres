@@ -6,7 +6,7 @@ money-related happens between the provider and the person paying; Keres asks the
 listens to what the provider reports.
 
 The contract is `packages/shared/payments/PaymentConnector.ts` (types only) plus the wire schemas in
-`packages/shared/schemas/PaymentConnectorSchemas.ts`, also published as JSON Schema under
+`packages/shared/schemas/payments/PaymentConnectorSchemas.ts`, also published as JSON Schema under
 `docs/payment_connector/` for implementations in any language. A connector imports nothing of Keres.
 
 A server with no connector works exactly as before: plans are handed out by assigning them to users in the admin

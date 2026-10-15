@@ -1,4 +1,4 @@
-import type { CharacterScene as CharacterSceneInterface } from '@keres/shared/entities/CharacterScene';
+import type { CharacterScene as CharacterSceneInterface } from '@keres/shared/entities/narrative/CharacterScene';
 import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';

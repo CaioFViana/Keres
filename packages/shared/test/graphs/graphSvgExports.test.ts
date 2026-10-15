@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildLocationGraphLayout } from '../../graphs/locationGraphLayout';
+import { buildLocationGraphLayout } from '../../graphs/location/locationGraphLayout';
 import {
   renderLocationGraphMapSvg,
   type LocationGraphSvgOptions,
-} from '../../graphs/locationGraphSvg';
-import { buildStoryGraphLayout } from '../../graphs/storyGraphLayout';
-import { renderStoryMapSvg, type StoryMapSvgOptions } from '../../graphs/storyGraphSvg';
+} from '../../graphs/location/locationGraphSvg';
+import { buildStoryGraphLayout } from '../../graphs/story/storyGraphLayout';
+import { renderStoryMapSvg, type StoryMapSvgOptions } from '../../graphs/story/storyGraphSvg';
 
 const COLORS = {
   background: '#ffffff',

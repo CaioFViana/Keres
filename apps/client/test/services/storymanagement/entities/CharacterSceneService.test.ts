@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
 import * as schema from '@/src/db/schema';
 import {
   createCharacterSceneService,

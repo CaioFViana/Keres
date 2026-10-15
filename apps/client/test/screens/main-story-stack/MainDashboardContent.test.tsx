@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 import { MainDashboardContent } from '@/src/screens/main-story-stack/MainDashboardContent';

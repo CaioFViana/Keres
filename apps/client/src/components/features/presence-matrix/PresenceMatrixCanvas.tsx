@@ -6,7 +6,7 @@ import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport'
 import { useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
 import { useTheme } from '@/src/theme';
 import { spatialRectIntersects } from '@keres/shared';
-import type { PresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
+import type { PresenceMatrixLayout } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
 import {
   buildMatrixThreadSegments,
   MATRIX_CELL_INSET,
@@ -17,7 +17,7 @@ import {
   MATRIX_THREAD_OPACITY,
   MATRIX_THREAD_WIDTH,
   matrixRowCenterY,
-} from '@keres/shared/graphs/presenceMatrixLayout';
+} from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface Props {

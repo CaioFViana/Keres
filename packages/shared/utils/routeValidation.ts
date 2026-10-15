@@ -1,5 +1,5 @@
-import type { Choice } from '../entities/Choice';
-import type { RouteStep } from '../entities/RouteStep';
+import type { Choice } from '../entities/narrative/Choice';
+import type { RouteStep } from '../entities/narrative/RouteStep';
 
 export type RouteValidationIssue =
   | 'empty'

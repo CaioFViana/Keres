@@ -2,7 +2,7 @@ import { getEntityAppearance } from '@keres/shared';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import type { ItemJourney, Item } from '@keres/shared/entities/Item';
+import type { ItemJourney, Item } from '@keres/shared/entities/narrative/Item';
 import type { SceneSelect } from '@/src/db/schema'; // SceneSelect type
 import type { CharacterSelect } from '@/src/db/schemas/characters'; // CharacterSelect type
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';

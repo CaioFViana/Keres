@@ -29,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
-import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
+import type { MapExportFormat } from '@keres/shared/entities/accounts/ClientSettings';
 import { resetDatabase, useDrizzle } from '@/src/db'; // Import resetDatabase
 import { servers } from '@/src/db/schema';
 import type { SettingsStackParamList } from '@/src/navigation/stacks/StorySelectionStack';

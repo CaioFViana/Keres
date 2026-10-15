@@ -1,4 +1,7 @@
-import type { StoryVocabulary, StoryVocabularyEntityType } from '@keres/shared/entities/Story';
+import type {
+  StoryVocabulary,
+  StoryVocabularyEntityType,
+} from '@keres/shared/entities/story/Story';
 import { and, eq } from 'drizzle-orm';
 import i18n, { type TFunction } from 'i18next';
 import type { AppDrizzleClient } from '@/src/db';

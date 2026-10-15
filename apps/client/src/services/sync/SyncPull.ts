@@ -6,7 +6,7 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { MAX_SYNC_PULL_BATCH, syncConflictValuesDiffer } from '@keres/shared';
-import type { FavoriteBehavior } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior } from '@keres/shared/entities/story/Story';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';

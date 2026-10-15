@@ -14,8 +14,8 @@ import CharacterRelationManager from '@/src/components/features/relations/Charac
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
 import type { TFunction } from 'i18next';
 import { type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { type StyleProp, type TextStyle, View, type ViewStyle } from 'react-native';

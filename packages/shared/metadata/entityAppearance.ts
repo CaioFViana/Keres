@@ -1,4 +1,4 @@
-import type { WorldPieceSection } from '../entities/WorldRule';
+import type { WorldPieceSection } from '../entities/narrative/WorldRule';
 
 /** Theme-aware visual vocabulary shared by every entity surface. */
 export const ENTITY_APPEARANCE = {

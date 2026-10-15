@@ -1,4 +1,4 @@
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

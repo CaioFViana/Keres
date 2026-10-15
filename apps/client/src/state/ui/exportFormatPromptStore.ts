@@ -1,4 +1,4 @@
-import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
+import type { MapExportFormat } from '@keres/shared/entities/accounts/ClientSettings';
 import { create } from 'zustand';
 
 interface ExportFormatPromptState {

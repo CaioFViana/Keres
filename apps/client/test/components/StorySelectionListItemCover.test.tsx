@@ -1,4 +1,4 @@
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import { act, cleanup, render } from '@testing-library/react-native';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 

@@ -8,7 +8,7 @@ import EntityFormContainer from '@/src/components/common/forms/EntityFormContain
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryIdentityDraft } from '@/src/hooks/forms/useStoryIdentityDraft';
-import type { FavoriteBehavior } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior } from '@keres/shared/entities/story/Story';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

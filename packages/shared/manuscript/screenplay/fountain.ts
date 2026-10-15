@@ -1,4 +1,4 @@
-import type { LocationIntExt } from '../../entities/Location';
+import type { LocationIntExt } from '../../entities/narrative/Location';
 import {
   parseMarkdownToDocument,
   type ManuscriptBlock,

@@ -1,5 +1,9 @@
 import { getEntityAppearance } from '@keres/shared';
-import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
+import type {
+  Note,
+  NoteRelation,
+  NoteRelationEntities,
+} from '@keres/shared/entities/narrative/Note';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text } from 'react-native';

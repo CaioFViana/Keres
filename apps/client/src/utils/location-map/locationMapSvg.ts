@@ -3,8 +3,11 @@ import type {
   LocationMapConnection,
   LocationMapContains,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
-import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
+import {
+  interpolateColor,
+  pointOnCircleBoundary,
+} from '@keres/shared/graphs/location/locationMapGeometry';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
 import {
   canvasOverlayExportBounds,
   renderCanvasOverlaySvg,

@@ -1,4 +1,4 @@
-import type { NoteRelation } from '@keres/shared/entities/Note';
+import type { NoteRelation } from '@keres/shared/entities/narrative/Note';
 import { useCallback } from 'react';
 import {
   clearEntityFormSecondaryDraft,

@@ -15,7 +15,7 @@ import {
   LOCATION_MAP_IMAGE_DEFAULT_WIDTH,
   LOCATION_MAP_IMAGE_MAX,
   LOCATION_MAP_IMAGE_MIN,
-} from '@keres/shared/graphs/locationMapLayout';
+} from '@keres/shared/graphs/location/locationMapLayout';
 import {
   appendImagesToMap,
   appendLocationsToMap,

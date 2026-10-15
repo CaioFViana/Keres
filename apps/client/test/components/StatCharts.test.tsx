@@ -2,7 +2,7 @@ import { act, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
-import type { StatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
+import type { StatRadarLayout } from '@keres/shared/graphs/stats/statRadarLayout';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

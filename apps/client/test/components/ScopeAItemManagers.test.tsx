@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
-import type { Character } from '@keres/shared/entities/Character';
-import type { Item, ItemJourney } from '@keres/shared/entities/Item';
-import type { Scene } from '@keres/shared/entities/Scene';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item';
+import type { Scene } from '@keres/shared/entities/narrative/Scene';
 import React from 'react';
 import type { SceneSelect } from '@/src/db/schema';
 import type { CharacterSelect } from '@/src/db/schemas/characters';

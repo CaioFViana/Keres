@@ -19,7 +19,7 @@ import {
   UpdateUserProfileSchema,
   UpdateUserTagSchema,
 } from '../../index';
-import { UserTargetIdParam } from '../../schemas/FriendshipRouteSchemas';
+import { UserTargetIdParam } from '../../schemas/social/FriendshipRouteSchemas';
 
 const id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 

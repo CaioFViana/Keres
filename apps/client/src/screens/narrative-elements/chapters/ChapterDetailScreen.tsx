@@ -52,7 +52,7 @@ import {
   formatSceneUniverseDuration,
   hasSceneUniverseDuration,
 } from '@/src/utils/scene/sceneTiming';
-import type { Location } from '@keres/shared/entities/Location';
+import type { Location } from '@keres/shared/entities/narrative/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

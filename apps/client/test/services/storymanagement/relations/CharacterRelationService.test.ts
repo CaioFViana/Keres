@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import * as schema from '@/src/db/schema';
 import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService';
 import {

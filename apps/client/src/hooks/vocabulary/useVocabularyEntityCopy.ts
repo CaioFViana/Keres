@@ -1,4 +1,4 @@
-import type { StoryVocabularyEntityType } from '@keres/shared/entities/Story';
+import type { StoryVocabularyEntityType } from '@keres/shared/entities/story/Story';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryVocabulary } from './useStoryVocabulary';

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import * as SkiaMock from '@shopify/react-native-skia';
-import type { CharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
+import type { CharacterRelationGraphLayout } from '@keres/shared/graphs/character-relations/characterRelationGraphLayout';
 import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import CharacterRelationGraphCanvas, {

@@ -13,7 +13,7 @@ import {
   getStorySyncEntityTypes,
   getEntityRowReferences,
 } from '../../entity-solvers/entities/EntityRegistry';
-import { FullStoryExportSchema } from '../../schemas/FullStorySchemas';
+import { FullStoryExportSchema } from '../../schemas/story/FullStorySchemas';
 
 const isArraySchema = (schema: unknown): boolean => {
   let current = schema as { def: { type: string; innerType?: unknown } };

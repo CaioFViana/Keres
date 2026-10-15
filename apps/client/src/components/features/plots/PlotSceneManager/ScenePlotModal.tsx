@@ -3,8 +3,8 @@ import FormActions from '@/src/components/common/controls/FormActions/FormAction
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
-import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/narrative/PlotScene';
+import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/narrative/PlotScene';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';

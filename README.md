@@ -366,7 +366,7 @@ The `.github/workflows/pages.yml` workflow builds and publishes on every push to
 
 The documents below are currently maintained in Portuguese:
 
-- [Actual monorepo structure](docs/file_structure.md)
+- [Monorepo structure and file conventions (where a new file goes)](docs/file_structure.md)
 - [Project plan and architecture](docs/project_plan.md)
 - [Screen flow](docs/screen_flow.md)
 - [Choice mechanics](docs/choice_mechanics.md)

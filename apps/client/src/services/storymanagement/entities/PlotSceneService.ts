@@ -1,5 +1,5 @@
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
-import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/narrative/PlotScene';
+import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/narrative/PlotScene';
 import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, PlotSceneInsert } from '@/src/db';
 import { plotScenes } from '@/src/db';

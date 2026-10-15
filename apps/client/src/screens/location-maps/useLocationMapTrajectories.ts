@@ -1,5 +1,8 @@
 import type { CanvasOverlayType, LocationMapContentType } from '@keres/shared';
-import { buildTrajectoryStops, projectTrajectoryStops } from '@keres/shared/graphs/trajectories';
+import {
+  buildTrajectoryStops,
+  projectTrajectoryStops,
+} from '@keres/shared/graphs/timeline/trajectories';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type {

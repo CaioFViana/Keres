@@ -1,6 +1,6 @@
 import type { SeeAlsoManagerHandle } from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
-import type { Item } from '@keres/shared/entities/Item';
+import type { Item } from '@keres/shared/entities/narrative/Item';
 import type { StorySchemaField } from '@keres/shared';
 import { StackActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

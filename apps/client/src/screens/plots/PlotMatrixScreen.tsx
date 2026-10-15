@@ -6,10 +6,10 @@ import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/Pres
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { graphSeriesColor } from '@keres/shared';
-import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presence-matrix/presenceMatrixSvg';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

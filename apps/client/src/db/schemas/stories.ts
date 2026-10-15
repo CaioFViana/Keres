@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 
 export const stories = sqliteTable('stories', {
   id: text('id').primaryKey(),

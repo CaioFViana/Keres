@@ -1,4 +1,4 @@
-import type { Effect } from '@keres/shared/entities/Effect';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';

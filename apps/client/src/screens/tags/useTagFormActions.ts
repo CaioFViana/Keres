@@ -1,4 +1,4 @@
-import type { Tag } from '@keres/shared/entities/Tag';
+import type { Tag } from '@keres/shared/entities/narrative/Tag';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';

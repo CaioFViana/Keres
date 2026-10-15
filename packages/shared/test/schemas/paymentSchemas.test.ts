@@ -3,12 +3,12 @@ import {
   PlayRelayRequestSchema,
   PlayVerifyRequestSchema,
   PlayVerifyResponseSchema,
-} from '../../schemas/PaymentConnectorSchemas';
+} from '../../schemas/payments/PaymentConnectorSchemas';
 import {
   AdminPaymentEventListQuerySchema,
   AdminSubscriptionListQuerySchema,
   CheckoutCreateSchema,
-} from '../../schemas/PaymentSchemas';
+} from '../../schemas/payments/PaymentSchemas';
 
 describe('CheckoutCreateSchema', () => {
   it('takes a plan, an interval and a method', () => {

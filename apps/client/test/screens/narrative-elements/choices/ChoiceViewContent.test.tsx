@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import { ChoiceViewContent } from '@/src/screens/narrative-elements/choices/ChoiceViewContent';

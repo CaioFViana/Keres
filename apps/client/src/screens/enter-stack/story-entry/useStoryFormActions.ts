@@ -1,5 +1,5 @@
 import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import type { NavigationProp } from '@react-navigation/native';
 import type { RefObject } from 'react';
 import { useState } from 'react';

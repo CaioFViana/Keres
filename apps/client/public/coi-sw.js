@@ -1,7 +1,7 @@
 /*
  * Cross-origin isolation for hosts that cannot send headers (GitHub Pages). Web expo-sqlite needs
  * SharedArrayBuffer, which only exists on a crossOriginIsolated page - the API and the desktop shell
- * send COOP/COEP themselves (see apps/api/src/services/hostedClient.ts). Here this worker re-serves
+ * send COOP/COEP themselves (see apps/api/src/services/static-delivery/hostedClient.ts). Here this worker re-serves
  * every response of its scope with the same headers. Registered by src/utils/platform/crossOriginIsolation.ts,
  * in the serverless build only.
  */

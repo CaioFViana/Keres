@@ -5,7 +5,7 @@ import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useTheme } from '@/src/theme';
 import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
-import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;
 const DESTINATION_HOLD_DURATION = 550;

@@ -1,4 +1,7 @@
-import type { ClientSettings, MapExportFormat } from '@keres/shared/entities/ClientSettings';
+import type {
+  ClientSettings,
+  MapExportFormat,
+} from '@keres/shared/entities/accounts/ClientSettings';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
 import { create } from 'zustand';
 import type { AppDrizzleClient } from '@/src/db';

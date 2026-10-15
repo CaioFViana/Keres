@@ -11,7 +11,7 @@ import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelec
 import { useDrizzle } from '@/src/db';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import * as schema from '@/src/db/schema';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 
 /**
  * The story's entities a media file can be linked to, ready for a picker.

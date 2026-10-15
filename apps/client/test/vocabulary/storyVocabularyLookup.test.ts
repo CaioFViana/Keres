@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 import i18n, { type TFunction } from 'i18next';
 import {
   fromStoryNoun,

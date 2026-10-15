@@ -3,7 +3,7 @@ import {
   type EdgeEnds,
   focusNeighborhood,
   type PositionedGraphNode,
-} from '@keres/shared/graphs/graphNeighborhood';
+} from '@keres/shared/graphs/common/graphNeighborhood';
 import {
   type RefObject,
   useCallback,

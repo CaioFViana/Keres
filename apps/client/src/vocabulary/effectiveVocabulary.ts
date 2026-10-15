@@ -1,6 +1,6 @@
 import type { ArcMedium } from '@keres/shared/metadata/ArcMedium';
 import { arcMediumTerms } from '@keres/shared/metadata/ArcMedium';
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 
 /** What the vocabulary needs to know about the Arc in effect. */
 export interface ArcVocabularySource {

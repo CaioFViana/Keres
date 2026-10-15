@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';

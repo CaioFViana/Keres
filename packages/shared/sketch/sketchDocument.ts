@@ -1,11 +1,11 @@
-import type { CanvasOverlayType } from '../schemas/CanvasOverlaySchemas';
+import type { CanvasOverlayType } from '../schemas/narrative/CanvasOverlaySchemas';
 import {
   generateSketchLocalId,
   MAX_SKETCH_LAYERS,
   type SketchContentType,
   type SketchLayerType,
   type SketchPageType,
-} from '../schemas/SketchSchemas';
+} from '../schemas/narrative/SketchSchemas';
 import { decodeSketchItems, encodeSketchItems } from './sketchCodec';
 import { compactSketchItems } from './sketchGeometry';
 import {

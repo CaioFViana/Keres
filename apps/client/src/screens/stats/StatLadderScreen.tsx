@@ -20,7 +20,11 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/graphs/statLadder';
+import {
+  generateNumericLadder,
+  sortLadder,
+  type StatTier,
+} from '@keres/shared/graphs/stats/statLadder';
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 
 type StatLadderNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatLadder'>;

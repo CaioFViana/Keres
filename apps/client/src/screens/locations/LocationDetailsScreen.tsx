@@ -27,8 +27,8 @@ import ScenePresenceList, {
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
-import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene'; // Import CharacterScene
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item'; // Import Item and ItemJourney entities
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

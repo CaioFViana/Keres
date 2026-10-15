@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildPlotCoverage, type PlotCoverageInput } from '../../graphs/plotCoverageLayout';
-import { renderPlotCoverageSvg } from '../../graphs/plotCoverageSvg';
-import { buildPresenceMatrixLayout } from '../../graphs/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '../../graphs/presenceMatrixSvg';
-import { buildStoryTimelineLayout } from '../../graphs/storyTimelineLayout';
-import { renderStoryTimelineSvg } from '../../graphs/storyTimelineSvg';
+import {
+  buildPlotCoverage,
+  type PlotCoverageInput,
+} from '../../graphs/plot-coverage/plotCoverageLayout';
+import { renderPlotCoverageSvg } from '../../graphs/plot-coverage/plotCoverageSvg';
+import { buildPresenceMatrixLayout } from '../../graphs/presence-matrix/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '../../graphs/presence-matrix/presenceMatrixSvg';
+import { buildStoryTimelineLayout } from '../../graphs/timeline/storyTimelineLayout';
+import { renderStoryTimelineSvg } from '../../graphs/timeline/storyTimelineSvg';
 
 const COLORS = {
   background: '#ffffff',

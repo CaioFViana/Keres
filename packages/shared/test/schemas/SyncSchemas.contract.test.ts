@@ -4,7 +4,7 @@ import {
   MAX_SYNC_PULL_BATCH,
   omitSyncImmutableFields,
   UlidSchema,
-} from '../../schemas/SyncSchemas';
+} from '../../schemas/sync/SyncSchemas';
 
 describe('sync schema helpers', () => {
   it('keeps mutable changes while stripping every protocol-owned field', () => {

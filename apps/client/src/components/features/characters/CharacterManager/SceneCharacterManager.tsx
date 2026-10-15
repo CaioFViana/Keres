@@ -1,6 +1,6 @@
 import { getEntityAppearance } from '@keres/shared';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';

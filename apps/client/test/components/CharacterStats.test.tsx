@@ -1,5 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import { formatStatNumber, formatStatValueDetailed } from '@keres/shared/graphs/statLadder';
+import { formatStatNumber, formatStatValueDetailed } from '@keres/shared/graphs/stats/statLadder';
 import React from 'react';
 import { CharacterStatPanel } from '@/src/components/features/stats/CharacterStatPanel/CharacterStatPanel';
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';

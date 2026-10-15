@@ -1,8 +1,8 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import CharacterRelationRows from '@/src/components/features/relations/CharacterRelationRows';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

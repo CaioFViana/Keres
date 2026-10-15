@@ -4,12 +4,12 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import type { Chapter } from '@keres/shared/entities/Chapter';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Choice } from '@keres/shared/entities/Choice';
-import type { Effect } from '@keres/shared/entities/Effect';
-import type { Item, ItemJourney } from '@keres/shared/entities/Item';
-import type { Location } from '@keres/shared/entities/Location';
+import type { Chapter } from '@keres/shared/entities/narrative/Chapter';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Choice } from '@keres/shared/entities/narrative/Choice';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item';
+import type { Location } from '@keres/shared/entities/narrative/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';

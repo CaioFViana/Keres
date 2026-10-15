@@ -15,7 +15,7 @@ import {
   transformSketchItem,
   translateMatrix,
 } from '@keres/shared';
-import { hitTestCanvasOverlay } from '@keres/shared/graphs/canvasOverlayGeometry';
+import { hitTestCanvasOverlay } from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import {
   type Dispatch,
   type MutableRefObject,

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import type { ThemeColors } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

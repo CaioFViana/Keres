@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';

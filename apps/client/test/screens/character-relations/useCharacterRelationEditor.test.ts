@@ -19,7 +19,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import { act, renderHook } from '@testing-library/react-native';
 import { useCharacterRelationEditor } from '@/src/screens/character-relations/useCharacterRelationEditor';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

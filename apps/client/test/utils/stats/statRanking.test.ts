@@ -1,4 +1,4 @@
-import type { StatTier } from '@keres/shared/graphs/statLadder';
+import type { StatTier } from '@keres/shared/graphs/stats/statLadder';
 import { buildStatRanking, type StatRankingInput } from '@/src/utils/stats/statRanking';
 import { indexStatValues } from '@/src/utils/stats/statValues';
 

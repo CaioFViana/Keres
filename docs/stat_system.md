@@ -123,7 +123,7 @@ instead of an opaque sync conflict hours later.
 
 ## 6. Where everything is
 
-- **Pure maths** (no React, no database): `packages/shared/graphs/statLadder.ts` (the ladder),
+- **Pure maths** (no React, no database): `packages/shared/graphs/stats/statLadder.ts` (the ladder),
   `statRadarLayout.ts` (the geometry), `statRadarSvg.ts` (the exported file) and
   `statLadderBarLayout.ts` (the tier bar), plus `apps/client/src/utils/stats/statValues.ts`
   (inheritance) and `statRanking.ts` (the tier list). The same discipline as the app's graph layouts: the

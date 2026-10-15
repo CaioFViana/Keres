@@ -11,9 +11,9 @@ import type {
   ManuscriptChapter,
   ManuscriptScene,
 } from '../../../manuscript/compile/manuscriptSections';
-import type { ChapterRowType } from '../../../schemas/ChapterSchemas';
-import type { ChoiceType } from '../../../schemas/ChoiceSchemas';
-import type { SceneType } from '../../../schemas/SceneSchemas';
+import type { ChapterRowType } from '../../../schemas/narrative/ChapterSchemas';
+import type { ChoiceType } from '../../../schemas/narrative/ChoiceSchemas';
+import type { SceneType } from '../../../schemas/narrative/SceneSchemas';
 
 describe('structural inputs', () => {
   it('accepts FullStoryExport collections as well as minimal rows', () => {

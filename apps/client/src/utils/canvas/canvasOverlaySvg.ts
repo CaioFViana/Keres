@@ -20,8 +20,8 @@ import {
   canvasOverlayFinalAngle,
   canvasOverlayPolylinePath,
   canvasOverlayRectPath,
-} from '@keres/shared/graphs/canvasOverlayGeometry';
-import { balloonPath, balloonText } from '@keres/shared/graphs/canvasBalloon';
+} from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
+import { balloonPath, balloonText } from '@keres/shared/graphs/canvas/canvasBalloon';
 import { renderMapIconSvg } from '@/src/utils/svg/mapIconSvg';
 import { escapeSvgXml, roundSvg, type SvgExportColors } from '@/src/utils/svg/svgExport';
 

@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { ItemJourney } from '@keres/shared/entities/Item';
+import type { ItemJourney } from '@keres/shared/entities/narrative/Item';
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';

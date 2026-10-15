@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { WorldRule } from '@keres/shared/entities/WorldRule'; // Import the WorldRule entity interface
+import type { WorldRule } from '@keres/shared/entities/narrative/WorldRule'; // Import the WorldRule entity interface
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';

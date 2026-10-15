@@ -1,7 +1,7 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { Ionicons } from '@expo/vector-icons';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';

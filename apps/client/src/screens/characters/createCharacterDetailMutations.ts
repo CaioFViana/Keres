@@ -1,5 +1,5 @@
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/relations/CharacterRelationService';

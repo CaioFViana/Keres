@@ -1,5 +1,9 @@
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/entities/Note';
+import type {
+  Note,
+  NoteRelation,
+  NoteRelationEntities,
+} from '@keres/shared/entities/narrative/Note';
 
 interface EntityNotesManagerProps {
   noteRelations: NoteRelation[];

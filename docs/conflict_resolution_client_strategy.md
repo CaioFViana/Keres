@@ -81,4 +81,4 @@ Old documents and comments spoke of last-write-wins by `updated_at`, an all-or-n
 
 - Server: `apps/api/src/services/sync/SyncService.ts`, `apps/api/src/services/entity-sync-handlers/BaseSyncEntityHandler.ts`, `apps/api/src/modules/sync/sync.route.ts`
 - Client: `apps/client/src/services/sync/SyncEngineService.ts`, `apps/client/src/services/sync/SyncConflictService.ts`, `apps/client/src/services/sync/syncUtils.ts`
-- Contract: `packages/shared/schemas/SyncSchemas.ts`
+- Contract: `packages/shared/schemas/sync/SyncSchemas.ts`

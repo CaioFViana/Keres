@@ -4,11 +4,11 @@ import {
   type CanvasOverlayType,
   type SpatialPoint,
 } from '@keres/shared';
-import { clampBalloonTip, defaultBalloonTail } from '@keres/shared/graphs/canvasBalloon';
+import { clampBalloonTip, defaultBalloonTail } from '@keres/shared/graphs/canvas/canvasBalloon';
 import {
   canvasOverlayPresetPoints,
   type CanvasOverlayPreset,
-} from '@keres/shared/graphs/canvasOverlayGeometry';
+} from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import { useCallback, useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import {

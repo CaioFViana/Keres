@@ -1,5 +1,5 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import type { LocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
+import type { LocationGraphLayout } from '@keres/shared/graphs/location/locationGraphLayout';
 import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import LocationGraphCanvas, {

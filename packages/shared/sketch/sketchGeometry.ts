@@ -1,4 +1,4 @@
-import type { SpatialRect } from '../graphs/spatialCanvas';
+import type { SpatialRect } from '../graphs/canvas/spatialCanvas';
 import {
   SKETCH_BRUSHES,
   type SketchFill,

@@ -1,4 +1,4 @@
-import { buildTrajectoryStops } from '@keres/shared/graphs/trajectories';
+import { buildTrajectoryStops } from '@keres/shared/graphs/timeline/trajectories';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';

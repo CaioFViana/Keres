@@ -306,7 +306,7 @@ The current behaviour is in `docs/conflict_resolution_client_strategy.md`. In su
 
 ### The synchronization mechanism in detail
 
-1.  **Format (`StoryUpdate`):** a Zod union in `packages/shared/schemas/SyncSchemas.ts`. A create carries `id` (the client's ULID) + `data`. An update carries `id` + `changes` with `changes.version` required. A delete carries `id` and, for child entities, `version`. A reorder carries `reorderItems`.
+1.  **Format (`StoryUpdate`):** a Zod union in `packages/shared/schemas/sync/SyncSchemas.ts`. A create carries `id` (the client's ULID) + `data`. An update carries `id` + `changes` with `changes.version` required. A delete carries `id` and, for child entities, `version`. A reorder carries `reorderItems`.
 2.  **Tracking:** every mutation in the `storymanagement/` services calls `recordLocalOperation` *after* the local write. The update/delete/reorder payload includes the *resulting* version; the engine derives the base as `version - 1`.
 3.  **Protocol:** REST `POST /sync/:storyId` (push, up to 200 ops) and `GET /sync/:storyId/pull` (pages of up to 500). The WebSocket (`/events`) only notifies that there is new work; the cycle itself is still HTTP pull/push. JWT + refresh.
 4.  **Authorization:** `owner` / `writer` / `reader`. A reader only writes their own Favorite and, if allowed, their own Comment.

@@ -1,5 +1,9 @@
-import type { GraphChapter, GraphChoice, GraphScene } from '@keres/shared/graphs/storyGraphLayout';
-import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type {
+  GraphChapter,
+  GraphChoice,
+  GraphScene,
+} from '@keres/shared/graphs/story/storyGraphLayout';
+import { buildStoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 
 /**
  * Sorts Item Journeys by the narrative position of each one's scene, not by `createdAt` (which is

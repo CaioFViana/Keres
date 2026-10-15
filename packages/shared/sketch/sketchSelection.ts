@@ -1,4 +1,4 @@
-import type { SpatialRect } from '../graphs/spatialCanvas';
+import type { SpatialRect } from '../graphs/canvas/spatialCanvas';
 import { rotateAboutMatrix, scaleAboutMatrix, translateMatrix } from './sketchGeometry';
 import type { SketchMatrix, SketchPoint } from './sketchTypes';
 

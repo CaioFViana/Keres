@@ -21,7 +21,7 @@ import {
   type GrammaticalGender,
   type StoryVocabulary,
   type StoryVocabularyEntityType,
-} from '@keres/shared/entities/Story';
+} from '@keres/shared/entities/story/Story';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';

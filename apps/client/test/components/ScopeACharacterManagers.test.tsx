@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
 import React from 'react';
 import type { SceneSelect } from '@/src/db/schema';
 import CharacterSceneManager from '@/src/components/features/characters/CharacterManager/CharacterSceneManager';

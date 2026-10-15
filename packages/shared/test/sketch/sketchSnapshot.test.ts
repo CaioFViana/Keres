@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emptySketchContent } from '../../schemas/SketchSchemas';
+import { emptySketchContent } from '../../schemas/narrative/SketchSchemas';
 import {
   appendStroke,
   decodeSketchDocument,

@@ -2,7 +2,7 @@ import type { CanvasOverlayType, SpatialPoint } from '@keres/shared';
 import {
   hitTestCanvasOverlay,
   snapPointToTargets,
-} from '@keres/shared/graphs/canvasOverlayGeometry';
+} from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
 import type { OverlayDrawTool } from './overlayTools';

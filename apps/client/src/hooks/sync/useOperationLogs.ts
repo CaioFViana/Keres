@@ -1,5 +1,5 @@
 import { OperationLogEntityType, type FavoriteBehavior } from '@keres/shared';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 import { and, eq, inArray } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

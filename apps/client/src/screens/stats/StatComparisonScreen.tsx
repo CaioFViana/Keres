@@ -23,12 +23,12 @@ import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import { deliverMapExport } from '@/src/utils/io/storyTransfer';
-import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
+import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/stats/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
-} from '@keres/shared/graphs/statRadarLayout';
-import { renderStatRadarSvg } from '@keres/shared/graphs/statRadarSvg';
+} from '@keres/shared/graphs/stats/statRadarLayout';
+import { renderStatRadarSvg } from '@keres/shared/graphs/stats/statRadarSvg';
 import { resolveStatValue } from '@/src/utils/stats/statValues';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 

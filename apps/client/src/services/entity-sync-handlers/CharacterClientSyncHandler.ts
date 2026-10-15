@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { Character } from '@keres/shared/entities/Character'; // Import the Character entity interface
+import type { Character } from '@keres/shared/entities/narrative/Character'; // Import the Character entity interface
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';

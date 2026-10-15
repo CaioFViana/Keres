@@ -21,7 +21,7 @@ import { useDraggedItemFrame } from '@/src/hooks/canvas/useDraggedItemFrame';
 import {
   locationMapCanvasBounds,
   LOCATION_MAP_NODE_SIZE,
-} from '@keres/shared/graphs/locationMapLayout';
+} from '@keres/shared/graphs/location/locationMapLayout';
 import { useTheme } from '@/src/theme';
 import { clampCanvasWorldCoordinate } from '@/src/utils/canvas/canvasDragBounds';
 import { visibleCanvasStamps } from '@/src/utils/canvas/canvasOverlayStamps';

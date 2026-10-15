@@ -6,7 +6,7 @@ import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryTimeline } from '@/src/hooks/story/useStoryTimeline';
 import { useTheme } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { Tag } from '@keres/shared/entities/Tag'; // Import the Tag entity interface
+import type { Tag } from '@keres/shared/entities/narrative/Tag'; // Import the Tag entity interface
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';

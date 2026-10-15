@@ -1,4 +1,4 @@
-import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior, Story } from '@keres/shared/entities/story/Story';
 import { useCallback, useState } from 'react';
 
 type StoryIdentitySource = Pick<

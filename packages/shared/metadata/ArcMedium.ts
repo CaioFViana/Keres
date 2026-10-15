@@ -1,4 +1,4 @@
-import type { StoryVocabularyEntityType, StoryVocabularyTerm } from '../entities/Story';
+import type { StoryVocabularyEntityType, StoryVocabularyTerm } from '../entities/story/Story';
 
 /**
  * What an Arc is: the form of the work it holds. An output profile, never a rule about the data -

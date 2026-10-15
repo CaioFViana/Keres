@@ -2,10 +2,10 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
-import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presence-matrix/presenceMatrixSvg';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';

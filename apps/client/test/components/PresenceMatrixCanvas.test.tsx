@@ -12,7 +12,7 @@ import {
   MATRIX_LABEL_WIDTH,
   MATRIX_PADDING,
   type PresenceMatrixLayout,
-} from '@keres/shared/graphs/presenceMatrixLayout';
+} from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

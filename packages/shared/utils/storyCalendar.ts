@@ -4,7 +4,7 @@ import type {
   CalendarDefinitionType,
   CalendarMoonType,
   CalendarSeasonType,
-} from '../schemas/StoryCalendarSchemas';
+} from '../schemas/story/StoryCalendarSchemas';
 
 /**
  * The arithmetic of a story's own calendar.

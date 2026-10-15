@@ -31,14 +31,14 @@ import {
   parseCalendarDateCoordinate,
   partsToDayNumber,
 } from '@keres/shared';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import type {
   StoryTimelineEventPlacement,
   StoryTimelineScaleMode,
   TimelineAnchoredContainer,
-} from '@keres/shared/graphs/storyTimelineLayout';
-import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
-import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
+} from '@keres/shared/graphs/timeline/storyTimelineLayout';
+import { buildStoryTimelineLayout } from '@keres/shared/graphs/timeline/storyTimelineLayout';
+import { renderStoryTimelineSvg } from '@keres/shared/graphs/timeline/storyTimelineSvg';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryCalendar } from './useStoryCalendar';

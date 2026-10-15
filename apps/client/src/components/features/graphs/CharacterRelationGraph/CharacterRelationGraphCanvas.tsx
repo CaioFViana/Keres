@@ -9,12 +9,12 @@ import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/use
 import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport';
 import { useGraphCanvasViewport } from '@/src/hooks/graph/useGraphCanvasViewport';
 import { useTheme } from '@/src/theme';
-import { EDGE_LABEL_MAX_CHARS } from '@keres/shared/graphs/edgeLabelPlacement';
-import { foldRelationType } from '@keres/shared/graphs/relationTypeColors';
+import { EDGE_LABEL_MAX_CHARS } from '@keres/shared/graphs/canvas/edgeLabelPlacement';
+import { foldRelationType } from '@keres/shared/graphs/character-relations/relationTypeColors';
 import type {
   CharacterRelationGraphLayout,
   RelationGraphNode,
-} from '@keres/shared/graphs/characterRelationGraphLayout';
+} from '@keres/shared/graphs/character-relations/characterRelationGraphLayout';
 
 /**
  * The interactive drawing of the character relations map.

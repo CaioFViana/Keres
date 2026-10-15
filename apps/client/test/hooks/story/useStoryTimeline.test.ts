@@ -75,7 +75,7 @@ jest.mock('@/src/utils/io/storyTransfer', () => ({
   buildStoryTimelineFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
-jest.mock('@keres/shared/graphs/storyTimelineLayout', () => ({
+jest.mock('@keres/shared/graphs/timeline/storyTimelineLayout', () => ({
   __esModule: true,
   buildStoryTimelineLayout: jest.fn((scenes) => ({
     rows: scenes.map((scene: any, index: number) => ({
@@ -84,7 +84,7 @@ jest.mock('@keres/shared/graphs/storyTimelineLayout', () => ({
     })),
   })),
 }));
-jest.mock('@keres/shared/graphs/storyTimelineSvg', () => ({
+jest.mock('@keres/shared/graphs/timeline/storyTimelineSvg', () => ({
   __esModule: true,
   renderStoryTimelineSvg: (...args: unknown[]) => mockRender(...args),
 }));

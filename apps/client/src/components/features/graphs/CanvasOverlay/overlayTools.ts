@@ -1,4 +1,4 @@
-import type { CanvasOverlayPreset } from '@keres/shared/graphs/canvasOverlayGeometry';
+import type { CanvasOverlayPreset } from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import type { SpatialPoint } from '@keres/shared';
 
 /**

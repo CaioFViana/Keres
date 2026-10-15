@@ -6,7 +6,7 @@ import {
 import { exampleStoryRegistry } from '@/src/content/example-stories/generated/registry';
 import { createExampleStoryService } from '@/src/services/storymanagement/packs/ExampleStoryService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

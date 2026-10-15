@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';

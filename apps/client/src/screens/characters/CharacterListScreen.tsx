@@ -11,7 +11,7 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CharacterListItem from '@/src/components/features/list-items/CharacterListItem';
 import CharacterRelationRows from '@/src/components/features/relations/CharacterRelationRows';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import { useDrizzle } from '@/src/db';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';

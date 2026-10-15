@@ -4,7 +4,7 @@ import {
   getWorldPieceSectionAppearance,
   OperationLogEntityType,
 } from '@keres/shared';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';

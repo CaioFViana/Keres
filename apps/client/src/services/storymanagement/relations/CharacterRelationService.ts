@@ -1,5 +1,5 @@
 import { sortIdPair } from '@keres/shared';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, or, sql } from 'drizzle-orm'; // Import SQL
 import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table aliasing

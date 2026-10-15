@@ -13,7 +13,7 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import type { SeeAlsoManagerHandle } from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { LOCATION_INT_EXT, type LocationIntExt } from '@keres/shared';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
 import type { TFunction } from 'i18next';
 import { type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native';

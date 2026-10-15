@@ -205,7 +205,7 @@ jest.mock('@/src/components/features/list-items/StorySelectionListItem', () => {
   };
 });
 
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
 import StorySelectionScreen from '@/src/screens/enter-stack/story-entry/StorySelectionScreen';

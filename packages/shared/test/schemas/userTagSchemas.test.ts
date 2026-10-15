@@ -5,7 +5,7 @@ import {
   slugifyUserTag,
   UpdateUserTagSchema,
   UserTagSchema,
-} from '../../schemas/UserTagSchemas';
+} from '../../schemas/accounts/UserTagSchemas';
 
 describe('normalizeUserTag', () => {
   it('makes the same tag of every way a person writes it', () => {

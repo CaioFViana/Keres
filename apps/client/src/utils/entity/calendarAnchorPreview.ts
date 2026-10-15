@@ -7,7 +7,7 @@ import {
   type CalendarDefinitionType,
   type ScenePosition,
 } from '@keres/shared';
-import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
+import { buildStoryTimelineLayout } from '@keres/shared/graphs/timeline/storyTimelineLayout';
 import type { ChapterAnchorSelect, ChapterSelect, SceneSelect, StorySelect } from '@/src/db/schema';
 
 export type CalendarAnchorPreviewKind = 'story-start' | 'anchor-start' | 'anchor-end';

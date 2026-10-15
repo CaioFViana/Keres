@@ -24,7 +24,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
+import { formatStatValue, type StatNotation } from '@keres/shared/graphs/stats/statLadder';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';

@@ -1,8 +1,8 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import ScenePlotModal from '@/src/components/features/plots/PlotSceneManager/ScenePlotModal';
-import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
+import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/narrative/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/narrative/PlotScene';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

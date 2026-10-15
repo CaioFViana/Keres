@@ -364,7 +364,7 @@ O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `mas
 
 ## Documentação técnica
 
-- [Estrutura real do monorepo](docs/file_structure.md)
+- [Estrutura do monorepo e convenções de arquivos (onde vai um arquivo novo)](docs/file_structure.md)
 - [Plano e arquitetura do projeto](docs/project_plan.md)
 - [Fluxo de telas](docs/screen_flow.md)
 - [Mecânicas de escolhas](docs/choice_mechanics.md)

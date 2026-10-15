@@ -1,12 +1,12 @@
 import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { buildNarrativeProjection } from '@keres/shared';
-import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import type { Effect } from '@keres/shared/entities/Effect';
-import type { GraphEdge, GraphNode } from '@keres/shared/graphs/storyGraphLayout';
-import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
-import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
+import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
+import type { GraphEdge, GraphNode } from '@keres/shared/graphs/story/storyGraphLayout';
+import { buildStoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
+import { renderStoryMapSvg } from '@keres/shared/graphs/story/storyGraphSvg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useRef, useState } from 'react';

@@ -36,16 +36,16 @@ import {
   degreeById,
   limitFocusSelection,
   MAX_FOCUS_SELECTION,
-} from '@keres/shared/graphs/graphNeighborhood';
+} from '@keres/shared/graphs/common/graphNeighborhood';
 import type {
   GraphLocationRelation,
   LocationGraphEdge,
   LocationRelationKind,
-} from '@keres/shared/graphs/locationGraphLayout';
-import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
-import { collapseLocationGraph } from '@keres/shared/graphs/locationGraphCollapse';
-import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
-import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
+} from '@keres/shared/graphs/location/locationGraphLayout';
+import { buildLocationGraphLayout } from '@keres/shared/graphs/location/locationGraphLayout';
+import { collapseLocationGraph } from '@keres/shared/graphs/location/locationGraphCollapse';
+import { renderLocationGraphMapSvg } from '@keres/shared/graphs/location/locationGraphSvg';
+import { filterLocationGraph } from '@keres/shared/graphs/location/locationGraphFilter';
 import { buildLocationGraphMapFileName } from '@/src/utils/io/storyTransfer';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 import { useLocationRelationEditor } from './useLocationRelationEditor';

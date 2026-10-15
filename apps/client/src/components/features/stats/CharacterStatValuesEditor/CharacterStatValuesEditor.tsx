@@ -9,7 +9,7 @@ import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { formatStatNumber, formatTierLabel } from '@keres/shared/graphs/statLadder';
+import { formatStatNumber, formatTierLabel } from '@keres/shared/graphs/stats/statLadder';
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 import { resolveStatValue } from '@/src/utils/stats/statValues';
 

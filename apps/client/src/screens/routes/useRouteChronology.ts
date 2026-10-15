@@ -17,7 +17,7 @@ import {
   parseCalendarDateCoordinate,
   partsToDayNumber,
 } from '@keres/shared';
-import type { StoryTimelineScaleMode } from '@keres/shared/graphs/storyTimelineLayout';
+import type { StoryTimelineScaleMode } from '@keres/shared/graphs/timeline/storyTimelineLayout';
 
 const timeFor = (
   hoursPerDay: number,

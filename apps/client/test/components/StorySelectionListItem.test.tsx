@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { fireEvent, render } from '@testing-library/react-native';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 
 jest.mock('@/src/theme/useThemeColors', () => ({

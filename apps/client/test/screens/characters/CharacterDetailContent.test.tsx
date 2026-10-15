@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';

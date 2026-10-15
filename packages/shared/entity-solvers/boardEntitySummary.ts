@@ -1,5 +1,5 @@
 import type { OperationLogEntityType } from '../metadata/OperationLogEntityType';
-import type { BoardPinEntity } from '../schemas/BoardSchemas';
+import type { BoardPinEntity } from '../schemas/narrative/BoardSchemas';
 import type { EntitySolverRow } from './contracts';
 import { getEntityDomainHandler } from './entities/EntityRegistry';
 import type { EntityPreview } from './entities/contracts';

@@ -1,4 +1,4 @@
-import type { SketchContentType } from '../schemas/SketchSchemas';
+import type { SketchContentType } from '../schemas/narrative/SketchSchemas';
 
 /*
  * A sketch's snapshot is a PNG of its drawing kept in the Gallery (the sketch's cover). A manuscript shows

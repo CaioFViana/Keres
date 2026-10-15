@@ -436,13 +436,16 @@ function applyEdits(text: string, edits: Edit[]): string {
 }
 
 function removeEmptyDirs(paths: Set<string>): void {
-  for (const path of [...paths].sort((a, b) => b.length - a.length)) {
-    const absolute = join(repoRoot, path);
-    if (existsSync(absolute) && readdirSync(absolute).length === 0) {
+  for (const start of [...paths].sort((a, b) => b.length - a.length)) {
+    // Climb: a folder whose last file moved leaves its own parent empty too (`help/content/` after `help/`).
+    for (let path = start; path && packageOf(path) !== path; path = dirOf(path)) {
+      const absolute = join(repoRoot, path);
+      if (!existsSync(absolute) || readdirSync(absolute).length > 0) break;
       try {
         rmdirSync(absolute);
       } catch {
         // A directory another process holds open stays; it is empty and harmless.
+        break;
       }
     }
   }

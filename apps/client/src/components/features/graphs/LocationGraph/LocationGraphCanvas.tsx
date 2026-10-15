@@ -11,7 +11,7 @@ import { useTheme } from '@/src/theme';
 import type {
   LocationGraphLayout,
   LocationGraphNode,
-} from '@keres/shared/graphs/locationGraphLayout';
+} from '@keres/shared/graphs/location/locationGraphLayout';
 
 /**
  * The interactive drawing of the Location structure graph. The same architecture as the app's other

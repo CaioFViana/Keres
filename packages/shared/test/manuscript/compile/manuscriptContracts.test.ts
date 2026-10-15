@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ShowcaseVersionSchema } from '../../../schemas/PublicationSchemas';
+import { ShowcaseVersionSchema } from '../../../schemas/story/PublicationSchemas';
 import {
   DEFAULT_MANUSCRIPT_LABELS,
   FORMAT_META,

@@ -19,11 +19,11 @@ import {
   canvasOverlayFinalAngle,
   canvasOverlayPolylinePath,
   canvasOverlayRectPath,
-} from '@keres/shared/graphs/canvasOverlayGeometry';
+} from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import { DashPathEffect, Group, Path, Text as SkiaText } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
-import { balloonPath, balloonText } from '@keres/shared/graphs/canvasBalloon';
+import { balloonPath, balloonText } from '@keres/shared/graphs/canvas/canvasBalloon';
 import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
 import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
 

@@ -3,8 +3,8 @@ import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryG
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
 import { useTheme } from '@/src/theme';
-import { buildStatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
-import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import { buildStatRadarLayout } from '@keres/shared/graphs/stats/statRadarLayout';
+import { buildStoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';

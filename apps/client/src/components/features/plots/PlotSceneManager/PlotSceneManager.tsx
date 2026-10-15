@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/narrative/PlotScene';
 import type { SceneSelect } from '@/src/db/schema';
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';

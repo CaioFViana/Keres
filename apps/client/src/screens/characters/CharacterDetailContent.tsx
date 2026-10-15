@@ -26,10 +26,10 @@ import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
-import type { StatNotation } from '@keres/shared/graphs/statLadder';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
+import type { StatNotation } from '@keres/shared/graphs/stats/statLadder';
 import type { TFunction } from 'i18next';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
 import type { CharacterSelect } from '@/src/db/schemas/characters';

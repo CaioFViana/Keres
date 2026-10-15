@@ -1,6 +1,6 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import LocationMapImageView from '@/src/components/features/location-maps/LocationMapImageView';

@@ -14,7 +14,7 @@ import { createStatService } from '@/src/services/storymanagement/choices-stats/
 import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
-import { resolveLadder, type StatTier } from '@keres/shared/graphs/statLadder';
+import { resolveLadder, type StatTier } from '@keres/shared/graphs/stats/statLadder';
 import { indexStatValues, type StatValueIndex } from '@/src/utils/stats/statValues';
 
 /**

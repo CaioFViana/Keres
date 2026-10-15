@@ -1,4 +1,4 @@
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import type { AppDrizzleClient } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
 import { useStoryListStore } from '@/src/state/story/storyListStore';

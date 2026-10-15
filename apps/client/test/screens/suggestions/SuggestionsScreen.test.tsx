@@ -54,7 +54,7 @@ jest.mock('@keres/shared/metadata/entityFields', () => ({
   __esModule: true,
   entityFieldMetadata: {},
 }));
-jest.mock('@keres/shared/entities/WorldRule', () => ({
+jest.mock('@keres/shared/entities/narrative/WorldRule', () => ({
   __esModule: true,
   WORLD_PIECE_SECTIONS: [],
 }));

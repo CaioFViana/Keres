@@ -6,14 +6,14 @@ import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport'
 import { useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
 import { useTheme } from '@/src/theme';
 import { getContrastTextColor, getReadableInk, spatialRectIntersects } from '@keres/shared';
-import type { StoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
+import type { StoryTimelineLayout } from '@keres/shared/graphs/timeline/storyTimelineLayout';
 import {
   TIMELINE_EVENT_LANE_HEIGHT,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
   TIMELINE_ROW_HEIGHT,
-} from '@keres/shared/graphs/storyTimelineLayout';
+} from '@keres/shared/graphs/timeline/storyTimelineLayout';
 
 interface Props {
   layout: StoryTimelineLayout;

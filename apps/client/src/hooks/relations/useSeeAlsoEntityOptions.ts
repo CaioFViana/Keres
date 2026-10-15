@@ -15,7 +15,7 @@ import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/relations/
 import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 
 export interface SeeAlsoEntityOption {
   label: string;

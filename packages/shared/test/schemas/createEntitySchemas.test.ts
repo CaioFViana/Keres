@@ -1,19 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { CreateChapterDataSchema } from '../../schemas/ChapterSchemas';
-import { CreateCharacterDataSchema, PartialCharacterSchema } from '../../schemas/CharacterSchemas';
-import { CreateNoteDataSchema } from '../../schemas/NoteSchemas';
+import { CreateChapterDataSchema } from '../../schemas/narrative/ChapterSchemas';
+import {
+  CreateCharacterDataSchema,
+  PartialCharacterSchema,
+} from '../../schemas/narrative/CharacterSchemas';
+import { CreateNoteDataSchema } from '../../schemas/narrative/NoteSchemas';
 import {
   CreateSceneDataSchema,
   MAX_SCENE_BODY_LENGTH,
   PartialSceneSchema,
-} from '../../schemas/SceneSchemas';
+} from '../../schemas/narrative/SceneSchemas';
 import {
   CreateStoryDataSchema,
   PartialStorySchema,
   StoryCreateInputSchema,
-} from '../../schemas/StorySchemas';
-import { CreateTagDataSchema } from '../../schemas/TagSchemas';
-import { CreateWorldRuleDataSchema } from '../../schemas/WorldRuleSchemas';
+} from '../../schemas/story/StorySchemas';
+import { CreateTagDataSchema } from '../../schemas/narrative/TagSchemas';
+import { CreateWorldRuleDataSchema } from '../../schemas/narrative/WorldRuleSchemas';
 
 const ulid = (suffix: string) => suffix.toUpperCase().padStart(26, '0');
 

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { NoteRelation } from '@keres/shared/entities/Note';
+import type { NoteRelation } from '@keres/shared/entities/narrative/Note';
 import {
   clearBoundEditorDraft,
   isEditorDraftDbBound,

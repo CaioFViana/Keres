@@ -1,7 +1,7 @@
 import type {
   NoteRelationEntities,
   NoteRelation as NoteRelationInterface,
-} from '@keres/shared/entities/Note';
+} from '@keres/shared/entities/narrative/Note';
 import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';

@@ -1,11 +1,11 @@
-import type { RouteStep } from '../entities/RouteStep';
-import type { Scene } from '../entities/Scene';
-import type { CalendarDefinitionType } from '../schemas/StoryCalendarSchemas';
+import type { RouteStep } from '../entities/narrative/RouteStep';
+import type { Scene } from '../entities/narrative/Scene';
+import type { CalendarDefinitionType } from '../schemas/story/StoryCalendarSchemas';
 import {
   buildStoryTimelineLayout,
   type StoryTimelineLayout,
   type StoryTimelineScaleMode,
-} from '../graphs/storyTimelineLayout';
+} from '../graphs/timeline/storyTimelineLayout';
 
 /**
  * A read-only chronological projection of one authored route.

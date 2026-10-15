@@ -7,7 +7,7 @@ import {
   type RenderResult,
   waitFor,
 } from '@testing-library/react-native';
-import type { GraphNode } from '@keres/shared/graphs/storyGraphLayout';
+import type { GraphNode } from '@keres/shared/graphs/story/storyGraphLayout';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();

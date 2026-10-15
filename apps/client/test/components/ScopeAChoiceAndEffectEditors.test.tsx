@@ -1,7 +1,7 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import type { Effect } from '@keres/shared/entities/Effect';
+import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import React from 'react';
 import ChoiceCheckGroupEditor from '@/src/components/features/choices/ChoiceCheckGroupEditor';
 import EffectListEditor from '@/src/components/features/effects/EffectListEditor';

@@ -24,7 +24,7 @@ import type {
   WorldRulesStackParamList,
 } from '@/src/navigation/drawer/MainSystemDrawer'; // Will create/update this later
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'WorldRulesStack'>,

@@ -1,5 +1,5 @@
-import type { Story } from '@keres/shared/entities/Story';
-import type { StoryArc } from '@keres/shared/entities/StoryArc';
+import type { Story } from '@keres/shared/entities/story/Story';
+import type { StoryArc } from '@keres/shared/entities/story/StoryArc';
 import { create } from 'zustand';
 
 /**

@@ -12,7 +12,7 @@ import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEnt
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import type { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
+import type { TagRelation } from '@keres/shared/entities/narrative/Tag'; // Import TagRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

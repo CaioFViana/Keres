@@ -1,4 +1,4 @@
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 import { resolveEffectiveVocabulary } from '@/src/vocabulary/effectiveVocabulary';
 
 const term = (singular: string, plural: string) => ({

@@ -6,11 +6,11 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import { useTheme } from '@/src/theme';
-import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
+import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/stats/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
-} from '@keres/shared/graphs/statRadarLayout';
+} from '@keres/shared/graphs/stats/statRadarLayout';
 import { resolveStatValue } from '@/src/utils/stats/statValues';
 import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
 

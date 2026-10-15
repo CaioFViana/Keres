@@ -1,8 +1,11 @@
 import JSZip from 'jszip';
-import { extensionForMimeType, galleryHasFile } from '../schemas/GallerySchemas';
-import { FullStoryExportSchema, type FullStoryExportType } from '../schemas/FullStorySchemas';
-import type { GalleryType } from '../schemas/GallerySchemas';
-import { migrateStoryExport, StoryExportVersionError } from '../schemas/storyExportMigrations';
+import { extensionForMimeType, galleryHasFile } from '../schemas/narrative/GallerySchemas';
+import { FullStoryExportSchema, type FullStoryExportType } from '../schemas/story/FullStorySchemas';
+import type { GalleryType } from '../schemas/narrative/GallerySchemas';
+import {
+  migrateStoryExport,
+  StoryExportVersionError,
+} from '../schemas/story/storyExportMigrations';
 import { reviveDates } from './reviveDates';
 import { stripUtf8Bom } from './stripUtf8Bom';
 

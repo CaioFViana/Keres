@@ -11,7 +11,10 @@ import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/F
 import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
-import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import {
+  WORLD_PIECE_SECTIONS,
+  type WorldPieceSection,
+} from '@keres/shared/entities/narrative/WorldRule';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

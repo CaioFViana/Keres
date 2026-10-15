@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, json, table, text, timestamp, timestampNow } from '@/db/schema/columns';
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 import { users } from './users';
 import { characters } from './characters';
 import { storyPermissions } from './storyPermissions';

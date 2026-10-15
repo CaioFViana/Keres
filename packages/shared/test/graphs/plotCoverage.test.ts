@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildPlotCoverage } from '../../graphs/plotCoverageLayout';
-import { renderPlotCoverageSvg } from '../../graphs/plotCoverageSvg';
+import { buildPlotCoverage } from '../../graphs/plot-coverage/plotCoverageLayout';
+import { renderPlotCoverageSvg } from '../../graphs/plot-coverage/plotCoverageSvg';
 
 const chapters = [
   { id: 'act-1', name: 'Ato I', color: '#8D6B13' },

@@ -12,7 +12,7 @@ import {
 const entitiesDirectory = join(__dirname, '../../../../../packages/shared/entities');
 
 const sharedEntityProperties = Object.fromEntries(
-  readdirSync(entitiesDirectory)
+  readdirSync(entitiesDirectory, { recursive: true, encoding: 'utf8' })
     .filter((fileName) => fileName.endsWith('.ts'))
     .flatMap((fileName) => {
       const source = ts.createSourceFile(

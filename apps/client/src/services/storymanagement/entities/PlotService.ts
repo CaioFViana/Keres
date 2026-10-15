@@ -1,4 +1,4 @@
-import type { Plot } from '@keres/shared/entities/Plot';
+import type { Plot } from '@keres/shared/entities/narrative/Plot';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, PlotInsert } from '@/src/db';
 import { plots } from '@/src/db';

@@ -9,7 +9,7 @@ import StoryWritingSection from '@/src/components/features/story/StoryWritingSec
 import type { ComponentProps } from 'react';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';

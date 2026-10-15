@@ -1,4 +1,4 @@
-import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
+import { UserTargetIdParam } from '@keres/shared/schemas/social/FriendshipRouteSchemas';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
 import { friendshipService } from '@/services/accounts/FriendshipService';

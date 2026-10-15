@@ -19,7 +19,7 @@ import CommentableDetailField from '@/src/components/features/comments/Commentab
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
-import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
+import type { NoteRelation } from '@keres/shared/entities/narrative/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

@@ -69,7 +69,7 @@ export const CURRENT_PACK_FORMAT_VERSION = 2;
  * that moved, and `index`/`order` are derived on each side. The protocol has no container order
  * any more; a peer on 4 would send one and never see a rank change, so it cannot share a story.
  *
- * **6** - Arc rework: Arc system now controls everything the story is. So better to bump it. 
+ * **6** - Arc rework: Arc system now controls everything the story is. So better to bump it.
  * As change was BIG to how 1.10 works, better bump to 6.
  */
 export const SYNC_PROTOCOL_VERSION = 6;

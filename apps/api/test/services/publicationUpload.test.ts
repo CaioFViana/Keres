@@ -1,6 +1,6 @@
 import { MAX_MANUSCRIPT_BYTES } from '@keres/shared';
 import { describe, expect, it } from 'vitest';
-import { validateUploadedManuscript, validateUploadedReader } from '@/services/publicationCompile';
+import { validateUploadedManuscript, validateUploadedReader } from '@/services/publication/publicationCompile';
 import { AppError } from '@/utils/errors';
 
 function statusOf(fn: () => unknown): number {

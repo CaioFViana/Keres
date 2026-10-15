@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { LogsPage } from '../../src/pages/logs/LogsPage';
-import { RecoveryPage } from '../../src/pages/recovery/RecoveryPage';
-import { RegistrationSettingsPage } from '../../src/pages/settings/RegistrationSettingsPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { TiersPage } from '../../src/pages/tiers/TiersPage';
-import { UserFormPage } from '../../src/pages/users/UserFormPage';
-import { UsersListPage } from '../../src/pages/users/UsersListPage';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { LogsPage } from '@/pages/logs/LogsPage';
+import { RecoveryPage } from '@/pages/recovery/RecoveryPage';
+import { RegistrationSettingsPage } from '@/pages/settings/RegistrationSettingsPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { TiersPage } from '@/pages/tiers/TiersPage';
+import { UserFormPage } from '@/pages/users/UserFormPage';
+import { UsersListPage } from '@/pages/users/UsersListPage';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   listUsers: vi.fn(),
@@ -32,7 +32,7 @@ const mocks = vi.hoisted(() => ({
   listLogs: vi.fn(),
 }));
 
-vi.mock('../../src/api/AdminUserApiService', () => ({
+vi.mock('@/api/AdminUserApiService', () => ({
   AdminUserApiService: {
     list: mocks.listUsers,
     create: mocks.createUser,
@@ -43,7 +43,7 @@ vi.mock('../../src/api/AdminUserApiService', () => ({
     regenerateRecoveryCodes: mocks.regenerateRecoveryCodes,
   },
 }));
-vi.mock('../../src/api/TierApiService', () => ({
+vi.mock('@/api/TierApiService', () => ({
   TierApiService: {
     list: mocks.listTiers,
     create: mocks.createTier,
@@ -51,23 +51,23 @@ vi.mock('../../src/api/TierApiService', () => ({
     softDelete: mocks.softDeleteTier,
   },
 }));
-vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+vi.mock('@/api/ShowcaseSettingsApiService', () => ({
   ShowcaseSettingsApiService: {
     get: mocks.getShowcaseSettings,
     update: mocks.updateShowcaseSettings,
   },
 }));
-vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+vi.mock('@/api/RegistrationSettingsApiService', () => ({
   RegistrationSettingsApiService: { get: mocks.getSettings, update: mocks.updateSettings },
 }));
-vi.mock('../../src/api/RecoveryApiService', () => ({
+vi.mock('@/api/RecoveryApiService', () => ({
   RecoveryApiService: {
     listDeleted: mocks.listDeleted,
     restore: mocks.restoreDeleted,
     browseOperationLog: mocks.browseOperationLog,
   },
 }));
-vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+vi.mock('@/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
 
 // `ThemeProvider` because the settings page now includes the appearance card, which reads the
 // chosen palette from the theme context.

@@ -6,7 +6,7 @@ import {
   logout as logoutRequest,
   readSessionToken,
   type ShowcaseViewer,
-} from '../api/showcaseAuth';
+} from '@/showcase/api/showcaseAuth';
 
 export type ShowcaseAuthStatus = 'loading' | 'anonymous' | 'signed-in';
 

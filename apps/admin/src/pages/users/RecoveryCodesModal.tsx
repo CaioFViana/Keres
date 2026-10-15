@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '../../components/Modal';
-import { AdminUserApiService } from '../../api/AdminUserApiService';
+import { Modal } from '@/components/Modal';
+import { AdminUserApiService } from '@/api/AdminUserApiService';
 
 /**
  * The "lost access to their account" flow as a dialog over the user form: it

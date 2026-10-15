@@ -1,9 +1,9 @@
 import { t, Elysia } from 'elysia';
 import { jwtShowcase } from '@/config/jwt';
 import type { JWTPayload } from '@/index';
-import { publicationStorageService } from '@/services/PublicationStorageService';
-import { showcaseService } from '@/services/ShowcaseService';
-import { showcaseSettingsService } from '@/services/ShowcaseSettingsService';
+import { publicationStorageService } from '@/services/publication/PublicationStorageService';
+import { showcaseService } from '@/services/showcase/ShowcaseService';
+import { showcaseSettingsService } from '@/services/showcase/ShowcaseSettingsService';
 import { AppError } from '@/utils/errors';
 import { signedPublicationUrl } from './showcaseAccess';
 import { openShowcaseStory } from './showcaseGate';

@@ -5,9 +5,9 @@ import {
   AdminStoryApiService,
   type AdminStoryCollaborator,
   type AdminStoryItem,
-} from '../../api/AdminStoryApiService';
-import { Pagination } from '../../components/Pagination';
-import { useAdminList } from '../../hooks/useAdminList';
+} from '@/api/AdminStoryApiService';
+import { Pagination } from '@/components/Pagination';
+import { useAdminList } from '@/hooks/useAdminList';
 import { StoryContent } from './StoryContent';
 
 type NsfwFilter = 'all' | 'nsfw' | 'safe';

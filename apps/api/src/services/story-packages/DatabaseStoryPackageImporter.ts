@@ -8,11 +8,11 @@ import {
 } from '@keres/shared';
 import { ulid } from 'ulid';
 import { db } from '@/db';
-import { storyNsfwService } from '@/services/StoryNsfwService';
-import { TierLimitExceededError, tierEnforcementService } from '@/services/TierEnforcementService';
+import { storyNsfwService } from '@/services/stories/StoryNsfwService';
+import { TierLimitExceededError, tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import { AppError, STORY_PREVIOUSLY_ON_SERVER } from '@/utils/errors';
 import { logger } from '@/utils/logger';
-import { purgeStoryData } from '@/services/StoryPurgeService';
+import { purgeStoryData } from '@/services/compliance/StoryPurgeService';
 import { renumberAllArranged } from '@/services/sync/arrangedRanks';
 import { ensurePublicFavoriteOperationLogs } from '@/services/sync/publicFavoriteRepair';
 import { importStoryAssets } from './DatabaseStoryPackageAssetsImport';

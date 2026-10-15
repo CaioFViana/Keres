@@ -1,10 +1,10 @@
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AdminStoryApiService } from '../../src/api/AdminStoryApiService';
-import { StoriesPage } from '../../src/pages/stories/StoriesPage';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { AdminStoryApiService } from '@/api/AdminStoryApiService';
+import { StoriesPage } from '@/pages/stories/StoriesPage';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
-vi.mock('../../src/api/AdminStoryApiService', () => ({
+vi.mock('@/api/AdminStoryApiService', () => ({
   AdminStoryApiService: {
     list: vi.fn(),
     collaborators: vi.fn(),

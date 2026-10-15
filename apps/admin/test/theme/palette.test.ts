@@ -7,7 +7,7 @@ import {
   readPaletteName,
   THEME_PALETTE_KEY,
   writePaletteName,
-} from '../../src/theme/theme';
+} from '@/theme/theme';
 
 function cssVar(name: string): string {
   return document.documentElement.style.getPropertyValue(name);

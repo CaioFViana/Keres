@@ -18,21 +18,21 @@ import {
   isShowcasePath,
   resolveHostedClientFile,
   SHOWCASE_PATH_PREFIX,
-} from './services/hostedClient';
-import { deliverDistFile } from './services/distStaticDelivery';
-import { hostedClientDelivery, hostedClientDeliveryInput } from './services/hostedClientDelivery';
-import { sendStaticDelivery } from './services/staticDelivery';
+} from './services/static-delivery/hostedClient';
+import { deliverDistFile } from './services/static-delivery/distStaticDelivery';
+import { hostedClientDelivery, hostedClientDeliveryInput } from './services/static-delivery/hostedClientDelivery';
+import { sendStaticDelivery } from './services/static-delivery/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
 import { requestAudit } from './plugins/requestAudit';
-import { assertPendingSessionMayReach } from './services/ageVerification/pendingAccess';
-import { showcaseSettingsService } from './services/ShowcaseSettingsService';
+import { assertPendingSessionMayReach } from './services/age-verification/pendingAccess';
+import { showcaseSettingsService } from './services/showcase/ShowcaseSettingsService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
 import {
   applyAdminUiSecurityHeaders,
   applyClientAppIsolationHeaders,
-} from './services/uiSecurityHeaders';
+} from './services/static-delivery/uiSecurityHeaders';
 import { isDatabaseConnectivityError } from './utils/databaseConnectivity';
 import type { JWTPayload } from './types/jwtPayload';
 

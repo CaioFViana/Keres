@@ -33,7 +33,7 @@ import { StorySyncHandler } from '@/services/entity-sync-handlers/StorySyncHandl
 import { SuggestionSyncHandler } from '@/services/entity-sync-handlers/SuggestionSyncHandler';
 import { TagRelationSyncHandler } from '@/services/entity-sync-handlers/TagRelationSyncHandler';
 import { TagSyncHandler } from '@/services/entity-sync-handlers/TagSyncHandler';
-import { mediaStorageService } from '@/services/MediaStorageService';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
 import { installBunShim } from '@test/helpers/bunShim';
 import { newId } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';

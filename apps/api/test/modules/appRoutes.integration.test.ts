@@ -5,7 +5,7 @@ import { env } from '@/config/env';
 import { db } from '@/db';
 import { showcaseSettings, tiers, users } from '@/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
-import { userService } from '@/services/UserService';
+import { userService } from '@/services/accounts/UserService';
 import { getApp, newId, registerUser, request, type TestUser } from '@test/helpers/app';
 import { hardDeleteUser, promoteToAdmin, truncateAll } from '@test/helpers/database';
 

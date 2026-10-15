@@ -6,7 +6,7 @@ import {
   type FinishedRequest,
   requestAddress,
 } from '@/plugins/requestAudit';
-import { csvCell } from '@/services/AuditService';
+import { csvCell } from '@/services/compliance/AuditService';
 
 const ULID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const finished = (over: Partial<FinishedRequest> = {}): FinishedRequest => ({

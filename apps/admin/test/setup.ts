@@ -1,4 +1,4 @@
-import { initI18n } from '../src/i18n';
+import { initI18n } from '@/i18n';
 
 declare global {
   // React 19 reads this in `act()`. Without the declaration, `tsc` rejects the index on `globalThis`.

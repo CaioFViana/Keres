@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { ShowcaseApp } from '../../src/showcase/App';
-import { flush, render } from '../helpers/react';
+import { ShowcaseApp } from '@/showcase/App';
+import { flush, render } from '@test/helpers/react';
 
 /**
  * What the public site tells a signed-in reader who cannot see the adults-only shelf: an unverified account is
@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   fetchConfig: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
   fetchStory: mocks.fetchStory,
   unlockStory: vi.fn(),

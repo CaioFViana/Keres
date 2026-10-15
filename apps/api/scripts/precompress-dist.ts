@@ -5,7 +5,7 @@
  *   bun apps/api/scripts/precompress-dist.ts [--encodings=br,gzip] [--quality=11] <folder>...
  *
  * For each file that compresses, it writes `<file>.br` and `<file>.gz` beside it, and one `precompressed.json` at the
- * root of the folder with the hash of each file's bytes (see `src/services/precompressedAssets.ts`). The server then
+ * root of the folder with the hash of each file's bytes (see `src/services/static-delivery/precompressedAssets.ts`). The server then
  * answers from those copies: it spends no CPU compressing at boot, and keeps no compressed copy of every file in memory.
  *
  * What it leaves alone: HTML (the hosted client rewrites its entry page at request time, and pages are small), files
@@ -18,17 +18,17 @@ import { readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
-import { hostedClientMimeType } from '../src/services/hostedClient';
+import { hostedClientMimeType } from '@/services/static-delivery/hostedClient';
 import {
   PRECOMPRESSED_MANIFEST,
   PRECOMPRESSED_SUFFIX,
   type PrecompressedManifest,
-} from '../src/services/precompressedAssets';
+} from '@/services/static-delivery/precompressedAssets';
 import {
   type ContentEncoding,
   contentHash,
   isCompressibleContentType,
-} from '../src/services/staticDelivery';
+} from '@/services/static-delivery/staticDelivery';
 
 const MIN_BYTES = 1024;
 const COPY_SUFFIXES = Object.values(PRECOMPRESSED_SUFFIX);

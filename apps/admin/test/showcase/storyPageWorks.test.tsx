@@ -1,9 +1,9 @@
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryDetail, ShowcaseVersion } from '@keres/shared';
-import { ShowcaseApp } from '../../src/showcase/App';
-import { groupVersions } from '../../src/showcase/pages/StoryPage';
-import { flush, render } from '../helpers/react';
+import { ShowcaseApp } from '@/showcase/App';
+import { groupVersions } from '@/showcase/pages/StoryPage';
+import { flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   fetchPack: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,

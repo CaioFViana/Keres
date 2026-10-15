@@ -8,14 +8,14 @@ const mocks = vi.hoisted(() => ({
   setStoredUsername: vi.fn(),
 }));
 
-vi.mock('../../src/api/apiClient', () => ({
+vi.mock('@/api/apiClient', () => ({
   apiClient: { post: mocks.post, get: mocks.get },
   setToken: mocks.setToken,
   clearLocalSession: mocks.clearLocalSession,
   setStoredUsername: mocks.setStoredUsername,
 }));
 
-import { login, logout, probeAdminAccess } from '../../src/api/AdminAuthService';
+import { login, logout, probeAdminAccess } from '@/api/AdminAuthService';
 
 describe('admin login', () => {
   beforeEach(() => vi.clearAllMocks());

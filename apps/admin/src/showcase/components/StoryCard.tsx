@@ -1,11 +1,11 @@
 import type { ShowcaseStoryCard } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
-import { paletteVars } from '../theme/paletteVars';
+import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
+import { paletteVars } from '@/showcase/theme/paletteVars';
 import { OwnerAvatar } from './OwnerAvatar';
 import { StoryCover } from './StoryCover';
-import { formatBytes, formatDate, genreList } from '../format';
+import { formatBytes, formatDate, genreList } from '@/showcase/format';
 
 export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
   const { resolved } = useShowcaseTheme();

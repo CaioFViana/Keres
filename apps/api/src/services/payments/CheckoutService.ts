@@ -12,7 +12,7 @@ import { db } from '@/db';
 import { paymentCheckouts, tiers, users } from '@/db/schema';
 import { AppError } from '@/utils/errors';
 import { logger } from '@/utils/logger';
-import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { claimPurchaseToken } from './playPurchaseClaims';
 import { subscriptionService } from './SubscriptionService';

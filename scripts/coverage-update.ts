@@ -65,7 +65,7 @@ const scopedReports: Record<string, { reports: [string, string][]; prefixes: str
   },
   apiSyncCore: {
     reports: reports.apiCombined,
-    prefixes: ['src/services/SyncService.ts'],
+    prefixes: ['src/services/sync/SyncService.ts'],
   },
   apiSyncHandlers: {
     reports: reports.apiCombined,
@@ -73,7 +73,7 @@ const scopedReports: Record<string, { reports: [string, string][]; prefixes: str
   },
   apiExportImport: {
     reports: reports.apiCombined,
-    prefixes: ['src/services/StoryExportImportService.ts'],
+    prefixes: ['src/services/stories/StoryExportImportService.ts'],
   },
 };
 

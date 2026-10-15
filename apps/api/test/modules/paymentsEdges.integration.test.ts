@@ -6,7 +6,7 @@ import { db } from '@/db';
 import { paymentCheckouts, paymentEvents, paymentSubscriptions, tiers, users } from '@/db/schema';
 import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
 import { subscriptionService } from '@/services/payments/SubscriptionService';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import { getApp, newId, registerUser, request, type TestUser } from '@test/helpers/app';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';

@@ -1,7 +1,7 @@
 import { REPORT_TYPES, StoryReportRequestSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { messageService } from '@/services/MessageService';
+import { messageService } from '@/services/messages/MessageService';
 import { AppError } from '@/utils/errors';
 
 const reportTypeField = t.Optional(

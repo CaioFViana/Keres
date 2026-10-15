@@ -7,7 +7,7 @@
  * test checks is what the handlers do, and that is the same either way.
  */
 import { bootAndListen } from '@/boot';
-import { auditService } from '@/services/AuditService';
+import { auditService } from '@/services/compliance/AuditService';
 
 // A record that is slow to write, as a busy database is: without the shutdown waiting for what is in flight,
 // the process would be gone before the line landed.

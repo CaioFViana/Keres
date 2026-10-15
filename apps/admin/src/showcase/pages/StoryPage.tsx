@@ -7,15 +7,15 @@ import {
   fetchManuscriptDownloadUrl,
   fetchStory,
   unlockStory,
-} from '../api/showcaseApi';
-import { useShowcaseAuth } from '../auth/ShowcaseAuthProvider';
-import { LoginDialog } from '../components/LoginDialog';
-import { OwnerAvatar } from '../components/OwnerAvatar';
-import { PasswordGate } from '../components/PasswordGate';
-import { StoryCover } from '../components/StoryCover';
-import { formatBytes, formatDate, genreList } from '../format';
-import { paletteDisplayName, paletteVars } from '../theme/paletteVars';
-import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
+} from '@/showcase/api/showcaseApi';
+import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
+import { LoginDialog } from '@/showcase/components/LoginDialog';
+import { OwnerAvatar } from '@/showcase/components/OwnerAvatar';
+import { PasswordGate } from '@/showcase/components/PasswordGate';
+import { StoryCover } from '@/showcase/components/StoryCover';
+import { formatBytes, formatDate, genreList } from '@/showcase/format';
+import { paletteDisplayName, paletteVars } from '@/showcase/theme/paletteVars';
+import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
 
 export function StoryPage() {
   const { storyId = '' } = useParams();

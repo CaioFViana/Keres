@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchCoverUrl } from '../api/showcaseApi';
+import { fetchCoverUrl } from '@/showcase/api/showcaseApi';
 
 /**
  * The cover of a story, when it has one: drawn small beside a card, or large on the story's page. Nothing at all

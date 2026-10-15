@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { storyNsfwService } from '@/services/StoryNsfwService';
+import { storyNsfwService } from '@/services/stories/StoryNsfwService';
 
 /**
  * Why a Story write may not land, or `null` when it may. Flagging a story adults-only is a privilege, not a field: the

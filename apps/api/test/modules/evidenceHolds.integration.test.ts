@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { accessRecordService } from '@/services/AccessRecordService';
-import { evidenceHoldService } from '@/services/EvidenceHoldService';
-import { userService } from '@/services/UserService';
+import { accessRecordService } from '@/services/compliance/AccessRecordService';
+import { evidenceHoldService } from '@/services/compliance/EvidenceHoldService';
+import { userService } from '@/services/accounts/UserService';
 import { drainBackground } from '@/utils/backgroundWork';
 import { registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';

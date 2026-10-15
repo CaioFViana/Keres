@@ -2,7 +2,7 @@ import type { ShowcasePackCard } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { OwnerAvatar } from './OwnerAvatar';
-import { packContentLines } from '../format';
+import { packContentLines } from '@/showcase/format';
 
 /**
  * A pack in the listing.

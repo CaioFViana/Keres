@@ -14,8 +14,8 @@ import {
   PAYMENT_WARNING_DAYS,
   SUBSCRIPTION_STATUSES,
 } from '@keres/shared/metadata/Payments';
-import { PaymentsApiService } from '../../api/PaymentsApiService';
-import { Pagination } from '../../components/Pagination';
+import { PaymentsApiService } from '@/api/PaymentsApiService';
+import { Pagination } from '@/components/Pagination';
 import { paymentDetailText } from './paymentDetail';
 
 const PAGE_SIZE = 25;

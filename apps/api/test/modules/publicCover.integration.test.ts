@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { galleries, showcaseSettings, stories } from '@/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
-import { mediaStorageService } from '@/services/MediaStorageService';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { installBunShim } from '@test/helpers/bunShim';
 import { truncateAll } from '@test/helpers/database';

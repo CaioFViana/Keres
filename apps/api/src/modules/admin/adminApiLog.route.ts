@@ -1,7 +1,7 @@
 import { AdminApiLogQuerySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { adminApiLogService } from '@/services/AdminApiLogService';
+import { adminApiLogService } from '@/services/admin/AdminApiLogService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

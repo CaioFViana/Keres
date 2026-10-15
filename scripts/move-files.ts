@@ -79,6 +79,11 @@ const MIRROR_ROOTS: Record<string, { src: string; test: string }> = {
  */
 const ALIASES: Record<string, { prefix: string; dir: string }[]> = {
   'apps/client': [{ prefix: '@/', dir: 'apps/client' }],
+  'apps/admin': [
+    { prefix: '@/', dir: 'apps/admin/src' },
+    { prefix: '@test/', dir: 'apps/admin/test' },
+    { prefix: '@root/', dir: 'apps/admin' },
+  ],
   'apps/api': [
     { prefix: '@/', dir: 'apps/api/src' },
     { prefix: '@test/', dir: 'apps/api/test' },

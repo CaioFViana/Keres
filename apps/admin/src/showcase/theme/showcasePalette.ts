@@ -1,7 +1,7 @@
 import type { ThemeColors } from '@keres/shared';
 import { themes } from '@keres/shared/theme/palettes/index';
 import { getContrastTextColor } from '@keres/shared/utils/colorUtils';
-import type { ResolvedTheme } from '../../theme/theme';
+import type { ResolvedTheme } from '@/theme/theme';
 
 /**
  * The public site's palette, from the server's `sitePalette`.

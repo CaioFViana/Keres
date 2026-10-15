@@ -1,14 +1,14 @@
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryCard } from '@keres/shared';
-import { StoryCard } from '../../src/showcase/components/StoryCard';
-import { StoryCover } from '../../src/showcase/components/StoryCover';
-import { ShowcaseThemeProvider } from '../../src/showcase/theme/ShowcaseThemeProvider';
-import { flush, render } from '../helpers/react';
+import { StoryCard } from '@/showcase/components/StoryCard';
+import { StoryCover } from '@/showcase/components/StoryCover';
+import { ShowcaseThemeProvider } from '@/showcase/theme/ShowcaseThemeProvider';
+import { flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({ fetchCoverUrl: vi.fn() }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchCoverUrl: mocks.fetchCoverUrl,
 }));
 

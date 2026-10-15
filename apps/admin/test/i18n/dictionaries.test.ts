@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import adminEn from '../../src/i18n/locales/admin.en.json';
-import adminPt from '../../src/i18n/locales/admin.pt.json';
-import showcaseEn from '../../src/i18n/locales/showcase.en.json';
-import showcasePt from '../../src/i18n/locales/showcase.pt.json';
-import { detectLanguage, LANGUAGE_LABELS, SUPPORTED_LANGUAGES } from '../../src/i18n';
+import adminEn from '@/i18n/locales/admin.en.json';
+import adminPt from '@/i18n/locales/admin.pt.json';
+import showcaseEn from '@/i18n/locales/showcase.en.json';
+import showcasePt from '@/i18n/locales/showcase.pt.json';
+import { detectLanguage, LANGUAGE_LABELS, SUPPORTED_LANGUAGES } from '@/i18n';
 
 /** Every key of a dictionary, flattened into `a.b.c`. */
 function flatten(value: unknown, prefix = ''): string[] {

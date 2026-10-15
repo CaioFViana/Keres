@@ -1,7 +1,7 @@
 import { AccessRecordListQuerySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { accessRecordService } from '@/services/AccessRecordService';
+import { accessRecordService } from '@/services/compliance/AccessRecordService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

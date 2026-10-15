@@ -24,7 +24,7 @@ import {
 } from '@/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
-import { mediaStorageService } from '@/services/MediaStorageService';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
 import { installBunShim } from '@test/helpers/bunShim';
 import { truncateAll } from '@test/helpers/database';
 

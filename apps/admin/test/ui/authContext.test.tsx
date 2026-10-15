@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthProvider, useAuth } from '../../src/auth/AuthContext';
-import { SESSION_CLEARED_EVENT } from '../../src/api/apiClient';
-import { click, flush, render } from '../helpers/react';
+import { AuthProvider, useAuth } from '@/auth/AuthContext';
+import { SESSION_CLEARED_EVENT } from '@/api/apiClient';
+import { click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   getToken: vi.fn(),
@@ -13,9 +13,8 @@ const mocks = vi.hoisted(() => ({
   probeAdminAccess: vi.fn(),
 }));
 
-vi.mock('../../src/api/apiClient', async () => {
-  const actual =
-    await vi.importActual<typeof import('../../src/api/apiClient')>('../../src/api/apiClient');
+vi.mock('@/api/apiClient', async () => {
+  const actual = await vi.importActual<typeof import('@/api/apiClient')>('@/api/apiClient');
   return {
     ...actual,
     getToken: mocks.getToken,
@@ -23,7 +22,7 @@ vi.mock('../../src/api/apiClient', async () => {
     setStoredUsername: mocks.setStoredUsername,
   };
 });
-vi.mock('../../src/api/AdminAuthService', () => ({
+vi.mock('@/api/AdminAuthService', () => ({
   login: mocks.login,
   logout: mocks.logout,
   probeAdminAccess: mocks.probeAdminAccess,

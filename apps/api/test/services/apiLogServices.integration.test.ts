@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db';
 import { apiLogs, stories, users } from '@/db/schema';
-import { AdminApiLogService } from '@/services/AdminApiLogService';
-import { persistApiLog } from '@/services/ApiLogService';
+import { AdminApiLogService } from '@/services/admin/AdminApiLogService';
+import { persistApiLog } from '@/services/compliance/ApiLogService';
 import { newId } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 

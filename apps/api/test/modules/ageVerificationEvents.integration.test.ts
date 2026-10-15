@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { env } from '@/config/env';
 import { db } from '@/db';
 import { ageVerificationEvents, ageVerifications } from '@/db/schema';
-import { resetAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
+import { resetAgeVerifier } from '@/services/age-verification/AgeVerifierRegistry';
 import { newId, registerUser } from '@test/helpers/app';
 import {
   approvedEvent,

@@ -7,7 +7,7 @@ import {
   storeReaderSaves,
   READER_MAX_SAVES,
   READER_MAX_STEPS,
-} from '../../src/showcase/reader/readerBridge';
+} from '@/showcase/reader/readerBridge';
 
 const manual = (overrides: Record<string, unknown> = {}) => ({
   id: 'm1',

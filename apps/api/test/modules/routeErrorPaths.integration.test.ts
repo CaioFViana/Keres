@@ -7,8 +7,8 @@ import { db } from '@/db';
 import { friendships, galleries, stories, storyPublications, tiers, users } from '@/db/schema';
 import { showcaseSettings } from '@/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
-import { showcaseService } from '@/services/ShowcaseService';
-import { userService } from '@/services/UserService';
+import { showcaseService } from '@/services/showcase/ShowcaseService';
+import { userService } from '@/services/accounts/UserService';
 import { installBunShim } from '@test/helpers/bunShim';
 import {
   getApp,

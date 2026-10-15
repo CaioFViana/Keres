@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { packs, showcaseSettings } from '@/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
-import { packService } from '@/services/PackService';
+import { packService } from '@/services/story-packages/PackService';
 import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 

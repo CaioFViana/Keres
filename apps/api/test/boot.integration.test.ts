@@ -108,7 +108,7 @@ const flush = async () => {
 
 describe('starting the server', () => {
   it('prepares what it needs, starts its jobs, says it started, and listens', async () => {
-    const { auditService } = await import('@/services/AuditService');
+    const { auditService } = await import('@/services/compliance/AuditService');
     const record = spyOn(auditService, 'record');
     const { bootAndListen } = await import('@/boot');
     const onListening = vi.fn();
@@ -150,7 +150,7 @@ describe('the periodic jobs', () => {
   const FIRST = { payments: 50_000, media: 60_000, audit: 30_000, attempts: 45_000 };
 
   it('sweeps the expired media blobs, and says so only when it found some', async () => {
-    const { mediaStorageService } = await import('@/services/MediaStorageService');
+    const { mediaStorageService } = await import('@/services/media-storage/MediaStorageService');
     const { logger } = await import('@/utils/logger');
     const info = spyOn(logger, 'info');
     const sweep = spyOn(mediaStorageService, 'sweepExpiredUnreferencedBlobs');
@@ -165,7 +165,7 @@ describe('the periodic jobs', () => {
   });
 
   it('keeps going when a media sweep fails', async () => {
-    const { mediaStorageService } = await import('@/services/MediaStorageService');
+    const { mediaStorageService } = await import('@/services/media-storage/MediaStorageService');
     const { logger } = await import('@/utils/logger');
     const error = spyOn(logger, 'error').mockImplementation(() => undefined);
     spyOn(mediaStorageService, 'sweepExpiredUnreferencedBlobs').mockRejectedValueOnce(
@@ -178,7 +178,7 @@ describe('the periodic jobs', () => {
   });
 
   it('prunes the activity record to its retention, and says how much it dropped', async () => {
-    const { auditService } = await import('@/services/AuditService');
+    const { auditService } = await import('@/services/compliance/AuditService');
     const { logger } = await import('@/utils/logger');
     const info = spyOn(logger, 'info');
     const prune = spyOn(auditService, 'prune');
@@ -193,7 +193,7 @@ describe('the periodic jobs', () => {
   });
 
   it('drops the access records past their retention, and says how many', async () => {
-    const { accessRecordService } = await import('@/services/AccessRecordService');
+    const { accessRecordService } = await import('@/services/compliance/AccessRecordService');
     const { logger } = await import('@/utils/logger');
     const info = spyOn(logger, 'info');
     const prune = spyOn(accessRecordService, 'pruneExpired');
@@ -208,7 +208,7 @@ describe('the periodic jobs', () => {
   });
 
   it('keeps going when the activity record cannot be pruned', async () => {
-    const { auditService } = await import('@/services/AuditService');
+    const { auditService } = await import('@/services/compliance/AuditService');
     const { logger } = await import('@/utils/logger');
     const error = spyOn(logger, 'error').mockImplementation(() => undefined);
     spyOn(auditService, 'prune').mockRejectedValueOnce(new Error('locked'));
@@ -239,7 +239,7 @@ describe('the periodic jobs', () => {
   });
 
   it('cleans the lockout counters, and survives a failure', async () => {
-    const attempts = await import('@/services/AttemptLimitService');
+    const attempts = await import('@/services/auth/AttemptLimitService');
     const { logger } = await import('@/utils/logger');
     const error = spyOn(logger, 'error').mockImplementation(() => undefined);
 
@@ -283,7 +283,7 @@ describe('a server that sells plans, and its default plan', () => {
     const warn = spyOn(logger, 'warn').mockImplementation(() => undefined);
     const before = getPaymentConnector();
     // The settings row is made on first use; the test changes it directly, so it has to be there.
-    const { registrationSettingsService } = await import('@/services/RegistrationSettingsService');
+    const { registrationSettingsService } = await import('@/services/admin/RegistrationSettingsService');
     await registrationSettingsService.getOrCreate();
 
     // No payments: a default plan is nobody's business here.
@@ -340,7 +340,7 @@ describe('a start that cannot be completed', () => {
 
 describe('stopping the server', () => {
   it('stops in order on a signal: the jobs, the record, the connections, the writes, the database', async () => {
-    const { auditService } = await import('@/services/AuditService');
+    const { auditService } = await import('@/services/compliance/AuditService');
     const record = spyOn(auditService, 'record');
     const clearTimeoutSpy = spyOn(globalThis, 'clearTimeout');
     const clearIntervalSpy = spyOn(globalThis, 'clearInterval');

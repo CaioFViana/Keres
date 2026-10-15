@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFaviconIco, FAVICON_SIZES } from '../../vite.keresIcon';
+import { buildFaviconIco, FAVICON_SIZES } from '@root/vite.keresIcon';
 
 /** The images inside an ICO: its directory is 16 bytes an entry after a 6-byte header. */
 function iconEntries(ico: Buffer) {

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { PALETTE_NAMES, paletteLabel } from '../../theme/theme';
-import { useTheme } from '../../theme/ThemeProvider';
+import { PALETTE_NAMES, paletteLabel } from '@/theme/theme';
+import { useTheme } from '@/theme/ThemeProvider';
 
 /**
  * The panel's palette.

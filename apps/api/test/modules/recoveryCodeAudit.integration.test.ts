@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { adminUserService } from '@/services/AdminUserService';
+import { adminUserService } from '@/services/admin/AdminUserService';
 import { newId, registerUser, request } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 

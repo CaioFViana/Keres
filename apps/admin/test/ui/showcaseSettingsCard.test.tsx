@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ShowcaseSettingsCard } from '../../src/pages/settings/ShowcaseSettingsCard';
-import { changeInput, click, flush, render } from '../helpers/react';
+import { ShowcaseSettingsCard } from '@/pages/settings/ShowcaseSettingsCard';
+import { changeInput, click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   deleteLogo: vi.fn(),
 }));
 
-vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+vi.mock('@/api/ShowcaseSettingsApiService', () => ({
   ShowcaseSettingsApiService: {
     get: mocks.get,
     update: mocks.update,

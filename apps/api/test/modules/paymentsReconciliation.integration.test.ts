@@ -7,7 +7,7 @@ import { paymentCheckouts, paymentSubscriptions, tiers } from '@/db/schema';
 import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
 import { PaymentReconciliationService } from '@/services/payments/PaymentReconciliationService';
 import { subscriptionService } from '@/services/payments/SubscriptionService';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';

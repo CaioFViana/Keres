@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import type { ShowcasePackDetail, StorySchemaEntityType } from '@keres/shared';
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared/metadata/StorySchemaEntityType';
-import { fetchPack } from '../api/showcaseApi';
-import { OwnerAvatar } from '../components/OwnerAvatar';
+import { fetchPack } from '@/showcase/api/showcaseApi';
+import { OwnerAvatar } from '@/showcase/components/OwnerAvatar';
 
 const CUSTOM_SUGGESTION_PREFIX = 'custom:';
 

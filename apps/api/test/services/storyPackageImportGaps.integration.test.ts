@@ -14,7 +14,7 @@ import {
   users,
 } from '@/db/schema';
 import { insertPortableCollection } from '@/services/story-packages/DatabaseStoryPackageCollectionRepository';
-import { StoryExportImportService } from '@/services/StoryExportImportService';
+import { StoryExportImportService } from '@/services/stories/StoryExportImportService';
 import { AppError } from '@/utils/errors';
 import { newId } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';

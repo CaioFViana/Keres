@@ -1,4 +1,4 @@
-import { showcaseService } from '@/services/ShowcaseService';
+import { showcaseService } from '@/services/showcase/ShowcaseService';
 import { AppError } from '@/utils/errors';
 
 /** What the reads of a published version need from the version row. */

@@ -1,9 +1,9 @@
 import { FullStoryExportSchema, StoryPlanSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { StoryExportImportService } from '@/services/StoryExportImportService';
-import { storyPermissionService } from '@/services/StoryPermissionService';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { StoryExportImportService } from '@/services/stories/StoryExportImportService';
+import { storyPermissionService } from '@/services/stories/StoryPermissionService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import { AppError } from '@/utils/errors';
 
 const storyExportImportService = new StoryExportImportService();

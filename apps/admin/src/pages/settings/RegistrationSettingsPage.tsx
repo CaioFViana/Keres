@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AgeVerificationMode, RegistrationSettings, Tier, TiersDisplay } from '@keres/shared';
-import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
-import { TierApiService } from '../../api/TierApiService';
+import { RegistrationSettingsApiService } from '@/api/RegistrationSettingsApiService';
+import { TierApiService } from '@/api/TierApiService';
 import { AppearanceCard } from './AppearanceCard';
 import { ShowcaseSettingsCard } from './ShowcaseSettingsCard';
 

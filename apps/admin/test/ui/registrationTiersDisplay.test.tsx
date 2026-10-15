@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { RegistrationSettingsPage } from '../../src/pages/settings/RegistrationSettingsPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, flush, render, submit } from '../helpers/react';
+import { RegistrationSettingsPage } from '@/pages/settings/RegistrationSettingsPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, flush, render, submit } from '@test/helpers/react';
 
 /** The server's choice of how the public landing page presents its plans: for sale, or information only. */
 
@@ -14,13 +14,13 @@ const mocks = vi.hoisted(() => ({
   updateShowcaseSettings: vi.fn(),
 }));
 
-vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+vi.mock('@/api/RegistrationSettingsApiService', () => ({
   RegistrationSettingsApiService: { get: mocks.getSettings, update: mocks.updateSettings },
 }));
-vi.mock('../../src/api/TierApiService', () => ({
+vi.mock('@/api/TierApiService', () => ({
   TierApiService: { list: mocks.listTiers },
 }));
-vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+vi.mock('@/api/ShowcaseSettingsApiService', () => ({
   ShowcaseSettingsApiService: {
     get: mocks.getShowcaseSettings,
     update: mocks.updateShowcaseSettings,

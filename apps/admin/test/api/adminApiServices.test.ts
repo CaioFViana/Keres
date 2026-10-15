@@ -8,21 +8,21 @@ const mocks = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-vi.mock('../../src/api/apiClient', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../src/api/apiClient')>();
+vi.mock('@/api/apiClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/apiClient')>();
   return { ...actual, apiClient: mocks };
 });
 
-import { AdminUserApiService } from '../../src/api/AdminUserApiService';
-import { AdminStoryApiService } from '../../src/api/AdminStoryApiService';
-import { ActivityApiService } from '../../src/api/ActivityApiService';
-import { PaymentsApiService } from '../../src/api/PaymentsApiService';
-import { LogsApiService } from '../../src/api/LogsApiService';
-import { MessagesApiService } from '../../src/api/MessagesApiService';
-import { RecoveryApiService } from '../../src/api/RecoveryApiService';
-import { RegistrationSettingsApiService } from '../../src/api/RegistrationSettingsApiService';
-import { ShowcaseSettingsApiService } from '../../src/api/ShowcaseSettingsApiService';
-import { TierApiService } from '../../src/api/TierApiService';
+import { AdminUserApiService } from '@/api/AdminUserApiService';
+import { AdminStoryApiService } from '@/api/AdminStoryApiService';
+import { ActivityApiService } from '@/api/ActivityApiService';
+import { PaymentsApiService } from '@/api/PaymentsApiService';
+import { LogsApiService } from '@/api/LogsApiService';
+import { MessagesApiService } from '@/api/MessagesApiService';
+import { RecoveryApiService } from '@/api/RecoveryApiService';
+import { RegistrationSettingsApiService } from '@/api/RegistrationSettingsApiService';
+import { ShowcaseSettingsApiService } from '@/api/ShowcaseSettingsApiService';
+import { TierApiService } from '@/api/TierApiService';
 
 /**
  * These modules are thin on purpose, but they are the map between screen and route: a wrong verb

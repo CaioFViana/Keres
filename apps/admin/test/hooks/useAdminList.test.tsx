@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { useAdminList } from '../../src/hooks/useAdminList';
-import { click, flush, render } from '../helpers/react';
+import { useAdminList } from '@/hooks/useAdminList';
+import { click, flush, render } from '@test/helpers/react';
 
 type Row = { id: string };
 

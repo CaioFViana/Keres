@@ -17,18 +17,18 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
 vi.mock('@/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
 vi.mock('@/index', () => ({ createApp: mocks.createApp }));
-vi.mock('@/services/hostedClientDelivery', () => ({ warmHostedClientDelivery: vi.fn() }));
-vi.mock('@/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
-vi.mock('@/services/UserTagMaintenance', () => ({
+vi.mock('@/services/static-delivery/hostedClientDelivery', () => ({ warmHostedClientDelivery: vi.fn() }));
+vi.mock('@/services/admin/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
+vi.mock('@/services/accounts/UserTagMaintenance', () => ({
   normalizeStoredUserTags: mocks.normalizeTags,
 }));
-vi.mock('@/services/MediaStorageConfigurationService', () => ({
+vi.mock('@/services/media-storage/MediaStorageConfigurationService', () => ({
   assertMediaStorageConfiguration: mocks.assertStorage,
 }));
-vi.mock('@/services/MediaStorageService', () => ({
+vi.mock('@/services/media-storage/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
-vi.mock('@/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+vi.mock('@/services/compliance/ApiLogService', () => ({ persistApiLog: vi.fn() }));
 vi.mock('@/shutdown', () => ({
   createShutdown: mocks.createShutdown,
   installShutdownHandlers: mocks.installShutdownHandlers,

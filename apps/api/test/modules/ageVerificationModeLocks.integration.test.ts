@@ -14,9 +14,9 @@ import {
 } from '@/db/schema';
 import { privacyPolicyDigest, privacyPolicyFor } from '@/legal/privacyPolicy';
 import { serverTermsDigest, serverTermsFor } from '@/legal/serverTerms';
-import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
-import { storyNsfwService } from '@/services/StoryNsfwService';
-import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { ageVerificationService } from '@/services/age-verification/AgeVerificationService';
+import { storyNsfwService } from '@/services/stories/StoryNsfwService';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
 import { drainBackground } from '@/utils/backgroundWork';
 import {
   importTestStory,

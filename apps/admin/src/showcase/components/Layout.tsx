@@ -2,11 +2,11 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useMatch } from 'react-router-dom';
-import { LanguageSelect } from '../../i18n/LanguageSelect';
-import { SHOWCASE_LANGUAGE_KEY } from '../../i18n';
+import { LanguageSelect } from '@/i18n/LanguageSelect';
+import { SHOWCASE_LANGUAGE_KEY } from '@/i18n';
 import keresLogoUrl from 'virtual:keres-logo';
-import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
-import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
+import { useShowcaseConfig } from '@/showcase/config/ShowcaseConfigProvider';
+import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
 import { AuthButton, LoginDialog } from './LoginDialog';
 
 /**

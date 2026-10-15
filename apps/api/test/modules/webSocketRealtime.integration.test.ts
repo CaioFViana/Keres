@@ -7,8 +7,8 @@ import {
   handleRealtimeEventMessage,
   hasValidRealtimeTicket,
   openRealtimeEvents,
-} from '@/modules/webSocket/webSocket.route';
-import type { RealtimeSocket } from '@/services/RealtimeSessionService';
+} from '@/modules/web-socket/webSocket.route';
+import type { RealtimeSocket } from '@/services/sync/RealtimeSessionService';
 import { eventManager } from '@/utils/EventManager';
 import { registerUser, uploadTestStory, type TestUser } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatStorage, splitBytes, toBytes } from '../../src/pages/tiers/storageUnits';
+import { formatStorage, splitBytes, toBytes } from '@/pages/tiers/storageUnits';
 
 const MB = 1024 * 1024;
 

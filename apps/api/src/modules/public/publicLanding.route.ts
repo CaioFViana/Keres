@@ -1,9 +1,9 @@
 import { ContactCreateSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { createHash } from 'node:crypto';
-import { contactService } from '@/services/ContactService';
-import { registrationSettingsService } from '@/services/RegistrationSettingsService';
-import { tierService } from '@/services/TierService';
+import { contactService } from '@/services/accounts/ContactService';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
+import { tierService } from '@/services/tiers/TierService';
 import { AppError } from '@/utils/errors';
 import { createAttemptLimiter } from '@/utils/rateLimiter';
 

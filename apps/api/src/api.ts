@@ -5,7 +5,7 @@ import { adminRoutes } from './modules/admin/admin.route';
 import {
   ageVerificationEventsRoutes,
   ageVerificationPublicRoutes,
-} from './modules/ageVerification/ageVerification.route';
+} from './modules/age-verification/ageVerification.route';
 import { authRoutes } from './modules/auth/auth.route';
 import { SERVER_TERMS_UPDATED_AT, SERVER_TERMS_VERSION, serverTermsFor } from './legal/serverTerms';
 import {
@@ -13,7 +13,7 @@ import {
   PRIVACY_POLICY_VERSION,
   privacyPolicyFor,
 } from './legal/privacyPolicy';
-import { ageVerificationMode } from './services/ageVerification/ageVerificationMode';
+import { ageVerificationMode } from './services/age-verification/ageVerificationMode';
 import { packRoutes } from './modules/pack/pack.route';
 import { friendRoutes } from './modules/friend/friend.route';
 import { storyInvitationRoutes } from './modules/friend/storyInvitation.route';
@@ -25,10 +25,10 @@ import { publicRoutes } from './modules/public/public.route';
 import { publicationRoutes } from './modules/story/publication.route';
 import { storyRoutes } from './modules/story/story.route';
 import { storyReportRoutes } from './modules/story/storyReport.route';
-import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
+import { storyPermissionRoutes } from './modules/story-permission/storyPermission.route';
 import { syncRoute } from './modules/sync/sync.route';
 import { userRoutes } from './modules/user/user.route';
-import { wsRoutes } from './modules/webSocket/webSocket.route';
+import { wsRoutes } from './modules/web-socket/webSocket.route';
 
 /**
  * Keres's HTTP contract. The hosted interface occupies the origin (`/`, `/admin`, `/showcase`);

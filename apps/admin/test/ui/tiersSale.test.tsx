@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { TiersPage } from '../../src/pages/tiers/TiersPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { TiersPage } from '@/pages/tiers/TiersPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   listTiers: vi.fn(),
@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   softDeleteTier: vi.fn(),
 }));
 
-vi.mock('../../src/api/TierApiService', () => ({
+vi.mock('@/api/TierApiService', () => ({
   TierApiService: {
     list: mocks.listTiers,
     create: mocks.createTier,

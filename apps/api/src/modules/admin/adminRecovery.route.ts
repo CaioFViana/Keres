@@ -5,7 +5,7 @@ import {
   adminRecoveryService,
   RecoveryEntityNotFoundError,
   UnknownEntityTypeError,
-} from '@/services/AdminRecoveryService';
+} from '@/services/auth/AdminRecoveryService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

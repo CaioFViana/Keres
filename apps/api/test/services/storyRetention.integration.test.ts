@@ -2,8 +2,8 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { operationLog, stories, storyArcs } from '@/db/schema';
-import { storyRetentionService } from '@/services/StoryRetentionService';
-import { userService } from '@/services/UserService';
+import { storyRetentionService } from '@/services/compliance/StoryRetentionService';
+import { userService } from '@/services/accounts/UserService';
 import {
   importTestStory,
   registerUser,

@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Tier, TierCreateInput } from '@keres/shared';
 import { yearlyDiscountPercent } from '@keres/shared/utils/tierPricing';
-import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
-import { TierApiService } from '../../api/TierApiService';
-import { Modal } from '../../components/Modal';
+import { RegistrationSettingsApiService } from '@/api/RegistrationSettingsApiService';
+import { TierApiService } from '@/api/TierApiService';
+import { Modal } from '@/components/Modal';
 import { StorageLimitInput } from './StorageLimitInput';
 import { formatStorage } from './storageUnits';
 

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ShowcaseStoryCard } from '@keres/shared';
-import { fetchStories } from '../api/showcaseApi';
-import { useShowcaseAuth } from '../auth/ShowcaseAuthProvider';
-import { StoryCard } from '../components/StoryCard';
-import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
+import { fetchStories } from '@/showcase/api/showcaseApi';
+import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
+import { StoryCard } from '@/showcase/components/StoryCard';
+import { useShowcaseConfig } from '@/showcase/config/ShowcaseConfigProvider';
 
 /** How often the list is polled. With an ETag, it almost always costs a 304. */
 const POLL_INTERVAL_MS = 30_000;

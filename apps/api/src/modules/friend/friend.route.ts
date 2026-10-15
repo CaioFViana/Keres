@@ -1,8 +1,8 @@
 import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { friendshipService } from '@/services/FriendshipService';
-import { storyPermissionService } from '@/services/StoryPermissionService';
+import { friendshipService } from '@/services/accounts/FriendshipService';
+import { storyPermissionService } from '@/services/stories/StoryPermissionService';
 import { AppError } from '@/utils/errors';
 
 /** A `friendships` row exactly as `.returning()`/`db.query` sends it back - `createdAt`/

@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { packService } from '@/services/PackService';
+import { packService } from '@/services/story-packages/PackService';
 import { AppError } from '@/utils/errors';
 
 /**

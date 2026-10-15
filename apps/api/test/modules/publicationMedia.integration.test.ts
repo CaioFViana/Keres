@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 import { env } from '@/config/env';
 import { db } from '@/db';
 import { galleries, showcaseSettings, stories } from '@/db/schema';
-import { mediaStorageService } from '@/services/MediaStorageService';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
 import { installBunShim } from '@test/helpers/bunShim';
 import { newId, registerUser, request, uploadTestStory, type TestUser } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';

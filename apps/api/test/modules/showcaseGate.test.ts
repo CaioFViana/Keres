@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   isVisibleTo: vi.fn(),
 }));
 
-vi.mock('@/services/ShowcaseService', () => ({
+vi.mock('@/services/showcase/ShowcaseService', () => ({
   showcaseService: {
     viewerIncludesNsfw: mocks.viewerIncludesNsfw,
     isVisibleTo: mocks.isVisibleTo,

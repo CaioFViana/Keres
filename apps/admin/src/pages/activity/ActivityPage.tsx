@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { AuditEvent, AuditSummary, AuditUserRef } from '@keres/shared';
 import { AUDIT_CATEGORIES, AUDIT_OUTCOMES } from '@keres/shared/metadata/AuditEvents';
-import { ActivityApiService, type ActivityFilters } from '../../api/ActivityApiService';
-import { Modal } from '../../components/Modal';
-import { Pagination } from '../../components/Pagination';
-import { useAdminList } from '../../hooks/useAdminList';
+import { ActivityApiService, type ActivityFilters } from '@/api/ActivityApiService';
+import { Modal } from '@/components/Modal';
+import { Pagination } from '@/components/Pagination';
+import { useAdminList } from '@/hooks/useAdminList';
 
 const PAGE_SIZE = 50;
 const WINDOWS = [1, 24, 168, 720] as const;

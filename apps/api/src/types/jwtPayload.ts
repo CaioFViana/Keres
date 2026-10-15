@@ -7,7 +7,7 @@ export interface JWTPayload {
   username: string;
   /**
    * Set while the account is not active in age verification: the session can only reach the verification routes
-   * (see `services/ageVerification/pendingAccess.ts`). Absent on every ordinary session.
+   * (see `services/age-verification/pendingAccess.ts`). Absent on every ordinary session.
    */
   pending?: true;
 }

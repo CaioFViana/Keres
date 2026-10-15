@@ -11,7 +11,7 @@ import {
 } from '@/db/schema';
 import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
 import { PaymentRetentionService } from '@/services/payments/PaymentRetentionService';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';

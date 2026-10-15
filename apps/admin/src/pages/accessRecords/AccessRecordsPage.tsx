@@ -3,11 +3,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AccessRecord } from '@keres/shared';
-import {
-  AccessRecordsApiService,
-  type AccessRecordFilters,
-} from '../../api/AccessRecordsApiService';
-import { Modal } from '../../components/Modal';
+import { AccessRecordsApiService, type AccessRecordFilters } from '@/api/AccessRecordsApiService';
+import { Modal } from '@/components/Modal';
 
 const PAGE_SIZE = 50;
 /** The server's cap on one export (`ACCESS_RECORD_EXPORT_MAX_ROWS`): what a truncated export says it holds. */

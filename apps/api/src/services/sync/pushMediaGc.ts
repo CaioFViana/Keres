@@ -1,6 +1,6 @@
 import type { StoryUpdate } from '@keres/shared';
 import { logger } from '@/utils/logger';
-import { mediaStorageService } from '@/services/MediaStorageService';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
 
 /**
  * Collects media blobs orphaned by an applied push operation. It runs after the operation's

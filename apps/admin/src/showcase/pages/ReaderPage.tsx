@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import type { ShowcaseStoryDetail } from '@keres/shared';
-import { fetchReaderUrl, fetchStory, unlockStory } from '../api/showcaseApi';
-import { PasswordGate } from '../components/PasswordGate';
-import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
+import { fetchReaderUrl, fetchStory, unlockStory } from '@/showcase/api/showcaseApi';
+import { PasswordGate } from '@/showcase/components/PasswordGate';
+import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
 import {
   loadReaderSaves,
   readerPaletteOf,
@@ -12,7 +12,7 @@ import {
   readReaderMessage,
   sanitizeReaderSaves,
   storeReaderSaves,
-} from '../reader/readerBridge';
+} from '@/showcase/reader/readerBridge';
 
 /**
  * A story read online: the reader page a publisher shipped with a version, in a frame of its own.

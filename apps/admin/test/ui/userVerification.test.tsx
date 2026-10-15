@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { UserFormPage } from '../../src/pages/users/UserFormPage';
-import { UsersListPage } from '../../src/pages/users/UsersListPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { UserFormPage } from '@/pages/users/UserFormPage';
+import { UsersListPage } from '@/pages/users/UsersListPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 /**
  * The age-verification part of the user pages: the account's standing and the verification actions. In `manual`
@@ -20,11 +20,11 @@ const mocks = vi.hoisted(() => ({
   getRegistrationSettings: vi.fn(),
 }));
 
-vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+vi.mock('@/api/RegistrationSettingsApiService', () => ({
   RegistrationSettingsApiService: { get: mocks.getRegistrationSettings },
 }));
 
-vi.mock('../../src/api/AdminUserApiService', () => ({
+vi.mock('@/api/AdminUserApiService', () => ({
   AdminUserApiService: {
     list: mocks.listUsers,
     get: mocks.getUser,
@@ -35,10 +35,10 @@ vi.mock('../../src/api/AdminUserApiService', () => ({
     regenerateRecoveryCodes: vi.fn(),
   },
 }));
-vi.mock('../../src/api/PaymentsApiService', () => ({
+vi.mock('@/api/PaymentsApiService', () => ({
   PaymentsApiService: { userSubscription: mocks.userSubscription, giveGift: vi.fn() },
 }));
-vi.mock('../../src/api/TierApiService', () => ({
+vi.mock('@/api/TierApiService', () => ({
   TierApiService: { list: mocks.listTiers },
 }));
 

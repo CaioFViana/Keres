@@ -6,8 +6,8 @@ import {
 import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { messageQuotaService } from '@/services/MessageQuotaService';
-import { messageService } from '@/services/MessageService';
+import { messageQuotaService } from '@/services/messages/MessageQuotaService';
+import { messageService } from '@/services/messages/MessageService';
 import { AppError } from '@/utils/errors';
 
 function parseBody(body: unknown) {

@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { login as doLogin, logout as doLogout, probeAdminAccess } from '../api/AdminAuthService';
+import { login as doLogin, logout as doLogout, probeAdminAccess } from '@/api/AdminAuthService';
 import {
   getStoredUsername,
   getToken,
   SESSION_CLEARED_EVENT,
   setStoredUsername,
-} from '../api/apiClient';
+} from '@/api/apiClient';
 
 interface AuthState {
   isAuthenticated: boolean;

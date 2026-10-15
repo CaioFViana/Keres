@@ -198,7 +198,7 @@ describe('POST /media/:storyId/blobs/:hash', () => {
   });
 
   it('answers 500 when storage fails, so the client retries instead of blaming its bytes', async () => {
-    const { mediaStorageService } = await import('@/services/MediaStorageService');
+    const { mediaStorageService } = await import('@/services/media-storage/MediaStorageService');
     const failing = vi
       .spyOn(mediaStorageService, 'store')
       .mockRejectedValueOnce(new Error('disk on fire'));

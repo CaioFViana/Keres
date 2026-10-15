@@ -6,10 +6,10 @@ import { MESSAGE_BODY_MAX_LENGTH } from '@keres/shared/metadata/MessageLimits';
 import { REPORT_TYPES } from '@keres/shared/metadata/ReportTypes';
 import type { ReportType } from '@keres/shared/metadata/ReportTypes';
 import { parseReportBody } from '@keres/shared/utils/storyReport';
-import { announceMessagesChanged, MessagesApiService } from '../../api/MessagesApiService';
-import { Modal } from '../../components/Modal';
-import { Pagination } from '../../components/Pagination';
-import { useAdminList } from '../../hooks/useAdminList';
+import { announceMessagesChanged, MessagesApiService } from '@/api/MessagesApiService';
+import { Modal } from '@/components/Modal';
+import { Pagination } from '@/components/Pagination';
+import { useAdminList } from '@/hooks/useAdminList';
 
 type Source = AdminMessageListQuery['source'];
 type ReadFilter = AdminMessageListQuery['read'];

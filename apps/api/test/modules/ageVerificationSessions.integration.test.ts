@@ -2,8 +2,8 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db';
 import { ageVerifications, users } from '@/db/schema';
-import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
-import { resetAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
+import { ageVerificationService } from '@/services/age-verification/AgeVerificationService';
+import { resetAgeVerifier } from '@/services/age-verification/AgeVerifierRegistry';
 import { registerUser, request, uploadTestStory } from '@test/helpers/app';
 import {
   approvedEvent,

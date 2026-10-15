@@ -9,11 +9,11 @@ import {
 import { eq } from 'drizzle-orm';
 import { db, withWriteTransaction } from '@/db';
 import { paymentSubscriptions, tiers, users } from '@/db/schema';
-import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { emitUserEvent } from '@/modules/web-socket/webSocket.route';
 import { AppError } from '@/utils/errors';
 import { logger } from '@/utils/logger';
-import { auditService } from '@/services/AuditService';
-import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { auditService } from '@/services/compliance/AuditService';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
 import { noteLedger } from './paymentLedger';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { dailyValueOf } from './periodConversion';

@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiClient, clearToken, getToken, setToken } from '../../src/api/apiClient';
+import { apiClient, clearToken, getToken, setToken } from '@/api/apiClient';
 
 /**
  * The interceptors are the only thing between the panel and the API: the request one authenticates

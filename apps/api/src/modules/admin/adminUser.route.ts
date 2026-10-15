@@ -10,9 +10,9 @@ import {
   adminUserService,
   RootAdminProtectedError,
   UsernameAlreadyTakenError,
-} from '@/services/AdminUserService';
-import { TierNotFoundError } from '@/services/TierService';
-import { TagAlreadyTakenError } from '@/services/UserService';
+} from '@/services/admin/AdminUserService';
+import { TierNotFoundError } from '@/services/tiers/TierService';
+import { TagAlreadyTakenError } from '@/services/accounts/UserService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

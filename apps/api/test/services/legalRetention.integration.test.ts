@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PRIVACY_POLICY_VERSION } from '@/legal/privacyPolicy';
 import { SERVER_TERMS_VERSION } from '@/legal/serverTerms';
-import { accessRecordService } from '@/services/AccessRecordService';
-import { auditService } from '@/services/AuditService';
-import { contactService } from '@/services/ContactService';
-import { UserService } from '@/services/UserService';
+import { accessRecordService } from '@/services/compliance/AccessRecordService';
+import { auditService } from '@/services/compliance/AuditService';
+import { contactService } from '@/services/accounts/ContactService';
+import { UserService } from '@/services/accounts/UserService';
 import { registerUser, request } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 

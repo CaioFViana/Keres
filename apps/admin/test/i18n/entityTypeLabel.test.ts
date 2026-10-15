@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { OperationLogEntityType } from '@keres/shared/metadata/OperationLogEntityType';
-import i18n from '../../src/i18n';
-import { entityTypeLabel } from '../../src/i18n/entityTypeLabel';
+import i18n from '@/i18n';
+import { entityTypeLabel } from '@/i18n/entityTypeLabel';
 
 const t = (language: string) => (key: string, options?: Record<string, unknown>) =>
   i18n.getFixedT(language, 'admin')(key, options) as string;

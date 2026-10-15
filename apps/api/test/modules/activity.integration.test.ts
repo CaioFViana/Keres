@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { auditEvents, messageLog, stories, tiers, users } from '@/db/schema';
-import { auditService } from '@/services/AuditService';
+import { auditService } from '@/services/compliance/AuditService';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 

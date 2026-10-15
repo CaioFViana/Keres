@@ -13,7 +13,7 @@ import {
   readUnlockToken,
   storeUnlockToken,
   unlockStory,
-} from '../../src/showcase/api/showcaseApi';
+} from '@/showcase/api/showcaseApi';
 
 /**
  * The public site's HTTP client, exercised against a stubbed `fetch` with the real

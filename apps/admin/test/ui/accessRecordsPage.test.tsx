@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { AccessRecordsPage } from '../../src/pages/accessRecords/AccessRecordsPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { AccessRecordsPage } from '@/pages/accessRecords/AccessRecordsPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   exportCsv: vi.fn(),
 }));
 
-vi.mock('../../src/api/AccessRecordsApiService', () => ({
+vi.mock('@/api/AccessRecordsApiService', () => ({
   AccessRecordsApiService: {
     list: mocks.list,
     exportCsv: mocks.exportCsv,

@@ -8,8 +8,8 @@ import {
   ageVerificationService,
   VerificationRetryNotAllowedError,
   VerificationUnavailableError,
-} from '@/services/ageVerification/AgeVerificationService';
-import { resetAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
+} from '@/services/age-verification/AgeVerificationService';
+import { resetAgeVerifier } from '@/services/age-verification/AgeVerifierRegistry';
 import { drainBackground } from '@/utils/backgroundWork';
 import { registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import {

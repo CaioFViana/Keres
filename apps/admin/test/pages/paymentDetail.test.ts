@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { paymentDetailText } from '../../src/pages/payments/paymentDetail';
+import { paymentDetailText } from '@/pages/payments/paymentDetail';
 
 const t = (key: string, options?: Record<string, unknown>) =>
   options && Object.keys(options).length > 0 ? `${key} ${JSON.stringify(options)}` : key;

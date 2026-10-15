@@ -5,7 +5,7 @@ import {
   readThemePreference,
   resolveTheme,
   writeThemePreference,
-} from '../../src/theme/theme';
+} from '@/theme/theme';
 
 afterEach(() => {
   localStorage.removeItem(THEME_PREFERENCE_KEY);

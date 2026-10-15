@@ -5,7 +5,7 @@ import {
 } from '@keres/shared/metadata/EvidenceHolds';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { evidenceHoldService } from '@/services/EvidenceHoldService';
+import { evidenceHoldService } from '@/services/compliance/EvidenceHoldService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

@@ -2,9 +2,9 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/db';
 import { characters, favorites, operationLog, stories } from '@/db/schema';
-import { SyncService, syncService } from '@/services/SyncService';
+import { SyncService, syncService } from '@/services/sync/SyncService';
 import { ensurePublicFavoriteOperationLogs } from '@/services/sync/publicFavoriteRepair';
-import { TierLimitExceededError, tierEnforcementService } from '@/services/TierEnforcementService';
+import { TierLimitExceededError, tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 

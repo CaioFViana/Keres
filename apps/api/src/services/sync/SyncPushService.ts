@@ -19,8 +19,8 @@ import type {
   SyncPayload,
 } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
 import { SyncConflictError } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
-import { storyPermissionService } from '@/services/StoryPermissionService';
-import { TierLimitExceededError } from '@/services/TierEnforcementService';
+import { storyPermissionService } from '@/services/stories/StoryPermissionService';
+import { TierLimitExceededError } from '@/services/tiers/TierEnforcementService';
 import { readPushEnvelope, writtenPayload } from './pushEnvelope';
 import { assertPlanRoomFor } from './pushPlanRoom';
 import { storyNsfwRefusal } from './storyNsfwGuard';
@@ -45,7 +45,7 @@ import {
   enforceNsfwCollaboratorsAfterStoryChange,
   repairPublicFavoritesAfterStoryChange,
 } from './storyChangeRepairs';
-import { auditService } from '@/services/AuditService';
+import { auditService } from '@/services/compliance/AuditService';
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates

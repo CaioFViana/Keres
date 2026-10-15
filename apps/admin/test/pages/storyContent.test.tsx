@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AdminStoryApiService } from '../../src/api/AdminStoryApiService';
-import { StoryContent } from '../../src/pages/stories/StoryContent';
-import { click, flush, render } from '../helpers/react';
+import { AdminStoryApiService } from '@/api/AdminStoryApiService';
+import { StoryContent } from '@/pages/stories/StoryContent';
+import { click, flush, render } from '@test/helpers/react';
 
-vi.mock('../../src/api/AdminStoryApiService', () => ({
+vi.mock('@/api/AdminStoryApiService', () => ({
   AdminStoryApiService: {
     media: vi.fn(),
     boards: vi.fn(),

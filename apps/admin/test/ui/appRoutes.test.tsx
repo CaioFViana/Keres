@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { App } from '../../src/App';
-import { clearToken, setToken } from '../../src/api/apiClient';
-import { flush, render } from '../helpers/react';
+import { App } from '@/App';
+import { clearToken, setToken } from '@/api/apiClient';
+import { flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
@@ -35,12 +35,12 @@ const mocks = vi.hoisted(() => ({
   unreadMessages: vi.fn(),
 }));
 
-vi.mock('../../src/api/AdminAuthService', () => ({
+vi.mock('@/api/AdminAuthService', () => ({
   login: mocks.login,
   logout: vi.fn().mockResolvedValue(undefined),
   probeAdminAccess: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock('../../src/api/AdminUserApiService', () => ({
+vi.mock('@/api/AdminUserApiService', () => ({
   AdminUserApiService: {
     list: mocks.listUsers,
     get: mocks.getUser,
@@ -51,7 +51,7 @@ vi.mock('../../src/api/AdminUserApiService', () => ({
     regenerateRecoveryCodes: mocks.regenerateRecoveryCodes,
   },
 }));
-vi.mock('../../src/api/TierApiService', () => ({
+vi.mock('@/api/TierApiService', () => ({
   TierApiService: {
     list: mocks.listTiers,
     create: mocks.createTier,
@@ -59,27 +59,27 @@ vi.mock('../../src/api/TierApiService', () => ({
     softDelete: mocks.softDeleteTier,
   },
 }));
-vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+vi.mock('@/api/ShowcaseSettingsApiService', () => ({
   ShowcaseSettingsApiService: {
     get: mocks.getShowcaseSettings,
     update: mocks.updateShowcaseSettings,
   },
 }));
-vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+vi.mock('@/api/RegistrationSettingsApiService', () => ({
   RegistrationSettingsApiService: {
     get: mocks.getSettings,
     update: mocks.updateSettings,
   },
 }));
-vi.mock('../../src/api/RecoveryApiService', () => ({
+vi.mock('@/api/RecoveryApiService', () => ({
   RecoveryApiService: {
     listDeleted: mocks.listDeleted,
     restore: mocks.restoreDeleted,
     browseOperationLog: mocks.browseOperationLog,
   },
 }));
-vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
-vi.mock('../../src/api/PaymentsApiService', () => ({
+vi.mock('@/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+vi.mock('@/api/PaymentsApiService', () => ({
   PaymentsApiService: {
     summary: mocks.paymentsSummary,
     health: mocks.paymentsHealth,
@@ -87,15 +87,15 @@ vi.mock('../../src/api/PaymentsApiService', () => ({
     events: mocks.paymentsEvents,
   },
 }));
-vi.mock('../../src/api/ActivityApiService', () => ({
+vi.mock('@/api/ActivityApiService', () => ({
   ActivityApiService: {
     list: mocks.listActivity,
     summary: mocks.activitySummary,
     exportCsv: vi.fn(),
   },
 }));
-vi.mock('../../src/api/MessagesApiService', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/api/MessagesApiService')>()),
+vi.mock('@/api/MessagesApiService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/MessagesApiService')>()),
   MessagesApiService: { list: mocks.listMessages, unreadCount: mocks.unreadMessages },
 }));
 

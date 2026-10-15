@@ -1,6 +1,6 @@
 import { getStoryExportCollections, OperationLogEntityType } from '@keres/shared';
 import type { DatabaseStoryPackageImportContext } from './DatabaseStoryPackageImportContext';
-import { getApiEntityTable } from '@/services/entity-solvers/ApiEntityTableRegistry';
+import { getApiEntityTable } from '@/services/entity-sync-handlers/ApiEntityTableRegistry';
 
 /**
  * Database adapter for ordinary rows in a portable package. Import phases own conversion, ID

@@ -2,8 +2,8 @@ import { desc, eq } from 'drizzle-orm';
 import { env } from '@/config/env';
 import { db } from '@/db';
 import { ageVerifications, users } from '@/db/schema';
-import { resetAgeVerifier, setAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
-import { sha256Hex } from '@/services/ageVerification/connector/signing';
+import { resetAgeVerifier, setAgeVerifier } from '@/services/age-verification/AgeVerifierRegistry';
+import { sha256Hex } from '@/services/age-verification/connector/signing';
 import { type TestUser, newId, registerUser } from './app';
 import { type FakeVerifierOptions, createFakeAgeVerifier } from './fakeAgeVerifier';
 

@@ -1,4 +1,4 @@
-import { type Direction, signRequestHeaders } from '@/services/ageVerification/connector/signing';
+import { type Direction, signRequestHeaders } from '@/services/age-verification/connector/signing';
 import { getApp } from './app';
 
 /** The keys the server checks a service's events with, and signs its own requests with: one per direction. */

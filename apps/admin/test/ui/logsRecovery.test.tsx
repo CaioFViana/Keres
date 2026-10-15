@@ -2,9 +2,9 @@ import type { ReactElement } from 'react';
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { LogsPage } from '../../src/pages/logs/LogsPage';
-import { RecoveryPage } from '../../src/pages/recovery/RecoveryPage';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { LogsPage } from '@/pages/logs/LogsPage';
+import { RecoveryPage } from '@/pages/recovery/RecoveryPage';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   listLogs: vi.fn(),
@@ -13,8 +13,8 @@ const mocks = vi.hoisted(() => ({
   browseOperationLog: vi.fn(),
 }));
 
-vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
-vi.mock('../../src/api/RecoveryApiService', () => ({
+vi.mock('@/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+vi.mock('@/api/RecoveryApiService', () => ({
   RecoveryApiService: {
     listDeleted: mocks.listDeleted,
     restore: mocks.restoreDeleted,

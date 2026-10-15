@@ -1,0 +1,393 @@
+import type {
+  AdminCreateUser,
+  AdminUpdateUser,
+  AdminUserListQuery,
+  UserTierSource,
+} from '@keres/shared';
+import { deriveUserTag, normalizeUserTag } from '@keres/shared';
+import { and, asc, count, eq, or, sql } from 'drizzle-orm';
+import { insensitiveLike } from '@/db/sqlOperators';
+import { ulid } from 'ulid';
+import { hashPassword } from '@/config/bcrypt';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { tiers, users } from '@/db/schema';
+import { AppError, isUniqueViolation, postgresErrorConstraint } from '@/utils/errors';
+import { ageVerificationService } from '@/services/age-verification/AgeVerificationService';
+import { isAgeVerificationRequired } from '@/services/age-verification/ageVerificationMode';
+import { auditService } from '@/services/compliance/AuditService';
+import { effectiveDefaultTierId } from '@/services/tiers/defaultTier';
+import { entitledTierIds } from '@/services/payments/entitlement';
+import { accountClosureService } from '@/services/payments/AccountClosureService';
+import { recoveryCodeService } from '@/services/auth/RecoveryCodeService';
+import { erasureLedger } from '@/services/compliance/ErasureLedger';
+import { storyNsfwService } from '@/services/stories/StoryNsfwService';
+import { TierNotFoundError } from '@/services/tiers/TierService';
+import { TagAlreadyTakenError } from '@/services/accounts/UserService';
+
+export class UsernameAlreadyTakenError extends Error {
+  constructor() {
+    super('Username is already taken.');
+    this.name = 'UsernameAlreadyTakenError';
+  }
+}
+
+export class AdminUserNotFoundError extends Error {
+  constructor() {
+    super('User not found.');
+    this.name = 'AdminUserNotFoundError';
+  }
+}
+
+/**
+ * Refuses to demote/delete the root account reconciled through the env (see RootAdminService) - it
+ * can only be removed by changing/removing the env vars and restarting the API, never through the UI.
+ *
+ * Only those two actions are blocked in `update`/`softDelete` below - the root account's tag, avatar,
+ * bio and tierId go through normal editing, so the message must not say "modified" without
+ * qualification, which would leave the impression that the account is immutable altogether.
+ */
+export class RootAdminProtectedError extends Error {
+  constructor() {
+    super(
+      'The root admin account cannot be demoted or deleted through the admin panel. Change ROOT_ADMIN_USERNAME/ROOT_ADMIN_PASSWORD and restart the API instead.',
+    );
+    this.name = 'RootAdminProtectedError';
+  }
+}
+
+// Shape differs between Drizzle's two query builders, same split as UserService.ts:
+// the relational API (`db.query.users.findFirst`) takes `{ column: true }`, the core
+// API's `.returning()` takes `{ alias: table.column }`.
+const ADMIN_USER_COLUMNS = {
+  id: true,
+  username: true,
+  tag: true,
+  avatarColor: true,
+  avatarIcon: true,
+  bio: true,
+  isAdmin: true,
+  isAdultVerified: true,
+  verificationStatus: true,
+  verifiedAt: true,
+  verificationMethod: true,
+  tierId: true,
+  createdAt: true,
+  updatedAt: true,
+  isDeleted: true,
+  deletedAt: true,
+} as const;
+
+const ADMIN_USER_RETURNING = {
+  id: users.id,
+  username: users.username,
+  tag: users.tag,
+  avatarColor: users.avatarColor,
+  avatarIcon: users.avatarIcon,
+  bio: users.bio,
+  isAdmin: users.isAdmin,
+  isAdultVerified: users.isAdultVerified,
+  verificationStatus: users.verificationStatus,
+  verifiedAt: users.verifiedAt,
+  verificationMethod: users.verificationMethod,
+  tierId: users.tierId,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt,
+  isDeleted: users.isDeleted,
+  deletedAt: users.deletedAt,
+};
+
+export class AdminUserService {
+  private isRootUsername(username: string): boolean {
+    return !!env.ROOT_ADMIN_USERNAME && username === env.ROOT_ADMIN_USERNAME;
+  }
+
+  /**
+   * A well-formed but dangling tier id would otherwise fail on the foreign key at write
+   * time and surface as a 500 - checked up front so the caller gets a 404 instead.
+   */
+  private async assertTierExists(tierId: string): Promise<void> {
+    const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, tierId) });
+    if (!tier) {
+      throw new TierNotFoundError();
+    }
+  }
+
+  async list(query: AdminUserListQuery) {
+    const conditions = [];
+    if (query.search) {
+      conditions.push(
+        or(
+          insensitiveLike(users.username, `%${query.search}%`),
+          insensitiveLike(users.tag, `%${query.search}%`),
+        ),
+      );
+    }
+    if (query.isAdmin !== undefined) {
+      conditions.push(eq(users.isAdmin, query.isAdmin));
+    }
+    if (query.isDeleted !== undefined) {
+      conditions.push(eq(users.isDeleted, query.isDeleted));
+    }
+    if (query.adultVerified !== undefined) {
+      conditions.push(eq(users.isAdultVerified, query.adultVerified));
+    }
+    if (query.tierId) {
+      conditions.push(eq(users.tierId, query.tierId));
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [rows, [{ total }]] = await Promise.all([
+      db.query.users.findMany({
+        columns: ADMIN_USER_COLUMNS,
+        where,
+        orderBy: [asc(users.username)],
+        limit: query.pageSize,
+        offset: (query.page - 1) * query.pageSize,
+      }),
+      db.select({ total: count() }).from(users).where(where),
+    ]);
+
+    return {
+      items: await this.withEffectiveTier(rows),
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+    };
+  }
+
+  async getById(id: string) {
+    const row = await db.query.users.findFirst({
+      columns: ADMIN_USER_COLUMNS,
+      where: eq(users.id, id),
+    });
+    return row ? (await this.withEffectiveTier([row]))[0] : undefined;
+  }
+
+  /**
+   * Adds the plan each person is on right now, and why. The `tierId` column is the plan an administrator
+   * assigned; what the person actually gets is their paid plan when their subscription is paid up, and only
+   * otherwise that one (then the server's default) - so a list that showed the column alone said "Free" about
+   * somebody who had just paid for a bigger plan.
+   */
+  private async withEffectiveTier<T extends { id: string; tierId: string | null }>(
+    rows: T[],
+  ): Promise<(T & { effectiveTierId: string | null; tierSource: UserTierSource })[]> {
+    const [paid, defaultTierId] = await Promise.all([
+      entitledTierIds(rows.map((row) => row.id)),
+      effectiveDefaultTierId(),
+    ]);
+    return rows.map((row) => {
+      const subscription = paid.get(row.id);
+      if (subscription) {
+        return { ...row, effectiveTierId: subscription, tierSource: 'subscription' as const };
+      }
+      if (row.tierId) {
+        return { ...row, effectiveTierId: row.tierId, tierSource: 'assigned' as const };
+      }
+      if (defaultTierId) {
+        return { ...row, effectiveTierId: defaultTierId, tierSource: 'default' as const };
+      }
+      return { ...row, effectiveTierId: null, tierSource: 'none' as const };
+    });
+  }
+
+  async create(input: AdminCreateUser) {
+    const existingUsername = await db.query.users.findFirst({
+      where: eq(users.username, input.username),
+    });
+    if (existingUsername) {
+      throw new UsernameAlreadyTakenError();
+    }
+    if (input.tierId) {
+      await this.assertTierExists(input.tierId);
+    }
+
+    const hashedPassword = await hashPassword(input.password);
+    const id = ulid();
+    // The tag the admin typed, as a slug; otherwise one made from the username. Whoever calls this,
+    // the stored tag is in the shape lookups expect and always a valid one (see deriveUserTag).
+    const desiredTag = deriveUserTag(input.tag ?? input.username, id);
+
+    // The same suffix fallback as self-registration (auth.route.ts): the tag may already be taken even
+    // when the username is not, since the two columns do not share uniqueness.
+    let created;
+    try {
+      [created] = await db
+        .insert(users)
+        .values({
+          id,
+          username: input.username,
+          tag: desiredTag,
+          password: hashedPassword,
+          isAdmin: input.isAdmin,
+          tierId: input.tierId ?? null,
+        })
+        .returning(ADMIN_USER_RETURNING);
+    } catch (error) {
+      if (isUniqueViolation(error) && postgresErrorConstraint(error) === 'users_tag_lower_idx') {
+        try {
+          [created] = await db
+            .insert(users)
+            .values({
+              id,
+              username: input.username,
+              tag: deriveUserTag(input.tag ?? input.username, id, { suffixed: true }),
+              password: hashedPassword,
+              isAdmin: input.isAdmin,
+              tierId: input.tierId ?? null,
+            })
+            .returning(ADMIN_USER_RETURNING);
+        } catch (retryError) {
+          // Same case as `auth.route.ts`: the tag was only the first constraint complained about, and the
+          // username is taken too. Which one the database reports first varies by engine.
+          if (isUniqueViolation(retryError)) {
+            throw new UsernameAlreadyTakenError();
+          }
+          throw retryError;
+        }
+      } else if (isUniqueViolation(error)) {
+        // Not the tag constraint - a concurrent request created this exact username between
+        // the pre-check above and this insert. Retrying with a suffixed tag (the tag-collision
+        // path) would just fail again on the *username* constraint, unhandled this time.
+        throw new UsernameAlreadyTakenError();
+      } else {
+        throw error;
+      }
+    }
+
+    // The admin is creating the account on somebody else's behalf - shown here so they can pass them
+    // along, since there is no email to send them later (see auth.route.ts /register, the same logic on
+    // the self-service side).
+    const recoveryCodes = await recoveryCodeService.generateCodes(created!.id);
+    return { ...created!, recoveryCodes };
+  }
+
+  /** No confirmation of the current password - the admin acts on somebody else's behalf, this is not */
+  async regenerateRecoveryCodes(id: string): Promise<string[]> {
+    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+    return recoveryCodeService.generateCodes(id);
+  }
+
+  /**
+   * Edits an account for an administrator. Verification:
+   * - `manual` mode: granting it (`isAdultVerified: true`) is done here by hand - the flag, the time, the method
+   *   `manual` and the account made active - with an audit line. Revoking goes through the same path as always.
+   * - `required` mode: the external service is the only one that verifies, so granting is refused. Revoking
+   *   (`isAdultVerified: false`) goes through that service, so there is one revocation path, with its audit line and
+   *   the removal from adults-only stories.
+   */
+  async update(id: string, patch: AdminUpdateUser, actorId?: string | null) {
+    if (patch.isAdultVerified === true && isAgeVerificationRequired()) {
+      throw new AppError(
+        400,
+        'Accounts are verified by the age-verification service, not by hand.',
+      );
+    }
+    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+    if (this.isRootUsername(existing.username) && patch.isAdmin === false) {
+      throw new RootAdminProtectedError();
+    }
+    // A deleted account cannot sign in, so there is nothing to verify.
+    if (patch.isAdultVerified === true && existing.isDeleted) {
+      throw new AppError(409, 'This account is deleted, so it cannot be verified.');
+    }
+    if (patch.tierId) {
+      await this.assertTierExists(patch.tierId);
+    }
+
+    const changes: AdminUpdateUser = { ...patch };
+    delete changes.isAdultVerified;
+    const grantedNow = new Date();
+    // Granting by hand (manual mode only, see above): the account is active too, so one left pending by an earlier
+    // `required` setting is not stuck behind a verification that will never come.
+    // Granting what is already granted changes nothing: no new date, no second audit line.
+    const grantsNow = patch.isAdultVerified === true && !existing.isAdultVerified;
+    const grant = grantsNow
+      ? {
+          isAdultVerified: true,
+          verifiedAt: grantedNow,
+          verificationMethod: 'manual',
+          verificationStatus: 'active' as const,
+        }
+      : {};
+    if (patch.tag !== undefined) {
+      // Stored in the one shape lookups expect, and never one somebody else already holds.
+      changes.tag = normalizeUserTag(patch.tag);
+      const holder = await db.query.users.findFirst({
+        columns: { id: true },
+        where: sql`lower(${users.tag}) = ${changes.tag}`,
+      });
+      if (holder && holder.id !== id) {
+        throw new TagAlreadyTakenError();
+      }
+    }
+
+    if (patch.isAdultVerified === false && existing.isAdultVerified) {
+      // Verification revoked: the user keeps every safe story, but leaves every NSFW one now.
+      await ageVerificationService.revoke(id, actorId ?? null);
+    }
+    const [updated] = await db
+      .update(users)
+      .set({ ...changes, ...grant, updatedAt: grantedNow })
+      .where(eq(users.id, id))
+      .returning(ADMIN_USER_RETURNING);
+    if (grantsNow) {
+      auditService.record({
+        category: 'account',
+        action: 'account.verification_granted',
+        outcome: 'success',
+        actorUserId: actorId ?? null,
+        subjectUserId: id,
+      });
+    }
+    return updated;
+  }
+
+  async softDelete(id: string) {
+    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+    if (this.isRootUsername(existing.username)) {
+      throw new RootAdminProtectedError();
+    }
+
+    // Whatever would charge this account again stops first (and the account stays open if that cannot be done).
+    await accountClosureService.stopForClosedAccount(id);
+
+    const [updated] = await db
+      .update(users)
+      .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning(ADMIN_USER_RETURNING);
+    erasureLedger.record('account_deleted', id);
+    // A deactivated account leaves every NSFW story now - it must not linger on adults-only
+    // content while banned, and the showcase shadowban (ShowcaseService) hides its publications.
+    await storyNsfwService.removeUserFromNsfwStories(id, 'account-deactivated');
+    return updated;
+  }
+
+  async restore(id: string) {
+    const existing = await db.query.users.findFirst({ where: eq(users.id, id) });
+    if (!existing) {
+      throw new AdminUserNotFoundError();
+    }
+
+    const [updated] = await db
+      .update(users)
+      .set({ isDeleted: false, deletedAt: null, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning(ADMIN_USER_RETURNING);
+    erasureLedger.record('account_restored', id);
+    return updated;
+  }
+}
+
+export const adminUserService = new AdminUserService();

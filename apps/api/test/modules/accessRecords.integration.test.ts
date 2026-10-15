@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { accessRecords, auditEvents } from '@/db/schema';
-import { accessRecordService } from '@/services/AccessRecordService';
+import { accessRecordService } from '@/services/compliance/AccessRecordService';
 import { drainBackground } from '@/utils/backgroundWork';
 import { getApp, registerUser, request, type TestUser } from '@test/helpers/app';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';

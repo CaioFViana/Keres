@@ -7,7 +7,7 @@ import {
   TierNotFoundError,
   TierPlayProductAlreadyUsedError,
   tierService,
-} from '@/services/TierService';
+} from '@/services/tiers/TierService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

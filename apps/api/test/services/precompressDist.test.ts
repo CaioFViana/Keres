@@ -9,8 +9,8 @@ import {
   PRECOMPRESSED_MANIFEST,
   precompressedFor,
   resetPrecompressedManifests,
-} from '@/services/precompressedAssets';
-import { contentHash, StaticDelivery } from '@/services/staticDelivery';
+} from '@/services/static-delivery/precompressedAssets';
+import { contentHash, StaticDelivery } from '@/services/static-delivery/staticDelivery';
 
 const script = 'const answer = 42;\n'.repeat(600);
 let root: string;

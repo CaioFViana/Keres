@@ -5,11 +5,8 @@ import {
   EVIDENCE_HOLD_DEFAULT_DAYS,
   EVIDENCE_HOLD_MAX_DAYS,
 } from '@keres/shared/metadata/EvidenceHolds';
-import {
-  EvidenceHoldsApiService,
-  type EvidenceHoldDetail,
-} from '../../api/EvidenceHoldsApiService';
-import { Modal } from '../../components/Modal';
+import { EvidenceHoldsApiService, type EvidenceHoldDetail } from '@/api/EvidenceHoldsApiService';
+import { Modal } from '@/components/Modal';
 
 interface EvidenceHoldDialogProps {
   id: string;

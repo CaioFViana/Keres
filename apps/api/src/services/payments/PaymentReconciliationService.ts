@@ -4,7 +4,7 @@ import { and, asc, desc, eq, gte, inArray, isNotNull, lte, ne } from 'drizzle-or
 import { db } from '@/db';
 import { paymentCheckouts, paymentSubscriptions } from '@/db/schema';
 import { logger } from '@/utils/logger';
-import { auditService } from '@/services/AuditService';
+import { auditService } from '@/services/compliance/AuditService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { isStoreMethod, subscriptionService } from './SubscriptionService';
 

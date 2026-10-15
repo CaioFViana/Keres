@@ -12,12 +12,12 @@ import {
   tiers,
   users,
 } from '@/db/schema';
-import * as webSocket from '@/modules/webSocket/webSocket.route';
+import * as webSocket from '@/modules/web-socket/webSocket.route';
 import { languageOf } from '@/modules/payments/payment.route';
 import { sanitizeAction } from '@/services/payments/CheckoutService';
 import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
 import { subscriptionService } from '@/services/payments/SubscriptionService';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import { newId, getApp, registerUser, request, type TestUser } from '@test/helpers/app';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';

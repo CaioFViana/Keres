@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AdminUserSubscription, Tier } from '@keres/shared';
 import { GIFT_MAX_MONTHS, GIFT_PROVIDER_ID } from '@keres/shared/metadata/Payments';
-import { PaymentsApiService } from '../../api/PaymentsApiService';
+import { PaymentsApiService } from '@/api/PaymentsApiService';
 
 /**
  * Gives a person a plan for a number of months. It is a payment of zero: it extends the plan they are on or opens

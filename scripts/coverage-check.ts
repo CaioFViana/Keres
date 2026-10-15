@@ -58,7 +58,7 @@ const scopesByProject: Record<string, Scope[]> = {
         ['apps/api', 'coverage'],
         ['apps/api', 'coverage-integration'],
       ],
-      prefixes: ['src/services/SyncService.ts'],
+      prefixes: ['src/services/sync/SyncService.ts'],
     },
     {
       threshold: 'apiSyncHandlers',
@@ -74,7 +74,7 @@ const scopesByProject: Record<string, Scope[]> = {
         ['apps/api', 'coverage'],
         ['apps/api', 'coverage-integration'],
       ],
-      prefixes: ['src/services/StoryExportImportService.ts'],
+      prefixes: ['src/services/stories/StoryExportImportService.ts'],
     },
   ],
 };

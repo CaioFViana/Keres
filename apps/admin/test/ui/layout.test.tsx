@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { Layout } from '../../src/components/Layout';
-import { announceMessagesChanged } from '../../src/api/MessagesApiService';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { click, flush, render } from '../helpers/react';
+import { Layout } from '@/components/Layout';
+import { announceMessagesChanged } from '@/api/MessagesApiService';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   logout: vi.fn(),
@@ -12,12 +12,12 @@ const mocks = vi.hoisted(() => ({
   unreadCount: vi.fn(),
 }));
 
-vi.mock('../../src/api/MessagesApiService', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/api/MessagesApiService')>()),
+vi.mock('@/api/MessagesApiService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/MessagesApiService')>()),
   MessagesApiService: { unreadCount: mocks.unreadCount },
 }));
 
-vi.mock('../../src/auth/AuthContext', () => ({ useAuth: mocks.useAuth }));
+vi.mock('@/auth/AuthContext', () => ({ useAuth: mocks.useAuth }));
 
 function renderShell(username: string | null = 'admin') {
   mocks.useAuth.mockReturnValue({

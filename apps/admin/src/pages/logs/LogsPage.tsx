@@ -1,10 +1,10 @@
 import type { KeyboardEvent } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ApiLogEntry, ApiLogFilters } from '../../api/LogsApiService';
-import { LogsApiService } from '../../api/LogsApiService';
-import { Pagination } from '../../components/Pagination';
-import { useAdminList } from '../../hooks/useAdminList';
+import type { ApiLogEntry, ApiLogFilters } from '@/api/LogsApiService';
+import { LogsApiService } from '@/api/LogsApiService';
+import { Pagination } from '@/components/Pagination';
+import { useAdminList } from '@/hooks/useAdminList';
 
 const LEVEL_CLASS: Record<ApiLogEntry['level'], string> = {
   info: 'level-info',

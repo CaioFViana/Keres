@@ -15,8 +15,8 @@ import { db } from '@/db';
 import { paymentEvents, paymentSubscriptions, tiers, users } from '@/db/schema';
 import { insensitiveLike } from '@/db/sqlOperators';
 import { maskReference } from './paymentRules';
-import { effectiveDefaultTierId } from '@/services/defaultTier';
-import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { effectiveDefaultTierId } from '@/services/tiers/defaultTier';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 
 const DAY_MS = 24 * 60 * 60 * 1000;

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { showcaseLogoStorageService } from '@/services/ShowcaseLogoStorageService';
+import { showcaseLogoStorageService } from '@/services/showcase/ShowcaseLogoStorageService';
 import { registerUser, request, type TestUser } from '@test/helpers/app';
 import { installBunShim } from '@test/helpers/bunShim';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';

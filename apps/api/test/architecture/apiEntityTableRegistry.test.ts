@@ -5,7 +5,7 @@ import {
   OperationLogEntityType,
 } from '@keres/shared';
 import { describe, expect, it } from 'vitest';
-import { API_ENTITY_TABLES } from '@/services/entity-solvers/ApiEntityTableRegistry';
+import { API_ENTITY_TABLES } from '@/services/entity-sync-handlers/ApiEntityTableRegistry';
 
 describe('API entity-table registry', () => {
   it('provides a PostgreSQL table adapter for every story-synchronized entity', () => {

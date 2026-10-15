@@ -1,9 +1,9 @@
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryCard, ShowcaseStoryDetail } from '@keres/shared';
-import { ShowcaseApp } from '../../src/showcase/App';
+import { ShowcaseApp } from '@/showcase/App';
 import avatarIcons from 'virtual:keres-avatar-icons';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   fetchConfig: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,

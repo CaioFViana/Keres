@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { mediaBlobs, tiers, users } from '@/db/schema';
 import { GallerySyncHandler } from '@/services/entity-sync-handlers/GallerySyncHandler';
-import { MEDIA_BLOB_GRACE_PERIOD_MS, mediaStorageService } from '@/services/MediaStorageService';
+import { MEDIA_BLOB_GRACE_PERIOD_MS, mediaStorageService } from '@/services/media-storage/MediaStorageService';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 

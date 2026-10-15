@@ -1,9 +1,9 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { PaymentsPage, REFRESH_MS } from '../../src/pages/payments/PaymentsPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { PaymentsPage, REFRESH_MS } from '@/pages/payments/PaymentsPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   summary: vi.fn(),
@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   events: vi.fn(),
 }));
 
-vi.mock('../../src/api/PaymentsApiService', () => ({
+vi.mock('@/api/PaymentsApiService', () => ({
   PaymentsApiService: {
     summary: mocks.summary,
     health: mocks.health,

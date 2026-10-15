@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Modal } from '../../src/components/Modal';
-import { click, flush, render } from '../helpers/react';
+import { Modal } from '@/components/Modal';
+import { click, flush, render } from '@test/helpers/react';
 import { act } from 'react';
 
 async function mouseDown(element: Element): Promise<void> {

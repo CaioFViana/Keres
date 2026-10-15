@@ -12,7 +12,7 @@ import { favorites, operationLog, stories } from '@/db/schema';
 import { eventManager } from '@/utils/EventManager';
 import { AppError } from '@/utils/errors';
 import { logger } from '@/utils/logger';
-import { storyPermissionService } from '@/services/StoryPermissionService';
+import { storyPermissionService } from '@/services/stories/StoryPermissionService';
 import {
   ensurePublicFavoriteOperationLogs,
   getFavoritesFingerprint,

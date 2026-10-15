@@ -16,7 +16,7 @@ import {
   users,
 } from '@/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
-import { MAX_PUBLICATIONS_PER_STORY } from '@/services/StoryPublicationService';
+import { MAX_PUBLICATIONS_PER_STORY } from '@/services/publication/StoryPublicationService';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { installBunShim } from '@test/helpers/bunShim';
 import { truncateAll } from '@test/helpers/database';

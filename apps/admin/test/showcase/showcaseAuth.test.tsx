@@ -6,11 +6,11 @@ import {
   login,
   logout,
   readSessionToken,
-} from '../../src/showcase/api/showcaseAuth';
-import { ShowcaseAuthProvider, seesNsfwOf } from '../../src/showcase/auth/ShowcaseAuthProvider';
-import { Layout } from '../../src/showcase/components/Layout';
-import { ShowcaseThemeProvider } from '../../src/showcase/theme/ShowcaseThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+} from '@/showcase/api/showcaseAuth';
+import { ShowcaseAuthProvider, seesNsfwOf } from '@/showcase/auth/ShowcaseAuthProvider';
+import { Layout } from '@/showcase/components/Layout';
+import { ShowcaseThemeProvider } from '@/showcase/theme/ShowcaseThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const viewer = {
   userId: 'user-1',

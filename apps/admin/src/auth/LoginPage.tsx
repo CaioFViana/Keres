@@ -2,8 +2,8 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { ADMIN_LANGUAGE_KEY } from '../i18n';
-import { LanguageSelect } from '../i18n/LanguageSelect';
+import { ADMIN_LANGUAGE_KEY } from '@/i18n';
+import { LanguageSelect } from '@/i18n/LanguageSelect';
 import { useAuth } from './AuthContext';
 
 export function LoginPage() {

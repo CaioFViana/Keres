@@ -9,9 +9,9 @@ import {
   type AdminStoryLocationMapSummary,
   type AdminStoryMediaItem,
   type AdminStorySketchSummary,
-} from '../../api/AdminStoryApiService';
-import { Pagination } from '../../components/Pagination';
-import { entityTypeLabel } from '../../i18n/entityTypeLabel';
+} from '@/api/AdminStoryApiService';
+import { Pagination } from '@/components/Pagination';
+import { entityTypeLabel } from '@/i18n/entityTypeLabel';
 
 type ContentTab = 'media' | 'boards' | 'sketches' | 'maps' | 'entities';
 

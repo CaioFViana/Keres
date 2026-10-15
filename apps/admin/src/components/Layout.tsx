@@ -2,12 +2,12 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { MESSAGES_CHANGED_EVENT, MessagesApiService } from '../api/MessagesApiService';
-import { useAuth } from '../auth/AuthContext';
-import { ADMIN_LANGUAGE_KEY } from '../i18n';
-import { LanguageSelect } from '../i18n/LanguageSelect';
-import { useTheme } from '../theme/ThemeProvider';
-import type { ThemePreference } from '../theme/theme';
+import { MESSAGES_CHANGED_EVENT, MessagesApiService } from '@/api/MessagesApiService';
+import { useAuth } from '@/auth/AuthContext';
+import { ADMIN_LANGUAGE_KEY } from '@/i18n';
+import { LanguageSelect } from '@/i18n/LanguageSelect';
+import { useTheme } from '@/theme/ThemeProvider';
+import type { ThemePreference } from '@/theme/theme';
 
 const THEME_ICONS: Record<ThemePreference, { path: ReactNode }> = {
   system: {

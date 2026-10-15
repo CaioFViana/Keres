@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { comments, tiers, users } from '@/db/schema';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 import {
   newId,
   registerUser,

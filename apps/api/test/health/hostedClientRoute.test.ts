@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 import { clientDistPath } from '@/config/resourceRoot';
 import { createApp } from '@/index';
-import { HOSTED_CLIENT_META } from '@/services/hostedClient';
+import { HOSTED_CLIENT_META } from '@/services/static-delivery/hostedClient';
 
 const clientBuilt = () => existsSync(`${clientDistPath()}/index.html`);
 

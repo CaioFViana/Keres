@@ -9,24 +9,24 @@ import {
   InvalidRecoveryCodeError,
   RecoveryAttemptsLockedError,
   recoveryCodeService,
-} from '@/services/RecoveryCodeService';
-import { createPersistentAttemptLimiter } from '@/services/AttemptLimitService';
-import { effectiveDefaultTierId } from '@/services/defaultTier';
-import { registrationSettingsService } from '@/services/RegistrationSettingsService';
-import { termsAcceptanceService } from '@/services/TermsAcceptanceService';
-import { userService } from '@/services/UserService';
-import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
+} from '@/services/auth/RecoveryCodeService';
+import { createPersistentAttemptLimiter } from '@/services/auth/AttemptLimitService';
+import { effectiveDefaultTierId } from '@/services/tiers/defaultTier';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
+import { termsAcceptanceService } from '@/services/auth/TermsAcceptanceService';
+import { userService } from '@/services/accounts/UserService';
+import { ageVerificationService } from '@/services/age-verification/AgeVerificationService';
 import {
   createRegisteredAccount,
   requestSendingFor,
-} from '@/services/ageVerification/accountRegistration';
-import { isAgeVerificationRequired } from '@/services/ageVerification/ageVerificationMode';
+} from '@/services/age-verification/accountRegistration';
+import { isAgeVerificationRequired } from '@/services/age-verification/ageVerificationMode';
 import { AppError } from '@/utils/errors';
 import { requestAddress } from '@/plugins/requestAudit';
-import { accessRecordService } from '@/services/AccessRecordService';
+import { accessRecordService } from '@/services/compliance/AccessRecordService';
 import type { JWTPayload } from '@/index';
 import { languageOf } from '@/modules/payments/payment.route';
-import { createWebSocketTicket } from '@/modules/webSocket/webSocket.route';
+import { createWebSocketTicket } from '@/modules/web-socket/webSocket.route';
 import {
   AccountVerificationStatusResponseSchema,
   CodedMessageResponseSchema,
@@ -54,7 +54,7 @@ const registrationLimiter = createPersistentAttemptLimiter('register', {
 
 /**
  * The claim a session carries while its account is not active in age verification: the request pipeline refuses it
- * everywhere except the verification routes (see `services/ageVerification/pendingAccess.ts`). An active account's
+ * everywhere except the verification routes (see `services/age-verification/pendingAccess.ts`). An active account's
  * session has no claim at all.
  */
 const pendingClaim = (pending: boolean) => (pending ? { pending: true as const } : {});

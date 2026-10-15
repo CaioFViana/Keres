@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { env } from '@/config/env';
-import { resetAgeVerifier, setAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
+import { resetAgeVerifier, setAgeVerifier } from '@/services/age-verification/AgeVerifierRegistry';
 import { request } from '@test/helpers/app';
 import { createFakeAgeVerifier } from '@test/helpers/fakeAgeVerifier';
 import { enterRequiredMode, leaveRequiredMode } from '@test/helpers/ageVerificationAccounts';

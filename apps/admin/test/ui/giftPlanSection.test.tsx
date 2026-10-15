@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GiftPlanSection } from '../../src/pages/users/GiftPlanSection';
-import { changeInput, click, flush, render } from '../helpers/react';
+import { GiftPlanSection } from '@/pages/users/GiftPlanSection';
+import { changeInput, click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({ userSubscription: vi.fn(), giveGift: vi.fn() }));
 
-vi.mock('../../src/api/PaymentsApiService', () => ({
+vi.mock('@/api/PaymentsApiService', () => ({
   PaymentsApiService: { userSubscription: mocks.userSubscription, giveGift: mocks.giveGift },
 }));
 

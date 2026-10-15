@@ -15,12 +15,12 @@ import {
   InvalidCurrentPasswordError,
   TagAlreadyTakenError,
   userService,
-} from '@/services/UserService';
-import { friendshipService } from '@/services/FriendshipService';
-import { messageService } from '@/services/MessageService';
-import { storyNsfwService } from '@/services/StoryNsfwService';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
-import { userDataService } from '@/services/UserDataService';
+} from '@/services/accounts/UserService';
+import { friendshipService } from '@/services/accounts/FriendshipService';
+import { messageService } from '@/services/messages/MessageService';
+import { storyNsfwService } from '@/services/stories/StoryNsfwService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
+import { userDataService } from '@/services/accounts/UserDataService';
 import { AppError, isUniqueViolation } from '@/utils/errors';
 
 const userResponseSchema = t.Object({

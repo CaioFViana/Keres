@@ -15,21 +15,21 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
 vi.mock('@/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
 vi.mock('@/index', () => ({ createApp: mocks.createApp }));
-vi.mock('@/services/hostedClientDelivery', () => ({ warmHostedClientDelivery: vi.fn() }));
-vi.mock('@/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
-vi.mock('@/services/MediaStorageConfigurationService', () => ({
+vi.mock('@/services/static-delivery/hostedClientDelivery', () => ({ warmHostedClientDelivery: vi.fn() }));
+vi.mock('@/services/admin/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
+vi.mock('@/services/media-storage/MediaStorageConfigurationService', () => ({
   assertMediaStorageConfiguration: mocks.assertStorage,
 }));
-vi.mock('@/services/MediaStorageService', () => ({
+vi.mock('@/services/media-storage/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
-vi.mock('@/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+vi.mock('@/services/compliance/ApiLogService', () => ({ persistApiLog: vi.fn() }));
 // Not what this test is about, and importing them pulls the whole database layer in cold (past the test's 5 s under load).
-vi.mock('@/services/AuditService', () => ({
+vi.mock('@/services/compliance/AuditService', () => ({
   auditService: { record: vi.fn(), prune: vi.fn() },
 }));
-vi.mock('@/services/AttemptLimitService', () => ({ pruneAttemptLimits: vi.fn() }));
-vi.mock('@/services/UserService', () => ({
+vi.mock('@/services/auth/AttemptLimitService', () => ({ pruneAttemptLimits: vi.fn() }));
+vi.mock('@/services/accounts/UserService', () => ({
   userService: { pruneDeletedAccounts: vi.fn() },
 }));
 vi.mock('@/utils/logger', () => ({

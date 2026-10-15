@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useShowcaseAuth } from '../auth/ShowcaseAuthProvider';
+import { useShowcaseAuth } from '@/showcase/auth/ShowcaseAuthProvider';
 
 /**
  * The showcase's own sign-in: username + password in a small dialog, for unlocking the

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import {
   ShowcaseSettingsApiService,
   type ShowcaseSettings,
-} from '../../api/ShowcaseSettingsApiService';
-import { PALETTE_NAMES, paletteLabel } from '../../theme/theme';
+} from '@/api/ShowcaseSettingsApiService';
+import { PALETTE_NAMES, paletteLabel } from '@/theme/theme';
 
 /**
  * Controls for the pages hosted on the API's own origin.

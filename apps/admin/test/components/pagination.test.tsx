@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Pagination } from '../../src/components/Pagination';
-import { click, flush, render } from '../helpers/react';
+import { Pagination } from '@/components/Pagination';
+import { click, flush, render } from '@test/helpers/react';
 
 const buttons = (container: HTMLElement) =>
   Array.from(container.querySelectorAll<HTMLButtonElement>('button'));

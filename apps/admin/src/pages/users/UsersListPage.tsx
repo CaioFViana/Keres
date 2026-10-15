@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AdminUserInfo, Tier } from '@keres/shared';
-import { AdminUserApiService } from '../../api/AdminUserApiService';
-import { TierApiService } from '../../api/TierApiService';
-import { Modal } from '../../components/Modal';
-import { Pagination } from '../../components/Pagination';
-import { useAdminList } from '../../hooks/useAdminList';
+import { AdminUserApiService } from '@/api/AdminUserApiService';
+import { TierApiService } from '@/api/TierApiService';
+import { Modal } from '@/components/Modal';
+import { Pagination } from '@/components/Pagination';
+import { useAdminList } from '@/hooks/useAdminList';
 
 export function UsersListPage() {
   const { t, i18n } = useTranslation('admin');

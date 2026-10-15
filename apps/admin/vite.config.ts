@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { adminAliases } from './vite.alias';
 import { keresFavicon } from './vite.keresIcon';
 
 // In development the app runs on its own Vite server (fast HMR) and the proxy below forwards API
@@ -8,6 +9,7 @@ import { keresFavicon } from './vite.keresIcon';
 // apps/api/src/index.ts) - the client always uses relative paths, so it works the same either way
 // with no extra configuration.
 export default defineConfig({
+  resolve: { alias: adminAliases },
   // The favicon is generated from apps/client/assets/images/desktop_icon.png (the same icon as the
   // desktop app); the implementation lives in vite.keresIcon.ts, shared with the public site's build.
   plugins: [react(), keresFavicon(['/favicon.ico', '/admin/favicon.ico'])],

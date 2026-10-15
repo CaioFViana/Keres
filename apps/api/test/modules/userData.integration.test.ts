@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { accessRecordService } from '@/services/AccessRecordService';
+import { accessRecordService } from '@/services/compliance/AccessRecordService';
 import { registerUser, request } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 

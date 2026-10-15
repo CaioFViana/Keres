@@ -5,7 +5,7 @@ import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSetti
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { installBunShim } from '@test/helpers/bunShim';
 import { truncateAll } from '@test/helpers/database';
-import { publicationStorageService } from '@/services/PublicationStorageService';
+import { publicationStorageService } from '@/services/publication/PublicationStorageService';
 
 // Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();

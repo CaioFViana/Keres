@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia';
 import { classifyRequest, isAdminApiPath, outcomeOf } from '@/audit/requestAuditRules';
 import type { JWTPayload } from '@/index';
-import { type AuditInput, auditService } from '@/services/AuditService';
+import { type AuditInput, auditService } from '@/services/compliance/AuditService';
 import { trackBackground } from '@/utils/backgroundWork';
 import { QUESTION_CODES } from '@/utils/errors';
 

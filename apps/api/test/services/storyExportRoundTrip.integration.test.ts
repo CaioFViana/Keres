@@ -48,7 +48,7 @@ import {
   users,
   worldRules,
 } from '@/db/schema';
-import { StoryExportImportService } from '@/services/StoryExportImportService';
+import { StoryExportImportService } from '@/services/stories/StoryExportImportService';
 import { newId } from '@test/helpers/app';
 import { truncateAll } from '@test/helpers/database';
 import { FullStoryExportSchema } from '@keres/shared';

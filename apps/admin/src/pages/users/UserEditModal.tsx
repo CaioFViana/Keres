@@ -5,10 +5,10 @@ import type { AdminUserInfo, AgeVerificationMode, Tier, UserTierSource } from '@
 import { slugifyUserTag } from '@keres/shared/utils/userTag';
 import { GiftPlanSection } from './GiftPlanSection';
 import { RecoveryCodesModal } from './RecoveryCodesModal';
-import { Modal } from '../../components/Modal';
-import { AdminUserApiService } from '../../api/AdminUserApiService';
-import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
-import { TierApiService } from '../../api/TierApiService';
+import { Modal } from '@/components/Modal';
+import { AdminUserApiService } from '@/api/AdminUserApiService';
+import { RegistrationSettingsApiService } from '@/api/RegistrationSettingsApiService';
+import { TierApiService } from '@/api/TierApiService';
 
 /**
  * The age-verification standing of the account. Dates arrive as text over JSON, so they are formatted where they are

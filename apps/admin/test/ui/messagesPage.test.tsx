@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { MessagesPage } from '../../src/pages/messages/MessagesPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { MessagesPage } from '@/pages/messages/MessagesPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -12,8 +12,8 @@ const mocks = vi.hoisted(() => ({
   remove: vi.fn(),
 }));
 
-vi.mock('../../src/api/MessagesApiService', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/api/MessagesApiService')>()),
+vi.mock('@/api/MessagesApiService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/MessagesApiService')>()),
   MessagesApiService: {
     list: mocks.list,
     open: mocks.open,

@@ -1,5 +1,5 @@
 import type { SyncEntityHandler } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
-import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 
 /**
  * Refuses a row that a create, or a restore of a deleted row, would bring into a plan's count: a story against

@@ -4,8 +4,8 @@ import {
   closeRealtimeEvents,
   createWebSocketTicket,
   openRealtimeEvents,
-} from '@/modules/webSocket/webSocket.route';
-import type { RealtimeSocket } from '@/services/RealtimeSessionService';
+} from '@/modules/web-socket/webSocket.route';
+import type { RealtimeSocket } from '@/services/sync/RealtimeSessionService';
 import { storyPermissions } from '@/db/schema';
 import {
   newId,

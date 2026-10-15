@@ -1,9 +1,9 @@
 import { type RegistrationSettingsView, UpdateRegistrationSettingsSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { ageVerificationMode } from '@/services/ageVerification/ageVerificationMode';
-import { registrationSettingsService } from '@/services/RegistrationSettingsService';
-import { TierNotFoundError } from '@/services/TierService';
+import { ageVerificationMode } from '@/services/age-verification/ageVerificationMode';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
+import { TierNotFoundError } from '@/services/tiers/TierService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

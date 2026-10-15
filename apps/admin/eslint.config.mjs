@@ -6,7 +6,7 @@ export default [
   {
     // `test/` and the Vitest config are TypeScript too: without them here, ESLint's default parser
     // (espree) tries to read type annotations and fails with "Unexpected token".
-    files: ['src/**/*.{ts,tsx}', 'test/**/*.{ts,tsx}', 'vitest.config.ts'],
+    files: ['src/**/*.{ts,tsx}', 'test/**/*.{ts,tsx}', 'vitest.config.ts', 'vite.alias.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: { ecmaFeatures: { jsx: true }, ecmaVersion: 'latest', sourceType: 'module' },

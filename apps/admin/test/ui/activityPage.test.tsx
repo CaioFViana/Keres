@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { ActivityPage } from '../../src/pages/activity/ActivityPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { ActivityPage } from '@/pages/activity/ActivityPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   exportCsv: vi.fn(),
 }));
 
-vi.mock('../../src/api/ActivityApiService', () => ({
+vi.mock('@/api/ActivityApiService', () => ({
   ActivityApiService: {
     list: mocks.list,
     summary: mocks.summary,

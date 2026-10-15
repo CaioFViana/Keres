@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { stories } from '@/db/schema';
 import { logger } from '@/utils/logger';
-import { storyNsfwService } from '@/services/StoryNsfwService';
+import { storyNsfwService } from '@/services/stories/StoryNsfwService';
 import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
 
 /** What a push does once per story edit, after the operations were stored. Both are best-effort. */

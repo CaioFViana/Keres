@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { EvidenceHoldsPage } from '../../src/pages/evidenceHolds/EvidenceHoldsPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { EvidenceHoldsPage } from '@/pages/evidenceHolds/EvidenceHoldsPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   release: vi.fn(),
 }));
 
-vi.mock('../../src/api/EvidenceHoldsApiService', () => ({
+vi.mock('@/api/EvidenceHoldsApiService', () => ({
   EvidenceHoldsApiService: {
     list: mocks.list,
     get: mocks.get,

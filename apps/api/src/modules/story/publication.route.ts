@@ -14,12 +14,12 @@ import {
 } from '@keres/shared';
 import { z } from 'zod';
 import type { JWTPayload } from '@/index';
-import { messageService } from '@/services/MessageService';
+import { messageService } from '@/services/messages/MessageService';
 import {
   type PublishUploadedArtifacts,
   type PublishUploadedFile,
   storyPublicationService,
-} from '@/services/StoryPublicationService';
+} from '@/services/publication/StoryPublicationService';
 import { AppError } from '@/utils/errors';
 
 /** A `story_publications` row as its owner sees it. */

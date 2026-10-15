@@ -9,6 +9,12 @@ electronVersion: 43.3.0
 # install/rebuild production deps, which breaks in this bun workspace (npm can't resolve the
 # "workspace:*" specifiers used elsewhere in the monorepo) and isn't needed regardless.
 npmRebuild: false
+# Chromium ships a .pak of its own strings per language (55 of them, ~47 MB unpacked). Keres is written
+# in English and Portuguese only - the interface language is the app's own setting (i18next), so what
+# these files still serve is Chromium's native UI: the context menu of a text field and the window menu.
+electronLanguages:
+  - en-US
+  - pt-BR
 directories:
   output: release
 files:

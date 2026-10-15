@@ -29,12 +29,11 @@ function sourceFiles(dir: string): string[] {
 
 /** Every module specifier a file asks for: imports, re-exports, `import()`, `require` and test mocks. */
 function specifiersOf(path: string): string[] {
-  const source = ts.createSourceFile(
-    path,
-    readFileSync(path, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true,
-  );
+  // A `../` specifier needs `..` somewhere in the file: skipping the rest keeps the scan to a few files instead of a parse of every one
+  // (the whole tree took longer than the default test timeout under coverage).
+  const text = readFileSync(path, 'utf8');
+  if (!text.includes('..')) return [];
+  const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
   const found: string[] = [];
   const push = (node: ts.Node | undefined) => {
     if (node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))) {
@@ -81,5 +80,5 @@ describe('import style', () => {
       }
     }
     expect(offenders).toEqual([]);
-  });
+  }, 30_000);
 });

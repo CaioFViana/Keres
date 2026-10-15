@@ -47,7 +47,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import { useStoryStore } from '@/src/state/story/storyStore';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { CharacterDetailContent } from './CharacterDetailContent';
 import { createCharacterDetailMutations } from './createCharacterDetailMutations';
 

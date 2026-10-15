@@ -1,7 +1,7 @@
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { LanguageInstallRow } from '@/src/components/common';
 import { useLanguageLabel } from '@/src/hooks/ui/useLanguageLabel';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -20,7 +20,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 /**
  * The catalog of example stories packaged with the app.

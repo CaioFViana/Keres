@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: (type: string) => ({ entity: type, entities: `${type}s` }),
 }));
 

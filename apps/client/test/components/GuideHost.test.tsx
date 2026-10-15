@@ -7,7 +7,7 @@ import type { Guide } from '@/src/guides/types';
 import {
   __resetGuideDrawersForTests,
   registerGuideDrawer,
-} from '@/src/navigation/drawerGuideRegistry';
+} from '@/src/navigation/drawer/drawerGuideRegistry';
 import { useGuideStore } from '@/src/state/ui/guideStore';
 
 jest.mock('@/src/theme', () => ({

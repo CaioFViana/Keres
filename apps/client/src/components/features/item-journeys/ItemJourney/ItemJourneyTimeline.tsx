@@ -9,12 +9,12 @@ import type { ItemSelect } from '@/src/db/schema';
 import { useItemJourneyTimelineData } from '@/src/hooks/item/useItemJourneyTimelineData';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
-import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
+import type { ItemStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { orderItemJourneysByNarrative } from '@/src/utils/entity/itemJourneyOrder';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface ItemJourneyTimelineProps {

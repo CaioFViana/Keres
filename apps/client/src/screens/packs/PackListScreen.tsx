@@ -17,7 +17,7 @@ import type { PackVisibility } from '@keres/shared';
 import type { ServerSelect } from '@/src/db/schema';
 import { packApiService } from '@/src/services/api/PackApiService';
 import { createServerService } from '@/src/services/servers/ServerService';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   createPackService,
@@ -32,7 +32,7 @@ import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.

@@ -8,7 +8,7 @@ import CommentableDetailField, {
 } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import ItemCharacterManager from '@/src/components/features/items/ItemManager/ItemCharacterManager';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';

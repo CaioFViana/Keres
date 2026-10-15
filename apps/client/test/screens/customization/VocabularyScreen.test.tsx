@@ -10,7 +10,7 @@ let mockSelectedStory: { id: string; vocabulary: null } | null = {
   vocabulary: null,
 };
 
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));

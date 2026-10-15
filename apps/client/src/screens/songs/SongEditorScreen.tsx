@@ -35,7 +35,7 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { useDrizzle } from '@/src/db';
 import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
@@ -47,7 +47,7 @@ import { useMusicTools } from '@/src/hooks/music/useMusicTools';
 import { useNewSectionWords } from '@/src/screens/songs/useNewSectionWords';
 import { type PlaybackVoice, useSongPlayback } from '@/src/hooks/music/useSongPlayback';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { SongStackParamList } from '@/src/navigation/MainSystemStacks';
+import type { SongStackParamList } from '@/src/navigation/stacks/MainSystemStacks';
 import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -56,7 +56,7 @@ import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { deliverFile } from '@/src/utils/io/storyTransfer';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type RouteProps = RouteProp<SongStackParamList, 'SongEditor'>;
 

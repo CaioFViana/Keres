@@ -88,7 +88,7 @@ jest.mock('@/src/theme', () => {
 jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 

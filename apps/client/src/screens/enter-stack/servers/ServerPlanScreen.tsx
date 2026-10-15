@@ -20,7 +20,7 @@ import { usePlanCancellation } from '@/src/screens/enter-stack/servers/usePlanCa
 import { useSwitchQuote } from '@/src/screens/enter-stack/servers/useSwitchQuote';
 import { usePlanCheckout } from '@/src/screens/enter-stack/servers/usePlanCheckout';
 import { useServerStatuses } from '@/src/screens/enter-stack/servers/useServerStatuses';
-import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { verifyPlayPurchase } from '@/src/services/payments/PaymentService';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

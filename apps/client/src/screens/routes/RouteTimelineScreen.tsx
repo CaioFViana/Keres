@@ -16,7 +16,7 @@ import {
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useRouteChronology } from '@/src/screens/routes/useRouteChronology';
-import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { useTheme } from '@/src/theme';
 import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';

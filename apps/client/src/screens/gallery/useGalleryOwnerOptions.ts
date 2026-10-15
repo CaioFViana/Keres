@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '@/src/db';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import * as schema from '@/src/db/schema';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 

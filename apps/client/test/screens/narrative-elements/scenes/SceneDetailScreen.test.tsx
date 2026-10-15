@@ -151,7 +151,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => {
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => {
   const copies: Record<string, object> = {};
   return {
     __esModule: true,

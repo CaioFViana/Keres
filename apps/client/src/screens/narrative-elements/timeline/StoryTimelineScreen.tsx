@@ -13,8 +13,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });

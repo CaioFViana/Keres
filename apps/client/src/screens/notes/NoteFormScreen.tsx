@@ -16,7 +16,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
 import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
-import type { NotesStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NotesStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

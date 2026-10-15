@@ -22,7 +22,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryAgenda } from '@/src/screens/story-calendars/useStoryAgenda';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
-import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
+import type { CalendarsStackParamList } from '@/src/navigation/stacks/CalendarsStack';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

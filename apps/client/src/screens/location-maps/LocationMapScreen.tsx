@@ -30,7 +30,7 @@ import type {
   LocationSelect,
 } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useLocationMapRelations } from '@/src/screens/location-maps/useLocationMapRelations';
 import { useLocationMapCanvasActions } from '@/src/screens/location-maps/useLocationMapCanvasActions';
 import { useLocationMapExport } from '@/src/screens/location-maps/useLocationMapExport';
@@ -41,14 +41,14 @@ import { useLocationMapNodeSummary } from '@/src/screens/location-maps/useLocati
 import { useLocationMapTrajectories } from '@/src/screens/location-maps/useLocationMapTrajectories';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { LocationStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createLocationMapService } from '@/src/services/storymanagement/entities/LocationMapService';
 import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
 import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

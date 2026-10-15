@@ -22,7 +22,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
-import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { isOfflineError } from '@/src/services/api/apiClient';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { userApiService } from '@/src/services/api/UserApiService';

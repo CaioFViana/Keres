@@ -14,7 +14,7 @@ import BoardCreateModal from '@/src/components/features/boards/BoardCreateModal'
 import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import { useDrizzle } from '@/src/db';
 import type { BoardSelect } from '@/src/db/schema';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
@@ -22,7 +22,7 @@ import { filterByNameAndDescription } from '@/src/utils/search/filterByNameAndDe
 import type {
   BoardStackParamList,
   MainSystemDrawerParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import { createBoardService } from '@/src/services/storymanagement/entities/BoardService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
@@ -32,7 +32,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'BoardsStack'>,

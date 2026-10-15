@@ -11,7 +11,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
-import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

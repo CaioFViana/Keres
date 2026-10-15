@@ -136,7 +136,7 @@ jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({ term: (key: string) => key }),
 }));
 

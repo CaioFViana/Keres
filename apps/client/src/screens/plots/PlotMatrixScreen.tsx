@@ -21,7 +21,7 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { deliverMapExport } from '@/src/utils/io/storyTransfer';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 

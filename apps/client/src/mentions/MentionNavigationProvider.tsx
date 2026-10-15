@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { MentionRef } from '@/src/utils/entity/entityMentions';
 import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import { MentionNavigationContext } from './MentionContext';

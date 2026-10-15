@@ -7,7 +7,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 interface UniverseWorksSectionProps {
   arcs: readonly StoryArcSelect[];

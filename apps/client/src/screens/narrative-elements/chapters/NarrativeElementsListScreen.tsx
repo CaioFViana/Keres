@@ -19,7 +19,7 @@ import { useDrizzle } from '@/src/db';
 import type { ChapterType } from '@keres/shared';
 import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
 import { useArcSearchScope } from '@/src/hooks/arcs/useArcSearchScope';
 import { chapterBelongsToArc } from '@/src/utils/search/storyArcFilter';
@@ -30,7 +30,7 @@ import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
 import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import { useChapterStore } from '@/src/state/story/chapterStore';
 import { useSceneStore } from '@/src/state/story/sceneStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
@@ -44,14 +44,14 @@ import { createSceneService } from '@/src/services/storymanagement/scenes-chapte
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import {
   createChapterListItemRenderer,
   scenesShownForChapter,
 } from './createChapterListItemRenderer';
 import { useAdvancedNarrativeMatches } from './useAdvancedNarrativeMatches';
 import { useVisibleChapters } from './useVisibleChapters';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,

@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,
@@ -40,9 +40,9 @@ import { useSceneStore } from '@/src/state/story/sceneStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import type { ItemStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type ItemJourneyDetailScreenParamList = {

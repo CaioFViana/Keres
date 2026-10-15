@@ -18,14 +18,16 @@ import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import ColdInstallStack from './ColdInstallStack';
-import MainSystemStack from './MainSystemStack';
+import ColdInstallStack from './stacks/ColdInstallStack';
+import MainSystemDrawer from './drawer/MainSystemDrawer';
 import { buildNavigationTheme } from './navigationTheme';
-import { openServerVerification } from './openServerVerification';
-import StorySelectionStack, { type StorySelectionDrawerParamList } from './StorySelectionStack';
-import { attachWebHistoryBack, hasScreenBehind } from './webHistoryBack';
+import { openServerVerification } from './links/openServerVerification';
+import StorySelectionStack, {
+  type StorySelectionDrawerParamList,
+} from './stacks/StorySelectionStack';
+import { attachWebHistoryBack, hasScreenBehind } from './links/webHistoryBack';
 
 export type RootStackParamList = {
   ColdInstall: undefined;
@@ -128,7 +130,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
         if (showcase) {
           // A late import: the showcase drags the whole story services along, and none of that
           // needs to exist when the app opens normally (which is always, apart from the screen capture).
-          const { prepareShowcase } = await import('@/src/showcase/prepareShowcase');
+          const { prepareShowcase } = await import('@/src/services/showcase/prepareShowcase');
           const ready = await prepareShowcase(drizzleDb, showcase);
           setShowcaseReady(ready);
           setIsColdInstallNeeded(!ready);
@@ -213,7 +215,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
           <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
           <RootStack.Screen name="LegalUpdate" component={LegalUpdateScreen} />
           <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
-          <RootStack.Screen name="MainSystem" component={MainSystemStack} />
+          <RootStack.Screen name="MainSystem" component={MainSystemDrawer} />
         </RootStack.Navigator>
       </SyncInitializer>
     </NavigationContainer>

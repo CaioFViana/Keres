@@ -7,7 +7,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager'; // Removed BaseItem, BaseRelation

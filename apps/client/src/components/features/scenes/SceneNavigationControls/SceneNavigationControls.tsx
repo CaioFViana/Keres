@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { layout } from '@/src/theme/layout';

@@ -29,7 +29,7 @@ import { useInviteFriendToStory } from '@/src/screens/enter-stack/social/useInvi
 import { useOpenStoryById } from '@/src/screens/enter-stack/social/useOpenStoryById';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useStoryInvitationList } from '@/src/hooks/social/useStoryInvitationList';
-import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { FriendshipStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import type { FriendshipWithServer } from '@/src/services/social/FriendshipService';
 import { createFriendshipService } from '@/src/services/social/FriendshipService';
 import { createServerService } from '@/src/services/servers/ServerService';

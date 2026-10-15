@@ -13,11 +13,11 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 import { useDrizzle } from '@/src/db';
 import type { StatSelect } from '@/src/db/schema';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
-import type { StatsStackParamList } from '@/src/navigation/StatsStack';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
 import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -26,7 +26,7 @@ import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;

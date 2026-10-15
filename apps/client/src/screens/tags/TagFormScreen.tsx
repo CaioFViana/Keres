@@ -15,7 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
-import type { TagsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { TagsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

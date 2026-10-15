@@ -3,8 +3,8 @@ import { join } from 'node:path';
 import en from '@/src/locales/en.json';
 import pt from '@/src/locales/pt.json';
 import { getHelpPages } from '@/src/help/repository';
-import { buildMainDrawerMenu } from '@/src/navigation/mainDrawerMenu';
-import { buildStorySelectionMenu } from '@/src/navigation/storySelectionMenu';
+import { buildMainDrawerMenu } from '@/src/navigation/drawer/mainDrawerMenu';
+import { buildStorySelectionMenu } from '@/src/navigation/drawer/storySelectionMenu';
 
 /**
  * Help that still names menus the app no longer has.
@@ -41,7 +41,10 @@ function menuLabels(language: string): string[] {
 
 /** Every label the drawer actually renders, in the given language. */
 function drawerLabels(language: string): Set<string> {
-  const source = readFileSync(join(__dirname, '../../src/navigation/MainSystemStack.tsx'), 'utf8');
+  const source = readFileSync(
+    join(__dirname, '../../src/navigation/drawer/MainSystemDrawer.tsx'),
+    'utf8',
+  );
   const drawer = source.slice(source.indexOf('<Drawer.Navigator'));
   const parts = drawer.split(/<Drawer\.Screen\s+name="[^"]+"/);
   const labels = new Set<string>();

@@ -88,7 +88,7 @@ jest.mock('@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList
     );
   },
 }));
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => ({
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => ({
   __esModule: true,
   default: () => {
     const react = jest.requireActual('react') as typeof import('react');

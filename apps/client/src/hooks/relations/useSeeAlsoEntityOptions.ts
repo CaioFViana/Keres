@@ -14,7 +14,7 @@ import { useDrizzle, worldRules } from '@/src/db';
 import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/relations/SeeAlsoRelationService';
 import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 export interface SeeAlsoEntityOption {

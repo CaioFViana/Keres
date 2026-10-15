@@ -12,7 +12,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { startSession } from '@/src/services/storymanagement/scenes-chapters/SessionService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
@@ -20,7 +20,7 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 type Nav = NativeStackNavigationProp<NarrativeElementsStackParamList, 'NewSession'>;
 

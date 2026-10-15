@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
-import type { NotesStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NotesStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { NoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 import type { NoteFormState } from './useNoteFormState';
 

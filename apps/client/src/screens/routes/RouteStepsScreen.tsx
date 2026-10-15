@@ -11,7 +11,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
-import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

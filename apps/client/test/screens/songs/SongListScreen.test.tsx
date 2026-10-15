@@ -51,7 +51,7 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: () => undefined,
 }));

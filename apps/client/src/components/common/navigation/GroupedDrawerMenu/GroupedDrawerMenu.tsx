@@ -13,9 +13,9 @@ import {
   type MenuBadges,
   type MenuGroup,
   type MenuLeaf,
-} from '@/src/navigation/drawerMenuModel';
-import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/openMenuLeaf';
-import { useGuideAnchor } from '@/src/guides/useGuideAnchor';
+} from '@/src/navigation/drawer/drawerMenuModel';
+import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/drawer/openMenuLeaf';
+import { useGuideAnchor } from '@/src/hooks/guides/useGuideAnchor';
 import { useTheme } from '@/src/theme';
 import { AnchoredDrawerRow } from '@/src/components/common/navigation/ResizableDrawerContent/AnchoredDrawerItemList';
 import { useDrawerGroupState } from './useDrawerGroupState';

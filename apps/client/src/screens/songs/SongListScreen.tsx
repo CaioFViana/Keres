@@ -16,13 +16,13 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import SongCreateModal from '@/src/components/features/songs/SongCreateModal';
 import { useDrizzle } from '@/src/db';
 import type { SongSelect } from '@/src/db/schema';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useSongs } from '@/src/hooks/music/useSongs';
 import { useMusicTools } from '@/src/hooks/music/useMusicTools';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { SongStackParamList } from '@/src/navigation/MainSystemStacks';
+import type { SongStackParamList } from '@/src/navigation/stacks/MainSystemStacks';
 import { loadCueSheet } from '@/src/services/storymanagement/media-music/CueSheetService';
 import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
@@ -32,7 +32,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { deliverFile, pickTextFile } from '@/src/utils/io/storyTransfer';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type Navigation = NativeStackNavigationProp<SongStackParamList, 'SongList'>;
 

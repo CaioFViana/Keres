@@ -32,7 +32,7 @@ import { useLiveLegalText } from '@/src/screens/enter-stack/servers/useLiveLegal
 import { useServerStatuses } from '@/src/screens/enter-stack/servers/useServerStatuses';
 import { useStableServer } from '@/src/screens/enter-stack/servers/useStableServer';
 import { useServerTagEditor } from '@/src/screens/enter-stack/servers/useServerTagEditor';
-import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
 import { exportAccountData } from '@/src/services/account/AccountDataExportService';
 import { createServerService } from '@/src/services/servers/ServerService';

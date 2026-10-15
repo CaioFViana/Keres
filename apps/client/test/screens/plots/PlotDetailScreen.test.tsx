@@ -62,7 +62,7 @@ jest.mock('@/src/components/features/relations/RelationManager/GenericRelationDi
   };
 });
 
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -99,7 +99,7 @@ jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: () => ({ entity: 'Chapter' }),
 }));
 

@@ -166,7 +166,7 @@ jest.mock('@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList
     },
   };
 });
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

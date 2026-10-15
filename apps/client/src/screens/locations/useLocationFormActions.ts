@@ -8,9 +8,9 @@ import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
-import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { LocationStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { LocationFormState } from './useLocationFormState';
 
 type LocationNavigation = NativeStackNavigationProp<LocationStackParamList, 'LocationForm'>;

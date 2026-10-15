@@ -8,7 +8,7 @@ import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import Button from '@/src/components/common/controls/Button/Button';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';

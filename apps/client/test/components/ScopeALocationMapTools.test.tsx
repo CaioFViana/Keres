@@ -98,7 +98,7 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockScreenAnchor = jest.fn();
-jest.mock('@/src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: jest.fn(() => () => {}),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),

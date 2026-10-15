@@ -5,7 +5,7 @@ const mockUseStoryStore = jest.fn();
 const mockRenderList = jest.fn();
 const mockUseScreenTour = jest.fn();
 
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));

@@ -38,6 +38,6 @@ export const entityEventEmitter = new EventEmitter();
 // fires on *any* navigation away from the stack, including the cross-entity jumps
 // GenericRelationDisplay/RelationManager now do (Character -> Item, Scene -> Location...),
 // which reset stacks that shouldn't have been touched and broke back-navigation. Each
-// Drawer.Screen in MainSystemStack.tsx/StorySelectionStack.tsx now resets its own stack
+// Drawer.Screen in MainSystemDrawer.tsx/StorySelectionStack.tsx now resets its own stack
 // directly from `drawerItemPress` (fired only when the user taps that item in the drawer) -
 // see the comment there.

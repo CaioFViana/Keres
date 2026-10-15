@@ -21,7 +21,7 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));

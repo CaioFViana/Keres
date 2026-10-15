@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import type { MenuBadges } from '@/src/navigation/drawerMenuModel';
+import type { MenuBadges } from '@/src/navigation/drawer/drawerMenuModel';
 import { createPublicationService } from '@/src/services/publication/PublicationService';
 
 /**

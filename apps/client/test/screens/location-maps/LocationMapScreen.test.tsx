@@ -28,7 +28,7 @@ const mockI18n = { language: 'en' };
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT, i18n: mockI18n }),
 }));
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: jest.fn(),
 }));
@@ -264,7 +264,7 @@ jest.mock('@/src/state/drafts/locationMapDraftStore', () => ({
     getState: () => ({ hydrate: mockHydrate, remember: mockRemember }),
   },
 }));
-jest.mock('@/src/showcase/showcaseRequest', () => ({
+jest.mock('@/src/services/showcase/showcaseRequest', () => ({
   readShowcaseRequest: () => null,
 }));
 jest.mock('@/src/utils/io/storyTransfer', () => ({

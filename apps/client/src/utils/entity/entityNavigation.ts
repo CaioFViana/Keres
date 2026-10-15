@@ -1,9 +1,9 @@
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-// `import type` here is load-bearing, not stylistic: MainSystemStack.tsx imports every
+// `import type` here is load-bearing, not stylistic: MainSystemDrawer.tsx imports every
 // screen (including ones that call this helper), so a value-level import back would be a
 // real require cycle (see db/index.ts's history for what that broke). A type-only import
 // erases at compile time and never touches the runtime require graph.
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { navigateAcrossStacks } from '@/src/utils/nav/stackNavigation';
 import type { OccurrenceTarget } from './occurrenceTarget';
 
@@ -71,7 +71,7 @@ export function toNavigableEntityType(value: string): NavigableEntityType | null
  * screen, even across stacks (e.g. from a Location's screen to a Character's).
  *
  * Every entity stack lives as a sibling `Drawer.Screen` under the same Drawer navigator (see
- * `MainSystemStack.tsx`), so the Drawer is reachable from any of them via `getParent()` - the
+ * `MainSystemDrawer.tsx`), so the Drawer is reachable from any of them via `getParent()` - the
  * same trick every Detail screen already uses to set its own header
  * (`navigation.getParent()?.setOptions(...)`). Centralized here, with the one `as any` this
  * dynamic routing needs contained to a single line, so every *caller* stays fully typed and

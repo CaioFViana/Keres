@@ -16,7 +16,7 @@ import GalleryGridItem from '@/src/components/features/list-items/GalleryGridIte
 import { useDrizzle } from '@/src/db';
 import type { GallerySelect } from '@/src/db/schemas/galleries';
 import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
@@ -24,7 +24,7 @@ import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import type {
   GalleryStackParamList,
   MainSystemDrawerParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import {
   GALLERY_ROW_PADDING,
   galleryGridLayout,
@@ -39,7 +39,7 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,

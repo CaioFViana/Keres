@@ -7,7 +7,7 @@ import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -43,8 +43,8 @@ import { createCharacterService } from '@/src/services/storymanagement/entities/
 import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
 
 export type ItemDetailScreenParamList = {

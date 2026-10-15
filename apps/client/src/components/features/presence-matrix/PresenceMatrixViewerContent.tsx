@@ -16,7 +16,7 @@ import type { PresenceMatrixViewerRequest } from '@/src/state/ui/presenceMatrixV
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { deliverMapExport } from '@/src/utils/io/storyTransfer';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
 import { MAX_VISIBLE_SERIES, seriesColor } from './presenceMatrixConstants';

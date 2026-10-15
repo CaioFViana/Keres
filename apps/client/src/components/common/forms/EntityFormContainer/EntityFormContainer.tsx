@@ -8,9 +8,9 @@ import {
 } from '@/src/components/layout/ScreenContainer/ScreenContainer';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import PlanUsageBanner from '@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useTheme } from '@/src/theme';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 interface EntityFormContainerProps {
   children: React.ReactNode;

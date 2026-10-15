@@ -138,7 +138,7 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { textSecondary: '#555' } }),
 }));
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) => {
     if (entity === 'Character') return mockCharacterCopy;

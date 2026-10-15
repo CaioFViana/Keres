@@ -34,7 +34,7 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({ notFound: 'scene-not-found' }),
 }));

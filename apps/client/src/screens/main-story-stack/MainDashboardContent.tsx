@@ -12,12 +12,12 @@ import DashboardSection from '@/src/components/layout/DashboardSection/Dashboard
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { getLanguageOptions } from '@/src/utils/format/i18n';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type MainDashboardContentProps = {
   story: Story | null | undefined;

@@ -114,7 +114,7 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: true }),
 }));
 
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({ term: (key: string) => key }),
 }));
 

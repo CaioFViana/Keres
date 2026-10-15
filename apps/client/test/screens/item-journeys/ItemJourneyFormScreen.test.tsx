@@ -246,11 +246,11 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { error: '#f00', primaryContainer: '#eef' } }),
 }));
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) => (entity === 'Item' ? mockItemCopy : mockSceneCopy),
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     agree: (_entity: string, forms: { masculine: string }) => forms.masculine,

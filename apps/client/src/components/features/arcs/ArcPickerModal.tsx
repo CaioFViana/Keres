@@ -10,7 +10,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { fontSize, fontWeight, space } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 interface Props {
   visible: boolean;

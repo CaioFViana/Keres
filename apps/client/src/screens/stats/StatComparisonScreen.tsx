@@ -14,12 +14,12 @@ import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/S
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
-import type { StatsStackParamList } from '@/src/navigation/StatsStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import { deliverMapExport } from '@/src/utils/io/storyTransfer';

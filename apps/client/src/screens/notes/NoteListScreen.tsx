@@ -13,7 +13,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
@@ -22,10 +22,10 @@ import { useTitleDateSortOptions } from '@/src/hooks/lists/useTitleDateSortOptio
 import type {
   MainSystemDrawerParamList,
   NotesStackParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import type { NoteWithTags } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 import { useNoteStore } from '@/src/state/story/noteStore';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NotesStack'>,

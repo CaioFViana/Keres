@@ -13,7 +13,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
 import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
@@ -23,13 +23,13 @@ import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOpt
 import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import type { LocationWithTags } from '@/src/services/storymanagement/entities/LocationService';
 import { useLocationStore } from '@/src/state/story/locationStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,

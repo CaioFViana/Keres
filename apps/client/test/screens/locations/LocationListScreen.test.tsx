@@ -43,7 +43,7 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -149,7 +149,7 @@ jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),

@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
-import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
+import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

@@ -19,7 +19,7 @@ import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
-import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { isOfflineError } from '@/src/services/api/apiClient';
 import { redeemRecoveryCode } from '@/src/services/api/AuthApiService';
 import { authTokenManager } from '@/src/services/auth/AuthTokenManager';

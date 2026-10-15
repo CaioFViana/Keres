@@ -19,7 +19,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '@/src/db';
 import type { StoryCalendarSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -34,8 +34,8 @@ import CalendarAnchorsModal from '@/src/components/features/calendars/CalendarAn
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
-import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import type { CalendarsStackParamList } from '@/src/navigation/stacks/CalendarsStack';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 /**
  * The story's calendars.

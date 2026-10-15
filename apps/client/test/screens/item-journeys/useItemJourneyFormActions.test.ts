@@ -28,7 +28,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: () => ({
     itemJourney: 'Journey',
     required: 'item required',

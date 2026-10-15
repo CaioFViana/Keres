@@ -23,7 +23,7 @@ import type {
   TagSelect,
 } from '@/src/db/schema';
 import type { ItemSelect } from '@/src/db/schemas/items';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
 import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
@@ -34,7 +34,7 @@ import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
 import type {
   ItemStackParamList,
   MainSystemDrawerParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import { useItemStore } from '@/src/state/story/itemStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { type ThemeColors } from '@/src/theme';
@@ -48,8 +48,8 @@ import { createTagService } from '@/src/services/storymanagement/notes-tags-comm
 import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { orderItemJourneysByNarrative } from '@/src/utils/entity/itemJourneyOrder';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,

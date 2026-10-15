@@ -7,7 +7,7 @@ import type { SceneSelect } from '@/src/db/schema'; // SceneSelect type
 import type { CharacterSelect } from '@/src/db/schemas/characters'; // CharacterSelect type
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { BaseRelation } from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay'; // Import GenericRelationDisplay and Base types
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';

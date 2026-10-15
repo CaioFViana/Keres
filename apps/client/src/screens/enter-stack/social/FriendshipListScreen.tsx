@@ -16,7 +16,7 @@ import { useFriendshipActionHandler } from '@/src/screens/enter-stack/social/use
 import type {
   FriendshipStackParamList,
   StorySelectionDrawerParamList,
-} from '@/src/navigation/StorySelectionStack';
+} from '@/src/navigation/stacks/StorySelectionStack';
 import type { FriendshipWithServer } from '@/src/services/social/FriendshipService';
 import { createFriendshipService } from '@/src/services/social/FriendshipService';
 import { createServerService } from '@/src/services/servers/ServerService';

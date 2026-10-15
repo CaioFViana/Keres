@@ -3,7 +3,7 @@ import { createEntityCommentFieldBindings } from '@/src/components/features/comm
 import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,

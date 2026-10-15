@@ -19,7 +19,7 @@ import {
   type SketchToolEntry,
   type SketchToolGroup,
 } from './sketchToolGroups';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 interface SketchCanvasToolsProps {
   tool: SketchTool;

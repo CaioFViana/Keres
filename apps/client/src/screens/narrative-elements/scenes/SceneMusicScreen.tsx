@@ -15,7 +15,7 @@ import SceneMusicTargetPicker from '@/src/components/features/scenes/SceneMusic/
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
 import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
@@ -27,7 +27,7 @@ import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMedia
 import { useSongPlayback } from '@/src/hooks/music/useSongPlayback';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import {
   createSceneMusicService,
   type SceneMusicTarget,
@@ -38,7 +38,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { sceneMusicWordKey } from '@/src/utils/scene/sceneMusicWords';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;
 

@@ -6,7 +6,7 @@ import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -45,8 +45,8 @@ import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonDetailStyleDefs } from '@/src/theme/commonStyles';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import {
   formatChapterUniverseDuration,
   formatSceneUniverseDuration,

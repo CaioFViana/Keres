@@ -20,8 +20,8 @@ import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearch
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
-import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
 import type { SuggestionUsage } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import {
   createSuggestionService,
@@ -35,7 +35,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 type UsageSection = { title: string; data: SuggestionUsage[] };

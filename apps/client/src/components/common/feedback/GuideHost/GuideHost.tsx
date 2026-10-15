@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import type { Guide, GuideRect } from '@/src/guides/types';
 import { arrowOffset, cardLayout } from '@/src/guides/cardPlacement';
-import { useTweenedRect } from '@/src/guides/useTweenedRect';
+import { useTweenedRect } from '@/src/hooks/guides/useTweenedRect';
 import GuideSpotlight from './GuideSpotlight';
 import GuideStepCard from './GuideStepCard';
 import { measureGuideAnchors, unionGuideRects } from '@/src/guides/anchorRegistry';
@@ -12,7 +12,7 @@ import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanv
 import { useGuidePersistence } from '@/src/hooks/ui/useGuidePersistence';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useSystemInsets } from '@/src/hooks/ui/useSystemInsets';
-import { getGuideDrawer, scrollDrawerToRect } from '@/src/navigation/drawerGuideRegistry';
+import { getGuideDrawer, scrollDrawerToRect } from '@/src/navigation/drawer/drawerGuideRegistry';
 import { useGuideStore } from '@/src/state/ui/guideStore';
 import { useTheme } from '@/src/theme';
 

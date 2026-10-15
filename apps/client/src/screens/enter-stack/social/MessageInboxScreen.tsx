@@ -7,16 +7,16 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useMessageInbox } from '@/src/screens/enter-stack/social/useMessageInbox';
-import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { FriendshipStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import type { InboxEntry, MessageContact } from '@/src/services/social/MessageService';
 import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { type ConversationPeer, conversationKey } from '@/src/utils/entity/conversationKey';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type MessageInboxNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,

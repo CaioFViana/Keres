@@ -7,7 +7,7 @@ jest.mock('@/src/theme', () => ({
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const mockScreenAnchor = jest.fn();
-jest.mock('@/src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: (id: string) => mockScreenAnchor(id),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryBackupExport } from '@/src/screens/story-share/useStoryBackupExport';
-import type { StoryShareStackParamList } from '@/src/navigation/StoryShareStack';
+import type { StoryShareStackParamList } from '@/src/navigation/stacks/StoryShareStack';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import { useStoryStore } from '@/src/state/story/storyStore';

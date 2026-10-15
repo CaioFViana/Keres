@@ -13,7 +13,7 @@ import type {
   AddObjectsAction,
   OverlayDrawTool,
 } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
 
 interface BoardCanvasToolsProps {
   groupedOptions: MultiSelectGroup[];

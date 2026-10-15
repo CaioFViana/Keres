@@ -25,7 +25,7 @@ import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDe
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryStore } from '@/src/state/story/storyStore';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
 import {
@@ -34,7 +34,7 @@ import {
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { NarrativeElementsScreenNavigationProp } from '@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
 import { describeEffect } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { SceneDetailContent } from './SceneDetailContent';

@@ -19,7 +19,7 @@ import { useDrizzle } from '@/src/db';
 import type { OperationLogSelect } from '@/src/db/schema'; // Ensure this path is correct
 import { useEntityName } from '@/src/hooks/entity/useEntityName';
 import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
-import type { OperationLogStackParamList } from '@/src/navigation/MainSystemStack'; // Corrected import path
+import type { OperationLogStackParamList } from '@/src/navigation/drawer/MainSystemDrawer'; // Corrected import path
 import { EntityService } from '@/src/services/entity-solvers/EntityService';
 import { createOperationLogService } from '@/src/services/sync/OperationLogService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

@@ -211,7 +211,7 @@ jest.mock('@/src/components/features/gallery/GalleryCoverField', () => ({
     );
   },
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (value: string) => value }),
 }));

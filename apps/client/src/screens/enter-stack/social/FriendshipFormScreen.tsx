@@ -16,7 +16,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type {
   FriendshipStackParamList,
   StorySelectionDrawerParamList,
-} from '@/src/navigation/StorySelectionStack';
+} from '@/src/navigation/stacks/StorySelectionStack';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';

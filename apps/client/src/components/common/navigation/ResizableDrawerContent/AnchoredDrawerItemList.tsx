@@ -6,7 +6,7 @@ import React from 'react';
 import { View } from 'react-native';
 import type { GuideDrawerId } from '@/src/guides/types';
 import { drawerAnchorId } from '@/src/guides/anchorRegistry';
-import { useGuideAnchor } from '@/src/guides/useGuideAnchor';
+import { useGuideAnchor } from '@/src/hooks/guides/useGuideAnchor';
 
 interface AnchoredDrawerItemListProps {
   state: DrawerContentComponentProps['state'];

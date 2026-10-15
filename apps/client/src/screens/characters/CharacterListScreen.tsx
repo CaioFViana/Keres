@@ -14,7 +14,7 @@ import CharacterRelationRows from '@/src/components/features/relations/Character
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { useDrizzle } from '@/src/db';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
 import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
@@ -28,10 +28,10 @@ import { createCharacterRelationService } from '@/src/services/storymanagement/r
 import { useCharacterStore } from '@/src/state/story/characterStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
-import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 const CharactersScreen = () => {
   useBackButtonHandler();

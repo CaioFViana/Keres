@@ -19,7 +19,7 @@ import MessageComposer from '@/src/components/features/messages/MessageComposer'
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConversation } from '@/src/screens/enter-stack/social/useConversation';
 import { useKeyboardOverlap } from '@/src/hooks/ui/useKeyboardOverlap';
-import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { FriendshipStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import type { MessagePeerRef } from '@/src/services/api/MessageApiService';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';

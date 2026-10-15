@@ -128,7 +128,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAppAlert(...args) },
 }));
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) =>
     entity === 'Location' ? mockLocationCopy : mockSceneCopy,
@@ -345,7 +345,7 @@ jest.mock('@/src/components/features/favorites/FavoritedByList/FavoritedByList',
     default: () => <Text testID="favorited-marker">favorited</Text>,
   };
 });
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

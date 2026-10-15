@@ -45,11 +45,11 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#101010' } }),
 }));
-jest.mock('@/src/showcase/prepareShowcase', () => ({
+jest.mock('@/src/services/showcase/prepareShowcase', () => ({
   __esModule: true,
   prepareShowcase: (...args: unknown[]) => mockPrepareShowcase(...args),
 }));
-jest.mock('@/src/showcase/showcaseRequest', () => ({
+jest.mock('@/src/services/showcase/showcaseRequest', () => ({
   __esModule: true,
   readShowcaseRequest: jest.fn(),
 }));
@@ -57,15 +57,15 @@ jest.mock('@/src/components/features/app/SyncInitializer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('@/src/navigation/ColdInstallStack', () => ({
+jest.mock('@/src/navigation/stacks/ColdInstallStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/navigation/MainSystemStack', () => ({
+jest.mock('@/src/navigation/drawer/MainSystemDrawer', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/navigation/StorySelectionStack', () => ({
+jest.mock('@/src/navigation/stacks/StorySelectionStack', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -73,7 +73,7 @@ jest.mock('@/src/navigation/StorySelectionStack', () => ({
 import AppNavigator from '@/src/navigation/AppNavigator';
 import { useDrizzle } from '@/src/db';
 import { getClientSettings } from '@/src/services/account/ClientSettingsService';
-import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 

@@ -28,7 +28,7 @@ import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import MelodyPlayerCard, { TOUCH, useMelodyVoice } from './MelodyPlayerCard';
 import PartTuneEditor from './PartTuneEditor';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface MelodyPanelProps {

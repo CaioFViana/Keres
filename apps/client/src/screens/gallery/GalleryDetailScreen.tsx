@@ -3,7 +3,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import type { GalleryStackParamList } from '@/src/navigation/MainSystemStack';
+import type { GalleryStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import GalleryDetailContent from './GalleryDetailContent';
 
 type GalleryDetailRouteProp = RouteProp<GalleryStackParamList, 'GalleryDetail'>;

@@ -6,9 +6,9 @@ import { StackActions } from '@react-navigation/native';
 import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { ChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { ChoiceFormState } from './useChoiceFormState';
 
 type ChoiceNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceForm'>;

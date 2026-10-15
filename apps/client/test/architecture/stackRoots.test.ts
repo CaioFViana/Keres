@@ -16,17 +16,18 @@ const MAIN_SYSTEM_STACK_FILES = [
 ];
 
 const read = (file: string) => fs.readFileSync(path.join(navigationDir, file), 'utf8');
+const readStack = (file: string) => read(`stacks/${file}`);
 
 /** The names in `mainSystemStackRootScreens`, read from the source (the module pulls in the whole navigator). */
 function declaredRoots(): Set<string> {
-  const source = read('MainSystemDrawerHelpers.tsx');
+  const source = read('drawer/MainSystemDrawerHelpers.tsx');
   const body = source.split('mainSystemStackRootScreens = new Set([')[1]?.split(']);')[0] ?? '';
   return new Set([...body.matchAll(/'([A-Za-z]+)'/g)].map((match) => match[1]));
 }
 
 /** The first screen of every `<X.Navigator>` in a file - the stack's root. */
 function stackRoots(file: string): { navigator: string; screen: string }[] {
-  return [...read(file).matchAll(/<(\w+)\.Navigator[^>]*>\s*<\1\.Screen\s+name="(\w+)"/g)].map(
+  return [...readStack(file).matchAll(/<(\w+)\.Navigator[^>]*>\s*<\1\.Screen\s+name="(\w+)"/g)].map(
     (match) => ({ navigator: match[1], screen: match[2] }),
   );
 }

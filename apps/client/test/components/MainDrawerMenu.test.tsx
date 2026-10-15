@@ -56,7 +56,7 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (key: string) => `term:${key}` }),
 }));
@@ -74,11 +74,11 @@ jest.mock('@/src/hooks/story/useStoryMenuBadges', () => ({
   __esModule: true,
   useStoryMenuBadges: () => mockBadges,
 }));
-jest.mock('@/src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: () => undefined,
 }));
-jest.mock('@/src/navigation/openMenuLeaf', () => ({
+jest.mock('@/src/navigation/drawer/openMenuLeaf', () => ({
   __esModule: true,
   nestedFocusOf: () => mockFocused,
   openMenuLeaf: (...args: unknown[]) => mockOpenLeaf(...args),

@@ -7,10 +7,10 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { parseTimingInput } from '@/src/utils/scene/sceneTimingInput';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { SceneFormState } from './useSceneFormState';
 
 type SceneNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneForm'>;

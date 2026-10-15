@@ -2,7 +2,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { StatsStackParamList } from '@/src/navigation/StatsStack';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
 import type { StatService } from '@/src/services/storymanagement/choices-stats/StatService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { StatFormState } from './useStatFormState';

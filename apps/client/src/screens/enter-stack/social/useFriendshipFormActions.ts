@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { FriendshipStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
 import type { FriendshipService } from '@/src/services/social/FriendshipService';
 import { userApiService } from '@/src/services/api/UserApiService';

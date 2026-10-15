@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 interface AnalysisChipProps {
   issueCount: number;

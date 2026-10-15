@@ -17,7 +17,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '@/src/db';
 import SuggestionGroupChooser, { type SuggestionGroup } from './SuggestionGroupChooser';
 import type { SuggestionSelect } from '@/src/db/schema';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
@@ -39,8 +39,8 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [

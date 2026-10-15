@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { MentionBacklinksSection } from '@/src/components/features/mentions/MentionBacklinksSection';
+import { MentionBacklinksSection } from '@/src/mentions/MentionBacklinksSection';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,
@@ -63,7 +63,7 @@ jest.mock('@/src/hooks/entity/useResolveAmbiguousMention', () => ({
   useResolveAmbiguousMention: () => mockResolve,
 }));
 
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (type: string) => type }),
 }));

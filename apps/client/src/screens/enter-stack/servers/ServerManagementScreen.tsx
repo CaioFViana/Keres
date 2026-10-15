@@ -9,7 +9,7 @@ import ServerListItem from '@/src/components/features/servers/ServerListItem';
 import { useServerStatuses } from '@/src/screens/enter-stack/servers/useServerStatuses';
 import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 import { adminConversationKey } from '@/src/utils/entity/conversationKey';
-import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';

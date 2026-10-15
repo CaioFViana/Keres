@@ -138,7 +138,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => {
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => {
   const copies: Record<string, object> = {};
   return {
     __esModule: true,
@@ -322,7 +322,7 @@ jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', ()
   };
 });
 
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

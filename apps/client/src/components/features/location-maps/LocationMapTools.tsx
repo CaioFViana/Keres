@@ -11,7 +11,7 @@ import type {
   AddObjectsAction,
   OverlayDrawTool,
 } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
 
 interface Props {
   imageOptions: { label: string; value: string }[];

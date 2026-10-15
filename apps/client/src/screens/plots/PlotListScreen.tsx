@@ -14,7 +14,7 @@ import {
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
 import type { PlotSelect } from '@/src/db/schema';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import type { AdvancedSearchCriteria } from '@/src/utils/search/advancedSearchCriteria';
 import { plotMatches } from '@/src/utils/search/plotSearch';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
@@ -23,11 +23,11 @@ import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type {
   MainSystemDrawerParamList,
   PlotsStackParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type PlotsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'PlotsStack'>,

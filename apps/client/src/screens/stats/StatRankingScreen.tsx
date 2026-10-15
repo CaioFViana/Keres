@@ -10,8 +10,8 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
-import type { StatsStackParamList } from '@/src/navigation/StatsStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';

@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, Platform, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { createServerService } from '@/src/services/servers/ServerService';
 import { createStoryContentMetricsService } from '@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
@@ -24,7 +24,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type RootStackParamList = {
   ColdInstall: undefined;

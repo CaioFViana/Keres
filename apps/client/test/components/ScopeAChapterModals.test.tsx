@@ -87,7 +87,7 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
   };
 });
 
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: (type: string) => ({
     convertTo: type === 'Chapter' ? 'Convert to chapter' : 'Convert to event',
   }),

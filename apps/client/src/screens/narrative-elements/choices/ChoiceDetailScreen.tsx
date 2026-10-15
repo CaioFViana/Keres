@@ -8,7 +8,7 @@ import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -52,8 +52,8 @@ import {
   describeChoiceCheck,
   describeEffect,
 } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 export type ChoiceDetailScreenParamList = {

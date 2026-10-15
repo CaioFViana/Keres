@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockScreenAnchor = jest.fn();
-jest.mock('@/src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: (id: string) => mockScreenAnchor(id),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),

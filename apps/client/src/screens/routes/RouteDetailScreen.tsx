@@ -17,7 +17,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
-import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { commonDetailStyleDefs } from '@/src/theme/commonStyles';

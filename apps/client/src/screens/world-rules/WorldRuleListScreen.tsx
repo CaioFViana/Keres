@@ -22,8 +22,8 @@ import { useTitleDateSortOptions } from '@/src/hooks/lists/useTitleDateSortOptio
 import type {
   MainSystemDrawerParamList,
   WorldRulesStackParamList,
-} from '@/src/navigation/MainSystemStack'; // Will create/update this later
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+} from '@/src/navigation/drawer/MainSystemDrawer'; // Will create/update this later
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<

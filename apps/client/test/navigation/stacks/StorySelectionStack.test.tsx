@@ -1,0 +1,422 @@
+import { render } from '@testing-library/react-native';
+import React from 'react';
+
+const mockDrawerScreens: Array<Record<string, any>> = [];
+const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
+const mockResponsiveLayout = { isCompact: false, isWide: true, width: 1200 };
+// An object, and not a loose boolean: `jest.mock` is hoisted above the assignments, so the
+// factory has to read the value at call time, not capture it at definition time.
+
+function mockDrawerNavigator({
+  children,
+  ...props
+}: {
+  children: React.ReactNode;
+  [key: string]: unknown;
+}) {
+  mockDrawerNavigatorProps.push(props);
+  return <>{children}</>;
+}
+
+function mockDrawerScreen(props: Record<string, any>) {
+  mockDrawerScreens.push(props);
+  return null;
+}
+
+function mockStackNavigator({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+
+const mockStackScreens: string[] = [];
+
+function mockStackScreen({ name }: { name: string }) {
+  mockStackScreens.push(name);
+  return null;
+}
+
+jest.mock('@react-navigation/drawer', () => ({
+  __esModule: true,
+  createDrawerNavigator: () => ({ Navigator: mockDrawerNavigator, Screen: mockDrawerScreen }),
+  DrawerActions: { toggleDrawer: () => ({ type: 'TOGGLE_DRAWER' }) },
+}));
+jest.mock('@react-navigation/native-stack', () => ({
+  __esModule: true,
+  createNativeStackNavigator: () => ({ Navigator: mockStackNavigator, Screen: mockStackScreen }),
+}));
+jest.mock('@react-navigation/native', () => ({
+  __esModule: true,
+  DrawerActions: { toggleDrawer: () => ({ type: 'TOGGLE_DRAWER' }) },
+  getFocusedRouteNameFromRoute: jest.fn(() => undefined),
+}));
+jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
+jest.mock('react-i18next', () => {
+  const t = (key: string) => key;
+  return { __esModule: true, useTranslation: () => ({ t }) };
+});
+jest.mock('@/src/theme', () => ({
+  __esModule: true,
+  useTheme: () => ({ colors: { surface: '#fff', text: '#111', primary: '#00f' } }),
+}));
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
+  __esModule: true,
+  useResponsiveLayout: () => mockResponsiveLayout,
+}));
+jest.mock(
+  '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent',
+  () => ({
+    __esModule: true,
+    DRAWER_MIN_WIDTH: 280,
+    default: () => null,
+    useResizableDrawerWidth: () => ({
+      drawerWidth: 360,
+      maximumWidth: 600,
+      setDrawerWidth: jest.fn(),
+    }),
+  }),
+);
+jest.mock('@/src/components/common/navigation/NavigationBackButton/NavigationBackButton', () => {
+  const { View } = jest.requireActual('react-native');
+  // Identifiable rather than `null`: whether the header offers a way back is the thing under
+  // test, and two components rendering nothing are indistinguishable.
+  return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
+});
+jest.mock('@/src/navigation/stacks/HelpStack', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/src/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
+
+jest.mock('@/src/screens/packs/PackListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/packs/PackFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/packs/ShippedPacksScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/packs/PackBrowseScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/account/AppSettingsScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/account/ChangePasswordScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/account/CreditsScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/social/FriendDetailScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/social/FriendshipFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/social/FriendshipListScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/social/ConversationScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/social/MessageInboxScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/story-entry/ImportStoryScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/account/MyProfileScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/servers/ServerDetailScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/servers/ServerManagementScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/servers/ServerPaymentHistoryScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/servers/ServerPlanScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/servers/ServerRegistrationScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/servers/ServerVerificationScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/story-entry/StoryFormScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/enter-stack/story-entry/StorySelectionScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/screens/example-stories/ExampleStoriesScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/components/features/packs/ShippedPacksInstallerOverlay', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+import StorySelectionStack from '@/src/navigation/stacks/StorySelectionStack';
+
+const drawerScreen = (name: string) => mockDrawerScreens.find((screen) => screen.name === name);
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockDrawerScreens.length = 0;
+  mockDrawerNavigatorProps.length = 0;
+  mockStackScreens.length = 0;
+  delete process.env.EXPO_PUBLIC_SERVERLESS;
+  mockResponsiveLayout.isCompact = false;
+  mockResponsiveLayout.isWide = true;
+  mockResponsiveLayout.width = 1200;
+});
+
+async function renderDrawer() {
+  await render(<StorySelectionStack />);
+  expect(mockDrawerScreens).toHaveLength(8);
+}
+
+it('keeps the wide story-selection menu permanently open with its main routes', async () => {
+  await renderDrawer();
+  const navigator = mockDrawerNavigatorProps.at(-1);
+  const options = navigator?.screenOptions({ navigation: {}, route: { name: 'Settings' } });
+
+  expect(navigator).toMatchObject({ defaultStatus: 'open' });
+  expect(options).toMatchObject({ drawerType: 'permanent', swipeEnabled: false });
+  expect(mockDrawerScreens.map((screen) => screen.name)).toEqual([
+    'StorySelectionMain',
+    'ServerManagementDrawer',
+    'FriendshipDrawer',
+    'ImportStory',
+    'PacksDrawer',
+    'ExampleStories',
+    'HelpDrawer',
+    'Settings',
+  ]);
+});
+
+it.each([
+  ['StorySelectionMain', 'StorySelectionScreen'],
+  ['ServerManagementDrawer', 'ServerManagement'],
+  ['FriendshipDrawer', 'FriendshipList'],
+  ['PacksDrawer', 'PackList'],
+  ['Settings', 'SettingsHome'],
+  ['HelpDrawer', 'HelpIndex'],
+])('returns %s to its root screen from a drawer press', async (drawerName, screen) => {
+  await renderDrawer();
+  const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
+  const preventDefault = jest.fn();
+  const listeners = drawerScreen(drawerName)?.listeners({ navigation });
+
+  listeners.drawerItemPress({ preventDefault });
+
+  expect(preventDefault).toHaveBeenCalledTimes(1);
+  expect(navigation.navigate).toHaveBeenCalledWith(drawerName, { screen });
+  // Same-section taps do not change the route index, so the router would not auto-close;
+  // the explicit close keeps the menu from lingering over the reset list.
+  expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
+});
+
+it.each([['ImportStory'], ['ExampleStories']])(
+  'closes the drawer when the plain entry %s is tapped while focused',
+  async (drawerName) => {
+    await renderDrawer();
+    const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
+    const preventDefault = jest.fn();
+    const listeners = drawerScreen(drawerName)?.listeners({ navigation });
+
+    listeners.drawerItemPress({ preventDefault });
+
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(navigation.navigate).toHaveBeenCalledWith(drawerName);
+    expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
+  },
+);
+
+it('uses the compact front drawer dimensions on small screens', async () => {
+  mockResponsiveLayout.isCompact = true;
+  mockResponsiveLayout.isWide = false;
+  mockResponsiveLayout.width = 500;
+  await renderDrawer();
+  const navigator = mockDrawerNavigatorProps.at(-1);
+  const options = navigator?.screenOptions({ navigation: {}, route: { name: 'Settings' } });
+
+  expect(navigator).toMatchObject({ defaultStatus: 'closed' });
+  expect(options).toMatchObject({
+    drawerType: 'front',
+    swipeEnabled: true,
+    swipeEdgeWidth: 28,
+    swipeMinDistance: 24,
+  });
+  expect(options.drawerStyle).toMatchObject({ minWidth: 300, width: 300 });
+});
+
+describe('a serverless build', () => {
+  // The web build on GitHub Pages runs on the device alone: what only talks to a server is not
+  // registered at all, so nothing can navigate there.
+  it('registers no server or friend entry', async () => {
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    await render(<StorySelectionStack />);
+
+    expect(mockDrawerScreens.map((screen) => screen.name)).toEqual([
+      'StorySelectionMain',
+      'ImportStory',
+      'PacksDrawer',
+      'ExampleStories',
+      'HelpDrawer',
+      'Settings',
+    ]);
+  });
+
+  it('keeps local packs but drops browsing the server ones', async () => {
+    const Packs = async () => {
+      await render(<StorySelectionStack />);
+      const PacksStack = drawerScreen('PacksDrawer')?.component;
+      mockStackScreens.length = 0;
+      await render(<PacksStack />);
+      return [...mockStackScreens];
+    };
+
+    expect(await Packs()).toEqual(['PackList', 'PackForm', 'PackBrowse', 'ShippedPacks']);
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    expect(await Packs()).toEqual(['PackList', 'PackForm', 'ShippedPacks']);
+  });
+});
+
+/**
+ * The packs entry is a nested stack, not four flat drawer destinations.
+ *
+ * Flat, the form had no way back: the drawer only draws an arrow for a nested destination, so the
+ * screen showed a hamburger, and `goBack` walked the drawer's own history to wherever the user had
+ * been before rather than to the list behind it.
+ */
+describe('the packs stack', () => {
+  const packsRoute = (index: number, ...routes: string[]) => ({
+    key: 'packs-key',
+    name: 'PacksDrawer',
+    state: {
+      type: 'stack',
+      key: 'packs-stack',
+      index,
+      routes: routes.map((name) => ({ name })),
+    },
+  });
+
+  async function headerOf(route: ReturnType<typeof packsRoute>) {
+    await renderDrawer();
+    const navigator = mockDrawerNavigatorProps.at(-1);
+    const options = navigator?.screenOptions({
+      navigation: { getState: () => ({ routes: [] }) },
+      route,
+    });
+    return render(<>{options.headerLeft()}</>);
+  }
+
+  it('shows no arrow on the list, which is the stack root', async () => {
+    const { queryByTestId } = await headerOf(packsRoute(0, 'PackList'));
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it.each(['PackForm', 'PackBrowse', 'ShippedPacks'])('shows an arrow on %s', async (screen) => {
+    const { queryByTestId } = await headerOf(packsRoute(1, 'PackList', screen));
+    expect(queryByTestId('navigation-back-button')).not.toBeNull();
+  });
+
+  /**
+   * The other route the drawer reads: the focused nested name. `PackList` has to be listed as a
+   * stack root, or the list itself would carry an arrow pointing at nothing.
+   */
+  const focusOn = (screen: string | undefined) => {
+    (
+      jest.requireMock('@react-navigation/native').getFocusedRouteNameFromRoute as jest.Mock
+    ).mockReturnValue(screen);
+  };
+
+  afterEach(() => focusOn(undefined));
+
+  it('shows no arrow when the focused nested route is the list', async () => {
+    focusOn('PackList');
+    const { queryByTestId } = await headerOf(packsRoute(0, 'PackList'));
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it('shows an arrow when the focused nested route is the form', async () => {
+    focusOn('PackForm');
+    const { queryByTestId } = await headerOf(packsRoute(0, 'PackForm'));
+    expect(queryByTestId('navigation-back-button')).not.toBeNull();
+  });
+
+  it('keeps the menu beside the back control on compact screens', async () => {
+    mockResponsiveLayout.isCompact = true;
+    mockResponsiveLayout.isWide = false;
+    mockResponsiveLayout.width = 500;
+    const { getByTestId } = await headerOf(packsRoute(1, 'PackList', 'PackForm'));
+
+    expect(getByTestId('navigation-back-button')).toBeTruthy();
+    expect(getByTestId('drawer-menu-button')).toBeTruthy();
+  });
+});
+
+describe('the settings stack', () => {
+  const focusOn = (screen: string | undefined) => {
+    (
+      jest.requireMock('@react-navigation/native').getFocusedRouteNameFromRoute as jest.Mock
+    ).mockReturnValue(screen);
+  };
+
+  async function headerOn(screen: string, index: number) {
+    focusOn(screen);
+    await renderDrawer();
+    const navigator = mockDrawerNavigatorProps.at(-1);
+    const options = navigator?.screenOptions({
+      navigation: { getState: () => ({ routes: [] }) },
+      route: {
+        key: 'settings-key',
+        name: 'Settings',
+        state: {
+          type: 'stack',
+          key: 'settings-stack',
+          index,
+          routes: ['SettingsHome', 'Credits'].slice(0, index + 1).map((name) => ({ name })),
+        },
+      },
+    });
+    return render(<>{options.headerLeft()}</>);
+  }
+
+  afterEach(() => focusOn(undefined));
+
+  it('shows no arrow on its root - there is nothing behind it to go back to', async () => {
+    const { queryByTestId } = await headerOn('SettingsHome', 0);
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it('shows an arrow on the credits screen, reached from it', async () => {
+    const { queryByTestId } = await headerOn('Credits', 1);
+    expect(queryByTestId('navigation-back-button')).not.toBeNull();
+  });
+});

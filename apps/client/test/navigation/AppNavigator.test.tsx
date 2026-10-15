@@ -38,15 +38,15 @@ jest.mock('@/src/components/features/app/SyncInitializer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('@/src/navigation/ColdInstallStack', () => ({
+jest.mock('@/src/navigation/stacks/ColdInstallStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/navigation/MainSystemStack', () => ({
+jest.mock('@/src/navigation/drawer/MainSystemDrawer', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/navigation/StorySelectionStack', () => ({
+jest.mock('@/src/navigation/stacks/StorySelectionStack', () => ({
   __esModule: true,
   default: () => null,
 }));

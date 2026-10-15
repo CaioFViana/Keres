@@ -21,7 +21,7 @@ import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { pickTextFile } from '@/src/utils/io/storyTransfer';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 const key = (name: string) => name.replace(/\s+/g, ' ').trim().toUpperCase();

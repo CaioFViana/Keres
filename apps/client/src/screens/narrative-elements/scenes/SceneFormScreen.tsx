@@ -24,12 +24,12 @@ import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSeco
 import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useSceneFormResources } from './useSceneFormResources';
 import { useSceneFormActions } from './useSceneFormActions';
 import { useSceneFormAssociations } from './useSceneFormAssociations';

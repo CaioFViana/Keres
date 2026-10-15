@@ -38,7 +38,7 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({
     term: (_type: string, plural?: boolean) => (plural ? 'Arcs' : 'Arc'),
   }),

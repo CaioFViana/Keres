@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
 import { ActivityIndicator, FlatList, Keyboard, StyleSheet, Text, View } from 'react-native';
 import { entityFieldMetadata, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { useTheme } from '@/src/theme';
 import { countActiveCriteria, withoutCriterion } from '@/src/utils/search/advancedSearchCriteria';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';

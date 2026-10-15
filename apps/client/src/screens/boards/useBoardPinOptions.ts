@@ -10,7 +10,7 @@ import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelec
 import { useDrizzle } from '@/src/db';
 import { boards, chapters, galleries, worldRules } from '@/src/db/schema';
 import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 type BoardPinGroup =

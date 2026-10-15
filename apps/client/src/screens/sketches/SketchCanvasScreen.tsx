@@ -41,7 +41,7 @@ import SketchPageSheet from '@/src/components/features/sketches/SketchPageSheet'
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useDrizzle } from '@/src/db';
 import type { SketchSelect } from '@/src/db/schema';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useCanvasHistory } from '@/src/screens/sketches/useCanvasHistory';
 import { useCanvasOverlayActions } from '@/src/hooks/canvas/useCanvasOverlayActions';
@@ -49,7 +49,7 @@ import { useSketchDrawing } from '@/src/hooks/sketch/useSketchDrawing';
 import { useSketchExport } from '@/src/screens/sketches/useSketchExport';
 import { useSketchSelection } from '@/src/screens/sketches/useSketchSelection';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { SketchStackParamList } from '@/src/navigation/MainSystemStack';
+import type { SketchStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useSketchDraftStore } from '@/src/state/drafts/sketchDraftStore';

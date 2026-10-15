@@ -5,12 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { GuideDrawerId } from '@/src/guides/types';
 import { useStoryMenuBadges } from '@/src/hooks/story/useStoryMenuBadges';
-import { buildMainDrawerMenu } from '@/src/navigation/mainDrawerMenu';
-import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/openMenuLeaf';
+import { buildMainDrawerMenu } from '@/src/navigation/drawer/mainDrawerMenu';
+import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/drawer/openMenuLeaf';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import GroupedDrawerMenu from '@/src/components/common/navigation/GroupedDrawerMenu/GroupedDrawerMenu';
 
 interface MainDrawerMenuProps {

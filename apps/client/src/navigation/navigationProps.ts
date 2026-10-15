@@ -1,7 +1,7 @@
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { CharacterStackParamList, MainSystemDrawerParamList } from './MainSystemStack';
+import type { CharacterStackParamList, MainSystemDrawerParamList } from './drawer/MainSystemDrawer';
 
 /**
  * Navigation types shared between screens.

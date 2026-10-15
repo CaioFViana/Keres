@@ -28,11 +28,11 @@ import {
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { useSceneBodyDraft } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/drafts/EditorDraftService';
 import {
   createSceneService,
@@ -42,8 +42,8 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
 type SceneEditorNavigation = NativeStackNavigationProp<

@@ -73,7 +73,7 @@ interface GalleryDetailContentProps {
  *
  * That second form exists because opening the media through `navigation.navigate` makes the whole app
  * lose focus on the Drawer tab the person was on, and each tab has a `blur` listener that resets its
- * own stack to the list (see `MainSystemStack.tsx`) - useful for genuinely switching tabs, but it threw
+ * own stack to the list (see `MainSystemDrawer.tsx`) - useful for genuinely switching tabs, but it threw
  * away the entity's detail screen merely for having shown a media file on top. A `Modal` does not take
  * part in React Navigation's focus, so it does not trigger that reset.
  */

@@ -9,9 +9,9 @@ import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilte
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import { useDrizzle } from '@/src/db';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { GlobalSearchResult } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
 import { createGlobalSearchService } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
 import { useStoryStore } from '@/src/state/story/storyStore';
@@ -20,9 +20,9 @@ import type { FavoriteFilterState } from '@/src/types/entityFilters';
 import { debounce } from '@/src/utils/sync/debounce';
 import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,

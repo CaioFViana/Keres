@@ -14,15 +14,15 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagListItem from '@/src/components/features/list-items/TagListItem';
 import type { TagSelect } from '@/src/db/schemas/tags';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import type {
   MainSystemDrawerParamList,
   TagsStackParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import { useTagStore } from '@/src/state/story/tagStore';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type TagsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'TagsStack'>, // Corrected to TagsStack

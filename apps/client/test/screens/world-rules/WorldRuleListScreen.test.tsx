@@ -147,7 +147,7 @@ jest.mock('@/src/state/story/worldRuleStore', () => ({
   __esModule: true,
   useWorldRuleStore: jest.fn(),
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),

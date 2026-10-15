@@ -9,8 +9,8 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useDrizzle } from '@/src/db';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type { StoryPlan } from '@keres/shared';
 import type { StoryEntityCounts } from '@/src/services/storymanagement/story-lifecycle/StoryEntityCountService';
@@ -20,7 +20,7 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 /**
  * What each synchronized entity type is called in the counts. The types the story's vocabulary renames

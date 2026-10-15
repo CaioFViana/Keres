@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { usePaymentHistory } from '@/src/screens/enter-stack/servers/usePaymentHistory';
 import { useServerStatuses } from '@/src/screens/enter-stack/servers/useServerStatuses';
-import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { ServerManagementStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import type { ThemeColors } from '@/src/theme';
 import { useTheme } from '@/src/theme';
 import { formatMoney, formatPlanDate } from '@/src/utils/billing/paymentPlans';

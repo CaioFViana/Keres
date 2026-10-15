@@ -8,7 +8,7 @@ import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
 import { useSceneBodyComments } from '@/src/hooks/scene/useSceneBodyComments';
 import { useStoryNavigatorData } from '@/src/hooks/story/useStoryNavigatorData';
 import { useStorySimulation } from '@/src/hooks/story/useStorySimulation';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import Button from '@/src/components/common/controls/Button/Button';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import FormField from '@/src/components/common/forms/FormField/FormField';

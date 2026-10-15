@@ -6,7 +6,7 @@ import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -45,7 +45,7 @@ import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { LocationStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
 import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService'; // Import CharacterSceneService
 import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
@@ -59,7 +59,7 @@ import { createLocationRelationService } from '@/src/services/storymanagement/re
 import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService'; // Import createSceneService
 import { useStoryStore } from '@/src/state/story/storyStore';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 

@@ -1,7 +1,7 @@
 import { drawerAnchorId, screenAnchorId } from './anchorRegistry';
-import { entityListGuides } from './entityListGuides';
-import { songGuides } from './songGuides';
-import { writingGuides } from './writingGuides';
+import { entityListGuides } from './content/entityListGuides';
+import { songGuides } from './content/songGuides';
+import { writingGuides } from './content/writingGuides';
 import type { Guide, GuideDrawerId } from './types';
 import { isServerless } from '@/src/utils/platform/clientFlavor';
 

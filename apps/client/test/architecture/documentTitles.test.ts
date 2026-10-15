@@ -20,8 +20,8 @@ const TITLE_CALL = /useScreenHeader\(|useEntityFormHeader\(|useDocumentTitle\(|s
 /** The screens the navigators register (a navigator wrapping more screens is not one of them). */
 function registeredScreens(): { route: string; file: string }[] {
   const found: { route: string; file: string }[] = [];
-  for (const entry of readdirSync(NAVIGATION).filter((name) => name.endsWith('.tsx'))) {
-    const source = readFileSync(join(NAVIGATION, entry), 'utf8');
+  for (const entryPath of sourceFiles(NAVIGATION).filter((name) => name.endsWith('.tsx'))) {
+    const source = readFileSync(entryPath, 'utf8');
     const imports = new Map<string, string>();
     for (const match of source.matchAll(/import\s+(\w+)\s+from\s+'([^']+)'/g)) {
       imports.set(match[1], match[2]);

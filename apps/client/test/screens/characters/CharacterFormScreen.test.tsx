@@ -59,7 +59,7 @@ jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonInputStyles: () => ({ input: {}, multiline: {} }),
 }));
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({
     createTitle: 'Create character',

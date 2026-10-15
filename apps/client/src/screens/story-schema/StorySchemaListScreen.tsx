@@ -10,12 +10,12 @@ import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import { StorySchemaFieldReorderModal } from '@/src/components/features/story-schema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
 import { useDrizzle } from '@/src/db';
 import type { StorySchemaFieldSelect } from '@/src/db/schema';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
-import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
+import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
 import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -24,8 +24,8 @@ import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 const ENTITY_TYPE_LABEL_KEYS: Record<StorySchemaEntityType, string> = {

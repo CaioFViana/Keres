@@ -61,8 +61,8 @@ jest.mock('@/src/hooks/sketch/useSketchCompact', () => ({
   ...jest.requireActual('@/src/hooks/sketch/useSketchCompact'),
   useSketchCompact: () => false,
 }));
-jest.mock('@/src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
-jest.mock('@/src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
+jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({
   useScreenAnchor: () => undefined,
   useGuideAnchor: () => undefined,
 }));

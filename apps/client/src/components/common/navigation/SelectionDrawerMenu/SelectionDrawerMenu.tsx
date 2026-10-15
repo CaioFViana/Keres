@@ -2,8 +2,8 @@ import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GuideDrawerId } from '@/src/guides/types';
-import type { MenuBadges } from '@/src/navigation/drawerMenuModel';
-import { buildStorySelectionMenu } from '@/src/navigation/storySelectionMenu';
+import type { MenuBadges } from '@/src/navigation/drawer/drawerMenuModel';
+import { buildStorySelectionMenu } from '@/src/navigation/drawer/storySelectionMenu';
 import {
   useHasUnseenAdminMessages,
   useHasUnseenMessages,

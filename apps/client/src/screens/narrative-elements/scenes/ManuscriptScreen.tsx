@@ -24,12 +24,12 @@ import { ManuscriptSearchToolbar } from '@/src/components/features/manuscript/Ma
 import ManuscriptExplorer from '@/src/components/features/manuscript/ManuscriptExplorer/ManuscriptExplorer';
 import ManuscriptIndexModal from '@/src/components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
 import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useManuscriptData } from '@/src/screens/narrative-elements/scenes/useManuscriptData';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { sceneBelongsToActiveArc } from '@/src/utils/search/storyArcFilter';

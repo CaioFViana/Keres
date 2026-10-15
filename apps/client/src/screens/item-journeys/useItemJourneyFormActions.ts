@@ -6,9 +6,9 @@ import { StackActions } from '@react-navigation/native';
 import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
+import type { ItemStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { ItemJourneyFormState } from './useItemJourneyFormState';
 
 type ItemJourneyNavigation = NativeStackNavigationProp<ItemStackParamList, 'ItemJourneyForm'>;

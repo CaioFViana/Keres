@@ -34,7 +34,7 @@ import { createCharacterRelationService } from '@/src/services/storymanagement/r
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { RelationGraphEdge } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { limitFocusSelection, MAX_FOCUS_SELECTION } from '@keres/shared/graphs/graphNeighborhood';
 import {

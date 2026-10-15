@@ -2,8 +2,8 @@ import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import GuideAnchor from '@/src/guides/GuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
@@ -14,7 +14,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type {
   MainSystemDrawerParamList,
   OperationLogStackParamList,
-} from '@/src/navigation/MainSystemStack'; // Use MainSystemDrawerParamList
+} from '@/src/navigation/drawer/MainSystemDrawer'; // Use MainSystemDrawerParamList
 import { useStoryStore } from '@/src/state/story/storyStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

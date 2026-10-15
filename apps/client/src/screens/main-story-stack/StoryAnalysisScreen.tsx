@@ -16,14 +16,14 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '@/src/db';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type {
   MainSystemDrawerParamList,
   StoryAnalysisStackParamList,
-} from '@/src/navigation/MainSystemStack';
+} from '@/src/navigation/drawer/MainSystemDrawer';
 import type { StoryAnalysisReport } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
 import { createStoryAnalysisService } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
 import { createStoryIndexService } from '@/src/services/storymanagement/story-lifecycle/StoryIndexService';
@@ -35,7 +35,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import type {
   StoryAnalysisCategory,

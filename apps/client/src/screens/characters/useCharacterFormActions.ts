@@ -8,9 +8,9 @@ import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
-import type { CharacterStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CharacterStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { CharacterFormState } from './useCharacterFormState';
 
 type CharacterNavigation = NativeStackNavigationProp<CharacterStackParamList, 'CharacterForm'>;

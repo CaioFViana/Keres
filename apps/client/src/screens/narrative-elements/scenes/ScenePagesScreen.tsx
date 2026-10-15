@@ -26,7 +26,7 @@ import { useSceneRecord } from '@/src/screens/narrative-elements/scenes/useScene
 import { useScenePages } from '@/src/hooks/scene/useScenePages';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import {
   createScenePageService,
   type ScenePageMedia,

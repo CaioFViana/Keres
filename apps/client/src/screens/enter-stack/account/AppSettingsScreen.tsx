@@ -32,7 +32,7 @@ import type { GregorianDateDisplayFormat } from '@keres/shared';
 import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import { resetDatabase, useDrizzle } from '@/src/db'; // Import resetDatabase
 import { servers } from '@/src/db/schema';
-import type { SettingsStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { SettingsStackParamList } from '@/src/navigation/stacks/StorySelectionStack';
 import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
 import { setEditorDraftDb } from '@/src/services/drafts/EditorDraftService';
 import { mediaFileService } from '@/src/services/media/MediaFileService';

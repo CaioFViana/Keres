@@ -5,12 +5,12 @@ import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/Key
 import ArcMediumChanges from '@/src/components/features/arcs/ArcMediumChanges';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
+import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
@@ -27,7 +27,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type VocabularyNavigation = NativeStackNavigationProp<StorySettingsStackParamList, 'Vocabulary'>;
 type DraftTerms = Record<

@@ -23,7 +23,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useGraphStoryReload } from '@/src/hooks/graph/useGraphStoryReload';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
-import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
 import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';

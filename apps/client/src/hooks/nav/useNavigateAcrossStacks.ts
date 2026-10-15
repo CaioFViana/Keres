@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useCallback } from 'react';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { navigateAcrossStacks } from '@/src/utils/nav/stackNavigation';
 
 /**

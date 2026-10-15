@@ -6,12 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { BackHandler, Platform } from 'react-native';
 
 import { useDrizzle } from '@/src/db';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useStoryReport } from '@/src/screens/main-story-stack/useStoryReport';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import ReportStoryModal from '@/src/components/features/story/ReportStoryModal/ReportStoryModal';
-import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { createStoryAnalysisService } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
 import { createStoryContentMetricsService } from '@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';

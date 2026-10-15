@@ -12,7 +12,7 @@ import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/Scre
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
-import type { StatsStackParamList } from '@/src/navigation/StatsStack';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

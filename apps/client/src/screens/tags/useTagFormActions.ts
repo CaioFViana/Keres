@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
-import type { TagsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { TagsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import type { TagFormState } from './useTagFormState';
 

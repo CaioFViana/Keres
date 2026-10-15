@@ -11,12 +11,12 @@ import SketchCreateModal from '@/src/components/features/sketches/SketchCreateMo
 import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
 import { useDrizzle } from '@/src/db';
 import type { SketchSelect } from '@/src/db/schema';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { SketchStackParamList } from '@/src/navigation/MainSystemStack';
+import type { SketchStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import { filterByNameAndDescription } from '@/src/utils/search/filterByNameAndDescription';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
@@ -27,7 +27,7 @@ import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type Navigation = NativeStackNavigationProp<SketchStackParamList, 'SketchList'>;
 

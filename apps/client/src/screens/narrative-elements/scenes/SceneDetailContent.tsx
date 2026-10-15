@@ -6,10 +6,10 @@ import SceneCharacterManager from '@/src/components/features/characters/Characte
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager';
 import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import SceneMusicEntry from '@/src/components/features/scenes/SceneMusic/SceneMusicEntry';
 import ScenePagesEntry from '@/src/components/features/scenes/ScenePages/ScenePagesEntry';
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
@@ -44,7 +44,7 @@ import type {
 import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
 import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
 import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
-import GuideAnchor from '@/src/guides/GuideAnchor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 /**
  * Presentation contract for the scene detail screen.

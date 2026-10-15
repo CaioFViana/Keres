@@ -4,7 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScrollView } from 'react-native';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
 import type { GuideDrawerId } from '@/src/guides/types';
-import { registerGuideDrawer, unregisterGuideDrawer } from '@/src/navigation/drawerGuideRegistry';
+import {
+  registerGuideDrawer,
+  unregisterGuideDrawer,
+} from '@/src/navigation/drawer/drawerGuideRegistry';
 import type { ThemeColors } from '@/src/theme';
 import { AnchoredDrawerItemList } from './AnchoredDrawerItemList';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

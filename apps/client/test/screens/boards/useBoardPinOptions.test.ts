@@ -11,7 +11,7 @@ jest.mock('@/src/services/entity-solvers/entityOptions', () => ({
   __esModule: true,
   loadEntityOptions: jest.fn(),
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (entityType: string) => entityType }),
 }));

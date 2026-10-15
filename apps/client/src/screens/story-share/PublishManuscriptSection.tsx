@@ -2,7 +2,7 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { StorySelect } from '@/src/db/schema';
 import { useTranslation } from 'react-i18next';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { StyleSheet, Text, View } from 'react-native';
 import ManuscriptExportOptions from '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import { SCREENPLAY_EXPORT_FORMATS } from '@/src/components/features/manuscript/export/manuscriptExport';

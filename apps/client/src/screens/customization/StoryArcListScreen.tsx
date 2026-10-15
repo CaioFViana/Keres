@@ -9,11 +9,11 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import type { ArcsStackParamList } from '@/src/navigation/ArcsStack';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import type { ArcsStackParamList } from '@/src/navigation/stacks/ArcsStack';
 import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';

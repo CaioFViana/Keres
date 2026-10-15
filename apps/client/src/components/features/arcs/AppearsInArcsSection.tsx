@@ -6,7 +6,7 @@ import EntityRelationList from '@/src/components/common/display/EntityRelationLi
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 interface Props {
   arcs: StoryArcSelect[];

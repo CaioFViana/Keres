@@ -9,7 +9,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { ThemeColors } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**

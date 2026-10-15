@@ -91,7 +91,7 @@ jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   useStoryCalendar: () => ({ definition: null }),
 }));
 
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (type: string, plural = false) => (plural ? `${type}s` : type),

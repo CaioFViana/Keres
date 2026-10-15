@@ -127,7 +127,7 @@ jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', ()
     return react.createElement(native.Text, { testID: 'seealso-manager' }, 'seealso');
   },
 }));
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => ({
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => ({
   __esModule: true,
   default: () => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -194,11 +194,11 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { textSecondary: '#666' } }),
 }));
-jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) => (entity === 'Item' ? mockItemCopy : mockSceneCopy),
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ agree: mockAgree, term: mockTerm }),
 }));

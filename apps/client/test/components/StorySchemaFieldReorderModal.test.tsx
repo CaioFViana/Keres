@@ -5,7 +5,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import { act, render } from '@testing-library/react-native';
-import { StorySchemaFieldReorderModal } from '@/src/components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
+import { StorySchemaFieldReorderModal } from '@/src/components/features/story-schema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
 import type { StorySchemaFieldSelect } from '@/src/db/schema';
 
 jest.mock('react-i18next', () => ({

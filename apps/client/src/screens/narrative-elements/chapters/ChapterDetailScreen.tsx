@@ -19,7 +19,7 @@ import AnchorManager from '@/src/components/features/chapters/AnchorManager/Anch
 import ConvertContainerModal from '@/src/components/features/chapters/ConvertContainerModal/ConvertContainerModal';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import type { ChapterType } from '@keres/shared';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useDrizzle } from '@/src/db';

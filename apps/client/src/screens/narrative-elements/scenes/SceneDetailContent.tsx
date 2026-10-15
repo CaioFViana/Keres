@@ -13,7 +13,7 @@ import { useScreenTour } from '@/src/guides/useScreenTour';
 import SceneMusicEntry from '@/src/components/features/scenes/SceneMusic/SceneMusicEntry';
 import ScenePagesEntry from '@/src/components/features/scenes/ScenePages/ScenePagesEntry';
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';

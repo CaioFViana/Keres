@@ -27,7 +27,7 @@ const COLLAPSIBLE_CARDS_WITHOUT_ENTITY_ROWS = [
   // Not a list of entities: metadata, the stat editor, analysis findings.
   'components/common/display/EntityMetadata/EntityMetadata.tsx',
   'components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor.tsx',
-  'screens/mainstorystack/StoryAnalysisScreen.tsx',
+  'screens/main-story-stack/StoryAnalysisScreen.tsx',
 ];
 
 describe('collapsible entity lists', () => {

@@ -2,7 +2,7 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { createRef } from 'react';
 import SeeAlsoManager, {
   type SeeAlsoManagerHandle,
-} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+} from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

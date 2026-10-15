@@ -14,7 +14,7 @@ describe('vocabulary presentation boundaries', () => {
     ['characters/CharacterFormScreen.tsx', 'character_form_description'],
     ['locations/LocationFormScreen.tsx', 'location_form_description'],
     ['items/ItemFormScreen.tsx', 'item_form_description'],
-    ['worldrules/WorldRuleFormScreen.tsx', 'world_rule_form_description'],
+    ['world-rules/WorldRuleFormScreen.tsx', 'world_rule_form_description'],
     ['narrative-elements/chapters/ChapterFormScreen.tsx', 'chapter_form_description'],
     ['narrative-elements/scenes/SceneFormScreen.tsx', 'scene_form_description'],
     ['narrative-elements/choices/ChoiceFormScreen.tsx', 'choice_form_description'],

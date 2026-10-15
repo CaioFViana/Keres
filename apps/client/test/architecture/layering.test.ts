@@ -199,7 +199,7 @@ describe('extracted multi-step form responsibilities', () => {
   const forms = [
     {
       label: 'WorldRule',
-      dir: 'screens/worldrules',
+      dir: 'screens/world-rules',
       screen: 'WorldRuleFormScreen.tsx',
       prefix: 'WorldRule',
       idName: 'WorldRuleId',
@@ -239,7 +239,7 @@ describe('extracted multi-step form responsibilities', () => {
     },
     {
       label: 'ItemJourney',
-      dir: 'screens/itemJourneys',
+      dir: 'screens/item-journeys',
       screen: 'ItemJourneyFormScreen.tsx',
       prefix: 'ItemJourney',
       idName: 'ItemJourneyId',
@@ -292,7 +292,7 @@ describe('extracted simple form responsibilities', () => {
   const forms = [
     {
       label: 'Story',
-      dir: 'screens/enterstack',
+      dir: 'screens/enter-stack/story-entry',
       screen: 'StoryFormScreen.tsx',
       prefix: 'Story',
       idParam: 'initialStoryId',
@@ -308,7 +308,7 @@ describe('extracted simple form responsibilities', () => {
     },
     {
       label: 'Friendship',
-      dir: 'screens/enterstack',
+      dir: 'screens/enter-stack/social',
       screen: 'FriendshipFormScreen.tsx',
       prefix: 'Friendship',
       idParam: null,
@@ -316,7 +316,7 @@ describe('extracted simple form responsibilities', () => {
     },
     {
       label: 'StorySchemaField',
-      dir: 'screens/storyschema',
+      dir: 'screens/story-schema',
       screen: 'StorySchemaFieldFormScreen.tsx',
       prefix: 'StorySchemaField',
       idParam: 'initialFieldId',

@@ -26,7 +26,7 @@ import ScenePresenceList, {
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import type { RouteProp } from '@react-navigation/native';

@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import StoryAgendaScreen from '@/src/screens/storycalendars/StoryAgendaScreen';
-import StoryCalendarFormScreen from '@/src/screens/storycalendars/StoryCalendarFormScreen';
-import StoryCalendarListScreen from '@/src/screens/storycalendars/StoryCalendarListScreen';
+import StoryAgendaScreen from '@/src/screens/story-calendars/StoryAgendaScreen';
+import StoryCalendarFormScreen from '@/src/screens/story-calendars/StoryCalendarFormScreen';
+import StoryCalendarListScreen from '@/src/screens/story-calendars/StoryCalendarListScreen';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 
 export type CalendarsStackParamList = {

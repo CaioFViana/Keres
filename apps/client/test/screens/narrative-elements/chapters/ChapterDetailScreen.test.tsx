@@ -439,7 +439,7 @@ jest.mock('@/src/components/features/notes/NoteManager', () => {
   };
 });
 
-jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

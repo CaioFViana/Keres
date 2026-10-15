@@ -95,7 +95,7 @@ const COMPONENTS_THAT_STILL_FETCH = [
  * listener and recursively requesting the same entity.
  */
 const ENTITY_DETAIL_SCREEN =
-  /^screens\/(?:characters|items|itemJourneys|locations|notes|tags|worldrules)\/.*Detail.*Screen\.tsx$|^screens\/narrative-elements\/(?:scenes|chapters|choices)\/.*Detail.*Screen\.tsx$/;
+  /^screens\/(?:characters|items|item-journeys|locations|notes|tags|world-rules)\/.*Detail.*Screen\.tsx$|^screens\/narrative-elements\/(?:scenes|chapters|choices)\/.*Detail.*Screen\.tsx$/;
 
 /** Shared lifecycle owners that refresh visible data from local entity events. */
 const SHARED_REFRESH_LIFECYCLE_OWNERS = [
@@ -115,7 +115,7 @@ const SHARED_REFRESH_LIFECYCLE_OWNERS = [
   'hooks/story/useStorySchemaFields.ts',
   'hooks/story/useStoryStats.ts',
   'mentions/MentionMatcherProvider.tsx',
-  'screens/enterstack/FriendDetailScreen.tsx',
+  'screens/enter-stack/social/FriendDetailScreen.tsx',
 ] as const;
 
 /** Components that draw story content - the basis of the site's static showcase. */

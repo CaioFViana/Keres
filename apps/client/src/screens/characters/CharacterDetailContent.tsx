@@ -13,7 +13,7 @@ import ItemCharacterManager from '@/src/components/features/items/ItemManager/It
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import CharacterTrajectorySection from '@/src/components/features/trajectories/CharacterTrajectorySection';
 import ScenePresenceList, {
   type ScenePresenceEntry,

@@ -167,7 +167,7 @@ jest.mock('@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/characterrelations/CharacterRelationGraphScreen', () => ({
+jest.mock('@/src/screens/character-relations/CharacterRelationGraphScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -215,15 +215,15 @@ jest.mock('@/src/screens/boards/BoardCanvasScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/globalsearch/GlobalSearchScreen', () => ({
+jest.mock('@/src/screens/global-search/GlobalSearchScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/itemJourneys/ItemJourneyDetailScreen', () => ({
+jest.mock('@/src/screens/item-journeys/ItemJourneyDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/itemJourneys/ItemJourneyFormScreen', () => ({
+jest.mock('@/src/screens/item-journeys/ItemJourneyFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -255,15 +255,15 @@ jest.mock('@/src/screens/locations/LocationListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/mainstorystack/MainDashboardScreen', () => ({
+jest.mock('@/src/screens/main-story-stack/MainDashboardScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/mainstorystack/StoryAnalysisScreen', () => ({
+jest.mock('@/src/screens/main-story-stack/StoryAnalysisScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/mainstorystack/StoryEntityCountScreen', () => ({
+jest.mock('@/src/screens/main-story-stack/StoryEntityCountScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -287,11 +287,11 @@ jest.mock('@/src/screens/notes/NoteListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/operationlog/OperationLogDetailScreen', () => ({
+jest.mock('@/src/screens/operation-log/OperationLogDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/operationlog/OperationLogListScreen', () => ({
+jest.mock('@/src/screens/operation-log/OperationLogListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -331,15 +331,15 @@ jest.mock('@/src/screens/stats/StatRankingScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/storycalendars/StoryAgendaScreen', () => ({
+jest.mock('@/src/screens/story-calendars/StoryAgendaScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/storycalendars/StoryCalendarListScreen', () => ({
+jest.mock('@/src/screens/story-calendars/StoryCalendarListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/storycalendars/StoryCalendarFormScreen', () => ({
+jest.mock('@/src/screens/story-calendars/StoryCalendarFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -347,11 +347,11 @@ jest.mock('@/src/screens/narrative-elements/timeline/StoryTimelineScreen', () =>
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/storyschema/StorySchemaFieldFormScreen', () => ({
+jest.mock('@/src/screens/story-schema/StorySchemaFieldFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/storyschema/StorySchemaListScreen', () => ({
+jest.mock('@/src/screens/story-schema/StorySchemaListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -399,15 +399,15 @@ jest.mock('@/src/screens/plots/PlotReaderScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/worldrules/WorldRuleDetailScreen', () => ({
+jest.mock('@/src/screens/world-rules/WorldRuleDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/worldrules/WorldRuleFormScreen', () => ({
+jest.mock('@/src/screens/world-rules/WorldRuleFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/worldrules/WorldRuleListScreen', () => ({
+jest.mock('@/src/screens/world-rules/WorldRuleListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));

@@ -1,11 +1,11 @@
 import type { StorySchemaEntityType } from '@keres/shared';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import StorySettingsAppearanceScreen from '@/src/screens/storysettings/StorySettingsAppearanceScreen';
-import StorySettingsCollaborationScreen from '@/src/screens/storysettings/StorySettingsCollaborationScreen';
-import StorySettingsGeneralScreen from '@/src/screens/storysettings/StorySettingsGeneralScreen';
-import StorySettingsIndexScreen from '@/src/screens/storysettings/StorySettingsIndexScreen';
-import StorySchemaFieldFormScreen from '@/src/screens/storyschema/StorySchemaFieldFormScreen';
-import StorySchemaListScreen from '@/src/screens/storyschema/StorySchemaListScreen';
+import StorySettingsAppearanceScreen from '@/src/screens/story-settings/StorySettingsAppearanceScreen';
+import StorySettingsCollaborationScreen from '@/src/screens/story-settings/StorySettingsCollaborationScreen';
+import StorySettingsGeneralScreen from '@/src/screens/story-settings/StorySettingsGeneralScreen';
+import StorySettingsIndexScreen from '@/src/screens/story-settings/StorySettingsIndexScreen';
+import StorySchemaFieldFormScreen from '@/src/screens/story-schema/StorySchemaFieldFormScreen';
+import StorySchemaListScreen from '@/src/screens/story-schema/StorySchemaListScreen';
 import SuggestionsScreen from '@/src/screens/suggestions/SuggestionsScreen';
 import SuggestionUsageScreen from '@/src/screens/suggestions/SuggestionUsageScreen';
 import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';

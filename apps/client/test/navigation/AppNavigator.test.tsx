@@ -50,7 +50,7 @@ jest.mock('@/src/navigation/StorySelectionStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/LegalUpdateScreen', () => ({
+jest.mock('@/src/screens/enter-stack/account/LegalUpdateScreen', () => ({
   __esModule: true,
   default: () => null,
 }));

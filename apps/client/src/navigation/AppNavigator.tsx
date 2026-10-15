@@ -11,7 +11,7 @@ import SyncInitializer from '@/src/components/features/app/SyncInitializer';
 import { useDrizzle } from '@/src/db';
 import { legalIsBehind } from '@/src/legal/clientLegalStatus';
 import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
-import LegalUpdateScreen from '@/src/screens/enterstack/LegalUpdateScreen';
+import LegalUpdateScreen from '@/src/screens/enter-stack/account/LegalUpdateScreen';
 import { getClientSettings } from '@/src/services/account/ClientSettingsService';
 import { VERIFICATION_PENDING_EVENT } from '@/src/services/api/apiClient';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';

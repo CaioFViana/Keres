@@ -26,10 +26,10 @@ const SAVE_DELETE_FORMS: FormFooterCheck[] = [
     remove: /onPress=\{onDelete\}/,
   },
   ...[
-    'screens/enterstack/ServerRegistrationScreen.tsx',
-    'screens/enterstack/StoryFormScreen.tsx',
+    'screens/enter-stack/servers/ServerRegistrationScreen.tsx',
+    'screens/enter-stack/story-entry/StoryFormScreen.tsx',
     'screens/gallery/GalleryDetailContent.tsx',
-    'screens/itemJourneys/ItemJourneyFormScreen.tsx',
+    'screens/item-journeys/ItemJourneyFormScreen.tsx',
     'screens/plots/PlotFormScreen.tsx',
     'screens/routes/RouteFormScreen.tsx',
   ].map((file) => ({ file, save: OWN_FOOTER_SAVE, remove: OWN_FOOTER_REMOVE })),
@@ -45,7 +45,7 @@ const FORMS_USING_ENTITY_FORM_ACTIONS = [
   'screens/narrative-elements/scenes/SceneFormScreen.tsx',
   'screens/notes/NoteFormScreen.tsx',
   'screens/tags/TagFormScreen.tsx',
-  'screens/worldrules/WorldRuleFormScreen.tsx',
+  'screens/world-rules/WorldRuleFormScreen.tsx',
 ];
 
 describe('form action order', () => {

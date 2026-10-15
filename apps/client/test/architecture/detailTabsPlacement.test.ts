@@ -13,10 +13,10 @@ const TABBED_SCREENS = [
   'screens/items/ItemDetailScreen.tsx',
   'screens/locations/LocationDetailsScreen.tsx',
   'screens/notes/NoteDetailScreen.tsx',
-  'screens/worldrules/WorldRuleDetailScreen.tsx',
+  'screens/world-rules/WorldRuleDetailScreen.tsx',
   'screens/narrative-elements/chapters/ChapterDetailScreen.tsx',
   'screens/narrative-elements/choices/ChoiceDetailScreen.tsx',
-  'screens/itemJourneys/ItemJourneyDetailScreen.tsx',
+  'screens/item-journeys/ItemJourneyDetailScreen.tsx',
 ];
 
 type Panels = { details: string; relations: string; other: string };

@@ -1,4 +1,4 @@
-import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { Location } from '@keres/shared/entities/Location';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

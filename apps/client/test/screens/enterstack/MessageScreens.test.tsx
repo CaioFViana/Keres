@@ -65,10 +65,10 @@ jest.mock('@/src/guides/useGuideAnchor', () => ({
 jest.mock('@/src/hooks/ui/useKeyboardOverlap', () => ({
   useKeyboardOverlap: (...args: unknown[]) => mockUseKeyboardOverlap(...args),
 }));
-jest.mock('@/src/screens/enterstack/useConversation', () => ({
+jest.mock('@/src/screens/enter-stack/social/useConversation', () => ({
   useConversation: (...args: unknown[]) => mockUseConversation(...args),
 }));
-jest.mock('@/src/screens/enterstack/useMessageInbox', () => ({
+jest.mock('@/src/screens/enter-stack/social/useMessageInbox', () => ({
   useMessageInbox: () => mockUseMessageInbox(),
 }));
 jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
@@ -100,8 +100,8 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import ConversationScreen, {
   keyboardRoom,
   liftAboveKeyboard,
-} from '@/src/screens/enterstack/ConversationScreen';
-import MessageInboxScreen from '@/src/screens/enterstack/MessageInboxScreen';
+} from '@/src/screens/enter-stack/social/ConversationScreen';
+import MessageInboxScreen from '@/src/screens/enter-stack/social/MessageInboxScreen';
 
 const conversation = (over: Record<string, unknown> = {}) => ({
   messages: [

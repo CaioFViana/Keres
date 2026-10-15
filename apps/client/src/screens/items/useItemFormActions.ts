@@ -1,4 +1,4 @@
-import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import type { SeeAlsoManagerHandle } from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { Item } from '@keres/shared/entities/Item';
 import type { StorySchemaField } from '@keres/shared';

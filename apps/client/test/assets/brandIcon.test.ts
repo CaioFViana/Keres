@@ -17,7 +17,7 @@ describe('the brand icon of the settings screen', () => {
 
   it('is the one the screen asks for, so the original never reaches the web bundle', () => {
     const screen = readFileSync(
-      join(__dirname, '../../src/screens/enterstack/AppSettingsScreen.tsx'),
+      join(__dirname, '../../src/screens/enter-stack/account/AppSettingsScreen.tsx'),
       'utf8',
     );
 

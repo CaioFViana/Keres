@@ -124,7 +124,7 @@ jest.mock('@/src/components/features/calendars/CalendarAnchorsModal', () => ({
   },
 }));
 
-import StoryCalendarFormScreen from '@/src/screens/storycalendars/StoryCalendarFormScreen';
+import StoryCalendarFormScreen from '@/src/screens/story-calendars/StoryCalendarFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

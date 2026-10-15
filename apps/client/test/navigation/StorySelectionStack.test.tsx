@@ -99,79 +99,79 @@ jest.mock('@/src/screens/packs/PackBrowseScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/AppSettingsScreen', () => ({
+jest.mock('@/src/screens/enter-stack/account/AppSettingsScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ChangePasswordScreen', () => ({
+jest.mock('@/src/screens/enter-stack/account/ChangePasswordScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/CreditsScreen', () => ({
+jest.mock('@/src/screens/enter-stack/account/CreditsScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/FriendDetailScreen', () => ({
+jest.mock('@/src/screens/enter-stack/social/FriendDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/FriendshipFormScreen', () => ({
+jest.mock('@/src/screens/enter-stack/social/FriendshipFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/FriendshipListScreen', () => ({
+jest.mock('@/src/screens/enter-stack/social/FriendshipListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ConversationScreen', () => ({
+jest.mock('@/src/screens/enter-stack/social/ConversationScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/MessageInboxScreen', () => ({
+jest.mock('@/src/screens/enter-stack/social/MessageInboxScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ImportStoryScreen', () => ({
+jest.mock('@/src/screens/enter-stack/story-entry/ImportStoryScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/MyProfileScreen', () => ({
+jest.mock('@/src/screens/enter-stack/account/MyProfileScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ServerDetailScreen', () => ({
+jest.mock('@/src/screens/enter-stack/servers/ServerDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ServerManagementScreen', () => ({
+jest.mock('@/src/screens/enter-stack/servers/ServerManagementScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ServerPaymentHistoryScreen', () => ({
+jest.mock('@/src/screens/enter-stack/servers/ServerPaymentHistoryScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ServerPlanScreen', () => ({
+jest.mock('@/src/screens/enter-stack/servers/ServerPlanScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ServerRegistrationScreen', () => ({
+jest.mock('@/src/screens/enter-stack/servers/ServerRegistrationScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/ServerVerificationScreen', () => ({
+jest.mock('@/src/screens/enter-stack/servers/ServerVerificationScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/StoryFormScreen', () => ({
+jest.mock('@/src/screens/enter-stack/story-entry/StoryFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/enterstack/StorySelectionScreen', () => ({
+jest.mock('@/src/screens/enter-stack/story-entry/StorySelectionScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/src/screens/examplestories/ExampleStoriesScreen', () => ({
+jest.mock('@/src/screens/example-stories/ExampleStoriesScreen', () => ({
   __esModule: true,
   default: () => null,
 }));

@@ -1,6 +1,7 @@
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateDocRegistry } from './lib/docRegistry';
+import { formatGenerated } from './lib/formatGenerated';
 import { generateExampleStoriesIndex } from './lib/exampleStoriesIndex';
 import { generateMigrationsIndex } from './lib/migrationsIndex';
 import { generateShippedPacksIndex } from './lib/shippedPacksIndex';
@@ -35,3 +36,11 @@ generateDocRegistry({
   registryName: 'storyDeviceRegistry',
   pageTypeImport: `import type { HelpPage } from '${srcAlias(join(clientRoot, 'src/content/help/types'))}';`,
 });
+
+formatGenerated(clientRoot, [
+  'src/db/migrations/index.ts',
+  'src/content/example-stories/generated/registry.ts',
+  'src/content/shipped-packs/generated/registry.ts',
+  'src/content/help/generated/registry.ts',
+  'src/content/story-devices/generated/registry.ts',
+]);

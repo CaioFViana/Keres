@@ -5,7 +5,7 @@ import { useDrizzle } from '@/src/db';
 import { friendships, servers } from '@/src/db/schema';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import { friendshipApiService } from '@/src/services/FriendshipApiService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 const remoteUserNameCache = new Map<string, Promise<string | undefined>>();
 

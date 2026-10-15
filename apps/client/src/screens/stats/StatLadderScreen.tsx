@@ -15,11 +15,11 @@ import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBotto
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
 import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/graphs/statLadder';
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 

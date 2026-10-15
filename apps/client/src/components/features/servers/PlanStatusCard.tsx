@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ThemeColors } from '@/src/theme';
 import { useTheme } from '@/src/theme';
-import { formatMoney, formatPlanDate, isRenewalBeingConfirmed } from '@/src/utils/paymentPlans';
+import {
+  formatMoney,
+  formatPlanDate,
+  isRenewalBeingConfirmed,
+} from '@/src/utils/billing/paymentPlans';
 import { serverCardStyleDefs } from './serverCardStyleDefs';
 
 export interface PlanStatusCardProps {

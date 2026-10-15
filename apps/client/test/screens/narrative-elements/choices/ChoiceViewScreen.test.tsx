@@ -1,4 +1,4 @@
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import {
   act,
   cleanup,
@@ -77,17 +77,17 @@ jest.mock('@/src/db', () => {
   };
 });
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: { getState: () => ({ exportFormat: 'png' }) },
 }));
@@ -108,7 +108,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (...args: unknown[]) => {
@@ -119,9 +119,9 @@ jest.mock('@/src/utils/EventEmitter', () => ({
   },
 }));
 
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('@/src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/io/storyTransfer'),
   buildStoryMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));

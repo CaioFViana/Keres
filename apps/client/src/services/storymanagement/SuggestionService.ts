@@ -2,8 +2,8 @@ import { and, eq, ne, sql } from 'drizzle-orm';
 import { deriveAttributeKey } from '@keres/shared';
 import type { AppDrizzleClient, SuggestionInsert, SuggestionSelect } from '@/src/db';
 import { suggestions } from '@/src/db';
-import { createULID } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

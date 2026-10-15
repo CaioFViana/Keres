@@ -17,7 +17,7 @@ import {
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createSongAudioService } from '@/src/services/SongAudioService';
-import { PREVIEW_MAX_SECONDS } from '@/src/utils/songPlayback';
+import { PREVIEW_MAX_SECONDS } from '@/src/utils/music/songPlayback';
 
 export type PlaybackPhase = 'idle' | 'preparing' | 'playing';
 

@@ -35,10 +35,10 @@ import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/EditorDraftService';
 import { createSceneService, type SceneService } from '@/src/services/storymanagement/SceneService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 

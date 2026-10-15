@@ -17,7 +17,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 
 export interface AgendaLookupStyles {

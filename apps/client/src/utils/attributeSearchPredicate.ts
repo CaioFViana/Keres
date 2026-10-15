@@ -3,7 +3,7 @@ import type { SQL } from 'drizzle-orm';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { attributeValues, storySchemaFields } from '@/src/db/schema';
-import { extractCustomFieldId } from './customAttributeFieldMetadata';
+import { extractCustomFieldId } from './entity/customAttributeFieldMetadata';
 
 /**
  * Builds the WHERE condition for an advanced search criterion key that references a custom attribute

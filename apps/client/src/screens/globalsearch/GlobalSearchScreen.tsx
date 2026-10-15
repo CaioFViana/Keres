@@ -14,14 +14,14 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { GlobalSearchResult } from '@/src/services/storymanagement/GlobalSearchService';
 import { createGlobalSearchService } from '@/src/services/storymanagement/GlobalSearchService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import type { FavoriteFilterState } from '@/src/types/entityFilters';
-import { debounce } from '@/src/utils/debounce';
-import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
+import { debounce } from '@/src/utils/sync/debounce';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<

@@ -82,7 +82,7 @@ jest.mock('@/src/components/features/packs/SharePackModal/SharePackModal', () =>
     );
   },
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
@@ -104,7 +104,7 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

@@ -3,7 +3,7 @@ import { desc, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import type { ServerPaymentSelect, ServerSelect } from '@/src/db/schema';
 import { serverPayments } from '@/src/db/schema';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { isOfflineError } from './apiClient';
 import { paymentApi } from './PaymentApiService';
 

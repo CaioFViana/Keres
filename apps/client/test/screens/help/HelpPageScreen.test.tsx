@@ -61,7 +61,7 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#fff', text: '#111', textSecondary: '#666' } }),
 }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: (...args: unknown[]) => mockSetDocumentTitle(...args),
 }));

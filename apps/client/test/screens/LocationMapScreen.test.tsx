@@ -43,7 +43,7 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
@@ -51,19 +51,19 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('@/src/state/storyStore', () => {
+jest.mock('@/src/state/story/storyStore', () => {
   const state = { selectedStory: { id: 'story-1' } };
   return {
     __esModule: true,
     useStoryStore: (selector: (value: typeof state) => unknown) => selector(state),
   };
 });
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 const mockShowNotification = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
@@ -74,7 +74,7 @@ const mockDraftState = {
   clear: jest.fn(),
   reset: jest.fn(),
 };
-jest.mock('@/src/state/locationMapDraftStore', () => ({
+jest.mock('@/src/state/drafts/locationMapDraftStore', () => ({
   __esModule: true,
   useLocationMapDraftStore: { getState: () => mockDraftState },
 }));

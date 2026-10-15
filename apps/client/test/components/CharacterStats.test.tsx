@@ -5,7 +5,7 @@ import { CharacterStatPanel } from '@/src/components/features/stats/CharacterSta
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
 import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
-import { indexStatValues } from '@/src/utils/statValues';
+import { indexStatValues } from '@/src/utils/stats/statValues';
 import type { ModeSelect, StatSelect } from '@/src/db/schema';
 
 jest.mock('@/src/theme', () => ({
@@ -45,7 +45,7 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
 }));
 
 const mockAlert = jest.fn();
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 

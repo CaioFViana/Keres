@@ -3,9 +3,9 @@ import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import type { LocationInsert, LocationSelect, TagSelect } from '@/src/db/schema';
 import { locationRelations, locations, tagRelations, tags } from '@/src/db/schema'; // Import LocationInsert and locations
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

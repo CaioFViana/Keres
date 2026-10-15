@@ -13,12 +13,12 @@ import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { ArcsStackParamList } from '@/src/navigation/ArcsStack';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
-import { resolveEffectiveTheme } from '@/src/utils/storyArcFilter';
+import { resolveEffectiveTheme } from '@/src/utils/search/storyArcFilter';
 import {
   DEFAULT_ARC_MEDIUM,
   isArcMedium,

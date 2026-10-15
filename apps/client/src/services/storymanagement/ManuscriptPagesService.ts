@@ -7,9 +7,9 @@ import {
   readImageInfo,
 } from '@keres/shared';
 import type { AppDrizzleClient } from '@/src/db';
-import { renderSketchSvg } from '@/src/utils/sketchSvg';
-import type { SvgExportColors } from '@/src/utils/svgExport';
-import { fitRasterSize, rasterizeMapSvg } from '@/src/utils/svgRaster';
+import { renderSketchSvg } from '@/src/utils/sketch/sketchSvg';
+import type { SvgExportColors } from '@/src/utils/svg/svgExport';
+import { fitRasterSize, rasterizeMapSvg } from '@/src/state/ui/svgRaster';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { createGalleryService } from './GalleryService';
 import { createScenePageService, groupPagesByScene } from './ScenePageService';

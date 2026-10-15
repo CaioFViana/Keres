@@ -1,7 +1,7 @@
 import type { GrammaticalGender, StoryVocabularyEntityType } from '@keres/shared/entities/Story';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { resolveEffectiveVocabulary } from './effectiveVocabulary';
 import {
   agreeStoryTerm,

@@ -18,7 +18,7 @@ import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDe
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { commonDetailStyleDefs } from '@/src/theme/commonStyles';
 

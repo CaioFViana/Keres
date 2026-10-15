@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { SketchSelect } from '@/src/db/schema';
 import { saveSketchSnapshot } from '@/src/services/storymanagement/SketchSnapshotService';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useTheme } from '@/src/theme';
-import { renderSketchSvg } from '@/src/utils/sketchSvg';
-import { buildSketchFileName, deliverMapExport, deliverSvgMap } from '@/src/utils/storyTransfer';
+import { renderSketchSvg } from '@/src/utils/sketch/sketchSvg';
+import { buildSketchFileName, deliverMapExport, deliverSvgMap } from '@/src/utils/io/storyTransfer';
 
 interface UseSketchExportOptions {
   docRef: MutableRefObject<SketchDocument>;

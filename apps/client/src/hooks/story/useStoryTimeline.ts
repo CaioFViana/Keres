@@ -3,21 +3,21 @@ import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/s
 import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import {
   formatChapterUniverseDuration,
   formatSceneGap,
   formatSceneUniverseDuration,
-} from '@/src/utils/sceneTiming';
-import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
+} from '@/src/utils/scene/sceneTiming';
+import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/search/storyArcFilter';
 import {
   buildStoryTimelineFileName,
   deliverMapExport,
   exportFileLanguage,
-} from '@/src/utils/storyTransfer';
+} from '@/src/utils/io/storyTransfer';
 import type { CalendarDefinitionType } from '@keres/shared';
 import {
   calendarSecondsPerDay,
@@ -42,7 +42,7 @@ import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryCalendar } from './useStoryCalendar';
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);

@@ -10,8 +10,8 @@ import { useEntityName } from '@/src/hooks/entity/useEntityName';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import type { CommentCriticality } from '@/src/utils/commentCriticality';
-import { CRITICALITY_ICONS } from '@/src/utils/commentCriticality';
+import type { CommentCriticality } from '@/src/utils/entity/commentCriticality';
+import { CRITICALITY_ICONS } from '@/src/utils/entity/commentCriticality';
 
 interface CommentListItemProps {
   comment: CommentSelect;

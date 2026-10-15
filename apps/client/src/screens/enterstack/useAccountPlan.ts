@@ -2,7 +2,7 @@ import type { AccountPlan } from '@keres/shared';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { ServerSelect } from '@/src/db/schema';
 import { userApiService } from '@/src/services/UserApiService';
-import { PAYMENTS_CHANGED } from '@/src/utils/paymentEvents';
+import { PAYMENTS_CHANGED } from '@/src/utils/billing/paymentEvents';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,

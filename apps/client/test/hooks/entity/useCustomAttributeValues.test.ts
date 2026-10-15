@@ -28,7 +28,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useCustomAttributeValues } from '@/src/hooks/entity/useCustomAttributeValues';
 import { EntityService } from '@/src/services/EntityService';
 import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const getValuesForEntity = jest.fn();
 const fields = [

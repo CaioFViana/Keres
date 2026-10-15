@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
 
 /**
  * Sets the initial `document.title` before any screen has focused yet (e.g. during the

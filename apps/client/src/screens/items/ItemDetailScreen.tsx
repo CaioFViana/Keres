@@ -2,7 +2,7 @@ import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
@@ -41,7 +41,7 @@ import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresen
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import { createItemService } from '@/src/services/storymanagement/ItemService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';

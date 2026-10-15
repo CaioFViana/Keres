@@ -6,7 +6,10 @@ import { useOccurrenceFlash } from '@/src/hooks/nav/useOccurrenceLanding';
 import { useMentions } from '@/src/mentions/MentionContext';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { splitTextIntoMentionSegments, type MentionSegment } from '@/src/utils/entityMentions';
+import {
+  splitTextIntoMentionSegments,
+  type MentionSegment,
+} from '@/src/utils/entity/entityMentions';
 import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 
 interface DetailFieldProps {

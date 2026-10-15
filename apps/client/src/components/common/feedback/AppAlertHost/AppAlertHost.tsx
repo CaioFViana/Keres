@@ -1,13 +1,13 @@
 import React, { useCallback } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { AppAlertButton } from '@/src/state/appAlertStore';
-import { useAppAlertStore } from '@/src/state/appAlertStore';
+import type { AppAlertButton } from '@/src/state/ui/appAlertStore';
+import { useAppAlertStore } from '@/src/state/ui/appAlertStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 
 /**
- * Renders what `AppAlert.alert()` asked for (see utils/AppAlert.ts). Mounted once near the
+ * Renders what `AppAlert.alert()` asked for (see state/ui/AppAlert.ts). Mounted once near the
  * app's root (`App.tsx`), the same way as `NotificationPopup` - a single `Modal`, isolated from
  * the rest of the screen tree, so any screen can fire an alert without having to mount
  * anything locally.

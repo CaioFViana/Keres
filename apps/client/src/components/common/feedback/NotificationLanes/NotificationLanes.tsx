@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import NotificationItem from '@/src/components/common/feedback/NotificationItem/NotificationItem';
 
 /**

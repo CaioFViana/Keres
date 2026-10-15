@@ -7,7 +7,7 @@ const mockTranslate = jest.fn((key: string) => key);
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockTranslate }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 

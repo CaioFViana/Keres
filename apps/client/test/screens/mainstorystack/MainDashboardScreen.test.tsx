@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 const mockNavigate = jest.fn();
 const mockDispatch = jest.fn();
@@ -96,15 +96,15 @@ jest.mock('@/src/services/storymanagement/StoryAnalysisService', () => ({
   __esModule: true,
   createStoryAnalysisService: () => ({ analyzeStoryCheap: mockAnalyzeStoryCheap }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('@/src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/sync/syncConflictStore', () => ({
   __esModule: true,
   useSyncConflictStore: (selector: (state: { conflicts: { id: string }[] }) => unknown) =>
     selector({ conflicts: mockConflicts }),

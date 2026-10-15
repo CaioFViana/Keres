@@ -1,7 +1,7 @@
 /** @jest-environment node */
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { useManuscriptData } from '@/src/screens/narrative-elements/scenes/useManuscriptData';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const mockGetChapters = jest.fn();
 const mockGetScenes = jest.fn();

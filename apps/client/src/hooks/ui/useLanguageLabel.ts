@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getLanguageOptions } from '@/src/utils/i18n';
+import { getLanguageOptions } from '@/src/utils/format/i18n';
 
 /** Resolves a language code to its localized label (no per-code i18n keys needed). */
 export function useLanguageLabel() {

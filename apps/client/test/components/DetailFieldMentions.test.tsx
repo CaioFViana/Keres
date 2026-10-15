@@ -7,13 +7,13 @@ import {
   OccurrenceLandingContext,
 } from '@/src/hooks/nav/useOccurrenceLanding';
 import { MentionMatcherContext, MentionNavigationContext } from '@/src/mentions/MentionContext';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import {
   buildMentionMatcher,
   EMPTY_MENTION_MATCHER,
   type MentionMatcher,
   type MentionRef,
-} from '@/src/utils/entityMentions';
+} from '@/src/utils/entity/entityMentions';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

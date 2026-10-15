@@ -7,7 +7,7 @@ import {
   type MessageContact,
   MESSAGES_CHANGED,
 } from '@/src/services/MessageService';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,

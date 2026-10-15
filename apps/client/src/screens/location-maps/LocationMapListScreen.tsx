@@ -17,20 +17,20 @@ import type { LocationMapSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { filterByNameAndDescription } from '@/src/utils/filterByNameAndDescription';
+import { filterByNameAndDescription } from '@/src/utils/search/filterByNameAndDescription';
 import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
 } from '@/src/navigation/MainSystemStack';
 import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,

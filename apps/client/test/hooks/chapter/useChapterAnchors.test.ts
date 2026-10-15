@@ -9,7 +9,7 @@ const mockAnchorService = {
 };
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));

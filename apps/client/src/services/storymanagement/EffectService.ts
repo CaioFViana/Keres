@@ -2,7 +2,7 @@ import type { Effect } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { effects } from '@/src/db';
-import { createULID, getChangedFields } from '@/src/utils/entityUtils';
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

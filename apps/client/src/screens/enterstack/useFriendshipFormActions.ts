@@ -8,8 +8,8 @@ import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionSt
 import { friendshipApiService } from '@/src/services/FriendshipApiService';
 import type { FriendshipService } from '@/src/services/FriendshipService';
 import { userApiService } from '@/src/services/UserApiService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { FriendshipFormState } from './useFriendshipFormState';
 
 type FriendshipNavigation = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;

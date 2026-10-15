@@ -2,17 +2,17 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import { and, eq } from 'drizzle-orm';
 import { DrizzleContext } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import { useStoryStore } from '@/src/state/storyStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import {
   buildMentionMatcher,
   EMPTY_MENTION_MATCHER,
   type MentionableEntity,
   type MentionMatcher,
-} from '@/src/utils/entityMentions';
+} from '@/src/utils/entity/entityMentions';
 import { loadEntityOptions } from '@/src/utils/entityOptions';
-import { debounce } from '@/src/utils/debounce';
+import { debounce } from '@/src/utils/sync/debounce';
 import {
   buildAmbiguousMentionIndex,
   buildMentionBacklinkIndex,

@@ -12,8 +12,8 @@ import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { attributeValues, chapters, scenes, storySchemaFields } from '@/src/db/schema';
 import { columnsOf, getEntityTable } from '@/src/services/entityTableRegistry';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
-import { truncate } from '@/src/utils/stringUtils';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
+import { truncate } from '@/src/utils/format/stringUtils';
 import { createFavoriteService } from './FavoriteService';
 import { createStoryArcService } from './StoryArcService';
 

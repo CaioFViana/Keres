@@ -28,7 +28,7 @@ import {
   deliverSvgMap,
   pickStoryExportFile,
   type StoryImportError,
-} from '@/src/utils/storyTransfer';
+} from '@/src/utils/io/storyTransfer';
 
 const getDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
 const FileMock = File as unknown as jest.Mock;

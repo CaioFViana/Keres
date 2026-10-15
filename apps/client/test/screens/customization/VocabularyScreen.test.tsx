@@ -38,11 +38,11 @@ jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: () => ({ updateArc: mockUpdateArc }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({
     selectedStory: mockSelectedStory,

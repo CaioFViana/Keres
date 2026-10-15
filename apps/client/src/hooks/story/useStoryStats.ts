@@ -12,10 +12,10 @@ import { createModeService } from '@/src/services/storymanagement/ModeService';
 import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
 import { createStatService } from '@/src/services/storymanagement/StatService';
 import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { resolveLadder, type StatTier } from '@keres/shared/graphs/statLadder';
-import { indexStatValues, type StatValueIndex } from '@/src/utils/statValues';
+import { indexStatValues, type StatValueIndex } from '@/src/utils/stats/statValues';
 
 /**
  * Everything a stats screen needs, in a single query and refreshed by event.

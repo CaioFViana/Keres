@@ -1,7 +1,7 @@
 /** @jest-environment node */
 const mockFetchStories = jest.fn(async () => undefined);
 
-jest.mock('@/src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: { getState: () => ({ fetchStories: mockFetchStories }) },
 }));

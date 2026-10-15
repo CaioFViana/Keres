@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /** Calls `reload` when the tags of this story, or what they are attached to, change. */
 export function useTagChangeReload(storyId: string | undefined, reload: () => unknown): void {

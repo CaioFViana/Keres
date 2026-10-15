@@ -6,9 +6,9 @@ import { notes } from '@/src/db/schemas/notes';
 import { tagRelations } from '@/src/db/schemas/tagRelations';
 import type { TagSelect } from '@/src/db/schemas/tags';
 import { tags } from '@/src/db/schemas/tags'; // Import tags schema
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

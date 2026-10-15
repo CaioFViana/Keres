@@ -18,10 +18,10 @@ import { createPublicationService } from '@/src/services/PublicationService';
 import { createServerService } from '@/src/services/ServerService';
 import { compilePublishArtifacts } from '@/src/services/storymanagement/PublishCompileService';
 import { fetchServerStoryPreviews } from '@/src/services/sync/StoryTransfer';
-import { useConnectivityStore } from '@/src/state/connectivityStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { usePublishManuscript } from './usePublishManuscript';
 
 /**

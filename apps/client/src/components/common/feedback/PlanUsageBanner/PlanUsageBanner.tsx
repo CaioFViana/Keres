@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { usePlanUsageStore } from '@/src/state/planUsageStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { usePlanUsageStore } from '@/src/state/app/planUsageStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 
 /**

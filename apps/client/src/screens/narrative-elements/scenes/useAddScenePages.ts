@@ -11,7 +11,7 @@ import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { createSketchService } from '@/src/services/storymanagement/SketchService';
-import { sketchSizeForPageFormat } from '@/src/utils/sketchPageSize';
+import { sketchSizeForPageFormat } from '@/src/utils/sketch/sketchPageSize';
 
 /** What picking pictures came to: the Gallery media they are now, in the order they were chosen. */
 export interface UploadedPictures {

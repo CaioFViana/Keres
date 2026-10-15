@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
-import { usePresenceMatrixViewerStore } from '@/src/state/presenceMatrixViewerStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
 
 beforeEach(() => usePresenceMatrixViewerStore.getState().close());
 

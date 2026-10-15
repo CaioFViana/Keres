@@ -2,7 +2,7 @@ import type { AgeVerificationInfo } from '@keres/shared';
 import { useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text } from 'react-native';
-import { blocksNewAccounts } from '@/src/utils/ageVerificationRules';
+import { blocksNewAccounts } from '@/src/utils/auth/ageVerificationRules';
 import { useTheme, type ThemeColors } from '@/src/theme';
 
 export interface AgeVerificationNoticeProps {

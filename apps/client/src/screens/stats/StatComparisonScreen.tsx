@@ -16,21 +16,21 @@ import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
-import { deliverMapExport } from '@/src/utils/storyTransfer';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
 import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
 } from '@keres/shared/graphs/statRadarLayout';
 import { renderStatRadarSvg } from '@keres/shared/graphs/statRadarSvg';
-import { resolveStatValue } from '@/src/utils/statValues';
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+import { resolveStatValue } from '@/src/utils/stats/statValues';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<
   StatsStackParamList,

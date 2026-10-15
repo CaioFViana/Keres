@@ -34,7 +34,7 @@ import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useLocationMapRelations } from '@/src/screens/location-maps/useLocationMapRelations';
 import { useLocationMapCanvasActions } from '@/src/screens/location-maps/useLocationMapCanvasActions';
 import { useLocationMapExport } from '@/src/screens/location-maps/useLocationMapExport';
-import { exportFileLanguage } from '@/src/utils/storyTransfer';
+import { exportFileLanguage } from '@/src/utils/io/storyTransfer';
 import { useCanvasOverlayActions } from '@/src/hooks/canvas/useCanvasOverlayActions';
 import { useLocationMapImageUris } from '@/src/screens/location-maps/useLocationMapImageUris';
 import { useLocationMapNodeSummary } from '@/src/screens/location-maps/useLocationMapNodeSummary';
@@ -46,13 +46,13 @@ import { createGalleryService } from '@/src/services/storymanagement/GalleryServ
 import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
 import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
-import { useLocationMapDraftStore } from '@/src/state/locationMapDraftStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { removeLocationMapPoint } from '@/src/utils/locationMapContent';
+import { removeLocationMapPoint } from '@/src/utils/location-map/locationMapContent';
 const LocationMapScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();

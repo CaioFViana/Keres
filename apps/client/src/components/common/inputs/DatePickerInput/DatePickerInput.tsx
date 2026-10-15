@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import DatePickerModal from '@/src/components/common/inputs/DatePickerInput/DatePickerModal';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';

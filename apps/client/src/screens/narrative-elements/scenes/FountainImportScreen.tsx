@@ -12,12 +12,12 @@ import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBotto
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { importFountain, titleCase } from '@/src/services/storymanagement/FountainImportService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { pickTextFile } from '@/src/utils/storyTransfer';
+import { pickTextFile } from '@/src/utils/io/storyTransfer';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

@@ -54,7 +54,7 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/utils/debounce', () => ({
+jest.mock('@/src/utils/sync/debounce', () => ({
   __esModule: true,
   debounce: (fn: (value: string) => void) => {
     const debounced = (value: string) => fn(value);
@@ -62,7 +62,7 @@ jest.mock('@/src/utils/debounce', () => ({
     return debounced;
   },
 }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: (...args: unknown[]) => mockSetDocumentTitle(...args),
 }));

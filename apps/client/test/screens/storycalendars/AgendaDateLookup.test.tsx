@@ -11,7 +11,7 @@ jest.mock('react-i18next', () => ({
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { onPrimary: '#fff' } }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (...args: unknown[]) => mockUseUserSettingsStore(...args),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));

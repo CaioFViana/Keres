@@ -40,7 +40,7 @@ export const stories = sqliteTable('stories', {
     .default(false),
   /** Adults-only story: only age-verified (+18) users may be added. Owner-only on the server. */
   isNsfw: integer('is_nsfw', { mode: 'boolean' }).notNull().default(false),
-  /** Renders entity names found in the story's text as links. See `utils/entityMentions.ts`. */
+  /** Renders entity names found in the story's text as links. See `utils/entity/entityMentions.ts`. */
   autoLinkMentions: integer('auto_link_mentions', { mode: 'boolean' }).notNull().default(false),
   /** Story Analysis also reports elements that are not referenced anywhere. Opinion, so opt-in. */
   completenessChecks: integer('completeness_checks', { mode: 'boolean' }).notNull().default(false),

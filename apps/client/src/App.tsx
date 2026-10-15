@@ -22,7 +22,7 @@ import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
 import { setEditorDraftDb } from './services/EditorDraftService';
 import { restoreHostedCookieSession } from './services/HostedCookieSession';
 import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
-import { useUserSettingsStore } from './state/userSettingsStore';
+import { useUserSettingsStore } from './state/app/userSettingsStore';
 import {
   runSqliteWebSmokeProbe,
   shouldRunSqliteWebSmokeProbe,
@@ -30,9 +30,9 @@ import {
 import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
-import i18n from './utils/i18n';
-import { keepPageOutOfBackForwardCache } from './utils/pageLifecycle';
-import { isServerless } from './utils/clientFlavor';
+import i18n from './utils/format/i18n';
+import { keepPageOutOfBackForwardCache } from './utils/ui/pageLifecycle';
+import { isServerless } from './utils/platform/clientFlavor';
 
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();

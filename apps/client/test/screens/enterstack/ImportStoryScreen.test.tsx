@@ -88,7 +88,7 @@ jest.mock('@/src/services/MediaFileService', () => ({
   },
 }));
 
-jest.mock('@/src/utils/storyTransfer', () => {
+jest.mock('@/src/utils/io/storyTransfer', () => {
   class StoryImportError extends Error {
     reason: string;
     constructor(reason: string) {
@@ -102,17 +102,17 @@ jest.mock('@/src/utils/storyTransfer', () => {
   };
 });
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
-jest.mock('@/src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockStoryListState) : mockStoryListState,
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
@@ -182,7 +182,7 @@ describe('ImportStoryScreen', () => {
 
   it('maps import rejections to specific messages', async () => {
     await withSilencedConsole(['log'], async () => {
-      const { StoryImportError } = jest.requireMock('@/src/utils/storyTransfer') as {
+      const { StoryImportError } = jest.requireMock('@/src/utils/io/storyTransfer') as {
         StoryImportError: new (reason: string) => Error;
       };
       const view = await render(<ImportStoryScreen />);

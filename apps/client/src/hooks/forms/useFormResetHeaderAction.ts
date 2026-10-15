@@ -1,7 +1,7 @@
 import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 type UseFormResetHeaderActionOptions = {
   isEditing: boolean;

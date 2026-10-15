@@ -5,7 +5,7 @@ import type { TagSelect } from '@/src/db/schemas/tags';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { truncate } from '@/src/utils/stringUtils';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 

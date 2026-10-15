@@ -168,11 +168,11 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory, setSelectedStory: mockSetSelectedStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
@@ -190,7 +190,7 @@ jest.mock('@/src/theme', () => ({
     setTheme: mockApplyTheme,
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

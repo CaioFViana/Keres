@@ -2,8 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import {
   buildRouteChronology,
   calendarSecondsPerDay,

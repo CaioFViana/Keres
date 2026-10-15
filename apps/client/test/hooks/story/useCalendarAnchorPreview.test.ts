@@ -2,7 +2,7 @@ const mockDb = {};
 const mockStoryState = { selectedStory: { id: 'story' } };
 const mockRows = [{ id: 'story-start', kind: 'story-start' }];
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));
@@ -18,7 +18,7 @@ jest.mock('@/src/services/storymanagement/ChapterAnchorService', () => ({
   __esModule: true,
   createChapterAnchorService: jest.fn(),
 }));
-jest.mock('@/src/utils/calendarAnchorPreview', () => ({
+jest.mock('@/src/utils/entity/calendarAnchorPreview', () => ({
   __esModule: true,
   buildCalendarAnchorPreview: jest.fn(() => mockRows),
 }));
@@ -28,7 +28,7 @@ import { useCalendarAnchorPreview } from '@/src/hooks/story/useCalendarAnchorPre
 import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { buildCalendarAnchorPreview } from '@/src/utils/calendarAnchorPreview';
+import { buildCalendarAnchorPreview } from '@/src/utils/entity/calendarAnchorPreview';
 
 const definition = { secondsPerMinute: 60, minutesPerHour: 60, hoursPerDay: 24 } as never;
 

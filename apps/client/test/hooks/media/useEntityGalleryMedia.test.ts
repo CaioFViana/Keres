@@ -1,7 +1,7 @@
 /** @jest-environment node */
 jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
-jest.mock('@/src/state/storyStore', () => ({ useStoryStore: jest.fn() }));
-jest.mock('@/src/state/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
+jest.mock('@/src/state/story/storyStore', () => ({ useStoryStore: jest.fn() }));
+jest.mock('@/src/state/app/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
 jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   createGalleryService: jest.fn(),
 }));
@@ -28,9 +28,9 @@ import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const gallery = { getGalleriesForOwner: jest.fn(), getGalleriesByStoryId: jest.fn() };
 const relation = { linkGalleryToOwner: jest.fn(), unlinkGalleryFromOwner: jest.fn() };

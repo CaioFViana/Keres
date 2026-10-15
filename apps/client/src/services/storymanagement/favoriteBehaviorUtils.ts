@@ -1,6 +1,6 @@
 import type { FavoriteEntityType } from '@keres/shared';
 import type { AppDrizzleClient } from '@/src/db';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { createFavoriteService } from './FavoriteService';
 
 export async function normalizeFavoriteUpdate<T extends { isFavorite?: boolean }>(

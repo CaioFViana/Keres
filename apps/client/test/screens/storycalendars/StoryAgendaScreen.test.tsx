@@ -110,12 +110,12 @@ jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: mockSelectedStory.current }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ dateDisplayFormat: 'iso' }),

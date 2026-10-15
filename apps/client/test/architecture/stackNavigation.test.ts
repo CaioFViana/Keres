@@ -18,7 +18,7 @@ const relativeOf = (path: string) => relative(SOURCE_ROOT, path).replace(/\\/g, 
 
 /** Files that are allowed to name another stack: the helper itself and the places that build the navigators. */
 const MAY_NAME_A_STACK = (path: string) =>
-  path === 'utils/stackNavigation.ts' || path.startsWith('navigation/');
+  path === 'utils/nav/stackNavigation.ts' || path.startsWith('navigation/');
 
 /**
  * `navigate('SomeStack', { screen })` from a screen of another stack is the classic back-button bug: that

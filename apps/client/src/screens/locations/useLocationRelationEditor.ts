@@ -3,8 +3,11 @@ import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
 import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { computeAncestorIds, computeDescendantIds } from '@/src/utils/locationMapRelations';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import {
+  computeAncestorIds,
+  computeDescendantIds,
+} from '@/src/utils/location-map/locationMapRelations';
 
 export type LocationRelationEditKind = 'parent' | 'child' | 'connection';
 

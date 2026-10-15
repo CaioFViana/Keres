@@ -5,7 +5,7 @@ import type { SceneSelect } from '@/src/db/schema';
 import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
 import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useSceneArcMedium } from '@/src/hooks/scene/useSceneArcMedium';
 
 export type ScreenplayPlace = {

@@ -10,7 +10,7 @@ const mockStoryState = {
 const mockGetArcsForStory = jest.fn();
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));
@@ -25,7 +25,7 @@ jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

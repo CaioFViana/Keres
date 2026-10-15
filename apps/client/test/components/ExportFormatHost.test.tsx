@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import ExportFormatHost from '@/src/components/features/export/ExportFormatHost';
-import { useExportFormatPromptStore } from '@/src/state/exportFormatPromptStore';
+import { useExportFormatPromptStore } from '@/src/state/ui/exportFormatPromptStore';
 
-jest.mock('@/src/utils/exportFormatPrompt', () =>
-  jest.requireActual('@/src/utils/exportFormatPrompt'),
+jest.mock('@/src/state/ui/exportFormatPrompt', () =>
+  jest.requireActual('@/src/state/ui/exportFormatPrompt'),
 );
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 const mockT = (key: string) => key;
@@ -25,7 +25,7 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 });
 
 // eslint-disable-next-line import/first
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 describe('export format chooser', () => {
   afterEach(() => useExportFormatPromptStore.getState().answer(null));

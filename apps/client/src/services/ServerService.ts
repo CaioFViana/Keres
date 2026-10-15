@@ -9,15 +9,15 @@ import {
   storyInvitations,
   storyPublications,
 } from '@/src/db/schema';
-import { useConnectivityStore } from '@/src/state/connectivityStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryListStore } from '@/src/state/storyListStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import type { Create } from '@/src/utils/entityUtils';
-import { prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { isJwtExpired } from '@/src/utils/jwtUtils'; // Added
-import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/serverUrl';
+import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { isJwtExpired } from '@/src/utils/auth/jwtUtils'; // Added
+import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/auth/serverUrl';
 import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { mediaFileService } from './MediaFileService';

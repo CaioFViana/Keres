@@ -85,13 +85,13 @@ jest.mock('@/src/hooks/chapter/useChapterAnchors', () => ({
 }));
 
 const mockShowNotification = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: mockShowNotification }),
 }));
 
 const mockAlert = jest.fn();
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 

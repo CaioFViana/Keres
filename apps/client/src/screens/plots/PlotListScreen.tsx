@@ -15,8 +15,8 @@ import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSo
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
 import type { PlotSelect } from '@/src/db/schema';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import type { AdvancedSearchCriteria } from '@/src/utils/advancedSearchCriteria';
-import { plotMatches } from '@/src/utils/plotSearch';
+import type { AdvancedSearchCriteria } from '@/src/utils/search/advancedSearchCriteria';
+import { plotMatches } from '@/src/utils/search/plotSearch';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
@@ -24,7 +24,7 @@ import type {
   MainSystemDrawerParamList,
   PlotsStackParamList,
 } from '@/src/navigation/MainSystemStack';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import GuideAnchor from '@/src/guides/GuideAnchor';

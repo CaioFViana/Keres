@@ -136,16 +136,16 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1', dateDisplayFormat: 'iso' }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: mockStory.current, setSelectedStory: mockSetSelectedStory }),
@@ -169,7 +169,7 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

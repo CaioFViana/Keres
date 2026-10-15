@@ -3,8 +3,8 @@ import { validateRouteSteps } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, RouteInsert, RouteStepInsert } from '@/src/db';
 import { choices, routeSteps, routes, scenes, stories } from '@/src/db/schema';
-import { createULID, getChangedFields } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

@@ -12,7 +12,7 @@ import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/Col
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import Button from '@/src/components/common/controls/Button/Button';
 import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 interface LocationRelationManagerProps {
   currentLocationId: string;

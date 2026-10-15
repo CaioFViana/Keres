@@ -85,7 +85,7 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -141,7 +141,7 @@ jest.mock('@/src/services/ServerTermsService', () => ({
   fetchServerPrivacy: (...args: unknown[]) => mockFetchServerPrivacy(...args),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));

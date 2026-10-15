@@ -12,10 +12,10 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useMessageInbox } from '@/src/screens/enterstack/useMessageInbox';
 import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
 import type { InboxEntry, MessageContact } from '@/src/services/MessageService';
-import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
+import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { type ConversationPeer, conversationKey } from '@/src/utils/conversationKey';
+import { type ConversationPeer, conversationKey } from '@/src/utils/entity/conversationKey';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type MessageInboxNavigationProp = NativeStackNavigationProp<

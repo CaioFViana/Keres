@@ -4,8 +4,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import type { AttributeValueInsert, AttributeValueSelect } from '@/src/db/schema';
 import { attributeValues, storySchemaFields } from '@/src/db/schema';
-import { prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

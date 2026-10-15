@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
-import { getEntityTypeBadge } from '@/src/utils/entityTypeBadge';
-import { planUsageLevel } from '@/src/utils/planUsage';
+import { getEntityTypeBadge } from '@/src/utils/entity/entityTypeBadge';
+import { planUsageLevel } from '@/src/utils/billing/planUsage';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 type SortKey = 'name' | 'count';

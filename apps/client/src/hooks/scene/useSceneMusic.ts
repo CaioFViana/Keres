@@ -5,7 +5,7 @@ import type { SceneMusicSelect } from '@/src/db/schema';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { createSceneMusicService } from '@/src/services/storymanagement/SceneMusicService';
 import { createSongService } from '@/src/services/storymanagement/SongService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /** What a piece of music points at: a song of the story, an audio file or a link of the Gallery. */
 export type SceneMusicTargetKind = 'song' | 'audio' | 'link';

@@ -21,7 +21,7 @@ import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
 import type {
   LocationMapChildRelation,
   LocationMapParentRelation,
-} from '@/src/utils/locationMapRelations';
+} from '@/src/utils/location-map/locationMapRelations';
 
 export interface LocationMapNodeConnection {
   relationId: string;

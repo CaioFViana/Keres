@@ -54,7 +54,7 @@ jest.mock('@/src/services/OperationLogService', () => ({
   __esModule: true,
   createOperationLogService: () => ({ getOperationLogById: mockGetOperationLogById }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
@@ -79,7 +79,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import OperationLogDetailScreen from '@/src/screens/operationlog/OperationLogDetailScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeLog = (overrides = {}) => ({
   id: 'log-1',

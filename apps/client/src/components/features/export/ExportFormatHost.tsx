@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useExportFormatPromptStore } from '@/src/state/exportFormatPromptStore';
+import { useExportFormatPromptStore } from '@/src/state/ui/exportFormatPromptStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

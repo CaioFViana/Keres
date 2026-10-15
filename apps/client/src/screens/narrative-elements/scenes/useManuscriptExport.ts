@@ -20,7 +20,7 @@ import {
 import { containsCjk } from '@keres/shared/manuscript/compile/export/manuscriptPdfFonts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import {
   CJK_PACK_SIZE_LABEL,
   cjkPackState,
@@ -56,15 +56,15 @@ import {
   loadManuscriptPages,
 } from '@/src/services/storymanagement/ManuscriptPagesService';
 import { songPrintOf } from '@/src/components/features/manuscript/export/songPrintOf';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
 import { useManuscriptData } from '@/src/screens/narrative-elements/scenes/useManuscriptData';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
-import { exportFileLanguage } from '@/src/utils/storyTransfer';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/search/storyArcFilter';
+import { exportFileLanguage } from '@/src/utils/io/storyTransfer';
 
 // What there is while there is no story: the same empty values every time, so nothing draws again for them.
 const NO_LOCATIONS: LocationSelect[] = [];

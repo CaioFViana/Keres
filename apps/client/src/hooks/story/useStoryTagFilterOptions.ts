@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { TagSelect } from '@/src/db/schema';
 import { createTagService } from '@/src/services/storymanagement/TagService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /**
  * The story's tags as the options of a list's tag filter. Fetched here rather than by the list hook,

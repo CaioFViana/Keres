@@ -66,19 +66,19 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: () => undefined,
 }));
 jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: () => undefined }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   useDocumentTitle: () => undefined,
 }));
 // Same stability reason as the translation mock above: this is an effect dependency.
-jest.mock('@/src/state/notificationStore', () => {
+jest.mock('@/src/state/ui/notificationStore', () => {
   const state = { showNotification: jest.fn() };
   return {
     __esModule: true,
     useNotificationStore: (selector: (value: typeof state) => unknown) => selector(state),
   };
 });
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: '01ARZ3NDEKTSV4RRFFQ69G5FUS' }),
 }));
@@ -94,7 +94,7 @@ jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
 });
 
 const mockAlert = jest.fn();
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

@@ -7,7 +7,7 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';

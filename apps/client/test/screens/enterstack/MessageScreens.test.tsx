@@ -454,7 +454,7 @@ describe('MessageInboxScreen', () => {
 });
 
 describe('MessageInboxScreen: which conversation has news', () => {
-  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/ui/unseenMessagesStore');
 
   beforeEach(() => {
     mockUseMessageInbox.mockReturnValue(inboxState());

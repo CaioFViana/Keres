@@ -2,7 +2,7 @@ import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
@@ -21,7 +21,7 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { ChapterType } from '@keres/shared';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
@@ -34,12 +34,12 @@ import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { useChapterStore } from '@/src/state/chapterStore';
+import { useChapterStore } from '@/src/state/story/chapterStore';
 import type { LocationService } from '@/src/services/storymanagement/LocationService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
 import type { SceneService } from '@/src/services/storymanagement/SceneService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
 import { type ThemeColors } from '@/src/theme';
@@ -51,7 +51,7 @@ import {
   formatChapterUniverseDuration,
   formatSceneUniverseDuration,
   hasSceneUniverseDuration,
-} from '@/src/utils/sceneTiming';
+} from '@/src/utils/scene/sceneTiming';
 import type { Location } from '@keres/shared/entities/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';

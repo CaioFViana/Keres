@@ -32,13 +32,13 @@ import {
   offersFrom,
   playProductForOffer,
   type PlanOffer,
-} from '@/src/utils/paymentPlans';
-import { planLimitLines } from '@/src/utils/planLimitLines';
-import { playDriver } from '@/src/utils/playPurchase';
+} from '@/src/utils/billing/paymentPlans';
+import { planLimitLines } from '@/src/utils/billing/planLimitLines';
+import { playDriver } from '@/src/utils/billing/playPurchase';
 import {
   devicePaymentCapabilities,
   visiblePaymentMethods,
-} from '@/src/utils/paymentMethodVisibility';
+} from '@/src/utils/billing/paymentMethodVisibility';
 
 type ServerPlanRouteProp = RouteProp<ServerManagementStackParamList, 'ServerPlan'>;
 type ServerPlanNavigationProp = NativeStackNavigationProp<

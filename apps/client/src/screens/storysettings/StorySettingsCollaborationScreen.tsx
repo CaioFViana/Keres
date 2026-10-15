@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useLoadedStory } from './useLoadedStory';
 import { useResetToStorySelection } from './useResetToStorySelection';
 import { useStorySettingsSave } from './useStorySettingsSave';

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AppDrizzleClient } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import apiClient, { apiUrl } from './apiClient';
 import { hostedApiOrigin, usesHttpOnlyCookieSession } from './browserCookieSession';
 import { createServerService } from './ServerService';

@@ -110,7 +110,7 @@ jest.mock('@/src/services/sync/appSyncEngine', () => ({
 }));
 
 const mockShowNotification = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) => {
     const state = { showNotification: mockShowNotification };
     return selector ? selector(state) : state;
@@ -124,7 +124,7 @@ jest.mock('@/src/services/StoryInvitationService', () => ({
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
 
-jest.mock('@/src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) => {
     const state = { fetchStories: mockFetchStories };
     return selector ? selector(state) : state;
@@ -134,13 +134,13 @@ jest.mock('@/src/state/storyListStore', () => ({
 const mockStoryState: {
   current: { selectedStory: { id: string; serverId: string | null } | null };
 } = { current: { selectedStory: null } };
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (state: unknown) => unknown) =>
     selector ? selector(mockStoryState.current) : mockStoryState.current,
 }));
 
 const mockRefreshConflicts = jest.fn(async () => {});
-jest.mock('@/src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/sync/syncConflictStore', () => ({
   useSyncConflictStore: { getState: () => ({ refresh: mockRefreshConflicts }) },
 }));
 
@@ -159,7 +159,7 @@ const mockUserSettings: {
     setActiveServer: jest.fn(),
   },
 };
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const hook = (selector?: (state: unknown) => unknown) =>
     selector ? selector(mockUserSettings.current) : mockUserSettings.current;
   return {
@@ -169,7 +169,7 @@ jest.mock('@/src/state/userSettingsStore', () => {
 
 const mockEEOn = jest.fn();
 const mockEEOff = jest.fn();
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: {
     on: (...args: unknown[]) => mockEEOn(...args),
     off: (...args: unknown[]) => mockEEOff(...args),

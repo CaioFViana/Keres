@@ -22,12 +22,12 @@ import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
 import type { OperationLogStackParamList } from '@/src/navigation/MainSystemStack'; // Corrected import path
 import { EntityService } from '@/src/services/EntityService';
 import { createOperationLogService } from '@/src/services/OperationLogService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */

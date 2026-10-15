@@ -131,7 +131,7 @@ jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('@/src/state/noteStore', () => ({
+jest.mock('@/src/state/story/noteStore', () => ({
   __esModule: true,
   useNoteStore: jest.fn(),
 }));

@@ -6,8 +6,8 @@ import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table alias
 import type { AppDrizzleClient } from '@/src/db';
 import type { AdvancedSearchCriteria } from '@/src/types/entityFilters';
 import { characterRelations, characters } from '@/src/db';
-import { createULID, getChangedFields } from '@/src/utils/entityUtils'; // Import for changed fields in update
-import { entityEventEmitter } from '@/src/utils/EventEmitter'; // Import for event emission
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils'; // Import for changed fields in update
+import { entityEventEmitter } from '@/src/state/events/EventEmitter'; // Import for event emission
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

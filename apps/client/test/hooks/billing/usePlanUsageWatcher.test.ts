@@ -6,11 +6,11 @@ jest.mock('@/src/services/PlanUsageService', () => ({
   __esModule: true,
   refreshPlanUsage: (...args: unknown[]) => mockRefresh(...args),
 }));
-jest.mock('@/src/state/planUsageStore', () => ({
+jest.mock('@/src/state/app/planUsageStore', () => ({
   __esModule: true,
   usePlanUsageStore: { getState: () => ({ clear: mockClear }) },
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (event: string, listener: (...args: unknown[]) => void) => {

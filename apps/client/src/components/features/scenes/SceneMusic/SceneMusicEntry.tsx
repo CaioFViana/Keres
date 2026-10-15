@@ -4,7 +4,7 @@ import DetailField from '@/src/components/common/display/DetailField/DetailField
 import type { SceneSelect } from '@/src/db/schema';
 import { useSceneArcMedium } from '@/src/hooks/scene/useSceneArcMedium';
 import { useSceneMusicCount } from '@/src/hooks/scene/useSceneMusic';
-import { sceneMusicWordKey } from '@/src/utils/sceneMusicWords';
+import { sceneMusicWordKey } from '@/src/utils/scene/sceneMusicWords';
 
 interface SceneMusicEntryProps {
   scene: Pick<SceneSelect, 'id' | 'storyId' | 'chapterId'>;

@@ -5,15 +5,18 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
 import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
-import { capturePointer, releasePointer } from '@/src/utils/pointerCapture';
-import { getBoardPinAppearance, type BoardCardAppearance } from '@/src/utils/boardPinAppearance';
+import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
+import {
+  getBoardPinAppearance,
+  type BoardCardAppearance,
+} from '@/src/utils/board/boardPinAppearance';
 import {
   boardNodeSize,
   galleryDisplayPath,
   galleryHasImage,
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMedia,
-} from '@/src/utils/boardLayout';
+} from '@/src/utils/board/boardLayout';
 import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
 
 const DRAG_THRESHOLD = 5;

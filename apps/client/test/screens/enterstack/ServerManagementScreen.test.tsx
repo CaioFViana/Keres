@@ -226,7 +226,7 @@ describe('ServerManagementScreen', () => {
 });
 
 describe('ServerManagementScreen: which server has news', () => {
-  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/ui/unseenMessagesStore');
 
   beforeEach(() => {
     jest.clearAllMocks();

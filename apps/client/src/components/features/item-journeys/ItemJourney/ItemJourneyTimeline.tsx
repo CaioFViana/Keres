@@ -13,7 +13,7 @@ import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { orderItemJourneysByNarrative } from '@/src/utils/itemJourneyOrder';
+import { orderItemJourneysByNarrative } from '@/src/utils/entity/itemJourneyOrder';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

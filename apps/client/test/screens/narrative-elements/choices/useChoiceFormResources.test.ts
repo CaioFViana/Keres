@@ -13,7 +13,7 @@ jest.mock('@/src/db', () => ({
 jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
   createChoiceService: (...args: unknown[]) => mockCreateChoiceService(...args),
 }));
-jest.mock('@/src/state/sceneStore', () => ({
+jest.mock('@/src/state/story/sceneStore', () => ({
   useSceneStore: () => ({
     scenes: [{ id: 'scene-1' }],
     fetchScenes: mockFetchScenes,
@@ -21,7 +21,7 @@ jest.mock('@/src/state/sceneStore', () => ({
     initializeService: mockInitScene,
   }),
 }));
-jest.mock('@/src/state/itemStore', () => ({
+jest.mock('@/src/state/story/itemStore', () => ({
   useItemStore: () => ({
     items: [{ id: 'item-1' }],
     fetchItems: mockFetchItems,

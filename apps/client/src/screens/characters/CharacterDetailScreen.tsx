@@ -1,5 +1,5 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
@@ -41,12 +41,12 @@ import { createItemService } from '@/src/services/storymanagement/ItemService'; 
 import type { LocationService } from '@/src/services/storymanagement/LocationService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore'; // Import useUserSettingsStore
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore'; // Import useUserSettingsStore
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { CharacterDetailContent } from './CharacterDetailContent';
 import { createCharacterDetailMutations } from './createCharacterDetailMutations';

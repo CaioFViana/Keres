@@ -14,7 +14,7 @@ jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
     removeRelation: (...args: unknown[]) => mockRemoveRelation(...args),
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({

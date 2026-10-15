@@ -6,11 +6,11 @@ import type {
   RunStoryAnalysisOptions,
   StoryAnalysisFinding,
   StoryAnalysisInput,
-} from '@/src/utils/storyAnalysisChecks';
+} from '@/src/utils/analysis/storyAnalysisChecks';
 import {
   buildCheapStoryAnalysisFindings,
   buildStoryAnalysisReport,
-} from '@/src/utils/storyAnalysisChecks';
+} from '@/src/utils/analysis/storyAnalysisChecks';
 
 export interface StoryAnalysisReport {
   findings: StoryAnalysisFinding[];

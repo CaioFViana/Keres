@@ -11,10 +11,10 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { isServerless } from '@/src/utils/clientFlavor';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
 import { useResetToStorySelection } from './useResetToStorySelection';
 
 type Entry = {

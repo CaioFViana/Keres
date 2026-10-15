@@ -10,9 +10,9 @@ import {
   startCheckout,
   verifyPlayPurchase,
 } from '@/src/services/PaymentService';
-import { playDriver } from '@/src/utils/playPurchase';
-import { PlayPurchaseError, type PlayPurchaseTicket } from '@/src/utils/playPurchaseTypes';
-import { offerForPlayProduct } from '@/src/utils/paymentPlans';
+import { playDriver } from '@/src/utils/billing/playPurchase';
+import { PlayPurchaseError, type PlayPurchaseTicket } from '@/src/utils/billing/playPurchaseTypes';
+import { offerForPlayProduct } from '@/src/utils/billing/paymentPlans';
 import { useEntityEventSubscriptions } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 /** How often an open payment is asked about while the person is on the screen: the provider may be slow to tell. */

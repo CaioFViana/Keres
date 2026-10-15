@@ -222,7 +222,7 @@ jest.mock('@shopify/react-native-skia', () => {
 // Every canvas export asks SVG or PNG through a modal host that does not exist under Jest. Screens
 // and hooks resolve the choice through this module, so the default answer is SVG; a test that cares
 // about the choice (or a cancel) overrides it per case.
-jest.mock('@/src/utils/exportFormatPrompt', () => ({
+jest.mock('@/src/state/ui/exportFormatPrompt', () => ({
   __esModule: true,
   chooseExportFormat: jest.fn(async () => 'svg'),
 }));

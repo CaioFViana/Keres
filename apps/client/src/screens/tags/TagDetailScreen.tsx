@@ -1,6 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
@@ -29,7 +29,7 @@ import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { EntityService } from '@/src/services/EntityService'; // Import EntityService
 import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService'; // Import createTagRelationService
 import { createTagService } from '@/src/services/storymanagement/TagService'; // Import createTagService
-import { useStoryStore } from '@/src/state/storyStore'; // Import useStoryStore
+import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
 import type { ThemeColors } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

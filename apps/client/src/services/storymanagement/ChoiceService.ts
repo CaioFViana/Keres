@@ -5,9 +5,9 @@ import type { ChoiceInsert, ChoiceSelect } from '@/src/db/schemas/choices';
 import { choices } from '@/src/db/schemas/choices';
 import { scenes } from '@/src/db/schemas/scenes';
 import { stories } from '@/src/db/schemas/stories';
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

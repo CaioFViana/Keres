@@ -4,8 +4,8 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
 import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
 import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 export type CharacterDetailMutationsProps = {
   characterRelationServiceRef: RefObject<CharacterRelationServiceInterface | null>;

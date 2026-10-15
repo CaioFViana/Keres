@@ -14,7 +14,7 @@ jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
 }));
 
 let mockUserId: string | null = 'local-user';
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: { getState: () => ({ userId: mockUserId }) },
 }));

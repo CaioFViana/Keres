@@ -5,8 +5,8 @@ import { isOfflineError } from '@/src/services/apiClient';
 import { createServerService } from '@/src/services/ServerService';
 import type { ReportType } from '@keres/shared';
 import { storyReportApi } from '@/src/services/StoryReportApiService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 
 const statusOf = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;

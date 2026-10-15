@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 
 /**
  * The save of a screen that does not throw into the screen: a failure is logged under the screen's name

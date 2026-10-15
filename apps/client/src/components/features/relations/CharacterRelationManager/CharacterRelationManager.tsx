@@ -8,13 +8,13 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import Button from '@/src/components/common/controls/Button/Button';
 import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 interface CharacterRelationManagerProps {
   characterRelations: CharacterRelation[];

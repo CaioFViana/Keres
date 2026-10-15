@@ -30,26 +30,26 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => mockStoryService),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: { getState: () => mockStoryState },
 }));
-jest.mock('@/src/state/themeStore', () => ({
+jest.mock('@/src/state/ui/themeStore', () => ({
   __esModule: true,
   useThemeStore: { getState: () => mockThemeState },
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: { getState: () => mockUserState },
 }));
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { changeLanguage: jest.fn() },
 }));
 
 import { createClientSettings, getClientSettings } from '@/src/services/ClientSettingsService';
 import { prepareShowcase } from '@/src/showcase/prepareShowcase';
-import i18n from '@/src/utils/i18n';
+import i18n from '@/src/utils/format/i18n';
 
 const db = { marker: 'db' } as any;
 const request = { story: 'alice', stack: 'PlotsStack', theme: 'light', language: 'en' } as any;

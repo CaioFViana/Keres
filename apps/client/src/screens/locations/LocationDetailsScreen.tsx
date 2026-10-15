@@ -2,7 +2,7 @@ import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import { useLocationRelationActions } from './useLocationRelationActions';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
@@ -58,9 +58,9 @@ import type { LocationRelationService } from '@/src/services/storymanagement/Loc
 import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import createSceneService
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {

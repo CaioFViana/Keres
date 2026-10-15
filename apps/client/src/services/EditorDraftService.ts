@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { editorDrafts } from '@/src/db/schema';
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 
 /**
  * Client-only work-in-progress store: scene prose, canvas drawings, unfinished form queues.

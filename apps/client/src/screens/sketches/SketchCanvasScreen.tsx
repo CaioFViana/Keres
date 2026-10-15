@@ -51,12 +51,16 @@ import { useSketchSelection } from '@/src/screens/sketches/useSketchSelection';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { SketchStackParamList } from '@/src/navigation/MainSystemStack';
 import { createSketchService } from '@/src/services/storymanagement/SketchService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useSketchDraftStore } from '@/src/state/sketchDraftStore';
-import { isObjectTool, useSketchToolStore, type SketchTool } from '@/src/state/sketchToolStore';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useSketchDraftStore } from '@/src/state/drafts/sketchDraftStore';
+import {
+  isObjectTool,
+  useSketchToolStore,
+  type SketchTool,
+} from '@/src/state/drafts/sketchToolStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 

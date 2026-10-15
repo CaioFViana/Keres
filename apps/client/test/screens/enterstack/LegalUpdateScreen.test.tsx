@@ -41,7 +41,7 @@ jest.mock('@/src/legal/clientTermsAcceptance', () => ({
   setAcceptedClientLegal: (...args: unknown[]) => mockSetAccepted(...args),
 }));
 
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   useDocumentTitle: (...args: unknown[]) => mockUseDocumentTitle(...args),
 }));
 

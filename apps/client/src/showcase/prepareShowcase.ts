@@ -4,10 +4,10 @@ import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
 import { createExampleStoryService } from '@/src/services/storymanagement/ExampleStoryService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import type { Story } from '@keres/shared/entities/Story';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useThemeStore } from '@/src/state/themeStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import i18n from '@/src/utils/i18n';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import i18n from '@/src/utils/format/i18n';
 import type { ShowcaseRequest } from './showcaseRequest';
 
 /**

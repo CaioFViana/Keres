@@ -28,17 +28,20 @@ import type { StoryAnalysisReport } from '@/src/services/storymanagement/StoryAn
 import { createStoryAnalysisService } from '@/src/services/storymanagement/StoryAnalysisService';
 import { createStoryIndexService } from '@/src/services/storymanagement/StoryIndexService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
-import type { StoryAnalysisCategory, StoryAnalysisFinding } from '@/src/utils/storyAnalysisChecks';
-import { StoryAnalysisCancelledError } from '@/src/utils/storyAnalysisChecks';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
+import type {
+  StoryAnalysisCategory,
+  StoryAnalysisFinding,
+} from '@/src/utils/analysis/storyAnalysisChecks';
+import { StoryAnalysisCancelledError } from '@/src/utils/analysis/storyAnalysisChecks';
 
 /**
  * The structural analysis report: it is not search, it is finding what the writer would hardly notice

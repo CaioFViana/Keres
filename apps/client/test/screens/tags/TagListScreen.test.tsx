@@ -133,7 +133,7 @@ jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('@/src/state/tagStore', () => ({
+jest.mock('@/src/state/story/tagStore', () => ({
   __esModule: true,
   useTagStore: jest.fn(),
 }));

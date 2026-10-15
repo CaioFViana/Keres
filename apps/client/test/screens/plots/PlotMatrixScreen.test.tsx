@@ -104,7 +104,7 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
   };
 });
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -116,11 +116,11 @@ jest.mock('@/src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (s: any) => any) => selector({ showNotification: mockNotify }),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const state = { userId: 'user-1', exportFormat: 'svg' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
@@ -140,7 +140,7 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({ term: (key: string) => key }),
 }));
 
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   deliverMapExport: (...a: any[]) => mockDeliverExport(...a),
   buildBoardMapFileName: (a: string, b: string) => `${a}-${b}.svg`,
 }));

@@ -1,6 +1,6 @@
 import { Directory, File } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
-import { getClientFlavor } from '@/src/utils/clientFlavor';
+import { getClientFlavor } from '@/src/utils/platform/clientFlavor';
 import {
   deleteFile as deleteStoredBytes,
   existsSync as storedBytesExist,
@@ -17,7 +17,7 @@ import {
   loadCjkMatrix,
 } from '@/src/services/cjkFontPack';
 
-jest.mock('@/src/utils/clientFlavor', () => ({ getClientFlavor: jest.fn() }));
+jest.mock('@/src/utils/platform/clientFlavor', () => ({ getClientFlavor: jest.fn() }));
 jest.mock('@/src/services/webMediaStore', () => ({
   deleteFile: jest.fn(),
   existsSync: jest.fn(),

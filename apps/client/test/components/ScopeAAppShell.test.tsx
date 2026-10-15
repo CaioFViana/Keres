@@ -5,9 +5,9 @@ import { render } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
 import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
 
-jest.mock('@/src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
+jest.mock('@/src/utils/nav/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
 
 const mockColors = {
   primary: '#0000ff',

@@ -118,7 +118,7 @@ jest.mock('@/src/db', () => {
   };
 });
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));

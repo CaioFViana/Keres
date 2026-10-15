@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import type { ClientFlavor } from '@/src/utils/clientFlavor';
+import type { ClientFlavor } from '@/src/utils/platform/clientFlavor';
 import WelcomeHero from './WelcomeHero';
 import {
   WELCOME_TITLE_KEYS,

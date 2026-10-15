@@ -16,9 +16,9 @@ jest.mock('@/src/theme', () => ({
 
 import { act, render } from '@testing-library/react-native';
 import PlanUsageBanner from '@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';
-import { usePlanUsageStore } from '@/src/state/planUsageStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { evaluatePlanUsage } from '@/src/utils/planUsage';
+import { usePlanUsageStore } from '@/src/state/app/planUsageStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { evaluatePlanUsage } from '@/src/utils/billing/planUsage';
 
 const plan = { maxEntitiesPerStory: 100, maxEntitiesTotal: 1000 };
 const show = (storyUsed: number, totalUsed = 0, storyId = 'story-1') =>

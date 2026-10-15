@@ -28,11 +28,11 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn(() => mockStoryState),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
@@ -70,7 +70,7 @@ jest.mock('@/src/services/storyInvitationActions', () => ({
   __esModule: true,
   closeStoryInvitation: (...args: unknown[]) => mockCloseInvitation(...args),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
@@ -93,7 +93,7 @@ jest.mock('@/src/services/sync/appSyncEngine', () => ({
   __esModule: true,
   syncEngine: { uploadNewStoryToServer: jest.fn() },
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -371,7 +371,7 @@ describe('useStoryServerCollaboration', () => {
   });
 
   it('reads the collaborators again when the server says they changed, for this story only', async () => {
-    const { entityEventEmitter } = jest.requireActual('@/src/utils/EventEmitter');
+    const { entityEventEmitter } = jest.requireActual('@/src/state/events/EventEmitter');
     mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
     const view = await renderHook(() => useStoryServerCollaboration('story-1'));
     await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));

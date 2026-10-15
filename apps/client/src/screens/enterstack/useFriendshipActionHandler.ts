@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ServerSelect } from '@/src/db/schema';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 export interface FriendshipActionOptions {
   /**

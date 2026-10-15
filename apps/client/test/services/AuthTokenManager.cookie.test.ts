@@ -7,7 +7,7 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(),
   deleteItemAsync: jest.fn(),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => mockUserSettings },
 }));
 jest.mock('@/src/services/browserCookieSession', () => ({

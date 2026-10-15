@@ -22,11 +22,11 @@ jest.mock('@/src/services/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
-jest.mock('@/src/state/themeStore', () => ({
+jest.mock('@/src/state/ui/themeStore', () => ({
   __esModule: true,
   useThemeStore: jest.fn(),
 }));
@@ -62,8 +62,8 @@ jest.mock('@/src/legal/clientTermsAcceptance', () => ({
 import AppNavigator from '@/src/navigation/AppNavigator';
 import { useDrizzle } from '@/src/db';
 import { getClientSettings } from '@/src/services/ClientSettingsService';
-import { useThemeStore } from '@/src/state/themeStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
 import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
 import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';

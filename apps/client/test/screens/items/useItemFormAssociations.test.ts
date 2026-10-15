@@ -8,7 +8,7 @@ let mockCharacters: { id: string; name: string; isDeleted: boolean }[] = [];
 jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-jest.mock('@/src/state/characterStore', () => ({
+jest.mock('@/src/state/story/characterStore', () => ({
   useCharacterStore: () => ({
     characters: mockCharacters,
     fetchCharacters: mockFetchCharacters,

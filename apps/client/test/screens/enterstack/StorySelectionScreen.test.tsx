@@ -104,7 +104,7 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -127,27 +127,27 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
   }),
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
-jest.mock('@/src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockStoryListState) : mockStoryListState,
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockStoryState) : mockStoryState,
 }));
 
-jest.mock('@/src/state/summaryStore', () => ({
+jest.mock('@/src/state/story/summaryStore', () => ({
   useSummaryStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockSummaryState) : mockSummaryState,
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));

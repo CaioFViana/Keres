@@ -14,11 +14,11 @@ import {
   readEntityFormSecondaryDraft,
   type EntityFormSecondaryDraft,
 } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { createULID } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 export interface UseEntityRelationsOptions {
   /** The entity these relations hang off, e.g. `'WorldRule'`. */

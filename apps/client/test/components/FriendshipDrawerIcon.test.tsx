@@ -24,7 +24,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 import { act, render } from '@testing-library/react-native';
 import FriendshipDrawerIcon from '@/src/components/features/messages/FriendshipDrawerIcon';
-import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
+import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 
 beforeEach(() => {
   useUnseenMessagesStore.getState().reset();

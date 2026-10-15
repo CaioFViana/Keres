@@ -25,7 +25,7 @@ import type {
   PlaybackVoice,
 } from '@/src/hooks/music/useSongPlayback';
 import { useTheme } from '@/src/theme';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import MelodyPlayerCard, { TOUCH, useMelodyVoice } from './MelodyPlayerCard';
 import PartTuneEditor from './PartTuneEditor';
 import GuideAnchor from '@/src/guides/GuideAnchor';

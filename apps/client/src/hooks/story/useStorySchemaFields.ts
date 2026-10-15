@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { StorySchemaFieldSelect } from '@/src/db/schema';
 import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 /**

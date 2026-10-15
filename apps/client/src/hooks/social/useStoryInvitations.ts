@@ -5,7 +5,7 @@ import {
   STORY_INVITATIONS_CHANGED,
   type ServerStoryInvitation,
 } from '@/src/services/StoryInvitationService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /**
  * The open story invitations of every registered server, as last synced - read from the local copy,

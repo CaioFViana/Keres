@@ -11,12 +11,12 @@ jest.mock('react-i18next', () => ({
 }));
 const mockT = (key: string) => key;
 const mockTranslation = { t: mockT };
-jest.mock('@/src/state/unseenMessagesStore', () => ({
+jest.mock('@/src/state/ui/unseenMessagesStore', () => ({
   __esModule: true,
   useHasUnseenAdminMessages: () => mockUnseenAdmin,
   useHasUnseenMessages: () => mockUnseenMessages,
 }));
-jest.mock('@/src/utils/clientFlavor', () => ({
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
   __esModule: true,
   isServerless: () => mockServerless,
 }));

@@ -4,7 +4,7 @@ jest.mock('@/src/services/ClientSettingsService', () => ({
 }));
 
 import { updateClientSettings } from '@/src/services/ClientSettingsService';
-import { useThemeStore } from '@/src/state/themeStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
 
 describe('previewDarkMode', () => {
   beforeEach(() => {

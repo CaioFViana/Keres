@@ -2,9 +2,9 @@ import type { CommentEntityType } from '@keres/shared';
 import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, CommentSelect } from '@/src/db';
 import { comments } from '@/src/db';
-import { createULID } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import i18n from '@/src/utils/i18n';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import i18n from '@/src/utils/format/i18n';
 import {
   getUserIdForOperation,
   recordLocalOperationSync,

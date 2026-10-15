@@ -15,13 +15,13 @@ import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { ArcsStackParamList } from '@/src/navigation/ArcsStack';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 const StoryArcListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });

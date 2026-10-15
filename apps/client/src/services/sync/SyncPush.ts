@@ -9,8 +9,8 @@ import type {
 import { MAX_SYNC_BATCH_SIZE, safeParseStoryUpdate } from '@keres/shared';
 import { and, asc, eq, inArray, isNull, max } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { withOpLogLock } from '@/src/utils/opLogMutex';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import { trimSyncedOperationLogs } from '@/src/utils/syncUtils';
 import { columnsOf, getEntityTable, toEntityColumns } from '@/src/services/entityTableRegistry';
 import { raiseConflictsServerVersion, withoutDerivedPosition } from './syncConflictHelpers';

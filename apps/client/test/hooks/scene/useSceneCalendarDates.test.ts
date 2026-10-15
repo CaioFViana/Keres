@@ -5,11 +5,11 @@ const mockSceneService = { getAllByStoryId: jest.fn() };
 const mockChapterService = { getAllByStoryId: jest.fn() };
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn((selector) => selector(mockSettings)),
 }));

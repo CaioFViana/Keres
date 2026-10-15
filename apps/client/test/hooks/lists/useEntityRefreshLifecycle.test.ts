@@ -3,7 +3,7 @@ import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 describe('entity refresh lifecycle', () => {
   it('runs the initial loader on mount and again only when its callback changes', async () => {

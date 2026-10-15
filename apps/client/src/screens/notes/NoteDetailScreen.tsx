@@ -2,7 +2,7 @@ import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
@@ -40,7 +40,7 @@ import { EntityService } from '@/src/services/EntityService'; // Import EntitySe
 import { createNoteService } from '@/src/services/storymanagement/NoteService';
 import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
 import { createTagService } from '@/src/services/storymanagement/TagService';
-import { useStoryStore } from '@/src/state/storyStore'; // Import useStoryStore
+import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
 import { useTheme } from '@/src/theme';
 
 import type { NotesScreenNavigationProp } from './NoteListScreen';

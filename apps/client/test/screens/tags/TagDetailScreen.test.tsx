@@ -133,7 +133,7 @@ jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getRelationsForTag: mockGetRelationsForTag }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
@@ -147,7 +147,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import TagDetailScreen from '@/src/screens/tags/TagDetailScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeTag = (overrides = {}) => ({
   id: 'tag-1',

@@ -74,7 +74,7 @@ jest.mock('@/src/services/AuthTokenManager', () => ({
   },
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: {
     getState: () => ({ setActiveServer: (...args: unknown[]) => mockSetActiveServer(...args) }),
   },

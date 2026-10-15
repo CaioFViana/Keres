@@ -13,7 +13,7 @@ import ScreenTitle from '@/src/components/layout/ScreenTitle/ScreenTitle';
 import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');

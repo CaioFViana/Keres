@@ -10,13 +10,13 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { deliverMapExport } from '@/src/utils/storyTransfer';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 /**
  * How much of the story each plot covers. **Coverage**, not participation: a scene may

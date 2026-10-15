@@ -24,7 +24,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: { showContextualHelp: boolean }) => unknown) =>
     selector({ showContextualHelp: true }),
@@ -42,7 +42,7 @@ import { renderHook } from '@testing-library/react-native';
 import { BackHandler, Platform } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });

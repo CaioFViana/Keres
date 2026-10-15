@@ -15,7 +15,7 @@ import {
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 import { statSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildStoryAnalysisReport } from '@/src/utils/storyAnalysisChecks';
+import { buildStoryAnalysisReport } from '@/src/utils/analysis/storyAnalysisChecks';
 
 let database: TestDatabase;
 

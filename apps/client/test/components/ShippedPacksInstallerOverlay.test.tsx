@@ -49,7 +49,7 @@ jest.mock('@/src/screens/packs/ShippedPacksContent', () => {
 });
 
 import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
-import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 
 beforeEach(() => {
   useShippedPacksInstallerStore.setState({ open: false, lastInstalledPackId: null });

@@ -6,8 +6,8 @@ jest.mock('react-native-safe-area-context', () => ({
 
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const mockRootDispatch = jest.fn();
 const mockSetSelectedStory = jest.fn();
@@ -64,7 +64,7 @@ jest.mock('react-i18next', () => {
   return {
     __esModule: true,
     useTranslation: () => ({ t }),
-    // `utils/i18n.ts` calls `i18n.use(initReactI18next)`; without the export the
+    // `utils/format/i18n.ts` calls `i18n.use(initReactI18next)`; without the export the
     // module crashes with "undefined module" whenever a screen pulls in `syncUtils`.
     initReactI18next: { type: '3rdParty', init: jest.fn() },
   };
@@ -78,7 +78,7 @@ jest.mock('@/src/theme', () => ({
   hexToRgb: () => ({ r: 0, g: 0, b: 0 }),
   rgbToHsv: () => ({ h: 0, s: 0, v: 0 }),
 }));
-jest.mock('@/src/state/storyStore', () => {
+jest.mock('@/src/state/story/storyStore', () => {
   const useStoryStore: any = jest.fn((selector) => {
     const state = { selectedStory: { title: 'A jornada', type: 'linear' } };
     return selector ? selector(state) : state;

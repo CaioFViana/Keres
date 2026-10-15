@@ -19,7 +19,7 @@ jest.mock('@/src/db', () => ({
 jest.mock('@/src/services/storymanagement/SceneService', () => ({
   createSceneService: (...args: unknown[]) => mockCreateSceneService(...args),
 }));
-jest.mock('@/src/state/chapterStore', () => ({
+jest.mock('@/src/state/story/chapterStore', () => ({
   useChapterStore: () => ({
     chapters: [{ id: 'chapter-1' }],
     fetchChapters: mockFetchChapters,
@@ -27,7 +27,7 @@ jest.mock('@/src/state/chapterStore', () => ({
     initializeService: mockInitChapter,
   }),
 }));
-jest.mock('@/src/state/locationStore', () => ({
+jest.mock('@/src/state/story/locationStore', () => ({
   useLocationStore: () => ({
     locations: [{ id: 'location-1' }],
     fetchLocations: mockFetchLocations,
@@ -35,7 +35,7 @@ jest.mock('@/src/state/locationStore', () => ({
     initializeService: mockInitLocation,
   }),
 }));
-jest.mock('@/src/state/characterStore', () => ({
+jest.mock('@/src/state/story/characterStore', () => ({
   useCharacterStore: () => ({
     characters: [{ id: 'character-1' }],
     fetchCharacters: mockFetchCharacters,
@@ -43,7 +43,7 @@ jest.mock('@/src/state/characterStore', () => ({
     initializeService: mockInitCharacter,
   }),
 }));
-jest.mock('@/src/state/itemStore', () => ({
+jest.mock('@/src/state/story/itemStore', () => ({
   useItemStore: () => ({
     items: [{ id: 'item-1' }],
     fetchItems: mockFetchItems,

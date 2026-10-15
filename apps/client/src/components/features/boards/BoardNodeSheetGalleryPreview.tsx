@@ -8,7 +8,7 @@ import {
   galleryDisplayPath,
   galleryHasImage,
   type BoardGalleryMedia,
-} from '@/src/utils/boardLayout';
+} from '@/src/utils/board/boardLayout';
 
 interface Props {
   /** The gallery's media, when the sheet's pin is a Gallery pin - otherwise nothing renders. */

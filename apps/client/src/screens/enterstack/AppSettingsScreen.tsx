@@ -43,20 +43,20 @@ import {
   downloadCjkPack,
 } from '@/src/services/cjkFontPack';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
-import { useGuideStore } from '@/src/state/guideStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useGuideStore } from '@/src/state/ui/guideStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { resetAllClientStores } from '@/src/state/resetAllClientStores';
-import { useThemeStore } from '@/src/state/themeStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useMusicTools } from '@/src/hooks/music/useMusicTools';
-import { useMusicToolsStore } from '@/src/state/musicToolsStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { isServerless } from '@/src/utils/clientFlavor';
-import i18n, { getLanguageOptions } from '@/src/utils/i18n';
-import { normalizeLocalUsername } from '@/src/utils/localUsername';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
+import i18n, { getLanguageOptions } from '@/src/utils/format/i18n';
+import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   SettingsStackParamList,

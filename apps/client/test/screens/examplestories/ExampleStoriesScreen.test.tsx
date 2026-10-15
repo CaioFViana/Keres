@@ -81,15 +81,15 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: (...args: unknown[]) => mockCreateStoryService(...args),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('@/src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: () => ({ fetchStories: mockFetchStoryList }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));

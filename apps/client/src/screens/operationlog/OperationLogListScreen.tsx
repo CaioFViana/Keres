@@ -15,10 +15,10 @@ import type {
   MainSystemDrawerParamList,
   OperationLogStackParamList,
 } from '@/src/navigation/MainSystemStack'; // Use MainSystemDrawerParamList
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { entityEventEmitter } from '@/src/utils/EventEmitter'; // Import entityEventEmitter
+import { entityEventEmitter } from '@/src/state/events/EventEmitter'; // Import entityEventEmitter
 
 // Redefine OperationLogScreenNavigationProp as CompositeNavigationProp
 export type OperationLogScreenNavigationProp = CompositeNavigationProp<

@@ -42,7 +42,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -54,7 +54,7 @@ jest.mock('@/src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (s: any) => any) => {
     const state = { userId: 'user-1', exportFormat: 'svg' };
     return typeof selector === 'function' ? selector(state) : state;

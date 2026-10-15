@@ -74,7 +74,7 @@ import WorldRuleDetailScreen from '@/src/screens/worldrules/WorldRuleDetailScree
 import WorldRuleFormScreen from '@/src/screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '@/src/screens/worldrules/WorldRuleListScreen';
 import { showcaseInitialRoute } from '@/src/showcase/showcaseRequest';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 
 /**
  * The main drawer's nested stacks: one navigator per drawer section (characters, plots,

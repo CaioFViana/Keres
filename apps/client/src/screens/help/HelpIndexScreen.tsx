@@ -20,8 +20,8 @@ import { createHelpSearchIndex, searchHelp } from '@/src/help/search';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { debounce } from '@/src/utils/debounce';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { debounce } from '@/src/utils/sync/debounce';
+import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
 
 type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;
 

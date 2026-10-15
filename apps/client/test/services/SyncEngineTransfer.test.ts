@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 const mockShowNotification = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));

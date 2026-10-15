@@ -12,7 +12,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';

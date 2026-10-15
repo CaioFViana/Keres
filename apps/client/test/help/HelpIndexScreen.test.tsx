@@ -23,9 +23,9 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
-jest.mock('@/src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
+jest.mock('@/src/utils/nav/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
 
-jest.mock('@/src/utils/debounce', () => ({
+jest.mock('@/src/utils/sync/debounce', () => ({
   debounce: (callback: (...args: any[]) => void) => {
     const immediate = (...args: any[]) => callback(...args);
     immediate.cancel = jest.fn();

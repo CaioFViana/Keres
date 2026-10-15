@@ -13,9 +13,9 @@ import type { ExampleStoryEntry, ExampleStoryLanguage } from '@/src/exampleStori
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { createExampleStoryService } from '@/src/services/storymanagement/ExampleStoryService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryListStore } from '@/src/state/storyListStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { layout } from '@/src/theme/layout';

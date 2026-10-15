@@ -9,7 +9,7 @@ import EntityRelationList from '@/src/components/common/display/EntityRelationLi
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import { MentionMatcherContext, MentionNavigationContext } from '@/src/mentions/MentionContext';
-import { EMPTY_MENTION_MATCHER } from '@/src/utils/entityMentions';
+import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');

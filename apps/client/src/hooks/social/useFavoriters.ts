@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import { servers, stories } from '@/src/db/schema';
 import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import type { ResolvedUserProfile } from './useUserProfileResolver';
 import { useUserProfileResolver } from './useUserProfileResolver';

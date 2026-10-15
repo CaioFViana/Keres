@@ -11,7 +11,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 
 interface Props {
   noteRelations: NoteRelation[];

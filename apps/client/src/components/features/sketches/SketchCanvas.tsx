@@ -20,10 +20,10 @@ import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/Skia
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
 import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
-import type { SketchTool } from '@/src/state/sketchToolStore';
+import type { SketchTool } from '@/src/state/drafts/sketchToolStore';
 import { useTheme } from '@/src/theme';
 import type { ErasePreview } from '@/src/hooks/sketch/useSketchDrawing';
-import { visibleCanvasStamps } from '@/src/utils/canvasOverlayStamps';
+import { visibleCanvasStamps } from '@/src/utils/canvas/canvasOverlayStamps';
 import SketchInputLayer, {
   SKETCH_HANDLE_SCREEN,
   SKETCH_KNOB_SCREEN,

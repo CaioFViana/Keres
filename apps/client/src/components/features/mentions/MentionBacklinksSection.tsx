@@ -1,6 +1,6 @@
 import { getEntityAppearance, SEE_ALSO_ENTITY_TYPES } from '@keres/shared';
 import type { SeeAlsoEntityType } from '@keres/shared';
-import type { NavigableEntityType } from '@/src/utils/entityNavigation';
+import type { NavigableEntityType } from '@/src/utils/entity/entityNavigation';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,9 +13,9 @@ import { useSeeAlsoRelations } from '@/src/hooks/relations/useSeeAlsoRelations';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useAmbiguousMentions, useMentionBacklinks } from '@/src/mentions/MentionContext';
 import type { AmbiguousMention } from '@/src/mentions/mentionBacklinks';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import type { MentionableEntity } from '@/src/utils/entityMentions';
+import type { MentionableEntity } from '@/src/utils/entity/entityMentions';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 

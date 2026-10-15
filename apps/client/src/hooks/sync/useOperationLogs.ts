@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle, worldRules } from '@/src/db';
 import type { OperationLogSelect } from '@/src/db/schema';
 import { createOperationLogService } from '@/src/services/OperationLogService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 interface UseOperationLogsOptions {

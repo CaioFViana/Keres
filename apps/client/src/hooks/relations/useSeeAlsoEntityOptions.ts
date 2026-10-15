@@ -13,7 +13,7 @@ import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelec
 import { useDrizzle, worldRules } from '@/src/db';
 import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/SeeAlsoRelationService';
 import { loadEntityOptions } from '@/src/utils/entityOptions';
-import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 

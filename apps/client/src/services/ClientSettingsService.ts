@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, ClientSettingsInsert, ClientSettingsSelect } from '@/src/db';
 import { schema } from '@/src/db';
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 
 export async function getClientSettings(
   db: AppDrizzleClient,

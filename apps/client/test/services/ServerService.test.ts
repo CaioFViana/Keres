@@ -12,7 +12,7 @@ import {
   ServerUrlAlreadyRegisteredError,
 } from '@/src/services/ServerService';
 import { mediaFileService } from '@/src/services/MediaFileService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

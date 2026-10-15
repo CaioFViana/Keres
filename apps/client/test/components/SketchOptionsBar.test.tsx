@@ -4,7 +4,7 @@ import SketchOptionsBar, {
   type SketchSelectionActions,
 } from '@/src/components/features/sketches/SketchOptionsBar';
 import { useSketchCompact } from '@/src/hooks/sketch/useSketchCompact';
-import { useSketchToolStore } from '@/src/state/sketchToolStore';
+import { useSketchToolStore } from '@/src/state/drafts/sketchToolStore';
 
 jest.mock('@/src/hooks/sketch/useSketchCompact', () => ({
   ...jest.requireActual('@/src/hooks/sketch/useSketchCompact'),

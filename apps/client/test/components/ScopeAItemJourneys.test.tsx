@@ -54,7 +54,7 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate }),
 }));
 
-jest.mock('@/src/utils/itemJourneyOrder', () => ({
+jest.mock('@/src/utils/entity/itemJourneyOrder', () => ({
   orderItemJourneysByNarrative: (journeys: unknown[]) => journeys,
 }));
 

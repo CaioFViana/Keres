@@ -2,9 +2,9 @@ import type { FavoriteBehavior, FavoriteEntityType } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { favorites, stories } from '@/src/db/schema';
-import { createULID } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import i18n from '@/src/utils/i18n';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import i18n from '@/src/utils/format/i18n';
 import { recordLocalOperationSync, runLocalWrite, StoryReadOnlyError } from '@/src/utils/syncUtils';
 import { createServerService } from '@/src/services/ServerService';
 

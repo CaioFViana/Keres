@@ -16,7 +16,7 @@ import type { StoryPlan } from '@keres/shared';
 import type { StoryEntityCounts } from '@/src/services/storymanagement/StoryEntityCountService';
 import { createStoryEntityCountService } from '@/src/services/storymanagement/StoryEntityCountService';
 import { createStoryPlanService } from '@/src/services/StoryPlanService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';

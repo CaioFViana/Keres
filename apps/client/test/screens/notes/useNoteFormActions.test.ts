@@ -22,7 +22,7 @@ jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
 jest.mock('@/src/services/storymanagement/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({

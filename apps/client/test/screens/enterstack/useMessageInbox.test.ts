@@ -12,11 +12,11 @@ jest.mock('@/src/services/MessageService', () => ({
   MESSAGES_CHANGED: 'messages_changed',
   createMessageService: () => mockService,
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (event: string, listener: (...args: unknown[]) => void) => {

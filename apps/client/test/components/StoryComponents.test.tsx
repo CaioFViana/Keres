@@ -25,7 +25,7 @@ jest.mock('@/src/theme', () => ({
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
-  // `utils/i18n.ts` calls `i18n.use(initReactI18next)`; without the export the
+  // `utils/format/i18n.ts` calls `i18n.use(initReactI18next)`; without the export the
   // module crashes with "undefined module" (StoryFieldsForm pulls it in).
   initReactI18next: { type: '3rdParty', init: jest.fn() },
 }));

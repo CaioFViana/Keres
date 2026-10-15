@@ -2,12 +2,12 @@ import { act, render } from '@testing-library/react-native';
 import { themes } from '@keres/shared';
 import { Text } from 'react-native';
 
-jest.mock('@/src/state/themeStore', () => ({
+jest.mock('@/src/state/ui/themeStore', () => ({
   __esModule: true,
   useThemeStore: jest.fn(),
 }));
 
-import { useThemeStore } from '@/src/state/themeStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useTheme } from '@/src/theme/ThemeContext';
 import { ThemeProvider } from '@/src/theme/ThemeProvider';
 

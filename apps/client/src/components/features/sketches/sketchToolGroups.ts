@@ -1,6 +1,6 @@
 import type { SketchBrushId } from '@keres/shared';
 import type { Ionicons } from '@expo/vector-icons';
-import type { SketchTool } from '@/src/state/sketchToolStore';
+import type { SketchTool } from '@/src/state/drafts/sketchToolStore';
 
 type Glyph = keyof typeof Ionicons.glyphMap;
 

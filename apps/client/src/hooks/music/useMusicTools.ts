@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useMusicToolsStore } from '@/src/state/musicToolsStore';
+import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
 
 /** Whether the music tools are on (chords, sheet, accompaniment, files). Reads what was kept the first time. */
 export function useMusicTools(): boolean {

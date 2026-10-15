@@ -6,7 +6,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { SceneMusicView } from '@/src/hooks/scene/useSceneMusic';
 import { useTheme } from '@/src/theme';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 interface SceneMusicCardProps {
   view: SceneMusicView;

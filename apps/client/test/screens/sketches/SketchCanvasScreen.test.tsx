@@ -6,7 +6,7 @@ import {
   type SketchDocument,
 } from '@keres/shared';
 import SketchCanvasScreen from '@/src/screens/sketches/SketchCanvasScreen';
-import { useSketchToolStore } from '@/src/state/sketchToolStore';
+import { useSketchToolStore } from '@/src/state/drafts/sketchToolStore';
 
 const mockGoBack = jest.fn();
 const mockNotify = jest.fn();
@@ -122,26 +122,26 @@ jest.mock('@/src/components/features/sketches/sketchRaster', () => ({
   sampleRasterColor: () => '#336699',
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = { selectedStory: { id: 'story-1' } };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const state = { userId: 'user-1', exportFormat: 'svg' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
   (useUserSettingsStore as any).getState = () => state;
   return { useUserSettingsStore };
 });
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (s: any) => any) => {
     const state = { showNotification: mockNotify };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('@/src/state/sketchDraftStore', () => ({
+jest.mock('@/src/state/drafts/sketchDraftStore', () => ({
   useSketchDraftStore: {
     getState: () => ({ hydrate: mockHydrate, remember: mockRemember }),
   },
@@ -171,12 +171,12 @@ jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   createGalleryService: () => ({}),
 }));
 jest.mock('@/src/services/MediaFileService', () => ({ mediaFileService: {} }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   buildSketchFileName: () => 'sketch.svg',
   deliverMapExport: jest.fn(),
   deliverSvgMap: jest.fn(),
 }));
-jest.mock('@/src/utils/svgRaster', () => ({
+jest.mock('@/src/state/ui/svgRaster', () => ({
   fitRasterSize: () => ({ width: 10, height: 10 }),
   rasterizeMapSvg: jest.fn(),
 }));
@@ -235,8 +235,8 @@ describe('SketchCanvasScreen', () => {
       useBackButtonHandler: jest.Mock;
     };
     const { useHeaderBackActionStore } = jest.requireActual(
-      '@/src/state/headerBackActionStore',
-    ) as typeof import('@/src/state/headerBackActionStore');
+      '@/src/state/ui/headerBackActionStore',
+    ) as typeof import('@/src/state/ui/headerBackActionStore');
     await open();
     const onBack = useBackButtonHandler.mock.calls.at(-1)?.[0].onBack as () => void;
 

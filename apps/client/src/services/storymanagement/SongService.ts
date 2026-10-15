@@ -3,8 +3,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import type { SongInsert, SongSelect } from '@/src/db/schema';
 import { songs } from '@/src/db/schema';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

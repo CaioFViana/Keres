@@ -17,7 +17,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { packApiService, type RemotePack } from '@/src/services/PackApiService';
 import { createServerService } from '@/src/services/ServerService';
 import { createPackService } from '@/src/services/storymanagement/PackService';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { layout } from '@/src/theme/layout';

@@ -132,7 +132,7 @@ jest.mock('@/src/hooks/scene/useSceneCalendarDates', () => ({
   useSceneCalendarDates: () => ({ dateForScene: () => null }),
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));

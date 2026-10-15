@@ -3,10 +3,10 @@ const mockNotify = jest.fn();
 const mockGetUserByTag = jest.fn();
 const mockSendFriendRequest = jest.fn();
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
 jest.mock('@/src/services/UserApiService', () => ({

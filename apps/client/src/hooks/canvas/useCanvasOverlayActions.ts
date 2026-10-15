@@ -18,7 +18,7 @@ import {
   type OverlayDrawTool,
   type OverlayInteractionMode,
 } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
-import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvas/canvasDragBounds';
 
 const MIN_RECT_WORLD = 8;
 /** The icon a fresh stamp carries until its sheet picks another. */

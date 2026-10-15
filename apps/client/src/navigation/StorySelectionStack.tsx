@@ -9,7 +9,7 @@ import ServerDrawerIcon from '@/src/components/features/messages/ServerDrawerIco
 import StorySelectionMenu from '@/src/components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
 import ResizableDrawerContent from '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
-import { isServerless } from '@/src/utils/clientFlavor';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
 import SettingsScreen from '@/src/screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '@/src/screens/enterstack/ChangePasswordScreen';
 import CreditsScreen from '@/src/screens/enterstack/CreditsScreen';

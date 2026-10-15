@@ -6,7 +6,7 @@ import type {
 } from '@keres/shared/utils/storyZip';
 import { File } from 'expo-file-system';
 import { mediaFileService } from '@/src/services/MediaFileService';
-import { StoryImportError } from './StoryImportError';
+import { StoryImportError } from './io/StoryImportError';
 
 export type BuildZipResult = BuildStoryZipResult;
 export type ExtractedZipMedia = ExtractedStoryZipMedia;

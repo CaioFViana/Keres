@@ -4,10 +4,10 @@ import { and, desc, eq, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ServerService } from '@/src/services/ServerService';
-import { entityEventEmitter } from './EventEmitter';
-import i18n from './i18n';
-import { createULID } from './entityUtils';
-import { withOpLogLock } from './opLogMutex';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import i18n from './format/i18n';
+import { createULID } from './entity/entityUtils';
+import { withOpLogLock } from './sync/opLogMutex';
 
 /** Thrown when a story-content mutation is attempted by a user with only reader access. */
 export class StoryReadOnlyError extends Error {

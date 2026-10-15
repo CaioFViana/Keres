@@ -22,8 +22,8 @@ import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSeco
 import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';

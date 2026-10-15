@@ -13,7 +13,7 @@ jest.mock('@/src/services/PublicationService', () => ({ createPublicationService
 jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: jest.fn(),
 }));
-jest.mock('@/src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   useStoryListStore: { getState: jest.fn() },
 }));
 const mockSyncInvitations = jest.fn(async () => undefined);
@@ -27,7 +27,7 @@ import { createFriendshipService } from '@/src/services/FriendshipService';
 import { createPublicationService } from '@/src/services/PublicationService';
 import { ServerRealtimeService } from '@/src/services/ServerRealtimeService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useStoryListStore } from '@/src/state/storyListStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
 
 const mockClient = {
   post: jest.fn(),
@@ -299,7 +299,7 @@ describe('catalog-driven resubscription', () => {
 
 describe('payments.changed', () => {
   it('tells whoever shows the plan which server changed, and does nothing else', async () => {
-    const { entityEventEmitter } = jest.requireActual('@/src/utils/EventEmitter');
+    const { entityEventEmitter } = jest.requireActual('@/src/state/events/EventEmitter');
     const listener = jest.fn();
     entityEventEmitter.on('payments_changed', listener);
     const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
@@ -509,7 +509,7 @@ describe('subscriptions, failures and reconnects', () => {
   });
 
   it('tells whoever shows the collaborators that they changed, with the story and the server', async () => {
-    const { entityEventEmitter } = jest.requireActual('@/src/utils/EventEmitter');
+    const { entityEventEmitter } = jest.requireActual('@/src/state/events/EventEmitter');
     const heard = jest.fn();
     entityEventEmitter.on('story_collaborators_changed', heard);
     const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);

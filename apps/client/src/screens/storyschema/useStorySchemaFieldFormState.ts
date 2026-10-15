@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { StorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 type UseStorySchemaFieldFormStateOptions = {
   initialFieldId?: string;

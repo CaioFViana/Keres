@@ -5,9 +5,9 @@ import { worldRules } from '@/src/db';
 import { tagRelations } from '@/src/db/schemas/tagRelations';
 import { tags } from '@/src/db/schemas/tags'; // Import tags schema
 import type { WorldRuleWithTags } from '@/src/db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

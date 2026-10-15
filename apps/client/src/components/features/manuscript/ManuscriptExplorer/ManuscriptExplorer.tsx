@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { readCopiedPassage } from '@/src/utils/copiedPassage';
+import { readCopiedPassage } from '@/src/utils/io/copiedPassage';
 import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
 import { useSceneBodyComments } from '@/src/hooks/scene/useSceneBodyComments';
 import { useStoryNavigatorData } from '@/src/hooks/story/useStoryNavigatorData';

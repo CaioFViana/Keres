@@ -4,8 +4,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, PlotSceneInsert } from '@/src/db';
 import { plotScenes } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import { createULID, getChangedFields } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

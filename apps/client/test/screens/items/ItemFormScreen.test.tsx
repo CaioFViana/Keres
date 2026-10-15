@@ -280,11 +280,11 @@ jest.mock('@/src/screens/items/useItemFormActions', () => ({
     seeAlsoManagerRef: mockSeeAlsoManagerRef,
   }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory.current }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));

@@ -3,9 +3,9 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { servers, storyInvitations } from '@/src/db/schema';
 import type { ServerSelect } from '@/src/db/schema';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import i18n from '@/src/utils/i18n';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import i18n from '@/src/utils/format/i18n';
 import { isOfflineError } from './apiClient';
 import { storyInvitationApi } from './StoryInvitationApiService';
 

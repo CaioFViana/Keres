@@ -64,7 +64,7 @@ jest.mock('@/src/services/storymanagement/PackService', () => ({
     importRemotePack: mockImportRemotePack,
   }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),

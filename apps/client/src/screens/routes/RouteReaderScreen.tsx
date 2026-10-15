@@ -13,7 +13,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 

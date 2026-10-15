@@ -8,7 +8,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { PlotSelect } from '@/src/db/schema';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { truncate } from '@/src/utils/stringUtils';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 interface PlotListItemProps {
   plot: PlotSelect;

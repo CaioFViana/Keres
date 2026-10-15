@@ -1,4 +1,4 @@
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 export type GalleryAddKind = 'playable' | 'document' | 'link';
 

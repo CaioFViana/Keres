@@ -85,19 +85,19 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
 });
 
 let mockStory: any = null;
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: any) => unknown) => selector({ selectedStory: mockStory }),
 }));
 
 const mockNotify = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: any) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const hook = (selector: (state: any) => unknown) => selector({ exportFormat: 'svg' });
   return {
     __esModule: true,
@@ -115,7 +115,7 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
 }));
 
 const mockDeliver = jest.fn();
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));

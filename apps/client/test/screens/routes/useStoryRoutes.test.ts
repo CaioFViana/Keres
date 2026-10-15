@@ -48,7 +48,7 @@ import { createEffectService } from '@/src/services/storymanagement/EffectServic
 import { createRouteService } from '@/src/services/storymanagement/RouteService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const route = { id: 'route', storyId: 'story', isDeleted: false } as never;
 const sceneA = { id: 'scene-a', storyId: 'story', isDeleted: false } as never;

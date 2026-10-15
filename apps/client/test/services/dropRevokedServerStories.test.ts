@@ -8,19 +8,19 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => ({ discardCollaboratedCopy: mockDiscard })),
 }));
-jest.mock('@/src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: { getState: () => ({ fetchStories: mockFetchStories }) },
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { t: (key: string, params?: { title: string }) => `${key}:${params?.title}` },
 }));

@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/SeeAlsoRelationService';
 import { createSeeAlsoRelationService } from '@/src/services/storymanagement/SeeAlsoRelationService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 /**
  * One-touch resolution for ambiguous-name suggestions: links the source entity to the

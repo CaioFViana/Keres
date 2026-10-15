@@ -1,4 +1,4 @@
-import { useThemeStore } from '@/src/state/themeStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
 import { themes } from '@keres/shared';
 import type { ThemeColors } from '@keres/shared';
 

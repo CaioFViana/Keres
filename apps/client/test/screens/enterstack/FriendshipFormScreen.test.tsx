@@ -72,15 +72,15 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));

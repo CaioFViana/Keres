@@ -1,0 +1,36 @@
+import type { MediaType } from '@keres/shared';
+import type { GallerySelect } from '@/src/db/schemas/galleries';
+import type { GalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createEntityStore } from '@/src/state/lib/createEntityStore';
+
+export type { FavoriteFilterState } from '@/src/types/entityFilters';
+
+/**
+ * The gallery does not filter by tags, so the store factory's generic `activeFilterTags` slot carries
+ * the selected media types here ('image' | 'video' | 'audio'). Reusing the slot is what allows using
+ * `useEntityListScreen` and the shared filter bar without a parallel path just for this screen.
+ */
+export const useGalleryStore = createEntityStore<'galleries', GallerySelect, GalleryService>({
+  collectionKey: 'galleries',
+  favoriteEntityType: 'Gallery',
+  createService: createGalleryService,
+  fetchEntities: (service, p) =>
+    service.getGalleriesByStoryId(p.storyId, {
+      searchTerm: p.searchTerm,
+      mediaTypes: p.activeFilterTags as MediaType[],
+      favoriteFilterState: p.favoriteFilterState,
+      sortBy: p.activeSort,
+      sortDirection: p.sortDirection,
+    }),
+  updateFavorite: (service, userId, id, isFavorite) =>
+    service.updateGalleryFavoriteStatus(userId, id, isFavorite),
+  changeEvent: 'gallery_changed',
+  persistKey: 'gallery-storage',
+  defaultSort: 'createdAt',
+  defaultSortDirection: 'desc',
+  errorMessages: {
+    fetch: 'Failed to load gallery media.',
+    toggleFavorite: 'Failed to update media favorite status.',
+  },
+});

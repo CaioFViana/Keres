@@ -57,14 +57,14 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
     checkLinearCompatibility: mockCheckLinearCompatibility,
   }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = { selectedStory: mockSelectedStory, setSelectedStory: mockSetSelectedStory };
     return selector ? selector(state) : state;
   },
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
@@ -74,7 +74,7 @@ jest.mock('@/src/theme', () => ({
     colors: { error: '#f00', text: '#111', textSecondary: '#555', card: '#fff', border: '#ddd' },
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAppAlert(...args) },
 }));

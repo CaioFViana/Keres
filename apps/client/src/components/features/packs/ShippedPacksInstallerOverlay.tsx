@@ -1,11 +1,11 @@
 import React from 'react';
 import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
 import ShippedPacksContent from '@/src/screens/packs/ShippedPacksContent';
-import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 
 /**
  * Mounts the shipped-packs catalogue offered from the story form, on top of everything, without
- * going through navigation. See `state/shippedPacksInstallerStore.ts` and
+ * going through navigation. See `state/app/shippedPacksInstallerStore.ts` and
  * `ShippedPacksContent.tsx` for the reason it exists (installing without abandoning the
  * half-filled form underneath).
  *

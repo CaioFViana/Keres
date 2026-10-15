@@ -11,7 +11,7 @@ import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
 } from '@keres/shared/graphs/statRadarLayout';
-import { resolveStatValue } from '@/src/utils/statValues';
+import { resolveStatValue } from '@/src/utils/stats/statValues';
 import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
 
 /**

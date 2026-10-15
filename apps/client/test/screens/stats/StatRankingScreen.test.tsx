@@ -74,7 +74,7 @@ jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   };
 });
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -90,7 +90,7 @@ jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: () => mockStatsData,
 }));
 
-jest.mock('@/src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   navigateToEntityDetail: (...a: any[]) => mockNavigateToEntity(...a),
   toNavigableEntityType: () => 'Character',
 }));

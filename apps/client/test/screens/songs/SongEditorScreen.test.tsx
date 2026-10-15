@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import type { SongSelect } from '@/src/db/schema';
-import { useMusicToolsStore } from '@/src/state/musicToolsStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import SongEditorScreen, { songFileName } from '@/src/screens/songs/SongEditorScreen';
 
 const mockUseScreenTour = jest.fn();
@@ -116,12 +116,12 @@ jest.mock('@/src/hooks/music/useSongPlayback', () => ({
     playTone: mockPlayTone,
   }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector?: (state: { userId: string }) => unknown) =>
     selector ? selector({ userId: 'user-1' }) : { userId: 'user-1' },
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
@@ -129,7 +129,7 @@ jest.mock('@/src/services/storymanagement/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ updateSong: mockUpdateSong, deleteSong: mockDeleteSong }),
 }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));

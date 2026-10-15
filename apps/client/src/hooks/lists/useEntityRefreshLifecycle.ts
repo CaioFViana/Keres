@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 export interface EntityEventSubscription {
   event: string;

@@ -8,7 +8,7 @@ import { createChoiceService } from '@/src/services/storymanagement/ChoiceServic
 import { createEffectService } from '@/src/services/storymanagement/EffectService';
 import { createItemService } from '@/src/services/storymanagement/ItemService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 export interface NavigatorData {

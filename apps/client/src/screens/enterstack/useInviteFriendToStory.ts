@@ -4,8 +4,8 @@ import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { storyInvitationApi } from '@/src/services/StoryInvitationApiService';
 import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 export type InviteRole = 'reader' | 'writer';
 export type InvitableStory = { id: string; title: string };

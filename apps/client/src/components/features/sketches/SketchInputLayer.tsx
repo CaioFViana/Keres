@@ -10,7 +10,7 @@ import {
 } from '@keres/shared';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
-import type { SketchTool } from '@/src/state/sketchToolStore';
+import type { SketchTool } from '@/src/state/drafts/sketchToolStore';
 import type { SketchPreview } from './SketchPreviewView';
 
 export interface SketchBrushStyle {

@@ -61,16 +61,16 @@ jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
     deleteArc: mockDeleteArc,
   }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: { selectedStory: unknown }) => unknown) =>
     selector({ selectedStory: mockStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
@@ -89,7 +89,7 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

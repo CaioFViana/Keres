@@ -20,9 +20,9 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 

@@ -3,7 +3,7 @@ import { useDrizzle } from '@/src/db';
 import type { CommentSelect } from '@/src/db/schema';
 import type { CommentService } from '@/src/services/storymanagement/CommentService';
 import { createCommentService } from '@/src/services/storymanagement/CommentService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 
 /**

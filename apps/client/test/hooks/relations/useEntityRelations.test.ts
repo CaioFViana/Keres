@@ -2,8 +2,8 @@
  * @jest-environment node
  */
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('@/src/state/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
@@ -11,7 +11,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
+jest.mock('@/src/state/ui/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
 jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: jest.fn(),
@@ -47,10 +47,10 @@ import { createNoteRelationService } from '@/src/services/storymanagement/NoteRe
 import { createNoteService } from '@/src/services/storymanagement/NoteService';
 import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
 import { createTagService } from '@/src/services/storymanagement/TagService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const STORY_ID = 'story-1';
 const ENTITY_ID = 'rule-1';

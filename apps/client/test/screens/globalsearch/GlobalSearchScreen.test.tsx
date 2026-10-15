@@ -65,11 +65,11 @@ jest.mock('@/src/services/storymanagement/GlobalSearchService', () => ({
   __esModule: true,
   createGlobalSearchService: () => ({ searchAllEntities: mockSearchAllEntities }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
@@ -79,7 +79,7 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
     label: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
   }),
 }));
-jest.mock('@/src/utils/debounce', () => ({
+jest.mock('@/src/utils/sync/debounce', () => ({
   __esModule: true,
   debounce: (fn: (value: string) => void) => {
     const debounced = (value: string) => fn(value);
@@ -87,7 +87,7 @@ jest.mock('@/src/utils/debounce', () => ({
     return debounced;
   },
 }));
-jest.mock('@/src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   __esModule: true,
   navigateToEntityDetail: (...args: unknown[]) => mockNavigateToEntityDetail(...args),
 }));

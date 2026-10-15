@@ -12,7 +12,7 @@ import {
   deriveConnections,
   deriveContains,
   deriveParent,
-} from '@/src/utils/locationMapRelations';
+} from '@/src/utils/location-map/locationMapRelations';
 
 type Notify = (message: string, type?: 'success' | 'warning' | 'error') => void;
 

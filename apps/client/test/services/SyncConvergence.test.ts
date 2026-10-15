@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
 }));
 jest.mock('@/src/services/MediaSyncService', () => ({

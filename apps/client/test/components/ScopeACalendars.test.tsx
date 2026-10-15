@@ -6,7 +6,7 @@ import CalendarAnchorsModal from '@/src/components/features/calendars/CalendarAn
 import CalendarRowList, {
   type CalendarRowField,
 } from '@/src/components/features/calendars/CalendarRowList';
-import type { CalendarAnchorPreviewRow } from '@/src/utils/calendarAnchorPreview';
+import type { CalendarAnchorPreviewRow } from '@/src/utils/entity/calendarAnchorPreview';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

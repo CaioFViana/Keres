@@ -23,11 +23,11 @@ import { useStorySimulation } from '@/src/hooks/story/useStorySimulation';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import { createRouteService } from '@/src/services/storymanagement/RouteService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useDrizzle } from '@/src/db';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'StoryNavigator'>;

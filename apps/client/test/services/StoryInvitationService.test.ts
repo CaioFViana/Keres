@@ -11,8 +11,8 @@ import {
   createStoryInvitationService,
   STORY_INVITATIONS_CHANGED,
 } from '@/src/services/StoryInvitationService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const NOW = new Date('2026-09-28T12:00:00.000Z');

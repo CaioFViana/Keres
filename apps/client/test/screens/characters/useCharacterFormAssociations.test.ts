@@ -22,10 +22,10 @@ jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => 
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadDraft(...args),
   patchEntityFormSecondaryDraft: (...args: unknown[]) => mockPatchDraft(...args),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
 jest.mock('react-i18next', () => ({

@@ -3,7 +3,7 @@ import { and, eq, lte } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ServerSelect } from '@/src/db/schema';
-import i18n from '@/src/utils/i18n';
+import i18n from '@/src/utils/format/i18n';
 import { createKeresAxiosInstance } from '@/src/services/apiClient';
 import { authTokenManager } from '@/src/services/AuthTokenManager';
 import { createServerService } from '@/src/services/ServerService';

@@ -240,26 +240,26 @@ jest.mock('@/src/screens/location-maps/useLocationMapCanvasActions', () => ({
 }));
 
 // ---- stores, services, the rest ----
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = { selectedStory: { id: 'story-1', type: 'linear' } };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const state = { userId: 'user-1' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
   (useUserSettingsStore as any).getState = () => state;
   return { useUserSettingsStore };
 });
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (s: any) => any) => {
     const state = { showNotification: mockNotify };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('@/src/state/locationMapDraftStore', () => ({
+jest.mock('@/src/state/drafts/locationMapDraftStore', () => ({
   useLocationMapDraftStore: {
     getState: () => ({ hydrate: mockHydrate, remember: mockRemember }),
   },
@@ -267,7 +267,7 @@ jest.mock('@/src/state/locationMapDraftStore', () => ({
 jest.mock('@/src/showcase/showcaseRequest', () => ({
   readShowcaseRequest: () => null,
 }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   exportFileLanguage: () => 'en',
 }));
 jest.mock('@/src/db', () => {

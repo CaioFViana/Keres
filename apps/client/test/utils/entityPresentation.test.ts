@@ -3,8 +3,8 @@ import {
   CRITICALITY_ICONS,
   CRITICALITY_LEVELS,
   DEFAULT_CRITICALITY,
-} from '@/src/utils/commentCriticality';
-import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
+} from '@/src/utils/entity/commentCriticality';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 
 /**
  * The two tables below are small, but each one carries an invariant that only breaks on screen: an

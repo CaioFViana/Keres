@@ -17,9 +17,9 @@ import {
 } from '@/src/components/features/canvas/CanvasNodeSheet';
 import { getCommonCardStyles } from '@/src/theme/commonStyles';
 import { useTheme } from '@/src/theme';
-import { boardPinTypeKey } from '@/src/utils/boardPinAppearance';
+import { boardPinTypeKey } from '@/src/utils/board/boardPinAppearance';
 import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
-import type { BoardGalleryMedia } from '@/src/utils/boardLayout';
+import type { BoardGalleryMedia } from '@/src/utils/board/boardLayout';
 import BoardNodeSheetGalleryPreview from './BoardNodeSheetGalleryPreview';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

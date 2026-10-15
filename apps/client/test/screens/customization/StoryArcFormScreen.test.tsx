@@ -34,7 +34,7 @@ jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('@/src/components/common', () => ({
@@ -223,16 +223,16 @@ jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
     createArc: mockCreateArc,
   }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: { selectedStory: unknown }) => unknown) =>
     selector({ selectedStory: mockStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),

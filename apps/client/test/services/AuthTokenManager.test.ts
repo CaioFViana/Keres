@@ -13,7 +13,7 @@ const mockUserSettings = {
   setActiveServer: jest.fn(),
   clearActiveServer: jest.fn(),
 };
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => mockUserSettings },
 }));
 

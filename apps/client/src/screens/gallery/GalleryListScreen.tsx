@@ -29,14 +29,14 @@ import {
   GALLERY_ROW_PADDING,
   galleryGridLayout,
   galleryScrollbarWidth,
-} from '@/src/utils/galleryGridLayout';
+} from '@/src/utils/ui/galleryGridLayout';
 import { createGalleryLink } from '@/src/services/galleryLink';
 import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { useGalleryStore } from '@/src/state/galleryStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useGalleryStore } from '@/src/state/story/galleryStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import GuideAnchor from '@/src/guides/GuideAnchor';

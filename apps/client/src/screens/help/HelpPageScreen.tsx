@@ -8,7 +8,7 @@ import type { DocLibrary } from '@/src/help/library';
 import { helpLibrary } from '@/src/help/library';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useTheme } from '@/src/theme';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;

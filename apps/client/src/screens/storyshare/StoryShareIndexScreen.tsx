@@ -9,13 +9,13 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryBackupExport } from '@/src/screens/storyshare/useStoryBackupExport';
 import type { StoryShareStackParamList } from '@/src/navigation/StoryShareStack';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { isServerless } from '@/src/utils/clientFlavor';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
 
 /**
  * Where the story leaves the app: published on the server's page, as the manuscript document, or as a copy

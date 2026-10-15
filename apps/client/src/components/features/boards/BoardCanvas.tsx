@@ -26,16 +26,16 @@ import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/use
 import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
 import { useDraggedItemFrame } from '@/src/hooks/canvas/useDraggedItemFrame';
 import { useTheme } from '@/src/theme';
-import { boardEdgeGeometry } from '@/src/utils/boardEdges';
-import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
-import { visibleCanvasStamps } from '@/src/utils/canvasOverlayStamps';
+import { boardEdgeGeometry } from '@/src/utils/board/boardEdges';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvas/canvasDragBounds';
+import { visibleCanvasStamps } from '@/src/utils/canvas/canvasOverlayStamps';
 import {
   boardCanvasBounds,
   boardNodeSize,
   type BoardGalleryMediaById,
-} from '@/src/utils/boardLayout';
+} from '@/src/utils/board/boardLayout';
 import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
-import type { BoardCardAppearance } from '@/src/utils/boardPinAppearance';
+import type { BoardCardAppearance } from '@/src/utils/board/boardPinAppearance';
 import BoardNodeView from './BoardNode';
 
 export type BoardCanvasHandle = CanvasViewportHandle;

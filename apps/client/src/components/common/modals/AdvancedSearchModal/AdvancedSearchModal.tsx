@@ -13,17 +13,17 @@ import {
   activeCriteria,
   isActiveCriterion,
   type AdvancedSearchCriteria,
-} from '@/src/utils/advancedSearchCriteria';
+} from '@/src/utils/search/advancedSearchCriteria';
 import {
   buildSearchFields,
   criterionKey,
   fieldLabelText,
   type AdvancedSearchScope,
-} from '@/src/utils/advancedSearchFields';
-import { CUSTOM_FIELD_METADATA_PREFIX } from '@/src/utils/customAttributeFieldMetadata';
+} from '@/src/utils/search/advancedSearchFields';
+import { CUSTOM_FIELD_METADATA_PREFIX } from '@/src/utils/entity/customAttributeFieldMetadata';
 import AdvancedSearchFieldRow, { isRenderableField } from './AdvancedSearchFieldRow';
 
-export type { AdvancedSearchScope } from '@/src/utils/advancedSearchFields';
+export type { AdvancedSearchScope } from '@/src/utils/search/advancedSearchFields';
 
 interface AdvancedSearchModalProps {
   entityName: string;

@@ -1,9 +1,9 @@
 /** @jest-environment node */
 import * as schema from '@/src/db/schema';
 import { resetAllClientStores } from '@/src/state/resetAllClientStores';
-import { useChapterStore } from '@/src/state/chapterStore';
-import { useSceneStore } from '@/src/state/sceneStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useChapterStore } from '@/src/state/story/chapterStore';
+import { useSceneStore } from '@/src/state/story/sceneStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import {
   entityBase,
   seedLocalStory,

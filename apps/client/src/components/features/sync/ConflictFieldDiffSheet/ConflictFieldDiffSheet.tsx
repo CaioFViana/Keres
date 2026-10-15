@@ -10,7 +10,7 @@ import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import ConflictSheetFrame from '@/src/components/features/sync/ConflictSheetFrame/ConflictSheetFrame';
 
 /** De qual lado vem o valor escolhido para um campo em disputa. */

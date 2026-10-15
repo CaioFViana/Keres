@@ -42,8 +42,8 @@ import type {
   TagSelect,
 } from '@/src/db/schema';
 import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
-import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 /**

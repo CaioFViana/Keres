@@ -1,14 +1,14 @@
 /** @jest-environment node */
 import * as schema from '@/src/db/schema';
-import { useCharacterStore } from '@/src/state/characterStore';
-import { useGalleryStore } from '@/src/state/galleryStore';
-import { useItemStore } from '@/src/state/itemStore';
-import { useLocationStore } from '@/src/state/locationStore';
-import { useNoteStore } from '@/src/state/noteStore';
+import { useCharacterStore } from '@/src/state/story/characterStore';
+import { useGalleryStore } from '@/src/state/story/galleryStore';
+import { useItemStore } from '@/src/state/story/itemStore';
+import { useLocationStore } from '@/src/state/story/locationStore';
+import { useNoteStore } from '@/src/state/story/noteStore';
 import { resetAllClientStores } from '@/src/state/resetAllClientStores';
-import { useTagStore } from '@/src/state/tagStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { useWorldRuleStore } from '@/src/state/worldRuleStore';
+import { useTagStore } from '@/src/state/story/tagStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useWorldRuleStore } from '@/src/state/story/worldRuleStore';
 import {
   entityBase,
   seedLocalStory,

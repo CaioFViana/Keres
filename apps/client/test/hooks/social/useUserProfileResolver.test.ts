@@ -4,7 +4,7 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
@@ -17,8 +17,8 @@ import { renderHook } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useUserProfileResolver } from '@/src/hooks/social/useUserProfileResolver';
 import { friendshipApiService } from '@/src/services/FriendshipApiService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const db = { query: { users: { findFirst: jest.fn() } } };
 

@@ -14,11 +14,11 @@ jest.mock('@/src/utils/syncUtils', () => ({
   recordLocalOperationSync: (...args: unknown[]) => mockOperation(...args),
   runLocalWrite: (_db: unknown, _storyId: unknown, unit: () => unknown) => Promise.resolve(unit()),
 }));
-jest.mock('@/src/utils/entityUtils', () => ({
+jest.mock('@/src/utils/entity/entityUtils', () => ({
   __esModule: true,
   prepareNewEntityData: (...args: unknown[]) => mockPrepare(...args),
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));

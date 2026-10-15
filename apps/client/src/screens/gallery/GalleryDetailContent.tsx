@@ -33,13 +33,13 @@ import { mediaFileService } from '@/src/services/MediaFileService';
 import type { GalleryOwnerRef } from '@/src/services/storymanagement/GalleryRelationService';
 import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { openGalleryExternally } from '@/src/utils/openGalleryExternally';
 
 function formatSize(bytes: number): string {

@@ -6,7 +6,7 @@ import type {
   SavePlotScene,
 } from '@/src/services/storymanagement/PlotSceneService';
 import type { createPlotService } from '@/src/services/storymanagement/PlotService';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 import type { PlotFormState } from './usePlotFormState';
 

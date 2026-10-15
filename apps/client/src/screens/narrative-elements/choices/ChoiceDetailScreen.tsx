@@ -2,7 +2,7 @@ import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -44,11 +44,14 @@ import { createChoiceService } from '@/src/services/storymanagement/ChoiceServic
 import { createEffectService } from '@/src/services/storymanagement/EffectService';
 import { createItemService } from '@/src/services/storymanagement/ItemService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { describeChoiceCheck, describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
+import {
+  describeChoiceCheck,
+  describeEffect,
+} from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';

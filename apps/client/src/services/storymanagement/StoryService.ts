@@ -15,10 +15,10 @@ import {
   storyPermissions,
   syncConflicts,
 } from '@/src/db/schema';
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import i18n from '@/src/utils/i18n';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import i18n from '@/src/utils/format/i18n';
 import {
   assertStoryIsOwned,
   assertStoryIsWritable,

@@ -143,7 +143,7 @@ jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('@/src/state/worldRuleStore', () => ({
+jest.mock('@/src/state/story/worldRuleStore', () => ({
   __esModule: true,
   useWorldRuleStore: jest.fn(),
 }));
@@ -159,7 +159,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import WorldRulesScreen from '@/src/screens/worldrules/WorldRuleListScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

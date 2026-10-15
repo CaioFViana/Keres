@@ -43,16 +43,16 @@ import { setAuthDb } from '@/src/services/AuthTokenManager';
 import { setEditorDraftDb } from '@/src/services/EditorDraftService';
 import { createClientSettings } from '@/src/services/ClientSettingsService';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useThemeStore } from '@/src/state/themeStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { getClientFlavor } from '@/src/utils/clientFlavor';
-import { useDocumentTitle } from '@/src/utils/documentTitle';
-import i18n, { getLanguageOptions } from '@/src/utils/i18n';
-import { normalizeLocalUsername } from '@/src/utils/localUsername';
+import { getClientFlavor } from '@/src/utils/platform/clientFlavor';
+import { useDocumentTitle } from '@/src/utils/nav/documentTitle';
+import i18n, { getLanguageOptions } from '@/src/utils/format/i18n';
+import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
 
 type RootStackParamList = {
   ColdInstall: undefined;

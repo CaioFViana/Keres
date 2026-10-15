@@ -4,7 +4,7 @@ import type { SongSelect } from '@/src/db/schema';
 import { createSceneMusicService } from '@/src/services/storymanagement/SceneMusicService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { createSongService } from '@/src/services/storymanagement/SongService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /** The songs of a story, by title. Reloads when a song is made, changed or deleted. */
 export function useSongs(storyId: string | undefined) {

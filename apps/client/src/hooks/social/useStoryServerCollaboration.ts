@@ -16,11 +16,11 @@ import {
   type ServerStoryInvitation,
 } from '@/src/services/StoryInvitationService';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useStoryInvitations } from './useStoryInvitations';
 
 /**

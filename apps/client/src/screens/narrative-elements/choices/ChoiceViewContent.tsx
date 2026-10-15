@@ -17,13 +17,13 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import StoryGraphCanvas, {
   type StoryGraphCanvasHandle,
 } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
-import { describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
+import { describeEffect } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import {
   formatSceneGap,
   formatSceneUniverseDuration,
   hasSceneGap,
   hasSceneUniverseDuration,
-} from '@/src/utils/sceneTiming';
+} from '@/src/utils/scene/sceneTiming';
 
 /**
  * Presentation contract for the choice graph screen.

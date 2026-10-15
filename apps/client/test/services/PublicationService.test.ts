@@ -8,7 +8,7 @@ jest.mock('@/src/services/PublicationApiService', () => ({
   },
 }));
 
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: {
     // A predictable format so the test can assert the notice's content without depending
@@ -22,7 +22,7 @@ import { eq } from 'drizzle-orm';
 import { servers, stories, storyPublications } from '@/src/db/schema';
 import { publicationApiService } from '@/src/services/PublicationApiService';
 import { createPublicationService } from '@/src/services/PublicationService';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const SERVER_ID = 'server-1';

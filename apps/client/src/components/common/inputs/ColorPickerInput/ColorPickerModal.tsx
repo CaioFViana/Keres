@@ -15,7 +15,7 @@ import {
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '@/src/utils/colorMath';
+import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '@/src/utils/format/colorMath';
 
 const SLIDER_HEIGHT = 20;
 

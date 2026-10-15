@@ -8,7 +8,7 @@ jest.mock('@/src/services/MediaSyncService', () => ({
 
 import { createMediaSyncService } from '@/src/services/MediaSyncService';
 import { SyncMedia } from '@/src/services/sync/SyncMedia';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const syncStoryMedia = jest.fn();
 const server = { id: 'server-1' } as never;

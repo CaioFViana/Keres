@@ -19,11 +19,11 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT, i18n: { language: mockLanguage } })),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: Object.assign(
     jest.fn((selector) => selector(mockSettings)),
@@ -32,7 +32,7 @@ jest.mock('@/src/state/userSettingsStore', () => ({
     },
   ),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: jest.fn((selector) => selector({ showNotification: mockNotify })),
 }));
@@ -64,14 +64,14 @@ jest.mock('@/src/services/storymanagement/ChapterAnchorService', () => ({
   __esModule: true,
   createChapterAnchorService: jest.fn(() => mockAnchorService),
 }));
-jest.mock('@/src/utils/storyArcFilter', () => ({
+jest.mock('@/src/utils/search/storyArcFilter', () => ({
   __esModule: true,
   chapterBelongsToArc: jest.fn(() => true),
   sceneBelongsToActiveArc: jest.fn(() => true),
 }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('@/src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/io/storyTransfer'),
   buildStoryTimelineFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));

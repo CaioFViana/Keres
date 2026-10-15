@@ -9,15 +9,15 @@ import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryListStore } from '@/src/state/storyListStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
-import { pickStoryExportFile, StoryImportError } from '@/src/utils/storyTransfer';
+import { pickStoryExportFile, StoryImportError } from '@/src/utils/io/storyTransfer';
 
 /**
  * Bringing a story in from a file. Taking one out is done from inside the story (Publish and export), where

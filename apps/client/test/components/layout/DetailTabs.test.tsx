@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text } from 'react-native';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
-import { detailTabForField } from '@/src/utils/detailTabs';
+import { detailTabForField } from '@/src/utils/nav/detailTabs';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

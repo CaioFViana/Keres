@@ -33,10 +33,13 @@ import { createItemService } from '@/src/services/storymanagement/ItemService';
 import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
 import { createPlotService } from '@/src/services/storymanagement/PlotService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import { describeChoiceCheck, describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
-import { buildStoryMapFileName } from '@/src/utils/storyTransfer';
+import {
+  describeChoiceCheck,
+  describeEffect,
+} from '@/src/utils/analysis/choiceCheckEffectDescriptions';
+import { buildStoryMapFileName } from '@/src/utils/io/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
 import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
 

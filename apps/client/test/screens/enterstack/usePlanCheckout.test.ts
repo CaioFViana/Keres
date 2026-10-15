@@ -22,7 +22,7 @@ jest.mock('@/src/services/PaymentService', () => ({
   getCheckout: (...args: unknown[]) => mockGet(...args),
   verifyPlayPurchase: (...args: unknown[]) => mockVerify(...args),
 }));
-jest.mock('@/src/utils/playPurchase', () => ({
+jest.mock('@/src/utils/billing/playPurchase', () => ({
   __esModule: true,
   playDriver: {
     available: true,
@@ -35,8 +35,8 @@ jest.mock('@/src/utils/playPurchase', () => ({
 import { act, renderHook } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { CHECKOUT_POLL_MS, usePlanCheckout } from '@/src/screens/enterstack/usePlanCheckout';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { PlayPurchaseError } from '@/src/utils/playPurchaseTypes';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { PlayPurchaseError } from '@/src/utils/billing/playPurchaseTypes';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const request = { tierId: 'tier-1', interval: 'monthly' as const, methodId: 'pix' };

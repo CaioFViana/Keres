@@ -25,7 +25,7 @@ import { useDrizzle } from '@/src/db';
 import { useAccountPlan } from '@/src/screens/enterstack/useAccountPlan';
 import { useAccountVerificationNotice } from '@/src/screens/enterstack/useAccountVerificationNotice';
 import { useAgeVerificationInfo } from '@/src/screens/enterstack/useAgeVerificationInfo';
-import { formatDateTime } from '@/src/utils/formatDateTime';
+import { formatDateTime } from '@/src/utils/format/formatDateTime';
 import { usePaymentOverview } from '@/src/screens/enterstack/usePaymentOverview';
 import { useServerDeletion } from '@/src/screens/enterstack/useServerDeletion';
 import { useLiveLegalText } from '@/src/screens/enterstack/useLiveLegalText';
@@ -48,14 +48,14 @@ import {
   deleteServerAccount,
 } from '@/src/services/DeleteAccountService';
 import { isOfflineError } from '@/src/services/apiClient';
-import { useIsConversationUnseen } from '@/src/state/unseenMessagesStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useIsConversationUnseen } from '@/src/state/ui/unseenMessagesStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { userApiService } from '@/src/services/UserApiService';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { adminConversationKey } from '@/src/utils/conversationKey';
+import { adminConversationKey } from '@/src/utils/entity/conversationKey';
 
 type ServerDetailRouteProp = RouteProp<ServerManagementStackParamList, 'ServerDetail'>;
 type ServerDetailNavigationProp = NativeStackNavigationProp<

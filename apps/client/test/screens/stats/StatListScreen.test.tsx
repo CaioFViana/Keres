@@ -105,7 +105,7 @@ jest.mock('@/src/components/common/modals/ReorderModal/ReorderModal', () => {
   };
 });
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -117,7 +117,7 @@ jest.mock('@/src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (s: any) => any) => {
     const state = { userId: mockUserId, exportFormat: 'svg' };
     return typeof selector === 'function' ? selector(state) : state;
@@ -143,7 +143,7 @@ jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
 jest.mock('@/src/services/storymanagement/StatService', () => ({

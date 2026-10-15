@@ -19,9 +19,9 @@ import { mediaFileService } from '@/src/services/MediaFileService';
 import {
   buildStandaloneBoardSvg,
   buildStandaloneLocationMapSvg,
-} from '@/src/utils/storyMapSvgExport';
-import { deliverMapExport } from '@/src/utils/storyTransfer';
-import { parseSvgRootSize } from '@/src/utils/svgRaster';
+} from '@/src/utils/io/storyMapSvgExport';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
+import { parseSvgRootSize } from '@/src/state/ui/svgRaster';
 
 const readBytesMock = mediaFileService.readBytes as jest.Mock;
 

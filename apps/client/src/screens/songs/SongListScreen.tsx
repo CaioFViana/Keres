@@ -25,13 +25,13 @@ import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { SongStackParamList } from '@/src/navigation/MainSystemStacks';
 import { loadCueSheet } from '@/src/services/storymanagement/CueSheetService';
 import { createSongService } from '@/src/services/storymanagement/SongService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { deliverFile, pickTextFile } from '@/src/utils/storyTransfer';
+import { deliverFile, pickTextFile } from '@/src/utils/io/storyTransfer';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type Navigation = NativeStackNavigationProp<SongStackParamList, 'SongList'>;

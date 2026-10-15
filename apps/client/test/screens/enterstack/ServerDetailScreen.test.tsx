@@ -94,7 +94,7 @@ jest.mock('@/src/services/AgeVerificationApiService', () => ({
   fetchAgeVerificationInfo: (...args: unknown[]) => mockFetchAgeInfo(...args),
   fetchVerificationStatus: (...args: unknown[]) => mockFetchVerificationStatus(...args),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -161,7 +161,7 @@ jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import ServerDetailScreen from '@/src/screens/enterstack/ServerDetailScreen';
 import { AccountDeletionCleanupError } from '@/src/services/DeleteAccountService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = {
@@ -673,7 +673,7 @@ describe('ServerDetailScreen', () => {
     });
 
     it("badges the way to the messages when this server's administrators wrote", async () => {
-      const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
+      const { useUnseenMessagesStore } = require('@/src/state/ui/unseenMessagesStore');
       await act(async () => {
         useUnseenMessagesStore.setState({ unseen: { 'srv-1|admin': '09' } });
       });

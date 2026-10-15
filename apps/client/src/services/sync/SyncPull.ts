@@ -11,9 +11,9 @@ import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { OperationLogSelect } from '@/src/db/schema';
-import { createULID } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { withOpLogLock } from '@/src/utils/opLogMutex';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
 import { getEntityTable, toEntityColumns } from '@/src/services/entityTableRegistry';
 import {

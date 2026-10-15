@@ -30,7 +30,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 const BIO_MAX_LENGTH = 200;
 

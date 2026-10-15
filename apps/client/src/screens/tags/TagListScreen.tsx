@@ -21,7 +21,7 @@ import type {
   MainSystemDrawerParamList,
   TagsStackParamList,
 } from '@/src/navigation/MainSystemStack';
-import { useTagStore } from '@/src/state/tagStore';
+import { useTagStore } from '@/src/state/story/tagStore';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type TagsScreenNavigationProp = CompositeNavigationProp<

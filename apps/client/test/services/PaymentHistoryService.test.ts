@@ -14,7 +14,7 @@ import {
   createPaymentHistoryService,
   PAYMENT_HISTORY_CHANGED,
 } from '@/src/services/PaymentHistoryService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { entityBase } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

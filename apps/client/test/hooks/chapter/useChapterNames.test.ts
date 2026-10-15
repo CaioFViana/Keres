@@ -17,7 +17,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { useChapterNames } from '@/src/hooks/chapter/useChapterNames';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const scenes = [{ storyId: 'story' }] as never;
 const getAllByStoryId = jest.fn();

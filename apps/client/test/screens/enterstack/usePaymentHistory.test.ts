@@ -13,8 +13,8 @@ jest.mock('@/src/services/PaymentHistoryService', () => ({
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { usePaymentHistory } from '@/src/screens/enterstack/usePaymentHistory';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { PAYMENTS_CHANGED } from '@/src/utils/paymentEvents';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { PAYMENTS_CHANGED } from '@/src/utils/billing/paymentEvents';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://a.example' } as never;
 const saved = [{ id: 'p1', serverId: 'srv-1', kind: 'payment_succeeded' }];

@@ -21,13 +21,13 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
-import type { CommentCriticality } from '@/src/utils/commentCriticality';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import type { CommentCriticality } from '@/src/utils/entity/commentCriticality';
 import {
   CRITICALITY_ICONS,
   CRITICALITY_LEVELS,
   DEFAULT_CRITICALITY,
-} from '@/src/utils/commentCriticality';
+} from '@/src/utils/entity/commentCriticality';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface CommentThreadModalProps {

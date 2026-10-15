@@ -31,8 +31,8 @@ import {
   rasterizeSketch,
   sampleRasterColor,
 } from '@/src/components/features/sketches/sketchRaster';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useSketchToolStore } from '@/src/state/sketchToolStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useSketchToolStore } from '@/src/state/drafts/sketchToolStore';
 
 /** RDP tolerance for a finished stroke, in world units: below what the eye resolves on a page. */
 const STROKE_SIMPLIFY = 0.3;

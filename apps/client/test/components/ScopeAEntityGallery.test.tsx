@@ -3,7 +3,7 @@ import React from 'react';
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import type { GallerySelect } from '@/src/db/schema';
-import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -36,7 +36,7 @@ jest.mock('@/src/hooks/media/useEntityGalleryMedia', () => ({
 }));
 
 const mockShowNotification = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) => {
     const state = { showNotification: mockShowNotification };
     return selector ? selector(state) : state;

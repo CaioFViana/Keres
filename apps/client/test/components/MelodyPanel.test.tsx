@@ -6,7 +6,7 @@ import MelodyPanel from '@/src/components/features/songs/MelodyPanel';
 
 const mockAlert = jest.fn();
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

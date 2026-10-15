@@ -7,7 +7,7 @@ const mockStore = {
 };
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/sync/syncConflictStore', () => ({
   __esModule: true,
   useSyncConflictStore: jest.fn((selector) => selector(mockStore)),
 }));

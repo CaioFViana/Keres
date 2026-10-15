@@ -16,7 +16,7 @@ import {
   loadChoiceAnnotations as fetchChoiceAnnotations,
   type ChoiceAnnotationLines,
 } from '@/src/utils/choiceAnnotations';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 /**

@@ -31,7 +31,7 @@ jest.mock('@/src/services/storymanagement/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(),
 }));
-jest.mock('@/src/state/characterStore', () => ({
+jest.mock('@/src/state/story/characterStore', () => ({
   __esModule: true,
   useCharacterStore: jest.fn(),
 }));
@@ -46,7 +46,7 @@ import { createItemJourneyService } from '@/src/services/storymanagement/ItemJou
 import { createItemService } from '@/src/services/storymanagement/ItemService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useCharacterStore } from '@/src/state/characterStore';
+import { useCharacterStore } from '@/src/state/story/characterStore';
 import { useSceneDetailServices } from '@/src/screens/narrative-elements/scenes/useSceneDetailServices';
 
 const serviceFactories = [

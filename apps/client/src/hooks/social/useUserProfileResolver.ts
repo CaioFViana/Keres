@@ -5,8 +5,8 @@ import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
 import { users } from '@/src/db/schema';
 import { friendshipApiService } from '@/src/services/FriendshipApiService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 export interface ResolvedUserProfile {
   id: string;

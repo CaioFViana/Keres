@@ -123,12 +123,12 @@ jest.mock('@/src/db', () => ({
 }));
 
 let mockServerless = false;
-jest.mock('@/src/utils/clientFlavor', () => ({
-  ...jest.requireActual('@/src/utils/clientFlavor'),
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/platform/clientFlavor'),
   isServerless: () => mockServerless,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -162,24 +162,24 @@ jest.mock('@/src/state/resetAllClientStores', () => ({
   resetAllClientStores: (...args: unknown[]) => mockResetAllClientStores(...args),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
-jest.mock('@/src/state/themeStore', () => ({
+jest.mock('@/src/state/ui/themeStore', () => ({
   useThemeStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockThemeState) : mockThemeState,
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) => {
     const state = { showNotification: (...args: unknown[]) => mockShowNotification(...args) };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { changeLanguage: (...args: unknown[]) => mockChangeLanguage(...args) },
   getLanguageOptions: () => [
@@ -230,7 +230,7 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import SettingsScreen from '@/src/screens/enterstack/AppSettingsScreen';
 import { getAcceptedClientLegal, setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
-import { useMusicToolsStore } from '@/src/state/musicToolsStore';
+import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
 
 type AlertButton = { text: string; onPress?: () => void | Promise<void> };
 

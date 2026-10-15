@@ -14,8 +14,8 @@ import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName'; // I
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { isLinkEntityType } from '@/src/utils/entityTypeBadge';
-import { truncate } from '@/src/utils/stringUtils';
+import { isLinkEntityType } from '@/src/utils/entity/entityTypeBadge';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 interface OperationLogListItemProps {
   log: OperationLogSelect;

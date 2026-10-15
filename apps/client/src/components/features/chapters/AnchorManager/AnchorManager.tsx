@@ -7,9 +7,9 @@ import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/Col
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import type { ChapterAnchorRow } from '@/src/hooks/chapter/useChapterAnchors';
 import { useChapterAnchors } from '@/src/hooks/chapter/useChapterAnchors';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useTheme } from '@/src/theme';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { AnchorDraft } from './AnchorEditModal';
 import AnchorEditModal from './AnchorEditModal';
 

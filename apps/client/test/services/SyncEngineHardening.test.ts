@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 const mockShowNotification = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
@@ -24,7 +24,7 @@ import * as schema from '@/src/db/schema';
 import type { SyncEngineService } from '@/src/services/SyncEngineService';
 import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const SERVER = { id: 'server-1', url: 'http://servidor' };

@@ -3,7 +3,7 @@
  */
 import { asc, eq } from 'drizzle-orm';
 import { operationLogs, stories, syncConflicts } from '@/src/db/schema';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsOwned,
   assertStoryIsWritable,

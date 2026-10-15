@@ -85,7 +85,7 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -172,7 +172,7 @@ jest.mock('@/src/components/features/friendship/InviteToStoryModal', () => {
   };
 });
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
@@ -805,7 +805,7 @@ describe('FriendDetailScreen', () => {
 });
 
 describe('FriendDetailScreen: news from this friend', () => {
-  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/ui/unseenMessagesStore');
   const friendOf = (over: Record<string, unknown> = {}) =>
     friendship({
       status: FriendStatus.FRIEND,

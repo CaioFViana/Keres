@@ -7,7 +7,7 @@ jest.mock('@/src/services/PaymentService', () => ({
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { usePaymentOverview } from '@/src/screens/enterstack/usePaymentOverview';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const overview = (name = 'Pro') => ({

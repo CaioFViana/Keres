@@ -2,8 +2,8 @@ import type { Plot } from '@keres/shared/entities/Plot';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, PlotInsert } from '@/src/db';
 import { plots } from '@/src/db';
-import { createULID, getChangedFields } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

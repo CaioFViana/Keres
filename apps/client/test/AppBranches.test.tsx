@@ -65,7 +65,7 @@ jest.mock('@/src/services/HostedCookieSession', () => ({
   __esModule: true,
   restoreHostedCookieSession: jest.fn(),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
@@ -83,7 +83,7 @@ jest.mock('@/src/theme/ThemeProvider', () => ({
   __esModule: true,
   ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { t: jest.fn((key: string) => key), changeLanguage: jest.fn() },
 }));
@@ -114,10 +114,10 @@ import { initializeDrizzle, useDrizzle } from '@/src/db';
 import { migrate } from '@/src/db/migrate';
 import { authTokenManager } from '@/src/services/AuthTokenManager';
 import { restoreHostedCookieSession } from '@/src/services/HostedCookieSession';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { isColorLight } from '@/src/theme/commonStyles';
-import i18n from '@/src/utils/i18n';
+import i18n from '@/src/utils/format/i18n';
 
 const db = { name: 'sqlite' };
 const drizzle = { name: 'drizzle' };

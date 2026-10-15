@@ -5,8 +5,8 @@ import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/s
 import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { buildCalendarAnchorPreview } from '@/src/utils/calendarAnchorPreview';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { buildCalendarAnchorPreview } from '@/src/utils/entity/calendarAnchorPreview';
 
 /** Loads the small, timeline-relevant data set once and lets definitions be compared purely. */
 export function useCalendarAnchorPreview(definition: CalendarDefinitionType, enabled: boolean) {

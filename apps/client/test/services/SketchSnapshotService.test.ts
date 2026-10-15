@@ -20,7 +20,7 @@ jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: { saveSnapshot: (...args: unknown[]) => mockSaveSnapshot(...args) },
 }));
 
-jest.mock('@/src/utils/svgRaster', () => ({
+jest.mock('@/src/state/ui/svgRaster', () => ({
   __esModule: true,
   fitRasterSize: (width: number, height: number) => ({ width, height }),
   rasterizeMapSvg: (...args: unknown[]) => mockRasterize(...args),

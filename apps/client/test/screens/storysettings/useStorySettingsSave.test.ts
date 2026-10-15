@@ -25,16 +25,16 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
 jest.mock('@/src/services/sync/appSyncEngine', () => ({
   syncEngine: { syncStoryNow: (...args: unknown[]) => mockSyncStoryNow(...args) },
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: () => ({
     selectedStory: { id: 'story-1', allowReaderComments: false },
     setSelectedStory: (...args: unknown[]) => mockSetSelectedStory(...args),
   }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 

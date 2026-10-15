@@ -4,9 +4,9 @@ import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import type { LocationMapInsert, LocationMapSelect } from '@/src/db/schema';
 import { locationMaps } from '@/src/db/schema';
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

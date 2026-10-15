@@ -10,7 +10,7 @@ import {
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { StorySelect } from '@/src/db/schema';
-import { pdfFontMatrices } from '@/src/utils/pdfFontAssets';
+import { pdfFontMatrices } from '@/src/utils/io/pdfFontAssets';
 import type {
   PublishManuscriptOptions,
   PublishReaderOptions,

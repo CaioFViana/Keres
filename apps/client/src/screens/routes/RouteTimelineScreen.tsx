@@ -18,7 +18,7 @@ import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDe
 import { useRouteChronology } from '@/src/screens/routes/useRouteChronology';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
-import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
+import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useTranslation } from 'react-i18next';
 

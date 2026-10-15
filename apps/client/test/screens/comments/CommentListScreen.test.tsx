@@ -29,7 +29,7 @@ jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
@@ -39,7 +39,7 @@ jest.mock('@/src/theme', () => ({
     colors: { background: '#fff', text: '#111', textSecondary: '#555' },
   }),
 }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));

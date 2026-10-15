@@ -31,8 +31,8 @@ import {
   createScenePageService,
   type ScenePageMedia,
 } from '@/src/services/storymanagement/ScenePageService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 

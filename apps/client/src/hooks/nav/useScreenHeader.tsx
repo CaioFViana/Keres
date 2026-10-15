@@ -3,7 +3,7 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import HeaderActions, {
   type HeaderAction,
 } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
 
 type ScreenHeaderOptions = {
   title: string;

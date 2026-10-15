@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { SongSelect } from '@/src/db/schema';
-import { useMusicToolsStore } from '@/src/state/musicToolsStore';
+import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
 import SongListScreen, {
   cueSheetFileName,
   songFactsLine,
@@ -73,16 +73,16 @@ jest.mock('@/src/hooks/music/useSongs', () => ({
   __esModule: true,
   useSongs: () => ({ songs: mockSongs, loading: mockLoading, reload: jest.fn() }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1', title: 'The Old Road' } }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
@@ -90,7 +90,7 @@ jest.mock('@/src/services/storymanagement/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ createSong: mockCreateSong }),
 }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
   pickTextFile: () => mockPickTextFile(),
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),

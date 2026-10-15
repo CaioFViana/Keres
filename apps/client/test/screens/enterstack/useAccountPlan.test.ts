@@ -5,8 +5,8 @@ jest.mock('@/src/services/UserApiService', () => ({
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useAccountPlan } from '@/src/screens/enterstack/useAccountPlan';
-import { PAYMENTS_CHANGED } from '@/src/utils/paymentEvents';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { PAYMENTS_CHANGED } from '@/src/utils/billing/paymentEvents';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const planNamed = (tierName: string) => ({ tierName, isDefault: false, storiesUsed: 1 });

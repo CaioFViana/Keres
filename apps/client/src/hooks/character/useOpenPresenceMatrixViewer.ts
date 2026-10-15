@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { usePresenceMatrixViewerStore } from '@/src/state/presenceMatrixViewerStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
 
 export function useOpenPresenceMatrixViewer() {
   const openCharacter = usePresenceMatrixViewerStore((state) => state.openCharacter);

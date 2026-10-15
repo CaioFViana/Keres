@@ -6,7 +6,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ModeSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';

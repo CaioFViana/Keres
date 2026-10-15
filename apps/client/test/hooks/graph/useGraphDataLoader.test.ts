@@ -11,7 +11,7 @@ jest.mock('@react-navigation/native', () => {
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useGraphDataLoader } from '@/src/hooks/graph/useGraphDataLoader';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const ERROR = 'could not load';
 const LOG = 'test: failed to load';

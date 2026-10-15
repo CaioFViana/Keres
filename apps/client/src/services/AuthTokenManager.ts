@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
 import { servers } from '@/src/db/schema';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { TokenProvider } from './apiClient';
 import apiClient, {
   clearAllServerAuthState,

@@ -17,7 +17,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useStoryComments } from '@/src/hooks/comments/useStoryComments';
 import { createCommentService } from '@/src/services/storymanagement/CommentService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const getAllCommentsForStory = jest.fn();
 

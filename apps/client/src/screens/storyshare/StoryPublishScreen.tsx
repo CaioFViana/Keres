@@ -25,8 +25,8 @@ import {
 } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';

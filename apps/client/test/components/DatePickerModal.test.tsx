@@ -22,7 +22,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 let mockUse24HourTime = true;
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: { use24HourTime: boolean }) => unknown) =>
     selector({ use24HourTime: mockUse24HourTime }),

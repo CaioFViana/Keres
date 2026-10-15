@@ -13,7 +13,7 @@ import { useGuidePersistence } from '@/src/hooks/ui/useGuidePersistence';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useSystemInsets } from '@/src/hooks/ui/useSystemInsets';
 import { getGuideDrawer, scrollDrawerToRect } from '@/src/navigation/drawerGuideRegistry';
-import { useGuideStore } from '@/src/state/guideStore';
+import { useGuideStore } from '@/src/state/ui/guideStore';
 import { useTheme } from '@/src/theme';
 
 /** Breathing room around the spotlighted target. */
@@ -62,7 +62,7 @@ async function measureSettled(
 }
 
 /**
- * Renders the active guided tour (see `state/guideStore`). Mounted once near the app's root
+ * Renders the active guided tour (see `state/ui/guideStore`). Mounted once near the app's root
  * (`App.tsx`), the same way as `AppAlertHost`: a single `Modal`, isolated from the rest of the
  * screen tree, so any screen can own a tour without mounting anything locally.
  *

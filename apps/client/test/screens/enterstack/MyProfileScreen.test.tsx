@@ -67,7 +67,7 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 

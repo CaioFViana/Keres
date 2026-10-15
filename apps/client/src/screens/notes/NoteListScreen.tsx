@@ -24,7 +24,7 @@ import type {
   NotesStackParamList,
 } from '@/src/navigation/MainSystemStack';
 import type { NoteWithTags } from '@/src/services/storymanagement/NoteService';
-import { useNoteStore } from '@/src/state/noteStore';
+import { useNoteStore } from '@/src/state/story/noteStore';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<

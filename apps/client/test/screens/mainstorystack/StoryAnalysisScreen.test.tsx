@@ -80,14 +80,14 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({
     selectedStory: mockSelectedStory,
     setSelectedStory: mockSetSelectedStory,
   }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
@@ -95,15 +95,15 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: mockColors }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAppAlert(...args) },
 }));
-jest.mock('@/src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   __esModule: true,
   navigateToEntityDetail: (...args: unknown[]) => mockNavigateToEntityDetail(...args),
 }));
-jest.mock('@/src/utils/storyAnalysisChecks', () => ({
+jest.mock('@/src/utils/analysis/storyAnalysisChecks', () => ({
   __esModule: true,
   StoryAnalysisCancelledError: class StoryAnalysisCancelledError extends Error {},
 }));
@@ -202,7 +202,9 @@ jest.mock('react-i18next', () => {
 
 import StoryAnalysisScreen from '@/src/screens/mainstorystack/StoryAnalysisScreen';
 
-const { StoryAnalysisCancelledError } = jest.requireMock('@/src/utils/storyAnalysisChecks') as {
+const { StoryAnalysisCancelledError } = jest.requireMock(
+  '@/src/utils/analysis/storyAnalysisChecks',
+) as {
   StoryAnalysisCancelledError: new (message: string) => Error;
 };
 

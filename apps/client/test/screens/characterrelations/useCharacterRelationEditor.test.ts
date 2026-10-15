@@ -12,7 +12,7 @@ jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
     deleteCharacterRelation: (...args: unknown[]) => mockDelete(...args),
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -22,7 +22,7 @@ jest.mock('react-i18next', () => ({
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { act, renderHook } from '@testing-library/react-native';
 import { useCharacterRelationEditor } from '@/src/screens/characterrelations/useCharacterRelationEditor';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 const relation = (id: string, a: string, b: string, type = 'friend'): CharacterRelation => ({

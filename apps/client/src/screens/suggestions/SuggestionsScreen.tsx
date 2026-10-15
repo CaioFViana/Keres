@@ -30,14 +30,14 @@ import {
   WORLD_PIECE_CATEGORY_TYPE,
   WORLD_PIECE_TYPE_PREFIX,
 } from '@/src/services/storymanagement/SuggestionService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';

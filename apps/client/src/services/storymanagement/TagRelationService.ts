@@ -2,8 +2,8 @@ import type { TagRelation, TagRelationEntities } from '@keres/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, TagRelationInsert, TagSelect } from '@/src/db';
 import { tagRelations, tags } from '@/src/db';
-import { prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

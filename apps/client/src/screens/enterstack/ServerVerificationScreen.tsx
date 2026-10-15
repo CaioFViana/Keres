@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
 import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
-import { isOpenableVerificationUrl } from '@/src/utils/ageVerificationRules';
+import { isOpenableVerificationUrl } from '@/src/utils/auth/ageVerificationRules';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SongSelect } from '@/src/db/schema';
 import { createSongService, type SongFields } from '@/src/services/storymanagement/SongService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 /** How long a song waits, after the last keystroke, before it is written. */
 export const SONG_SAVE_DELAY_MS = 1500;

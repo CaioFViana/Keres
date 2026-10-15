@@ -1,6 +1,6 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
-import { useWorldRuleStore } from '@/src/state/worldRuleStore';
+import { useWorldRuleStore } from '@/src/state/story/worldRuleStore';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';

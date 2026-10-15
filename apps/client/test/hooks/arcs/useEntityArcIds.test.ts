@@ -17,7 +17,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useEntityArcIds } from '@/src/hooks/arcs/useEntityArcIds';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const service = {
   listEntityArcIds: jest.fn(),

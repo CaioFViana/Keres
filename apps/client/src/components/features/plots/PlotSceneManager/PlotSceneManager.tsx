@@ -12,8 +12,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { createULID } from '@/src/utils/entityUtils';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import ScenePlotModal from './ScenePlotModal';
 
 interface PlotSceneManagerProps {

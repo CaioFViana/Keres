@@ -49,13 +49,13 @@ import { type PlaybackVoice, useSongPlayback } from '@/src/hooks/music/useSongPl
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { SongStackParamList } from '@/src/navigation/MainSystemStacks';
 import { createSongService } from '@/src/services/storymanagement/SongService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { deliverFile } from '@/src/utils/storyTransfer';
+import { deliverFile } from '@/src/utils/io/storyTransfer';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type RouteProps = RouteProp<SongStackParamList, 'SongEditor'>;

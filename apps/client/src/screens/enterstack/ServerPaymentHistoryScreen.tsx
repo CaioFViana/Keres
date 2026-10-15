@@ -15,7 +15,7 @@ import { useServerStatuses } from '@/src/screens/enterstack/useServerStatuses';
 import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
 import type { ThemeColors } from '@/src/theme';
 import { useTheme } from '@/src/theme';
-import { formatMoney, formatPlanDate } from '@/src/utils/paymentPlans';
+import { formatMoney, formatPlanDate } from '@/src/utils/billing/paymentPlans';
 
 type RouteProps = RouteProp<ServerManagementStackParamList, 'ServerPaymentHistory'>;
 

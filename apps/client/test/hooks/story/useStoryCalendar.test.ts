@@ -18,8 +18,8 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
-import { useStoryStore } from '@/src/state/storyStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const definition = {
   secondsPerMinute: 60,

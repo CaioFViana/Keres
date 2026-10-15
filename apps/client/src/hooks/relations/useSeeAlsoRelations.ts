@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/SeeAlsoRelationService';
 import { createSeeAlsoRelationService } from '@/src/services/storymanagement/SeeAlsoRelationService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 export interface SeeAlsoLink {

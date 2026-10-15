@@ -8,7 +8,7 @@ import {
   CanvasActionBarButton,
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 import { useSketchCompact } from '@/src/hooks/sketch/useSketchCompact';
-import type { SketchTool } from '@/src/state/sketchToolStore';
+import type { SketchTool } from '@/src/state/drafts/sketchToolStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import SketchMenuSheet, { type SketchMenuItem } from './SketchMenuSheet';

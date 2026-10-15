@@ -9,8 +9,8 @@ import {
   createShippedPackService,
   type ShippedPackPreview,
 } from '@/src/services/storymanagement/ShippedPackService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { layout } from '@/src/theme/layout';

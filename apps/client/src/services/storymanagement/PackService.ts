@@ -10,13 +10,13 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { PackSelect } from '@/src/db/schema';
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import {
   buildStoryBundleFromPacks,
   findPackConflicts,
   type NewStoryData,
   type PackConflict,
-} from '@/src/utils/packBundle';
+} from '@/src/utils/io/packBundle';
 import { createSuggestionService } from './SuggestionService';
 import { createStoryService } from './StoryService';
 
@@ -126,7 +126,7 @@ export interface PackService {
    *
    * The only way a pack is ever applied. It goes through `importFullStory`, so it writes no
    * operation log entries and the result is bootstrapped to a server whole - see
-   * `utils/packBundle.ts`.
+   * `utils/io/packBundle.ts`.
    */
   createStoryWithPacks(
     userId: string,

@@ -12,7 +12,7 @@ import { createChoiceService } from '@/src/services/storymanagement/ChoiceServic
 import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
 import { createPlotService } from '@/src/services/storymanagement/PlotService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { buildNarrativeProjection, type NarrativePresentationOrder } from '@keres/shared';
 

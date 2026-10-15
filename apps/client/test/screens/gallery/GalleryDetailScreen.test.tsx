@@ -36,7 +36,7 @@ jest.mock('@/src/screens/gallery/GalleryDetailContent', () => ({
     );
   },
 }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));

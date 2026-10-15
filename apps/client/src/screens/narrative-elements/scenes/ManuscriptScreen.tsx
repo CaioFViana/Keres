@@ -30,9 +30,9 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useManuscriptData } from '@/src/screens/narrative-elements/scenes/useManuscriptData';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import { sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
+import { sceneBelongsToActiveArc } from '@/src/utils/search/storyArcFilter';
 import {
   manuscriptModeHeaderActions,
   useManuscriptReview,

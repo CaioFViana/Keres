@@ -21,13 +21,13 @@ import type { FriendshipWithServer } from '@/src/services/FriendshipService';
 import { createFriendshipService } from '@/src/services/FriendshipService';
 import { createServerService } from '@/src/services/ServerService';
 import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useHasUnseenMessages } from '@/src/state/unseenMessagesStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useHasUnseenMessages } from '@/src/state/ui/unseenMessagesStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { type FriendshipListRow, groupFriendshipsByServer } from '@/src/utils/friendshipGroups';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<

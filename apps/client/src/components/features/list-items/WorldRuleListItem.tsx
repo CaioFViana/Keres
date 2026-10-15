@@ -7,7 +7,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useTheme } from '@/src/theme';
-import { truncate } from '@/src/utils/stringUtils';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 import type { WorldRuleWithTags } from '@/src/db/schemas/worldRules';
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';

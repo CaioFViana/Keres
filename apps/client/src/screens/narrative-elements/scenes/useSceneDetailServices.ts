@@ -26,7 +26,7 @@ import {
   type LocationService,
 } from '@/src/services/storymanagement/LocationService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useCharacterStore } from '@/src/state/characterStore';
+import { useCharacterStore } from '@/src/state/story/characterStore';
 
 /** Owns service lifecycles and the story-scoped character cache used by Scene detail. */
 export function useSceneDetailServices(storyId?: string) {

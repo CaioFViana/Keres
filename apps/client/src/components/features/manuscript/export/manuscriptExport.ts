@@ -11,8 +11,8 @@ import {
   deliverFile,
   type ExportDeliveryResult,
   type ExportFileLanguage,
-} from '@/src/utils/storyTransfer';
-import { pdfFontMatrices } from '@/src/utils/pdfFontAssets';
+} from '@/src/utils/io/storyTransfer';
+import { pdfFontMatrices } from '@/src/utils/io/pdfFontAssets';
 
 export type ManuscriptExportFormat = ManuscriptFormat;
 

@@ -11,7 +11,7 @@ import type {
 import type { ServerSelect } from '@/src/db/schema';
 import { paymentApi } from './PaymentApiService';
 
-export { PAYMENTS_CHANGED } from '@/src/utils/paymentEvents';
+export { PAYMENTS_CHANGED } from '@/src/utils/billing/paymentEvents';
 
 /** What the plan screen shows for a server that sells plans. */
 export interface PaymentOverview {

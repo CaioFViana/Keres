@@ -52,7 +52,7 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
     term: (type: string) => (type === 'Chapter' ? 'Session' : 'Scene'),
   }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({
@@ -60,11 +60,11 @@ jest.mock('@/src/state/storyStore', () => ({
       effectiveArc: { id: 'arc-1', medium: 'campaign' },
     }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockNotify(...args) }),

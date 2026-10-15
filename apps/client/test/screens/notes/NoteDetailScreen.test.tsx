@@ -210,7 +210,7 @@ jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { SKETCH_PALETTE } from '@/src/state/sketchToolStore';
+import { SKETCH_PALETTE } from '@/src/state/drafts/sketchToolStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { space, typography } from '@/src/theme/tokens';

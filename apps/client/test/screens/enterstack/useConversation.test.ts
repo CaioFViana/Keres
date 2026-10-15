@@ -35,21 +35,21 @@ jest.mock('@/src/services/MessageService', () => ({
   createMessageService: () => mockService,
   setOpenConversation: (key: string | null) => mockSetOpen(key),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('@/src/state/unseenMessagesStore', () => ({
+jest.mock('@/src/state/ui/unseenMessagesStore', () => ({
   __esModule: true,
   useUnseenMessagesStore: {
     getState: () => ({ markSeen: (...args: unknown[]) => mockMarkSeen(...args) }),
   },
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (event: string, listener: (...args: unknown[]) => void) => {

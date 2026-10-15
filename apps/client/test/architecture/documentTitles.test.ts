@@ -69,7 +69,7 @@ describe('the web page title', () => {
 
   it('is only ever written through `setDocumentTitle`', () => {
     const offenders = sourceFiles(SRC)
-      .filter((path) => relative(path) !== 'utils/documentTitle.ts')
+      .filter((path) => relative(path) !== 'utils/nav/documentTitle.ts')
       .filter((path) => /document\.title\s*=/.test(readFileSync(path, 'utf8')))
       .map(relative)
       .sort();

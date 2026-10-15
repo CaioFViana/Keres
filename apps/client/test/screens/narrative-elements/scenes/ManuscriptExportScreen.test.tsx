@@ -57,7 +57,7 @@ jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: () => undefined,
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = {
@@ -106,7 +106,7 @@ jest.mock('@/src/services/storymanagement/ManuscriptMusicService', () => ({
         })
       : [...scenes],
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
@@ -116,7 +116,7 @@ jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   useStoryArcs: () => ({ arcs: mockArcs }),
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));

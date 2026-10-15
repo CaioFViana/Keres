@@ -126,11 +126,11 @@ jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));

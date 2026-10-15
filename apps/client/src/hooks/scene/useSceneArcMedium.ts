@@ -3,7 +3,7 @@ import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 
 /**
  * The medium of the work a scene belongs to, or `null` while loading. A scene belongs to the work of

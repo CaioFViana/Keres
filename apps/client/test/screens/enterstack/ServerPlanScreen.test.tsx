@@ -69,14 +69,14 @@ jest.mock('@/src/services/PaymentService', () => ({
 }));
 // The device filter defaults to the web build here, so the redirect methods show;
 // one test below switches it to a phone without a purchase runtime.
-jest.mock('@/src/utils/paymentMethodVisibility', () => {
-  const actual = jest.requireActual('@/src/utils/paymentMethodVisibility');
+jest.mock('@/src/utils/billing/paymentMethodVisibility', () => {
+  const actual = jest.requireActual('@/src/utils/billing/paymentMethodVisibility');
   return { ...actual, devicePaymentCapabilities: jest.fn() };
 });
 
 import { fireEvent, render, within } from '@testing-library/react-native';
 import ServerPlanScreen from '@/src/screens/enterstack/ServerPlanScreen';
-import { devicePaymentCapabilities } from '@/src/utils/paymentMethodVisibility';
+import { devicePaymentCapabilities } from '@/src/utils/billing/paymentMethodVisibility';
 
 const mockDeviceCaps = devicePaymentCapabilities as jest.Mock;
 

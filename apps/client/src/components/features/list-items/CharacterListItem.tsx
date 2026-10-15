@@ -3,7 +3,7 @@ import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { Text, View } from 'react-native';
 import type { CharacterWithTags } from '@/src/services/storymanagement/CharacterService';
 import { useTheme } from '@/src/theme';
-import { truncate } from '@/src/utils/stringUtils';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '@/src/components/common/display/TagList/TagList';

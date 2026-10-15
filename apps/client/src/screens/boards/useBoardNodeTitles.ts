@@ -6,7 +6,7 @@ import {
   boardPinTypeKey,
   getBoardPinAppearance,
   worldPieceSectionFromBoardPinGroup,
-} from '@/src/utils/boardPinAppearance';
+} from '@/src/utils/board/boardPinAppearance';
 import type { BoardPinOption } from './useBoardPinOptions';
 
 export interface BoardNodeTitleMeta {

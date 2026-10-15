@@ -12,7 +12,7 @@ import { createChapterService } from '@/src/services/storymanagement/ChapterServ
 import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
 import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 export function useItemJourneyTimelineData(storyId: string, itemId: string) {
   const drizzleDb = useDrizzle();

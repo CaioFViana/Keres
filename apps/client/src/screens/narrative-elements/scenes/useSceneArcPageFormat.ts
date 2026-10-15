@@ -4,7 +4,7 @@ import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 
 /**
  * The shape a page of the scene's work is drawn in: the work's own choice or its medium's. A scene

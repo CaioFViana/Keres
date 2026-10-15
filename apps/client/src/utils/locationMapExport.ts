@@ -1,8 +1,8 @@
 import type { LocationMapContentType } from '@keres/shared';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { bytesToBase64 } from './locationMapMedia';
-import { renderLocationMapSvg } from './locationMapSvg';
-import type { LocationMapSvgOptions } from './locationMapSvg';
+import { renderLocationMapSvg } from './location-map/locationMapSvg';
+import type { LocationMapSvgOptions } from './location-map/locationMapSvg';
 
 export interface LocationMapExportMedia {
   mediaType: string;

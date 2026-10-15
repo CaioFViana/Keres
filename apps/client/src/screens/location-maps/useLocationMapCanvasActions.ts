@@ -9,7 +9,7 @@ import type { MultiSelectOption } from '@/src/components/common/inputs/MultiSele
 import type { GallerySelect, LocationMapSelect, LocationSelect } from '@/src/db/schema';
 import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
 import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
-import type { NotificationType } from '@/src/state/notificationStore';
+import type { NotificationType } from '@/src/state/ui/notificationStore';
 import {
   LOCATION_MAP_IMAGE_DEFAULT_HEIGHT,
   LOCATION_MAP_IMAGE_DEFAULT_WIDTH,
@@ -20,9 +20,9 @@ import {
   appendImagesToMap,
   appendLocationsToMap,
   appendMarkersToMap,
-} from '@/src/utils/locationMapContent';
+} from '@/src/utils/location-map/locationMapContent';
 import { imageSizeOf } from '@/src/utils/locationMapMedia';
-import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvas/canvasDragBounds';
 
 type GalleryMediaById = Record<
   string,

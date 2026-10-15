@@ -33,11 +33,11 @@ import {
   type SceneMusicTarget,
 } from '@/src/services/storymanagement/SceneMusicService';
 import { createSongService } from '@/src/services/storymanagement/SongService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { sceneMusicWordKey } from '@/src/utils/sceneMusicWords';
+import { sceneMusicWordKey } from '@/src/utils/scene/sceneMusicWords';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;

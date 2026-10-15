@@ -27,7 +27,7 @@ function bootWeb() {
   const {
     ensureCanvasKit,
   } = require('./src/components/features/graphs/SkiaEdgeCanvas/canvasKitBoot');
-  const { promiseWithTimeout } = require('./src/utils/promiseWithTimeout');
+  const { promiseWithTimeout } = require('./src/utils/sync/promiseWithTimeout');
   promiseWithTimeout(ensureCanvasKit(), 30000, 'CanvasKit boot').then(boot, (error) => {
     console.error('[SkiaEdgeCanvas] CanvasKit failed to load; booting without edge lines.', error);
     boot();
@@ -39,7 +39,7 @@ if (Platform.OS !== 'web') {
 } else {
   // The serverless build (GitHub Pages) gets its COOP/COEP from a service worker, installed
   // before anything opens the database; everywhere else this resolves at once.
-  const { ensureCrossOriginIsolation } = require('./src/utils/crossOriginIsolation');
+  const { ensureCrossOriginIsolation } = require('./src/utils/platform/crossOriginIsolation');
   ensureCrossOriginIsolation().then((ready) => {
     if (ready) bootWeb();
   }, bootWeb);

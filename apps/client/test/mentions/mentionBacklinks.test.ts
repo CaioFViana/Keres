@@ -1,4 +1,4 @@
-import { buildMentionMatcher } from '@/src/utils/entityMentions';
+import { buildMentionMatcher } from '@/src/utils/entity/entityMentions';
 import {
   buildAmbiguousMentionIndex,
   buildMentionBacklinkIndex,

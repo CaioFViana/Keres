@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 const mockShowNotification = jest.fn();
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
@@ -26,7 +26,7 @@ import { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from '@/src/services/SyncEngineSer
 import type { SyncCycleOutcome } from '@/src/services/sync/SyncScheduler';
 import type { SyncEngineService } from '@/src/services/SyncEngineService';
 import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';

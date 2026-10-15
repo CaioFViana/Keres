@@ -38,7 +38,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,

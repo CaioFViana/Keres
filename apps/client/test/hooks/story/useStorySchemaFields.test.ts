@@ -8,7 +8,7 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const service = { getFieldsByStoryAndEntityType: jest.fn() };
 

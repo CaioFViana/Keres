@@ -10,8 +10,8 @@ import {
   retryVerification,
 } from '@/src/services/AgeVerificationApiService';
 import { authTokenManager } from '@/src/services/AuthTokenManager';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /** How often the verification is asked about while the screen is in front. */
 export const VERIFICATION_POLL_MS = 5000;

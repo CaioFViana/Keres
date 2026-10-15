@@ -14,12 +14,12 @@ import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
 import LegalUpdateScreen from '@/src/screens/enterstack/LegalUpdateScreen';
 import { getClientSettings } from '@/src/services/ClientSettingsService';
 import { VERIFICATION_PENDING_EVENT } from '@/src/services/apiClient';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
-import { useThemeStore } from '@/src/state/themeStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
 import { buildNavigationTheme } from './navigationTheme';
@@ -199,7 +199,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
       theme={navigationTheme}
       // Left on, React Navigation writes the focused route's name (`DeviceIndex`, `PackList`) into the
       // title whenever the screen sets its title on a parent navigator - racing the explicit
-      // `setDocumentTitle` calls. The screens own the title (see `utils/documentTitle`).
+      // `setDocumentTitle` calls. The screens own the title (see `utils/nav/documentTitle`).
       documentTitle={{ enabled: false }}
     >
       <SyncInitializer>

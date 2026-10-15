@@ -24,7 +24,7 @@ import {
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { space, typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { useDocumentTitle } from '@/src/utils/documentTitle';
+import { useDocumentTitle } from '@/src/utils/nav/documentTitle';
 
 type RootStackParamList = {
   LegalUpdate: undefined;

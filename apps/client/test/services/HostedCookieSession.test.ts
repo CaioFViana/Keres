@@ -5,7 +5,7 @@ jest.mock('@/src/services/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: jest.fn(),
   hostedApiOrigin: jest.fn(() => 'http://localhost:3000'),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => mockSettings },
 }));
 jest.mock('@/src/services/apiClient', () => ({

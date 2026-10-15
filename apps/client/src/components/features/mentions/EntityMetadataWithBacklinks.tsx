@@ -1,7 +1,7 @@
 import EntityMetadata, {
   type EntityMetadataProps,
 } from '@/src/components/common/display/EntityMetadata/EntityMetadata';
-import type { NavigableEntityType } from '@/src/utils/entityNavigation';
+import type { NavigableEntityType } from '@/src/utils/entity/entityNavigation';
 import { MentionBacklinksSection } from './MentionBacklinksSection';
 
 interface Props extends EntityMetadataProps {

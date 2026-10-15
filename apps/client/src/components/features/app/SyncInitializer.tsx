@@ -20,12 +20,12 @@ import { createStoryService } from '@/src/services/storymanagement/StoryService'
 import type { ServerStoryPreview } from '@/src/services/SyncEngineService';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryListStore } from '@/src/state/storyListStore';
-import { useStoryStore } from '@/src/state/storyStore'; // Import useStoryStore
-import { useSyncConflictStore } from '@/src/state/syncConflictStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
+import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 interface SyncInitializerProps {

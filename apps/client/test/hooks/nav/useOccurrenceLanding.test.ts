@@ -6,7 +6,7 @@ import {
   useOccurrenceFlash,
   useOccurrenceLandingController,
 } from '@/src/hooks/nav/useOccurrenceLanding';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 
 type MeasureCallback = (x: number, y: number, width: number, height: number) => void;
 

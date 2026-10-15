@@ -7,7 +7,7 @@ jest.mock('@react-navigation/native', () => ({
 import { renderHook } from '@testing-library/react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 
 const navigate = jest.fn();
 

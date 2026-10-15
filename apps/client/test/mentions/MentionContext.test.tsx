@@ -7,7 +7,7 @@ import {
   useMentionBacklinks,
   useMentions,
 } from '@/src/mentions/MentionContext';
-import { EMPTY_MENTION_MATCHER } from '@/src/utils/entityMentions';
+import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
 
 describe('useMentions', () => {
   it('defaults to an empty matcher and a no-op opener outside providers', async () => {

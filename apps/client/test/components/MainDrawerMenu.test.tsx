@@ -60,12 +60,12 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (key: string) => `term:${key}` }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ suggestLiteraryDevices: false }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1' } }),

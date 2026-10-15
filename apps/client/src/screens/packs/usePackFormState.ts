@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StorySelect } from '@/src/db/schema';
 import type { PackService } from '@/src/services/storymanagement/PackService';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 
 const ALL_OFF: PackSelectionType = {
   customAttributes: false,

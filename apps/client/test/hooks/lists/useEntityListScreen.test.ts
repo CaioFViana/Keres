@@ -2,13 +2,13 @@
  * @jest-environment node
  */
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('@/src/state/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
+jest.mock('@/src/state/story/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
-import { useStoryStore } from '@/src/state/storyStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const STORY_ID = 'story-1';
 const CHANGE_EVENT = 'tag_changed';

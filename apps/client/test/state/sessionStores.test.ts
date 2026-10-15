@@ -8,11 +8,11 @@ jest.mock('@/src/services/ClientSettingsService', () => ({
 }));
 
 import * as ClientSettingsService from '@/src/services/ClientSettingsService';
-import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
-import { useLocationMapDraftStore } from '@/src/state/locationMapDraftStore';
-import { usePresenceMatrixViewerStore } from '@/src/state/presenceMatrixViewerStore';
-import { useThemeStore } from '@/src/state/themeStore';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
 
 const settingsService = ClientSettingsService as unknown as {
   getClientSettings: jest.Mock;

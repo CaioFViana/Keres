@@ -2,14 +2,14 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { buildStoryZipBytes } from '@/src/utils/storyMediaBundle';
 import {
   buildExportFileName,
   buildExportZipFileName,
   deliverStoryExport,
   deliverStoryZipExport,
-} from '@/src/utils/storyTransfer';
+} from '@/src/utils/io/storyTransfer';
 
 /**
  * The whole story as a file to keep: the data alone (`.json`), or with the media this device already has

@@ -14,7 +14,7 @@ import {
   sceneBelongsToGroup,
   scenesShownForChapter,
 } from '@/src/screens/narrative-elements/chapters/createChapterListItemRenderer';
-import { UNCHAPTERED_GROUP_ID } from '@/src/utils/narrativeSceneOrder';
+import { UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
 
 const scene = (overrides: Record<string, unknown> = {}) =>
   ({

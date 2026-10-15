@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { ServerSelect } from '@/src/db/schema';
 import { isOfflineError } from '@/src/services/apiClient';
 import { cancelSubscription } from '@/src/services/PaymentService';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { formatPlanDate } from '@/src/utils/paymentPlans';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { formatPlanDate } from '@/src/utils/billing/paymentPlans';
 
 /**
  * Stopping a subscription renewing, after the user confirms: what is paid stays in force until its date, and

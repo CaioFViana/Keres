@@ -45,11 +45,11 @@ jest.mock('@/src/services/MessageApiService', () => ({
     },
   ),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('@/src/state/unseenMessagesStore', () => ({
+jest.mock('@/src/state/ui/unseenMessagesStore', () => ({
   __esModule: true,
   useUnseenMessagesStore: {
     getState: () => ({
@@ -58,11 +58,11 @@ jest.mock('@/src/state/unseenMessagesStore', () => ({
     }),
   },
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { t: (key: string, options?: { name?: string }) => `${key}:${options?.name ?? ''}` },
 }));

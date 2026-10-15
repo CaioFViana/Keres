@@ -13,7 +13,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
-jest.mock('@/src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
+jest.mock('@/src/utils/nav/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'pt' }, t: (key: string) => key }),

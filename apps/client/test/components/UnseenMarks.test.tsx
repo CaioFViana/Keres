@@ -44,7 +44,7 @@ import ServerDrawerIcon from '@/src/components/features/messages/ServerDrawerIco
 import UnseenMark from '@/src/components/features/messages/UnseenMark';
 import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
 import ServerListItem from '@/src/components/features/servers/ServerListItem';
-import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
+import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 
 const setUnseen = (unseen: Record<string, string>) =>
   act(async () => {

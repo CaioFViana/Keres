@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
 
 /**
  * Opens a gallery medium on top of the current screen - without navigating.

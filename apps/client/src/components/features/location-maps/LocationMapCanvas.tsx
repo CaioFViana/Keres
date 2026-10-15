@@ -23,8 +23,8 @@ import {
   LOCATION_MAP_NODE_SIZE,
 } from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '@/src/theme';
-import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
-import { visibleCanvasStamps } from '@/src/utils/canvasOverlayStamps';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvas/canvasDragBounds';
+import { visibleCanvasStamps } from '@/src/utils/canvas/canvasOverlayStamps';
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import LocationMapConnectionLayer, {
   type LocationMapConnection,

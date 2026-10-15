@@ -5,7 +5,7 @@ import { ActivityIndicator, FlatList, Keyboard, StyleSheet, Text, View } from 'r
 import { entityFieldMetadata, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 import { useTheme } from '@/src/theme';
-import { countActiveCriteria, withoutCriterion } from '@/src/utils/advancedSearchCriteria';
+import { countActiveCriteria, withoutCriterion } from '@/src/utils/search/advancedSearchCriteria';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import MultiSelectPill, {

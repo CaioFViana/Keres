@@ -68,12 +68,12 @@ jest.mock('@/src/services/storymanagement/SuggestionService', () => {
     }),
   };
 });
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: mockSelectedStoryId.current } }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
@@ -91,11 +91,11 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   __esModule: true,
   navigateToEntityDetail: (...args: unknown[]) => mockNavigateToEntityDetail(...args),
 }));

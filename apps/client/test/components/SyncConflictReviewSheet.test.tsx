@@ -37,12 +37,12 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 });
 
 const mockAlert = jest.fn();
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 let mockUserId: string | null = 'user-1';
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) => selector({ userId: mockUserId }),
 }));
@@ -53,7 +53,7 @@ const mockStore = {
   selectConflict: jest.fn(),
   clearSelection: jest.fn(),
 };
-jest.mock('@/src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/sync/syncConflictStore', () => ({
   __esModule: true,
   useSyncConflictStore: (selector: (state: unknown) => unknown) => selector(mockStore),
 }));

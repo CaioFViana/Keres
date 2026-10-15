@@ -28,11 +28,11 @@ jest.mock('@/src/db/schema', () => {
     attributeValues: table('attributeValues'),
   };
 });
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn(),
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { on: jest.fn(), off: jest.fn() },
 }));
@@ -50,7 +50,7 @@ const mockDebounce = jest.fn((fn: (...args: unknown[]) => void) => {
   (wrapped as unknown as { cancel: jest.Mock }).cancel = jest.fn();
   return wrapped;
 });
-jest.mock('@/src/utils/debounce', () => ({
+jest.mock('@/src/utils/sync/debounce', () => ({
   __esModule: true,
   debounce: (...args: unknown[]) => (mockDebounce as (...callArgs: unknown[]) => unknown)(...args),
 }));
@@ -66,9 +66,9 @@ import {
   MENTIONABLE_ENTITY_TYPES,
   MentionMatcherProvider,
 } from '@/src/mentions/MentionMatcherProvider';
-import { useStoryStore } from '@/src/state/storyStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { EMPTY_MENTION_MATCHER } from '@/src/utils/entityMentions';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
 import { loadEntityOptions } from '@/src/utils/entityOptions';
 
 const rowsByTable: Record<string, Record<string, unknown>[]> = {};

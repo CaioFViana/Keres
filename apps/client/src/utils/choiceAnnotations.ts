@@ -9,7 +9,7 @@ import { createChoiceCheckGroupService } from '@/src/services/storymanagement/Ch
 import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
 import { createEffectService } from '@/src/services/storymanagement/EffectService';
 import { createItemService } from '@/src/services/storymanagement/ItemService';
-import { choiceAnnotationFormatterFromT } from './choiceCheckEffectDescriptions';
+import { choiceAnnotationFormatterFromT } from './analysis/choiceCheckEffectDescriptions';
 
 export type { ChoiceAnnotationLines };
 

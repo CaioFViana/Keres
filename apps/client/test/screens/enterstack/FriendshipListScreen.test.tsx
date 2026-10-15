@@ -94,7 +94,7 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -127,12 +127,12 @@ jest.mock('@/src/services/ServerService', () => ({
   }),
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
@@ -140,7 +140,7 @@ jest.mock('@/src/state/userSettingsStore', () => ({
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import FriendshipListScreen from '@/src/screens/enterstack/FriendshipListScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', idUser: 'me-on-server', name: 'Main' };
@@ -314,7 +314,7 @@ describe('FriendshipListScreen', () => {
   });
 
   it('changes the inbox icon when a message has not been opened', async () => {
-    const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
+    const { useUnseenMessagesStore } = require('@/src/state/ui/unseenMessagesStore');
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await view.findByText('friends_title · 1');
@@ -563,7 +563,7 @@ describe('FriendshipListScreen', () => {
 });
 
 describe('FriendshipListScreen: which chat has news', () => {
-  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/ui/unseenMessagesStore');
   const bo = friendship({
     id: 'f6',
     status: FriendStatus.FRIEND,

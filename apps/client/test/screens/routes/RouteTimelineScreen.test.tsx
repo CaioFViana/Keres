@@ -95,7 +95,7 @@ jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('@/src/utils/sceneTiming', () => ({
+jest.mock('@/src/utils/scene/sceneTiming', () => ({
   formatSceneGap: () => 'gap',
   formatSceneUniverseDuration: () => 'dur',
 }));

@@ -174,19 +174,19 @@ jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getById: mockGetItemJourneyById }),
 }));
-jest.mock('@/src/state/itemStore', () => ({
+jest.mock('@/src/state/story/itemStore', () => ({
   __esModule: true,
   useItemStore: () => storeStub('items')(),
 }));
-jest.mock('@/src/state/sceneStore', () => ({
+jest.mock('@/src/state/story/sceneStore', () => ({
   __esModule: true,
   useSceneStore: () => storeStub('scenes')(),
 }));
-jest.mock('@/src/state/characterStore', () => ({
+jest.mock('@/src/state/story/characterStore', () => ({
   __esModule: true,
   useCharacterStore: () => storeStub('characters')(),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
@@ -208,7 +208,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import ItemJourneyDetailScreen from '@/src/screens/itemJourneys/ItemJourneyDetailScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeJourney = (overrides = {}) => ({
   id: 'journey-1',

@@ -2,7 +2,7 @@ import type { CalendarDefinitionType } from '@keres/shared';
 import { dayNumberForElapsed, gregorianDayNumberForElapsed } from '@keres/shared';
 import { useMemo } from 'react';
 import { useStoryTimeline } from '@/src/hooks/story/useStoryTimeline';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 
 /** One thing that happens on a day: a scene of the spine, or an anchored event. */
 export interface AgendaEntry {

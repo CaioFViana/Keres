@@ -280,15 +280,15 @@ jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
     deleteCharacterRelation: (...args: unknown[]) => mockDeleteRelation(...args),
   }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const store = () => ({ userId: 'user-1' });
   store.getState = () => ({ exportFormat: 'svg' });
   return { __esModule: true, useUserSettingsStore: store };
@@ -297,7 +297,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock(
@@ -356,9 +356,9 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('@/src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/io/storyTransfer'),
   buildCharacterRelationMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));
@@ -374,7 +374,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import CharacterRelationGraphScreen from '@/src/screens/characterrelations/CharacterRelationGraphScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

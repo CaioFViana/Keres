@@ -18,10 +18,10 @@ import { MentionNavigationProvider } from '@/src/mentions/MentionNavigationProvi
 import GlobalSearchScreen from '@/src/screens/globalsearch/GlobalSearchScreen';
 import MainDashboardScreen from '@/src/screens/mainstorystack/MainDashboardScreen';
 import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import { drawerItemListeners } from './drawerInteraction';
 import { drawerScreenOptions, readDrawerHeaderRoute, useDrawerChrome } from './drawerHeaderOptions';

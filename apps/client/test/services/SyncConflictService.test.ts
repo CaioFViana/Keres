@@ -10,7 +10,7 @@ import {
   type RecordConflictInput,
 } from '@/src/services/SyncConflictService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const ENTITY_ID = 'char-1';

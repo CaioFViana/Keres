@@ -203,7 +203,7 @@ jest.mock('@/src/services/storymanagement/WorldRuleService', () => ({
   __esModule: true,
   createWorldRuleService: () => ({ getById: mockGetWorldRuleById }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
@@ -221,7 +221,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import WorldRuleDetailScreen from '@/src/screens/worldrules/WorldRuleDetailScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeWorldRule = (overrides = {}) => ({
   id: 'wr-1',

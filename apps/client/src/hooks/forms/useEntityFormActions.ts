@@ -12,8 +12,8 @@ import {
   type PersistedEntity,
   saveEntityWithSecondaryData,
 } from '@/src/services/storymanagement/EntityFormSaveCoordinator';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { type ConfirmDeleteOptions, useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
 
 export interface EntityFormActionsConfig<TData, TEntity extends PersistedEntity> {

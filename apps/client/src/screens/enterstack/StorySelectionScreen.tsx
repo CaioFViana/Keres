@@ -15,15 +15,15 @@ import { useScreenTour } from '@/src/guides/useScreenTour';
 import { createServerService } from '@/src/services/ServerService';
 import { createStoryContentMetricsService } from '@/src/services/storymanagement/StoryContentMetricsService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryListStore } from '@/src/state/storyListStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useSummaryStore } from '@/src/state/summaryStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useSummaryStore } from '@/src/state/story/summaryStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type RootStackParamList = {

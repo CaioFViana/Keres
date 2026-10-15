@@ -8,9 +8,9 @@ jest.mock('@/src/services/AuthTokenManager', () => ({
   },
 }));
 
-jest.mock('@/src/utils/jwtUtils', () => ({ isJwtExpired: jest.fn() }));
+jest.mock('@/src/utils/auth/jwtUtils', () => ({ isJwtExpired: jest.fn() }));
 jest.mock('@/src/services/apiClient', () => ({ isOfflineError: jest.fn() }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: jest.fn() },
 }));
 
@@ -18,9 +18,9 @@ import type { ServerSelect } from '@/src/db/schema';
 import { authTokenManager } from '@/src/services/AuthTokenManager';
 import { createServerService } from '@/src/services/ServerService';
 import { isOfflineError } from '@/src/services/apiClient';
-import { useConnectivityStore } from '@/src/state/connectivityStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { isJwtExpired } from '@/src/utils/jwtUtils';
+import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { isJwtExpired } from '@/src/utils/auth/jwtUtils';
 
 const mockGetTokens = authTokenManager.getTokens as jest.Mock;
 const mockRefreshAccessToken = authTokenManager.refreshAccessToken as jest.Mock;

@@ -66,8 +66,8 @@ jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonContainerStyles: () => ({ container: {} }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
@@ -91,13 +91,13 @@ const mockBaseStory = {
   userId: '01ARZ3NDEKTSV4RRFFQ69G5FUS',
   vocabulary: null,
 };
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: { ...mockBaseStory }, setSelectedStory: jest.fn() }),
 }));
 
 import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 beforeEach(() => {
   jest.clearAllMocks();

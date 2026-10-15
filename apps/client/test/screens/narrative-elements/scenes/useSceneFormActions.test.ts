@@ -19,10 +19,10 @@ jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
 jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
 jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({

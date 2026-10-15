@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHasUnseenMessages } from '@/src/state/unseenMessagesStore';
+import { useHasUnseenMessages } from '@/src/state/ui/unseenMessagesStore';
 import DrawerIconWithMark from './DrawerIconWithMark';
 
 interface FriendshipDrawerIconProps {

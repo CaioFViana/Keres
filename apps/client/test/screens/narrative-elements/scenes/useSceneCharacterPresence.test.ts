@@ -13,7 +13,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
@@ -21,7 +21,7 @@ jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: jest.fn(() => mockService),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

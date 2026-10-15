@@ -40,5 +40,5 @@ ${entries.join('\n')}
 };
 `;
 
-writeFileSync(join(process.cwd(), 'apps/client/src/utils/locationMapIconPaths.ts'), out);
+writeFileSync(join(process.cwd(), 'apps/client/src/utils/svg/locationMapIconPaths.ts'), out);
 console.log(`wrote ${entries.length} icons`);

@@ -72,7 +72,7 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   }),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector: (state: { use24HourTime: boolean }) => boolean) =>
     selector({ use24HourTime: true }),
 }));

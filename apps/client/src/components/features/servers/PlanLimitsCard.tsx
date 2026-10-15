@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { planLimitLines } from '@/src/utils/planLimitLines';
+import { planLimitLines } from '@/src/utils/billing/planLimitLines';
 import { serverCardStyleDefs } from './serverCardStyleDefs';
 
 export interface PlanLimitsCardProps {

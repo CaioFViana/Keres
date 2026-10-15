@@ -7,7 +7,7 @@ const mockStore = {
 };
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/state/chapterStore', () => ({
+jest.mock('@/src/state/story/chapterStore', () => ({
   __esModule: true,
   useChapterStore: jest.fn(() => mockStore),
 }));

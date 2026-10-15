@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import PlanStatusCard from '@/src/components/features/servers/PlanStatusCard';
-import { formatPlanDate } from '@/src/utils/paymentPlans';
+import { formatPlanDate } from '@/src/utils/billing/paymentPlans';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

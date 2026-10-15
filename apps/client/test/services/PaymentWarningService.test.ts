@@ -18,11 +18,11 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     },
   },
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: {
     language: 'en',

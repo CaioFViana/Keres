@@ -11,12 +11,12 @@ const mockBuildManuscriptFileName = jest.fn(
 );
 const mockPdfFontMatrices = jest.fn();
 
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
   buildManuscriptFileName: (...args: unknown[]) => mockBuildManuscriptFileName(...args),
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));
-jest.mock('@/src/utils/pdfFontAssets', () => ({
+jest.mock('@/src/utils/io/pdfFontAssets', () => ({
   __esModule: true,
   pdfFontMatrices: (...args: unknown[]) => mockPdfFontMatrices(...args),
 }));
@@ -34,7 +34,7 @@ beforeEach(() => {
   // Every existing test keeps the real serif loader; the wiring tests below
   // override per case.
   mockPdfFontMatrices.mockImplementation(() =>
-    jest.requireActual('@/src/utils/pdfFontAssets').pdfFontMatrices(),
+    jest.requireActual('@/src/utils/io/pdfFontAssets').pdfFontMatrices(),
   );
 });
 

@@ -7,15 +7,15 @@ import type {
   LocationMapContains,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import type { LocationMapSelect } from '@/src/db/schema';
-import type { NotificationType } from '@/src/state/notificationStore';
-import type { SvgExportColors } from '@/src/utils/svgExport';
+import type { NotificationType } from '@/src/state/ui/notificationStore';
+import type { SvgExportColors } from '@/src/utils/svg/svgExport';
 import {
   buildLocationMapFileName,
   deliverMapExport,
   type ExportFileLanguage,
-} from '@/src/utils/storyTransfer';
-import { buildStandaloneLocationMapSvg } from '@/src/utils/storyMapSvgExport';
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+} from '@/src/utils/io/storyTransfer';
+import { buildStandaloneLocationMapSvg } from '@/src/utils/io/storyMapSvgExport';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 type GalleryMediaById = Record<
   string,

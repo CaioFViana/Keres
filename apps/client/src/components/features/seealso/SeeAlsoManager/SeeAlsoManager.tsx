@@ -11,7 +11,7 @@ import {
 } from '@/src/hooks/relations/useSeeAlsoEntityOptions';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useSeeAlsoRelations } from '@/src/hooks/relations/useSeeAlsoRelations';
-import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 
 interface SeeAlsoManagerProps {
   storyId: string;

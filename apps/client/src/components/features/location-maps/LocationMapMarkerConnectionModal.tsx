@@ -3,7 +3,7 @@ import type { LocationMapContentType } from '@keres/shared';
 import { MAX_LOCATION_MAP_ANNOTATION_LENGTH } from '@keres/shared';
 import React from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { addLocationMapMarkerConnection } from '@/src/utils/locationMapContent';
+import { addLocationMapMarkerConnection } from '@/src/utils/location-map/locationMapContent';
 
 interface Props {
   pair: { from: string; to: string };

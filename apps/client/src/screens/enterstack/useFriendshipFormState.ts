@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import type { createServerService } from '@/src/services/ServerService';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 type ServerService = ReturnType<typeof createServerService>;
 

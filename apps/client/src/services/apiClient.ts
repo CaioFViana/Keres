@@ -3,8 +3,8 @@ import { SYNC_PROTOCOL_HEADER, SYNC_PROTOCOL_VERSION } from '@keres/shared';
 import { AxiosError, create as createAxios, isAxiosError } from 'axios';
 import { Platform } from 'react-native';
 import type { ServerSelect } from '@/src/db/schema'; // Import ServerSelect
-import { useConnectivityStore } from '@/src/state/connectivityStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { canRefreshSessionWithCookie } from './browserCookieSession';
 
 export const NO_RESPONSE_ERROR = 'NO_RESPONSE';

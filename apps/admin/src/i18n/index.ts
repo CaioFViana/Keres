@@ -8,7 +8,7 @@ import showcasePt from './locales/showcase.pt.json';
 /**
  * Translation for the panel and the public site.
  *
- * The same stack as the application (`i18next` + `react-i18next`, see apps/client/src/utils/i18n.ts)
+ * The same stack as the application (`i18next` + `react-i18next`, see apps/client/src/utils/format/i18n.ts)
  * rather than a mechanism of its own: whoever has touched the app's translations does not have to
  * learn a second system, and plurals and interpolation come for free.
  *

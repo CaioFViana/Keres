@@ -2,7 +2,7 @@
 import type React from 'react';
 import { renderHook } from '@testing-library/react-native';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
 
 let mockFocused = true;
 const mockParent = { setOptions: jest.fn() };
@@ -15,7 +15,7 @@ jest.mock('@react-navigation/native', () => ({
     }, [callback, mockFocused]);
   },
 }));
-jest.mock('@/src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
+jest.mock('@/src/utils/nav/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
 jest.mock('@/src/components/common/navigation/HeaderActions/HeaderActions', () => 'HeaderActions');
 
 beforeEach(() => {

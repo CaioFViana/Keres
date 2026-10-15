@@ -11,9 +11,9 @@ import {
   MESSAGES_CHANGED,
   setOpenConversation,
 } from '@/src/services/MessageService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,

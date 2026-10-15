@@ -11,8 +11,8 @@ import {
 } from '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import { screenHelpPage } from '@/src/help/contextualHelp';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { DrawerToggleButton } from './MainSystemDrawerHelpers';
 import {

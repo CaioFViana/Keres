@@ -133,11 +133,11 @@ jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('@/src/state/locationStore', () => ({
+jest.mock('@/src/state/story/locationStore', () => ({
   __esModule: true,
   useLocationStore: jest.fn(),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: object) => unknown) => mockUseStoryStore(selector),
 }));
@@ -145,7 +145,7 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#fff' } }),
 }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));

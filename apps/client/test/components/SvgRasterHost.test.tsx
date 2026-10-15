@@ -3,8 +3,8 @@ import * as SkiaMock from '@shopify/react-native-skia';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import SvgRasterHost from '@/src/components/features/export/SvgRasterHost';
-import { __resetSvgRasterForTests, useSvgRasterStore } from '@/src/state/svgRasterStore';
-import { rasterizeMapSvg } from '@/src/utils/svgRaster';
+import { __resetSvgRasterForTests, useSvgRasterStore } from '@/src/state/ui/svgRasterStore';
+import { rasterizeMapSvg } from '@/src/state/ui/svgRaster';
 
 const mockUseCanvasKitReady = jest.fn(() => true);
 jest.mock('@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({

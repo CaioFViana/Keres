@@ -11,12 +11,12 @@ jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: (...args: unknown[]) => mockStoryCalendar(...args),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: mockSelectedStory() }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ dateDisplayFormat: mockDateFormat() }),

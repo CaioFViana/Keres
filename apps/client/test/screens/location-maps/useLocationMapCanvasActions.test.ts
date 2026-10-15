@@ -4,7 +4,7 @@ const mockAppendMarkers = jest.fn();
 const mockImageSize = jest.fn();
 const mockCreateMap = jest.fn();
 
-jest.mock('@/src/utils/locationMapContent', () => ({
+jest.mock('@/src/utils/location-map/locationMapContent', () => ({
   __esModule: true,
   appendImagesToMap: (...args: unknown[]) => mockAppendImages(...args),
   appendLocationsToMap: (...args: unknown[]) => mockAppendLocations(...args),

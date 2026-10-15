@@ -21,7 +21,7 @@ import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDe
 import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';

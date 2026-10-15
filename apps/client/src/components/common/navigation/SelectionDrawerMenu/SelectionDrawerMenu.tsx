@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next';
 import type { GuideDrawerId } from '@/src/guides/types';
 import type { MenuBadges } from '@/src/navigation/drawerMenuModel';
 import { buildStorySelectionMenu } from '@/src/navigation/storySelectionMenu';
-import { useHasUnseenAdminMessages, useHasUnseenMessages } from '@/src/state/unseenMessagesStore';
-import { isServerless } from '@/src/utils/clientFlavor';
+import {
+  useHasUnseenAdminMessages,
+  useHasUnseenMessages,
+} from '@/src/state/ui/unseenMessagesStore';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
 import GroupedDrawerMenu from '@/src/components/common/navigation/GroupedDrawerMenu/GroupedDrawerMenu';
 
 interface SelectionDrawerMenuProps {

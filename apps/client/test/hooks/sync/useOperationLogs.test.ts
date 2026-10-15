@@ -16,7 +16,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
@@ -32,7 +32,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useOperationLogs } from '@/src/hooks/sync/useOperationLogs';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

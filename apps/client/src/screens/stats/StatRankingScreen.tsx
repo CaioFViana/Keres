@@ -12,12 +12,12 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
-import { buildStatRanking } from '@/src/utils/statRanking';
+import { buildStatRanking } from '@/src/utils/stats/statRanking';
 
 type StatRankingNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatRanking'>;
 

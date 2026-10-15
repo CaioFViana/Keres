@@ -1,6 +1,6 @@
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -82,15 +82,15 @@ jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
     removeRelation: (...args: unknown[]) => mockRemoveRelation(...args),
   }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const store = () => ({ exportFormat: 'png', userId: 'user-1' });
   store.getState = () => ({ exportFormat: 'png' });
   return { __esModule: true, useUserSettingsStore: store };
@@ -99,7 +99,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('@/src/components/features/relations/LocationRelationManager/LocationPickerModal', () => {
@@ -131,9 +131,9 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: mockColors }),
 }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('@/src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/io/storyTransfer'),
   buildLocationGraphMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));

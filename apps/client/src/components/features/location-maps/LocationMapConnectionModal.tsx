@@ -4,7 +4,7 @@ import { MAX_LOCATION_MAP_ANNOTATION_LENGTH } from '@keres/shared';
 import React from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { setLocationMapRelationText } from '@/src/utils/locationMapContent';
+import { setLocationMapRelationText } from '@/src/utils/location-map/locationMapContent';
 
 interface Props {
   pair: { from: string; to: string };

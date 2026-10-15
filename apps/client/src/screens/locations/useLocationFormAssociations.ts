@@ -9,8 +9,8 @@ import {
 } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
 import type { LocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
 import type { LocationService } from '@/src/services/storymanagement/LocationService';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { createULID } from '@/src/utils/entityUtils';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { createULID } from '@/src/utils/entity/entityUtils';
 
 const makePendingLocationRelation = (
   storyId: string,

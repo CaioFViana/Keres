@@ -4,7 +4,7 @@ import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matr
 
 let mockRequest: unknown = null;
 const mockClose = jest.fn();
-jest.mock('@/src/state/presenceMatrixViewerStore', () => ({
+jest.mock('@/src/state/ui/presenceMatrixViewerStore', () => ({
   __esModule: true,
   usePresenceMatrixViewerStore: (selector: (state: unknown) => unknown) =>
     selector({ request: mockRequest, close: mockClose }),

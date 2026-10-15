@@ -35,8 +35,8 @@ import type {
   ItemStackParamList,
   MainSystemDrawerParamList,
 } from '@/src/navigation/MainSystemStack';
-import { useItemStore } from '@/src/state/itemStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useItemStore } from '@/src/state/story/itemStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
@@ -46,8 +46,8 @@ import { createItemJourneyService } from '@/src/services/storymanagement/ItemJou
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { createTagService } from '@/src/services/storymanagement/TagService';
 import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { orderItemJourneysByNarrative } from '@/src/utils/itemJourneyOrder';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { orderItemJourneysByNarrative } from '@/src/utils/entity/itemJourneyOrder';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 

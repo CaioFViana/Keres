@@ -3,9 +3,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { createULID } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 interface EditorTarget {
   /** The character whose relations are being edited: the node that was in focus. */

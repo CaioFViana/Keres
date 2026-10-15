@@ -104,7 +104,7 @@ jest.mock('@/src/hooks/nav/useNavigateAcrossStacks', () => ({
       mockNavigateAcross(...args),
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1', title: 'Epic' } }),
 }));
@@ -126,7 +126,7 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -215,7 +215,7 @@ jest.mock('@/src/services/apiClient', () => ({
     (err as { name?: string; code?: string })?.code === 'ERR_CANCELED',
 }));
 
-jest.mock('@/src/state/connectivityStore', () => ({
+jest.mock('@/src/state/sync/connectivityStore', () => ({
   useConnectivityStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockConnectivity) : mockConnectivity,
 }));
@@ -227,12 +227,12 @@ let mockSungSongs = false;
 jest.mock('@/src/services/storymanagement/ManuscriptMusicService', () => ({
   storyMusicFacts: async () => ({ hasMusic: mockSungSongs, hasSungSongs: mockSungSongs }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector({ userId: 'user-1' }) : { userId: 'user-1' },
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));

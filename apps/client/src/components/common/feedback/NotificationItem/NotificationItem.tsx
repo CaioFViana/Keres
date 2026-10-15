@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { Notification } from '@/src/state/notificationStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import type { Notification } from '@/src/state/ui/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useTheme } from '@/src/theme';
 
 const { width } = Dimensions.get('window');

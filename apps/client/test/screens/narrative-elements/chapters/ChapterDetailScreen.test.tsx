@@ -131,12 +131,12 @@ jest.mock('@/src/db', () => {
   };
 });
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('@/src/state/chapterStore', () => ({
+jest.mock('@/src/state/story/chapterStore', () => ({
   __esModule: true,
   useChapterStore: (selector: (state: { convertChapterType: unknown }) => unknown) =>
     selector({ convertChapterType: mockConvertChapterType }),
@@ -181,7 +181,7 @@ jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => {
   };
 });
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

@@ -6,7 +6,7 @@ import type {
   CommentTarget,
   CreateCommentInput,
 } from '@/src/services/storymanagement/CommentService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useCommentSurface } from './useCommentSurface';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 

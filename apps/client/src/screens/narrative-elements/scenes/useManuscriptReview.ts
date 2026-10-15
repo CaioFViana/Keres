@@ -7,7 +7,7 @@ import type {
   ManuscriptReviewThread,
 } from '@/src/components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
 import { Platform } from 'react-native';
-import { readCopiedPassage } from '@/src/utils/copiedPassage';
+import { readCopiedPassage } from '@/src/utils/io/copiedPassage';
 import { trackSelectionContainer } from '@/src/hooks/ui/useWebSelectionClip';
 import { useSceneBodyComments } from '@/src/hooks/scene/useSceneBodyComments';
 

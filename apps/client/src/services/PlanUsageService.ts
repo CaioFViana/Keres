@@ -1,9 +1,9 @@
 import type { StoryPlan } from '@keres/shared';
 import type { AppDrizzleClient } from '@/src/db';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { usePlanUsageStore } from '@/src/state/planUsageStore';
-import i18n from '@/src/utils/i18n';
-import { evaluatePlanUsage, type PlanUsage } from '@/src/utils/planUsage';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { usePlanUsageStore } from '@/src/state/app/planUsageStore';
+import i18n from '@/src/utils/format/i18n';
+import { evaluatePlanUsage, type PlanUsage } from '@/src/utils/billing/planUsage';
 import { createStoryEntityCountService } from './storymanagement/StoryEntityCountService';
 import { createStoryPlanService } from './StoryPlanService';
 

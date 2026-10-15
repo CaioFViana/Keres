@@ -8,9 +8,9 @@ import { createGalleryLink } from '@/src/services/galleryLink';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /**
  * The media linked to an entity (a character, location, note, scene, item or World Piece), with the means

@@ -10,8 +10,8 @@ import { Canvas, ImageSVG, Skia } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
 import { Image, Platform, View } from 'react-native';
 import { useTheme, type ThemeColors } from '@/src/theme';
-import { renderSketchSvg } from '@/src/utils/sketchSvg';
-import type { SvgExportColors } from '@/src/utils/svgExport';
+import { renderSketchSvg } from '@/src/utils/sketch/sketchSvg';
+import type { SvgExportColors } from '@/src/utils/svg/svgExport';
 
 interface SketchPreviewThumbProps {
   sketch: { name: string; content: SketchContentType };

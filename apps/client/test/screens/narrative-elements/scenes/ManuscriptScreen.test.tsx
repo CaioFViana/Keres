@@ -79,7 +79,7 @@ jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   },
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = {
@@ -102,7 +102,7 @@ jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   }),
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));

@@ -17,7 +17,7 @@ import type {
   FriendshipStackParamList,
   StorySelectionDrawerParamList,
 } from '@/src/navigation/StorySelectionStack';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useFriendshipFormActions } from './useFriendshipFormActions';

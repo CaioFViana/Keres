@@ -20,14 +20,14 @@ jest.mock('@/src/utils/storyMediaBundle', () => ({
   __esModule: true,
   buildStoryZipBytes: (...args: unknown[]) => mockBuildZipBytes(...args),
 }));
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
   buildExportFileName: (title: string) => `${title}.json`,
   buildExportZipFileName: (title: string) => `${title}.zip`,
   deliverStoryExport: (...args: unknown[]) => mockDeliverExport(...args),
   deliverStoryZipExport: (...args: unknown[]) => mockDeliverZipExport(...args),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,

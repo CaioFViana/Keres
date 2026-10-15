@@ -6,7 +6,7 @@ import { PanResponder, StyleSheet, View } from 'react-native';
 import BoardCanvas, { type BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
 import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
-import { boardEdgeGeometry } from '@/src/utils/boardEdges';
+import { boardEdgeGeometry } from '@/src/utils/board/boardEdges';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

@@ -39,13 +39,13 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: () => ({ userId: 'user' }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: () => ({ selectedStory: { id: 'story' } }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('@/src/services/storymanagement/TagService', () => ({

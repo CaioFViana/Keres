@@ -52,17 +52,17 @@ jest.mock('@/src/screens/storyshare/useStoryBackupExport', () => ({
     return { exporting: mockExporting, exportJson: mockExportJson, exportZip: mockExportZip };
   },
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1', title: 'Epic' } }),
 }));
-jest.mock('@/src/utils/clientFlavor', () => ({
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
   __esModule: true,
   isServerless: () => mockServerless,
 }));
 
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import StoryShareIndexScreen from '@/src/screens/storyshare/StoryShareIndexScreen';
 
 beforeEach(() => {

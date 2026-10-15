@@ -16,10 +16,10 @@ jest.mock('@/src/services/StoryInvitationService', () => ({
     syncWithServer: (...args: unknown[]) => mockSync(...args),
   }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 

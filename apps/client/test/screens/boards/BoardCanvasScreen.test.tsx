@@ -206,7 +206,7 @@ jest.mock('@/src/components/features/graphs/GraphCanvasControls/GraphCanvasContr
   };
 });
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -218,7 +218,7 @@ jest.mock('@/src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const state = { userId: 'user-1', exportFormat: 'svg' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
@@ -226,14 +226,14 @@ jest.mock('@/src/state/userSettingsStore', () => {
   return { useUserSettingsStore };
 });
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (s: any) => any) => {
     const state = { showNotification: mockNotify };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('@/src/state/boardDraftStore', () => ({
+jest.mock('@/src/state/drafts/boardDraftStore', () => ({
   useBoardDraftStore: { getState: () => ({ hydrate: mockHydrate, remember: mockRemember }) },
 }));
 
@@ -271,17 +271,17 @@ jest.mock('@/src/utils/boardEntitySummary', () => ({
   loadBoardEntitySummary: (...a: any[]) => mockLoadSummary(...a),
 }));
 
-jest.mock('@/src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   navigateToEntityDetail: jest.fn(),
   toNavigableEntityType: () => 'Character',
 }));
 
-jest.mock('@/src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   deliverMapExport: (...a: any[]) => mockDeliverExport(...a),
   buildBoardMapFileName: () => 'board.svg',
 }));
 
-jest.mock('@/src/utils/storyMapSvgExport', () => ({
+jest.mock('@/src/utils/io/storyMapSvgExport', () => ({
   buildStandaloneBoardSvg: (...a: any[]) => mockBuildSvg(...a),
 }));
 

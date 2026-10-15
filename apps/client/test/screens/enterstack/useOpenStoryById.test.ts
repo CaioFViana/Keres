@@ -17,10 +17,10 @@ jest.mock('@/src/db', () => ({
   }),
 }));
 jest.mock('@/src/theme', () => ({ useTheme: () => ({ setTheme: mockSetTheme }) }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: {
     getState: () => ({ setSelectedStory: (...args: unknown[]) => mockSetSelectedStory(...args) }),
   },

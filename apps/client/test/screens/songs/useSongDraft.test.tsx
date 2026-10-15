@@ -8,7 +8,7 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: { userId: string }) => unknown) =>
     selector({ userId: 'user-1' }),

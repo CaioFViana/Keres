@@ -37,7 +37,7 @@ import { createStatRelationService } from '@/src/services/storymanagement/StatRe
 import { createStatService } from '@/src/services/storymanagement/StatService';
 import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

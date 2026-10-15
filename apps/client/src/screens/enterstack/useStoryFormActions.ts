@@ -8,7 +8,7 @@ import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { manualSyncRefusalText } from '@/src/services/sync/manualSyncMessage';
 import type { PackService } from '@/src/services/storymanagement/PackService';
 import type { StoryService } from '@/src/services/storymanagement/StoryService';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { StoryFormState } from './useStoryFormState';
 
 type StoryFormNavigation = NavigationProp<{

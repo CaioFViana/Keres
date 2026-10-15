@@ -1,4 +1,4 @@
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createKeresAxiosInstance } from '@/src/services/apiClient';
 import { authTokenManager } from '@/src/services/AuthTokenManager';
 import { createServerService } from '@/src/services/ServerService';

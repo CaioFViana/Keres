@@ -58,8 +58,8 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
 }));
 
 const mockFlavor = { current: 'native' as 'native' | 'desktop' | 'web' | 'serverless-web' };
-jest.mock('@/src/utils/clientFlavor', () => ({
-  ...jest.requireActual('@/src/utils/clientFlavor'),
+jest.mock('@/src/utils/platform/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/platform/clientFlavor'),
   getClientFlavor: () => mockFlavor.current,
 }));
 
@@ -99,7 +99,7 @@ jest.mock('@/src/services/sync/appSyncEngine', () => ({
   syncEngine: { bindDatabase: (...args: unknown[]) => mockBindDatabase(...args) },
 }));
 
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
@@ -108,7 +108,7 @@ const mockTheme = { darkMode: false };
 const mockPreviewDarkMode = jest.fn((value: boolean) => {
   mockTheme.darkMode = value;
 });
-jest.mock('@/src/state/themeStore', () => ({
+jest.mock('@/src/state/ui/themeStore', () => ({
   useThemeStore: (selector: (state: unknown) => unknown) =>
     selector({
       initializeTheme: (...args: unknown[]) => mockInitializeTheme(...args),
@@ -117,16 +117,16 @@ jest.mock('@/src/state/themeStore', () => ({
     }),
 }));
 
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ initializeSettings: (...args: unknown[]) => mockInitializeSettings(...args) }),
 }));
 
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   useDocumentTitle: (...args: unknown[]) => mockUseDocumentTitle(...args),
 }));
 
-jest.mock('@/src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { language: 'en', changeLanguage: (...args: unknown[]) => mockChangeLanguage(...args) },
   getLanguageOptions: () => [

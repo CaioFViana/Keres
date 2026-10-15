@@ -1,8 +1,8 @@
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import { and, eq, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, LocationRelationSelect } from '@/src/db';
 import { locationRelations } from '@/src/db';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

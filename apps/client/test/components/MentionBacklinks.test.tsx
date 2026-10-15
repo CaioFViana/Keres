@@ -37,7 +37,7 @@ jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1' } }),

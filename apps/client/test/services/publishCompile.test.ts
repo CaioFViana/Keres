@@ -14,7 +14,7 @@ import {
   type PublishCompileRows,
 } from '@/src/services/storymanagement/PublishCompileService';
 
-jest.mock('@/src/utils/pdfFontAssets', () => ({
+jest.mock('@/src/utils/io/pdfFontAssets', () => ({
   __esModule: true,
   pdfFontMatrices: async () => null,
 }));

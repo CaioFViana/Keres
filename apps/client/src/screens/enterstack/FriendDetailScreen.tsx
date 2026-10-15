@@ -33,12 +33,12 @@ import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionSt
 import type { FriendshipWithServer } from '@/src/services/FriendshipService';
 import { createFriendshipService } from '@/src/services/FriendshipService';
 import { createServerService } from '@/src/services/ServerService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useIsConversationUnseen } from '@/src/state/unseenMessagesStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useIsConversationUnseen } from '@/src/state/ui/unseenMessagesStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { directConversationKey } from '@/src/utils/conversationKey';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { directConversationKey } from '@/src/utils/entity/conversationKey';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
 type FriendDetailScreenNavigationProp = NativeStackNavigationProp<

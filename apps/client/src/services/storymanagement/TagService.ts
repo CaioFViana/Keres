@@ -4,9 +4,9 @@ import type { AppDrizzleClient } from '@/src/db';
 import type { TagInsert, TagSelect } from '@/src/db/schema';
 import { tags } from '@/src/db/schema'; // Import TagInsert and stories
 import type { AdvancedSearchCriteria, FavoriteFilterState } from '@/src/types/entityFilters';
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils'; // Import Create and prepareNewEntityData
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils'; // Import Create and prepareNewEntityData
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

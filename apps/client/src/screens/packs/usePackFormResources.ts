@@ -4,7 +4,7 @@ import { useDrizzle } from '@/src/db';
 import type { StorySelect } from '@/src/db/schema';
 import { createPackService, type PackService } from '@/src/services/storymanagement/PackService';
 import { createStoryService, type StoryService } from '@/src/services/storymanagement/StoryService';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 
 /** Owns pack/story services and the source-story lookup list. */
 export function usePackFormResources(userId?: string | null) {

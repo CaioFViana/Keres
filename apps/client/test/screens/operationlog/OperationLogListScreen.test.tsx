@@ -23,7 +23,7 @@ jest.mock('react-i18next', () => ({
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (...args: unknown[]) => mockUseStoryStore(...args),
 }));
 jest.mock('@/src/components/features/operation-log/OperationLogList/OperationLogList', () => ({
@@ -36,7 +36,7 @@ jest.mock('@/src/components/features/operation-log/OperationLogList/OperationLog
 
 import { act, render } from '@testing-library/react-native';
 import OperationLogScreen from '@/src/screens/operationlog/OperationLogListScreen';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const lastListProps = () => mockRenderList.mock.calls[mockRenderList.mock.calls.length - 1][0];
 

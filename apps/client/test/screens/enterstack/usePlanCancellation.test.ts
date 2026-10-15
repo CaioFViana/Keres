@@ -18,7 +18,7 @@ jest.mock('@/src/services/PaymentService', () => ({
   __esModule: true,
   cancelSubscription: (...args: unknown[]) => mockCancel(...args),
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

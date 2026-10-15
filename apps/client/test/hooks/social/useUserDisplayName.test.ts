@@ -4,7 +4,7 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
@@ -22,7 +22,7 @@ import { useDrizzle } from '@/src/db';
 import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
 import { friendshipApiService } from '@/src/services/FriendshipApiService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 const storyService = { getStoryById: jest.fn() };
 const db = {

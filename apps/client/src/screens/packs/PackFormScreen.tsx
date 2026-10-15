@@ -12,7 +12,7 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';

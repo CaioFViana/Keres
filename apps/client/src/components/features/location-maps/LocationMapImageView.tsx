@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import type { LocationMapImageType } from '@keres/shared';
 import { useTheme } from '@/src/theme';
-import { capturePointer, releasePointer } from '@/src/utils/pointerCapture';
+import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
 
 const DRAG_THRESHOLD = 5;
 

@@ -8,7 +8,7 @@ import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDe
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { createULID } from '@/src/utils/entityUtils';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager'; // Removed BaseItem, BaseRelation
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';

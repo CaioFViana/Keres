@@ -37,16 +37,16 @@ import {
   ServerUrlAlreadyRegisteredError,
   ServerUrlNotSecureError,
 } from '@/src/services/ServerService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { authenticateWithKeresServer, keresAuthAlertMessage } from '@/src/utils/keresServerAuth';
 import { accountNeedsVerification } from '@/src/utils/ageVerificationRouting';
-import { blocksNewAccounts } from '@/src/utils/ageVerificationRules';
+import { blocksNewAccounts } from '@/src/utils/auth/ageVerificationRules';
 import { fetchServerPrivacy, fetchServerTerms } from '@/src/services/ServerTermsService';
-import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/serverUrl';
+import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/auth/serverUrl';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };

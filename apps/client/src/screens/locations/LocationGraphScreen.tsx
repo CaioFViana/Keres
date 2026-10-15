@@ -28,8 +28,8 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
 import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import {
@@ -46,7 +46,7 @@ import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayo
 import { collapseLocationGraph } from '@keres/shared/graphs/locationGraphCollapse';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
-import { buildLocationGraphMapFileName } from '@/src/utils/storyTransfer';
+import { buildLocationGraphMapFileName } from '@/src/utils/io/storyTransfer';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 import { useLocationRelationEditor } from './useLocationRelationEditor';
 import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';

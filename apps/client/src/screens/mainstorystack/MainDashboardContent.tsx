@@ -16,7 +16,7 @@ import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { getLanguageOptions } from '@/src/utils/i18n';
+import { getLanguageOptions } from '@/src/utils/format/i18n';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type MainDashboardContentProps = {

@@ -15,7 +15,7 @@ import {
 } from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useManuscriptExport } from './useManuscriptExport';
 
 /**

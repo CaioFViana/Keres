@@ -16,7 +16,7 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockShowNotification(...args) }),
 }));

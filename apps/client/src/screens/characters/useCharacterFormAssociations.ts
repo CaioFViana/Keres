@@ -14,8 +14,8 @@ import {
 } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
 import { createModeService } from '@/src/services/storymanagement/ModeService';
 import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 type UseCharacterFormAssociationsOptions = {
   /** Route id when opening an existing character — used to restore durable pending relations. */

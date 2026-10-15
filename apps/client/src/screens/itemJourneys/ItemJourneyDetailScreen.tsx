@@ -2,7 +2,7 @@ import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
@@ -34,10 +34,10 @@ import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { useCharacterStore } from '@/src/state/characterStore';
-import { useItemStore } from '@/src/state/itemStore';
-import { useSceneStore } from '@/src/state/sceneStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useCharacterStore } from '@/src/state/story/characterStore';
+import { useItemStore } from '@/src/state/story/itemStore';
+import { useSceneStore } from '@/src/state/story/sceneStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';

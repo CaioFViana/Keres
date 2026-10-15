@@ -14,7 +14,7 @@ import {
 import type { GallerySelect } from '@/src/db/schema';
 import { useEntityGalleryMedia } from '@/src/hooks/media/useEntityGalleryMedia';
 import { useGalleryThumbnailUri } from '@/src/hooks/media/useGalleryThumbnailUri';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import GalleryAddMediaModal, {

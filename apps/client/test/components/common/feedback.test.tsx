@@ -7,11 +7,11 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useAppAlertStore } from '@/src/state/appAlertStore';
-import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { usePresenceMatrixViewerStore } from '@/src/state/presenceMatrixViewerStore';
-import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
+import { useAppAlertStore } from '@/src/state/ui/appAlertStore';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');

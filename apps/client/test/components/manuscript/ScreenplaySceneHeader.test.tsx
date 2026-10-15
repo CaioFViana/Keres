@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => {
 // The same handle every render, like the real one: a new object each time would re-run every effect.
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ effectiveArc: mockEffectiveMedium ? { medium: mockEffectiveMedium } : null }),

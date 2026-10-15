@@ -25,11 +25,11 @@ import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOpt
 import type { CharacterWithTags } from '@/src/services/storymanagement/CharacterService';
 import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
-import { useCharacterStore } from '@/src/state/characterStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useCharacterStore } from '@/src/state/story/characterStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
 import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 

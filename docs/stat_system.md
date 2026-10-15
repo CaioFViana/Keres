@@ -34,7 +34,7 @@ invitation to register more in place of the drawing.
 **Modes.** They exist even with the system off: describing what changes in a transformation is useful
 in itself. `Mode` enters the global search by name; since it has no screen of its own, the result carries the
 **owning character's id** and opening it leads to that character's detail (see `ENTITY_ROUTES.Mode` in
-`apps/client/src/utils/entityNavigation.ts`).
+`apps/client/src/utils/entity/entityNavigation.ts`).
 
 ## 3. The tier ladder
 
@@ -98,7 +98,7 @@ left) - assuming all of them centred made "90" and "100" come out glued together
 A mode that does **not** have a row of its own for a stat reads the normal mode's value, marked as
 inherited in the interface. Writing a value in a mode is precisely the act of no longer inheriting; clearing
 the field deletes the row and gives the inheritance back. The rule lives in a single place,
-`apps/client/src/utils/statValues.ts`, consumed by the panel, the comparison and the ranking.
+`apps/client/src/utils/stats/statValues.ts`, consumed by the panel, the comparison and the ranking.
 
 Deleting a mode also deletes the values registered only for it: without the mode, a `StatRelation` with
 that `modeId` would be orphaned and the server would refuse any later edit to it.
@@ -125,7 +125,7 @@ instead of an opaque sync conflict hours later.
 
 - **Pure maths** (no React, no database): `packages/shared/graphs/statLadder.ts` (the ladder),
   `statRadarLayout.ts` (the geometry), `statRadarSvg.ts` (the exported file) and
-  `statLadderBarLayout.ts` (the tier bar), plus `apps/client/src/utils/statValues.ts`
+  `statLadderBarLayout.ts` (the tier bar), plus `apps/client/src/utils/stats/statValues.ts`
   (inheritance) and `statRanking.ts` (the tier list). The same discipline as the app's graph layouts: the
   interactive screen and the exported SVG consume the same geometry and never disagree - and because they are
   shared, the site's showcase draws exactly the same charts.

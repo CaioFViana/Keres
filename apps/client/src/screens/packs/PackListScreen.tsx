@@ -21,14 +21,14 @@ import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { createPackService, type PackSummary } from '@/src/services/storymanagement/PackService';
 import { packExtrasChips } from '@/src/utils/packChips';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { isServerless } from '@/src/utils/clientFlavor';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 /**

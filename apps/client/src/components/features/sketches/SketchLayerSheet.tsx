@@ -13,7 +13,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import SketchSlider from './SketchSlider';
 
 interface SketchLayerSheetProps {

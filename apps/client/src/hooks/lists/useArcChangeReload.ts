@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { ArcMembershipKind } from '@/src/services/storymanagement/StoryArcService';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /**
  * Calls `reload` when the story's arcs, chapters or scenes change, and when the links of the given kind

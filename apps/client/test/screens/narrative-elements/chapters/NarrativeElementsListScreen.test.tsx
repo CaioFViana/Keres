@@ -6,7 +6,7 @@ import {
   type RenderResult,
   waitFor,
 } from '@testing-library/react-native';
-import { UNCHAPTERED_GROUP_ID } from '@/src/utils/narrativeSceneOrder';
+import { UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -123,7 +123,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: object) => unknown) =>
     selector({
@@ -133,7 +133,7 @@ jest.mock('@/src/state/storyStore', () => ({
     }),
 }));
 
-jest.mock('@/src/state/sceneStore', () => ({
+jest.mock('@/src/state/story/sceneStore', () => ({
   __esModule: true,
   useSceneStore: (selector: (state: object) => unknown) =>
     selector({
@@ -146,7 +146,7 @@ jest.mock('@/src/state/sceneStore', () => ({
     }),
 }));
 
-jest.mock('@/src/state/chapterStore', () => ({
+jest.mock('@/src/state/story/chapterStore', () => ({
   __esModule: true,
   useChapterStore: (selector: (state: object) => unknown) =>
     selector({ reorderChapters: mockReorderChapters }),
@@ -182,12 +182,12 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => {
   };
 });
 
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (...args: unknown[]) => mockEmitterOn(...args),
@@ -241,7 +241,7 @@ jest.mock('@/src/screens/narrative-elements/chapters/createChapterListItemRender
   const actual = jest.requireActual(
     '@/src/screens/narrative-elements/chapters/createChapterListItemRenderer',
   ) as object;
-  const { isUnchapteredGroup } = jest.requireActual('@/src/utils/narrativeSceneOrder') as {
+  const { isUnchapteredGroup } = jest.requireActual('@/src/utils/analysis/narrativeSceneOrder') as {
     isUnchapteredGroup: (id: string) => boolean;
   };
   return {

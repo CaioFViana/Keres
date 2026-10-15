@@ -24,9 +24,9 @@ import {
 import { mediaFileService } from '@/src/services/MediaFileService';
 import { createServerService } from '@/src/services/ServerService';
 import { userApiService } from '@/src/services/UserApiService';
-import { useStoryListStore } from '@/src/state/storyListStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

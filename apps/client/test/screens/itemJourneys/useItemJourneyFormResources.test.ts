@@ -25,9 +25,9 @@ jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
 jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   createItemJourneyService: (...args: unknown[]) => mockCreateItemJourneyService(...args),
 }));
-jest.mock('@/src/state/itemStore', () => ({ useItemStore: () => mockItemStore }));
-jest.mock('@/src/state/sceneStore', () => ({ useSceneStore: () => mockSceneStore }));
-jest.mock('@/src/state/characterStore', () => ({
+jest.mock('@/src/state/story/itemStore', () => ({ useItemStore: () => mockItemStore }));
+jest.mock('@/src/state/story/sceneStore', () => ({ useSceneStore: () => mockSceneStore }));
+jest.mock('@/src/state/story/characterStore', () => ({
   useCharacterStore: () => mockCharacterStore,
 }));
 

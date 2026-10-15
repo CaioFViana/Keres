@@ -19,7 +19,7 @@ jest.mock('@keres/shared', () => ({
   dayNumberForElapsed: jest.fn((_definition, epoch, elapsed) => epoch + elapsed / 86_400),
   gregorianDayNumberForElapsed: jest.fn((epoch, elapsed) => epoch + elapsed / 86_400),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));

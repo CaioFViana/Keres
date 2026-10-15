@@ -63,12 +63,12 @@ jest.mock('@/src/services/storymanagement/ShippedPackService', () => ({
     installShippedPack: mockInstallShippedPack,
   }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
-jest.mock('@/src/state/shippedPacksInstallerStore', () => ({
+jest.mock('@/src/state/app/shippedPacksInstallerStore', () => ({
   __esModule: true,
   useShippedPacksInstallerStore: (selector: (state: { markInstalled: unknown }) => unknown) =>
     selector({ markInstalled: mockMarkInstalled }),

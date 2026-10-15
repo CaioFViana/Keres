@@ -26,7 +26,7 @@ jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { readBytes: (...args: unknown[]) => mockReadBytes(...args) },
 }));
-jest.mock('@/src/utils/svgRaster', () => ({
+jest.mock('@/src/state/ui/svgRaster', () => ({
   __esModule: true,
   fitRasterSize: (width: number, height: number) => ({ width, height }),
   rasterizeMapSvg: (...args: unknown[]) => mockRasterize(...args),

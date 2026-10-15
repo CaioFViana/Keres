@@ -2,7 +2,7 @@ import type { CharacterScene as CharacterSceneInterface } from '@keres/shared/en
 import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import { createULID, getChangedFields } from '@/src/utils/entityUtils';
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

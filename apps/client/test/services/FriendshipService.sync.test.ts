@@ -21,8 +21,8 @@ import { friendships, servers, users } from '@/src/db/schema';
 import { friendshipApiService } from '@/src/services/FriendshipApiService';
 import { createFriendshipService } from '@/src/services/FriendshipService';
 import { userApiService } from '@/src/services/UserApiService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**

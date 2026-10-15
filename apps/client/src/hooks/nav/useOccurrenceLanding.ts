@@ -9,8 +9,8 @@ import {
   useState,
 } from 'react';
 import type { ScrollView } from 'react-native';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
-import { computeScrollAdjustment } from '@/src/utils/scrollIntoView';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
+import { computeScrollAdjustment } from '@/src/utils/ui/scrollIntoView';
 
 /** How long the landed occurrence keeps its strong fill before fading to plain. */
 export const OCCURRENCE_FLASH_MS = 2000;

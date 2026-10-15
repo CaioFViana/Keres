@@ -69,22 +69,22 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
-jest.mock('@/src/state/notificationStore', () => {
+jest.mock('@/src/state/ui/notificationStore', () => {
   const state = { showNotification: jest.fn() };
   return {
     __esModule: true,
     useNotificationStore: (selector: (value: typeof state) => unknown) => selector(state),
   };
 });
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: '01ARZ3NDEKTSV4RRFFQ69G5FUS' }),
 }));
-jest.mock('@/src/state/storyStore', () => {
+jest.mock('@/src/state/story/storyStore', () => {
   const state = { selectedStory: { id: '01ARZ3NDEKTSV4RRFFQ69G5FUT', title: 'A story' } };
   return {
     __esModule: true,

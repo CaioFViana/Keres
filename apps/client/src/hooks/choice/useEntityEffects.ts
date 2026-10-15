@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import { createEffectService } from '@/src/services/storymanagement/EffectService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { AppAlert } from '@/src/utils/AppAlert';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 type EffectEntityType = 'Scene' | 'Choice';
 type EffectChanges = Partial<

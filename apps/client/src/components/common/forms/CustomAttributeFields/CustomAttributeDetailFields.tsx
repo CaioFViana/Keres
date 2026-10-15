@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 
 interface CustomAttributeDetailFieldsProps {

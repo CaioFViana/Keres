@@ -3,8 +3,8 @@ import { OperationLogEntityType } from '@keres/shared/metadata/OperationLogEntit
 import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { itemJourneys } from '@/src/db';
-import { createULID, getChangedFields } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

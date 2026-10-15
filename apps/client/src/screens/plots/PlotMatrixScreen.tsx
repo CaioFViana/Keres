@@ -17,13 +17,13 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
-import { deliverMapExport } from '@/src/utils/storyTransfer';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
-import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 /** Same cap as the presence matrix: the two charts are read side by side. */
 const MAX_VISIBLE_SERIES = 12;

@@ -4,7 +4,7 @@ import type { ChapterAnchorSelect } from '@/src/db/schema';
 import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 
 export type ChapterAnchorRow = ChapterAnchorSelect;
 

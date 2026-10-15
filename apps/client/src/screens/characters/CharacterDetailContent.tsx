@@ -1,4 +1,4 @@
-import { navigateAcrossStacks } from '@/src/utils/stackNavigation';
+import { navigateAcrossStacks } from '@/src/utils/nav/stackNavigation';
 import Button from '@/src/components/common/controls/Button/Button';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
@@ -25,7 +25,7 @@ import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
 import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import TagList from '@/src/components/common/display/TagList/TagList';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';

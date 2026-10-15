@@ -3,9 +3,9 @@ import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import type { ItemInsert, ItemSelect } from '@/src/db/schemas/items';
 import { items } from '@/src/db/schemas/items';
-import type { Create } from '@/src/utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { Create } from '@/src/utils/entity/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,

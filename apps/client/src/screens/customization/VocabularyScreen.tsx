@@ -9,13 +9,13 @@ import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import {
   STORY_VOCABULARY_ENTITY_TYPES,
   type GrammaticalGender,

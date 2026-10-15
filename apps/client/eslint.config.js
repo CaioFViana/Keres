@@ -15,7 +15,7 @@ module.exports = defineConfig([
        * `import { SceneSelect } from '../db/schema'` dragged drizzle and expo-sqlite into
        * a component that only draws a card, and it was what closed the cycles between
        * `navigation/` and `screens/` (each screen imported the `ParamList` back as a value).
-       * See the comment in `utils/entityNavigation.ts`, which already depended on this discipline by hand.
+       * See the comment in `utils/entity/entityNavigation.ts`, which already depended on this discipline by hand.
        */
       '@typescript-eslint/consistent-type-imports': [
         'error',

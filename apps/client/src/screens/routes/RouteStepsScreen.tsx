@@ -13,11 +13,11 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import { createRouteService } from '@/src/services/storymanagement/RouteService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteSteps'>;
 type ScreenRoute = RouteProp<PlotsStackParamList, 'RouteSteps'>;

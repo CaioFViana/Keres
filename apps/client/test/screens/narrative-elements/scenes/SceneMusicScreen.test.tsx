@@ -100,7 +100,7 @@ jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenMedia,
 }));
-jest.mock('@/src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -112,11 +112,11 @@ jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   __esModule: true,
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));

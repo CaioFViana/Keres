@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next';
 import { DEFAULT_CHOICE_ANNOTATION_LABELS } from '@keres/shared';
 import en from '@/src/locales/en.json';
 import { describeChoiceAnnotations } from '@/src/utils/choiceAnnotations';
-import { CHOICE_ANNOTATION_LABEL_KEYS } from '@/src/utils/choiceCheckEffectDescriptions';
+import { CHOICE_ANNOTATION_LABEL_KEYS } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 
 const t = (key: string, values: Record<string, unknown> = {}) =>
   `${key}:${Object.entries(values)

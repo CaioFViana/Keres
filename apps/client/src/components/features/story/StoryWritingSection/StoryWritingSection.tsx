@@ -8,7 +8,7 @@ import type { ResumeScene } from '@/src/hooks/scene/useResumeScene';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
-import { formatEditedAgo } from '@/src/utils/editedAgo';
+import { formatEditedAgo } from '@/src/utils/format/editedAgo';
 
 interface StoryWritingSectionProps {
   /** The scene last written in; absent while the story has none. */

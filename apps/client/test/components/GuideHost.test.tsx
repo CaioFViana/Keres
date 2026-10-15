@@ -8,7 +8,7 @@ import {
   __resetGuideDrawersForTests,
   registerGuideDrawer,
 } from '@/src/navigation/drawerGuideRegistry';
-import { useGuideStore } from '@/src/state/guideStore';
+import { useGuideStore } from '@/src/state/ui/guideStore';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

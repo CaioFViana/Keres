@@ -3,7 +3,7 @@ import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/s
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
-import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
+import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

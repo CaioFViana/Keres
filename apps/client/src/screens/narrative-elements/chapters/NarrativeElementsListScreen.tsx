@@ -18,11 +18,11 @@ import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModa
 import { useDrizzle } from '@/src/db';
 import type { ChapterType } from '@keres/shared';
 import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
 import { useArcSearchScope } from '@/src/hooks/arcs/useArcSearchScope';
-import { chapterBelongsToArc } from '@/src/utils/storyArcFilter';
+import { chapterBelongsToArc } from '@/src/utils/search/storyArcFilter';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
@@ -31,14 +31,14 @@ import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,
 } from '@/src/navigation/MainSystemStack';
-import { useChapterStore } from '@/src/state/chapterStore';
-import { useSceneStore } from '@/src/state/sceneStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useChapterStore } from '@/src/state/story/chapterStore';
+import { useSceneStore } from '@/src/state/story/sceneStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '@/src/utils/narrativeSceneOrder';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
 import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';

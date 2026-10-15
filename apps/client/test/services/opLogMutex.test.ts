@@ -4,7 +4,7 @@
 import { asc, eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import { createSyncConflictService } from '@/src/services/SyncConflictService';
-import { withOpLogLock } from '@/src/utils/opLogMutex';
+import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import { recordLocalOperation } from '@/src/utils/syncUtils';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

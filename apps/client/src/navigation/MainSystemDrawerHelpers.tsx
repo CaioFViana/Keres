@@ -5,7 +5,7 @@ import { DrawerActions, StackActions, useNavigation } from '@react-navigation/na
 import React from 'react';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import DrawerMenuButton from '@/src/components/common/navigation/DrawerMenuButton/DrawerMenuButton';
-import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import type { MainSystemDrawerParamList } from './MainSystemStack';
 
 /**

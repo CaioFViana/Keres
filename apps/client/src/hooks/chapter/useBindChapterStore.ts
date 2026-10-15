@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDrizzle } from '@/src/db';
-import { useChapterStore } from '@/src/state/chapterStore';
+import { useChapterStore } from '@/src/state/story/chapterStore';
 
 /** Wires the chapter store to the current story so a modal can list chapters without touching db. */
 export function useBindChapterStore(storyId: string, fetchWhen: boolean) {

@@ -7,13 +7,16 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useEntityPickerOptions } from '@/src/hooks/lists/useEntityPickerOptions';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import { useTheme } from '@/src/theme';
-import { activeCriteria, type AdvancedSearchCriteria } from '@/src/utils/advancedSearchCriteria';
+import {
+  activeCriteria,
+  type AdvancedSearchCriteria,
+} from '@/src/utils/search/advancedSearchCriteria';
 import {
   buildSearchFields,
   criterionKey,
   fieldLabelText,
   type AdvancedSearchScope,
-} from '@/src/utils/advancedSearchFields';
+} from '@/src/utils/search/advancedSearchFields';
 import type { FavoriteFilterState } from '@/src/types/entityFilters';
 
 interface ActiveFilterChipsProps {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { LoginPage } from '@/auth/LoginPage';
+import { LoginPage } from '@/pages/auth/LoginPage';
 import { changeInput, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({

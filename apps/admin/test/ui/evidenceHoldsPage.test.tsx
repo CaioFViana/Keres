@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { EvidenceHoldsPage } from '@/pages/evidenceHolds/EvidenceHoldsPage';
+import { EvidenceHoldsPage } from '@/pages/evidence-holds/EvidenceHoldsPage';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ADMIN_LANGUAGE_KEY } from '@/i18n';
 import { LanguageSelect } from '@/i18n/LanguageSelect';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 
 export function LoginPage() {
   const { login, isAuthenticated, isBootstrapping } = useAuth();

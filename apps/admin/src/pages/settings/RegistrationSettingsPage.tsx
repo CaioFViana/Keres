@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { AgeVerificationMode, RegistrationSettings, Tier, TiersDisplay } from '@keres/shared';
 import { RegistrationSettingsApiService } from '@/api/RegistrationSettingsApiService';
 import { TierApiService } from '@/api/TierApiService';
-import { AppearanceCard } from './AppearanceCard';
-import { ShowcaseSettingsCard } from './ShowcaseSettingsCard';
+import { AppearanceCard } from './components/AppearanceCard';
+import { ShowcaseSettingsCard } from './components/ShowcaseSettingsCard';
 
 const SECTION_IDS = ['settings-registration', 'settings-showcase', 'settings-appearance'] as const;
 

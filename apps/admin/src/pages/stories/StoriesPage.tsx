@@ -8,7 +8,7 @@ import {
 } from '@/api/AdminStoryApiService';
 import { Pagination } from '@/components/Pagination';
 import { useAdminList } from '@/hooks/useAdminList';
-import { StoryContent } from './StoryContent';
+import { StoryContent } from './components/StoryContent';
 
 type NsfwFilter = 'all' | 'nsfw' | 'safe';
 

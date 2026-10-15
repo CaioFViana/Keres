@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { UsersListPage } from './UsersListPage';
-import { UserEditModal } from './UserEditModal';
+import { UserEditModal } from './components/UserEditModal';
 
 /**
  * Thin route wrapper: the list stays mounted behind, and creating or editing

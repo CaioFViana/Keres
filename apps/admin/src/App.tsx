@@ -1,11 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
-import { LoginPage } from './auth/LoginPage';
+import { LoginPage } from './pages/auth/LoginPage';
 import { RequireAdmin } from './auth/RequireAdmin';
 import { Layout } from './components/Layout';
-import { AccessRecordsPage } from './pages/accessRecords/AccessRecordsPage';
+import { AccessRecordsPage } from './pages/access-records/AccessRecordsPage';
 import { ActivityPage } from './pages/activity/ActivityPage';
-import { EvidenceHoldsPage } from './pages/evidenceHolds/EvidenceHoldsPage';
+import { EvidenceHoldsPage } from './pages/evidence-holds/EvidenceHoldsPage';
 import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { LogsPage } from './pages/logs/LogsPage';
 import { MessagesPage } from './pages/messages/MessagesPage';

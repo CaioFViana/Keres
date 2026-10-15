@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { AccessRecordsPage } from '@/pages/accessRecords/AccessRecordsPage';
+import { AccessRecordsPage } from '@/pages/access-records/AccessRecordsPage';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 

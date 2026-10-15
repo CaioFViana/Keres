@@ -11,7 +11,7 @@ import {
 import type { EvidenceHoldTarget } from '@keres/shared/metadata/EvidenceHolds';
 import { EvidenceHoldsApiService } from '@/api/EvidenceHoldsApiService';
 import { Modal } from '@/components/Modal';
-import { EvidenceHoldDialog } from './EvidenceHoldDialog';
+import { EvidenceHoldDialog } from './components/EvidenceHoldDialog';
 
 const LIST_LIMIT = 100;
 

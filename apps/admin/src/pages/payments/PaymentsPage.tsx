@@ -16,7 +16,7 @@ import {
 } from '@keres/shared/metadata/Payments';
 import { PaymentsApiService } from '@/api/PaymentsApiService';
 import { Pagination } from '@/components/Pagination';
-import { paymentDetailText } from './paymentDetail';
+import { paymentDetailText } from '@/utils/paymentDetail';
 
 const PAGE_SIZE = 25;
 /** A payment can happen at any moment, away from this page: it looks again by itself while it is in view. */

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type StorageUnit, splitBytes, toBytes } from './storageUnits';
+import { type StorageUnit, splitBytes, toBytes } from '@/utils/storageUnits';
 
 /**
  * A storage ceiling typed the way people think of it ("100" and "Megabytes"), stored as bytes.

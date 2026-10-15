@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ShowcaseSettingsCard } from '@/pages/settings/ShowcaseSettingsCard';
+import { ShowcaseSettingsCard } from '@/pages/settings/components/ShowcaseSettingsCard';
 import { changeInput, click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({

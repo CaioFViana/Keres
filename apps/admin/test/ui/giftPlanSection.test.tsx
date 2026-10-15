@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { GiftPlanSection } from '@/pages/users/GiftPlanSection';
+import { GiftPlanSection } from '@/pages/users/components/GiftPlanSection';
 import { changeInput, click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({ userSubscription: vi.fn(), giveGift: vi.fn() }));

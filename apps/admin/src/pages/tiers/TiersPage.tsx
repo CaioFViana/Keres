@@ -6,8 +6,8 @@ import { yearlyDiscountPercent } from '@keres/shared/utils/tierPricing';
 import { RegistrationSettingsApiService } from '@/api/RegistrationSettingsApiService';
 import { TierApiService } from '@/api/TierApiService';
 import { Modal } from '@/components/Modal';
-import { StorageLimitInput } from './StorageLimitInput';
-import { formatStorage } from './storageUnits';
+import { StorageLimitInput } from './components/StorageLimitInput';
+import { formatStorage } from '@/utils/storageUnits';
 
 const emptyForm: TierCreateInput = {
   name: '',

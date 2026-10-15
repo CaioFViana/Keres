@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminStoryApiService } from '@/api/AdminStoryApiService';
-import { StoryContent } from '@/pages/stories/StoryContent';
+import { StoryContent } from '@/pages/stories/components/StoryContent';
 import { click, flush, render } from '@test/helpers/react';
 
 vi.mock('@/api/AdminStoryApiService', () => ({

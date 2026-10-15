@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, isNull, lt, or } from 'drizzle-orm';
 import type { AgeVerifier } from '@keres/shared/age-verification/AgeVerificationConnector';
-import { env } from '../../config/env';
-import { type CompatibleDb, db, withWriteTransaction } from '../../db';
+import { env } from '@/config/env';
+import { type CompatibleDb, db, withWriteTransaction } from '@/db';
 import {
   ageVerifications,
   comments,
@@ -22,9 +22,9 @@ import {
   termsAcceptances,
   userRecoveryCodes,
   users,
-} from '../../db/schema';
-import { logger } from '../../utils/logger';
-import { auditService } from '../AuditService';
+} from '@/db/schema';
+import { logger } from '@/utils/logger';
+import { auditService } from '@/services/AuditService';
 import { type AgeVerificationRow, standingSince } from './ageVerificationStatus';
 
 /**

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { eventManager } from '../../src/utils/EventManager';
+import { eventManager } from '@/utils/EventManager';
 
 // `eventManager` is a module singleton: without clearing the listeners, one test leaks into the next
 // exactly as it would leak between requests.

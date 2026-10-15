@@ -1,4 +1,4 @@
-import { boolean, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 
 /**
  * Global Showcase configuration. A single-row table, the same pattern as `registration_settings`:

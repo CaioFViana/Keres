@@ -1,7 +1,7 @@
 import { ulid } from 'ulid';
-import { db } from '../db';
-import { apiLogs } from '../db/schema';
-import { isForeignKeyConstraint } from '../utils/errors';
+import { db } from '@/db';
+import { apiLogs } from '@/db/schema';
+import { isForeignKeyConstraint } from '@/utils/errors';
 
 type LogLevel = 'info' | 'warn' | 'error';
 

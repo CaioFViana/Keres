@@ -2,31 +2,31 @@ import { jwt } from '@elysiajs/jwt';
 import { ForgotPasswordSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { ulid } from 'ulid';
-import { comparePassword, hashPassword } from '../../config/bcrypt';
-import { env } from '../../config/env';
-import { jwtRefresh } from '../../config/jwt';
+import { comparePassword, hashPassword } from '@/config/bcrypt';
+import { env } from '@/config/env';
+import { jwtRefresh } from '@/config/jwt';
 import {
   InvalidRecoveryCodeError,
   RecoveryAttemptsLockedError,
   recoveryCodeService,
-} from '../../services/RecoveryCodeService';
-import { createPersistentAttemptLimiter } from '../../services/AttemptLimitService';
-import { effectiveDefaultTierId } from '../../services/defaultTier';
-import { registrationSettingsService } from '../../services/RegistrationSettingsService';
-import { termsAcceptanceService } from '../../services/TermsAcceptanceService';
-import { userService } from '../../services/UserService';
-import { ageVerificationService } from '../../services/ageVerification/AgeVerificationService';
+} from '@/services/RecoveryCodeService';
+import { createPersistentAttemptLimiter } from '@/services/AttemptLimitService';
+import { effectiveDefaultTierId } from '@/services/defaultTier';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { termsAcceptanceService } from '@/services/TermsAcceptanceService';
+import { userService } from '@/services/UserService';
+import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
 import {
   createRegisteredAccount,
   requestSendingFor,
-} from '../../services/ageVerification/accountRegistration';
-import { isAgeVerificationRequired } from '../../services/ageVerification/ageVerificationMode';
-import { AppError } from '../../utils/errors';
-import { requestAddress } from '../../plugins/requestAudit';
-import { accessRecordService } from '../../services/AccessRecordService';
-import type { JWTPayload } from '../../index';
-import { languageOf } from '../payments/payment.route';
-import { createWebSocketTicket } from '../webSocket/webSocket.route';
+} from '@/services/ageVerification/accountRegistration';
+import { isAgeVerificationRequired } from '@/services/ageVerification/ageVerificationMode';
+import { AppError } from '@/utils/errors';
+import { requestAddress } from '@/plugins/requestAudit';
+import { accessRecordService } from '@/services/AccessRecordService';
+import type { JWTPayload } from '@/index';
+import { languageOf } from '@/modules/payments/payment.route';
+import { createWebSocketTicket } from '@/modules/webSocket/webSocket.route';
 import {
   AccountVerificationStatusResponseSchema,
   CodedMessageResponseSchema,

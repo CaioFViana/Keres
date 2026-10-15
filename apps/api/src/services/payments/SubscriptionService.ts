@@ -9,19 +9,19 @@ import type {
 import { GIFT_PROVIDER_ID } from '@keres/shared/metadata/Payments';
 import { and, desc, eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, withWriteTransaction } from '../../db';
+import { db, withWriteTransaction } from '@/db';
 import {
   paymentCheckouts,
   paymentEvents,
   paymentSubscriptions,
   playPurchaseClaims,
   tiers,
-} from '../../db/schema';
-import { emitUserEvent } from '../../modules/webSocket/webSocket.route';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
-import { auditService } from '../AuditService';
-import { registrationSettingsService } from '../RegistrationSettingsService';
+} from '@/db/schema';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { AppError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { auditService } from '@/services/AuditService';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
 import { clipDetail as clip, noteLedger, REFUSED_DETAIL_PREFIX, tierNameOf } from './paymentLedger';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { hashPurchaseToken } from './playPurchaseClaims';

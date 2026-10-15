@@ -1,14 +1,14 @@
 import { Elysia } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { storyPermissionService } from '../../services/StoryPermissionService';
-import { eventManager } from '../../utils/EventManager';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
+import type { JWTPayload } from '@/index';
+import { storyPermissionService } from '@/services/StoryPermissionService';
+import { eventManager } from '@/utils/EventManager';
+import { AppError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
 import {
   RealtimeSessionService,
   type RealtimeEvent,
   type RealtimeSocket,
-} from '../../services/RealtimeSessionService';
+} from '@/services/RealtimeSessionService';
 
 const realtimeSessions = new RealtimeSessionService({
   eventBus: eventManager,

@@ -1,8 +1,8 @@
 import type { PartialTier, TierCreateInput } from '@keres/shared';
 import { and, eq, inArray, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../db';
-import { paymentSubscriptions, tiers, users } from '../db/schema';
+import { db } from '@/db';
+import { paymentSubscriptions, tiers, users } from '@/db/schema';
 import { effectiveDefaultTierId, isSettingDefaultTier, setDefaultTier } from './defaultTier';
 
 export class TierNotFoundError extends Error {

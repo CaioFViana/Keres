@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { eventManager } from '../../src/utils/EventManager';
+import { eventManager } from '@/utils/EventManager';
 
 const registered: Array<[string, (payload: unknown) => void]> = [];
 

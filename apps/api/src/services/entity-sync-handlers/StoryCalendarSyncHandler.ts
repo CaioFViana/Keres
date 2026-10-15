@@ -1,7 +1,7 @@
 import type { CreateStoryCalendarDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateStoryCalendarDataSchema, PartialStoryCalendarSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { storyCalendars } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { storyCalendars } from '@/db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 /**

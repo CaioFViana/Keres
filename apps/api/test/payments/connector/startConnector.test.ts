@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getPaymentConnector,
   setPaymentConnector,
-} from '../../../src/services/payments/PaymentConnectorRegistry';
-import { startPaymentConnector } from '../../../src/services/payments/connector/startConnector';
-import { logger } from '../../../src/utils/logger';
-import { connectorDouble, KERES_KEY } from '../../helpers/connectorDouble';
+} from '@/services/payments/PaymentConnectorRegistry';
+import { startPaymentConnector } from '@/services/payments/connector/startConnector';
+import { logger } from '@/utils/logger';
+import { connectorDouble, KERES_KEY } from '@test/helpers/connectorDouble';
 
 const config = { url: 'https://connector.test/pay-base', secrets: [KERES_KEY], timeoutMs: 2000 };
 

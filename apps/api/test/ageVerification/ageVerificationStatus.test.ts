@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type { AgeVerificationRow } from '../../src/services/ageVerification/ageVerificationStatus';
+import type { AgeVerificationRow } from '@/services/ageVerification/ageVerificationStatus';
 import {
   accountStatusOf,
   canRetrySending,
   standingSince,
-} from '../../src/services/ageVerification/ageVerificationStatus';
-import { toVerificationEvent } from '../../src/services/ageVerification/verificationEvents';
+} from '@/services/ageVerification/ageVerificationStatus';
+import { toVerificationEvent } from '@/services/ageVerification/verificationEvents';
 
 const MAX = 3;
 const REDIRECT = { kind: 'redirect' as const, url: 'https://verify.example.test/v/abc' };

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PublicationStorageService } from '../../src/services/PublicationStorageService';
+import { PublicationStorageService } from '@/services/PublicationStorageService';
 
 describe('PublicationStorageService', () => {
   it('returns null for a signed URL on a backend that cannot sign', async () => {

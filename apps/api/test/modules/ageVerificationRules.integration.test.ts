@@ -1,17 +1,17 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
-import { ageVerificationEvents, ageVerifications, auditEvents, stories } from '../../src/db/schema';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { ageVerificationEvents, ageVerifications, auditEvents, stories } from '@/db/schema';
 import {
   AgeVerificationUserNotFoundError,
   ageVerificationService,
   VerificationRetryNotAllowedError,
   VerificationUnavailableError,
-} from '../../src/services/ageVerification/AgeVerificationService';
-import { resetAgeVerifier } from '../../src/services/ageVerification/AgeVerifierRegistry';
-import { drainBackground } from '../../src/utils/backgroundWork';
-import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+} from '@/services/ageVerification/AgeVerificationService';
+import { resetAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
+import { drainBackground } from '@/utils/backgroundWork';
+import { registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import {
   approvedEvent,
   commitmentFor,
@@ -21,9 +21,9 @@ import {
   pendingAccount,
   rejectedEvent,
   userRow,
-} from '../helpers/ageVerificationAccounts';
-import { postVerifierEvents } from '../helpers/ageVerificationEvents';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/ageVerificationAccounts';
+import { postVerifierEvents } from '@test/helpers/ageVerificationEvents';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(async () => {
   await truncateAll();

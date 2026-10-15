@@ -7,12 +7,12 @@ import type {
 } from '@keres/shared';
 import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { and, eq, gt, max, ne, or } from 'drizzle-orm';
-import { db } from '../../db';
-import { favorites, operationLog, stories } from '../../db/schema';
-import { eventManager } from '../../utils/EventManager';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
-import { storyPermissionService } from '../StoryPermissionService';
+import { db } from '@/db';
+import { favorites, operationLog, stories } from '@/db/schema';
+import { eventManager } from '@/utils/EventManager';
+import { AppError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { storyPermissionService } from '@/services/StoryPermissionService';
 import {
   ensurePublicFavoriteOperationLogs,
   getFavoritesFingerprint,

@@ -2,8 +2,8 @@ import type { MessageLimits } from '@keres/shared';
 import { ADMIN_MESSAGES_PER_DAY } from '@keres/shared/metadata/MessageLimits';
 import { and, count, eq, gte, lt } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../db';
-import { messageLog } from '../db/schema';
+import { db } from '@/db';
+import { messageLog } from '@/db/schema';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 
 export type MessageQuotaKind = 'direct' | 'admin';

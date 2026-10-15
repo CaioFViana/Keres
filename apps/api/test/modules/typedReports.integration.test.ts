@@ -1,10 +1,10 @@
 import { ulid } from 'ulid';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
-import { db } from '../../src/db';
-import { storyPublications, storyShowcaseEntries } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { storyPublications, storyShowcaseEntries } from '@/db/schema';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let ana: TestUser;

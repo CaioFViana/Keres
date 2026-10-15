@@ -1,8 +1,8 @@
 import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateCommentDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateCommentDataSchema, PartialCommentSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { comments } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { comments } from '@/db/schema';
 import {
   BaseSyncEntityHandler,
   SyncConflictError,

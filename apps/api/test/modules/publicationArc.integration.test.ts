@@ -3,7 +3,7 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import JSZip from 'jszip';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   chapters,
   locations,
@@ -14,12 +14,12 @@ import {
   storyPublications,
   tiers,
   users,
-} from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { MAX_PUBLICATIONS_PER_STORY } from '../../src/services/StoryPublicationService';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { MAX_PUBLICATIONS_PER_STORY } from '@/services/StoryPublicationService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { truncateAll } from '@test/helpers/database';
 
 // Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();

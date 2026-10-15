@@ -2,8 +2,8 @@ import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateChoiceCheckDataSchema, PartialChoiceCheckSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { choiceCheckGroups, choiceChecks, scenes } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { choiceCheckGroups, choiceChecks, scenes } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<

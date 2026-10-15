@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { users } from '../../src/db/schema';
-import { getApp, request } from '../helpers/app';
-import { enterRequiredMode, leaveRequiredMode } from '../helpers/ageVerificationAccounts';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { getApp, request } from '@test/helpers/app';
+import { enterRequiredMode, leaveRequiredMode } from '@test/helpers/ageVerificationAccounts';
+import { truncateAll } from '@test/helpers/database';
 
 /**
  * The per-address limit on `POST /auth/register` (`registrationLimiter` in `auth.route.ts`). The suites run the app

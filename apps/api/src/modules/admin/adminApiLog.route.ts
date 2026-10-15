@@ -1,9 +1,9 @@
 import { AdminApiLogQuerySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { adminApiLogService } from '../../services/AdminApiLogService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { adminApiLogService } from '@/services/AdminApiLogService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 export const adminApiLogRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)

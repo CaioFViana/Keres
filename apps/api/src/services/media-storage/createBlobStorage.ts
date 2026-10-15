@@ -1,4 +1,4 @@
-import { env } from '../../config/env';
+import { env } from '@/config/env';
 import type { BlobStorage } from './BlobStorage';
 import { LocalFilesystemBlobStorage } from './LocalFilesystemBlobStorage';
 import { S3BlobStorage } from './S3BlobStorage';

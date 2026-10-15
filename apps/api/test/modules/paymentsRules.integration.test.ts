@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   paymentCheckouts,
   paymentEvents,
@@ -8,14 +8,14 @@ import {
   playPurchaseClaims,
   tiers,
   users,
-} from '../../src/db/schema';
-import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
-import { PaymentRetentionService } from '../../src/services/payments/PaymentRetentionService';
-import { tierEnforcementService } from '../../src/services/TierEnforcementService';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
-import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
-import { postEvents } from '../helpers/paymentEvents';
+} from '@/db/schema';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { PaymentRetentionService } from '@/services/payments/PaymentRetentionService';
+import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
+import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';
+import { postEvents } from '@test/helpers/paymentEvents';
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;

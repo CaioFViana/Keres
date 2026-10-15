@@ -11,12 +11,12 @@ import type {
 } from '@keres/shared';
 import { PAYMENT_WARNING_DAYS } from '@keres/shared/metadata/Payments';
 import { and, asc, count, desc, eq, gte, inArray, lte, or, sql, sum, type SQL } from 'drizzle-orm';
-import { db } from '../../db';
-import { paymentEvents, paymentSubscriptions, tiers, users } from '../../db/schema';
-import { insensitiveLike } from '../../db/sqlOperators';
+import { db } from '@/db';
+import { paymentEvents, paymentSubscriptions, tiers, users } from '@/db/schema';
+import { insensitiveLike } from '@/db/sqlOperators';
 import { maskReference } from './paymentRules';
-import { effectiveDefaultTierId } from '../defaultTier';
-import { registrationSettingsService } from '../RegistrationSettingsService';
+import { effectiveDefaultTierId } from '@/services/defaultTier';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 
 const DAY_MS = 24 * 60 * 60 * 1000;

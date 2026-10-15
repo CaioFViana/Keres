@@ -6,11 +6,11 @@ import {
 } from '@keres/shared/metadata/EvidenceHolds';
 import { and, desc, eq, gt, lt } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { env } from '../config/env';
-import { db } from '../db';
-import { evidenceHolds, messages, stories, storyPublications, users } from '../db/schema';
-import { trackBackground } from '../utils/backgroundWork';
-import { AppError } from '../utils/errors';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { evidenceHolds, messages, stories, storyPublications, users } from '@/db/schema';
+import { trackBackground } from '@/utils/backgroundWork';
+import { AppError } from '@/utils/errors';
 import { accessRecordService } from './AccessRecordService';
 import { StoryExportImportService } from './StoryExportImportService';
 

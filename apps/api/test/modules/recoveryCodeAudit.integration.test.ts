@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { adminUserService } from '../../src/services/AdminUserService';
-import { newId, registerUser, request } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { adminUserService } from '@/services/AdminUserService';
+import { newId, registerUser, request } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

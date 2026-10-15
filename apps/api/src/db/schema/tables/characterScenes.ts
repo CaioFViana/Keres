@@ -1,4 +1,4 @@
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { characters } from './characters';
 import { stories } from './stories';
 import { scenes } from './scenes';

@@ -1,7 +1,7 @@
 import type { CreateSketchDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateSketchDataSchema, PartialSketchSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { sketches } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { sketches } from '@/db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 /**

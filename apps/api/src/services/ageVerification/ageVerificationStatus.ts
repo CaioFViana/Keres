@@ -1,6 +1,6 @@
 import { type AccountVerificationStatus, VerificationActionSchema } from '@keres/shared';
 import type { VerificationRejectionReason } from '@keres/shared/age-verification/AgeVerificationConnector';
-import type { ageVerifications, UserVerificationStatus } from '../../db/schema';
+import type { ageVerifications, UserVerificationStatus } from '@/db/schema';
 
 /**
  * What an account's standing says to the app (`AccountVerificationStatus`), worked out from the account and its latest

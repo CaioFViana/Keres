@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../../src/index';
+import { createApp } from '@/index';
 
 /**
  * A hosted page answers the same with or without the slash after it: `/admin` used to fall to the

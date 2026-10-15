@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { accessRecordService } from '../../src/services/AccessRecordService';
-import { registerUser, request } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { accessRecordService } from '@/services/AccessRecordService';
+import { registerUser, request } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(async () => {
   await truncateAll();

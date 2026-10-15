@@ -2,7 +2,7 @@ import type { BoardContentType, LocationMapContentType, SketchContentType } from
 import { decodeSketchItems, OperationLogEntityType } from '@keres/shared';
 import { and, asc, count, desc, eq, getTableColumns, type SQL } from 'drizzle-orm';
 import type { Column } from 'drizzle-orm/column';
-import { db } from '../db';
+import { db } from '@/db';
 import {
   boards,
   galleries,
@@ -12,11 +12,11 @@ import {
   storyInvitations,
   storyPermissions,
   users,
-} from '../db/schema';
-import type { ApplicationTable } from '../db/schema/columns';
-import { insensitiveLike } from '../db/sqlOperators';
-import { emitUserEvent } from '../modules/webSocket/webSocket.route';
-import { AppError } from '../utils/errors';
+} from '@/db/schema';
+import type { ApplicationTable } from '@/db/schema/columns';
+import { insensitiveLike } from '@/db/sqlOperators';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { AppError } from '@/utils/errors';
 import { API_ENTITY_TABLES } from './entity-solvers/ApiEntityTableRegistry';
 import { mediaStorageService } from './MediaStorageService';
 import { storyNsfwService } from './StoryNsfwService';

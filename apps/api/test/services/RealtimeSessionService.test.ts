@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RealtimeSessionService } from '../../src/services/RealtimeSessionService';
+import { RealtimeSessionService } from '@/services/RealtimeSessionService';
 
 const listeners = new Map<string, Set<(event: never) => void>>();
 let now = 1_000;

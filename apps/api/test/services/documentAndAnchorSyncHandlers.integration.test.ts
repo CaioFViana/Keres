@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { chapters, locations, scenes, stories, users } from '../../src/db/schema';
-import { SyncConflictError } from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
-import { BoardSyncHandler } from '../../src/services/entity-sync-handlers/BoardSyncHandler';
-import { ChapterAnchorSyncHandler } from '../../src/services/entity-sync-handlers/ChapterAnchorSyncHandler';
-import { LocationMapSyncHandler } from '../../src/services/entity-sync-handlers/LocationMapSyncHandler';
-import { StoryCalendarSyncHandler } from '../../src/services/entity-sync-handlers/StoryCalendarSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { chapters, locations, scenes, stories, users } from '@/db/schema';
+import { SyncConflictError } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { BoardSyncHandler } from '@/services/entity-sync-handlers/BoardSyncHandler';
+import { ChapterAnchorSyncHandler } from '@/services/entity-sync-handlers/ChapterAnchorSyncHandler';
+import { LocationMapSyncHandler } from '@/services/entity-sync-handlers/LocationMapSyncHandler';
+import { StoryCalendarSyncHandler } from '@/services/entity-sync-handlers/StoryCalendarSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

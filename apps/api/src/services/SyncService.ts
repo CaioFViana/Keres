@@ -1,7 +1,7 @@
 import type { EffectiveStoryRole, StoryUpdate } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../db';
-import { stories, storyPermissions } from '../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { stories, storyPermissions } from '@/db/schema';
 import type { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { registerApiSyncHandlers } from './entity-sync-handlers/registerApiSyncHandlers';
 import { SyncOperationLogService } from './sync/SyncOperationLogService';

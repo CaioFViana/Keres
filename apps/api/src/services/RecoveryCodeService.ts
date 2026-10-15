@@ -1,8 +1,8 @@
 import { normalizeRecoveryCode } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { comparePassword, hashPassword } from '../config/bcrypt';
-import { db } from '../db';
-import { users, userRecoveryCodes } from '../db/schema';
+import { comparePassword, hashPassword } from '@/config/bcrypt';
+import { db } from '@/db';
+import { users, userRecoveryCodes } from '@/db/schema';
 import { createPersistentAttemptLimiter } from './AttemptLimitService';
 
 export class InvalidRecoveryCodeError extends Error {

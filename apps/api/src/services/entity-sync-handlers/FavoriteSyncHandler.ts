@@ -2,8 +2,8 @@ import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateFavoriteDataSchema, PartialFavoriteSchema } from '@keres/shared';
 import { and, count, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { favorites } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { favorites } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /** Live favorites one user may keep in one story (see the create). */

@@ -5,14 +5,14 @@ const mocks = vi.hoisted(() => ({
   isVisibleTo: vi.fn(),
 }));
 
-vi.mock('../../src/services/ShowcaseService', () => ({
+vi.mock('@/services/ShowcaseService', () => ({
   showcaseService: {
     viewerIncludesNsfw: mocks.viewerIncludesNsfw,
     isVisibleTo: mocks.isVisibleTo,
   },
 }));
 
-import { assertShowcaseOpen } from '../../src/modules/public/showcaseGate';
+import { assertShowcaseOpen } from '@/modules/public/showcaseGate';
 
 /** A signer that knows these tokens: `Showcase <token>` → what the token proves. */
 const jwt = (known: Record<string, { storyId: string; nsfwOk?: boolean }>) => ({

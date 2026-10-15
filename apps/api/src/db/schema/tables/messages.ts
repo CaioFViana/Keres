@@ -1,5 +1,5 @@
 import { MESSAGE_CHANNELS } from '@keres/shared/metadata/MessageLimits';
-import { dbEnum, index, table, text, timestamp, timestampNow } from '../columns';
+import { dbEnum, index, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { users } from './users';
 
 export const messageChannelEnum = dbEnum('message_channel', MESSAGE_CHANNELS);

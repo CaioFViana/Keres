@@ -2,15 +2,15 @@ import type { EnrichedFriendship, Friendship } from '@keres/shared';
 import { FriendStatus } from '@keres/shared';
 import { and, eq, ne, or, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, withWriteTransaction } from '../db';
-import { alias } from '../db/schema/columns';
-import { friendships } from '../db/schema/tables/friendships';
-import { users } from '../db/schema/tables/users';
-import { lockUserPair } from '../db/sqlOperators';
-import { AppError } from '../utils/errors';
+import { db, withWriteTransaction } from '@/db';
+import { alias } from '@/db/schema/columns';
+import { friendships } from '@/db/schema/tables/friendships';
+import { users } from '@/db/schema/tables/users';
+import { lockUserPair } from '@/db/sqlOperators';
+import { AppError } from '@/utils/errors';
 import { storyPermissionService } from './StoryPermissionService';
 import { ACTIVE_ACCOUNT } from './UserService';
-import { emitUserEvent } from '../modules/webSocket/webSocket.route';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
 
 export class FriendshipService {
   private notifyChanged(...userIds: string[]): void {

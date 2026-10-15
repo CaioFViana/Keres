@@ -1,5 +1,5 @@
-import { logger } from '../../../utils/logger';
-import { setPaymentConnector } from '../PaymentConnectorRegistry';
+import { logger } from '@/utils/logger';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
 import { type ConnectorConfig, connectorConfig } from './config';
 import { HttpConnector } from './HttpConnector';
 

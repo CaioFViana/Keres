@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createTranslator } from '../../src/launcher/i18n';
-import { choiceMenuLines, runSetupWizard } from '../../src/launcher/wizard';
-import type { LauncherIo } from '../../src/launcher/io';
+import { createTranslator } from '@/launcher/i18n';
+import { choiceMenuLines, runSetupWizard } from '@/launcher/wizard';
+import type { LauncherIo } from '@/launcher/io';
 
 describe('wizard choice menu', () => {
   it('lists options on their own lines and labels the default, not a trailing [1]', () => {

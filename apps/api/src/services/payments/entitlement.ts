@@ -1,7 +1,7 @@
 import { GIFT_PROVIDER_ID, PAYMENT_RENEWAL_GRACE_HOURS } from '@keres/shared/metadata/Payments';
 import { and, eq, gt, inArray, lte, ne, or, type SQL } from 'drizzle-orm';
-import { db } from '../../db';
-import { paymentSubscriptions } from '../../db/schema';
+import { db } from '@/db';
+import { paymentSubscriptions } from '@/db/schema';
 
 const HOUR_MS = 60 * 60 * 1000;
 

@@ -16,11 +16,11 @@
  * Runs on the disposable test database (`docker-compose.test.yml`) - `../setup` points every
  * connection there before anything loads - and only ever under Bun: `bun test/syncFuzz/server.ts`.
  */
-import '../setup';
+import '@test/setup';
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { asc, eq, max } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { runMigrations } from '../../src/db/migrate';
+import { db } from '@/db';
+import { runMigrations } from '@/db/migrate';
 import {
   attributeValues,
   boards,
@@ -63,10 +63,10 @@ import {
   storySchemaFields,
   tagRelations,
   tags,
-} from '../../src/db/schema';
-import { compactStoryUpdateHistory } from '../../src/services/sync/SyncHistoryCompaction';
-import { getApp, registerUser, request } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { compactStoryUpdateHistory } from '@/services/sync/SyncHistoryCompaction';
+import { getApp, registerUser, request } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 await runMigrations();
 const app = await getApp();

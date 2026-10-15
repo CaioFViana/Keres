@@ -2,21 +2,14 @@ import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SYNC_PROTOCOL_HEADER } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
-import {
-  friendships,
-  galleries,
-  stories,
-  storyPublications,
-  tiers,
-  users,
-} from '../../src/db/schema';
-import { showcaseSettings } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { showcaseService } from '../../src/services/ShowcaseService';
-import { userService } from '../../src/services/UserService';
-import { installBunShim } from '../helpers/bunShim';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { friendships, galleries, stories, storyPublications, tiers, users } from '@/db/schema';
+import { showcaseSettings } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { showcaseService } from '@/services/ShowcaseService';
+import { userService } from '@/services/UserService';
+import { installBunShim } from '@test/helpers/bunShim';
 import {
   getApp,
   newId,
@@ -24,8 +17,8 @@ import {
   request,
   uploadTestStory,
   type TestUser,
-} from '../helpers/app';
-import { hardDeleteUser, promoteToAdmin, truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { hardDeleteUser, promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 installBunShim();
 

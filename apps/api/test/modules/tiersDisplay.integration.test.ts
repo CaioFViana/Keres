@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PublicTiersResponseSchema } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { registrationSettings, tiers } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { registrationSettings, tiers } from '@/db/schema';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 /**
  * The server's setting for how the landing page presents its plans: `sale` (prices and buy links, as

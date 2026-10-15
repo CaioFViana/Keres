@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { hardDeleteUser, truncateAll } from '../helpers/database';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { hardDeleteUser, truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 

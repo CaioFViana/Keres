@@ -1,9 +1,9 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../db';
-import { termsAcceptances, type LegalDocumentKind } from '../db/schema/tables/termsAcceptances';
-import { PRIVACY_POLICY_VERSION, privacyPolicyDigest } from '../legal/privacyPolicy';
-import { SERVER_TERMS_VERSION, serverTermsDigest } from '../legal/serverTerms';
+import { db } from '@/db';
+import { termsAcceptances, type LegalDocumentKind } from '@/db/schema/tables/termsAcceptances';
+import { PRIVACY_POLICY_VERSION, privacyPolicyDigest } from '@/legal/privacyPolicy';
+import { SERVER_TERMS_VERSION, serverTermsDigest } from '@/legal/serverTerms';
 import { ageVerificationMode } from './ageVerification/ageVerificationMode';
 
 export type LegalAcceptanceMethod = 'registration' | 'reaccept';

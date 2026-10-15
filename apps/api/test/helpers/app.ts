@@ -4,7 +4,7 @@ import {
   SYNC_PROTOCOL_VERSION,
 } from '@keres/shared';
 import { ulid } from 'ulid';
-import { createApp } from '../../src/index';
+import { createApp } from '@/index';
 
 /** Every programmatic endpoint is mounted below this prefix; test call sites stay route-relative. */
 const API_PREFIX = '/api';

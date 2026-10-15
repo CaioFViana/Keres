@@ -9,19 +9,19 @@ import {
   UserReportRequestSchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
+import type { JWTPayload } from '@/index';
 import {
   AdultVerificationRequiredError,
   InvalidCurrentPasswordError,
   TagAlreadyTakenError,
   userService,
-} from '../../services/UserService';
-import { friendshipService } from '../../services/FriendshipService';
-import { messageService } from '../../services/MessageService';
-import { storyNsfwService } from '../../services/StoryNsfwService';
-import { tierEnforcementService } from '../../services/TierEnforcementService';
-import { userDataService } from '../../services/UserDataService';
-import { AppError, isUniqueViolation } from '../../utils/errors';
+} from '@/services/UserService';
+import { friendshipService } from '@/services/FriendshipService';
+import { messageService } from '@/services/MessageService';
+import { storyNsfwService } from '@/services/StoryNsfwService';
+import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { userDataService } from '@/services/UserDataService';
+import { AppError, isUniqueViolation } from '@/utils/errors';
 
 const userResponseSchema = t.Object({
   id: t.String(),

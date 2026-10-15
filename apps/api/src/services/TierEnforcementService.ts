@@ -1,7 +1,7 @@
 import { type AccountPlan, getTierCountedEntityTypes, type StoryPlan } from '@keres/shared';
 import { and, count, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../db';
+import { db } from '@/db';
 import {
   comments,
   galleries,
@@ -13,7 +13,7 @@ import {
   storyPublications,
   tiers,
   users,
-} from '../db/schema';
+} from '@/db/schema';
 import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierId } from './payments/entitlement';
 import { syncService } from './SyncService';

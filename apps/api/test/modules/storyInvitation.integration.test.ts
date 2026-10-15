@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { stories } from '../../src/db/schema';
-import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { stories } from '@/db/schema';
+import { registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let bia: TestUser;

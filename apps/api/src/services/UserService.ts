@@ -7,10 +7,10 @@ import type {
 import { ACCOUNT_DELETION_GRACE_DAYS, deriveUserTag, normalizeUserTag } from '@keres/shared';
 import { randomUUID } from 'node:crypto';
 import { and, eq, lt, notLike, sql } from 'drizzle-orm';
-import { comparePassword, hashPassword } from '../config/bcrypt';
-import { db } from '../db';
-import { users, type UserVerificationStatus } from '../db/schema/tables/users';
-import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
+import { comparePassword, hashPassword } from '@/config/bcrypt';
+import { db } from '@/db';
+import { users, type UserVerificationStatus } from '@/db/schema/tables/users';
+import { isUniqueViolation, postgresErrorConstraint } from '@/utils/errors';
 import { auditService } from './AuditService';
 import { erasureLedger } from './ErasureLedger';
 import { effectiveAdultVerified } from './ageVerification/ageVerificationMode';

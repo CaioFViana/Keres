@@ -4,8 +4,8 @@ import {
   type PaymentHistoryQuery,
 } from '@keres/shared';
 import { and, desc, eq, inArray, lt, not, or, isNull, like } from 'drizzle-orm';
-import { db } from '../../db';
-import { paymentEvents } from '../../db/schema';
+import { db } from '@/db';
+import { paymentEvents } from '@/db/schema';
 import { REFUSED_DETAIL_PREFIX } from './paymentLedger';
 
 /**

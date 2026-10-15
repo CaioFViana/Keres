@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { auditEvents, messageLog, stories, tiers, users } from '../../src/db/schema';
-import { auditService } from '../../src/services/AuditService';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { auditEvents, messageLog, stories, tiers, users } from '@/db/schema';
+import { auditService } from '@/services/AuditService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let ana: TestUser;

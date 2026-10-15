@@ -1,15 +1,15 @@
 import { APP_RELEASE } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { jwtShowcase } from '../../config/jwt';
-import type { JWTPayload } from '../../index';
-import { mediaStorageService } from '../../services/MediaStorageService';
-import { packService } from '../../services/PackService';
-import { publicationStorageService } from '../../services/PublicationStorageService';
-import { showcaseLogoStorageService } from '../../services/ShowcaseLogoStorageService';
-import { showcaseService } from '../../services/ShowcaseService';
-import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
-import { AppError } from '../../utils/errors';
-import { createAttemptLimiter } from '../../utils/rateLimiter';
+import { jwtShowcase } from '@/config/jwt';
+import type { JWTPayload } from '@/index';
+import { mediaStorageService } from '@/services/MediaStorageService';
+import { packService } from '@/services/PackService';
+import { publicationStorageService } from '@/services/PublicationStorageService';
+import { showcaseLogoStorageService } from '@/services/ShowcaseLogoStorageService';
+import { showcaseService } from '@/services/ShowcaseService';
+import { showcaseSettingsService } from '@/services/ShowcaseSettingsService';
+import { AppError } from '@/utils/errors';
+import { createAttemptLimiter } from '@/utils/rateLimiter';
 import { publicReaderRoutes } from './publicReader.route';
 import {
   manuscriptMetaOf,

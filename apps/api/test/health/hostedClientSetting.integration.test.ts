@@ -1,9 +1,9 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-import { landingDistPath, showcaseDistPath } from '../../src/config/resourceRoot';
-import { createApp } from '../../src/index';
-import { request, registerUser, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { landingDistPath, showcaseDistPath } from '@/config/resourceRoot';
+import { createApp } from '@/index';
+import { request, registerUser, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 

@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { operationLog, stories, storyArcs } from '../../src/db/schema';
-import { storyRetentionService } from '../../src/services/StoryRetentionService';
-import { userService } from '../../src/services/UserService';
+import { db } from '@/db';
+import { operationLog, stories, storyArcs } from '@/db/schema';
+import { storyRetentionService } from '@/services/StoryRetentionService';
+import { userService } from '@/services/UserService';
 import {
   importTestStory,
   registerUser,
@@ -11,8 +11,8 @@ import {
   shareStory,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 const DAY = 24 * 60 * 60 * 1000;
 let ana: TestUser;

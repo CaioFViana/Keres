@@ -6,7 +6,7 @@ import {
   PRECOMPRESSED_MANIFEST,
   precompressedFor,
   resetPrecompressedManifests,
-} from '../../src/services/precompressedAssets';
+} from '@/services/precompressedAssets';
 
 let root: string;
 

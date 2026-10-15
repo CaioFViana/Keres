@@ -1,8 +1,8 @@
 import { encodeSketchItems, type SketchItem } from '@keres/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SketchSyncHandler } from '../../src/services/entity-sync-handlers/SketchSyncHandler';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { SketchSyncHandler } from '@/services/entity-sync-handlers/SketchSyncHandler';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let user: TestUser;
 let storyId: string;

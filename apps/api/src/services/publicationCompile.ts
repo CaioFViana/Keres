@@ -13,9 +13,9 @@ import {
 } from '@keres/shared';
 import { compileStoryManuscript } from '@keres/shared/manuscript/export';
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
-import { users } from '../db/schema';
-import { AppError } from '../utils/errors';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { AppError } from '@/utils/errors';
 import { compileInputOf } from './publicationCompileInput';
 import { withCover, withScenePages, type ReadMediaBytes } from './publicationPages';
 import { withSceneSongs } from './publicationSongs';

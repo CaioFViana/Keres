@@ -15,7 +15,7 @@ import {
   signResponseHeaders,
   verifyRequest,
   verifyResponse,
-} from '../../../src/services/payments/connector/signing';
+} from '@/services/payments/connector/signing';
 
 /** A fixed secret, fixed inputs and the signatures they must give: what a connector in another language checks itself against. */
 const VECTOR = {

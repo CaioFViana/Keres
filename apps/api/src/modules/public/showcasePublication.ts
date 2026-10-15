@@ -1,5 +1,5 @@
-import { showcaseService } from '../../services/ShowcaseService';
-import { AppError } from '../../utils/errors';
+import { showcaseService } from '@/services/ShowcaseService';
+import { AppError } from '@/utils/errors';
 
 /** What the reads of a published version need from the version row. */
 type Publication = NonNullable<Awaited<ReturnType<typeof showcaseService.getPublication>>>;

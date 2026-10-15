@@ -7,7 +7,7 @@ import {
   deliverDistFile,
   distFileCacheControl,
   resolveDistFile,
-} from '../../src/services/distStaticDelivery';
+} from '@/services/distStaticDelivery';
 
 const request = (headers: Record<string, string> = {}) =>
   new Request('http://localhost/x', { headers });

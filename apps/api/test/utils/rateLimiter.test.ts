@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createAttemptLimiter, MAX_TRACKED_KEYS } from '../../src/utils/rateLimiter';
+import { createAttemptLimiter, MAX_TRACKED_KEYS } from '@/utils/rateLimiter';
 
 describe('createAttemptLimiter', () => {
   beforeEach(() => vi.useFakeTimers());

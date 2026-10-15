@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { SHOWCASE_SETTINGS_SINGLETON_ID, showcaseSettings } from '../../src/db/schema';
-import { ShowcaseSettingsService } from '../../src/services/ShowcaseSettingsService';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { SHOWCASE_SETTINGS_SINGLETON_ID, showcaseSettings } from '@/db/schema';
+import { ShowcaseSettingsService } from '@/services/ShowcaseSettingsService';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

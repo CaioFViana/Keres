@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { usingSqlite } from '../../src/db/dialect';
-import { termsAcceptances, userRecoveryCodes, users } from '../../src/db/schema';
+import { db } from '@/db';
+import { usingSqlite } from '@/db/dialect';
+import { termsAcceptances, userRecoveryCodes, users } from '@/db/schema';
 
 /**
  * Promotes a user to admin by writing straight to the table.

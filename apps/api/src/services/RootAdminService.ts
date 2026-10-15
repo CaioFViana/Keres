@@ -1,11 +1,11 @@
 import { deriveUserTag } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { hashPassword } from '../config/bcrypt';
-import { env } from '../config/env';
-import { db } from '../db';
-import { users } from '../db/schema';
-import { logger } from '../utils/logger';
+import { hashPassword } from '@/config/bcrypt';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { logger } from '@/utils/logger';
 
 /**
  * Guarantees that the "root" admin account configured through the env always exists and is always

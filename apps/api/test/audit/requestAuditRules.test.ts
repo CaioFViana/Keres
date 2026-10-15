@@ -1,17 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AUDIT_RULES,
-  classifyRequest,
-  isAdminApiPath,
-  outcomeOf,
-} from '../../src/audit/requestAuditRules';
+import { AUDIT_RULES, classifyRequest, isAdminApiPath, outcomeOf } from '@/audit/requestAuditRules';
 import {
   clientAddress,
   decideAudit,
   type FinishedRequest,
   requestAddress,
-} from '../../src/plugins/requestAudit';
-import { csvCell } from '../../src/services/AuditService';
+} from '@/plugins/requestAudit';
+import { csvCell } from '@/services/AuditService';
 
 const ULID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const finished = (over: Partial<FinishedRequest> = {}): FinishedRequest => ({

@@ -1,8 +1,8 @@
 import { themes } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
-import { SHOWCASE_SETTINGS_SINGLETON_ID, showcaseSettings } from '../db/schema';
-import { AppError } from '../utils/errors';
+import { db } from '@/db';
+import { SHOWCASE_SETTINGS_SINGLETON_ID, showcaseSettings } from '@/db/schema';
+import { AppError } from '@/utils/errors';
 
 /** A header title, not a paragraph: trimmed, never blank, fits the public site's layout. */
 export const SHOWCASE_SITE_NAME_MAX_LENGTH = 60;

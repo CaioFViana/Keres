@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { packService } from '../../services/PackService';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { packService } from '@/services/PackService';
+import { AppError } from '@/utils/errors';
 
 /**
  * Sharing packs.

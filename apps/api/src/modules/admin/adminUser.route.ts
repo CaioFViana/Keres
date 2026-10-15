@@ -4,17 +4,17 @@ import {
   AdminUserListQuerySchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
+import type { JWTPayload } from '@/index';
 import {
   AdminUserNotFoundError,
   adminUserService,
   RootAdminProtectedError,
   UsernameAlreadyTakenError,
-} from '../../services/AdminUserService';
-import { TierNotFoundError } from '../../services/TierService';
-import { TagAlreadyTakenError } from '../../services/UserService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+} from '@/services/AdminUserService';
+import { TierNotFoundError } from '@/services/TierService';
+import { TagAlreadyTakenError } from '@/services/UserService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 export const adminUserRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)

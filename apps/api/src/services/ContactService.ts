@@ -1,8 +1,8 @@
 import type { ContactCreate } from '@keres/shared';
 import { and, eq, lt } from 'drizzle-orm';
-import { db } from '../db';
-import { messages } from '../db/schema';
-import { env } from '../config/env';
+import { db } from '@/db';
+import { messages } from '@/db/schema';
+import { env } from '@/config/env';
 import { newMessageId } from './MessageService';
 
 /**

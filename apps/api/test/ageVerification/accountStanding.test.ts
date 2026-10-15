@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { AgeVerificationRow } from '../../src/services/ageVerification/ageVerificationStatus';
-import {
-  accountStatusOf,
-  isLapsed,
-} from '../../src/services/ageVerification/ageVerificationStatus';
+import type { AgeVerificationRow } from '@/services/ageVerification/ageVerificationStatus';
+import { accountStatusOf, isLapsed } from '@/services/ageVerification/ageVerificationStatus';
 
 const MAX = 3;
 const NOW = new Date('2026-06-01T12:00:00Z');

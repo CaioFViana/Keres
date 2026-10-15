@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { boards, characters, galleries, locationMaps, notes } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
-import { installBunShim } from '../helpers/bunShim';
+import { db } from '@/db';
+import { boards, characters, galleries, locationMaps, notes } from '@/db/schema';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
+import { installBunShim } from '@test/helpers/bunShim';
 
 installBunShim();
 

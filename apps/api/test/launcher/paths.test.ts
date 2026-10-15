@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { defaultDataDir, sqliteUrlFor } from '../../src/launcher/paths';
+import { defaultDataDir, sqliteUrlFor } from '@/launcher/paths';
 
 describe('launcher paths', () => {
   it('puts Windows data under AppData\\Roaming\\KeresServer', () => {

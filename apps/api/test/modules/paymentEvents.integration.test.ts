@@ -1,33 +1,33 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   auditEvents,
   paymentEvents,
   paymentSubscriptions,
   playPurchaseClaims,
   tiers,
-} from '../../src/db/schema';
-import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
-import { hashPurchaseToken } from '../../src/services/payments/playPurchaseClaims';
+} from '@/db/schema';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { hashPurchaseToken } from '@/services/payments/playPurchaseClaims';
 import {
   HEADER_NONCE,
   HEADER_SIGNATURE,
   HEADER_TIMESTAMP,
   MAX_CLOCK_SKEW_SECONDS,
   verifyResponse,
-} from '../../src/services/payments/connector/signing';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
-import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
+} from '@/services/payments/connector/signing';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
+import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';
 import {
   CONNECTOR_SECRET,
   EVENTS_SECRET,
   postEvents,
   sendEvents,
   signEvents,
-} from '../helpers/paymentEvents';
-import { drainBackground } from '../../src/utils/backgroundWork';
+} from '@test/helpers/paymentEvents';
+import { drainBackground } from '@/utils/backgroundWork';
 
 /**
  * The only door a payment connector comes in by is `POST /api/payments/events`, and it is open to the internet. What

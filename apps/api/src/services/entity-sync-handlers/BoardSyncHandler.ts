@@ -1,7 +1,7 @@
 import type { CreateBoardDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateBoardDataSchema, PartialBoardSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { boards } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { boards } from '@/db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 /**

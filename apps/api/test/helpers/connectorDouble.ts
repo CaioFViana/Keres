@@ -3,7 +3,7 @@ import {
   NonceCache,
   signResponseHeaders,
   verifyRequest,
-} from '../../src/services/payments/connector/signing';
+} from '@/services/payments/connector/signing';
 
 export const KERES_KEY = 'k'.repeat(40);
 export const OLD_KEY = 'o'.repeat(40);

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   chapters,
   characters,
@@ -19,14 +19,14 @@ import {
   tags,
   users,
   worldRules,
-} from '../../src/db/schema';
+} from '@/db/schema';
 import {
   type EnrichableDeletedRow,
   enrichDeletedDisplayNames,
   enrichOperationLogNames,
-} from '../../src/services/AdminRecoveryDisplayNames';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/AdminRecoveryDisplayNames';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 const ids = {
   user: '',

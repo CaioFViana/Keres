@@ -1,7 +1,7 @@
 import { addBillingMonths, addBillingPeriod } from '@keres/shared/utils/billingPeriod';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   auditEvents,
   paymentEvents,
@@ -9,15 +9,15 @@ import {
   registrationSettings,
   tiers,
   users,
-} from '../../src/db/schema';
-import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
-import { subscriptionService } from '../../src/services/payments/SubscriptionService';
-import { tierEnforcementService } from '../../src/services/TierEnforcementService';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
-import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
-import { postEvents } from '../helpers/paymentEvents';
-import { drainBackground } from '../../src/utils/backgroundWork';
+} from '@/db/schema';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { subscriptionService } from '@/services/payments/SubscriptionService';
+import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
+import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';
+import { postEvents } from '@test/helpers/paymentEvents';
+import { drainBackground } from '@/utils/backgroundWork';
 
 /**
  * A plan given by an administrator is a payment of zero: it extends a running period, switches plan with the

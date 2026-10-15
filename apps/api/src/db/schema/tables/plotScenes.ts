@@ -8,7 +8,7 @@ import {
   timestamp,
   timestampNow,
   uniqueIndex,
-} from '../columns';
+} from '@/db/schema/columns';
 import { plots } from './plots';
 import { scenes } from './scenes';
 import { stories } from './stories';

@@ -1,11 +1,11 @@
 import { type RegistrationSettingsView, UpdateRegistrationSettingsSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { ageVerificationMode } from '../../services/ageVerification/ageVerificationMode';
-import { registrationSettingsService } from '../../services/RegistrationSettingsService';
-import { TierNotFoundError } from '../../services/TierService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { ageVerificationMode } from '@/services/ageVerification/ageVerificationMode';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { TierNotFoundError } from '@/services/TierService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 export const adminRegistrationRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)

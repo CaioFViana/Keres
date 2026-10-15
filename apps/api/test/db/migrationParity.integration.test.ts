@@ -5,8 +5,8 @@ import { rm } from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { usingSqlite } from '../../src/db/dialect';
-import * as schema from '../../src/db/schema';
+import { usingSqlite } from '@/db/dialect';
+import * as schema from '@/db/schema';
 
 /**
  * The SQLite migrations describe the same schema the code defines.
@@ -86,7 +86,7 @@ describeForSqlite('the SQLite migrations match the schema', () => {
   // drizzle's control table lives in the main database (on Postgres it is a separate schema), and it is
   // the one the cleanup between tests has to spare - see `truncateAll`.
   it('keeps its bookkeeping in __drizzle_migrations', async () => {
-    const { db } = await import('../../src/db');
+    const { db } = await import('@/db');
     const sqliteDb = db as unknown as { all: (query: unknown) => Promise<unknown> };
     const { sql } = await import('drizzle-orm');
 

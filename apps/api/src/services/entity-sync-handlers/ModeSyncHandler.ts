@@ -2,8 +2,8 @@ import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateModeDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateModeDataSchema, PartialModeSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { characters, modes } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { characters, modes } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ModeSyncHandler extends BaseSyncEntityHandler<

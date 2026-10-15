@@ -31,7 +31,7 @@ afterEach(() => {
 
 async function freshLoader() {
   vi.resetModules();
-  const { publicationPdfFontMatrices } = await import('../../src/services/publicationPdfFonts');
+  const { publicationPdfFontMatrices } = await import('@/services/publicationPdfFonts');
   return publicationPdfFontMatrices as () => Promise<
     { regular: Uint8Array; italic: Uint8Array } | undefined
   >;

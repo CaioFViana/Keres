@@ -8,19 +8,19 @@ import type {
 } from '@keres/shared';
 import { and, asc, eq, max, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, withWriteTransaction } from '../../db';
-import { operationLog, stories } from '../../db/schema';
-import { AppError } from '../../utils/errors';
-import { eventManager } from '../../utils/EventManager';
-import { logger } from '../../utils/logger';
+import { db, withWriteTransaction } from '@/db';
+import { operationLog, stories } from '@/db/schema';
+import { AppError } from '@/utils/errors';
+import { eventManager } from '@/utils/EventManager';
+import { logger } from '@/utils/logger';
 import type {
   SyncEntityRow,
   SyncEntityHandler,
   SyncPayload,
-} from '../entity-sync-handlers/BaseSyncEntityHandler';
-import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler';
-import { storyPermissionService } from '../StoryPermissionService';
-import { TierLimitExceededError } from '../TierEnforcementService';
+} from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { SyncConflictError } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { storyPermissionService } from '@/services/StoryPermissionService';
+import { TierLimitExceededError } from '@/services/TierEnforcementService';
 import { readPushEnvelope, writtenPayload } from './pushEnvelope';
 import { assertPlanRoomFor } from './pushPlanRoom';
 import { storyNsfwRefusal } from './storyNsfwGuard';
@@ -45,7 +45,7 @@ import {
   enforceNsfwCollaboratorsAfterStoryChange,
   repairPublicFavoritesAfterStoryChange,
 } from './storyChangeRepairs';
-import { auditService } from '../AuditService';
+import { auditService } from '@/services/AuditService';
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates

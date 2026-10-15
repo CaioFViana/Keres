@@ -1,8 +1,8 @@
 import type { PaymentLedgerKind } from '@keres/shared/metadata/Payments';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, type CompatibleDb } from '../../db';
-import { paymentEvents, tiers } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { paymentEvents, tiers } from '@/db/schema';
 
 const MAX_DETAIL = 200;
 

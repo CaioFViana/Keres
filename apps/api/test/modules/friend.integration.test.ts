@@ -6,8 +6,8 @@ import {
   shareStory,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let bia: TestUser;

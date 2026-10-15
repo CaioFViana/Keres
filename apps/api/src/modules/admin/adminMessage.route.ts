@@ -4,10 +4,10 @@ import {
   MessageSendSchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { adminMessageService } from '../../services/AdminMessageService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { adminMessageService } from '@/services/AdminMessageService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 const security = [{ bearerAuth: [] }];
 

@@ -1,8 +1,8 @@
 import { MAX_MANUSCRIPT_BYTES } from '@keres/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TierLimitExceededError } from '../../src/services/TierEnforcementService';
-import { StoryPublicationService } from '../../src/services/StoryPublicationService';
-import { AppError } from '../../src/utils/errors';
+import { TierLimitExceededError } from '@/services/TierEnforcementService';
+import { StoryPublicationService } from '@/services/StoryPublicationService';
+import { AppError } from '@/utils/errors';
 
 const storeFns = vi.hoisted(() => ({
   store: vi.fn(async (_storyId: string, _publicationId: string, _bytes: Uint8Array) => {}),
@@ -45,31 +45,31 @@ const dbState = vi.hoisted(() => ({
   existingPublications: [] as ExistingPublicationRow[],
 }));
 
-vi.mock('../../src/services/PublicationStorageService', () => ({
+vi.mock('@/services/PublicationStorageService', () => ({
   publicationStorageService: { ...storeFns },
 }));
-vi.mock('../../src/services/TierEnforcementService', () => ({
+vi.mock('@/services/TierEnforcementService', () => ({
   tierEnforcementService: { ...tierFns },
   TierLimitExceededError: class TierLimitExceededError extends Error {},
 }));
 // Compiling a book is its own module's business; the rest of it (option parsing) stays real.
-vi.mock('../../src/services/publicationCompile', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../src/services/publicationCompile')>()),
+vi.mock('@/services/publicationCompile', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/publicationCompile')>()),
   ...compileFns,
   ownerHandleOf: async () => '@ana',
 }));
 // The showcase on/off gate still exists in the service; only the reverted
 // compile-mode flag is gone, so the mock keeps just `isEnabled`.
-vi.mock('../../src/services/ShowcaseSettingsService', () => ({
+vi.mock('@/services/ShowcaseSettingsService', () => ({
   showcaseSettingsService: { isEnabled: async () => true },
 }));
-vi.mock('../../src/services/MediaStorageService', () => ({
+vi.mock('@/services/MediaStorageService', () => ({
   mediaStorageService: { read: async () => null },
 }));
-vi.mock('../../src/modules/webSocket/webSocket.route', () => ({
+vi.mock('@/modules/webSocket/webSocket.route', () => ({
   emitUserEvent: () => {},
 }));
-vi.mock('../../src/db', () => {
+vi.mock('@/db', () => {
   // `where(...)` is awaited directly in one query and extended with `.orderBy(...)` in another, so it
   // resolves to the rows while still carrying the chain. The trim query reads staged rows.
   const where = () =>

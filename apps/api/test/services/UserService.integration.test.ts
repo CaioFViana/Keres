@@ -3,9 +3,9 @@ import {
   InvalidCurrentPasswordError,
   TagAlreadyTakenError,
   UserService,
-} from '../../src/services/UserService';
-import { registerUser, request } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/UserService';
+import { registerUser, request } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

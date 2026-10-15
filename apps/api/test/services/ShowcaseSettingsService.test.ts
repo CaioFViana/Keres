@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ findFirst: vi.fn(), returning: vi.fn(), eq: vi
 // Chainable stubs for the drizzle calls the service makes; `set` captures its patch for assertions.
 const captured = vi.hoisted(() => ({ patch: null as Record<string, unknown> | null }));
 
-vi.mock('../../src/db', () => ({
+vi.mock('@/db', () => ({
   db: {
     query: { showcaseSettings: { findFirst: mocks.findFirst } },
     insert: () => ({
@@ -19,13 +19,13 @@ vi.mock('../../src/db', () => ({
     }),
   },
 }));
-vi.mock('../../src/db/schema', () => ({
+vi.mock('@/db/schema', () => ({
   SHOWCASE_SETTINGS_SINGLETON_ID: 'singleton',
   showcaseSettings: { id: 'showcase_settings.id' },
 }));
 vi.mock('drizzle-orm', () => ({ eq: mocks.eq }));
 
-import { ShowcaseSettingsService } from '../../src/services/ShowcaseSettingsService';
+import { ShowcaseSettingsService } from '@/services/ShowcaseSettingsService';
 
 const existingRow = () => ({
   id: 'singleton',

@@ -1,11 +1,11 @@
 import { and, eq, or, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, type CompatibleDb } from '../db';
-import { stories, storyInvitations, storyPermissions } from '../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { stories, storyInvitations, storyPermissions } from '@/db/schema';
 import { FriendStatus, type SharedStory } from '@keres/shared';
-import { friendships } from '../db/schema/tables/friendships';
-import { emitUserEvent } from '../modules/webSocket/webSocket.route';
-import { AppError } from '../utils/errors';
+import { friendships } from '@/db/schema/tables/friendships';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { AppError } from '@/utils/errors';
 import { storyNsfwService } from './StoryNsfwService';
 
 export class StoryPermissionService {

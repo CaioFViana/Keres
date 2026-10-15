@@ -1,11 +1,11 @@
 import { rankAtPosition } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { galleries, galleryRelations, sceneMusic, scenes, songs } from '../../src/db/schema';
-import { SongSyncHandler } from '../../src/services/entity-sync-handlers/SongSyncHandler';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { galleries, galleryRelations, sceneMusic, scenes, songs } from '@/db/schema';
+import { SongSyncHandler } from '@/services/entity-sync-handlers/SongSyncHandler';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let user: TestUser;
 let storyId: string;

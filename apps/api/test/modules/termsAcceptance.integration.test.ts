@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PRIVACY_POLICY_VERSION, privacyPolicyDigest } from '../../src/legal/privacyPolicy';
-import { SERVER_TERMS_VERSION, serverTermsDigest } from '../../src/legal/serverTerms';
-import { truncateAll } from '../helpers/database';
-import { registerUser, request } from '../helpers/app';
+import { PRIVACY_POLICY_VERSION, privacyPolicyDigest } from '@/legal/privacyPolicy';
+import { SERVER_TERMS_VERSION, serverTermsDigest } from '@/legal/serverTerms';
+import { truncateAll } from '@test/helpers/database';
+import { registerUser, request } from '@test/helpers/app';
 
 beforeEach(async () => {
   await truncateAll();

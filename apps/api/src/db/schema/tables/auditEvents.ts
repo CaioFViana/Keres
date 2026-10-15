@@ -1,6 +1,6 @@
 import { AUDIT_CATEGORIES, AUDIT_OUTCOMES } from '@keres/shared/metadata/AuditEvents';
 import { desc } from 'drizzle-orm';
-import { index, json, table, text, timestampNow } from '../columns';
+import { index, json, table, text, timestampNow } from '@/db/schema/columns';
 
 /**
  * The activity record: who did what to whom, when, and how it ended - for the administrators to monitor the

@@ -1,8 +1,8 @@
 import { CreateStoryPermissionSchema, StoryAndTargetUserParams, StoryIdParam } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { storyPermissionService } from '../../services/StoryPermissionService';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { storyPermissionService } from '@/services/StoryPermissionService';
+import { AppError } from '@/utils/errors';
 
 /** Shape of a `story_permissions` row as returned by updateStoryPermission. */
 const StoryPermissionResponseSchema = t.Object({

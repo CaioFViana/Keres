@@ -12,27 +12,27 @@ const mocks = vi.hoisted(() => ({
   setLogSink: vi.fn(),
 }));
 
-vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
-vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
-vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
-vi.mock('../src/services/hostedClientDelivery', () => ({ warmHostedClientDelivery: vi.fn() }));
-vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
-vi.mock('../src/services/MediaStorageConfigurationService', () => ({
+vi.mock('@/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
+vi.mock('@/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
+vi.mock('@/index', () => ({ createApp: mocks.createApp }));
+vi.mock('@/services/hostedClientDelivery', () => ({ warmHostedClientDelivery: vi.fn() }));
+vi.mock('@/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
+vi.mock('@/services/MediaStorageConfigurationService', () => ({
   assertMediaStorageConfiguration: mocks.assertStorage,
 }));
-vi.mock('../src/services/MediaStorageService', () => ({
+vi.mock('@/services/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
-vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+vi.mock('@/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
 // Not what this test is about, and importing them pulls the whole database layer in cold (past the test's 5 s under load).
-vi.mock('../src/services/AuditService', () => ({
+vi.mock('@/services/AuditService', () => ({
   auditService: { record: vi.fn(), prune: vi.fn() },
 }));
-vi.mock('../src/services/AttemptLimitService', () => ({ pruneAttemptLimits: vi.fn() }));
-vi.mock('../src/services/UserService', () => ({
+vi.mock('@/services/AttemptLimitService', () => ({ pruneAttemptLimits: vi.fn() }));
+vi.mock('@/services/UserService', () => ({
   userService: { pruneDeletedAccounts: vi.fn() },
 }));
-vi.mock('../src/utils/logger', () => ({
+vi.mock('@/utils/logger', () => ({
   logger: { info: mocks.loggerInfo, error: mocks.loggerError },
   setLogSink: mocks.setLogSink,
 }));
@@ -57,7 +57,7 @@ describe('production server bootstrap - fatal startup error', () => {
     });
 
     vi.resetModules();
-    await expect(import('../src/server')).rejects.toBe(processExitSentinel);
+    await expect(import('@/server')).rejects.toBe(processExitSentinel);
 
     expect(mocks.loggerError).toHaveBeenCalledWith('Fatal error during startup', bootError);
     expect(exitSpy).toHaveBeenCalledWith(1);

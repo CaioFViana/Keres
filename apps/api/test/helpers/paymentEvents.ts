@@ -1,4 +1,4 @@
-import { signRequestHeaders, type Direction } from '../../src/services/payments/connector/signing';
+import { signRequestHeaders, type Direction } from '@/services/payments/connector/signing';
 import { getApp } from './app';
 
 /** The keys the server checks a connector's events with, and signs its own requests with: one per direction. */

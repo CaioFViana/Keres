@@ -1,12 +1,12 @@
 import type { UpdateRegistrationSettings } from '@keres/shared';
 import { count, eq } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '@/db';
 import {
   REGISTRATION_SETTINGS_SINGLETON_ID,
   registrationSettings,
   tiers,
   users,
-} from '../db/schema';
+} from '@/db/schema';
 import { syncDefaultTierFlags } from './defaultTier';
 import { TierNotFoundError } from './TierService';
 

@@ -1,8 +1,8 @@
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { showcaseLogoStorageService } from '../../services/ShowcaseLogoStorageService';
-import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
-import { requireAdmin } from '../../utils/adminAuth';
+import type { JWTPayload } from '@/index';
+import { showcaseLogoStorageService } from '@/services/ShowcaseLogoStorageService';
+import { showcaseSettingsService } from '@/services/ShowcaseSettingsService';
+import { requireAdmin } from '@/utils/adminAuth';
 
 /**
  * The hosted pages' switches, in the hands of whoever hosts the server.

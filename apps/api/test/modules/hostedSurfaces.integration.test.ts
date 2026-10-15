@@ -3,10 +3,10 @@ import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import { showcaseSettings } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { showcaseSettings } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { truncateAll } from '@test/helpers/database';
 
 /**
  * The surfaces a Keres server hands out besides its API - the hosted client, the landing page, the
@@ -14,7 +14,7 @@ import { truncateAll } from '../helpers/database';
  * test makes itself. The real builds are not a given on a machine (a server that never built the landing
  * page must still answer), so these run over fixtures: a full set, and none at all.
  */
-type App = Awaited<ReturnType<typeof import('../../src/index').createApp>>;
+type App = Awaited<ReturnType<typeof import('@/index').createApp>>;
 
 const root = mkdtempSync(path.join(tmpdir(), 'keres-surfaces-'));
 const ICO = Buffer.from([0, 0, 1, 0, 1, 0, 16, 16]);
@@ -47,13 +47,13 @@ function writeFullTree() {
 /** The app as a server that has (or has not) built every surface would create it. */
 async function loadApp(resources: 'full' | 'none'): Promise<App> {
   vi.resetModules();
-  vi.doUnmock('../../src/config/resourceRoot');
+  vi.doUnmock('@/config/resourceRoot');
   if (resources === 'full') {
     process.env.KERES_RESOURCE_ROOT = path.join(root, 'full');
   } else {
     const nowhere = path.join(root, 'nowhere');
-    vi.doMock('../../src/config/resourceRoot', async (original) => ({
-      ...(await original<typeof import('../../src/config/resourceRoot')>()),
+    vi.doMock('@/config/resourceRoot', async (original) => ({
+      ...(await original<typeof import('@/config/resourceRoot')>()),
       adminDistPath: () => path.join(nowhere, 'admin'),
       showcaseDistPath: () => path.join(nowhere, 'showcase'),
       landingDistPath: () => path.join(nowhere, 'landing'),
@@ -61,7 +61,7 @@ async function loadApp(resources: 'full' | 'none'): Promise<App> {
       desktopIconPath: () => path.join(nowhere, 'icon.png'),
     }));
   }
-  const { createApp } = await import('../../src/index');
+  const { createApp } = await import('@/index');
   return createApp();
 }
 
@@ -105,7 +105,7 @@ beforeAll(() => {
 afterAll(() => {
   if (previousRoot === undefined) delete process.env.KERES_RESOURCE_ROOT;
   else process.env.KERES_RESOURCE_ROOT = previousRoot;
-  vi.doUnmock('../../src/config/resourceRoot');
+  vi.doUnmock('@/config/resourceRoot');
   rmSync(root, { recursive: true, force: true });
 });
 

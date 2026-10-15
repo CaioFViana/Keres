@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateGalleryRelationDataSchema, PartialGalleryRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
+import { db, type CompatibleDb } from '@/db';
 import {
   characters,
   galleries,
@@ -18,7 +18,7 @@ import {
   scenes,
   songs,
   worldRules,
-} from '../../db/schema';
+} from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 /**

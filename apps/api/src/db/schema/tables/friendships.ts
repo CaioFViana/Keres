@@ -1,6 +1,6 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { sql } from 'drizzle-orm';
-import { dbEnum, table, text, timestamp, timestampNow, unique } from '../columns';
+import { dbEnum, table, text, timestamp, timestampNow, unique } from '@/db/schema/columns';
 import { ulid } from 'ulid';
 import { users } from './users';
 

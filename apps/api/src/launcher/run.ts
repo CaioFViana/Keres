@@ -125,7 +125,7 @@ export async function runLauncher(
   const boot =
     options.boot ??
     (async () => {
-      const { bootAndListen } = await import('../boot');
+      const { bootAndListen } = await import('@/boot');
       await bootAndListen({
         onListening: ({ port }) => {
           const localUrl = `http://127.0.0.1:${port}`;

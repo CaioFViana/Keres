@@ -1,7 +1,7 @@
 import type { CreateNoteDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateNoteDataSchema, PartialNoteSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { notes } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { notes } from '@/db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class NoteSyncHandler extends BaseSyncEntityHandler<

@@ -8,10 +8,10 @@ import {
 } from '@keres/shared';
 import { and, desc, eq, gte, lt, lte, or, type SQL } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { env } from '../config/env';
-import { db } from '../db';
-import { accessRecords, users } from '../db/schema';
-import { trackBackground } from '../utils/backgroundWork';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { accessRecords, users } from '@/db/schema';
+import { trackBackground } from '@/utils/backgroundWork';
 import { csvCell } from './AuditService';
 
 const DAY_MS = 24 * 60 * 60 * 1000;

@@ -1,16 +1,16 @@
 import { rankAtPosition } from '@keres/shared';
 import { asc, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { chapters, locations, scenes, stats, stories, users } from '../../src/db/schema';
+import { db } from '@/db';
+import { chapters, locations, scenes, stats, stories, users } from '@/db/schema';
 import {
   movesArrangedRows,
   normalizeArrangedUpdate,
   renumberAllArranged,
   renumberArranged,
-} from '../../src/services/sync/arrangedRanks';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/sync/arrangedRanks';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 /**
  * Positions on the server: a row's place is its rank, and `index`/`order` are derived from the

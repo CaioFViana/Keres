@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  InvalidRecoveryCodeError,
-  RecoveryCodeService,
-} from '../../src/services/RecoveryCodeService';
-import { newId, request } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { InvalidRecoveryCodeError, RecoveryCodeService } from '@/services/RecoveryCodeService';
+import { newId, request } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 interface RegisteredUser {
   userId: string;

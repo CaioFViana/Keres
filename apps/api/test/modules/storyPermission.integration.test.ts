@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   closeRealtimeEvents,
   createWebSocketTicket,
   openRealtimeEvents,
-} from '../../src/modules/webSocket/webSocket.route';
-import type { RealtimeSocket } from '../../src/services/RealtimeSessionService';
-import { storyPermissions } from '../../src/db/schema';
+} from '@/modules/webSocket/webSocket.route';
+import type { RealtimeSocket } from '@/services/RealtimeSessionService';
+import { storyPermissions } from '@/db/schema';
 import {
   newId,
   registerUser,
@@ -14,8 +14,8 @@ import {
   shareStory,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let bia: TestUser;

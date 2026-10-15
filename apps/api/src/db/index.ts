@@ -5,7 +5,7 @@ import { drizzle as drizzleLibsql, type LibSQLDatabase } from 'drizzle-orm/libsq
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 import { usingSqlite } from './dialect';
 import * as schema from './schema';
 

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   attributeValues,
   boards,
@@ -47,10 +47,10 @@ import {
   tags,
   users,
   worldRules,
-} from '../../src/db/schema';
-import { StoryExportImportService } from '../../src/services/StoryExportImportService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { StoryExportImportService } from '@/services/StoryExportImportService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 import { FullStoryExportSchema } from '@keres/shared';
 
 /**

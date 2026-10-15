@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseLauncherArgs } from '../../src/launcher/args';
+import { parseLauncherArgs } from '@/launcher/args';
 
 describe('parseLauncherArgs', () => {
   it('parses help and version first', () => {

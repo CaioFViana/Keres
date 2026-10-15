@@ -1,4 +1,4 @@
-import { AppError } from '../utils/errors';
+import { AppError } from '@/utils/errors';
 import type { BlobStorage } from './media-storage/BlobStorage';
 import { createBlobStorage } from './media-storage/createBlobStorage';
 

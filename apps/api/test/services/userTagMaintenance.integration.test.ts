@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { users } from '../../src/db/schema/tables/users';
-import { normalizeStoredUserTags } from '../../src/services/UserTagMaintenance';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { users } from '@/db/schema/tables/users';
+import { normalizeStoredUserTags } from '@/services/UserTagMaintenance';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

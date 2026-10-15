@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { TIERS_DISPLAYS } from '@keres/shared/metadata/TiersDisplay';
-import { boolean, integer, table, text, timestampNow } from '../columns';
+import { boolean, integer, table, text, timestampNow } from '@/db/schema/columns';
 import { tiers } from './tiers';
 
 /**

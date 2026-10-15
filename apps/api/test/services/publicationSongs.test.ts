@@ -1,7 +1,7 @@
 import type { CompileStoryReaderInput, FullStoryExportType } from '@keres/shared';
 import { describe, expect, it } from 'vitest';
-import { parseManuscriptOptions } from '../../src/services/publicationCompile';
-import { withSceneSongs } from '../../src/services/publicationSongs';
+import { parseManuscriptOptions } from '@/services/publicationCompile';
+import { withSceneSongs } from '@/services/publicationSongs';
 
 const input: CompileStoryReaderInput = {
   storyTitle: 'T',

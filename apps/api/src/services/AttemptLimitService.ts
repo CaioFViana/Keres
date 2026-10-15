@@ -1,6 +1,6 @@
 import { eq, lt, sql } from 'drizzle-orm';
-import { db } from '../db';
-import { attemptLimits } from '../db/schema';
+import { db } from '@/db';
+import { attemptLimits } from '@/db/schema';
 
 /** The longest window any limiter uses is a quarter of an hour; a row this old is dead whatever its scope. */
 const PRUNE_AFTER_MS = 24 * 60 * 60 * 1000;

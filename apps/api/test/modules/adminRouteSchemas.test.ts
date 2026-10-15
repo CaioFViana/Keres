@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../../src/index';
+import { createApp } from '@/index';
 
 /**
  * Guards against schema drift: these admin routes declare a loose Elysia `query`/`body`

@@ -1,8 +1,8 @@
 import type { CreateStoryArcDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateStoryArcDataSchema, PartialStoryArcSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { storyArcs } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { storyArcs } from '@/db/schema';
 import { BaseSyncEntityHandler, type SyncEntityRow } from './BaseSyncEntityHandler';
 
 export class StoryArcSyncHandler extends BaseSyncEntityHandler<

@@ -1,15 +1,15 @@
 import { PartialTierSchema, TierCreateInputSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
+import type { JWTPayload } from '@/index';
 import {
   TierInUseError,
   TierNameAlreadyTakenError,
   TierNotFoundError,
   TierPlayProductAlreadyUsedError,
   tierService,
-} from '../../services/TierService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+} from '@/services/TierService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 /**
  * The two conflicts a tier write can hit (409), mapped the same way by create and update.

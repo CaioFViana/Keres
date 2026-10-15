@@ -1,8 +1,8 @@
 import type { StoryUpdate } from '@keres/shared';
 import { ARRANGED, derivePositions, rankAtPositionOf } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { CompatibleDb } from '../../db';
-import { chapters, scenes, stats, storySchemaFields } from '../../db/schema';
+import type { CompatibleDb } from '@/db';
+import { chapters, scenes, stats, storySchemaFields } from '@/db/schema';
 
 /**
  * Positions of arranged rows on the server: `rank` is the synchronized field, and `index`/`order`

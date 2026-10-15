@@ -1,8 +1,8 @@
 import type { AdminApiLogQuery } from '@keres/shared';
 import { and, count, desc, eq, gte, inArray, lte, or } from 'drizzle-orm';
-import { insensitiveLike } from '../db/sqlOperators';
-import { db } from '../db';
-import { apiLogs, stories, users } from '../db/schema';
+import { insensitiveLike } from '@/db/sqlOperators';
+import { db } from '@/db';
+import { apiLogs, stories, users } from '@/db/schema';
 
 export class AdminApiLogService {
   async browseApiLogs(filters: AdminApiLogQuery) {

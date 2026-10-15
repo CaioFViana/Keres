@@ -2,7 +2,7 @@ import { access, mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promis
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { LocalFilesystemBlobStorage } from '../../../src/services/media-storage/LocalFilesystemBlobStorage';
+import { LocalFilesystemBlobStorage } from '@/services/media-storage/LocalFilesystemBlobStorage';
 
 const temporaryDirectories: string[] = [];
 

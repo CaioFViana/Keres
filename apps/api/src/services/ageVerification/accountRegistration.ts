@@ -1,5 +1,5 @@
-import { AppError } from '../../utils/errors';
-import { userService } from '../UserService';
+import { AppError } from '@/utils/errors';
+import { userService } from '@/services/UserService';
 import {
   ageVerificationService,
   type RequestedSending,

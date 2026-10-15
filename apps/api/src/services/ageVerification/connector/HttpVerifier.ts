@@ -17,7 +17,7 @@ import type {
   VerifierCapability,
 } from '@keres/shared/age-verification/AgeVerificationConnector';
 import type { z } from 'zod';
-import { env } from '../../../config/env';
+import { env } from '@/config/env';
 import { SignedClient, type SignedClientOptions, VerifierError } from './signedClient';
 
 /** What a person is shown of the service's words: clipped, because they end up on screens and in the database. */

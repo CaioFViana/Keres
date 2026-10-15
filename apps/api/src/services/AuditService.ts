@@ -11,12 +11,12 @@ import { APP_RELEASE } from '@keres/shared';
 import { AUDIT_ACTIONS, AUDIT_EXPORT_MAX_ROWS } from '@keres/shared/metadata/AuditEvents';
 import { and, asc, count, desc, eq, gte, lt, lte, or, type SQL } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { env } from '../config/env';
-import { db } from '../db';
-import { alias } from '../db/schema/columns';
-import { apiLogs, auditEvents, stories, users } from '../db/schema';
-import { insensitiveLike } from '../db/sqlOperators';
-import { trackBackground } from '../utils/backgroundWork';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { alias } from '@/db/schema/columns';
+import { apiLogs, auditEvents, stories, users } from '@/db/schema';
+import { insensitiveLike } from '@/db/sqlOperators';
+import { trackBackground } from '@/utils/backgroundWork';
 
 const STARTED_AT = new Date();
 const DAY_MS = 24 * 60 * 60 * 1000;

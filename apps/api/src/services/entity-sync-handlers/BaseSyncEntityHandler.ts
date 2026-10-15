@@ -14,9 +14,9 @@ import {
 import type { SQL } from 'drizzle-orm';
 import { and, count, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import type { z } from 'zod';
-import { db, type CompatibleDb } from '../../db';
-import { items, scenes } from '../../db/schema';
-import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
+import { db, type CompatibleDb } from '@/db';
+import { items, scenes } from '@/db/schema';
+import { getApiEntityTable } from '@/services/entity-solvers/ApiEntityTableRegistry';
 import { syncValuesMatch } from './syncValueComparison';
 
 /**

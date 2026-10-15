@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { accessRecordService } from '../../src/services/AccessRecordService';
-import { evidenceHoldService } from '../../src/services/EvidenceHoldService';
-import { userService } from '../../src/services/UserService';
-import { drainBackground } from '../../src/utils/backgroundWork';
-import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { accessRecordService } from '@/services/AccessRecordService';
+import { evidenceHoldService } from '@/services/EvidenceHoldService';
+import { userService } from '@/services/UserService';
+import { drainBackground } from '@/utils/backgroundWork';
+import { registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 const DAY = 24 * 60 * 60 * 1000;
 let admin: TestUser;

@@ -1,8 +1,8 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { brotliDecompressSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { adminDistPath, landingDistPath, showcaseDistPath } from '../../src/config/resourceRoot';
-import { createApp } from '../../src/index';
+import { adminDistPath, landingDistPath, showcaseDistPath } from '@/config/resourceRoot';
+import { createApp } from '@/index';
 
 /**
  * The static trees of the admin panel, the showcase and the landing page: what they load comes

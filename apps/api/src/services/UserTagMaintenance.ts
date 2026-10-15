@@ -5,9 +5,9 @@ import {
   USER_TAG_MIN_LENGTH,
 } from '@keres/shared';
 import { asc, eq } from 'drizzle-orm';
-import { db } from '../db';
-import { users } from '../db/schema/tables/users';
-import { logger } from '../utils/logger';
+import { db } from '@/db';
+import { users } from '@/db/schema/tables/users';
+import { logger } from '@/utils/logger';
 
 const isStoredShape = (tag: string): boolean =>
   tag === normalizeUserTag(tag) &&

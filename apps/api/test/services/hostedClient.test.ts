@@ -16,7 +16,7 @@ import {
   rewriteHostedClientHtml,
   resolveHostedClientFile,
   SHOWCASE_PATH_PREFIX,
-} from '../../src/services/hostedClient';
+} from '@/services/hostedClient';
 
 describe('rewriteHostedClientHtml', () => {
   it('marks the page as co-hosted so the client can use the session cookie', () => {

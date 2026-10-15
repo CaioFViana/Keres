@@ -1,21 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HttpConnector } from '../../../src/services/payments/connector/HttpConnector';
-import {
-  ConnectorError,
-  MAX_RESPONSE_BYTES,
-} from '../../../src/services/payments/connector/signedClient';
+import { HttpConnector } from '@/services/payments/connector/HttpConnector';
+import { ConnectorError, MAX_RESPONSE_BYTES } from '@/services/payments/connector/signedClient';
 import {
   HEADER_NONCE,
   HEADER_SIGNATURE,
   HEADER_TIMESTAMP,
-} from '../../../src/services/payments/connector/signing';
+} from '@/services/payments/connector/signing';
 import {
   connectorDouble,
   KERES_KEY,
   OLD_KEY,
   type Reply,
   type Seen,
-} from '../../helpers/connectorDouble';
+} from '@test/helpers/connectorDouble';
 
 const connect = (
   double: ReturnType<typeof connectorDouble>,

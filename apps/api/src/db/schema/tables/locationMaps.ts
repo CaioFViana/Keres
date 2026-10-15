@@ -1,6 +1,6 @@
 import type { LocationMapContentType } from '@keres/shared';
 import { relations } from 'drizzle-orm';
-import { boolean, integer, json, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, json, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { stories } from './stories';
 
 /**

@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, index, integer, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, index, integer, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { stories } from './stories';
 
 /**

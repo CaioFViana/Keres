@@ -1,7 +1,7 @@
 import type { CreateSongDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateSongDataSchema, PartialSongSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { songs } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { songs } from '@/db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 /**

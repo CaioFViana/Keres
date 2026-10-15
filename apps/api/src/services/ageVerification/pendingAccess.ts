@@ -1,4 +1,4 @@
-import { AppError } from '../../utils/errors';
+import { AppError } from '@/utils/errors';
 
 /**
  * What a session of a pending account may still reach (see `docs/age_verification.md`, "Registration in required

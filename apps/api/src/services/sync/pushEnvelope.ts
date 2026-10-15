@@ -7,11 +7,11 @@ import {
 import type {
   SyncEntityHandler,
   SyncEntityRow,
-} from '../entity-sync-handlers/BaseSyncEntityHandler';
+} from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
 import {
   clampOperationTime,
   SyncConflictError,
-} from '../entity-sync-handlers/BaseSyncEntityHandler';
+} from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
 import { serializeSyncEntity } from './SyncConflictDetails';
 
 /**

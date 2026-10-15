@@ -3,7 +3,7 @@ import {
   assertPendingSessionMayReach,
   pendingSessionMayReach,
   VERIFICATION_PENDING_CODE,
-} from '../../src/services/ageVerification/pendingAccess';
+} from '@/services/ageVerification/pendingAccess';
 
 /**
  * The allow-list a pending session is held to (`services/ageVerification/pendingAccess.ts`): exact paths and the

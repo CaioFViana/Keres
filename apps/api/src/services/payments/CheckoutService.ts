@@ -7,12 +7,12 @@ import type {
 } from '@keres/shared/payments/PaymentConnector';
 import { and, count, eq, gt, gte, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { env } from '../../config/env';
-import { db } from '../../db';
-import { paymentCheckouts, tiers, users } from '../../db/schema';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
-import { registrationSettingsService } from '../RegistrationSettingsService';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { paymentCheckouts, tiers, users } from '@/db/schema';
+import { AppError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { claimPurchaseToken } from './playPurchaseClaims';
 import { subscriptionService } from './SubscriptionService';

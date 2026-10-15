@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNotNull, lt } from 'drizzle-orm';
-import { db } from '../db';
-import { galleries, mediaBlobs, stories } from '../db/schema';
+import { db } from '@/db';
+import { galleries, mediaBlobs, stories } from '@/db/schema';
 import type { BlobStorage } from './media-storage/BlobStorage';
 import { createBlobStorage } from './media-storage/createBlobStorage';
 

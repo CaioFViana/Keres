@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
-import { db } from '../../src/db';
-import { galleries, mediaBlobs, stories, users } from '../../src/db/schema';
+import { db } from '@/db';
+import { galleries, mediaBlobs, stories, users } from '@/db/schema';
 import {
   MEDIA_BLOB_GRACE_PERIOD_MS,
   MediaHashMismatchError,
   MediaStorageService,
-} from '../../src/services/MediaStorageService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/MediaStorageService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 const hash = (letter: string) => letter.repeat(32);
 

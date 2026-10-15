@@ -1,11 +1,8 @@
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import {
-  ADMIN_ENTITY_DEFAULT_PAGE_SIZE,
-  adminStoryService,
-} from '../../services/AdminStoryService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { ADMIN_ENTITY_DEFAULT_PAGE_SIZE, adminStoryService } from '@/services/AdminStoryService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 const security = [{ bearerAuth: [] }];
 

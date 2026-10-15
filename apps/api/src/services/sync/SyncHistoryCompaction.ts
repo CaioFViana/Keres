@@ -1,8 +1,8 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { decodeTime } from 'ulid';
-import { env } from '../../config/env';
-import { db, type CompatibleDb } from '../../db';
-import { operationLog } from '../../db/schema';
+import { env } from '@/config/env';
+import { db, type CompatibleDb } from '@/db';
+import { operationLog } from '@/db/schema';
 
 /**
  * Server-side history compaction ("squash") for the sync operation log.

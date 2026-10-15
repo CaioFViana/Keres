@@ -4,10 +4,10 @@ import {
   EVIDENCE_HOLD_TARGETS,
 } from '@keres/shared/metadata/EvidenceHolds';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { evidenceHoldService } from '../../services/EvidenceHoldService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { evidenceHoldService } from '@/services/EvidenceHoldService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 const security = [{ bearerAuth: [] }];
 

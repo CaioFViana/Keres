@@ -1,6 +1,6 @@
-import type { JWTPayload } from '../../index';
-import { showcaseService } from '../../services/ShowcaseService';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { showcaseService } from '@/services/ShowcaseService';
+import { AppError } from '@/utils/errors';
 import { verifyNsfwToken, verifyShowcaseToken } from './showcaseAccess';
 
 type ShowcaseJwt = {

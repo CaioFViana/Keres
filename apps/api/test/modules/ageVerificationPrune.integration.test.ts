@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { ageVerifications, termsAcceptances, userRecoveryCodes, users } from '../../src/db/schema';
-import { ageVerificationService } from '../../src/services/ageVerification/AgeVerificationService';
-import { registerUser, uploadTestStory } from '../helpers/app';
+import { db } from '@/db';
+import { ageVerifications, termsAcceptances, userRecoveryCodes, users } from '@/db/schema';
+import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
+import { registerUser, uploadTestStory } from '@test/helpers/app';
 import {
   approvedEvent,
   enterRequiredMode,
@@ -12,9 +12,9 @@ import {
   pendingAccount,
   rejectedEvent,
   userRow,
-} from '../helpers/ageVerificationAccounts';
-import { postVerifierEvents } from '../helpers/ageVerificationEvents';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/ageVerificationAccounts';
+import { postVerifierEvents } from '@test/helpers/ageVerificationEvents';
+import { truncateAll } from '@test/helpers/database';
 
 const DAY = 24 * 60 * 60 * 1000;
 const daysAgo = (days: number) => new Date(Date.now() - days * DAY);

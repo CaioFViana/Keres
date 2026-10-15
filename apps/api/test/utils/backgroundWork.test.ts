@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  drainBackground,
-  pendingBackgroundCount,
-  trackBackground,
-} from '../../src/utils/backgroundWork';
-import { logger, setLogSink } from '../../src/utils/logger';
+import { drainBackground, pendingBackgroundCount, trackBackground } from '@/utils/backgroundWork';
+import { logger, setLogSink } from '@/utils/logger';
 
 afterEach(async () => {
   await drainBackground(1000);

@@ -1,6 +1,6 @@
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { describe, expect, it } from 'vitest';
-import type { CompatibleDb } from '../../src/db';
+import type { CompatibleDb } from '@/db';
 
 describe('CompatibleDb brand', () => {
   it('rejects assigning a raw Postgres handle without the adapter bridge', () => {

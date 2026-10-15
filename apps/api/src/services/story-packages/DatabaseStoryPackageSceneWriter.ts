@@ -1,6 +1,6 @@
 import { scenesToUnflag } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../db/schema';
+import * as schema from '@/db/schema';
 import type { DatabaseStoryPackageImportContext } from './DatabaseStoryPackageImportContext';
 
 /**

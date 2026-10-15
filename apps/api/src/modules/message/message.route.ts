@@ -5,10 +5,10 @@ import {
 } from '@keres/shared';
 import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { messageQuotaService } from '../../services/MessageQuotaService';
-import { messageService } from '../../services/MessageService';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { messageQuotaService } from '@/services/MessageQuotaService';
+import { messageService } from '@/services/MessageService';
+import { AppError } from '@/utils/errors';
 
 function parseBody(body: unknown) {
   const parsed = MessageSendSchema.safeParse(body);

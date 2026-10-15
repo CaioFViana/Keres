@@ -1,13 +1,13 @@
 import { AdminDeletedItemsQuerySchema, AdminOperationLogQuerySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
+import type { JWTPayload } from '@/index';
 import {
   adminRecoveryService,
   RecoveryEntityNotFoundError,
   UnknownEntityTypeError,
-} from '../../services/AdminRecoveryService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+} from '@/services/AdminRecoveryService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 export const adminRecoveryRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)

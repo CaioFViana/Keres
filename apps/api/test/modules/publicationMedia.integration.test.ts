@@ -3,13 +3,13 @@ import { unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
-import { galleries, showcaseSettings, stories } from '../../src/db/schema';
-import { mediaStorageService } from '../../src/services/MediaStorageService';
-import { installBunShim } from '../helpers/bunShim';
-import { newId, registerUser, request, uploadTestStory, type TestUser } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { galleries, showcaseSettings, stories } from '@/db/schema';
+import { mediaStorageService } from '@/services/MediaStorageService';
+import { installBunShim } from '@test/helpers/bunShim';
+import { newId, registerUser, request, uploadTestStory, type TestUser } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 installBunShim();
 

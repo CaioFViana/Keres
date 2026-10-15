@@ -1,19 +1,19 @@
 import { jwt } from '@elysiajs/jwt';
 import { Elysia, t } from 'elysia';
-import { env } from '../../config/env';
-import { jwtRefresh } from '../../config/jwt';
-import { createPersistentAttemptLimiter } from '../../services/AttemptLimitService';
-import { userService } from '../../services/UserService';
+import { env } from '@/config/env';
+import { jwtRefresh } from '@/config/jwt';
+import { createPersistentAttemptLimiter } from '@/services/AttemptLimitService';
+import { userService } from '@/services/UserService';
 import {
   AgeVerificationUserNotFoundError,
   ageVerificationService,
   VerificationRetryNotAllowedError,
   VerificationUnavailableError,
-} from '../../services/ageVerification/AgeVerificationService';
-import { verificationUnavailable } from '../../services/ageVerification/accountRegistration';
-import { AppError } from '../../utils/errors';
-import type { JWTPayload } from '../../index';
-import { languageOf } from '../payments/payment.route';
+} from '@/services/ageVerification/AgeVerificationService';
+import { verificationUnavailable } from '@/services/ageVerification/accountRegistration';
+import { AppError } from '@/utils/errors';
+import type { JWTPayload } from '@/index';
+import { languageOf } from '@/modules/payments/payment.route';
 import {
   AccountVerificationStatusResponseSchema,
   CodedMessageResponseSchema,

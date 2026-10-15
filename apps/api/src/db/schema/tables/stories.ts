@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, json, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, json, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import type { StoryVocabulary } from '@keres/shared/entities/Story';
 import { users } from './users';
 import { characters } from './characters';
@@ -24,7 +24,7 @@ import { seeAlsoRelations } from './seeAlsoRelations';
 import { comments } from './comments';
 import { plots } from './plots';
 import { plotScenes } from './plotScenes';
-import { storyTypeEnum } from '../enums';
+import { storyTypeEnum } from '@/db/schema/enums';
 
 export const stories = table('stories', {
   id: text('id').primaryKey(),

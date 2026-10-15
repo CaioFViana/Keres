@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreateSuggestionDataSchema, PartialSuggestionSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { suggestions } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { suggestions } from '@/db/schema';
 import { BaseSyncEntityHandler, duplicateOf } from './BaseSyncEntityHandler';
 
 export class SuggestionSyncHandler extends BaseSyncEntityHandler<

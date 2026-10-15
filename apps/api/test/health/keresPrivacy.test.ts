@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../../src/index';
+import { createApp } from '@/index';
 import {
   PRIVACY_POLICY,
   PRIVACY_POLICY_VERSION,
   privacyPolicyDigest,
   privacyPolicyFor,
   type PrivacyPolicySection,
-} from '../../src/legal/privacyPolicy';
+} from '@/legal/privacyPolicy';
 
 describe('GET /api/keres-privacy', () => {
   it('serves the versioned privacy policy with no session', async () => {

@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreateChoiceDataSchema, PartialChoiceSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { choices, scenes, stories } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { choices, scenes, stories } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChoiceSyncHandler extends BaseSyncEntityHandler<

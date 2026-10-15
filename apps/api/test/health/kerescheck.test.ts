@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../../src/index';
+import { createApp } from '@/index';
 
 describe('GET /api/kerescheck', () => {
   it('responds in memory without opening a server', async () => {

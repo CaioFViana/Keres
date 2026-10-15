@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { chapters, locations, plots, scenes, stories, users } from '../../src/db/schema';
-import { PlotSceneSyncHandler } from '../../src/services/entity-sync-handlers/PlotSceneSyncHandler';
-import { PlotSyncHandler } from '../../src/services/entity-sync-handlers/PlotSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { chapters, locations, plots, scenes, stories, users } from '@/db/schema';
+import { PlotSceneSyncHandler } from '@/services/entity-sync-handlers/PlotSceneSyncHandler';
+import { PlotSyncHandler } from '@/services/entity-sync-handlers/PlotSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

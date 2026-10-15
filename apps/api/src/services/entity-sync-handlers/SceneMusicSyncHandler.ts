@@ -6,8 +6,8 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreateSceneMusicDataSchema, PartialSceneMusicSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { sceneMusic } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { sceneMusic } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class SceneMusicSyncHandler extends BaseSyncEntityHandler<

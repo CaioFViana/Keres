@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { env } from '../../src/config/env';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { enterRequiredMode, leaveRequiredMode } from '../helpers/ageVerificationAccounts';
-import { promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
+import { env } from '@/config/env';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { enterRequiredMode, leaveRequiredMode } from '@test/helpers/ageVerificationAccounts';
+import { promoteToAdmin, softDeleteUser, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let comum: TestUser;

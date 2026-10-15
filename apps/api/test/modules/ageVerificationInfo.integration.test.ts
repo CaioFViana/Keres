@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { env } from '../../src/config/env';
-import {
-  resetAgeVerifier,
-  setAgeVerifier,
-} from '../../src/services/ageVerification/AgeVerifierRegistry';
-import { request } from '../helpers/app';
-import { createFakeAgeVerifier } from '../helpers/fakeAgeVerifier';
-import { enterRequiredMode, leaveRequiredMode } from '../helpers/ageVerificationAccounts';
-import { truncateAll } from '../helpers/database';
+import { env } from '@/config/env';
+import { resetAgeVerifier, setAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
+import { request } from '@test/helpers/app';
+import { createFakeAgeVerifier } from '@test/helpers/fakeAgeVerifier';
+import { enterRequiredMode, leaveRequiredMode } from '@test/helpers/ageVerificationAccounts';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(async () => {
   await truncateAll();

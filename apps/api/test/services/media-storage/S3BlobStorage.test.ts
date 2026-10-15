@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   getSignedUrl: vi.fn(),
 }));
 
-vi.mock('../../../src/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     MEDIA_S3_ENDPOINT: 'http://s3.local',
     MEDIA_S3_REGION: 'sa-east-1',
@@ -41,7 +41,7 @@ vi.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: (...args: Array<unknown>) => mocks.getSignedUrl(...args),
 }));
 
-import { S3BlobStorage } from '../../../src/services/media-storage/S3BlobStorage';
+import { S3BlobStorage } from '@/services/media-storage/S3BlobStorage';
 
 beforeEach(() => vi.clearAllMocks());
 

@@ -5,21 +5,21 @@ import {
   PlayRelayRequestSchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { checkoutService } from '../../services/payments/CheckoutService';
-import { paymentHistoryService } from '../../services/payments/PaymentHistoryService';
-import { eventsSecrets } from '../../services/payments/connector/config';
-import { toPaymentEvent } from '../../services/payments/connector/events';
+import type { JWTPayload } from '@/index';
+import { checkoutService } from '@/services/payments/CheckoutService';
+import { paymentHistoryService } from '@/services/payments/PaymentHistoryService';
+import { eventsSecrets } from '@/services/payments/connector/config';
+import { toPaymentEvent } from '@/services/payments/connector/events';
 import {
   HEADER_NONCE,
   NonceCache,
   signResponseHeaders,
   verifyRequest,
-} from '../../services/payments/connector/signing';
-import { getPaymentConnector } from '../../services/payments/PaymentConnectorRegistry';
-import { subscriptionService } from '../../services/payments/SubscriptionService';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
+} from '@/services/payments/connector/signing';
+import { getPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { subscriptionService } from '@/services/payments/SubscriptionService';
+import { AppError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
 
 /** What a connector's request may weigh: a batch of events is a few kilobytes. */
 const EVENTS_MAX_BYTES = 256 * 1024;

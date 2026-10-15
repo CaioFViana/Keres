@@ -7,13 +7,13 @@ import {
   wholeDays,
 } from '@keres/shared/utils/billingPeriod';
 import { eq } from 'drizzle-orm';
-import { db, withWriteTransaction } from '../../db';
-import { paymentSubscriptions, tiers, users } from '../../db/schema';
-import { emitUserEvent } from '../../modules/webSocket/webSocket.route';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
-import { auditService } from '../AuditService';
-import { registrationSettingsService } from '../RegistrationSettingsService';
+import { db, withWriteTransaction } from '@/db';
+import { paymentSubscriptions, tiers, users } from '@/db/schema';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { AppError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { auditService } from '@/services/AuditService';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
 import { noteLedger } from './paymentLedger';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { dailyValueOf } from './periodConversion';

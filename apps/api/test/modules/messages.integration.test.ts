@@ -1,11 +1,11 @@
 import { ADMIN_MESSAGES_PER_DAY } from '@keres/shared/metadata/MessageLimits';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import * as webSocket from '../../src/modules/webSocket/webSocket.route';
-import { messageLog, messages, tiers, users } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import * as webSocket from '@/modules/webSocket/webSocket.route';
+import { messageLog, messages, tiers, users } from '@/db/schema';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, softDeleteUser, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let ana: TestUser;

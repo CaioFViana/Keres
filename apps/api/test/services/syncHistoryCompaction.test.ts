@@ -12,7 +12,7 @@ import {
   recordedAt,
   type CompactableOperation,
   type HistoryCompactionPolicy,
-} from '../../src/services/sync/SyncHistoryCompaction';
+} from '@/services/sync/SyncHistoryCompaction';
 
 const OLD = new Date('2026-01-01T00:00:00.000Z');
 const RECENT = new Date('2026-06-01T00:00:00.000Z');

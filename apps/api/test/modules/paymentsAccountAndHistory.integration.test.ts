@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { paymentEvents, paymentSubscriptions, tiers, users } from '../../src/db/schema';
-import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
-import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
-import { ConnectorError } from '../../src/services/payments/connector/signedClient';
-import { postEvents } from '../helpers/paymentEvents';
+import { db } from '@/db';
+import { paymentEvents, paymentSubscriptions, tiers, users } from '@/db/schema';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
+import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';
+import { ConnectorError } from '@/services/payments/connector/signedClient';
+import { postEvents } from '@test/helpers/paymentEvents';
 
 /**
  * Two things a person's account has to do with its payments: closing the account must stop what would charge it

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
-import { users } from '../db/schema';
+import { db } from '@/db';
+import { users } from '@/db/schema';
 import { type ErasureLedger, erasureLedger } from './ErasureLedger';
 import { userService } from './UserService';
 

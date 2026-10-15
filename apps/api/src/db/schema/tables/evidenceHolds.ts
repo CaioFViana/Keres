@@ -1,5 +1,5 @@
 import { EVIDENCE_HOLD_TARGETS } from '@keres/shared/metadata/EvidenceHolds';
-import { index, json, table, text, timestamp, timestampNow } from '../columns';
+import { index, json, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 
 /**
  * Evidence holds (Lei 15.211/2025 art. 27, par. 2): a copy of a reported item, and of the data of the person

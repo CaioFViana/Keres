@@ -1,6 +1,6 @@
 import { OperationLogEntityType } from '@keres/shared';
-import * as schema from '../../db/schema';
-import type { ApplicationTable } from '../../db/schema/columns';
+import * as schema from '@/db/schema';
+import type { ApplicationTable } from '@/db/schema/columns';
 
 type ApiEntityTable = ApplicationTable;
 

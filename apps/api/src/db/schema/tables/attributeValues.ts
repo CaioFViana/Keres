@@ -1,5 +1,13 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
+import {
+  boolean,
+  integer,
+  table,
+  text,
+  timestamp,
+  timestampNow,
+  uniqueIndex,
+} from '@/db/schema/columns';
 import { stories } from './stories';
 import { storySchemaFields } from './storySchemaFields';
 import type { StorySchemaEntityType } from '@keres/shared';

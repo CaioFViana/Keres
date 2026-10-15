@@ -6,7 +6,7 @@ import {
   remapSketchCoverGalleryId,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { stories, storyArcs } from '../../db/schema';
+import { stories, storyArcs } from '@/db/schema';
 import type { DatabaseStoryPackageImportContext } from './DatabaseStoryPackageImportContext';
 import { insertPortableCollection } from './DatabaseStoryPackageCollectionRepository';
 

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate } from '@keres/shared';
-import { db } from '../../src/db';
-import { stories, users } from '../../src/db/schema';
-import { BoardSyncHandler } from '../../src/services/entity-sync-handlers/BoardSyncHandler';
-import { syncValuesMatch } from '../../src/services/entity-sync-handlers/syncValueComparison';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { stories, users } from '@/db/schema';
+import { BoardSyncHandler } from '@/services/entity-sync-handlers/BoardSyncHandler';
+import { syncValuesMatch } from '@/services/entity-sync-handlers/syncValueComparison';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

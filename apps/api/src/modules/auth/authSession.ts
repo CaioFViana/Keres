@@ -1,5 +1,5 @@
 import type { Cookie } from 'elysia';
-import { env } from '../../config/env';
+import { env } from '@/config/env';
 
 /**
  * Sets the hosted web client's session cookies: the access token for one hour, the refresh token for

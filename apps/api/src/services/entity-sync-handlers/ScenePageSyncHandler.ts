@@ -6,8 +6,8 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreateScenePageDataSchema, PartialScenePageSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { scenePages } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { scenePages } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ScenePageSyncHandler extends BaseSyncEntityHandler<

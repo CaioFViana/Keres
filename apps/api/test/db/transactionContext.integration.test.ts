@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
-import { db, withTransaction, withWriteTransaction } from '../../src/db';
-import { users } from '../../src/db/schema';
-import { truncateAll } from '../helpers/database';
+import { db, withTransaction, withWriteTransaction } from '@/db';
+import { users } from '@/db/schema';
+import { truncateAll } from '@test/helpers/database';
 
 afterEach(async () => {
   await truncateAll();

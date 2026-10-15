@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectSystemLanguage } from '../../src/launcher/language';
+import { detectSystemLanguage } from '@/launcher/language';
 
 describe('detectSystemLanguage', () => {
   it('maps Portuguese tags to pt', () => {

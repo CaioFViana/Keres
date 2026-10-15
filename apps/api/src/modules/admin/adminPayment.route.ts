@@ -4,12 +4,12 @@ import {
   AdminSubscriptionListQuerySchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { adminPaymentService } from '../../services/payments/AdminPaymentService';
-import { paymentHealthService } from '../../services/payments/PaymentHealthService';
-import { giftService } from '../../services/payments/GiftService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { adminPaymentService } from '@/services/payments/AdminPaymentService';
+import { paymentHealthService } from '@/services/payments/PaymentHealthService';
+import { giftService } from '@/services/payments/GiftService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 const security = [{ bearerAuth: [] }];
 

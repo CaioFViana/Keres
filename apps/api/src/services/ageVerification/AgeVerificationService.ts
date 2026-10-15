@@ -6,17 +6,17 @@ import type {
 } from '@keres/shared/age-verification/AgeVerificationConnector';
 import { and, asc, desc, eq, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { env } from '../../config/env';
-import { type CompatibleDb, db, withWriteTransaction } from '../../db';
+import { env } from '@/config/env';
+import { type CompatibleDb, db, withWriteTransaction } from '@/db';
 import {
   type StoredAgeVerificationEventOutcome,
   ageVerificationEvents,
   ageVerifications,
   users,
-} from '../../db/schema';
-import { logger } from '../../utils/logger';
-import { auditService } from '../AuditService';
-import { storyNsfwService } from '../StoryNsfwService';
+} from '@/db/schema';
+import { logger } from '@/utils/logger';
+import { auditService } from '@/services/AuditService';
+import { storyNsfwService } from '@/services/StoryNsfwService';
 import { getAgeVerifier } from './AgeVerifierRegistry';
 import { effectiveAdultVerified, isAgeVerificationRequired } from './ageVerificationMode';
 import { pruneAbandonedAccounts, type PruneOutcome } from './ageVerificationPrune';

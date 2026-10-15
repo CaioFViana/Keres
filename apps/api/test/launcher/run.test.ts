@@ -2,16 +2,12 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  generateSecret,
-  type LauncherPublicConfig,
-  type LauncherSecrets,
-} from '../../src/launcher/config';
-import type { LauncherIo } from '../../src/launcher/io';
+import { generateSecret, type LauncherPublicConfig, type LauncherSecrets } from '@/launcher/config';
+import type { LauncherIo } from '@/launcher/io';
 import { createClient } from '@libsql/client';
-import { runLauncher } from '../../src/launcher/run';
-import { assertDriverNotChanged } from '../../src/launcher/wizard';
-import { createTranslator } from '../../src/launcher/i18n';
+import { runLauncher } from '@/launcher/run';
+import { assertDriverNotChanged } from '@/launcher/wizard';
+import { createTranslator } from '@/launcher/i18n';
 
 function fakeIo(answers: string[] = [], interactive = true): { lines: string[]; io: LauncherIo } {
   const lines: string[] = [];

@@ -1,14 +1,14 @@
 import { and, eq, inArray, isNotNull, lte } from 'drizzle-orm';
-import { env } from '../../config/env';
-import { db, withWriteTransaction } from '../../db';
+import { env } from '@/config/env';
+import { db, withWriteTransaction } from '@/db';
 import {
   paymentCheckouts,
   paymentEvents,
   paymentSubscriptions,
   playPurchaseClaims,
   users,
-} from '../../db/schema';
-import { logger } from '../../utils/logger';
+} from '@/db/schema';
+import { logger } from '@/utils/logger';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** A run takes this many accounts at most: a backlog is worked off over the next runs. */

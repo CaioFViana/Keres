@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import * as path from 'node:path';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 import {
   hostedClientCacheControl,
   hostedClientMimeType,

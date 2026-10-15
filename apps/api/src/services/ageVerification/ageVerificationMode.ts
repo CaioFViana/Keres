@@ -1,5 +1,5 @@
 import type { AgeVerificationMode } from '@keres/shared/age-verification/AgeVerificationConnector';
-import { env } from '../../config/env';
+import { env } from '@/config/env';
 
 /**
  * How this server treats age (see `docs/age_verification.md`): `required` makes every new account wait for the

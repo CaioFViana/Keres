@@ -3,7 +3,7 @@ import {
   splitAuthorization,
   verifyNsfwToken,
   verifyShowcaseToken,
-} from '../../src/modules/public/showcaseAccess';
+} from '@/modules/public/showcaseAccess';
 
 const jwtFor =
   (payload: { storyId?: string; nsfwOk?: boolean } | false) => async (_token: string) =>

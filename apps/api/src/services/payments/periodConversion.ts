@@ -6,8 +6,8 @@ import {
 } from '@keres/shared/utils/billingPeriod';
 import type { BillingInterval } from '@keres/shared/payments/PaymentConnector';
 import { eq } from 'drizzle-orm';
-import type { CompatibleDb } from '../../db';
-import { type paymentSubscriptions, tiers } from '../../db/schema';
+import type { CompatibleDb } from '@/db';
+import { type paymentSubscriptions, tiers } from '@/db/schema';
 import { tierNameOf } from './paymentLedger';
 
 type SubscriptionRow = typeof paymentSubscriptions.$inferSelect;

@@ -1,5 +1,5 @@
-import { logger } from '../../../utils/logger';
-import { resetAgeVerifier, setAgeVerifier } from '../AgeVerifierRegistry';
+import { logger } from '@/utils/logger';
+import { resetAgeVerifier, setAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
 import { type VerifierConfig, verifierConfig } from './config';
 import { HttpVerifier } from './HttpVerifier';
 

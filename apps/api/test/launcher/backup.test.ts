@@ -16,9 +16,9 @@ import {
   createDataBackup,
   defaultBackupParent,
   describeBackupResult,
-} from '../../src/launcher/backup';
-import type { LauncherPublicConfig } from '../../src/launcher/config';
-import { createTranslator } from '../../src/launcher/i18n';
+} from '@/launcher/backup';
+import type { LauncherPublicConfig } from '@/launcher/config';
+import { createTranslator } from '@/launcher/i18n';
 
 function sampleConfig(dataDir: string): LauncherPublicConfig {
   return {

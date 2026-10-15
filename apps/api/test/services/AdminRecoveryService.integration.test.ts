@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   chapterAnchors,
   chapters,
@@ -10,14 +10,14 @@ import {
   scenes,
   stories,
   users,
-} from '../../src/db/schema';
+} from '@/db/schema';
 import {
   adminRecoveryService,
   RecoveryEntityNotFoundError,
   UnknownEntityTypeError,
-} from '../../src/services/AdminRecoveryService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/AdminRecoveryService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 const ids = {
   ana: '',

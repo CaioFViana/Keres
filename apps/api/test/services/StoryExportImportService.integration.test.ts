@@ -1,7 +1,7 @@
 import { AttributeType, CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   attributeValues,
   chapters,
@@ -18,10 +18,10 @@ import {
   stories,
   tiers,
   users,
-} from '../../src/db/schema';
-import { StoryExportImportService } from '../../src/services/StoryExportImportService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { StoryExportImportService } from '@/services/StoryExportImportService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 const OWNER_ID = newId();
 const IMPORTER_ID = newId();

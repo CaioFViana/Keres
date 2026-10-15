@@ -1,8 +1,8 @@
 import { STORY_DELETION_GRACE_DAYS } from '@keres/shared';
 import { and, asc, eq, isNull, like, lt, or } from 'drizzle-orm';
-import { db, withWriteTransaction } from '../db';
-import { stories, users } from '../db/schema';
-import { logger } from '../utils/logger';
+import { db, withWriteTransaction } from '@/db';
+import { stories, users } from '@/db/schema';
+import { logger } from '@/utils/logger';
 import { purgeStoryData } from './StoryPurgeService';
 
 const DAY_MS = 24 * 60 * 60 * 1000;

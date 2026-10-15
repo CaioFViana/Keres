@@ -1,15 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import { characters, favorites, operationLog, stories } from '../../src/db/schema';
-import { SyncService, syncService } from '../../src/services/SyncService';
-import { ensurePublicFavoriteOperationLogs } from '../../src/services/sync/publicFavoriteRepair';
-import {
-  TierLimitExceededError,
-  tierEnforcementService,
-} from '../../src/services/TierEnforcementService';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { characters, favorites, operationLog, stories } from '@/db/schema';
+import { SyncService, syncService } from '@/services/SyncService';
+import { ensurePublicFavoriteOperationLogs } from '@/services/sync/publicFavoriteRepair';
+import { TierLimitExceededError, tierEnforcementService } from '@/services/TierEnforcementService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let storyId: string;

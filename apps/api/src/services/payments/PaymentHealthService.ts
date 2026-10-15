@@ -1,12 +1,7 @@
 import type { AdminPaymentHealth, AdminPaymentWarning } from '@keres/shared';
 import { and, count, eq, gt, gte, isNotNull, like, lte, max } from 'drizzle-orm';
-import { db } from '../../db';
-import {
-  auditEvents,
-  paymentCheckouts,
-  paymentEvents,
-  paymentSubscriptions,
-} from '../../db/schema';
+import { db } from '@/db';
+import { auditEvents, paymentCheckouts, paymentEvents, paymentSubscriptions } from '@/db/schema';
 import { connectorConfig } from './connector/config';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { paymentReconciliationService } from './PaymentReconciliationService';

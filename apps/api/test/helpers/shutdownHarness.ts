@@ -6,8 +6,8 @@
  * has no SIGTERM to send: `kill` there ends the process on the spot, without running any handler. What the
  * test checks is what the handlers do, and that is the same either way.
  */
-import { bootAndListen } from '../../src/boot';
-import { auditService } from '../../src/services/AuditService';
+import { bootAndListen } from '@/boot';
+import { auditService } from '@/services/AuditService';
 
 // A record that is slow to write, as a busy database is: without the shutdown waiting for what is in flight,
 // the process would be gone before the line landed.

@@ -15,9 +15,9 @@ import {
   signResponseHeaders,
   verifyRequest,
   verifyResponse,
-} from '../../src/services/ageVerification/connector/signing';
+} from '@/services/ageVerification/connector/signing';
 // The payment connector's signing: the scheme the age-verification one must never accept, and never be accepted by.
-import * as payments from '../../src/services/payments/connector/signing';
+import * as payments from '@/services/payments/connector/signing';
 
 /** A fixed secret, fixed inputs and the signatures they must give: what a service in another language checks itself against. */
 const VECTOR = {

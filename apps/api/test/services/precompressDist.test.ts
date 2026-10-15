@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { precompressDirectory } from '../../scripts/precompress-dist';
+import { precompressDirectory } from '@scripts/precompress-dist';
 import {
   PRECOMPRESSED_MANIFEST,
   precompressedFor,
   resetPrecompressedManifests,
-} from '../../src/services/precompressedAssets';
-import { contentHash, StaticDelivery } from '../../src/services/staticDelivery';
+} from '@/services/precompressedAssets';
+import { contentHash, StaticDelivery } from '@/services/staticDelivery';
 
 const script = 'const answer = 42;\n'.repeat(600);
 let root: string;

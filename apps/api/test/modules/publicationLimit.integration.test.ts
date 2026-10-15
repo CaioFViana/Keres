@@ -1,21 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import {
-  publicationLog,
-  registrationSettings,
-  showcaseSettings,
-  tiers,
-  users,
-} from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import {
-  TierLimitExceededError,
-  tierEnforcementService,
-} from '../../src/services/TierEnforcementService';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { publicationLog, registrationSettings, showcaseSettings, tiers, users } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { TierLimitExceededError, tierEnforcementService } from '@/services/TierEnforcementService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 // Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();

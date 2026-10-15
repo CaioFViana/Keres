@@ -1,6 +1,6 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
-import { db } from '../db';
-import { REGISTRATION_SETTINGS_SINGLETON_ID, registrationSettings, tiers } from '../db/schema';
+import { db } from '@/db';
+import { REGISTRATION_SETTINGS_SINGLETON_ID, registrationSettings, tiers } from '@/db/schema';
 
 /**
  * The default plan: what a person has when no plan was assigned to them (and what a new account is given). Its

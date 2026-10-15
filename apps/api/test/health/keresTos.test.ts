@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../../src/index';
+import { createApp } from '@/index';
 import {
   SERVER_TERMS,
   SERVER_TERMS_VERSION,
   serverTermsDigest,
   serverTermsFor,
   type ServerTermsSection,
-} from '../../src/legal/serverTerms';
+} from '@/legal/serverTerms';
 
 describe('GET /api/keres-tos', () => {
   it('serves the versioned terms with no session', async () => {

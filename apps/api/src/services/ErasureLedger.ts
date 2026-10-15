@@ -7,7 +7,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname } from 'node:path';
-import { env } from '../config/env';
+import { env } from '@/config/env';
 
 /**
  * The erasure ledger: what the server must not forget when a backup is restored.

@@ -8,9 +8,9 @@ import {
   validatePackContent,
 } from '@keres/shared';
 import { desc, eq } from 'drizzle-orm';
-import { db } from '../db';
-import { packs, users } from '../db/schema';
-import { AppError } from '../utils/errors';
+import { db } from '@/db';
+import { packs, users } from '@/db/schema';
+import { AppError } from '@/utils/errors';
 
 /**
  * Shared packs.

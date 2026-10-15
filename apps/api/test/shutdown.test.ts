@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createShutdown, installShutdownHandlers, type StoppableServer } from '../src/shutdown';
+import { createShutdown, installShutdownHandlers, type StoppableServer } from '@/shutdown';
 
 /** A clock that the fake `sleep` moves, so waiting costs no real time. */
 function fakeClock() {

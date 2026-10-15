@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreateTagDataSchema, PartialTagSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { tags } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { tags } from '@/db/schema';
 import { BaseSyncEntityHandler, duplicateOf } from './BaseSyncEntityHandler';
 
 export class TagSyncHandler extends BaseSyncEntityHandler<

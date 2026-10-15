@@ -1,9 +1,9 @@
 import { Elysia } from 'elysia';
-import { classifyRequest, isAdminApiPath, outcomeOf } from '../audit/requestAuditRules';
-import type { JWTPayload } from '../index';
-import { type AuditInput, auditService } from '../services/AuditService';
-import { trackBackground } from '../utils/backgroundWork';
-import { QUESTION_CODES } from '../utils/errors';
+import { classifyRequest, isAdminApiPath, outcomeOf } from '@/audit/requestAuditRules';
+import type { JWTPayload } from '@/index';
+import { type AuditInput, auditService } from '@/services/AuditService';
+import { trackBackground } from '@/utils/backgroundWork';
+import { QUESTION_CODES } from '@/utils/errors';
 
 /** What the audit needs of a finished request. */
 export interface FinishedRequest {

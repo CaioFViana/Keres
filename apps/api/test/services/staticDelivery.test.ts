@@ -7,7 +7,7 @@ import {
   matchesEntityTag,
   negotiateContentEncoding,
   StaticDelivery,
-} from '../../src/services/staticDelivery';
+} from '@/services/staticDelivery';
 
 const text = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
 const source = new TextEncoder().encode('const answer = 42;\n'.repeat(400));

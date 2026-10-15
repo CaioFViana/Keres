@@ -1,11 +1,11 @@
 import { ContactCreateSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { createHash } from 'node:crypto';
-import { contactService } from '../../services/ContactService';
-import { registrationSettingsService } from '../../services/RegistrationSettingsService';
-import { tierService } from '../../services/TierService';
-import { AppError } from '../../utils/errors';
-import { createAttemptLimiter } from '../../utils/rateLimiter';
+import { contactService } from '@/services/ContactService';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { tierService } from '@/services/TierService';
+import { AppError } from '@/utils/errors';
+import { createAttemptLimiter } from '@/utils/rateLimiter';
 
 /**
  * The landing page's two server calls, mounted at `/api/public` next to the showcase routes -

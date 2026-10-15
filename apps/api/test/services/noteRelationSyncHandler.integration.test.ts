@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { choices, notes, stories, users } from '../../src/db/schema';
-import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
-import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
-import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
-import { NoteRelationSyncHandler } from '../../src/services/entity-sync-handlers/NoteRelationSyncHandler';
-import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
-import { SceneSyncHandler } from '../../src/services/entity-sync-handlers/SceneSyncHandler';
-import { WorldRuleSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { choices, notes, stories, users } from '@/db/schema';
+import { ChapterSyncHandler } from '@/services/entity-sync-handlers/ChapterSyncHandler';
+import { CharacterSyncHandler } from '@/services/entity-sync-handlers/CharacterSyncHandler';
+import { LocationSyncHandler } from '@/services/entity-sync-handlers/LocationSyncHandler';
+import { NoteRelationSyncHandler } from '@/services/entity-sync-handlers/NoteRelationSyncHandler';
+import { NoteSyncHandler } from '@/services/entity-sync-handlers/NoteSyncHandler';
+import { SceneSyncHandler } from '@/services/entity-sync-handlers/SceneSyncHandler';
+import { WorldRuleSyncHandler } from '@/services/entity-sync-handlers/WorldRuleSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

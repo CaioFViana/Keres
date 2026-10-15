@@ -1,5 +1,13 @@
 import { relations } from 'drizzle-orm';
-import { bigintNumber, boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import {
+  bigintNumber,
+  boolean,
+  integer,
+  table,
+  text,
+  timestamp,
+  timestampNow,
+} from '@/db/schema/columns';
 import { users } from './users';
 
 /**

@@ -7,14 +7,14 @@ import {
   StoryExportVersionError,
 } from '@keres/shared';
 import { ulid } from 'ulid';
-import { db } from '../../db';
-import { storyNsfwService } from '../StoryNsfwService';
-import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
-import { AppError, STORY_PREVIOUSLY_ON_SERVER } from '../../utils/errors';
-import { logger } from '../../utils/logger';
-import { purgeStoryData } from '../StoryPurgeService';
-import { renumberAllArranged } from '../sync/arrangedRanks';
-import { ensurePublicFavoriteOperationLogs } from '../sync/publicFavoriteRepair';
+import { db } from '@/db';
+import { storyNsfwService } from '@/services/StoryNsfwService';
+import { TierLimitExceededError, tierEnforcementService } from '@/services/TierEnforcementService';
+import { AppError, STORY_PREVIOUSLY_ON_SERVER } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { purgeStoryData } from '@/services/StoryPurgeService';
+import { renumberAllArranged } from '@/services/sync/arrangedRanks';
+import { ensurePublicFavoriteOperationLogs } from '@/services/sync/publicFavoriteRepair';
 import { importStoryAssets } from './DatabaseStoryPackageAssetsImport';
 import { importStoryCore } from './DatabaseStoryPackageCoreImport';
 import { importStoryFinalCollections } from './DatabaseStoryPackageFinalImport';

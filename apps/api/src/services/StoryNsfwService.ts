@@ -1,8 +1,8 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { db } from '../db';
-import { stories, storyInvitations, storyPermissions, users } from '../db/schema';
-import { emitUserEvent } from '../modules/webSocket/webSocket.route';
-import { AppError } from '../utils/errors';
+import { db } from '@/db';
+import { stories, storyInvitations, storyPermissions, users } from '@/db/schema';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { AppError } from '@/utils/errors';
 import { effectiveAdultVerified } from './ageVerification/ageVerificationMode';
 import { registrationSettingsService } from './RegistrationSettingsService';
 

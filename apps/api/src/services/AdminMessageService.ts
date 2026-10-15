@@ -7,11 +7,11 @@ import type {
 } from '@keres/shared';
 import { and, asc, count, desc, eq, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { NSFW_REPORT_TAG, REPORT_TAG } from '@keres/shared';
-import { db, withWriteTransaction } from '../db';
-import { messages, users } from '../db/schema';
-import { insensitiveLike } from '../db/sqlOperators';
-import { emitUserEvent } from '../modules/webSocket/webSocket.route';
-import { AppError } from '../utils/errors';
+import { db, withWriteTransaction } from '@/db';
+import { messages, users } from '@/db/schema';
+import { insensitiveLike } from '@/db/sqlOperators';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { AppError } from '@/utils/errors';
 import { newMessageId, purgeFullyDeleted } from './MessageService';
 
 /** How much of a conversation the detail view shows next to the message that was opened. */

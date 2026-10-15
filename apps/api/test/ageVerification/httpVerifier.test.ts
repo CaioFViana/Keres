@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { HttpVerifier } from '../../src/services/ageVerification/connector/HttpVerifier';
-import { VerifierError } from '../../src/services/ageVerification/connector/signedClient';
+import { HttpVerifier } from '@/services/ageVerification/connector/HttpVerifier';
+import { VerifierError } from '@/services/ageVerification/connector/signedClient';
 import {
   HEADER_NONCE,
   NonceCache,
   signResponseHeaders,
   verifyRequest,
-} from '../../src/services/ageVerification/connector/signing';
+} from '@/services/ageVerification/connector/signing';
 // A payment connector's answer, which the age-verification client must refuse.
-import { signResponseHeaders as signPaymentsResponse } from '../../src/services/payments/connector/signing';
+import { signResponseHeaders as signPaymentsResponse } from '@/services/payments/connector/signing';
 
 const KEY = 'k'.repeat(40);
 const OTHER = 'o'.repeat(40);

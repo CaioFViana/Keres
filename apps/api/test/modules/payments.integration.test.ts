@@ -2,7 +2,7 @@ import { PAYMENT_RENEWAL_GRACE_HOURS } from '@keres/shared/metadata/Payments';
 import { addBillingPeriod } from '@keres/shared/utils/billingPeriod';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   auditEvents,
   paymentCheckouts,
@@ -11,18 +11,18 @@ import {
   registrationSettings,
   tiers,
   users,
-} from '../../src/db/schema';
-import * as webSocket from '../../src/modules/webSocket/webSocket.route';
-import { languageOf } from '../../src/modules/payments/payment.route';
-import { sanitizeAction } from '../../src/services/payments/CheckoutService';
-import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
-import { subscriptionService } from '../../src/services/payments/SubscriptionService';
-import { tierEnforcementService } from '../../src/services/TierEnforcementService';
-import { newId, getApp, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
-import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
-import { postEvents } from '../helpers/paymentEvents';
-import { drainBackground } from '../../src/utils/backgroundWork';
+} from '@/db/schema';
+import * as webSocket from '@/modules/webSocket/webSocket.route';
+import { languageOf } from '@/modules/payments/payment.route';
+import { sanitizeAction } from '@/services/payments/CheckoutService';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { subscriptionService } from '@/services/payments/SubscriptionService';
+import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { newId, getApp, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
+import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';
+import { postEvents } from '@test/helpers/paymentEvents';
+import { drainBackground } from '@/utils/backgroundWork';
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;

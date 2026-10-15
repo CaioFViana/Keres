@@ -1,5 +1,5 @@
 import { ACCESS_RECORD_EVENTS } from '@keres/shared/metadata/AccessRecords';
-import { index, table, text, timestampNow } from '../columns';
+import { index, table, text, timestampNow } from '@/db/schema/columns';
 
 /**
  * The access records: when somebody signed in (or tried to), signed up, recovered an account or renewed a session,

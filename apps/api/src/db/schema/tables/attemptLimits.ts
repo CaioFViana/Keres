@@ -1,4 +1,4 @@
-import { bigintNumber, index, integer, table, text } from '../columns';
+import { bigintNumber, index, integer, table, text } from '@/db/schema/columns';
 
 /**
  * Failed attempts at something guessable (a password, a recovery code), per key, within a window - so a

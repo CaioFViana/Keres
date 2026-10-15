@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createTranslator } from '../../src/launcher/i18n';
-import { en, pt } from '../../src/launcher/locales';
+import { createTranslator } from '@/launcher/i18n';
+import { en, pt } from '@/launcher/locales';
 
 describe('launcher locales', () => {
   it('has the same keys in English and Portuguese', () => {

@@ -1,6 +1,6 @@
 import { type Column, eq, getTableColumns, getTableName, is, Table } from 'drizzle-orm';
-import type { CompatibleDb } from '../db';
-import * as schema from '../db/schema';
+import type { CompatibleDb } from '@/db';
+import * as schema from '@/db/schema';
 
 type StoryScopedTable = Table & { storyId: Column };
 

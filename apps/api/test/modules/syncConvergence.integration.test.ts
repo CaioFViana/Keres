@@ -1,11 +1,11 @@
 import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { characters } from '../../src/db/schema';
-import { compactStoryUpdateHistory } from '../../src/services/sync/SyncHistoryCompaction';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { characters } from '@/db/schema';
+import { compactStoryUpdateHistory } from '@/services/sync/SyncHistoryCompaction';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let storyId: string;

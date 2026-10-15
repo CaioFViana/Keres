@@ -3,9 +3,9 @@ import {
   AdminUserNotFoundError,
   AdminUserService,
   UsernameAlreadyTakenError,
-} from '../../src/services/AdminUserService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/AdminUserService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

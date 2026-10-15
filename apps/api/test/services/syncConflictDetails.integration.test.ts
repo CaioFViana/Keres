@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { operationLog, stories, users } from '../../src/db/schema';
-import { getChangedFieldsSinceVersion } from '../../src/services/sync/SyncConflictDetails';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { operationLog, stories, users } from '@/db/schema';
+import { getChangedFieldsSinceVersion } from '@/services/sync/SyncConflictDetails';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

@@ -1,5 +1,5 @@
 import { ulid } from 'ulid';
-import type { JWTPayload } from '../index';
+import type { JWTPayload } from '@/index';
 
 export type RealtimeEvent =
   | { type: 'story.changed'; storyId: string; maxOperationVersion?: number }

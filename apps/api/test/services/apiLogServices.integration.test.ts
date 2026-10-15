@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import { apiLogs, stories, users } from '../../src/db/schema';
-import { AdminApiLogService } from '../../src/services/AdminApiLogService';
-import { persistApiLog } from '../../src/services/ApiLogService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { apiLogs, stories, users } from '@/db/schema';
+import { AdminApiLogService } from '@/services/AdminApiLogService';
+import { persistApiLog } from '@/services/ApiLogService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

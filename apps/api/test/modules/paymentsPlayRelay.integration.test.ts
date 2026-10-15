@@ -1,19 +1,14 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import {
-  paymentCheckouts,
-  paymentSubscriptions,
-  playPurchaseClaims,
-  tiers,
-} from '../../src/db/schema';
-import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
-import { hashPurchaseToken } from '../../src/services/payments/playPurchaseClaims';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
-import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
-import { ConnectorError } from '../../src/services/payments/connector/signedClient';
-import { postEvents } from '../helpers/paymentEvents';
+import { db } from '@/db';
+import { paymentCheckouts, paymentSubscriptions, playPurchaseClaims, tiers } from '@/db/schema';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { hashPurchaseToken } from '@/services/payments/playPurchaseClaims';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
+import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';
+import { ConnectorError } from '@/services/payments/connector/signedClient';
+import { postEvents } from '@test/helpers/paymentEvents';
 
 let ana: TestUser;
 let proId: string;

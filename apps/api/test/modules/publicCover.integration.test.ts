@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { galleries, showcaseSettings, stories } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { mediaStorageService } from '../../src/services/MediaStorageService';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { galleries, showcaseSettings, stories } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { mediaStorageService } from '@/services/MediaStorageService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { truncateAll } from '@test/helpers/database';
 
 installBunShim();
 

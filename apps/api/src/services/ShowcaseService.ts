@@ -6,12 +6,12 @@ import type {
   ShowcaseVersion,
   StoryPublicationSnapshot,
 } from '@keres/shared';
-import { comparePassword } from '../config/bcrypt';
+import { comparePassword } from '@/config/bcrypt';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
-import { db } from '../db';
+import { db } from '@/db';
 import { effectiveAdultVerified } from './ageVerification/ageVerificationMode';
 import { ACTIVE_ACCOUNT } from './UserService';
-import { galleries, stories, storyPublications, storyShowcaseEntries, users } from '../db/schema';
+import { galleries, stories, storyPublications, storyShowcaseEntries, users } from '@/db/schema';
 
 /** What a cover may be to be served to a page: raster images only, nothing that runs. */
 const COVER_MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);

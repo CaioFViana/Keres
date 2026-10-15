@@ -1,7 +1,7 @@
 import { migrate as migrateLibsql } from 'drizzle-orm/libsql/migrator';
 import { migrate as migratePostgres } from 'drizzle-orm/node-postgres/migrator';
-import { migrationsFolder } from '../config/resourceRoot';
-import { logger } from '../utils/logger';
+import { migrationsFolder } from '@/config/resourceRoot';
+import { logger } from '@/utils/logger';
 import { databaseMigrationTarget } from './index';
 
 /**

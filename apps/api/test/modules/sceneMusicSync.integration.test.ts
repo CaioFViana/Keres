@@ -1,11 +1,11 @@
 import { rankAtPosition, rankBetween } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { sceneMusic, scenes } from '../../src/db/schema';
-import { SceneMusicSyncHandler } from '../../src/services/entity-sync-handlers/SceneMusicSyncHandler';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { sceneMusic, scenes } from '@/db/schema';
+import { SceneMusicSyncHandler } from '@/services/entity-sync-handlers/SceneMusicSyncHandler';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let user: TestUser;
 let storyId: string;

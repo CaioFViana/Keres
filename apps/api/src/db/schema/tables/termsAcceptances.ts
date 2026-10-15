@@ -1,4 +1,4 @@
-import { index, integer, table, text, timestampNow } from '../columns';
+import { index, integer, table, text, timestampNow } from '@/db/schema/columns';
 import { users } from './users';
 
 /** Legal documents an account can accept: the terms (`keres-tos`) and the privacy policy (`keres-privacy`). */

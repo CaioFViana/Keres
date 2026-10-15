@@ -2,16 +2,16 @@ import { PAYMENT_RENEWAL_GRACE_HOURS } from '@keres/shared/metadata/Payments';
 import type { PaymentEvent } from '@keres/shared/payments/PaymentConnector';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { paymentCheckouts, paymentSubscriptions, tiers } from '../../src/db/schema';
-import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
-import { PaymentReconciliationService } from '../../src/services/payments/PaymentReconciliationService';
-import { subscriptionService } from '../../src/services/payments/SubscriptionService';
-import { tierEnforcementService } from '../../src/services/TierEnforcementService';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
-import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
-import { postEvents } from '../helpers/paymentEvents';
+import { db } from '@/db';
+import { paymentCheckouts, paymentSubscriptions, tiers } from '@/db/schema';
+import { setPaymentConnector } from '@/services/payments/PaymentConnectorRegistry';
+import { PaymentReconciliationService } from '@/services/payments/PaymentReconciliationService';
+import { subscriptionService } from '@/services/payments/SubscriptionService';
+import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
+import { createFakePaymentConnector } from '@test/helpers/fakePaymentConnector';
+import { postEvents } from '@test/helpers/paymentEvents';
 
 /**
  * The safety net under the webhooks: a notice that never came is found by asking the provider. What it asks

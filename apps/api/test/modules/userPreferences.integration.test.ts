@@ -2,17 +2,12 @@ import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import {
-  showcaseSettings,
-  stories,
-  storyPublications,
-  storyShowcaseEntries,
-} from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { showcaseSettings, stories, storyPublications, storyShowcaseEntries } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 // Publishing writes through the local blob backend, which uses `Bun.write`.
 installBunShim();

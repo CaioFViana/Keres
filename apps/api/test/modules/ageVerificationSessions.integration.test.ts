@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import { ageVerifications, users } from '../../src/db/schema';
-import { ageVerificationService } from '../../src/services/ageVerification/AgeVerificationService';
-import { resetAgeVerifier } from '../../src/services/ageVerification/AgeVerifierRegistry';
-import { registerUser, request, uploadTestStory } from '../helpers/app';
+import { db } from '@/db';
+import { ageVerifications, users } from '@/db/schema';
+import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
+import { resetAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
+import { registerUser, request, uploadTestStory } from '@test/helpers/app';
 import {
   approvedEvent,
   enterRequiredMode,
@@ -13,9 +13,9 @@ import {
   pendingAccount,
   rejectedEvent,
   userRow,
-} from '../helpers/ageVerificationAccounts';
-import { postVerifierEvents } from '../helpers/ageVerificationEvents';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/ageVerificationAccounts';
+import { postVerifierEvents } from '@test/helpers/ageVerificationEvents';
+import { truncateAll } from '@test/helpers/database';
 
 /**
  * Registration in `required` mode and the session that goes with a pending account (`docs/age_verification.md`,

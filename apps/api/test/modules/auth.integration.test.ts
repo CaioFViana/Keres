@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { users } from '../../src/db/schema';
-import { hardDeleteUser, softDeleteUser, truncateAll } from '../helpers/database';
-import { newId, registerUser, request } from '../helpers/app';
-import { enterRequiredMode, leaveRequiredMode } from '../helpers/ageVerificationAccounts';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { hardDeleteUser, softDeleteUser, truncateAll } from '@test/helpers/database';
+import { newId, registerUser, request } from '@test/helpers/app';
+import { enterRequiredMode, leaveRequiredMode } from '@test/helpers/ageVerificationAccounts';
 
 beforeEach(truncateAll);
 

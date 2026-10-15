@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { runAgeVerificationPrune } from '../../src/boot';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
+import { runAgeVerificationPrune } from '@/boot';
+import { env } from '@/config/env';
+import { db } from '@/db';
 import {
   ageVerifications,
   auditEvents,
@@ -11,27 +11,27 @@ import {
   stories,
   termsAcceptances,
   users,
-} from '../../src/db/schema';
-import { privacyPolicyDigest, privacyPolicyFor } from '../../src/legal/privacyPolicy';
-import { serverTermsDigest, serverTermsFor } from '../../src/legal/serverTerms';
-import { ageVerificationService } from '../../src/services/ageVerification/AgeVerificationService';
-import { storyNsfwService } from '../../src/services/StoryNsfwService';
-import { registrationSettingsService } from '../../src/services/RegistrationSettingsService';
-import { drainBackground } from '../../src/utils/backgroundWork';
+} from '@/db/schema';
+import { privacyPolicyDigest, privacyPolicyFor } from '@/legal/privacyPolicy';
+import { serverTermsDigest, serverTermsFor } from '@/legal/serverTerms';
+import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
+import { storyNsfwService } from '@/services/StoryNsfwService';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { drainBackground } from '@/utils/backgroundWork';
 import {
   importTestStory,
   registerUser,
   request,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
+} from '@test/helpers/app';
 import {
   enterRequiredMode,
   leaveRequiredMode,
   pendingAccount,
   userRow,
-} from '../helpers/ageVerificationAccounts';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+} from '@test/helpers/ageVerificationAccounts';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 /**
  * How the two modes differ once an account exists (`docs/age_verification.md`, "Modes"): in `manual` an administrator

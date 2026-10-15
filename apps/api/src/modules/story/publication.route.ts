@@ -13,14 +13,14 @@ import {
   type ShowcaseVisibility,
 } from '@keres/shared';
 import { z } from 'zod';
-import type { JWTPayload } from '../../index';
-import { messageService } from '../../services/MessageService';
+import type { JWTPayload } from '@/index';
+import { messageService } from '@/services/MessageService';
 import {
   type PublishUploadedArtifacts,
   type PublishUploadedFile,
   storyPublicationService,
-} from '../../services/StoryPublicationService';
-import { AppError } from '../../utils/errors';
+} from '@/services/StoryPublicationService';
+import { AppError } from '@/utils/errors';
 
 /** A `story_publications` row as its owner sees it. */
 const PublicationResponseSchema = t.Object({

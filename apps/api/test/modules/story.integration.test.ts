@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { tiers, users } from '../../src/db/schema';
+import { db } from '@/db';
+import { tiers, users } from '@/db/schema';
 import {
   importTestStory,
   newId,
@@ -9,8 +9,8 @@ import {
   request,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 

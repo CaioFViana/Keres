@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { db } from '../../db';
-import { playPurchaseClaims } from '../../db/schema';
-import { AppError } from '../../utils/errors';
+import { db } from '@/db';
+import { playPurchaseClaims } from '@/db/schema';
+import { AppError } from '@/utils/errors';
 
 /** sha256 of a store purchase token: claims keep the hash, never the token itself. */
 export function hashPurchaseToken(purchaseToken: string): string {

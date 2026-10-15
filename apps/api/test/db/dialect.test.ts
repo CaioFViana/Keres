@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isForeignKeyConstraint,
-  isUniqueViolation,
-  postgresErrorConstraint,
-} from '../../src/utils/errors';
+import { isForeignKeyConstraint, isUniqueViolation, postgresErrorConstraint } from '@/utils/errors';
 
 /**
  * The differences between the two engines the code has to recognise.

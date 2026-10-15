@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
-import { comparePassword } from '../../src/config/bcrypt';
+import { comparePassword } from '@/config/bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import { users } from '../../src/db/schema';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { truncateAll } from '@test/helpers/database';
 
 const config = vi.hoisted(() => ({
   env: {
@@ -13,8 +13,8 @@ const config = vi.hoisted(() => ({
 }));
 const logger = vi.hoisted(() => ({ info: vi.fn() }));
 
-vi.mock('../../src/config/env', () => config);
-vi.mock('../../src/utils/logger', () => ({ logger }));
+vi.mock('@/config/env', () => config);
+vi.mock('@/utils/logger', () => ({ logger }));
 
 beforeEach(async () => {
   await truncateAll();
@@ -25,7 +25,7 @@ beforeEach(async () => {
 
 describe('RootAdminService integration', () => {
   it('does nothing when the root admin credentials are not configured', async () => {
-    const { reconcileRootAdmin } = await import('../../src/services/RootAdminService');
+    const { reconcileRootAdmin } = await import('@/services/RootAdminService');
     await reconcileRootAdmin();
 
     expect(await db.select().from(users)).toEqual([]);
@@ -34,7 +34,7 @@ describe('RootAdminService integration', () => {
   it('creates the configured root administrator and reconciles its elevated access on subsequent boots', async () => {
     config.env.ROOT_ADMIN_USERNAME = 'root';
     config.env.ROOT_ADMIN_PASSWORD = 'secure-root-password';
-    const { reconcileRootAdmin } = await import('../../src/services/RootAdminService');
+    const { reconcileRootAdmin } = await import('@/services/RootAdminService');
     await reconcileRootAdmin();
     const created = await db.query.users.findFirst({
       where: (fields, { eq }) => eq(fields.username, 'root'),

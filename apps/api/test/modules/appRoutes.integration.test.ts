@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { clientDistPath, showcaseDistPath } from '../../src/config/resourceRoot';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
-import { showcaseSettings, tiers, users } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { userService } from '../../src/services/UserService';
-import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
-import { hardDeleteUser, promoteToAdmin, truncateAll } from '../helpers/database';
+import { clientDistPath, showcaseDistPath } from '@/config/resourceRoot';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { showcaseSettings, tiers, users } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { userService } from '@/services/UserService';
+import { getApp, newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { hardDeleteUser, promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let ana: TestUser;

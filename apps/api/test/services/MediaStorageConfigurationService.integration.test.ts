@@ -1,16 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
-import {
-  MEDIA_STORAGE_SETTINGS_SINGLETON_ID,
-  mediaBlobs,
-  mediaStorageSettings,
-} from '../../src/db/schema';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { MEDIA_STORAGE_SETTINGS_SINGLETON_ID, mediaBlobs, mediaStorageSettings } from '@/db/schema';
 import {
   assertMediaStorageConfiguration,
   configuredMediaStorageIdentity,
-} from '../../src/services/MediaStorageConfigurationService';
-import { truncateAll } from '../helpers/database';
+} from '@/services/MediaStorageConfigurationService';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

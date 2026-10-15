@@ -1,12 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { registrationSettings, tiers, users } from '../../src/db/schema';
-import { effectiveDefaultTierId } from '../../src/services/defaultTier';
-import { registrationSettingsService } from '../../src/services/RegistrationSettingsService';
-import { tierEnforcementService } from '../../src/services/TierEnforcementService';
-import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { registrationSettings, tiers, users } from '@/db/schema';
+import { effectiveDefaultTierId } from '@/services/defaultTier';
+import { registrationSettingsService } from '@/services/RegistrationSettingsService';
+import { tierEnforcementService } from '@/services/TierEnforcementService';
+import { getApp, newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 /**
  * The default plan is one thing written in two places - the registration setting and the flag on the plan - and

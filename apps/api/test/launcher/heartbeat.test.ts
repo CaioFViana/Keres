@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createTranslator } from '../../src/launcher/i18n';
-import {
-  describeLanAddresses,
-  LAN_POLL_MS,
-  startLanAddressHeartbeat,
-} from '../../src/launcher/heartbeat';
+import { createTranslator } from '@/launcher/i18n';
+import { describeLanAddresses, LAN_POLL_MS, startLanAddressHeartbeat } from '@/launcher/heartbeat';
 
 describe('LAN address heartbeat', () => {
   const t = createTranslator('en');

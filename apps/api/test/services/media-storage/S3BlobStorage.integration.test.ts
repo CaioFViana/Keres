@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
 describe('S3BlobStorage (SeaweedFS)', () => {
-  let S3BlobStorage: typeof import('../../../src/services/media-storage/S3BlobStorage').S3BlobStorage;
+  let S3BlobStorage: typeof import('@/services/media-storage/S3BlobStorage').S3BlobStorage;
 
   beforeAll(async () => {
     process.env.MEDIA_STORAGE_DRIVER = 's3';
@@ -15,7 +15,7 @@ describe('S3BlobStorage (SeaweedFS)', () => {
     process.env.MEDIA_S3_PREFIX = process.env.S3_TEST_PREFIX ?? 'keres-integration';
     process.env.MEDIA_S3_FORCE_PATH_STYLE = 'true';
     vi.resetModules();
-    ({ S3BlobStorage } = await import('../../../src/services/media-storage/S3BlobStorage'));
+    ({ S3BlobStorage } = await import('@/services/media-storage/S3BlobStorage'));
   });
 
   afterAll(() => {

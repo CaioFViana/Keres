@@ -1,13 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import {
-  REGISTRATION_SETTINGS_SINGLETON_ID,
-  registrationSettings,
-  users,
-} from '../../src/db/schema';
-import { RegistrationSettingsService } from '../../src/services/RegistrationSettingsService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { REGISTRATION_SETTINGS_SINGLETON_ID, registrationSettings, users } from '@/db/schema';
+import { RegistrationSettingsService } from '@/services/RegistrationSettingsService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

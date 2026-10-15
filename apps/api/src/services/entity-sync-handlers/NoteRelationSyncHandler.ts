@@ -8,7 +8,7 @@ import type {
 } from '@keres/shared';
 import { CreateNoteRelationDataSchema, PartialNoteRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
+import { db, type CompatibleDb } from '@/db';
 import {
   chapters,
   characters,
@@ -18,7 +18,7 @@ import {
   notes,
   scenes,
   worldRules,
-} from '../../db/schema';
+} from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class NoteRelationSyncHandler extends BaseSyncEntityHandler<

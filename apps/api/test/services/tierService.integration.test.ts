@@ -1,14 +1,14 @@
 import { TierCreateInputSchema } from '@keres/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { tiers } from '../../src/db/schema';
+import { db } from '@/db';
+import { tiers } from '@/db/schema';
 import {
   TierNotFoundError,
   TierPlayProductAlreadyUsedError,
   TierService,
-} from '../../src/services/TierService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/TierService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let service: TierService;
 

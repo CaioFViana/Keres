@@ -14,7 +14,7 @@ import {
   timestamp,
   timestampNow,
   uniqueIndex,
-} from '../columns';
+} from '@/db/schema/columns';
 
 /**
  * What a payment plugin's provider has told this server about who has paid for what.

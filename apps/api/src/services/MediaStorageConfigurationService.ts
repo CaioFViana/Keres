@@ -1,12 +1,8 @@
 import { count, eq } from 'drizzle-orm';
 import * as path from 'node:path';
-import { env } from '../config/env';
-import { db } from '../db';
-import {
-  MEDIA_STORAGE_SETTINGS_SINGLETON_ID,
-  mediaBlobs,
-  mediaStorageSettings,
-} from '../db/schema';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { MEDIA_STORAGE_SETTINGS_SINGLETON_ID, mediaBlobs, mediaStorageSettings } from '@/db/schema';
 
 export function configuredMediaStorageIdentity(): string {
   if (env.MEDIA_STORAGE_DRIVER === 'local') {

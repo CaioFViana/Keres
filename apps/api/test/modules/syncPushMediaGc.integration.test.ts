@@ -1,15 +1,12 @@
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { mediaBlobs, tiers, users } from '../../src/db/schema';
-import { GallerySyncHandler } from '../../src/services/entity-sync-handlers/GallerySyncHandler';
-import {
-  MEDIA_BLOB_GRACE_PERIOD_MS,
-  mediaStorageService,
-} from '../../src/services/MediaStorageService';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { mediaBlobs, tiers, users } from '@/db/schema';
+import { GallerySyncHandler } from '@/services/entity-sync-handlers/GallerySyncHandler';
+import { MEDIA_BLOB_GRACE_PERIOD_MS, mediaStorageService } from '@/services/MediaStorageService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let storyId: string;

@@ -5,8 +5,8 @@ import {
   type EntitySolverContext,
 } from '@keres/shared';
 import { inArray } from 'drizzle-orm';
-import { db } from '../db';
-import { stories, users } from '../db/schema';
+import { db } from '@/db';
+import { stories, users } from '@/db/schema';
 import { getApiEntityTable } from './entity-solvers/ApiEntityTableRegistry';
 
 type EntityRow = Record<string, unknown>;

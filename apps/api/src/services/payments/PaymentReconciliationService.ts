@@ -1,10 +1,10 @@
 import { GIFT_PROVIDER_ID } from '@keres/shared/metadata/Payments';
 import type { PaymentEvent } from '@keres/shared/payments/PaymentConnector';
 import { and, asc, desc, eq, gte, inArray, isNotNull, lte, ne } from 'drizzle-orm';
-import { db } from '../../db';
-import { paymentCheckouts, paymentSubscriptions } from '../../db/schema';
-import { logger } from '../../utils/logger';
-import { auditService } from '../AuditService';
+import { db } from '@/db';
+import { paymentCheckouts, paymentSubscriptions } from '@/db/schema';
+import { logger } from '@/utils/logger';
+import { auditService } from '@/services/AuditService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { isStoreMethod, subscriptionService } from './SubscriptionService';
 

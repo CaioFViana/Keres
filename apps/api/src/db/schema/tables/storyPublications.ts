@@ -9,7 +9,7 @@ import {
   text,
   timestampNow,
   unique,
-} from '../columns';
+} from '@/db/schema/columns';
 import type { StoryPublicationSnapshot } from '@keres/shared';
 import { stories } from './stories';
 import { users } from './users';

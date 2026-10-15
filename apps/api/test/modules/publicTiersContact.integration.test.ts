@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PublicTiersResponseSchema } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { messages, tiers } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { messages, tiers } from '@/db/schema';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 

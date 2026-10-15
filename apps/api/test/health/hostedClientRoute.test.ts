@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
-import { clientDistPath } from '../../src/config/resourceRoot';
-import { createApp } from '../../src/index';
-import { HOSTED_CLIENT_META } from '../../src/services/hostedClient';
+import { clientDistPath } from '@/config/resourceRoot';
+import { createApp } from '@/index';
+import { HOSTED_CLIENT_META } from '@/services/hostedClient';
 
 const clientBuilt = () => existsSync(`${clientDistPath()}/index.html`);
 

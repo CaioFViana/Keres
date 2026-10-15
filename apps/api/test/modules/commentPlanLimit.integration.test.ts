@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { comments, tiers, users } from '../../src/db/schema';
-import { tierEnforcementService } from '../../src/services/TierEnforcementService';
+import { db } from '@/db';
+import { comments, tiers, users } from '@/db/schema';
+import { tierEnforcementService } from '@/services/TierEnforcementService';
 import {
   newId,
   registerUser,
@@ -10,8 +10,8 @@ import {
   shareStory,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 /**
  * A comment is not an entity, so the entity ceilings never see it; `maxCommentsPerStory` is its own cap. These

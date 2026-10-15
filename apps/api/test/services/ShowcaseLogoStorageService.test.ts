@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { BlobStorage } from '../../src/services/media-storage/BlobStorage';
+import type { BlobStorage } from '@/services/media-storage/BlobStorage';
 import {
   SHOWCASE_LOGO_KEY,
   SHOWCASE_LOGO_MAX_BYTES,
   ShowcaseLogoStorageService,
-} from '../../src/services/ShowcaseLogoStorageService';
+} from '@/services/ShowcaseLogoStorageService';
 
 /** In-memory backend: the same constructor injection `publicationStorageService.test.ts` uses. */
 function memoryBackend() {

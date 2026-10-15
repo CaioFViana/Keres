@@ -14,7 +14,7 @@ import {
   sortEntityPair,
 } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
+import { db, type CompatibleDb } from '@/db';
 import {
   chapters,
   characters,
@@ -25,7 +25,7 @@ import {
   scenes,
   seeAlsoRelations,
   worldRules,
-} from '../../db/schema';
+} from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 type EntityRef = { type: SeeAlsoEntityType; id: string };

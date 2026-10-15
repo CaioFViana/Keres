@@ -1,8 +1,8 @@
 import { relations } from 'drizzle-orm';
-import { index, integer, json, table, text, timestampNow, uniqueIndex } from '../columns';
+import { index, integer, json, table, text, timestampNow, uniqueIndex } from '@/db/schema/columns';
 import { stories } from './stories';
 import { users } from './users';
-import { operationTypeEnum } from '../enums';
+import { operationTypeEnum } from '@/db/schema/enums';
 
 export const operationLog = table(
   'operation_log',

@@ -1,4 +1,4 @@
-import { env } from '../config/env';
+import { env } from '@/config/env';
 import { accessRecordService } from './AccessRecordService';
 import { ageVerificationService } from './ageVerification/AgeVerificationService';
 import { auditService } from './AuditService';

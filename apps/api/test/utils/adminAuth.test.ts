@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ findFirst: vi.fn(), eq: vi.fn() }));
 
-vi.mock('../../src/db', () => ({ db: { query: { users: { findFirst: mocks.findFirst } } } }));
-vi.mock('../../src/db/schema', () => ({ users: { id: 'users.id' } }));
+vi.mock('@/db', () => ({ db: { query: { users: { findFirst: mocks.findFirst } } } }));
+vi.mock('@/db/schema', () => ({ users: { id: 'users.id' } }));
 vi.mock('drizzle-orm', () => ({ eq: mocks.eq }));
 
-import { requireAdmin } from '../../src/utils/adminAuth';
+import { requireAdmin } from '@/utils/adminAuth';
 
 beforeEach(() => {
   vi.clearAllMocks();

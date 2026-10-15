@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PRIVACY_POLICY_VERSION } from '../../src/legal/privacyPolicy';
-import { SERVER_TERMS_VERSION } from '../../src/legal/serverTerms';
-import { accessRecordService } from '../../src/services/AccessRecordService';
-import { auditService } from '../../src/services/AuditService';
-import { contactService } from '../../src/services/ContactService';
-import { UserService } from '../../src/services/UserService';
-import { registerUser, request } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { PRIVACY_POLICY_VERSION } from '@/legal/privacyPolicy';
+import { SERVER_TERMS_VERSION } from '@/legal/serverTerms';
+import { accessRecordService } from '@/services/AccessRecordService';
+import { auditService } from '@/services/AuditService';
+import { contactService } from '@/services/ContactService';
+import { UserService } from '@/services/UserService';
+import { registerUser, request } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 

@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { accessRecords, auditEvents } from '../../src/db/schema';
-import { accessRecordService } from '../../src/services/AccessRecordService';
-import { drainBackground } from '../../src/utils/backgroundWork';
-import { getApp, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { accessRecords, auditEvents } from '@/db/schema';
+import { accessRecordService } from '@/services/AccessRecordService';
+import { drainBackground } from '@/utils/backgroundWork';
+import { getApp, registerUser, request, type TestUser } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 /** The address the test requests come from, as a real listener would report it. */
 const ADDRESS = '203.0.113.7';

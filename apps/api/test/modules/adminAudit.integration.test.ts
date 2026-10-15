@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { apiLogs, stories } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { apiLogs, stories } from '@/db/schema';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let storyId: string;

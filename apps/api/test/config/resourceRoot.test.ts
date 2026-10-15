@@ -7,7 +7,7 @@ import {
   clientDistPath,
   firstExistingPath,
   migrationsFolder,
-} from '../../src/config/resourceRoot';
+} from '@/config/resourceRoot';
 
 describe('resourceRoot', () => {
   afterEach(() => {

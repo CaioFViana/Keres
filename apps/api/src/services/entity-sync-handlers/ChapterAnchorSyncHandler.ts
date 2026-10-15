@@ -2,8 +2,8 @@ import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateChapterAnchorDataSchema, PartialChapterAnchorSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { chapterAnchors, chapters, scenes } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { chapterAnchors, chapters, scenes } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**

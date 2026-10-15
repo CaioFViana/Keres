@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isDatabaseConnectivityError } from '../src/index';
+import { isDatabaseConnectivityError } from '@/index';
 
 const withCode = (code: string, cause?: unknown) => Object.assign(new Error(code), { code, cause });
 

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import type { PdfFontMatrices } from '@keres/shared/manuscript/export';
-import { apiPackageRoot } from '../config/resourceRoot';
+import { apiPackageRoot } from '@/config/resourceRoot';
 
 /**
  * The serif matrices for server-side PDF manuscripts, read once from the

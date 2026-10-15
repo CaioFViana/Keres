@@ -1,11 +1,11 @@
 import type { StoryInvitation } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, withWriteTransaction } from '../db';
-import { alias } from '../db/schema/columns';
-import { stories, storyInvitations, users } from '../db/schema';
-import { emitUserEvent } from '../modules/webSocket/webSocket.route';
-import { AppError } from '../utils/errors';
+import { db, withWriteTransaction } from '@/db';
+import { alias } from '@/db/schema/columns';
+import { stories, storyInvitations, users } from '@/db/schema';
+import { emitUserEvent } from '@/modules/webSocket/webSocket.route';
+import { AppError } from '@/utils/errors';
 import { storyNsfwService } from './StoryNsfwService';
 import { storyPermissionService } from './StoryPermissionService';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';

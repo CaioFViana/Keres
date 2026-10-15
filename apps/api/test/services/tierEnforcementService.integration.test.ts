@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   characters,
   galleries,
@@ -11,14 +11,14 @@ import {
   tags,
   tiers,
   users,
-} from '../../src/db/schema';
+} from '@/db/schema';
 import {
   BlobNotReferencedError,
   TierLimitExceededError,
   tierEnforcementService,
-} from '../../src/services/TierEnforcementService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/TierEnforcementService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

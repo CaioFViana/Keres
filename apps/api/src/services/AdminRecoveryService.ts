@@ -4,8 +4,8 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm';
-import { db, withTransaction } from '../db';
-import { operationLog } from '../db/schema';
+import { db, withTransaction } from '@/db';
+import { operationLog } from '@/db/schema';
 import {
   enrichDeletedDisplayNames,
   enrichOperationLogNames,

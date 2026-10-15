@@ -1,9 +1,9 @@
 import { AuditEventListQuerySchema, AuditSummaryQuerySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { auditService } from '../../services/AuditService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { auditService } from '@/services/AuditService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 const security = [{ bearerAuth: [] }];
 

@@ -1,21 +1,21 @@
 import { AgeVerificationInfoSchema, VerificationEventsRequestSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { ageVerificationService } from '../../services/ageVerification/AgeVerificationService';
-import { getAgeVerifier } from '../../services/ageVerification/AgeVerifierRegistry';
+import { ageVerificationService } from '@/services/ageVerification/AgeVerificationService';
+import { getAgeVerifier } from '@/services/ageVerification/AgeVerifierRegistry';
 import {
   ageVerificationMode,
   isAgeVerificationRequired,
-} from '../../services/ageVerification/ageVerificationMode';
-import { verifierEventsSecrets } from '../../services/ageVerification/connector/config';
+} from '@/services/ageVerification/ageVerificationMode';
+import { verifierEventsSecrets } from '@/services/ageVerification/connector/config';
 import {
   HEADER_NONCE,
   NonceCache,
   signResponseHeaders,
   verifyRequest,
-} from '../../services/ageVerification/connector/signing';
-import { toVerificationEvent } from '../../services/ageVerification/verificationEvents';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
+} from '@/services/ageVerification/connector/signing';
+import { toVerificationEvent } from '@/services/ageVerification/verificationEvents';
+import { AppError } from '@/utils/errors';
+import { logger } from '@/utils/logger';
 
 /** What a service's request may weigh: a batch of events is a few kilobytes. */
 const EVENTS_MAX_BYTES = 256 * 1024;

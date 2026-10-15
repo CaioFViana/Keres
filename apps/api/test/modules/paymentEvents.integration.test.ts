@@ -17,7 +17,6 @@ import {
   MAX_CLOCK_SKEW_SECONDS,
   verifyResponse,
 } from '../../src/services/payments/connector/signing';
-import { auditService } from '../../src/services/AuditService';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
@@ -28,6 +27,7 @@ import {
   sendEvents,
   signEvents,
 } from '../helpers/paymentEvents';
+import { drainBackground } from '../../src/utils/backgroundWork';
 
 /**
  * The only door a payment connector comes in by is `POST /api/payments/events`, and it is open to the internet. What
@@ -286,7 +286,7 @@ describe('a request that does not prove itself', () => {
 
   it('is written in the activity record as a failure, without saying what was in it', async () => {
     await postEvents([succeeded({ eventId: 'evt_secret_looking' })], { forged: true });
-    await auditService.recordNow({ category: 'system', action: 'system.flush' });
+    await drainBackground(5000);
 
     const rows = await db
       .select()

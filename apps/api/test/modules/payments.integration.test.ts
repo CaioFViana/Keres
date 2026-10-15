@@ -13,7 +13,6 @@ import {
   users,
 } from '../../src/db/schema';
 import * as webSocket from '../../src/modules/webSocket/webSocket.route';
-import { auditService } from '../../src/services/AuditService';
 import { languageOf } from '../../src/modules/payments/payment.route';
 import { sanitizeAction } from '../../src/services/payments/CheckoutService';
 import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
@@ -23,6 +22,7 @@ import { newId, getApp, registerUser, request, type TestUser } from '../helpers/
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
 import { postEvents } from '../helpers/paymentEvents';
+import { drainBackground } from '../../src/utils/backgroundWork';
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -348,7 +348,7 @@ describe('starting to pay', () => {
   it('records the attempt in the activity record, with the person and no payment detail', async () => {
     await openCheckout(ana);
     await new Promise((resolve) => setTimeout(resolve, 50));
-    await auditService.recordNow({ category: 'system', action: 'system.flush' });
+    await drainBackground(5000);
 
     const rows = await db
       .select()
@@ -592,7 +592,7 @@ describe('the provider’s notices', () => {
   it('puts the payment in the activity record', async () => {
     const mine = await openCheckout(ana);
     await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
-    await auditService.recordNow({ category: 'system', action: 'system.flush' });
+    await drainBackground(5000);
 
     const rows = await db
       .select()
@@ -608,7 +608,7 @@ describe('the provider’s notices', () => {
   it('puts a refused notice in the activity record as a failure', async () => {
     await webhook([paid({})], 'forged');
     await new Promise((resolve) => setTimeout(resolve, 50));
-    await auditService.recordNow({ category: 'system', action: 'system.flush' });
+    await drainBackground(5000);
 
     const rows = await db
       .select()

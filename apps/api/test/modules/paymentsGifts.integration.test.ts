@@ -10,7 +10,6 @@ import {
   tiers,
   users,
 } from '../../src/db/schema';
-import { auditService } from '../../src/services/AuditService';
 import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
 import { subscriptionService } from '../../src/services/payments/SubscriptionService';
 import { tierEnforcementService } from '../../src/services/TierEnforcementService';
@@ -18,6 +17,7 @@ import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
 import { postEvents } from '../helpers/paymentEvents';
+import { drainBackground } from '../../src/utils/backgroundWork';
 
 /**
  * A plan given by an administrator is a payment of zero: it extends a running period, switches plan with the
@@ -163,7 +163,7 @@ describe('giving a plan to somebody with none', () => {
 
   it('is written in the ledger and the activity record, by the administrator, and is no income', async () => {
     await give(ana, maxId, { months: 3 });
-    await auditService.recordNow({ category: 'system', action: 'system.flush' });
+    await drainBackground(5000);
 
     const [line] = await db
       .select()
@@ -342,7 +342,7 @@ describe('giving another plan to somebody a provider is still charging', () => {
 
   it('cancels the renewal at the provider, then gives the plan, and records the consent', async () => {
     const { status } = await give(ana, maxId, { cancelRenewal: true, consent: true });
-    await auditService.recordNow({ category: 'system', action: 'system.flush' });
+    await drainBackground(5000);
 
     expect(status).toBe(201);
     expect(fake.cancelSubscription).toHaveBeenCalledWith('sub_ana');

@@ -330,6 +330,149 @@ describe('an account that is not verified in manual mode', () => {
   });
 });
 
+describe('edges of the verification actions', () => {
+  it('offers no grant when the server does not state its mode', async () => {
+    mocks.getRegistrationSettings.mockResolvedValue({});
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    expect(dialogButton(view.container, 'Mark as verified +18')).toBeUndefined();
+    expect(view.container.querySelector('[data-testid="verification-source"]')).toBeNull();
+    await view.unmount();
+  });
+
+  it('falls back to a plain message when a grant or a revocation fails without a reason', async () => {
+    mocks.getRegistrationSettings.mockResolvedValue({ ageVerificationMode: 'manual' });
+    mocks.updateUser.mockRejectedValue('nope');
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    await click(dialogButton(view.container, 'Mark as verified +18')!);
+    await flush();
+    const grantError = view.container.querySelector('.error-text')?.textContent;
+    expect(grantError).toBeTruthy();
+    expect(grantError).not.toBe('nope');
+    await view.unmount();
+
+    mocks.getUser.mockResolvedValue(user(verified));
+    const again = await renderFormAt('/users/user-1');
+    await flush();
+    await click(dialogButton(again.container, 'Revoke verification')!);
+    await flush();
+    const revokeError = again.container.querySelector('.error-text')?.textContent;
+    expect(revokeError).toBeTruthy();
+    expect(revokeError).not.toBe('nope');
+    await again.unmount();
+  });
+
+  it('states a verification with a date but no method, or with neither', async () => {
+    mocks.getUser.mockResolvedValue(user({ ...verified, verificationMethod: null }));
+    const dated = await renderFormAt('/users/user-1');
+    await flush();
+    const datedState = dated.container.querySelector(
+      '[data-testid="verification-state"]',
+    )?.textContent;
+    expect(datedState).toMatch(/^Verified 18\+ /);
+    expect(datedState).not.toContain('(manual');
+    await dated.unmount();
+
+    mocks.getUser.mockResolvedValue(
+      user({ ...verified, verifiedAt: null, verificationMethod: null }),
+    );
+    const bare = await renderFormAt('/users/user-1');
+    await flush();
+    expect(bare.container.querySelector('[data-testid="verification-state"]')?.textContent).toMatch(
+      /^Verified 18\+/,
+    );
+    await bare.unmount();
+  });
+});
+
+describe('loading the edit dialog', () => {
+  it('shows why the account could not be read', async () => {
+    mocks.getUser.mockRejectedValue(new Error('not found'));
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    expect(view.container.querySelector('.error-text')?.textContent).toBe('not found');
+    await view.unmount();
+  });
+
+  it('shows why the tiers could not be read, with or without a reason', async () => {
+    mocks.listTiers.mockRejectedValue(new Error('tiers down'));
+    const withReason = await renderFormAt('/users/user-1');
+    await flush();
+    expect(withReason.container.textContent).toContain('tiers down');
+    await withReason.unmount();
+
+    mocks.listTiers.mockRejectedValue('nope');
+    const without = await renderFormAt('/users/user-1');
+    await flush();
+    expect(without.container.querySelector('.error-text')).not.toBeNull();
+    await without.unmount();
+  });
+
+  it('names the tier an account uses, or its id when the tier is not listed', async () => {
+    mocks.listTiers.mockResolvedValue([{ id: 'tier-1', name: 'Gold' }]);
+    mocks.getUser.mockResolvedValue(
+      user({ tierSource: 'subscription', effectiveTierId: 'tier-1', tierId: 'tier-1' }),
+    );
+    const listed = await renderFormAt('/users/user-1');
+    await flush();
+    expect(listed.container.textContent).toContain('Gold');
+    await listed.unmount();
+
+    mocks.getUser.mockResolvedValue(user({ tierSource: 'default', effectiveTierId: 'tier-9' }));
+    const unlisted = await renderFormAt('/users/user-1');
+    await flush();
+    expect(unlisted.container.textContent).toContain('tier-9');
+    await unlisted.unmount();
+
+    mocks.getUser.mockResolvedValue(user({ tierSource: 'default', effectiveTierId: null }));
+    const none = await renderFormAt('/users/user-1');
+    await flush();
+    expect(none.container.querySelector('[data-testid="tier-in-use"]')).not.toBeNull();
+    await none.unmount();
+  });
+
+  it('ignores answers that arrive after the dialog was closed', async () => {
+    let answerUser: (value: unknown) => void = () => undefined;
+    let answerSettings: (value: unknown) => void = () => undefined;
+    let failUser: (reason: Error) => void = () => undefined;
+    mocks.getUser.mockReturnValueOnce(new Promise((resolve) => (answerUser = resolve)));
+    mocks.getRegistrationSettings.mockReturnValueOnce(
+      new Promise((resolve) => (answerSettings = resolve)),
+    );
+    const first = await renderFormAt('/users/user-1');
+    await first.unmount();
+    answerUser(user());
+    answerSettings({ ageVerificationMode: 'manual' });
+
+    mocks.getUser.mockReturnValueOnce(new Promise((_, reject) => (failUser = reject)));
+    mocks.getRegistrationSettings.mockRejectedValueOnce(new Error('late'));
+    const second = await renderFormAt('/users/user-1');
+    await second.unmount();
+    failUser(new Error('late'));
+    await flush();
+
+    expect(mocks.getUser).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends the tag with the save when the account has one', async () => {
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    await submit(dialogForm(view.container));
+    await flush();
+
+    expect(mocks.updateUser).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ tag: 'ana' }),
+    );
+    await view.unmount();
+  });
+});
+
 describe('the user list', () => {
   it('shows the pending and refused standing of accounts that are not verified', async () => {
     mocks.listUsers.mockResolvedValue({

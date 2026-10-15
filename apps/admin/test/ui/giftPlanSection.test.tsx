@@ -248,3 +248,59 @@ describe('another plan for somebody a provider is still charging', () => {
     await view.unmount();
   });
 });
+
+describe('edges of the gift section', () => {
+  it('falls back to a plain message when the subscription fails without a reason', async () => {
+    mocks.userSubscription.mockRejectedValue('nope');
+    const view = await renderSection();
+
+    expect(view.container.textContent).not.toContain('nope');
+    expect(view.container.querySelector('.error-text')).not.toBeNull();
+    await view.unmount();
+  });
+
+  it('ignores an answer that arrives after the section closed', async () => {
+    let answerLate: (value: unknown) => void = () => undefined;
+    mocks.userSubscription.mockReturnValueOnce(new Promise((resolve) => (answerLate = resolve)));
+    const closed = await render(<GiftPlanSection userId="user-1" username="ana" tiers={tiers} />);
+    await closed.unmount();
+    answerLate(answer(subscription()));
+
+    let failLate: (reason: Error) => void = () => undefined;
+    mocks.userSubscription.mockReturnValueOnce(new Promise((_, reject) => (failLate = reject)));
+    const failing = await render(<GiftPlanSection userId="user-1" username="ana" tiers={tiers} />);
+    await failing.unmount();
+    failLate(new Error('late'));
+    await flush();
+
+    expect(mocks.userSubscription).toHaveBeenCalledTimes(2);
+  });
+
+  it('names a plan by its id when it is not in the list', async () => {
+    mocks.userSubscription.mockResolvedValue(answer(subscription({ tierId: 'tier-gone' })));
+    const view = await renderSection();
+
+    await changeInput(select(view), 'tier-max');
+    await click(button(view));
+    await flush();
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('tier-gone'));
+    await view.unmount();
+  });
+
+  it('gives no date when the answer carries no subscription, and a plain message when it fails without a reason', async () => {
+    mocks.giveGift.mockResolvedValueOnce(answer(null, false));
+    const view = await renderSection();
+
+    await changeInput(select(view), 'tier-max');
+    await click(button(view));
+    await flush();
+    expect(view.container.querySelector('[data-testid="gift-done"]')).not.toBeNull();
+
+    mocks.giveGift.mockRejectedValueOnce('nope');
+    await click(button(view));
+    await flush();
+    expect(view.container.querySelector('.error-text')).not.toBeNull();
+    await view.unmount();
+  });
+});

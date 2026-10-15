@@ -1162,4 +1162,37 @@ describe('tiers page', () => {
     );
     await view.unmount();
   });
+
+  it('shows and edits the web purchase switches and the sale flag a tier already has', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({
+        webMonthlyEnabled: false,
+        webYearlyEnabled: true,
+        isPublicForSale: true,
+        sortOrder: 3,
+      }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const facts = view.container.querySelector('.tier-card')!.textContent ?? '';
+    expect(facts).toMatch(/Web \(monthly\)\s*No/);
+    expect(facts).toMatch(/Web \(yearly\)\s*Yes/);
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+    const boxes = Array.from(
+      view.container.querySelectorAll<HTMLInputElement>('.form-card input[type="checkbox"]'),
+    );
+    expect(boxes.some((box) => box.checked)).toBe(true);
+    expect(boxes.some((box) => !box.checked)).toBe(true);
+    const sort = Array.from(
+      view.container.querySelectorAll<HTMLInputElement>('.form-card input[type="number"]'),
+    ).find((input) => input.value === '3');
+    expect(sort).toBeDefined();
+    await view.unmount();
+  });
 });

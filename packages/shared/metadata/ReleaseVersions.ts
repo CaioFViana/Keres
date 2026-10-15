@@ -68,8 +68,11 @@ export const CURRENT_PACK_FORMAT_VERSION = 2;
  * **5** - Positions became per-row ranks (`rules/rank.ts`): a move is an ordinary edit of the row
  * that moved, and `index`/`order` are derived on each side. The protocol has no container order
  * any more; a peer on 4 would send one and never see a rank change, so it cannot share a story.
+ *
+ * **6** - Arc rework: Arc system now controls everything the story is. So better to bump it. 
+ * As change was BIG to how 1.10 works, better bump to 6.
  */
-export const SYNC_PROTOCOL_VERSION = 5;
+export const SYNC_PROTOCOL_VERSION = 6;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -78,6 +81,6 @@ export const SYNC_PROTOCOL_VERSION = 5;
  * old peers are cut off, and it should be a decision rather than a side effect of bumping the line
  * above.
  *
- * Raised to **4** with the lines above, and to **5** with ranks: a peer on 4 would diverge.
+ * Raised to **6** with the lines above.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 5;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 6;

@@ -15,15 +15,17 @@ const resetSource = readFileSync(join(stateRoot, 'resetAllClientStores.ts'), 'ut
  */
 describe('database-bound store reset architecture', () => {
   it('resets every store created through the entity-store factory', () => {
-    const entityStoreModules = readdirSync(stateRoot)
+    // Stores sit in subfolders by domain (`state/story/chapterStore.ts`); the reset imports them by that path.
+    const entityStoreModules = readdirSync(stateRoot, { recursive: true, encoding: 'utf8' })
+      .map((file) => file.replace(/\\/g, '/'))
       .filter(
         (file) =>
           file.endsWith('Store.ts') &&
-          file !== 'resetAllClientStores.ts' &&
-          file !== 'createEntityStore.ts',
+          !file.endsWith('createEntityStore.ts') &&
+          !file.endsWith('resetAllClientStores.ts'),
       )
       .filter((file) => readFileSync(join(stateRoot, file), 'utf8').includes('createEntityStore<'))
-      .map((file) => file.replace(/Store\.ts$/, 'Store'))
+      .map((file) => file.replace(/\.ts$/, ''))
       .sort();
 
     const resetEntityStoreModules = Array.from(
@@ -33,6 +35,8 @@ describe('database-bound store reset architecture', () => {
       .filter((module) => entityStoreModules.includes(module))
       .sort();
 
+    // An empty list would pass the equality below without checking anything.
+    expect(entityStoreModules.length).toBeGreaterThan(0);
     expect(resetEntityStoreModules).toEqual(entityStoreModules);
   });
 });

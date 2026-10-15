@@ -1,7 +1,7 @@
 import { FullStoryExportSchema, reviveDates } from '@keres/shared';
 import type { AppDrizzleClient } from '@/src/db';
-import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
-import type { ExampleStoryEntry } from '@/src/exampleStories/types';
+import { exampleStoryRegistry } from '@/src/content/example-stories/generated/registry';
+import type { ExampleStoryEntry } from '@/src/content/example-stories/types';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 
 /**
@@ -11,7 +11,7 @@ import { createStoryService } from '@/src/services/storymanagement/story-lifecyc
  * content is already in the `FullStoryExportSchema` format (the same as an exported
  * `.json` file), so "installing" is literally "importing" - checking whether the story already
  * exists (the same check as `ImportExportScreen`) and calling `importFullStory`. Examples have
- * no media (see `exampleStories/`), so there is nothing equivalent to the `.zip` flow.
+ * no media (see `content/example-stories/`), so there is nothing equivalent to the `.zip` flow.
  */
 
 export type InstallExampleStoryResult =

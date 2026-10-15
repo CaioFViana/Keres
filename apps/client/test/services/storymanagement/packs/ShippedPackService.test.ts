@@ -5,7 +5,7 @@ import { PackContentSchema, STORY_VOCABULARY_ENTITY_TYPES } from '@keres/shared'
 import { createPackService } from '@/src/services/storymanagement/packs/PackService';
 import { createShippedPackService } from '@/src/services/storymanagement/packs/ShippedPackService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
-import { shippedPackRegistry } from '@/src/shippedPacks/generated/registry';
+import { shippedPackRegistry } from '@/src/content/shipped-packs/generated/registry';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**

@@ -4,7 +4,14 @@ import { join, relative, resolve } from 'node:path';
 import * as ts from 'typescript';
 
 const CLIENT_ROOT = resolve(__dirname, '../..');
-const MOCK_CALLS = new Set(['mock', 'doMock', 'unmock', 'requireActual', 'requireMock']);
+const MOCK_CALLS = new Set([
+  'mock',
+  'doMock',
+  'unmock',
+  'doUnmock',
+  'requireActual',
+  'requireMock',
+]);
 
 function sourceFiles(dir: string): string[] {
   const files: string[] = [];

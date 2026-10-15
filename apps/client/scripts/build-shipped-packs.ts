@@ -5,7 +5,7 @@ import { buildPack } from './lib/buildShippedPack';
 import { SHIPPED_PACKS } from './lib/shippedPackDefinitions';
 
 /**
- * Writes `src/shippedPacks/content/<slug>/<lang>.json` from the definitions.
+ * Writes `src/content/shipped-packs/content/<slug>/<lang>.json` from the definitions.
  *
  * One row per language rather than one pack with translated labels: a pack carries a `language`
  * string and no selector, exactly as a story does, so two languages are two packs. That is the
@@ -16,7 +16,7 @@ import { SHIPPED_PACKS } from './lib/shippedPackDefinitions';
  */
 
 const clientRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const contentRoot = join(clientRoot, 'src/shippedPacks/content');
+const contentRoot = join(clientRoot, 'src/content/shipped-packs/content');
 
 let written = 0;
 for (const definition of SHIPPED_PACKS) {

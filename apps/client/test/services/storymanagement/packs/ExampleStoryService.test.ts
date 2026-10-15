@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { createExampleStoryService } from '@/src/services/storymanagement/packs/ExampleStoryService';
-import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
+import { exampleStoryRegistry } from '@/src/content/example-stories/generated/registry';
 import {
   CURRENT_STORY_FORMAT_VERSION,
   findStoryExportIntegrityViolations,
@@ -330,7 +330,7 @@ it('keeps example ids valid, unique, referentially sound, bilingual, and bundle-
         statSync(
           join(
             process.cwd(),
-            'src/exampleStories/content',
+            'src/content/example-stories/content',
             entry.slug,
             `${language.language}.json`,
           ),

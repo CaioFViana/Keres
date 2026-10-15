@@ -71,7 +71,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
-import type { DocLibrary } from '@/src/help/library';
+import type { DocLibrary } from '@/src/content/help/library';
 
 const pages = [
   {

@@ -81,7 +81,7 @@ jest.mock('@/src/components/common/navigation/NavigationBackButton/NavigationBac
   return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
 });
 jest.mock('@/src/navigation/stacks/HelpStack', () => ({ __esModule: true, default: () => null }));
-jest.mock('@/src/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
+jest.mock('@/src/content/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
 
 jest.mock('@/src/screens/packs/PackListScreen', () => ({
   __esModule: true,

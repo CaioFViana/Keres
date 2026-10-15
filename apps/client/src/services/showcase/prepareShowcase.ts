@@ -3,7 +3,7 @@ import {
   createClientSettings,
   getClientSettings,
 } from '@/src/services/account/ClientSettingsService';
-import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
+import { exampleStoryRegistry } from '@/src/content/example-stories/generated/registry';
 import { createExampleStoryService } from '@/src/services/storymanagement/packs/ExampleStoryService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import type { Story } from '@keres/shared/entities/Story';

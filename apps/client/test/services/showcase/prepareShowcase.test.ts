@@ -16,7 +16,7 @@ jest.mock('@/src/services/account/ClientSettingsService', () => ({
   getClientSettings: jest.fn(),
   createClientSettings: jest.fn(),
 }));
-jest.mock('@/src/exampleStories/generated/registry', () => ({
+jest.mock('@/src/content/example-stories/generated/registry', () => ({
   __esModule: true,
   get exampleStoryRegistry() {
     return mockRegistry;

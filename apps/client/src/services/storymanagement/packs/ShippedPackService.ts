@@ -1,8 +1,8 @@
 import { PackContentSchema } from '@keres/shared';
 import { z } from 'zod';
 import type { AppDrizzleClient } from '@/src/db';
-import { shippedPackRegistry } from '@/src/shippedPacks/generated/registry';
-import type { ShippedPackEntry } from '@/src/shippedPacks/types';
+import { shippedPackRegistry } from '@/src/content/shipped-packs/generated/registry';
+import type { ShippedPackEntry } from '@/src/content/shipped-packs/types';
 import { createPackService, type PackContentCounts } from './PackService';
 
 /**

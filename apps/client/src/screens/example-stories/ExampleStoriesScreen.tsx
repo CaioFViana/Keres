@@ -9,7 +9,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
-import type { ExampleStoryEntry, ExampleStoryLanguage } from '@/src/exampleStories/types';
+import type { ExampleStoryEntry, ExampleStoryLanguage } from '@/src/content/example-stories/types';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { createExampleStoryService } from '@/src/services/storymanagement/packs/ExampleStoryService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
@@ -35,7 +35,7 @@ import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
  * an ever-taller column of buttons.
  *
  * The catalog itself (`exampleStoryRegistry`) is static - folk and fairy tales packaged under
- * `exampleStories/content/` (en+pt). The empty state only shows if the registry ever empties. The cards
+ * `content/example-stories/content/` (en+pt). The empty state only shows if the registry ever empties. The cards
  * draw from each story's `meta`; the story itself is fetched on install, and started on its way as soon
  * as the list opens, so that tapping Install does not depend on the connection of a web build.
  */

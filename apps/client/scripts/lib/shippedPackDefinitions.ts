@@ -1,7 +1,7 @@
 /**
  * The packs Keres ships with, as definitions rather than as JSON.
  *
- * The `.json` files under `src/shippedPacks/content/` are generated from this by
+ * The `.json` files under `src/content/shipped-packs/content/` are generated from this by
  * `scripts/build-shipped-packs.ts`. Writing them by hand would mean keeping fifteen fields, four
  * suggestion catalogues and two languages in agreement across six files - the first careless edit
  * would give the Portuguese pack a field the English one lacks, and nothing would catch it.

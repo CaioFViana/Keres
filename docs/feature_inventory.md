@@ -342,10 +342,10 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 | API route files | 18 | `apps/api/src/modules/**/*.route.ts` |
 | Shared entities | 44 | `packages/shared/entities/*.ts` |
 | Sync push / pull batch caps | 200 / 500 | `SyncSchemas.ts` (`MAX_SYNC_BATCH_SIZE`, `MAX_SYNC_PULL_BATCH`) |
-| Help pages × languages | 72 × EN+PT | `apps/client/src/help/catalog.ts` |
-| Story-device entries × languages | 54 × EN+PT | `apps/client/src/storyDevices/catalog.ts` |
-| Example stories × languages | 6 × EN+PT | `exampleStories/generated/registry.ts` |
-| Shipped packs × languages | 5 × EN+PT | `shippedPacks/generated/registry.ts` |
+| Help pages × languages | 72 × EN+PT | `apps/client/src/content/help/catalog.ts` |
+| Story-device entries × languages | 54 × EN+PT | `apps/client/src/content/story-devices/catalog.ts` |
+| Example stories × languages | 6 × EN+PT | `src/content/example-stories/generated/registry.ts` |
+| Shipped packs × languages | 5 × EN+PT | `src/content/shipped-packs/generated/registry.ts` |
 | Manuscript formats (+ client PDF) | docx/md/txt/html (+pdf) | `manuscriptContracts.ts`, `manuscriptPdf.ts` |
 | Kept publication versions | 5 | `publication.route.ts` |
 | Media transfers per sync cycle | 5 | `MediaSyncService.ts` |

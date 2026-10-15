@@ -1,5 +1,5 @@
 import type { FullStoryExportType } from '@keres/shared';
-import { cloneExampleStoryForInstall } from '@/src/exampleStories/cloneExampleStory';
+import { cloneExampleStoryForInstall } from '@/src/content/example-stories/cloneExampleStory';
 
 /**
  * Gives a file import its own identity graph. This intentionally shares the remapping

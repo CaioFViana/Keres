@@ -9,7 +9,7 @@ import {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
 } from '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
-import { screenHelpPage } from '@/src/help/contextualHelp';
+import { screenHelpPage } from '@/src/content/help/contextualHelp';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

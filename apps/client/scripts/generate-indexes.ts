@@ -4,6 +4,7 @@ import { generateDocRegistry } from './lib/docRegistry';
 import { generateExampleStoriesIndex } from './lib/exampleStoriesIndex';
 import { generateMigrationsIndex } from './lib/migrationsIndex';
 import { generateShippedPacksIndex } from './lib/shippedPacksIndex';
+import { srcAlias } from './lib/srcAlias';
 
 /**
  * The five indexes the app needs written before it compiles.
@@ -21,16 +22,16 @@ generateMigrationsIndex(clientRoot);
 generateExampleStoriesIndex(clientRoot);
 generateShippedPacksIndex(clientRoot);
 generateDocRegistry({
-  contentDir: join(clientRoot, 'src/help/content'),
-  outputFile: join(clientRoot, 'src/help/generated/registry.ts'),
+  contentDir: join(clientRoot, 'src/content/help/content'),
+  outputFile: join(clientRoot, 'src/content/help/generated/registry.ts'),
   typeName: 'GeneratedHelpPageId',
   registryName: 'helpRegistry',
-  pageTypeImport: "import type { HelpPage } from '../types';",
+  pageTypeImport: `import type { HelpPage } from '${srcAlias(join(clientRoot, 'src/content/help/types'))}';`,
 });
 generateDocRegistry({
-  contentDir: join(clientRoot, 'src/storyDevices/content'),
-  outputFile: join(clientRoot, 'src/storyDevices/generated/registry.ts'),
+  contentDir: join(clientRoot, 'src/content/story-devices/content'),
+  outputFile: join(clientRoot, 'src/content/story-devices/generated/registry.ts'),
   typeName: 'GeneratedStoryDeviceId',
   registryName: 'storyDeviceRegistry',
-  pageTypeImport: "import type { HelpPage } from '../../help/types';",
+  pageTypeImport: `import type { HelpPage } from '${srcAlias(join(clientRoot, 'src/content/help/types'))}';`,
 });

@@ -26,7 +26,7 @@ type StoryDocument = Record<string, any>;
 
 const CONTENT_ROOT = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  '../src/exampleStories/content',
+  '../src/content/example-stories/content',
 );
 const EXAMPLE_USER_ID = 'EXAMPLEUSERPLACEHOLDER0000';
 

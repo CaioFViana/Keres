@@ -129,7 +129,7 @@ jest.mock(
   () => () => null,
 );
 jest.mock('@/src/navigation/stacks/HelpStack', () => ({ __esModule: true, default: () => null }));
-jest.mock('@/src/help/contextualHelp', () => ({
+jest.mock('@/src/content/help/contextualHelp', () => ({
   __esModule: true,
   screenHelpPage: { NarrativeElementsStack: 'narrative-elements' },
 }));

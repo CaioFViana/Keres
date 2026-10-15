@@ -71,8 +71,8 @@ const siteSrcPath = path.join(repoRoot, 'apps', 'site', 'src');
 const siteLocalesPath = path.join(siteSrcPath, 'i18n', 'locales');
 // Everywhere a translation key can plausibly originate: the app itself, and the shared
 // package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
-const HELP_CONTENT_PATH = path.join(clientSrcPath, 'help', 'content');
-const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'storyDevices', 'content');
+const HELP_CONTENT_PATH = path.join(clientSrcPath, 'content', 'help', 'content');
+const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'content', 'story-devices', 'content');
 // Prose authored per language: it uses no translation keys and must stay out of the audit.
 const DOC_CONTENT_PATHS = [HELP_CONTENT_PATH, STORY_DEVICES_CONTENT_PATH];
 

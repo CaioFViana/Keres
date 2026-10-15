@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/exampleStories/generated/registry', () => ({
+jest.mock('@/src/content/example-stories/generated/registry', () => ({
   __esModule: true,
   exampleStoryRegistry: [
     {
@@ -12,7 +12,7 @@ jest.mock('@/src/exampleStories/generated/registry', () => ({
     },
   ],
 }));
-jest.mock('@/src/shippedPacks/generated/registry', () => ({
+jest.mock('@/src/content/shipped-packs/generated/registry', () => ({
   __esModule: true,
   shippedPackRegistry: [{ slug: 'broken', languages: [{ language: 'en', pack: { nope: true } }] }],
 }));

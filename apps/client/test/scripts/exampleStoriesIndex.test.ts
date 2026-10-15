@@ -4,7 +4,7 @@
 import { join } from 'node:path';
 import { readExampleStoryMeta, renderExampleStoriesIndex } from '@/scripts/lib/exampleStoriesIndex';
 
-const contentDir = join(__dirname, '../../src/exampleStories/content');
+const contentDir = join(__dirname, '../../src/content/example-stories/content');
 
 describe('renderExampleStoriesIndex', () => {
   it('keeps the stories out of the bundle everybody downloads: no static import of any of them', () => {
@@ -15,7 +15,7 @@ describe('renderExampleStoriesIndex', () => {
     expect(source).not.toMatch(/^import [A-Za-z_]+ from '.*\.json'/m);
     // Each one is a literal `import()` (Metro needs the string) behind a `load()`.
     expect(
-      source.match(/load: \(\) =>\s*import\('\.\.\/content\//g)?.length,
+      source.match(/load: \(\) =>\s*import\('@\/src\/content\/example-stories\/content\//g)?.length,
     ).toBeGreaterThanOrEqual(12);
   });
 

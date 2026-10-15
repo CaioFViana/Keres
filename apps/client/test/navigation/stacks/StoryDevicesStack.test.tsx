@@ -21,7 +21,7 @@ jest.mock('@/src/screens/help/HelpPageScreen', () => ({
   __esModule: true,
   HelpPageScreen: jest.fn(() => null),
 }));
-jest.mock('@/src/storyDevices/library', () => ({
+jest.mock('@/src/content/story-devices/library', () => ({
   __esModule: true,
   storyDeviceLibrary: { id: 'test-library' },
 }));
@@ -29,7 +29,7 @@ jest.mock('@/src/storyDevices/library', () => ({
 import StoryDevicesStackNavigator from '@/src/navigation/stacks/StoryDevicesStack';
 import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
 import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
-import { storyDeviceLibrary } from '@/src/storyDevices/library';
+import { storyDeviceLibrary } from '@/src/content/story-devices/library';
 
 beforeEach(() => {
   jest.clearAllMocks();

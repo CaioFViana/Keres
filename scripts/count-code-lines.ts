@@ -23,8 +23,8 @@ const applications: [name: string, path: string][] = [
 
 const categories: [name: string, path: string][] = [
   ...applications,
-  ['Client-Help', 'apps/client/src/help'],
-  ['Client-StoryDevices', 'apps/client/src/storyDevices'],
+  ['Client-Help', 'apps/client/src/content/help'],
+  ['Client-StoryDevices', 'apps/client/src/content/story-devices'],
   ['Client-Narratives', 'apps/client/scripts/lib/narratives'],
   ...applications.map(([name, path]): [string, string] => [`${name}-Scripts`, `${path}/scripts`]),
   ['Repo-Scripts', 'scripts'],

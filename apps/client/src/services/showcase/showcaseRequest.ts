@@ -11,7 +11,7 @@
  * on any other path, `null`.
  */
 export interface ShowcaseRequest {
-  /** The story's folder in `exampleStories/content`. */
+  /** The story's folder in `content/example-stories/content`. */
   story: string;
   /** Drawer item, e.g. `PlotsStack`. */
   stack: string;

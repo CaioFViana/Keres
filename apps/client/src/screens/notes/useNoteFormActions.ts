@@ -1,4 +1,4 @@
-import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
+import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { Note } from '@keres/shared/entities/Note';
 import type { StorySchemaField } from '@keres/shared';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

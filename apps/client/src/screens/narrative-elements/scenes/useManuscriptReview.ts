@@ -7,9 +7,9 @@ import type {
   ManuscriptReviewThread,
 } from '@/src/components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
 import { Platform } from 'react-native';
-import { readCopiedPassage } from '@/src/hooks/useCopiedPassage';
-import { trackSelectionContainer } from '@/src/hooks/useWebSelectionClip';
-import { useSceneBodyComments } from '@/src/hooks/useSceneBodyComments';
+import { readCopiedPassage } from '@/src/utils/copiedPassage';
+import { trackSelectionContainer } from '@/src/hooks/ui/useWebSelectionClip';
+import { useSceneBodyComments } from '@/src/hooks/scene/useSceneBodyComments';
 
 export type ManuscriptReviewMode = 'read' | 'review';
 

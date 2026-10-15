@@ -85,18 +85,18 @@ jest.mock('@/src/theme', () => {
   };
 });
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
 jest.mock('@/src/guides/useScreenTour', () => ({
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 

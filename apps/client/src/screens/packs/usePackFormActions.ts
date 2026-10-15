@@ -1,4 +1,4 @@
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PackService } from '@/src/services/storymanagement/PackService';

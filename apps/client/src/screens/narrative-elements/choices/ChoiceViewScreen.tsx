@@ -1,5 +1,5 @@
 import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { buildNarrativeProjection } from '@keres/shared';
 import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
@@ -19,10 +19,10 @@ import type {
   PlotSelect,
   SceneSelect,
 } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useGraphStoryReload } from '@/src/hooks/useGraphStoryReload';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useGraphStoryReload } from '@/src/hooks/graph/useGraphStoryReload';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
@@ -38,7 +38,7 @@ import { useTheme } from '@/src/theme';
 import { describeChoiceCheck, describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
 import { buildStoryMapFileName } from '@/src/utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
-import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
+import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
 
 /**
  * The story map: the scenes and the choices that link one to another.

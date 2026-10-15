@@ -3,7 +3,7 @@
  */
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { scenePageViewOf } from '@/src/hooks/useScenePages';
+import { scenePageViewOf } from '@/src/hooks/scene/useScenePages';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
 import { createSketchService } from '@/src/services/storymanagement/SketchService';

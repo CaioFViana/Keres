@@ -36,8 +36,8 @@ import WelcomePager, { useWelcomePager } from '@/src/components/features/welcome
 import WelcomeProgress from '@/src/components/features/welcome/WelcomeProgress';
 import { offersOfficialApp, WELCOME_PAGES } from '@/src/components/features/welcome/welcomeContent';
 import { useDrizzle } from '@/src/db';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { migrate } from '@/src/db/migrate';
 import { setAuthDb } from '@/src/services/AuthTokenManager';
 import { setEditorDraftDb } from '@/src/services/EditorDraftService';

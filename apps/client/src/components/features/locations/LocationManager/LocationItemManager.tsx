@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 import type { ItemJourney, Item } from '@keres/shared/entities/Item';
 import type { SceneSelect } from '@/src/db/schema'; // SceneSelect type
 import type { CharacterSelect } from '@/src/db/schemas/characters'; // CharacterSelect type
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { BaseRelation } from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';

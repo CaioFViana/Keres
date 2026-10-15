@@ -6,10 +6,10 @@ const mockReadDraft = jest.fn();
 const mockPatchDraft = jest.fn();
 let mockModes: { id: string; characterId: string }[] = [];
 
-jest.mock('@/src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-jest.mock('@/src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: () => ({ modes: mockModes }),
 }));
 jest.mock('@/src/services/storymanagement/ModeService', () => ({

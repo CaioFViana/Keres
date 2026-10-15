@@ -2,8 +2,8 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineSheets from '@/src/components/features/story-timeline/StoryTimelineSheets';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useStoryTimeline } from '@/src/hooks/useStoryTimeline';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryTimeline } from '@/src/hooks/story/useStoryTimeline';
 import { useTheme } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
@@ -12,7 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 

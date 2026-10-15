@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -19,8 +19,8 @@ import {
 import { setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
 import { clearEverythingOutsideDatabase } from '@/src/services/LocalDataReset';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -47,7 +47,7 @@ import { useGuideStore } from '@/src/state/guideStore';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { resetAllClientStores } from '@/src/state/resetAllClientStores';
 import { useThemeStore } from '@/src/state/themeStore';
-import { useMusicTools } from '@/src/hooks/useMusicTools';
+import { useMusicTools } from '@/src/hooks/music/useMusicTools';
 import { useMusicToolsStore } from '@/src/state/musicToolsStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';

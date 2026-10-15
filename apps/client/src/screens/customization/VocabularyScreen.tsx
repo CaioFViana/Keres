@@ -1,13 +1,13 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Button, SingleSelectPill, TextInput } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ArcMediumChanges from '@/src/components/features/arcs/ArcMediumChanges';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useStoryArcs } from '@/src/hooks/useStoryArcs';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';

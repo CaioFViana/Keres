@@ -53,7 +53,7 @@ jest.mock('@/src/components/features/help/HelpBlockRenderer/HelpBlockRenderer', 
     );
   },
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: (...args: unknown[]) => mockUseBackButtonHandler(...args),
 }));

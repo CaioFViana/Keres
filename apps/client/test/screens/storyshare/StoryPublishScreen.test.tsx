@@ -93,11 +93,11 @@ jest.mock('@/src/theme', () => {
 });
 
 const mockCompact: { current: boolean } = { current: true };
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: mockCompact.current }),
 }));
 
-jest.mock('@/src/hooks/useNavigateAcrossStacks', () => ({
+jest.mock('@/src/hooks/nav/useNavigateAcrossStacks', () => ({
   useNavigateAcrossStacks:
     () =>
     (...args: unknown[]) =>
@@ -109,16 +109,16 @@ jest.mock('@/src/state/storyStore', () => ({
     selector({ selectedStory: { id: 'story-1', title: 'Epic' } }),
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
 const mockBackHandlerOptions = jest.fn();
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: (options: unknown) => mockBackHandlerOptions(options),
 }));
 
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 

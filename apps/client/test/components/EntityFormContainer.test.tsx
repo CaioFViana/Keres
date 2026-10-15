@@ -5,7 +5,7 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import Button from '@/src/components/common/controls/Button/Button';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -16,10 +16,10 @@ jest.mock('@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner', ()
   const { Text } = require('react-native');
   return { __esModule: true, default: () => <Text>plan-usage-banner</Text> };
 });
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: false }),
 }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 58,
 }));
 

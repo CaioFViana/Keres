@@ -2,8 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import type { SceneSelect } from '@/src/db/schema';
-import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
-import { useScenePages } from '@/src/hooks/useScenePages';
+import { useSceneArcMedium } from '@/src/hooks/scene/useSceneArcMedium';
+import { useScenePages } from '@/src/hooks/scene/useScenePages';
 
 interface ScenePagesEntryProps {
   scene: Pick<SceneSelect, 'id' | 'storyId' | 'chapterId'>;

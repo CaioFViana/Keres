@@ -30,22 +30,22 @@ jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
 const mockChapterNameOf = jest.fn(
   (_chapterId: string | null | undefined): string | undefined => 'Chapter One',
 );
-jest.mock('@/src/hooks/useChapterNames', () => ({
+jest.mock('@/src/hooks/chapter/useChapterNames', () => ({
   useChapterNames: () => mockChapterNameOf,
 }));
 
 const mockUseItemJourneyTimelineData = jest.fn();
-jest.mock('@/src/hooks/useItemJourneyTimelineData', () => ({
+jest.mock('@/src/hooks/item/useItemJourneyTimelineData', () => ({
   useItemJourneyTimelineData: (...args: unknown[]) => mockUseItemJourneyTimelineData(...args),
 }));
 
 const mockDateForScene = jest.fn((_scene: unknown): { date: string } | null => null);
-jest.mock('@/src/hooks/useSceneCalendarDates', () => ({
+jest.mock('@/src/hooks/scene/useSceneCalendarDates', () => ({
   useSceneCalendarDates: () => ({ dateForScene: mockDateForScene }),
 }));
 
 const mockNavigateToDetail = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
 

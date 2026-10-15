@@ -8,8 +8,8 @@ import {
   unregisterGuideAnchor,
 } from '@/src/guides/anchorRegistry';
 import { measureGuideNode, useGuideAnchor } from '@/src/guides/useGuideAnchor';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useSystemInsets } from '@/src/hooks/useSystemInsets';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useSystemInsets } from '@/src/hooks/ui/useSystemInsets';
 import { useTheme } from '@/src/theme';
 
 /**

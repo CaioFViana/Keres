@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { useNavigation } from '@react-navigation/native';
@@ -14,9 +14,9 @@ import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderMod
 import { useDrizzle } from '@/src/db';
 import type { StatSelect } from '@/src/db/schema';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
 import { createStatService } from '@/src/services/storymanagement/StatService';
 import { useStoryStore } from '@/src/state/storyStore';

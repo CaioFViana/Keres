@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import {
@@ -15,9 +15,9 @@ import ServerRegistrationFields, {
 import TermsModal, {
   type TermsSection,
 } from '@/src/components/features/servers/TermsModal/TermsModal';
-import { useAgeVerificationInfo } from '@/src/hooks/useAgeVerificationInfo';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
+import { useAgeVerificationInfo } from '@/src/screens/enterstack/useAgeVerificationInfo';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useDebouncedValue } from '@/src/hooks/ui/useDebouncedValue';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   NativeStackNavigationProp,

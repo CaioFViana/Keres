@@ -1,7 +1,7 @@
 const mockUseEntityRelations = jest.fn();
 const mockGetArcsForStory = jest.fn();
 
-jest.mock('@/src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
 jest.mock('@/src/services/storymanagement/StoryArcService', () => ({

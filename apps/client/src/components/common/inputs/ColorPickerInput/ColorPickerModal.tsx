@@ -12,7 +12,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '@/src/utils/colorMath';

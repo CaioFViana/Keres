@@ -22,7 +22,7 @@ import { type StyleProp, type TextStyle, View, type ViewStyle } from 'react-nati
 import type { CharacterSelect } from '@/src/db/schemas/characters';
 import type { ModeSelect } from '@/src/db/schemas/modes';
 import type { StorySchemaFieldSelect, TagSelect } from '@/src/db/schema';
-import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import type { ModeService } from '@/src/services/storymanagement/ModeService';
 import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
 import type { StatRelationService } from '@/src/services/storymanagement/StatRelationService';

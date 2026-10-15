@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { manualSyncRefusalText } from '@/src/services/sync/manualSyncMessage';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';

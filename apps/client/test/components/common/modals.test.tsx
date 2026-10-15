@@ -10,7 +10,7 @@ import { Text } from 'react-native';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 import type { StorySchemaFieldSelect } from '@/src/db/schema';
-import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
@@ -53,7 +53,7 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MIcon',
 }));
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,
@@ -64,11 +64,11 @@ jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   }),
 }));
 
-jest.mock('@/src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/story/useStorySchemaFields', () => ({
   useStorySchemaFields: jest.fn(() => []),
 }));
 
-jest.mock('@/src/hooks/useEntityPickerOptions', () => ({
+jest.mock('@/src/hooks/lists/useEntityPickerOptions', () => ({
   useEntityPickerOptions: () => ({
     options: [{ id: 'e1', name: 'Ent One' }],
     loading: false,

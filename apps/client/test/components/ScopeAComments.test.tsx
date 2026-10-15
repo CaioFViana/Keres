@@ -149,7 +149,7 @@ jest.mock('@/src/components/features/comments/CommentThreadModal/CommentThreadMo
 }));
 
 const mockUseStoryComments = jest.fn();
-jest.mock('@/src/hooks/useStoryComments', () => ({
+jest.mock('@/src/hooks/comments/useStoryComments', () => ({
   useStoryComments: (...args: unknown[]) => mockUseStoryComments(...args),
 }));
 
@@ -164,7 +164,7 @@ jest.mock('@/src/components/features/list-items/CommentListItem', () => {
 });
 
 const mockUseAuthorProfiles = jest.fn();
-jest.mock('@/src/hooks/useAuthorProfiles', () => ({
+jest.mock('@/src/hooks/social/useAuthorProfiles', () => ({
   useAuthorProfiles: (...args: unknown[]) => mockUseAuthorProfiles(...args),
 }));
 

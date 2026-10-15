@@ -70,7 +70,7 @@ jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1' } }),
 }));
-jest.mock('@/src/hooks/useStoryMenuBadges', () => ({
+jest.mock('@/src/hooks/story/useStoryMenuBadges', () => ({
   __esModule: true,
   useStoryMenuBadges: () => mockBadges,
 }));

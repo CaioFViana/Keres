@@ -1,12 +1,12 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { formatDateTime } from '@/src/utils/formatDateTime';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import ServerListItem from '@/src/components/features/servers/ServerListItem';
-import { useServerStatuses } from '@/src/hooks/useServerStatuses';
+import { useServerStatuses } from '@/src/screens/enterstack/useServerStatuses';
 import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
 import { adminConversationKey } from '@/src/utils/conversationKey';
 import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';

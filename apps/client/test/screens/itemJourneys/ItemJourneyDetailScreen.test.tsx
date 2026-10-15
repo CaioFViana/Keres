@@ -34,7 +34,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { itemJourneyId: 'journey-1' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
@@ -136,11 +136,11 @@ jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () =
   },
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     canComment: false,
@@ -152,7 +152,7 @@ jest.mock('@/src/hooks/useEntityComments', () => ({
     updateComment: jest.fn(),
   }),
 }));
-jest.mock('@/src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [],
@@ -162,11 +162,11 @@ jest.mock('@/src/hooks/useEntityRelations', () => ({
     deleteNoteRelation: jest.fn(),
   }),
 }));
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToEntity,
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));

@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -7,9 +7,9 @@ import { BackHandler, Platform } from 'react-native';
 
 import { useDrizzle } from '@/src/db';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useStoryArcs } from '@/src/hooks/useStoryArcs';
-import { useStoryReport } from '@/src/hooks/useStoryReport';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
+import { useStoryReport } from '@/src/screens/mainstorystack/useStoryReport';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import ReportStoryModal from '@/src/components/features/story/ReportStoryModal/ReportStoryModal';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import { createStoryAnalysisService } from '@/src/services/storymanagement/StoryAnalysisService';
@@ -21,8 +21,8 @@ import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { isServerless } from '@/src/utils/clientFlavor';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { shouldCompleteFirstStory } from '@/src/utils/tutorialProgress';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useResumeScene } from '@/src/hooks/useResumeScene';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
+import { useResumeScene } from '@/src/hooks/scene/useResumeScene';
 import { MainDashboardContent } from './MainDashboardContent';
 
 const MainDashboardScreen = () => {

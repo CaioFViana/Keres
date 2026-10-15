@@ -47,24 +47,24 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string }) => {
     mockHeaderArgs = args;
   },
 }));
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: mockIsCompact }),
 }));
 
-jest.mock('@/src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => ({ definition: { id: 'cal-1' } }),
 }));

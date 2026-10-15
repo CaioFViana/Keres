@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import SketchCanvasTools from '@/src/components/features/sketches/SketchCanvasTools';
-import { useSketchCompact } from '@/src/hooks/useSketchCompact';
+import { useSketchCompact } from '@/src/hooks/sketch/useSketchCompact';
 
-jest.mock('@/src/hooks/useSketchCompact', () => ({
-  ...jest.requireActual('@/src/hooks/useSketchCompact'),
+jest.mock('@/src/hooks/sketch/useSketchCompact', () => ({
+  ...jest.requireActual('@/src/hooks/sketch/useSketchCompact'),
   useSketchCompact: jest.fn(() => false),
 }));
 jest.mock('@/src/guides/useGuideAnchor', () => ({

@@ -25,7 +25,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockUseOperationLogs = jest.fn();
-jest.mock('@/src/hooks/useOperationLogs', () => ({
+jest.mock('@/src/hooks/sync/useOperationLogs', () => ({
   __esModule: true,
   useOperationLogs: (...args: unknown[]) => mockUseOperationLogs(...args),
 }));

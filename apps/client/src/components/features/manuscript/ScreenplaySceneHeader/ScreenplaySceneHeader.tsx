@@ -2,11 +2,11 @@ import type { sceneHeadingPlan } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { ScreenplayPlace as Place } from '@/src/hooks/useScreenplaySceneContext';
+import type { ScreenplayPlace as Place } from '@/src/hooks/scene/useScreenplaySceneContext';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
-export { useScreenplaySceneContext } from '@/src/hooks/useScreenplaySceneContext';
+export { useScreenplaySceneContext } from '@/src/hooks/scene/useScreenplaySceneContext';
 
 interface ScreenplaySceneHeaderProps {
   place: Place;

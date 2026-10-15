@@ -6,7 +6,7 @@ import CommentThreadModal from '@/src/components/features/comments/CommentThread
 import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
 import type { CommentSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
-import { readClippedSelection } from '@/src/hooks/useWebSelectionClip';
+import { readClippedSelection } from '@/src/hooks/ui/useWebSelectionClip';
 
 export interface ManuscriptReviewBar {
   sceneLabel: string;

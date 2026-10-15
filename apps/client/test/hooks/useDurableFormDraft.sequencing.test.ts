@@ -10,7 +10,7 @@ jest.mock('@/src/services/EditorDraftService', () => ({
   writeEditorDraftNow: jest.fn(async () => true),
 }));
 
-import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import {
   clearBoundEditorDraft,
   readBoundEditorDraft,

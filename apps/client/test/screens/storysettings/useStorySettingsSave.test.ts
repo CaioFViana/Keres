@@ -11,7 +11,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
-jest.mock('@/src/hooks/useAsyncOperation', () => ({
+jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
     run: (operation: () => Promise<void>) => operation(),

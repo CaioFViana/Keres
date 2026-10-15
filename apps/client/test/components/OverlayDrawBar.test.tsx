@@ -15,7 +15,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
@@ -27,7 +27,7 @@ jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   })),
 }));
 
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
 const compactLayout = {

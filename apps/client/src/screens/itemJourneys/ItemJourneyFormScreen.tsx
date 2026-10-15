@@ -2,7 +2,7 @@ import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/Scre
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill, {
   SingleSelectPill,
@@ -17,9 +17,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityFormSecondaryDraft } from '@/src/hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '@/src/hooks/useFormResetHeaderAction';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
 import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';

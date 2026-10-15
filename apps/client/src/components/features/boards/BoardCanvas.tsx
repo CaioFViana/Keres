@@ -23,8 +23,8 @@ import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeC
 import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
 import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
 import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
-import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
-import { useDraggedItemFrame } from '@/src/hooks/useDraggedItemFrame';
+import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
+import { useDraggedItemFrame } from '@/src/hooks/canvas/useDraggedItemFrame';
 import { useTheme } from '@/src/theme';
 import { boardEdgeGeometry } from '@/src/utils/boardEdges';
 import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';

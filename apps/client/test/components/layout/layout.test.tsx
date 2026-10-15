@@ -11,8 +11,8 @@ import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenConta
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import ScreenTitle from '@/src/components/layout/ScreenTitle/ScreenTitle';
 import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useNotificationStore } from '@/src/state/notificationStore';
 
 jest.mock('@/src/theme', () => {
@@ -51,7 +51,7 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Icon',
 }));
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
     height: 844,
@@ -62,7 +62,7 @@ jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   })),
 }));
 
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: jest.fn(() => 58),
 }));
 

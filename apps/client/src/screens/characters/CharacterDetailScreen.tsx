@@ -1,12 +1,12 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
-import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
+import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
@@ -19,16 +19,16 @@ import { StyleSheet } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema'; // For available scenes
 import type { CharacterSelect } from '@/src/db/schemas/characters';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '@/src/hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
-import { useOpenPresenceMatrixViewer } from '@/src/hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
 import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
 import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
@@ -45,7 +45,7 @@ import { useUserSettingsStore } from '@/src/state/userSettingsStore'; // Import 
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
-import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { CharacterDetailContent } from './CharacterDetailContent';

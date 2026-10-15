@@ -83,22 +83,22 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
   };
 });
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/hooks/useGalleryOwnerOptions', () => {
-  const actual = jest.requireActual('@/src/hooks/useGalleryOwnerOptions');
+jest.mock('@/src/screens/gallery/useGalleryOwnerOptions', () => {
+  const actual = jest.requireActual('@/src/screens/gallery/useGalleryOwnerOptions');
   return {
     ...actual,
     useGalleryOwnerOptions: () => ({ groupedOptions: mockOwnerOptions.current }),
   };
 });
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   __esModule: true,
   useResolvedMediaUri: () => mockResolvedUri.current,
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: true }),
 }));

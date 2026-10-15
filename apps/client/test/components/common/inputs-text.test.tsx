@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { KeyboardAwareContext } from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { useSuggestions } from '@/src/hooks/useSuggestions';
+import { useSuggestions } from '@/src/hooks/entity/useSuggestions';
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
@@ -46,7 +46,7 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MIcon',
 }));
 
-jest.mock('@/src/hooks/useSuggestions', () => ({
+jest.mock('@/src/hooks/entity/useSuggestions', () => ({
   useSuggestions: jest.fn(() => ({ suggestions: [], loading: false, reload: jest.fn() })),
 }));
 

@@ -4,7 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
 import { findFirstExcerptMatch } from '@keres/shared';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import { useWebSelectionClip } from '@/src/hooks/useWebSelectionClip';
+import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
 import type { CommentSelect } from '@/src/db/schema';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';

@@ -28,7 +28,7 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
       visible ? <View>{children}</View> : null,
   };
 });
-jest.mock('@/src/hooks/useGalleryMedia', () => ({
+jest.mock('@/src/hooks/media/useGalleryMedia', () => ({
   __esModule: true,
   useScenePageChoices: () => mockChoices,
 }));

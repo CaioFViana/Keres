@@ -69,15 +69,15 @@ jest.mock('@/src/theme', () => {
   };
 });
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: (options: unknown) => mockHeader(options),
 }));
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
@@ -108,7 +108,7 @@ jest.mock('@/src/services/ServerService', () => ({
 }));
 
 const mockCompact: { current: boolean } = { current: false };
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: mockCompact.current }),
 }));
 
@@ -119,7 +119,7 @@ const NO_ACTIVITY = {
   loading: false,
 };
 const mockActivity = { current: { ...NO_ACTIVITY } };
-jest.mock('@/src/hooks/useFriendActivity', () => ({
+jest.mock('@/src/screens/enterstack/useFriendActivity', () => ({
   useFriendActivity: () => mockActivity.current,
 }));
 
@@ -131,12 +131,12 @@ const mockInvitationActions = {
 const mockInvitations: {
   current: { received: unknown[]; sent: unknown[]; busyId: string | null };
 } = { current: { received: [], sent: [], busyId: null } };
-jest.mock('@/src/hooks/useStoryInvitationList', () => ({
+jest.mock('@/src/hooks/social/useStoryInvitationList', () => ({
   useStoryInvitationList: () => ({ ...mockInvitations.current, ...mockInvitationActions }),
 }));
 
 const mockOpenStory = jest.fn();
-jest.mock('@/src/hooks/useOpenStoryById', () => ({
+jest.mock('@/src/screens/enterstack/useOpenStoryById', () => ({
   useOpenStoryById: () => mockOpenStory,
 }));
 
@@ -148,7 +148,7 @@ const mockInviteState: {
     invite: jest.Mock;
   };
 } = { current: { stories: null, busy: false, invite: jest.fn(async () => true) } };
-jest.mock('@/src/hooks/useInviteFriendToStory', () => ({
+jest.mock('@/src/screens/enterstack/useInviteFriendToStory', () => ({
   useInviteFriendToStory: (options: unknown) => {
     mockInviteHook(options);
     return mockInviteState.current;

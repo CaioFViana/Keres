@@ -12,7 +12,7 @@ import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matr
 import MainDrawerMenu from '@/src/components/common/navigation/MainDrawerMenu/MainDrawerMenu';
 import ResizableDrawerContent from '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
 import ArcPickerModal from '@/src/components/features/arcs/ArcPickerModal';
-import { useStoryArcs } from '@/src/hooks/useStoryArcs';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { MentionMatcherProvider } from '@/src/mentions/MentionMatcherProvider';
 import { MentionNavigationProvider } from '@/src/mentions/MentionNavigationProvider';
 import GlobalSearchScreen from '@/src/screens/globalsearch/GlobalSearchScreen';

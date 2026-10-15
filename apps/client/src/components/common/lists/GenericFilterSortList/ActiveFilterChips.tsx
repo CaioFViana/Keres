@@ -4,8 +4,8 @@ import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
-import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useEntityPickerOptions } from '@/src/hooks/lists/useEntityPickerOptions';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import { useTheme } from '@/src/theme';
 import { activeCriteria, type AdvancedSearchCriteria } from '@/src/utils/advancedSearchCriteria';
 import {

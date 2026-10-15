@@ -10,8 +10,8 @@ import {
   View,
 } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useGalleryMedia } from '@/src/hooks/useGalleryMedia';
-import { useSongs } from '@/src/hooks/useSongs';
+import { useGalleryMedia } from '@/src/hooks/media/useGalleryMedia';
+import { useSongs } from '@/src/hooks/music/useSongs';
 import type { SceneMusicTarget } from '@/src/services/storymanagement/SceneMusicService';
 import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '@/src/components/features/scenes/scenePickerStyleDefs';

@@ -5,8 +5,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useCharacterTrajectoryData } from '@/src/hooks/useCharacterTrajectoryData';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useCharacterTrajectoryData } from '@/src/hooks/character/useCharacterTrajectoryData';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 

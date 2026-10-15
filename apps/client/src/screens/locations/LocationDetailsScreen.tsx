@@ -1,11 +1,11 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
-import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import { useLocationRelationActions } from './useLocationRelationActions';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
@@ -25,7 +25,7 @@ import ScenePresenceList, {
   groupScenePresenceEntries,
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
-import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
+import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
@@ -36,15 +36,15 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { LocationRelationSelect, LocationSelect, SceneSelect } from '@/src/db/schema'; // Explicitly import SceneSelect
 import type { CharacterSelect } from '@/src/db/schemas/characters'; // Import CharacterSelect
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '@/src/hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
 import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
 import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService'; // Import CharacterSceneService

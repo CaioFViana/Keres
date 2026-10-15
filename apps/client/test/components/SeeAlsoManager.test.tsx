@@ -38,7 +38,7 @@ jest.mock('@expo/vector-icons', () => {
 const mockSave = jest.fn();
 const mockPersist = jest.fn();
 let mockRelations: any[] = [];
-jest.mock('@/src/hooks/useSeeAlsoRelations', () => ({
+jest.mock('@/src/hooks/relations/useSeeAlsoRelations', () => ({
   __esModule: true,
   useSeeAlsoRelations: (...args: unknown[]) => {
     (mockRelationCalls as unknown[]).push(args);
@@ -53,8 +53,8 @@ const mockGroupedOptions = [
   { key: 'WorldRule:lore', label: 'Lore', options: [] },
   { key: 'Scene', label: 'Scenes', options: [] },
 ];
-jest.mock('@/src/hooks/useSeeAlsoEntityOptions', () => {
-  const actual = jest.requireActual('@/src/hooks/useSeeAlsoEntityOptions');
+jest.mock('@/src/hooks/relations/useSeeAlsoEntityOptions', () => {
+  const actual = jest.requireActual('@/src/hooks/relations/useSeeAlsoEntityOptions');
   return {
     ...actual,
     __esModule: true,
@@ -70,7 +70,7 @@ jest.mock('@/src/hooks/useSeeAlsoEntityOptions', () => {
 const mockOptionsCalls: unknown[][] = [];
 
 const mockNavigate = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));

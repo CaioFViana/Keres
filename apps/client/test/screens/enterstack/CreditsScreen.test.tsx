@@ -24,12 +24,12 @@ jest.mock('@/src/theme', () => {
   };
 });
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
 const mockBackHandler = jest.fn();
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: (options: unknown) => mockBackHandler(options),
 }));
 

@@ -1,5 +1,5 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -16,11 +16,11 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useStoryNavigatorData } from '@/src/hooks/useStoryNavigatorData';
-import { useStorySimulation } from '@/src/hooks/useStorySimulation';
-import { useStoryRoutes } from '@/src/hooks/useStoryRoutes';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryNavigatorData } from '@/src/hooks/story/useStoryNavigatorData';
+import { useStorySimulation } from '@/src/hooks/story/useStorySimulation';
+import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import { createRouteService } from '@/src/services/storymanagement/RouteService';
 import { useStoryStore } from '@/src/state/storyStore';

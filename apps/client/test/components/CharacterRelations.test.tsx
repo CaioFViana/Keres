@@ -36,7 +36,7 @@ jest.mock('@expo/vector-icons', () => {
 });
 
 const mockNavigate = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));

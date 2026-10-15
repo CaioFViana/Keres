@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,9 +10,9 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
 import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
 import { useStoryStore } from '@/src/state/storyStore';

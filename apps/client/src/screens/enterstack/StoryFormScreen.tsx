@@ -6,8 +6,8 @@ import ArcMediumSelect from '@/src/components/features/arcs/ArcMediumSelect';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import StoryPacksPicker from '@/src/components/features/story/StoryPacksPicker';
 import StoryStartChoice from '@/src/components/features/story/StoryStartChoice';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   NativeStackNavigationProp,
@@ -16,7 +16,7 @@ import type {
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { packHasExtras } from '@/src/services/storymanagement/PackService';
 import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';

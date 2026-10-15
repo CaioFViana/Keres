@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { MESSAGE_BODY_MAX_LENGTH } from '@keres/shared/metadata/MessageLimits';
 import type { RouteProp } from '@react-navigation/native';
@@ -16,9 +16,9 @@ import {
 } from 'react-native';
 import MessageBubble from '@/src/components/features/messages/MessageBubble';
 import MessageComposer from '@/src/components/features/messages/MessageComposer';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useConversation } from '@/src/hooks/useConversation';
-import { useKeyboardOverlap } from '@/src/hooks/useKeyboardOverlap';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useConversation } from '@/src/screens/enterstack/useConversation';
+import { useKeyboardOverlap } from '@/src/hooks/ui/useKeyboardOverlap';
 import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
 import type { MessagePeerRef } from '@/src/services/MessageApiService';
 import { useTheme } from '@/src/theme';

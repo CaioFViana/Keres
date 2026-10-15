@@ -1,9 +1,9 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { useNavigation } from '@react-navigation/native';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useGraphDataLoader } from '@/src/hooks/useGraphDataLoader';
-import { useGraphFocus } from '@/src/hooks/useGraphFocus';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
+import { useGraphDataLoader } from '@/src/hooks/graph/useGraphDataLoader';
+import { useGraphFocus } from '@/src/hooks/graph/useGraphFocus';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -25,9 +25,9 @@ import CharacterRelationModal from '@/src/components/features/relations/Characte
 import type { Character } from '@keres/shared/entities/Character';
 import { useDrizzle } from '@/src/db';
 import type { CharacterSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import type { CharacterRelationWithNames } from '@/src/services/storymanagement/CharacterRelationService';
 import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
@@ -47,7 +47,7 @@ import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRela
 import { buildCharacterRelationMapFileName } from '@/src/utils/storyTransfer';
 import { useCharacterRelationEditor } from './useCharacterRelationEditor';
 import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
-import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
+import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
 
 /**
  * The relations map: a story's characters and who knows whom.

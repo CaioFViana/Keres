@@ -61,11 +61,11 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: () => undefined }));
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: () => undefined }));
 jest.mock('@/src/utils/documentTitle', () => ({
   __esModule: true,
   useDocumentTitle: () => undefined,

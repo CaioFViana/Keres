@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import BoardNodeSheetGalleryPreview from '@/src/components/features/boards/BoardNodeSheetGalleryPreview';
 import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -12,7 +12,7 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 jest.mock('expo-image', () => ({ Image: () => null }));
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: jest.fn() }));
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({ useResolvedMediaUri: jest.fn() }));
 jest.mock('@/src/components/features/media/MediaPlayer/ImageZoomViewer', () => jest.fn(() => null));
 
 const uriMock = useResolvedMediaUri as jest.Mock;

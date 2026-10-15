@@ -66,12 +66,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string; actions?: readonly HeaderAction[] }) => {
     mockHeaderTitle = args.title;
@@ -90,7 +90,7 @@ jest.mock('@/src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('@/src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({
     arcs: mockArcs,
@@ -107,13 +107,13 @@ jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
 
-jest.mock('@/src/hooks/useStoryNavigatorData', () => ({
+jest.mock('@/src/hooks/story/useStoryNavigatorData', () => ({
   __esModule: true,
   useStoryNavigatorData: () => mockNavigatorData,
 }));
 
 const mockLoadChoiceAnnotations = jest.fn(async () => new Map());
-jest.mock('@/src/hooks/useManuscriptData', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useManuscriptData', () => ({
   __esModule: true,
   useManuscriptData: () => ({
     ...mockManuscriptData,
@@ -121,7 +121,7 @@ jest.mock('@/src/hooks/useManuscriptData', () => ({
   }),
 }));
 
-jest.mock('@/src/hooks/useSceneBodyComments', () => ({
+jest.mock('@/src/hooks/scene/useSceneBodyComments', () => ({
   __esModule: true,
   useSceneBodyComments: () => ({
     commentsBySceneId: mockCommentsBySceneId,

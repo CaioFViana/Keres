@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
-import { useScenePageChoices } from '@/src/hooks/useGalleryMedia';
+import { useScenePageChoices } from '@/src/hooks/media/useGalleryMedia';
 import type { ScenePageMedia } from '@/src/services/storymanagement/ScenePageService';
 import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '@/src/components/features/scenes/scenePickerStyleDefs';

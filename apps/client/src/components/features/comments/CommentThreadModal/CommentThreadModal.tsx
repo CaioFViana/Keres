@@ -16,7 +16,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { CommentSelect } from '@/src/db/schema';
-import { useAuthorProfiles } from '@/src/hooks/useAuthorProfiles';
+import { useAuthorProfiles } from '@/src/hooks/social/useAuthorProfiles';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';

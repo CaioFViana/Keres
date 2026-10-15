@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -8,10 +8,10 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { ArcsStackParamList } from '@/src/navigation/ArcsStack';
 import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';

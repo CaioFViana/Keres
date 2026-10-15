@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { GuideDrawerId } from '@/src/guides/types';
-import { useStoryMenuBadges } from '@/src/hooks/useStoryMenuBadges';
+import { useStoryMenuBadges } from '@/src/hooks/story/useStoryMenuBadges';
 import { buildMainDrawerMenu } from '@/src/navigation/mainDrawerMenu';
 import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/openMenuLeaf';
 import { useStoryStore } from '@/src/state/storyStore';

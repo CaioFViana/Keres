@@ -15,7 +15,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { GallerySelect } from '@/src/db/schema';
-import { useGalleryThumbnailUri } from '@/src/hooks/useGalleryThumbnailUri';
+import { useGalleryThumbnailUri } from '@/src/hooks/media/useGalleryThumbnailUri';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';

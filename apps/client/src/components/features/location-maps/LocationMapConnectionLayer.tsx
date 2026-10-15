@@ -10,7 +10,7 @@ import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-sk
 import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
-import type { CanvasCameraTransform } from '@/src/hooks/useCanvasViewport';
+import type { CanvasCameraTransform } from '@/src/hooks/canvas/useCanvasViewport';
 import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 import CanvasOverlayLayer from '@/src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';

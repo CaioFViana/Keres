@@ -1,6 +1,6 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
@@ -10,8 +10,8 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useFormResetHeaderAction } from '@/src/hooks/useFormResetHeaderAction';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';

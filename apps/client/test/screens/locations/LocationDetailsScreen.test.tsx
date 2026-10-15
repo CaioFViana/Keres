@@ -36,15 +36,15 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { locationId: 'loc-1' } }),
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('@/src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: {},
@@ -56,7 +56,7 @@ jest.mock('@/src/hooks/useEntityComments', () => ({
     updateComment: jest.fn(),
   }),
 }));
-jest.mock('@/src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [{ id: 'tag-1', name: 'City' }],
@@ -66,15 +66,15 @@ jest.mock('@/src/hooks/useEntityRelations', () => ({
     deleteNoteRelation: jest.fn(),
   }),
 }));
-jest.mock('@/src/hooks/useAppearsInArcs', () => ({
+jest.mock('@/src/hooks/arcs/useAppearsInArcs', () => ({
   __esModule: true,
   useAppearsInArcs: () => [{ id: 'arc-1' }],
 }));
-jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => jest.fn(),
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));

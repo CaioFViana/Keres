@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
@@ -10,7 +10,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import { useDrizzle } from '@/src/db';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { GlobalSearchResult } from '@/src/services/storymanagement/GlobalSearchService';
 import { createGlobalSearchService } from '@/src/services/storymanagement/GlobalSearchService';

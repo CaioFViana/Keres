@@ -3,11 +3,11 @@ import SketchOptionsBar, {
   SKETCH_OPTIONS_BAR_HEIGHT,
   type SketchSelectionActions,
 } from '@/src/components/features/sketches/SketchOptionsBar';
-import { useSketchCompact } from '@/src/hooks/useSketchCompact';
+import { useSketchCompact } from '@/src/hooks/sketch/useSketchCompact';
 import { useSketchToolStore } from '@/src/state/sketchToolStore';
 
-jest.mock('@/src/hooks/useSketchCompact', () => ({
-  ...jest.requireActual('@/src/hooks/useSketchCompact'),
+jest.mock('@/src/hooks/sketch/useSketchCompact', () => ({
+  ...jest.requireActual('@/src/hooks/sketch/useSketchCompact'),
   useSketchCompact: jest.fn(() => false),
 }));
 

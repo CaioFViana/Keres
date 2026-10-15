@@ -44,7 +44,7 @@ jest.mock('@/src/services/storyInvitationActions', () => ({
   closeStoryInvitation: (...args: unknown[]) => mockClose(...args),
 }));
 let mockInvitations: unknown[] = [];
-jest.mock('@/src/hooks/useStoryInvitations', () => ({
+jest.mock('@/src/hooks/social/useStoryInvitations', () => ({
   __esModule: true,
   useStoryInvitations: () => mockInvitations,
 }));

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import type { ScenePageView } from '@/src/hooks/useScenePages';
+import type { ScenePageView } from '@/src/hooks/scene/useScenePages';
 import { useTheme } from '@/src/theme';
 import ScenePageThumb from './ScenePageThumb';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';

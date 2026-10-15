@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import {
   ScreenError,
@@ -21,14 +21,14 @@ import FriendSharedStories from '@/src/components/features/friendship/FriendShar
 import InviteToStoryModal from '@/src/components/features/friendship/InviteToStoryModal';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schemas/servers';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
-import { useFriendActivity } from '@/src/hooks/useFriendActivity';
-import { useFriendshipActionHandler } from '@/src/hooks/useFriendshipActionHandler';
-import { useInviteFriendToStory } from '@/src/hooks/useInviteFriendToStory';
-import { useOpenStoryById } from '@/src/hooks/useOpenStoryById';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useStoryInvitationList } from '@/src/hooks/useStoryInvitationList';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useFriendActivity } from '@/src/screens/enterstack/useFriendActivity';
+import { useFriendshipActionHandler } from '@/src/screens/enterstack/useFriendshipActionHandler';
+import { useInviteFriendToStory } from '@/src/screens/enterstack/useInviteFriendToStory';
+import { useOpenStoryById } from '@/src/screens/enterstack/useOpenStoryById';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryInvitationList } from '@/src/hooks/social/useStoryInvitationList';
 import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
 import type { FriendshipWithServer } from '@/src/services/FriendshipService';
 import { createFriendshipService } from '@/src/services/FriendshipService';

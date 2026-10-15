@@ -4,7 +4,7 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

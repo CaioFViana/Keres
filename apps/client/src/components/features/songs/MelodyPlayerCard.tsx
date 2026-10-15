@@ -15,7 +15,7 @@ import type {
   PlaybackPhase,
   PlaybackProblem,
   PlaybackVoice,
-} from '@/src/hooks/useSongPlayback';
+} from '@/src/hooks/music/useSongPlayback';
 import { useTheme } from '@/src/theme';
 import SongChip from './SongChip';
 

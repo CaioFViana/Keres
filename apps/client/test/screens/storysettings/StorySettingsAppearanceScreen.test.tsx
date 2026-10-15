@@ -19,7 +19,7 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ goBack: mockGoBack }),
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -156,11 +156,11 @@ jest.mock('@/src/screens/storysettings/useStorySettingsSave', () => ({
   useStorySettingsSave: () => ({ saving: false, save: mockSave }),
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));

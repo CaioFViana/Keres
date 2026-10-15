@@ -15,7 +15,7 @@ import type {
   StoryArcSelect,
   TagSelect,
 } from '@/src/db/schema';
-import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import type { ScenePresenceEntry } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 
 jest.mock('@/src/theme', () => ({

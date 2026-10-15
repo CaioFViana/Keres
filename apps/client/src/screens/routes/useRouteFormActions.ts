@@ -1,7 +1,7 @@
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
+import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import type { createRouteService } from '@/src/services/storymanagement/RouteService';
 import type { RouteFormState } from './useRouteFormState';

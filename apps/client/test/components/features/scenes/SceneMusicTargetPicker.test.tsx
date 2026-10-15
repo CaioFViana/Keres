@@ -33,11 +33,11 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
       visible ? <View>{children}</View> : null,
   };
 });
-jest.mock('@/src/hooks/useSongs', () => ({
+jest.mock('@/src/hooks/music/useSongs', () => ({
   __esModule: true,
   useSongs: (...args: unknown[]) => mockUseSongs(...args),
 }));
-jest.mock('@/src/hooks/useGalleryMedia', () => ({
+jest.mock('@/src/hooks/media/useGalleryMedia', () => ({
   __esModule: true,
   useGalleryMedia: (...args: unknown[]) => mockUseGalleryMedia(...args),
 }));

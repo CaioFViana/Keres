@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
-import { useOccurrenceFlash } from '@/src/hooks/useOccurrenceLanding';
+import { useOccurrenceFlash } from '@/src/hooks/nav/useOccurrenceLanding';
 import { useMentions } from '@/src/mentions/MentionContext';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

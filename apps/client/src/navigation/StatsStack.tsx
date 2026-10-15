@@ -4,7 +4,7 @@ import StatFormScreen from '@/src/screens/stats/StatFormScreen';
 import StatLadderScreen from '@/src/screens/stats/StatLadderScreen';
 import StatListScreen from '@/src/screens/stats/StatListScreen';
 import StatRankingScreen from '@/src/screens/stats/StatRankingScreen';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 
 export type StatsStackParamList = {
   StatList: undefined;

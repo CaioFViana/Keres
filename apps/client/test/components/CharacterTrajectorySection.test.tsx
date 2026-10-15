@@ -2,7 +2,7 @@ import { act, fireEvent, render, waitFor, within } from '@testing-library/react-
 import CharacterTrajectorySection from '@/src/components/features/trajectories/CharacterTrajectorySection';
 
 const mockTrajectoryData = jest.fn();
-jest.mock('@/src/hooks/useCharacterTrajectoryData', () => ({
+jest.mock('@/src/hooks/character/useCharacterTrajectoryData', () => ({
   useCharacterTrajectoryData: (...args: unknown[]) => mockTrajectoryData(...args),
 }));
 jest.mock('@/src/theme', () => ({
@@ -69,7 +69,7 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
   };
 });
 const mockNavigate = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 

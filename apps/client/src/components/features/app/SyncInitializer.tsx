@@ -12,9 +12,9 @@ import { setEditorDraftDb } from '@/src/services/EditorDraftService';
 import { createFriendshipService } from '@/src/services/FriendshipService';
 import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
 import { createServerService } from '@/src/services/ServerService';
-import { useFlushDraftsOnBackground } from '@/src/hooks/useFlushDraftsOnBackground';
-import { usePaymentDueWatcher } from '@/src/hooks/usePaymentDueWatcher';
-import { usePlanUsageWatcher } from '@/src/hooks/usePlanUsageWatcher';
+import { useFlushDraftsOnBackground } from '@/src/hooks/sync/useFlushDraftsOnBackground';
+import { usePaymentDueWatcher } from '@/src/hooks/billing/usePaymentDueWatcher';
+import { usePlanUsageWatcher } from '@/src/hooks/billing/usePlanUsageWatcher';
 import { ServerRealtimeService } from '@/src/services/ServerRealtimeService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import type { ServerStoryPreview } from '@/src/services/SyncEngineService';
@@ -26,7 +26,7 @@ import { useStoryStore } from '@/src/state/storyStore'; // Import useStoryStore
 import { useSyncConflictStore } from '@/src/state/syncConflictStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 interface SyncInitializerProps {
   children: React.ReactNode;

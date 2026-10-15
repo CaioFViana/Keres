@@ -55,21 +55,21 @@ jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: () => undefined,
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: typeof mockHeader) => {
     mockHeader = args;
   },
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/hooks/useSongs', () => ({
+jest.mock('@/src/hooks/music/useSongs', () => ({
   __esModule: true,
   useSongs: () => ({ songs: mockSongs, loading: mockLoading, reload: jest.fn() }),
 }));

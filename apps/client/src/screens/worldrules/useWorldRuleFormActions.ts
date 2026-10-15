@@ -1,5 +1,5 @@
 import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
+import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { WorldRule } from '@keres/shared/entities/WorldRule';
 import type { StorySchemaField } from '@keres/shared';
 import { StackActions } from '@react-navigation/native';

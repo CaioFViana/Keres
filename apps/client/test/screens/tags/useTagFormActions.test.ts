@@ -8,13 +8,13 @@ jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFi
 jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
-jest.mock('@/src/hooks/useAsyncOperation', () => ({
+jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('@/src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
 jest.mock('@/src/utils/AppAlert', () => ({

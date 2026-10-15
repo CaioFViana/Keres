@@ -6,8 +6,8 @@ import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/Skia
 import SkiaEdgeLabels from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeLabels';
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
-import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
-import { useGraphCanvasViewport } from '@/src/hooks/useGraphCanvasViewport';
+import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport';
+import { useGraphCanvasViewport } from '@/src/hooks/graph/useGraphCanvasViewport';
 import { useTheme } from '@/src/theme';
 import { EDGE_LABEL_MAX_CHARS } from '@keres/shared/graphs/edgeLabelPlacement';
 import { foldRelationType } from '@keres/shared/graphs/relationTypeColors';

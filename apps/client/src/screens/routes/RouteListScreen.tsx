@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,9 +7,9 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStoryRoutes } from '@/src/hooks/useStoryRoutes';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';

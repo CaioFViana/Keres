@@ -10,14 +10,14 @@ jest.mock('expo-image', () => ({
   __esModule: true,
   Image: 'ExpoImage',
 }));
-jest.mock('@/src/hooks/useGalleryMedia', () => ({
+jest.mock('@/src/hooks/media/useGalleryMedia', () => ({
   __esModule: true,
   useGalleryRow: (...args: unknown[]) => {
     mockGalleryRow(...args);
     return mockRow;
   },
 }));
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   __esModule: true,
   useResolvedMediaUri: () => mockUri,
 }));

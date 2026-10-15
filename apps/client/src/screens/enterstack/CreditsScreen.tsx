@@ -1,5 +1,5 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   APP_RELEASE,
   KERES_LATEST_RELEASE_URL,

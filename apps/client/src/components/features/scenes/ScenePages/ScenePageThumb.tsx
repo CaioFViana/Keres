@@ -3,10 +3,10 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
-import { useGalleryRow } from '@/src/hooks/useGalleryMedia';
-import { useGalleryThumbnailUri } from '@/src/hooks/useGalleryThumbnailUri';
+import { useGalleryRow } from '@/src/hooks/media/useGalleryMedia';
+import { useGalleryThumbnailUri } from '@/src/hooks/media/useGalleryThumbnailUri';
 import { useTheme } from '@/src/theme';
-import type { ScenePageView } from '@/src/hooks/useScenePages';
+import type { ScenePageView } from '@/src/hooks/scene/useScenePages';
 
 interface ScenePageThumbProps {
   /** The Gallery medium to draw; `null` draws the placeholder. */

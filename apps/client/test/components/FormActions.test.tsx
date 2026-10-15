@@ -2,7 +2,7 @@ import { render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
@@ -14,7 +14,7 @@ jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   })),
 }));
 
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
 

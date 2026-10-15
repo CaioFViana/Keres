@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -17,9 +17,9 @@ import type { PlotSelect } from '@/src/db/schema';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import type { AdvancedSearchCriteria } from '@/src/utils/advancedSearchCriteria';
 import { plotMatches } from '@/src/utils/plotSearch';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryPlots } from '@/src/hooks/useStoryPlots';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type {
   MainSystemDrawerParamList,
   PlotsStackParamList,

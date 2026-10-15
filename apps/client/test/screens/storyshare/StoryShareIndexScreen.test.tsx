@@ -40,13 +40,13 @@ jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const { Text } = require('react-native');
   return { __esModule: true, default: ({ title }: { title: string }) => <Text>{title}</Text> };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: () => {} }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canManageStoryPolicy: mockCanManage, loading: mockRoleLoading }),
 }));
-jest.mock('@/src/hooks/useStoryBackupExport', () => ({
+jest.mock('@/src/screens/storyshare/useStoryBackupExport', () => ({
   useStoryBackupExport: (story: unknown) => {
     mockBackupArgs(story);
     return { exporting: mockExporting, exportJson: mockExportJson, exportZip: mockExportZip };

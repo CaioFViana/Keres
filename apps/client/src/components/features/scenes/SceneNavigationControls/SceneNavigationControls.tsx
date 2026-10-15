@@ -6,7 +6,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

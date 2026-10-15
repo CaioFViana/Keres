@@ -1,11 +1,11 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
-import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
@@ -20,7 +20,7 @@ import EntityGalleryManager from '@/src/components/features/gallery/GalleryManag
 import ItemJourneyTimeline from '@/src/components/features/item-journeys/ItemJourney/ItemJourneyTimeline';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
-import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
+import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -29,16 +29,16 @@ import { useTranslation } from 'react-i18next';
 
 import { useDrizzle } from '@/src/db';
 import type { CharacterSelect, ItemSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityInitialLoad,
   useEntityEventSubscriptions,
-} from '@/src/hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
-import { useOpenPresenceMatrixViewer } from '@/src/hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import { createItemService } from '@/src/services/storymanagement/ItemService';
 import { useStoryStore } from '@/src/state/storyStore';

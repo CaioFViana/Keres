@@ -9,7 +9,7 @@ import StorySchemaListScreen from '@/src/screens/storyschema/StorySchemaListScre
 import SuggestionsScreen from '@/src/screens/suggestions/SuggestionsScreen';
 import SuggestionUsageScreen from '@/src/screens/suggestions/SuggestionUsageScreen';
 import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 
 export type StorySettingsStackParamList = {
   StorySettingsIndex: undefined;

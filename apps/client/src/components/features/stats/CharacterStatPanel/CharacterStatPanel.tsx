@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import { useTheme } from '@/src/theme';
 import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
 import {

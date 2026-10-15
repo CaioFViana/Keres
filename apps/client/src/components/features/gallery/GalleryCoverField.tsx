@@ -1,8 +1,8 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { GallerySelect } from '@/src/db/schema';
-import { useGalleryImages, useGalleryRow } from '@/src/hooks/useGalleryMedia';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useGalleryImages, useGalleryRow } from '@/src/hooks/media/useGalleryMedia';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
 import { useTheme } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';

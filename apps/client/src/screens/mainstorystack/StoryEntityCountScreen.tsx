@@ -7,11 +7,11 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useDrizzle } from '@/src/db';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type { StoryPlan } from '@keres/shared';
 import type { StoryEntityCounts } from '@/src/services/storymanagement/StoryEntityCountService';
 import { createStoryEntityCountService } from '@/src/services/storymanagement/StoryEntityCountService';

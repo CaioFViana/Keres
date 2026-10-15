@@ -237,7 +237,7 @@ jest.mock('@/src/state/boardDraftStore', () => ({
   useBoardDraftStore: { getState: () => ({ hydrate: mockHydrate, remember: mockRemember }) },
 }));
 
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -246,11 +246,11 @@ jest.mock('@/src/hooks/useStoryRole', () => ({
   }),
 }));
 
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('@/src/hooks/useBoardPinOptions', () => ({
+jest.mock('@/src/screens/boards/useBoardPinOptions', () => ({
   useBoardPinOptions: () => mockPinOptions,
   decodeBoardPinValue: (value: string) => {
     const separator = value.indexOf(':');
@@ -259,7 +259,7 @@ jest.mock('@/src/hooks/useBoardPinOptions', () => ({
   },
 }));
 
-jest.mock('@/src/hooks/useBoardCanvasLayout', () => ({
+jest.mock('@/src/screens/boards/useBoardCanvasLayout', () => ({
   useBoardCanvasLayout: () => ({
     handleMoveNode: jest.fn(),
     handleResizeNode: jest.fn(),
@@ -285,13 +285,13 @@ jest.mock('@/src/utils/storyMapSvgExport', () => ({
   buildStandaloneBoardSvg: (...a: any[]) => mockBuildSvg(...a),
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: ({ renderActions }: any = {}) => {
     (global as any).__headerActions = renderActions;
   },
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 jest.mock('@/src/db', () => {

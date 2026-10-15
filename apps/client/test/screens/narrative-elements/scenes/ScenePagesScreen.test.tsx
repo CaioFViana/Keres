@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import type { ScenePageView } from '@/src/hooks/useScenePages';
+import type { ScenePageView } from '@/src/hooks/scene/useScenePages';
 import ScenePagesScreen from '@/src/screens/narrative-elements/scenes/ScenePagesScreen';
 
 const mockGoBack = jest.fn();
@@ -77,45 +77,45 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   __esModule: true,
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: typeof mockHeader) => {
     mockHeader = args;
   },
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/hooks/useSceneArcMedium', () => ({
+jest.mock('@/src/hooks/scene/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
-jest.mock('@/src/hooks/useSceneArcPageFormat', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneArcPageFormat', () => ({
   __esModule: true,
   useSceneArcPageFormat: () => 'comic-us',
 }));
-jest.mock('@/src/hooks/useNavigateAcrossStacks', () => ({
+jest.mock('@/src/hooks/nav/useNavigateAcrossStacks', () => ({
   __esModule: true,
   useNavigateAcrossStacks: () => mockNavigateAcross,
 }));
-jest.mock('@/src/hooks/useAddScenePages', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useAddScenePages', () => ({
   __esModule: true,
   useAddScenePages: () => ({ drawNewPage: mockDrawNewPage, uploadPictures: mockUploadPictures }),
 }));
-jest.mock('@/src/hooks/useScenePages', () => ({
+jest.mock('@/src/hooks/scene/useScenePages', () => ({
   __esModule: true,
   useScenePages: () => ({ pages: mockViews, loading: false, reload: jest.fn() }),
 }));
-jest.mock('@/src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   __esModule: true,
   useConfirmDelete: () => mockConfirmDelete,
 }));

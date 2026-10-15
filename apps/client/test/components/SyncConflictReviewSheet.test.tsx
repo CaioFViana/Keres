@@ -59,7 +59,7 @@ jest.mock('@/src/state/syncConflictStore', () => ({
 }));
 
 let mockSummaries: ConflictSummary[] = [];
-jest.mock('@/src/hooks/useConflictReviewData', () => ({
+jest.mock('@/src/hooks/sync/useConflictReviewData', () => ({
   __esModule: true,
   useConflictReviewData: () => ({ summaries: mockSummaries }),
 }));
@@ -70,7 +70,7 @@ const mockActions = {
   keepServer: jest.fn(),
   keepServerAndCloneBoard: jest.fn(),
 };
-jest.mock('@/src/hooks/useSyncConflictActions', () => ({
+jest.mock('@/src/hooks/sync/useSyncConflictActions', () => ({
   __esModule: true,
   useSyncConflictActions: () => mockActions,
 }));

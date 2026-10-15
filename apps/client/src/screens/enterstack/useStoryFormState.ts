@@ -1,4 +1,4 @@
-import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
+import { useStoryIdentityDraft } from '@/src/hooks/forms/useStoryIdentityDraft';
 import { DEFAULT_ARC_MEDIUM, type ArcMedium } from '@keres/shared/metadata/ArcMedium';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';

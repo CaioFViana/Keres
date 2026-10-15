@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -18,8 +18,8 @@ import {
 import { useDrizzle } from '@/src/db';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type {
   MainSystemDrawerParamList,
   StoryAnalysisStackParamList,

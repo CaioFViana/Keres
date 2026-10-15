@@ -26,12 +26,12 @@ jest.mock('react-i18next', () => ({
 jest.mock('expo-image', () => ({ Image: () => null }));
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 
 const mockUseEntityGalleryMedia = jest.fn();
-jest.mock('@/src/hooks/useEntityGalleryMedia', () => ({
+jest.mock('@/src/hooks/media/useEntityGalleryMedia', () => ({
   useEntityGalleryMedia: (...args: unknown[]) => mockUseEntityGalleryMedia(...args),
 }));
 

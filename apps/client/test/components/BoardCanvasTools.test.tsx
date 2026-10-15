@@ -42,7 +42,7 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     default: (props: Record<string, unknown>) => <RN.View testID="multi-select-pill" {...props} />,
   };
 });
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
@@ -54,7 +54,7 @@ jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   })),
 }));
 
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockScreenAnchor = jest.fn();
 jest.mock('@/src/guides/useGuideAnchor', () => ({

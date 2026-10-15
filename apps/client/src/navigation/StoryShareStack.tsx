@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import ManuscriptExportScreen from '@/src/screens/narrative-elements/scenes/ManuscriptExportScreen';
 import StoryPublishScreen from '@/src/screens/storyshare/StoryPublishScreen';
 import StoryShareIndexScreen from '@/src/screens/storyshare/StoryShareIndexScreen';

@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
@@ -15,21 +15,21 @@ import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/sha
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { BoardSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBoardCanvasLayout } from '@/src/hooks/useBoardCanvasLayout';
-import { useCanvasOverlayActions } from '@/src/hooks/useCanvasOverlayActions';
-import { useBoardNodeTitles } from '@/src/hooks/useBoardNodeTitles';
-import { decodeBoardPinValue, useBoardPinOptions } from '@/src/hooks/useBoardPinOptions';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBoardCanvasLayout } from '@/src/screens/boards/useBoardCanvasLayout';
+import { useCanvasOverlayActions } from '@/src/hooks/canvas/useCanvasOverlayActions';
+import { useBoardNodeTitles } from '@/src/screens/boards/useBoardNodeTitles';
+import { decodeBoardPinValue, useBoardPinOptions } from '@/src/screens/boards/useBoardPinOptions';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { BoardStackParamList } from '@/src/navigation/MainSystemStack';
 import { createBoardService } from '@/src/services/storymanagement/BoardService';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';

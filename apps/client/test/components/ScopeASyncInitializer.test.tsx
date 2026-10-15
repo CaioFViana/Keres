@@ -66,11 +66,11 @@ const mockRealtimeClass = jest.fn(() => ({
   subscribeToStory: mockRtSubscribe,
 }));
 const mockPlanUsageWatcher = jest.fn();
-jest.mock('@/src/hooks/usePlanUsageWatcher', () => ({
+jest.mock('@/src/hooks/billing/usePlanUsageWatcher', () => ({
   usePlanUsageWatcher: (...args: unknown[]) => mockPlanUsageWatcher(...args),
 }));
 const mockPaymentDueWatcher = jest.fn();
-jest.mock('@/src/hooks/usePaymentDueWatcher', () => ({
+jest.mock('@/src/hooks/billing/usePaymentDueWatcher', () => ({
   usePaymentDueWatcher: (...args: unknown[]) => mockPaymentDueWatcher(...args),
 }));
 jest.mock('@/src/services/ServerRealtimeService', () => ({
@@ -177,7 +177,7 @@ jest.mock('@/src/utils/EventEmitter', () => ({
 }));
 
 const mockInitialLoad = jest.fn();
-jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => ({
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => ({
   useEntityInitialLoad: (...args: unknown[]) => mockInitialLoad(...args),
 }));
 

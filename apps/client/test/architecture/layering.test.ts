@@ -454,7 +454,10 @@ describe('file size', () => {
 
 describe('shared entity form actions', () => {
   it('owns the save flow every entity form configures: secondary data, attributes, event, feedback', () => {
-    const shared = readFileSync(resolve(SOURCE_ROOT, 'hooks/useEntityFormActions.ts'), 'utf8');
+    const shared = readFileSync(
+      resolve(SOURCE_ROOT, 'hooks/forms/useEntityFormActions.ts'),
+      'utf8',
+    );
 
     expect(shared).toContain('saveEntityWithSecondaryData');
     expect(shared).toContain('createAttributeValueService');

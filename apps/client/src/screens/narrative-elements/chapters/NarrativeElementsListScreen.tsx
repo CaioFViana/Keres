@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -21,12 +21,12 @@ import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '@/src/
 import { AppAlert } from '@/src/utils/AppAlert';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
-import { useArcSearchScope } from '@/src/hooks/useArcSearchScope';
+import { useArcSearchScope } from '@/src/hooks/arcs/useArcSearchScope';
 import { chapterBelongsToArc } from '@/src/utils/storyArcFilter';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useTagChangeReload } from '@/src/hooks/useTagChangeReload';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
 import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,

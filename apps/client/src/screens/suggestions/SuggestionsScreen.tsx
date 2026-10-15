@@ -1,5 +1,5 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -18,9 +18,9 @@ import { useDrizzle } from '@/src/db';
 import SuggestionGroupChooser, { type SuggestionGroup } from './SuggestionGroupChooser';
 import type { SuggestionSelect } from '@/src/db/schema';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
 import {
   createSuggestionService,

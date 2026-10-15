@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -13,13 +13,13 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useRouteChronology } from '@/src/hooks/useRouteChronology';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useRouteChronology } from '@/src/screens/routes/useRouteChronology';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
 import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useTranslation } from 'react-i18next';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteTimeline'>;

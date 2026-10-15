@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
@@ -8,10 +8,10 @@ import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useStoryPlots } from '@/src/hooks/useStoryPlots';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';

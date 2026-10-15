@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useScenePageChoices } from '@/src/hooks/useGalleryMedia';
+import { useScenePageChoices } from '@/src/hooks/media/useGalleryMedia';
 import { useTheme } from '@/src/theme';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 

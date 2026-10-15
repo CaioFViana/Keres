@@ -23,7 +23,7 @@ import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeMan
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
-import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
@@ -41,7 +41,7 @@ import type {
   StoryArcSelect,
   TagSelect,
 } from '@/src/db/schema';
-import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
 
 export type CharacterDetailContentProps = {

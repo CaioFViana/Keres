@@ -1,7 +1,7 @@
 import { Button, SingleSelectPill } from '@/src/components/common';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useStoryServerCollaboration } from '@/src/hooks/useStoryServerCollaboration';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryServerCollaboration } from '@/src/hooks/social/useStoryServerCollaboration';
 import { Ionicons } from '@expo/vector-icons';
 import type { ThemeColors } from '@keres/shared';
 import { useMemo } from 'react';

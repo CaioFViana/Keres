@@ -58,7 +58,7 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   }),
 }));
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,

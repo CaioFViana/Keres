@@ -1,5 +1,5 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
@@ -16,22 +16,22 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { stripManuscriptMarkers } from '@keres/shared';
-import { readStoredSceneBodyText } from '@/src/hooks/useSceneBodyDraft';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { readStoredSceneBodyText } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
-import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '@/src/hooks/useEntityRefreshLifecycle';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';

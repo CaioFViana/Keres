@@ -12,11 +12,11 @@ jest.mock('react-i18next', () => ({
       options?.count !== undefined ? `${key}:${options.count}` : key,
   }),
 }));
-jest.mock('@/src/hooks/useSceneArcMedium', () => ({
+jest.mock('@/src/hooks/scene/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
-jest.mock('@/src/hooks/useScenePages', () => ({
+jest.mock('@/src/hooks/scene/useScenePages', () => ({
   __esModule: true,
   useScenePages: () => ({
     pages: Array.from({ length: mockPageCount }, (_, index) => ({ page: { id: `p${index}` } })),

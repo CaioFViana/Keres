@@ -1,5 +1,5 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,11 +14,11 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStoryTagFilterOptions } from '@/src/hooks/useStoryTagFilterOptions';
-import { useTitleDateSortOptions } from '@/src/hooks/useTitleDateSortOptions';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOptions';
+import { useTitleDateSortOptions } from '@/src/hooks/lists/useTitleDateSortOptions';
 import type {
   MainSystemDrawerParamList,
   NotesStackParamList,

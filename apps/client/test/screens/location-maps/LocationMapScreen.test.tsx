@@ -126,21 +126,21 @@ jest.mock('@/src/components/features/graphs/GraphCanvasControls/GraphCanvasContr
 }));
 
 // ---- the hooks around the document ----
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: jest.fn(),
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: ({ renderActions }: any = {}) => {
     (global as any).__headerActions = renderActions;
   },
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   useStoryRole: () => ({ role: 'owner', canEdit: mockCanEdit, loading: false }),
 }));
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => jest.fn(),
 }));
-jest.mock('@/src/hooks/useLocationMapRelations', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapRelations', () => ({
   useLocationMapRelations: () => ({
     connections: [],
     contains: [],
@@ -160,16 +160,16 @@ jest.mock('@/src/hooks/useLocationMapRelations', () => ({
     handleRemoveRelation: jest.fn(),
   }),
 }));
-jest.mock('@/src/hooks/useLocationMapExport', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapExport', () => ({
   useLocationMapExport: () => jest.fn(),
 }));
-jest.mock('@/src/hooks/useLocationMapImageUris', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapImageUris', () => ({
   useLocationMapImageUris: () => ({ galleryMediaById: {}, imageUris: {}, nodeNames: {} }),
 }));
-jest.mock('@/src/hooks/useLocationMapNodeSummary', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapNodeSummary', () => ({
   useLocationMapNodeSummary: () => ({ selectedNode: null, selectedNodeSummary: null }),
 }));
-jest.mock('@/src/hooks/useLocationMapTrajectories', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapTrajectories', () => ({
   useLocationMapTrajectories: () => ({
     hasSelection: false,
     setPickerOpen: jest.fn(),
@@ -184,7 +184,7 @@ jest.mock('@/src/hooks/useLocationMapTrajectories', () => ({
     routeId: null,
   }),
 }));
-jest.mock('@/src/hooks/useCanvasOverlayActions', () => ({
+jest.mock('@/src/hooks/canvas/useCanvasOverlayActions', () => ({
   useCanvasOverlayActions: () => ({
     selectMode: false,
     drawTool: null,
@@ -204,7 +204,7 @@ jest.mock('@/src/hooks/useCanvasOverlayActions', () => ({
   }),
 }));
 // "Add marker" is the one edit this test needs: it puts a node into the document through the screen's own setContent.
-jest.mock('@/src/hooks/useLocationMapCanvasActions', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapCanvasActions', () => ({
   useLocationMapCanvasActions: (args: any) => ({
     imageOptions: [],
     locationOptions: [],

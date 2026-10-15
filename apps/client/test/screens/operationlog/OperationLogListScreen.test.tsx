@@ -9,8 +9,8 @@ jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: () => {} }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { textSecondary: '#666' } }),
 }));

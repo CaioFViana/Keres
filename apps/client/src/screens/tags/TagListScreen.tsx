@@ -1,5 +1,5 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,8 +15,8 @@ import {
 import TagListItem from '@/src/components/features/list-items/TagListItem';
 import type { TagSelect } from '@/src/db/schemas/tags';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
 import type {
   MainSystemDrawerParamList,
   TagsStackParamList,

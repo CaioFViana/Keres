@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { GuidedEmptyState } from '@/src/components/common/lists/GenericFilterSortList/ListEmptyStates';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
@@ -11,8 +11,8 @@ import ServerFriendsHeader from '@/src/components/features/friendship/ServerFrie
 import StoryInvitationList from '@/src/components/features/story/StoryInvitationList/StoryInvitationList';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schemas/servers';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useFriendshipActionHandler } from '@/src/hooks/useFriendshipActionHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFriendshipActionHandler } from '@/src/screens/enterstack/useFriendshipActionHandler';
 import type {
   FriendshipStackParamList,
   StorySelectionDrawerParamList,

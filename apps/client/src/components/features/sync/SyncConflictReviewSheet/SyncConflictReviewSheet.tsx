@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
-import { useConflictReviewData } from '@/src/hooks/useConflictReviewData';
-import { useSyncConflictActions } from '@/src/hooks/useSyncConflictActions';
+import { useConflictReviewData } from '@/src/hooks/sync/useConflictReviewData';
+import { useSyncConflictActions } from '@/src/hooks/sync/useSyncConflictActions';
 import { useSyncConflictStore } from '@/src/state/syncConflictStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import type { ThemeColors } from '@/src/theme';

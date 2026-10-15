@@ -90,11 +90,11 @@ jest.mock('@/src/state/storyStore', () => {
   });
   return { __esModule: true, useStoryStore };
 });
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => mockResponsiveLayout),
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: jest.fn(),
 }));
@@ -141,7 +141,7 @@ const mockStoryArcs = {
   showSelector: false,
   reload: jest.fn(),
 };
-jest.mock('@/src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => mockStoryArcs,
 }));

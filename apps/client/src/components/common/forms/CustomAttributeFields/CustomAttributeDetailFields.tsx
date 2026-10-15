@@ -13,13 +13,13 @@ import {
   formatCalendarDate,
   joinSuggestionListForDisplay,
 } from '@keres/shared';
-import { useCustomAttributeValues } from '@/src/hooks/useCustomAttributeValues';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useCustomAttributeValues } from '@/src/hooks/entity/useCustomAttributeValues';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 

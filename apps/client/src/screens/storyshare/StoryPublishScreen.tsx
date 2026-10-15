@@ -6,8 +6,8 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { PublicationLabelMode } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -23,8 +23,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { type ThemeColors, useTheme } from '@/src/theme';

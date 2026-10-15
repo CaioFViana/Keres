@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { useEntityComments } from '@/src/hooks/useEntityComments';
+import type { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import type CommentableDetailField from './CommentableDetailField';
 
 type FieldProps = React.ComponentProps<typeof CommentableDetailField>;

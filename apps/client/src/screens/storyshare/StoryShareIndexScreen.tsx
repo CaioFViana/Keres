@@ -1,14 +1,14 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryBackupExport } from '@/src/hooks/useStoryBackupExport';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryBackupExport } from '@/src/screens/storyshare/useStoryBackupExport';
 import type { StoryShareStackParamList } from '@/src/navigation/StoryShareStack';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { type ThemeColors, useTheme } from '@/src/theme';

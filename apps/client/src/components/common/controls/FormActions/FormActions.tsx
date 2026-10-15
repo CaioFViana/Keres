@@ -1,7 +1,7 @@
 import React, { Children, isValidElement, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 /**
  * The row of actions that closes a form, a modal or a detail screen.

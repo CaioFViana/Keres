@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
+import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type {
   createPlotSceneService,
   SavePlotScene,

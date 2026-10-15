@@ -10,7 +10,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { CharacterSelect, ItemSelect } from '@/src/db/schema';
-import { usePresenceMatrixCatalog } from '@/src/hooks/usePresenceMatrixCatalog';
+import { usePresenceMatrixCatalog } from '@/src/hooks/character/usePresenceMatrixCatalog';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '@/src/state/presenceMatrixViewerStore';
 import { useStoryStore } from '@/src/state/storyStore';

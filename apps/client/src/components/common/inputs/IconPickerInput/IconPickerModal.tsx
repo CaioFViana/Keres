@@ -19,8 +19,8 @@ import {
 } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useIconRecents } from '@/src/hooks/useIconRecents';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useIconRecents } from '@/src/hooks/ui/useIconRecents';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 

@@ -76,38 +76,38 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   __esModule: true,
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => jest.fn(),
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: typeof mockHeader) => {
     mockHeader = args;
   },
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   __esModule: true,
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('@/src/hooks/useSongs', () => ({
+jest.mock('@/src/hooks/music/useSongs', () => ({
   __esModule: true,
   useSong: () => mockSong,
   useSongUses: () => mockUses,
 }));
-jest.mock('@/src/hooks/useSongPlayback', () => ({
+jest.mock('@/src/hooks/music/useSongPlayback', () => ({
   __esModule: true,
   useSongPlayback: () => ({
     ...mockPlayback,

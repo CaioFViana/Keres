@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useNavigation } from '@react-navigation/native';
@@ -8,8 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useMessageInbox } from '@/src/hooks/useMessageInbox';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useMessageInbox } from '@/src/screens/enterstack/useMessageInbox';
 import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
 import type { InboxEntry, MessageContact } from '@/src/services/MessageService';
 import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';

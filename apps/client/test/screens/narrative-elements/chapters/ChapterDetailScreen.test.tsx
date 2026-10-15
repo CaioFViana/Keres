@@ -47,12 +47,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: {
     title: string;
@@ -62,7 +62,7 @@ jest.mock('@/src/hooks/useScreenHeader', () => ({
   },
 }));
 
-jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -79,7 +79,7 @@ jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   };
 });
 
-jest.mock('@/src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: {},
@@ -92,7 +92,7 @@ jest.mock('@/src/hooks/useEntityComments', () => ({
   }),
 }));
 
-jest.mock('@/src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [{ id: 'tag-1', name: 'Tag' }],
@@ -103,22 +103,22 @@ jest.mock('@/src/hooks/useEntityRelations', () => ({
   }),
 }));
 
-jest.mock('@/src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: mockArcs, showSelector: mockShowSelector }),
 }));
 
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('@/src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => ({ definition: { id: 'cal-1' } }),
 }));
 
-jest.mock('@/src/hooks/useSceneCalendarDates', () => ({
+jest.mock('@/src/hooks/scene/useSceneCalendarDates', () => ({
   __esModule: true,
   useSceneCalendarDates: () => ({ dateForScene: mockDateForScene }),
 }));

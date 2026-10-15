@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HighlightedText from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
 import type { GallerySelect } from '@/src/db/schemas/galleries';
-import { useGalleryThumbnailUri } from '@/src/hooks/useGalleryThumbnailUri';
+import { useGalleryThumbnailUri } from '@/src/hooks/media/useGalleryThumbnailUri';
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 

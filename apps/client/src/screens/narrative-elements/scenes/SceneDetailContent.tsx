@@ -17,7 +17,7 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
-import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { Ionicons } from '@expo/vector-icons';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';

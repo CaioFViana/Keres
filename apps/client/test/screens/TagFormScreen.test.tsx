@@ -14,12 +14,12 @@ jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFi
 jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: () => {} }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: false }),
 }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 24,
 }));
 jest.mock('@/src/theme', () => ({

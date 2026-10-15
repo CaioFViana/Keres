@@ -8,7 +8,7 @@ import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import type { FriendshipWithServer } from '@/src/services/FriendshipService';
 import { useTheme } from '@/src/theme';
 import { getCommonCardStyles } from '@/src/theme/commonStyles';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import FriendChatButton from '@/src/components/features/messages/FriendChatButton';
 import FriendActionsModal, { type FriendAction } from './FriendActionsModal';
 

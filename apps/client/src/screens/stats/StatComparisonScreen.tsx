@@ -1,5 +1,5 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,9 +11,9 @@ import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
 import { useNotificationStore } from '@/src/state/notificationStore';

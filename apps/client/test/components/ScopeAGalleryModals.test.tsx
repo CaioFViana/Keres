@@ -61,7 +61,7 @@ jest.mock('@/src/components/common/controls/Button/Button', () => {
 });
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 

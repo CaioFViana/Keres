@@ -58,9 +58,9 @@ import {
 import { songPrintOf } from '@/src/components/features/manuscript/export/songPrintOf';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
-import { useManuscriptData } from '@/src/hooks/useManuscriptData';
-import { useStoryArcs } from '@/src/hooks/useStoryArcs';
+import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
+import { useManuscriptData } from '@/src/screens/narrative-elements/scenes/useManuscriptData';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';

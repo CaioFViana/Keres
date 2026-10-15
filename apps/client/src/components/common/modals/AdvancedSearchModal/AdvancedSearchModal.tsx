@@ -7,7 +7,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import Button from '@/src/components/common/controls/Button/Button';
-import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import { useTheme } from '@/src/theme';
 import {
   activeCriteria,

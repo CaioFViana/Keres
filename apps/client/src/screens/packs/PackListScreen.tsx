@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
@@ -18,7 +18,7 @@ import type { ServerSelect } from '@/src/db/schema';
 import { packApiService } from '@/src/services/PackApiService';
 import { createServerService } from '@/src/services/ServerService';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { createPackService, type PackSummary } from '@/src/services/storymanagement/PackService';
 import { packExtrasChips } from '@/src/utils/packChips';
 import { useNotificationStore } from '@/src/state/notificationStore';

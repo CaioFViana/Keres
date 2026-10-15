@@ -9,8 +9,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { OperationLogSelect } from '@/src/db/schema';
-import { useEntityName } from '@/src/hooks/useEntityName';
-import { useUserDisplayName } from '@/src/hooks/useUserDisplayName'; // Import the new hook
+import { useEntityName } from '@/src/hooks/entity/useEntityName';
+import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName'; // Import the new hook
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';

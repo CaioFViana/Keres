@@ -3,15 +3,15 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { usePaymentHistory } from '@/src/hooks/usePaymentHistory';
-import { useServerStatuses } from '@/src/hooks/useServerStatuses';
+import { usePaymentHistory } from '@/src/screens/enterstack/usePaymentHistory';
+import { useServerStatuses } from '@/src/screens/enterstack/useServerStatuses';
 import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
 import type { ThemeColors } from '@/src/theme';
 import { useTheme } from '@/src/theme';

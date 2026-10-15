@@ -3,7 +3,7 @@ import type { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo } from 'react';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { toNavigableEntityType } from '@/src/utils/entityNavigation';
 
 export interface RelatedEntityItem {

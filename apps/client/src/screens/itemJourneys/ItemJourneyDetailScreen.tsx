@@ -1,11 +1,11 @@
 import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
-import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -24,15 +24,15 @@ import CommentableDetailField from '@/src/components/features/comments/Commentab
 import TagList from '@/src/components/common/display/TagList/TagList';
 import { useDrizzle } from '@/src/db';
 import type { ItemJourneySelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityInitialLoad,
   useEntityEventSubscriptions,
-} from '@/src/hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
 import { useCharacterStore } from '@/src/state/characterStore';
 import { useItemStore } from '@/src/state/itemStore';

@@ -43,24 +43,24 @@ jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
-jest.mock('@/src/hooks/useServerStatuses', () => ({
+jest.mock('@/src/screens/enterstack/useServerStatuses', () => ({
   useServerStatuses: (...args: unknown[]) => mockStatuses(...args),
 }));
-jest.mock('@/src/hooks/usePaymentOverview', () => ({
+jest.mock('@/src/screens/enterstack/usePaymentOverview', () => ({
   usePaymentOverview: (...args: unknown[]) => mockOverview(...args),
 }));
-jest.mock('@/src/hooks/usePlanCheckout', () => ({
+jest.mock('@/src/screens/enterstack/usePlanCheckout', () => ({
   usePlanCheckout: (...args: unknown[]) => mockCheckout(...args),
 }));
-jest.mock('@/src/hooks/useSwitchQuote', () => ({
+jest.mock('@/src/screens/enterstack/useSwitchQuote', () => ({
   useSwitchQuote: (...args: unknown[]) => mockSwitchQuote(...args),
 }));
-jest.mock('@/src/hooks/usePlanCancellation', () => ({
+jest.mock('@/src/screens/enterstack/usePlanCancellation', () => ({
   usePlanCancellation: (...args: unknown[]) => mockCancelRenewal(...args),
 }));
 jest.mock('@/src/services/PaymentService', () => ({

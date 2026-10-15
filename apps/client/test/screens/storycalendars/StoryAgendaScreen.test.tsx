@@ -68,7 +68,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
@@ -94,19 +94,19 @@ jest.mock('@/src/screens/storycalendars/AgendaDateLookup', () => {
     GregorianCalendarDateLookup: stub('gregorian-lookup'),
   };
 });
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useStoryAgenda', () => ({
+jest.mock('@/src/screens/storycalendars/useStoryAgenda', () => ({
   __esModule: true,
   useStoryAgenda: () => mockAgendaState.current,
 }));
-jest.mock('@/src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => mockCalendarState.current,
 }));
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));

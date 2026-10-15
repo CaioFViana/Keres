@@ -20,7 +20,7 @@ jest.mock('@react-navigation/native-stack', () => ({
     },
   }),
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: jest.fn(),
 }));
@@ -349,7 +349,7 @@ jest.mock('@/src/screens/worldrules/WorldRuleListScreen', () => ({
   default: () => null,
 }));
 
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   BoardsStackNavigator,
   CharacterStackNavigator,

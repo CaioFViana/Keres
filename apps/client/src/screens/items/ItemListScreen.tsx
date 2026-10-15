@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -24,13 +24,13 @@ import type {
 } from '@/src/db/schema';
 import type { ItemSelect } from '@/src/db/schemas/items';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
-import { useEntityArcScope } from '@/src/hooks/useEntityArcScope';
-import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
-import { useOpenPresenceMatrixViewer } from '@/src/hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useTagChangeReload } from '@/src/hooks/useTagChangeReload';
+import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
 import type {
   ItemStackParamList,
   MainSystemDrawerParamList,

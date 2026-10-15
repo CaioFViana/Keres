@@ -5,7 +5,7 @@ import {
   type ServerStoryInvitation,
   type StoryInvitationServerLookup,
   useStoryInvitationList,
-} from '@/src/hooks/useStoryInvitationList';
+} from '@/src/hooks/social/useStoryInvitationList';
 import { useTheme } from '@/src/theme';
 import { getCommonCardStyles } from '@/src/theme/commonStyles';
 

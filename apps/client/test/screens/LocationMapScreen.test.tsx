@@ -39,7 +39,7 @@ jest.mock('@react-navigation/native', () => {
 });
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
@@ -47,7 +47,7 @@ jest.mock('@/src/utils/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
@@ -80,15 +80,15 @@ jest.mock('@/src/state/locationMapDraftStore', () => ({
 }));
 
 const mockNavigateToEntity = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToEntity,
 }));
-jest.mock('@/src/hooks/useResolvedMediaUris', () => ({
+jest.mock('@/src/screens/location-maps/useResolvedMediaUris', () => ({
   __esModule: true,
   useResolvedMediaUris: () => ({}),
 }));
-jest.mock('@/src/hooks/useLocationMapRelations', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapRelations', () => ({
   __esModule: true,
   useLocationMapRelations: () => ({
     connections: [],
@@ -154,7 +154,7 @@ jest.mock('@/src/components/features/location-maps/LocationMapCanvas', () => {
     }),
   };
 });
-jest.mock('@/src/hooks/useLocationMapTrajectories', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapTrajectories', () => ({
   __esModule: true,
   useLocationMapTrajectories: () => ({
     characters: [],

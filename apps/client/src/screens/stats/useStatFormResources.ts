@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useDrizzle } from '@/src/db';
-import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import { createStatService, type StatService } from '@/src/services/storymanagement/StatService';
 
 /** Owns the stat service and story-scoped stats lookup used by the form. */

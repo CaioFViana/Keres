@@ -36,7 +36,7 @@ jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { on: jest.fn(), off: jest.fn() },
 }));
-jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => ({
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => ({
   __esModule: true,
   useEntityInitialLoad: jest.fn(),
 }));
@@ -56,7 +56,7 @@ jest.mock('@/src/utils/debounce', () => ({
 }));
 
 import { DrizzleContext } from '@/src/db';
-import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import {
   MentionAmbiguityContext,
   MentionBacklinksContext,

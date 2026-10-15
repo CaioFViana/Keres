@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
@@ -20,12 +20,12 @@ import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { TagSelect } from '@/src/db/schema'; // Import TagSelect
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '@/src/hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { EntityService } from '@/src/services/EntityService'; // Import EntityService
 import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService'; // Import createTagRelationService
 import { createTagService } from '@/src/services/storymanagement/TagService'; // Import createTagService

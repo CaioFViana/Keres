@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { generateLocationMapLocalId, type LocationMapContentType } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -29,18 +29,18 @@ import type {
   LocationRelationSelect,
   LocationSelect,
 } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useLocationMapRelations } from '@/src/hooks/useLocationMapRelations';
-import { useLocationMapCanvasActions } from '@/src/hooks/useLocationMapCanvasActions';
-import { useLocationMapExport } from '@/src/hooks/useLocationMapExport';
+import { useLocationMapRelations } from '@/src/screens/location-maps/useLocationMapRelations';
+import { useLocationMapCanvasActions } from '@/src/screens/location-maps/useLocationMapCanvasActions';
+import { useLocationMapExport } from '@/src/screens/location-maps/useLocationMapExport';
 import { exportFileLanguage } from '@/src/utils/storyTransfer';
-import { useCanvasOverlayActions } from '@/src/hooks/useCanvasOverlayActions';
-import { useLocationMapImageUris } from '@/src/hooks/useLocationMapImageUris';
-import { useLocationMapNodeSummary } from '@/src/hooks/useLocationMapNodeSummary';
-import { useLocationMapTrajectories } from '@/src/hooks/useLocationMapTrajectories';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useCanvasOverlayActions } from '@/src/hooks/canvas/useCanvasOverlayActions';
+import { useLocationMapImageUris } from '@/src/screens/location-maps/useLocationMapImageUris';
+import { useLocationMapNodeSummary } from '@/src/screens/location-maps/useLocationMapNodeSummary';
+import { useLocationMapTrajectories } from '@/src/screens/location-maps/useLocationMapTrajectories';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
 import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';

@@ -57,8 +57,8 @@ const mockI18n = { language: 'en' };
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT, i18n: mockI18n }),
 }));
-jest.mock('@/src/hooks/useSketchCompact', () => ({
-  ...jest.requireActual('@/src/hooks/useSketchCompact'),
+jest.mock('@/src/hooks/sketch/useSketchCompact', () => ({
+  ...jest.requireActual('@/src/hooks/sketch/useSketchCompact'),
   useSketchCompact: () => false,
 }));
 jest.mock('@/src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
@@ -146,7 +146,7 @@ jest.mock('@/src/state/sketchDraftStore', () => ({
     getState: () => ({ hydrate: mockHydrate, remember: mockRemember }),
   },
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -154,12 +154,12 @@ jest.mock('@/src/hooks/useStoryRole', () => ({
     loading: false,
   }),
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: ({ renderActions }: any = {}) => {
     (global as any).__headerActions = renderActions;
   },
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
 jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
@@ -231,7 +231,7 @@ describe('SketchCanvasScreen', () => {
   }
 
   it('goes back to the page that opened it when there is one, and one screen back otherwise', async () => {
-    const { useBackButtonHandler } = jest.requireMock('@/src/hooks/useBackButtonHandler') as {
+    const { useBackButtonHandler } = jest.requireMock('@/src/hooks/nav/useBackButtonHandler') as {
       useBackButtonHandler: jest.Mock;
     };
     const { useHeaderBackActionStore } = jest.requireActual(

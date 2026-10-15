@@ -4,8 +4,8 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import ResponsiveGrid from '@/src/components/layout/ResponsiveGrid/ResponsiveGrid';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/utils/AppAlert';

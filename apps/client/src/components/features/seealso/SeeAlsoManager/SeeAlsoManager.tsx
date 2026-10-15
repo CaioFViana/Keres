@@ -8,9 +8,9 @@ import {
   decodeSeeAlsoValue,
   encodeSeeAlsoValue,
   useSeeAlsoEntityOptions,
-} from '@/src/hooks/useSeeAlsoEntityOptions';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { useSeeAlsoRelations } from '@/src/hooks/useSeeAlsoRelations';
+} from '@/src/hooks/relations/useSeeAlsoEntityOptions';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useSeeAlsoRelations } from '@/src/hooks/relations/useSeeAlsoRelations';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
 
 interface SeeAlsoManagerProps {

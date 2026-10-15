@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
@@ -12,9 +12,9 @@ import { useDrizzle } from '@/src/db';
 import type { StorySchemaFieldSelect } from '@/src/db/schema';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
 import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
 import { useStoryStore } from '@/src/state/storyStore';

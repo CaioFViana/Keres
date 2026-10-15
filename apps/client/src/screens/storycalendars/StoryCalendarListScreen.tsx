@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import {
   calendarDaysPerYear,
@@ -18,10 +18,10 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { StoryCalendarSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';

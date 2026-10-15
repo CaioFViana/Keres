@@ -113,19 +113,19 @@ jest.mock('@/src/components/features/list-items/LocationListItem', () => ({
   },
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('@/src/hooks/useEntityArcIds', () => ({
+jest.mock('@/src/hooks/arcs/useEntityArcIds', () => ({
   __esModule: true,
   useEntityArcIds: (...args: unknown[]) => mockUseLocationArcIds(...args),
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));

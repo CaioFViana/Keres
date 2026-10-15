@@ -1,9 +1,9 @@
 import React from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { KeyboardHandledContext, useKeyboardOverlap } from '@/src/hooks/useKeyboardOverlap';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { KeyboardHandledContext, useKeyboardOverlap } from '@/src/hooks/ui/useKeyboardOverlap';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useTheme } from '@/src/theme';
 import { radius, space } from '@/src/theme/tokens';
 

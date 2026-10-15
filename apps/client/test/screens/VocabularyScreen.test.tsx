@@ -28,15 +28,15 @@ jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () 
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true, canManageStoryPolicy: true }),
 }));
-jest.mock('@/src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ activeArc: mockActiveArc }),
 }));

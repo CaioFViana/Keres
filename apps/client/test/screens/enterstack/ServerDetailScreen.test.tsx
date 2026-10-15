@@ -73,18 +73,18 @@ jest.mock('@/src/theme', () => {
   };
 });
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDrizzle }));
-jest.mock('@/src/hooks/usePaymentOverview', () => ({
+jest.mock('@/src/screens/enterstack/usePaymentOverview', () => ({
   usePaymentOverview: (...args: unknown[]) => mockPaymentOverview(...args),
 }));
-jest.mock('@/src/hooks/useAccountPlan', () => ({
+jest.mock('@/src/screens/enterstack/useAccountPlan', () => ({
   useAccountPlan: (...args: unknown[]) => mockAccountPlan(...args),
 }));
 const mockFetchAgeInfo = jest.fn();

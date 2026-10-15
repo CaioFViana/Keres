@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import {
   calendarMoonPhases,
@@ -19,14 +19,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryAgenda } from '@/src/hooks/useStoryAgenda';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryAgenda } from '@/src/screens/storycalendars/useStoryAgenda';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { CustomCalendarDateLookup, GregorianCalendarDateLookup } from './AgendaDateLookup';
 
 /**

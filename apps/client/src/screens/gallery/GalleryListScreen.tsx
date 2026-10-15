@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -15,12 +15,12 @@ import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGa
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '@/src/db';
 import type { GallerySelect } from '@/src/db/schemas/galleries';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import type {
   GalleryStackParamList,
   MainSystemDrawerParamList,

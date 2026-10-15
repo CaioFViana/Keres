@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
-import { useBindChapterStore } from '@/src/hooks/useBindChapterStore';
+import { useBindChapterStore } from '@/src/hooks/chapter/useBindChapterStore';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { buildReorderItems } from '@keres/shared';

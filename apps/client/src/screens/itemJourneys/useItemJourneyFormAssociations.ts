@@ -1,4 +1,4 @@
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 
 /** Owns relation wiring used by the ItemJourney form. */
 export function useItemJourneyFormAssociations(currentItemJourneyId: string | undefined) {

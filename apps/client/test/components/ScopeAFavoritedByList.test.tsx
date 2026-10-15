@@ -47,7 +47,7 @@ jest.mock('@/src/components/common/display/EntityRelationList/EntityRelationList
 jest.mock('@/src/components/common/display/Avatar/Avatar', () => () => null);
 
 const mockUseFavoriters = jest.fn();
-jest.mock('@/src/hooks/useFavoriters', () => ({
+jest.mock('@/src/hooks/social/useFavoriters', () => ({
   useFavoriters: (...args: unknown[]) => mockUseFavoriters(...args),
 }));
 

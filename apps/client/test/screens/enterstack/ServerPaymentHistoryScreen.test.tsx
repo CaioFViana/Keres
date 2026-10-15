@@ -29,15 +29,15 @@ jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
-jest.mock('@/src/hooks/useServerStatuses', () => ({
+jest.mock('@/src/screens/enterstack/useServerStatuses', () => ({
   useServerStatuses: (...args: unknown[]) => mockStatuses(...args),
 }));
-jest.mock('@/src/hooks/usePaymentHistory', () => ({
+jest.mock('@/src/screens/enterstack/usePaymentHistory', () => ({
   usePaymentHistory: (...args: unknown[]) => mockHistory(...args),
 }));
 

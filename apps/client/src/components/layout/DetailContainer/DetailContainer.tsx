@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { ScrollView, View, type ScrollViewProps } from 'react-native';
 import { useTheme } from '@/src/theme';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import {
   OccurrenceLandingContext,
   useOccurrenceLandingController,
-} from '@/src/hooks/useOccurrenceLanding';
+} from '@/src/hooks/nav/useOccurrenceLanding';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import {
   screenLayoutStyles,

@@ -33,12 +33,12 @@ jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
 }));
 
 const mockNavigateToDetail = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
 
 const mockChapterNameOf = jest.fn((_chapterId: string | null | undefined) => 'Chapter One');
-jest.mock('@/src/hooks/useChapterNames', () => ({
+jest.mock('@/src/hooks/chapter/useChapterNames', () => ({
   useChapterNames: () => mockChapterNameOf,
 }));
 

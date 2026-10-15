@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -14,12 +14,12 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
-import { useEntityArcScope } from '@/src/hooks/useEntityArcScope';
-import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStoryTagFilterOptions } from '@/src/hooks/useStoryTagFilterOptions';
+import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOptions';
 import type {
   LocationStackParamList,
   MainSystemDrawerParamList,

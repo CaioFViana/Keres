@@ -2,7 +2,7 @@ import { act, render } from '@testing-library/react-native';
 import React from 'react';
 import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
 import type { AnchorDraft } from '@/src/components/features/chapters/AnchorManager/AnchorEditModal';
-import type { ChapterAnchorRow } from '@/src/hooks/useChapterAnchors';
+import type { ChapterAnchorRow } from '@/src/hooks/chapter/useChapterAnchors';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -80,7 +80,7 @@ jest.mock('@/src/components/features/chapters/AnchorManager/AnchorEditModal', ()
 }));
 
 const mockUseChapterAnchors = jest.fn();
-jest.mock('@/src/hooks/useChapterAnchors', () => ({
+jest.mock('@/src/hooks/chapter/useChapterAnchors', () => ({
   useChapterAnchors: (...args: unknown[]) => mockUseChapterAnchors(...args),
 }));
 

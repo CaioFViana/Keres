@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { OperationLogSelect } from '@/src/db/schema';
-import { useOperationLogs } from '@/src/hooks/useOperationLogs';
+import { useOperationLogs } from '@/src/hooks/sync/useOperationLogs';
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';

@@ -25,10 +25,10 @@ import {
   decodeOwnerValue,
   encodeOwnerValue,
   useGalleryOwnerOptions,
-} from '@/src/hooks/useGalleryOwnerOptions';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+} from '@/src/screens/gallery/useGalleryOwnerOptions';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { mediaFileService } from '@/src/services/MediaFileService';
 import type { GalleryOwnerRef } from '@/src/services/storymanagement/GalleryRelationService';
 import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';

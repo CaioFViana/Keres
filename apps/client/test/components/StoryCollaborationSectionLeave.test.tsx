@@ -4,10 +4,10 @@ import StoryCollaborationSection from '@/src/components/features/story/StoryColl
 const mockLeave = jest.fn();
 let mockCollaboration: Record<string, unknown> = {};
 
-jest.mock('@/src/hooks/useStoryServerCollaboration', () => ({
+jest.mock('@/src/hooks/social/useStoryServerCollaboration', () => ({
   useStoryServerCollaboration: () => mockCollaboration,
 }));
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: false }),
 }));
 // The barrel pulls in half of the app: only the two controls the section draws are needed.

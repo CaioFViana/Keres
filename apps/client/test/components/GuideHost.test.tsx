@@ -29,12 +29,12 @@ jest.mock('react-i18next', () => {
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
 const mockRecordSeen = jest.fn();
-jest.mock('@/src/hooks/useGuidePersistence', () => ({
+jest.mock('@/src/hooks/ui/useGuidePersistence', () => ({
   __esModule: true,
   useGuidePersistence: () => mockRecordSeen,
 }));
 const mockResponsiveLayout = { isWide: false };
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => mockResponsiveLayout,
 }));

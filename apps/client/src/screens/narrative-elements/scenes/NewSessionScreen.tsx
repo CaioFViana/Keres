@@ -8,10 +8,10 @@ import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/Date
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { startSession } from '@/src/services/storymanagement/SessionService';

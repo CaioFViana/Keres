@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useMusicTools } from '@/src/hooks/useMusicTools';
+import { useMusicTools } from '@/src/hooks/music/useMusicTools';
 import { useMusicToolsStore } from '@/src/state/musicToolsStore';
 
 beforeEach(async () => {

@@ -2,7 +2,10 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import type { TextRange } from '@keres/shared';
 import { StyleSheet } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import { OCCURRENCE_FLASH_MS, OccurrenceLandingContext } from '@/src/hooks/useOccurrenceLanding';
+import {
+  OCCURRENCE_FLASH_MS,
+  OccurrenceLandingContext,
+} from '@/src/hooks/nav/useOccurrenceLanding';
 import { MentionMatcherContext, MentionNavigationContext } from '@/src/mentions/MentionContext';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import {

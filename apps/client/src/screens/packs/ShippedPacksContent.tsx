@@ -1,5 +1,5 @@
 import { LanguageInstallRow } from '@/src/components/common';
-import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
+import { useLanguageLabel } from '@/src/hooks/ui/useLanguageLabel';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

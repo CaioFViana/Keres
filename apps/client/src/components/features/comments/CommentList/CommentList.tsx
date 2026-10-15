@@ -4,7 +4,7 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-nativ
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CommentListItem from '@/src/components/features/list-items/CommentListItem';
 import type { CommentSelect } from '@/src/db/schema';
-import { useStoryComments } from '@/src/hooks/useStoryComments';
+import { useStoryComments } from '@/src/hooks/comments/useStoryComments';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 

@@ -21,17 +21,17 @@ import {
 } from '@/src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
 import type { SceneSelect } from '@/src/db/schema';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '@/src/hooks/useEntityRefreshLifecycle';
-import { useSceneBodyDraft } from '@/src/hooks/useSceneBodyDraft';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useSceneBodyDraft } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useWebSelectionClip } from '@/src/hooks/useWebSelectionClip';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/EditorDraftService';
 import { createSceneService, type SceneService } from '@/src/services/storymanagement/SceneService';

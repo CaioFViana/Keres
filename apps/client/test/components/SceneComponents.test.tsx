@@ -81,13 +81,13 @@ jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
 });
 
 const mockChapterNameOf = jest.fn();
-jest.mock('@/src/hooks/useChapterNames', () => ({
+jest.mock('@/src/hooks/chapter/useChapterNames', () => ({
   __esModule: true,
   useChapterNames: () => mockChapterNameOf,
 }));
 
 const mockNavigate = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
@@ -97,7 +97,7 @@ jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: () => ({ entity: 'Chapter' }),
 }));
 
-jest.mock('@/src/hooks/useBindChapterStore', () => ({
+jest.mock('@/src/hooks/chapter/useBindChapterStore', () => ({
   __esModule: true,
   useBindChapterStore: () => ({
     chapters: [

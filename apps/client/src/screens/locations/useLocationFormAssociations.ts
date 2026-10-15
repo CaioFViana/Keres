@@ -2,7 +2,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,

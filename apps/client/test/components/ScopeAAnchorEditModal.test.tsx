@@ -3,7 +3,7 @@ import React from 'react';
 import AnchorEditModal, {
   type AnchorDraft,
 } from '@/src/components/features/chapters/AnchorManager/AnchorEditModal';
-import type { AnchorSceneChoice } from '@/src/hooks/useChapterAnchors';
+import type { AnchorSceneChoice } from '@/src/hooks/chapter/useChapterAnchors';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -26,7 +26,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: true, isMedium: false, isWide: false }),
 }));
 

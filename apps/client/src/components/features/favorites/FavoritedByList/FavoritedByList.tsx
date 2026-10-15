@@ -2,7 +2,7 @@ import type { FavoriteEntityType } from '@keres/shared';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useFavoriters } from '@/src/hooks/useFavoriters';
+import { useFavoriters } from '@/src/hooks/social/useFavoriters';
 import { useTheme } from '@/src/theme';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';

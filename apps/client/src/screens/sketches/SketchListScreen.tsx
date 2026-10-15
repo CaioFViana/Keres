@@ -12,10 +12,10 @@ import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreview
 import { useDrizzle } from '@/src/db';
 import type { SketchSelect } from '@/src/db/schema';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { SketchStackParamList } from '@/src/navigation/MainSystemStack';
 import { filterByNameAndDescription } from '@/src/utils/filterByNameAndDescription';
 import { createSketchService } from '@/src/services/storymanagement/SketchService';

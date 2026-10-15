@@ -1,7 +1,7 @@
-jest.mock('@/src/hooks/useSceneBodyComments', () => ({
+jest.mock('@/src/hooks/scene/useSceneBodyComments', () => ({
   useSceneBodyComments: jest.fn(),
 }));
-jest.mock('@/src/hooks/useWebSelectionClip', () => ({
+jest.mock('@/src/hooks/ui/useWebSelectionClip', () => ({
   trackSelectionContainer: jest.fn(),
   readClippedSelection: jest.fn(),
 }));

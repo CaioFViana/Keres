@@ -8,13 +8,13 @@ const mockValidateRequired = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: (...args: unknown[]) => mockValidateRequired(...args),
 }));
-jest.mock('@/src/hooks/useAsyncOperation', () => ({
+jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('@/src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
 jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({

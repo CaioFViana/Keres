@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ConflictSummary } from '@/src/services/ConflictSummaryService';
 import type { PendingConflict } from '@/src/services/SyncConflictService';
-import { useSyncConflictActions } from '@/src/hooks/useSyncConflictActions';
+import { useSyncConflictActions } from '@/src/hooks/sync/useSyncConflictActions';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';

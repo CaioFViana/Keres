@@ -11,7 +11,7 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
+import { useEntityPickerOptions } from '@/src/hooks/lists/useEntityPickerOptions';
 import type { SuggestionType } from '@/src/services/storymanagement/SuggestionService';
 import { useTheme } from '@/src/theme';
 

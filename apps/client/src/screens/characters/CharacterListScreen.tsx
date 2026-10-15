@@ -1,5 +1,5 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,13 +15,13 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import { useDrizzle } from '@/src/db';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
-import { useEntityArcScope } from '@/src/hooks/useEntityArcScope';
-import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
-import { useOpenPresenceMatrixViewer } from '@/src/hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStoryTagFilterOptions } from '@/src/hooks/useStoryTagFilterOptions';
+import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOptions';
 import type { CharacterWithTags } from '@/src/services/storymanagement/CharacterService';
 import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';

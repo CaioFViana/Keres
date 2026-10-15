@@ -4,7 +4,7 @@ import React from 'react';
 import { CharacterStatPanel } from '@/src/components/features/stats/CharacterStatPanel/CharacterStatPanel';
 import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
 import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
-import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
 import { indexStatValues } from '@/src/utils/statValues';
 import type { ModeSelect, StatSelect } from '@/src/db/schema';
 
@@ -39,7 +39,7 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: true, isMedium: false, isWide: false }),
 }));

@@ -48,7 +48,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 const mockLayout = { width: 600 };
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: mockLayout.width,
     isCompact: mockLayout.width < 768,

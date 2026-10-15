@@ -12,8 +12,8 @@ import {
   View,
 } from 'react-native';
 import type { GallerySelect } from '@/src/db/schema';
-import { useEntityGalleryMedia } from '@/src/hooks/useEntityGalleryMedia';
-import { useGalleryThumbnailUri } from '@/src/hooks/useGalleryThumbnailUri';
+import { useEntityGalleryMedia } from '@/src/hooks/media/useEntityGalleryMedia';
+import { useGalleryThumbnailUri } from '@/src/hooks/media/useGalleryThumbnailUri';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

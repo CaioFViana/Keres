@@ -5,7 +5,7 @@ const mockInitializeCharacterService = jest.fn();
 const mockFetchCharacters = jest.fn();
 let mockCharacters: { id: string; name: string; isDeleted: boolean }[] = [];
 
-jest.mock('@/src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
 jest.mock('@/src/state/characterStore', () => ({

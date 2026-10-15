@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import StoryArcFormScreen from '@/src/screens/customization/StoryArcFormScreen';
 import StoryArcListScreen from '@/src/screens/customization/StoryArcListScreen';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 
 export type ArcsStackParamList = {
   StoryArcList: undefined;

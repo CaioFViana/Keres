@@ -3,7 +3,7 @@ import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/C
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AppDrizzleClient, SceneSelect } from '@/src/db';
-import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
 import type { SceneService } from '@/src/services/storymanagement/SceneService';

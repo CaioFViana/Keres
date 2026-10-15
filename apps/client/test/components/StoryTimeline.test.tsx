@@ -35,7 +35,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockViewportOptions = { current: null as Record<string, any> | null };
-jest.mock('@/src/hooks/useCanvasViewport', () => ({
+jest.mock('@/src/hooks/canvas/useCanvasViewport', () => ({
   __esModule: true,
   useCanvasViewport: (_ref: unknown, _layout: unknown, options: Record<string, unknown>) => {
     mockViewportOptions.current = options as Record<string, any>;
@@ -86,7 +86,7 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
   };
 });
 
-jest.mock('@/src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => ({ definition: null }),
 }));

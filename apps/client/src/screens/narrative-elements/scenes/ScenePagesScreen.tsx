@@ -14,18 +14,18 @@ import ScenePageCard from '@/src/components/features/scenes/ScenePages/ScenePage
 import ScenePageMediaPicker from '@/src/components/features/scenes/ScenePages/ScenePageMediaPicker';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
-import { useAddScenePages } from '@/src/hooks/useAddScenePages';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
-import { useSceneArcPageFormat } from '@/src/hooks/useSceneArcPageFormat';
-import { useSaveAttempt } from '@/src/hooks/useSaveAttempt';
-import { useSceneRecord } from '@/src/hooks/useSceneRecord';
-import { useScenePages } from '@/src/hooks/useScenePages';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useAddScenePages } from '@/src/screens/narrative-elements/scenes/useAddScenePages';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
+import { useSceneArcMedium } from '@/src/hooks/scene/useSceneArcMedium';
+import { useSceneArcPageFormat } from '@/src/screens/narrative-elements/scenes/useSceneArcPageFormat';
+import { useSaveAttempt } from '@/src/screens/narrative-elements/scenes/useSaveAttempt';
+import { useSceneRecord } from '@/src/screens/narrative-elements/scenes/useSceneRecord';
+import { useScenePages } from '@/src/hooks/scene/useScenePages';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import {
   createScenePageService,

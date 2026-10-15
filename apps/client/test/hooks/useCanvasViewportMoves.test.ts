@@ -8,7 +8,7 @@ import {
   type CanvasViewportBounds,
   type CanvasViewportHandle,
   type CanvasViewportOptions,
-} from '@/src/hooks/useCanvasViewport';
+} from '@/src/hooks/canvas/useCanvasViewport';
 
 const VIEWPORT = { x: 0, y: 0, width: 400, height: 300 };
 const BOUNDS = { x: 0, y: 0, width: 800, height: 600 };

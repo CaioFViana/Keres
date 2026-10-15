@@ -1,8 +1,8 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useCalendarAnchorPreview } from '@/src/hooks/useCalendarAnchorPreview';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useCalendarAnchorPreview } from '@/src/hooks/story/useCalendarAnchorPreview';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
 import type { CalendarAnchorPreviewRow } from '@/src/utils/calendarAnchorPreview';
 import type { CalendarDefinitionType } from '@keres/shared';

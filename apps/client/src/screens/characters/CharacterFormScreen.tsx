@@ -1,14 +1,14 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { useEntityFormSecondaryDraft } from '@/src/hooks/useEntityFormSecondaryDraft';
-import { useEntityFormHeader } from '@/src/hooks/useEntityFormHeader';
-import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import type { CharacterStackParamList } from '@/src/navigation/MainSystemStack';
 import { readEntityFormSecondaryDraft } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
 import { useNotificationStore } from '@/src/state/notificationStore';

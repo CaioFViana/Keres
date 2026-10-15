@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -14,9 +14,9 @@ import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import LocationMapCreateModal from '@/src/components/features/location-maps/LocationMapCreateModal';
 import { useDrizzle } from '@/src/db';
 import type { LocationMapSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { filterByNameAndDescription } from '@/src/utils/filterByNameAndDescription';
 import type {
   LocationStackParamList,

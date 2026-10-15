@@ -1,6 +1,6 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -17,8 +17,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { OperationLogSelect } from '@/src/db/schema'; // Ensure this path is correct
-import { useEntityName } from '@/src/hooks/useEntityName';
-import { useUserDisplayName } from '@/src/hooks/useUserDisplayName';
+import { useEntityName } from '@/src/hooks/entity/useEntityName';
+import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
 import type { OperationLogStackParamList } from '@/src/navigation/MainSystemStack'; // Corrected import path
 import { EntityService } from '@/src/services/EntityService';
 import { createOperationLogService } from '@/src/services/OperationLogService';

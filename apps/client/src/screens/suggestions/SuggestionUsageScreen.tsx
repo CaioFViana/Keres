@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -18,8 +18,8 @@ import {
 } from 'react-native';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
 import type { SuggestionUsage } from '@/src/services/storymanagement/SuggestionService';

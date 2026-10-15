@@ -1,6 +1,6 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import type { CalendarDefinitionType } from '@keres/shared';
 import { calendarDaysPerYear, CalendarDefinitionSchema } from '@keres/shared';
@@ -16,8 +16,8 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { CalendarRowField } from '@/src/components/features/calendars/CalendarRowList';
 import CalendarRowList from '@/src/components/features/calendars/CalendarRowList';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
 import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';

@@ -6,7 +6,7 @@ import { ScrollView } from 'react-native';
 import { HelpBlockRenderer } from '@/src/components/features/help/HelpBlockRenderer/HelpBlockRenderer';
 import type { DocLibrary } from '@/src/help/library';
 import { helpLibrary } from '@/src/help/library';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useTheme } from '@/src/theme';
 import { setDocumentTitle } from '@/src/utils/documentTitle';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';

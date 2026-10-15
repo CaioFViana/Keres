@@ -32,7 +32,7 @@ jest.mock('@/src/theme', () => ({
 }));
 
 const mockViewportOptions = { current: null as Record<string, any> | null };
-jest.mock('@/src/hooks/useCanvasViewport', () => ({
+jest.mock('@/src/hooks/canvas/useCanvasViewport', () => ({
   __esModule: true,
   useCanvasViewport: (_ref: unknown, _layout: unknown, options: Record<string, unknown>) => {
     mockViewportOptions.current = options as Record<string, any>;

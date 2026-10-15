@@ -7,8 +7,8 @@ import SkiaEdgeLabels from '@/src/components/features/graphs/SkiaEdgeCanvas/Skia
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
 import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
-import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
-import { useGraphCanvasViewport } from '@/src/hooks/useGraphCanvasViewport';
+import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport';
+import { useGraphCanvasViewport } from '@/src/hooks/graph/useGraphCanvasViewport';
 import { useTheme } from '@/src/theme';
 import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 

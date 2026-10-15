@@ -1,6 +1,6 @@
-import { useChoiceChecks } from '@/src/hooks/useChoiceChecks';
-import { useEntityEffects } from '@/src/hooks/useEntityEffects';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useChoiceChecks } from '@/src/screens/narrative-elements/choices/useChoiceChecks';
+import { useEntityEffects } from '@/src/hooks/choice/useEntityEffects';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 
 /** Owns relation, check and effect wiring used by the Choice form. */
 export function useChoiceFormAssociations(

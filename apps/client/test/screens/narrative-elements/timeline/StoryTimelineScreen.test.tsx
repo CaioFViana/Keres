@@ -51,17 +51,17 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate }),
 }));
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useStoryTimeline', () => ({
+jest.mock('@/src/hooks/story/useStoryTimeline', () => ({
   __esModule: true,
   useStoryTimeline: () => ({
     ...mockTimeline,

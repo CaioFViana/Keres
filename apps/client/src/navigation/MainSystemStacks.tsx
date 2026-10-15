@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import BoardCanvasScreen from '@/src/screens/boards/BoardCanvasScreen';
 import BoardListScreen from '@/src/screens/boards/BoardListScreen';
 import SketchCanvasScreen from '@/src/screens/sketches/SketchCanvasScreen';

@@ -15,7 +15,7 @@ import IconPickerModal from '@/src/components/common/inputs/IconPickerInput/Icon
 import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
 import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
 import ThemePickerModal from '@/src/components/common/inputs/ThemePickerModal/ThemePickerModal';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 jest.mock('@/src/theme', () => {
@@ -61,7 +61,7 @@ jest.mock('@expo/vector-icons', () => ({
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,
@@ -77,7 +77,7 @@ jest.mock('@/src/state/userSettingsStore', () => ({
     selector({ use24HourTime: true }),
 }));
 
-jest.mock('@/src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   useStoryCalendar: jest.fn(() => ({ definition: null })),
 }));
 

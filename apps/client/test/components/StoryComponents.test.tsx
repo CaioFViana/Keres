@@ -39,7 +39,7 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: true, isMedium: false, isWide: false }),
 }));
@@ -108,7 +108,7 @@ jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
 });
 
 let mockCollaboration: any = null;
-jest.mock('@/src/hooks/useStoryServerCollaboration', () => ({
+jest.mock('@/src/hooks/social/useStoryServerCollaboration', () => ({
   __esModule: true,
   useStoryServerCollaboration: (...args: unknown[]) => {
     (mockCollaborationCalls as unknown[]).push(args);

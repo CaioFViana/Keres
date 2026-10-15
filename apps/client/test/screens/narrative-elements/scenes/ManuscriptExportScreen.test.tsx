@@ -47,12 +47,12 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: jest.fn(), goBack: mockGoBack }),
 }));
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -111,7 +111,7 @@ jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 
-jest.mock('@/src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: mockArcs }),
 }));
@@ -122,7 +122,7 @@ jest.mock('@/src/state/notificationStore', () => ({
 }));
 
 const mockLoadChoiceAnnotations = jest.fn(async () => new Map());
-jest.mock('@/src/hooks/useManuscriptData', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useManuscriptData', () => ({
   __esModule: true,
   useManuscriptData: () => ({
     ...mockManuscriptData,

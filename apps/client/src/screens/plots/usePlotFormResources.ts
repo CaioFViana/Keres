@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useDrizzle } from '@/src/db';
-import { useStoryPlots } from '@/src/hooks/useStoryPlots';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
 import { createPlotService } from '@/src/services/storymanagement/PlotService';
 import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
 

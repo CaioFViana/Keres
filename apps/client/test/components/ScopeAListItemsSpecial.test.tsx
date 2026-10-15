@@ -41,27 +41,27 @@ jest.mock('@expo/vector-icons', () => ({
 jest.mock('@/src/components/common/display/Avatar/Avatar', () => () => null);
 
 const mockUseEntityName = jest.fn();
-jest.mock('@/src/hooks/useEntityName', () => ({
+jest.mock('@/src/hooks/entity/useEntityName', () => ({
   useEntityName: (...args: unknown[]) => mockUseEntityName(...args),
 }));
 
 const mockUseCommentFieldLabel = jest.fn();
-jest.mock('@/src/hooks/useCommentFieldLabel', () => ({
+jest.mock('@/src/hooks/comments/useCommentFieldLabel', () => ({
   useCommentFieldLabel: (...args: unknown[]) => mockUseCommentFieldLabel(...args),
 }));
 
 const mockUseAuthorProfiles = jest.fn();
-jest.mock('@/src/hooks/useAuthorProfiles', () => ({
+jest.mock('@/src/hooks/social/useAuthorProfiles', () => ({
   useAuthorProfiles: (...args: unknown[]) => mockUseAuthorProfiles(...args),
 }));
 
 const mockUseUserDisplayName = jest.fn();
-jest.mock('@/src/hooks/useUserDisplayName', () => ({
+jest.mock('@/src/hooks/social/useUserDisplayName', () => ({
   useUserDisplayName: (...args: unknown[]) => mockUseUserDisplayName(...args),
 }));
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 

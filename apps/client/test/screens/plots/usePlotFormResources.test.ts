@@ -12,7 +12,7 @@ jest.mock('@/src/services/storymanagement/PlotService', () => ({
 jest.mock('@/src/services/storymanagement/PlotSceneService', () => ({
   createPlotSceneService: (...args: unknown[]) => mockCreatePlotSceneService(...args),
 }));
-jest.mock('@/src/hooks/useStoryPlots', () => ({
+jest.mock('@/src/screens/plots/useStoryPlots', () => ({
   useStoryPlots: (...args: unknown[]) => mockUseStoryPlots(...args),
 }));
 

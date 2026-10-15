@@ -16,14 +16,14 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
+import { useDebouncedValue } from '@/src/hooks/ui/useDebouncedValue';
 import type {
   ActiveLine,
   PlaybackPhase,
   PlaybackProblem,
   PlaybackScope,
   PlaybackVoice,
-} from '@/src/hooks/useSongPlayback';
+} from '@/src/hooks/music/useSongPlayback';
 import { useTheme } from '@/src/theme';
 import { AppAlert } from '@/src/utils/AppAlert';
 import MelodyPlayerCard, { TOUCH, useMelodyVoice } from './MelodyPlayerCard';

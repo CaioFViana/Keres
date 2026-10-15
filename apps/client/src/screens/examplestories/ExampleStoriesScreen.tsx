@@ -1,6 +1,6 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { LanguageInstallRow } from '@/src/components/common';
-import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
+import { useLanguageLabel } from '@/src/hooks/ui/useLanguageLabel';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { ExampleStoryEntry, ExampleStoryLanguage } from '@/src/exampleStories/types';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { createExampleStoryService } from '@/src/services/storymanagement/ExampleStoryService';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import { useNotificationStore } from '@/src/state/notificationStore';

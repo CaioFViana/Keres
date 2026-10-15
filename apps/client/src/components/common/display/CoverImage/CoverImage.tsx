@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { useGalleryRow } from '@/src/hooks/useGalleryMedia';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useGalleryRow } from '@/src/hooks/media/useGalleryMedia';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
 import { useTheme } from '@/src/theme';
 
 interface CoverImageProps {

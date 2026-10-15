@@ -16,8 +16,8 @@ import type {
 import GraphCanvasFrame, {
   graphCanvasPlaneStyle,
 } from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
-import { useDraggedItemFrame } from '@/src/hooks/useDraggedItemFrame';
+import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
+import { useDraggedItemFrame } from '@/src/hooks/canvas/useDraggedItemFrame';
 import {
   locationMapCanvasBounds,
   LOCATION_MAP_NODE_SIZE,

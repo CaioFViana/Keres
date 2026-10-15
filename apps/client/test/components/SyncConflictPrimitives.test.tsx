@@ -89,7 +89,7 @@ const mockConflictActions = {
   keepLocal: jest.fn(),
   keepServer: jest.fn(),
 };
-jest.mock('@/src/hooks/useSyncConflictActions', () => ({
+jest.mock('@/src/hooks/sync/useSyncConflictActions', () => ({
   __esModule: true,
   useSyncConflictActions: () => mockConflictActions,
 }));

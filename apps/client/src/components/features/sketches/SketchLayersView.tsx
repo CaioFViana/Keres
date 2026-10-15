@@ -6,7 +6,7 @@ import {
 } from '@keres/shared';
 import { Group, Path, Picture, Skia } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
-import type { ErasePreview } from '@/src/hooks/useSketchDrawing';
+import type { ErasePreview } from '@/src/hooks/sketch/useSketchDrawing';
 import { SketchLayerPictures } from './sketchPictures';
 
 /** The selection being dragged: its items render through `matrix` instead of with the layer. */

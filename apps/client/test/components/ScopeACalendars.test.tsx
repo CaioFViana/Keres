@@ -75,12 +75,12 @@ jest.mock('@/src/components/common/controls/Button/Button', () => {
 });
 
 const mockCalendarAnchorPreview = jest.fn();
-jest.mock('@/src/hooks/useCalendarAnchorPreview', () => ({
+jest.mock('@/src/hooks/story/useCalendarAnchorPreview', () => ({
   useCalendarAnchorPreview: (...args: unknown[]) => mockCalendarAnchorPreview(...args),
 }));
 
 const mockNavigateToEntity = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigateToEntity,
 }));
 

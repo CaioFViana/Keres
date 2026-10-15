@@ -53,22 +53,22 @@ jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: (options: unknown) => mockHeader(options),
 }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
 jest.mock('@/src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
 jest.mock('@/src/guides/useGuideAnchor', () => ({
   useScreenAnchor: () => null,
   useGuideAnchor: () => null,
 }));
-jest.mock('@/src/hooks/useKeyboardOverlap', () => ({
+jest.mock('@/src/hooks/ui/useKeyboardOverlap', () => ({
   useKeyboardOverlap: (...args: unknown[]) => mockUseKeyboardOverlap(...args),
 }));
-jest.mock('@/src/hooks/useConversation', () => ({
+jest.mock('@/src/screens/enterstack/useConversation', () => ({
   useConversation: (...args: unknown[]) => mockUseConversation(...args),
 }));
-jest.mock('@/src/hooks/useMessageInbox', () => ({
+jest.mock('@/src/screens/enterstack/useMessageInbox', () => ({
   useMessageInbox: () => mockUseMessageInbox(),
 }));
 jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {

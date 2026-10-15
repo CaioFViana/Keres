@@ -38,7 +38,7 @@ jest.mock('@/src/services/ClientSettingsService', () => ({
   getClientSettings: jest.fn(),
   updateClientSettings: (...args: unknown[]) => mockUpdateClientSettings(...args),
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
@@ -46,7 +46,7 @@ let mockRole: string | null = 'owner';
 let mockCanManage = true;
 let mockCanReport = false;
 const mockReport = jest.fn();
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({
     role: mockRole,
@@ -61,15 +61,15 @@ let mockResume: { id: string; name: string; chapterName: string | null; editedAt
   chapterName: 'Arrival',
   editedAt: new Date('2026-10-08T10:00:00.000Z'),
 };
-jest.mock('@/src/hooks/useResumeScene', () => ({
+jest.mock('@/src/hooks/scene/useResumeScene', () => ({
   __esModule: true,
   useResumeScene: () => mockResume,
 }));
-jest.mock('@/src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: [] }),
 }));
-jest.mock('@/src/hooks/useStoryReport', () => ({
+jest.mock('@/src/screens/mainstorystack/useStoryReport', () => ({
   __esModule: true,
   useStoryReport: () => ({ canReport: mockCanReport, sending: false, report: mockReport }),
 }));

@@ -18,7 +18,7 @@ jest.mock('@expo/vector-icons', () => ({
     return react.createElement(native.Text, { testID: `icon-${name}` }, name);
   },
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -57,7 +57,7 @@ jest.mock('@/src/components/features/list-items/GlobalSearchResultItem', () => (
   },
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));

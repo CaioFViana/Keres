@@ -26,9 +26,9 @@ import ManuscriptIndexModal from '@/src/components/features/manuscript/Manuscrip
 import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useManuscriptData } from '@/src/hooks/useManuscriptData';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useManuscriptData } from '@/src/screens/narrative-elements/scenes/useManuscriptData';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';

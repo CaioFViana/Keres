@@ -122,7 +122,7 @@ jest.mock('@/src/utils/storyTransfer', () => ({
 
 let mockCatalog: any = null;
 const mockCatalogCalls: unknown[][] = [];
-jest.mock('@/src/hooks/usePresenceMatrixCatalog', () => ({
+jest.mock('@/src/hooks/character/usePresenceMatrixCatalog', () => ({
   __esModule: true,
   usePresenceMatrixCatalog: (...args: unknown[]) => {
     mockCatalogCalls.push(args);

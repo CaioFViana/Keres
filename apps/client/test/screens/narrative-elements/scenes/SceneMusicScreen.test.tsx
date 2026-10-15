@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import type { SceneMusicView } from '@/src/hooks/useSceneMusic';
+import type { SceneMusicView } from '@/src/hooks/scene/useSceneMusic';
 import SceneMusicScreen from '@/src/screens/narrative-elements/scenes/SceneMusicScreen';
 
 const mockGoBack = jest.fn();
@@ -66,37 +66,37 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   __esModule: true,
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: typeof mockHeader) => {
     mockHeader = args;
   },
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/hooks/useSceneArcMedium', () => ({
+jest.mock('@/src/hooks/scene/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
-jest.mock('@/src/hooks/useSceneMusic', () => ({
+jest.mock('@/src/hooks/scene/useSceneMusic', () => ({
   __esModule: true,
   useSceneMusic: () => ({ views: mockViews, loading: false, reload: jest.fn() }),
 }));
-jest.mock('@/src/hooks/useSongPlayback', () => ({
+jest.mock('@/src/hooks/music/useSongPlayback', () => ({
   __esModule: true,
   useSongPlayback: () => ({ ...mockPlayback, play: mockPlay, stop: mockStop }),
 }));
-jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenMedia,
 }));
@@ -108,7 +108,7 @@ jest.mock('@/src/services/storymanagement/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ getById: mockGetSong }),
 }));
-jest.mock('@/src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   __esModule: true,
   useConfirmDelete: () => mockConfirmDelete,
 }));

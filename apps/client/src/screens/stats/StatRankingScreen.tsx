@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -8,8 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
 import { useStoryStore } from '@/src/state/storyStore';

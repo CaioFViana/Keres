@@ -1,6 +1,6 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import {
   ScreenError,
@@ -9,7 +9,7 @@ import {
 import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
 import { isOfflineError } from '@/src/services/apiClient';
 import { redeemRecoveryCode } from '@/src/services/AuthApiService';

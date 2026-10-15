@@ -21,7 +21,7 @@ jest.mock('@expo/vector-icons', () => ({
     return react.createElement(native.Text, { testID: `icon-${name}` }, name);
   },
 }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -34,15 +34,15 @@ jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => ({
   },
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useEntityName', () => ({
+jest.mock('@/src/hooks/entity/useEntityName', () => ({
   __esModule: true,
   useEntityName: () => ({ entityName: mockEntityName, loading: mockEntityLoading }),
 }));
-jest.mock('@/src/hooks/useUserDisplayName', () => ({
+jest.mock('@/src/hooks/social/useUserDisplayName', () => ({
   __esModule: true,
   useUserDisplayName: () => mockUserDisplayName,
 }));

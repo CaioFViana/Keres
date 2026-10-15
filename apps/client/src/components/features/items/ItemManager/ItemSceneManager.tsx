@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { ItemJourney, Item } from '@keres/shared/entities/Item';
 import type { Character } from '@keres/shared/entities/Character';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import { useTheme } from '@/src/theme';

@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 import type { ChoiceService } from '@/src/services/storymanagement/ChoiceService';
 
 type UseChoiceFormStateOptions = {

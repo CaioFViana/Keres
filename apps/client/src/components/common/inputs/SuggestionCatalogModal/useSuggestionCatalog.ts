@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useSuggestions } from '@/src/hooks/useSuggestions';
+import { useSuggestions } from '@/src/hooks/entity/useSuggestions';
 import type { SuggestionType } from '@/src/services/storymanagement/SuggestionService';
 
 /**

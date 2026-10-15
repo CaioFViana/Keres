@@ -49,16 +49,16 @@ jest.mock('@expo/vector-icons', () => ({
 
 // The filter/sort pills open through ResponsiveModal, which reads the system bottom inset.
 // The hook needs a SafeAreaProvider that these unit tests do not mount, so stub it.
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
 
 const mockSchemaFields = jest.fn((..._args: unknown[]) => [] as unknown[]);
-jest.mock('@/src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/story/useStorySchemaFields', () => ({
   useStorySchemaFields: (...args: unknown[]) => mockSchemaFields(...args),
 }));
 
-jest.mock('@/src/hooks/useEntityPickerOptions', () => ({
+jest.mock('@/src/hooks/lists/useEntityPickerOptions', () => ({
   useEntityPickerOptions: () => ({
     options: [{ id: 'e1', name: 'Ent One' }],
     loading: false,

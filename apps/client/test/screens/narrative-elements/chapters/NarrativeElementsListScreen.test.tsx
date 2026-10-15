@@ -83,12 +83,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: {
     title: string;
@@ -102,7 +102,7 @@ jest.mock('@/src/guides/useScreenTour', () => ({
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
-jest.mock('@/src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: () => ({
     listProps: mockListPropsValue,
@@ -118,7 +118,7 @@ jest.mock('@/src/hooks/useEntityListScreen', () => ({
   }),
 }));
 
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));

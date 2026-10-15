@@ -34,7 +34,7 @@ jest.mock('@expo/vector-icons', () => {
       }),
   };
 });
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
 
 type Root = RenderResult['container'];
 

@@ -4,13 +4,13 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useServerStatuses } from '@/src/hooks/useServerStatuses';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useServerStatuses } from '@/src/screens/enterstack/useServerStatuses';
 import {
   useServerVerification,
   type VerificationRetryError,
-} from '@/src/hooks/useServerVerification';
+} from '@/src/screens/enterstack/useServerVerification';
 import type { AccountVerificationResponse } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';

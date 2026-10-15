@@ -5,8 +5,8 @@ import GraphNodeBox from '@/src/components/features/graphs/GraphNodeBox/GraphNod
 import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
-import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
-import { useGraphCanvasViewport } from '@/src/hooks/useGraphCanvasViewport';
+import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport';
+import { useGraphCanvasViewport } from '@/src/hooks/graph/useGraphCanvasViewport';
 import { useTheme } from '@/src/theme';
 import type {
   LocationGraphLayout,

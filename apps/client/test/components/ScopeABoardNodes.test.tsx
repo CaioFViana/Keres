@@ -31,7 +31,7 @@ jest.mock('expo-image', () => ({
 }));
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 

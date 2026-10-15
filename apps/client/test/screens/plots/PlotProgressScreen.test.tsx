@@ -63,7 +63,7 @@ jest.mock('@/src/state/userSettingsStore', () => {
   return { useUserSettingsStore };
 });
 
-jest.mock('@/src/hooks/useStoryPlots', () => ({
+jest.mock('@/src/screens/plots/useStoryPlots', () => ({
   useStoryPlots: () => mockPlotsData,
 }));
 
@@ -72,9 +72,9 @@ jest.mock('@/src/utils/storyTransfer', () => ({
   buildBoardMapFileName: (a: string, b: string) => `${a}-${b}.svg`,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

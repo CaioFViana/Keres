@@ -4,7 +4,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

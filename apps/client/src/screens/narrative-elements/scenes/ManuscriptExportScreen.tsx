@@ -13,8 +13,8 @@ import {
   applyPreset,
   defaultExportSettings,
 } from '@/src/components/features/manuscript/export/manuscriptExportSettings';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useManuscriptExport } from './useManuscriptExport';
 

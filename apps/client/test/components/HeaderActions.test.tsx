@@ -2,7 +2,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import HeaderActions from '@/src/components/common/navigation/HeaderActions/HeaderActions';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -14,7 +14,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('@/src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: jest.fn(() => ({
     width: 1400,
     height: 900,

@@ -32,7 +32,7 @@ jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
 }));
 
 const mockNavigateToDetail = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
 

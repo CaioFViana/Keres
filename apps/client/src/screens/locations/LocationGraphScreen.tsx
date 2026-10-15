@@ -1,9 +1,9 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { useNavigation } from '@react-navigation/native';
-import { useGraphDataLoader } from '@/src/hooks/useGraphDataLoader';
-import { useGraphFocus } from '@/src/hooks/useGraphFocus';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useGraphDataLoader } from '@/src/hooks/graph/useGraphDataLoader';
+import { useGraphFocus } from '@/src/hooks/graph/useGraphFocus';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,8 +24,8 @@ import LocationGraphCanvas from '@/src/components/features/graphs/LocationGraph/
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useDrizzle } from '@/src/db';
 import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
 import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
 import { useStoryStore } from '@/src/state/storyStore';
@@ -49,7 +49,7 @@ import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
 import { buildLocationGraphMapFileName } from '@/src/utils/storyTransfer';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 import { useLocationRelationEditor } from './useLocationRelationEditor';
-import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
+import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
 
 /**
  * The Locations structure graph: each Location becomes a node, `contains`/`connected_to` become

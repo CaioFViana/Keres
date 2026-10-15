@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { StatSelect } from '@/src/db/schema';
-import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 
 type UseStatFormStateOptions = {
   statId?: string;

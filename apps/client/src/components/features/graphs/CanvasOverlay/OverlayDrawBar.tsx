@@ -5,7 +5,7 @@ import {
   CANVAS_ACTION_ROW_HEIGHT,
   CanvasActionBarButton,
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { OverlayDrawTool } from './overlayTools';

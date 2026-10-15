@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
 import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
 import {

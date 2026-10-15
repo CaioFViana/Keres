@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
 import { useTheme } from '@/src/theme';
 import {
   galleryDisplayPath,

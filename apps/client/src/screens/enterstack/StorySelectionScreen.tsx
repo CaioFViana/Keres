@@ -1,8 +1,8 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import FirstStoryStart from '@/src/components/features/story/FirstStoryStart';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import type { Story } from '@keres/shared/entities/Story';
 import { useIsFocused, useNavigation } from '@react-navigation/native';

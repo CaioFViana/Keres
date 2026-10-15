@@ -8,7 +8,7 @@ jest.mock('@/src/db', () => ({
 jest.mock('@/src/services/storymanagement/StatService', () => ({
   createStatService: (...args: unknown[]) => mockCreateStatService(...args),
 }));
-jest.mock('@/src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: (...args: unknown[]) => mockUseStoryStats(...args),
 }));
 

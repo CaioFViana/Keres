@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
-import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
 import { capturePointer, releasePointer } from '@/src/utils/pointerCapture';
 import { getBoardPinAppearance, type BoardCardAppearance } from '@/src/utils/boardPinAppearance';
 import {

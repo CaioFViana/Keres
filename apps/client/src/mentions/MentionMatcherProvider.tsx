@@ -4,7 +4,7 @@ import { DrizzleContext } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import { useStoryStore } from '@/src/state/storyStore';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
-import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import {
   buildMentionMatcher,
   EMPTY_MENTION_MATCHER,

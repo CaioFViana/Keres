@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
 import type { OverlayDrawTool } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import type { ThemeColors } from '@/src/theme';
 import { layout } from '@/src/theme/layout';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

@@ -32,7 +32,7 @@ jest.mock('@/src/mentions/MentionContext', () => ({
 }));
 
 const mockNavigate = jest.fn();
-jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
@@ -44,7 +44,7 @@ jest.mock('@/src/state/storyStore', () => ({
 }));
 
 const mockCanEdit = jest.fn(() => true);
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit(), loading: false }),
 }));
@@ -52,13 +52,13 @@ jest.mock('@/src/hooks/useStoryRole', () => ({
 const mockRelations = jest.fn(
   (): { relationId: string; otherType: string; otherId: string }[] => [],
 );
-jest.mock('@/src/hooks/useSeeAlsoRelations', () => ({
+jest.mock('@/src/hooks/relations/useSeeAlsoRelations', () => ({
   __esModule: true,
   useSeeAlsoRelations: () => ({ relations: mockRelations(), loading: false }),
 }));
 
 const mockResolve = jest.fn();
-jest.mock('@/src/hooks/useResolveAmbiguousMention', () => ({
+jest.mock('@/src/hooks/entity/useResolveAmbiguousMention', () => ({
   __esModule: true,
   useResolveAmbiguousMention: () => mockResolve,
 }));

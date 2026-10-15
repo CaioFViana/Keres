@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
-import type { ResumeScene } from '@/src/hooks/useResumeScene';
+import type { ResumeScene } from '@/src/hooks/scene/useResumeScene';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';

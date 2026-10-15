@@ -63,19 +63,19 @@ jest.mock(
   },
 );
 
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string; actions?: readonly HeaderAction[] }) => {
     mockHeaderArgs = args;
   },
 }));
 
-jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -92,12 +92,12 @@ jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   };
 });
 
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('@/src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: mockCommentsByField,
@@ -122,7 +122,7 @@ jest.mock('@/src/state/userSettingsStore', () => ({
 
 // The draft lifecycle itself is covered node-side in `useSceneBodyDraft.test.ts` (the real
 // SQLite driver cannot load in this environment); here the hook is a wired seam.
-jest.mock('@/src/hooks/useSceneBodyDraft', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneBodyDraft', () => ({
   __esModule: true,
   useSceneBodyDraft: (options: {
     savedBody: string | null;

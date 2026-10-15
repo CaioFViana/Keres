@@ -14,19 +14,19 @@ import SceneMusicCard from '@/src/components/features/scenes/SceneMusic/SceneMus
 import SceneMusicTargetPicker from '@/src/components/features/scenes/SceneMusic/SceneMusicTargetPicker';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
 import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
-import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
-import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
-import { useSceneMusic } from '@/src/hooks/useSceneMusic';
-import { useSceneRecord } from '@/src/hooks/useSceneRecord';
-import { useSaveAttempt } from '@/src/hooks/useSaveAttempt';
-import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
-import { useSongPlayback } from '@/src/hooks/useSongPlayback';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useSceneArcMedium } from '@/src/hooks/scene/useSceneArcMedium';
+import { useSceneMusic } from '@/src/hooks/scene/useSceneMusic';
+import { useSceneRecord } from '@/src/screens/narrative-elements/scenes/useSceneRecord';
+import { useSaveAttempt } from '@/src/screens/narrative-elements/scenes/useSaveAttempt';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useSongPlayback } from '@/src/hooks/music/useSongPlayback';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import {
   createSceneMusicService,

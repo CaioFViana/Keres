@@ -2,7 +2,10 @@ import { isSupportedMediaMimeType } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { env } from '@/config/env';
 import type { JWTPayload } from '@/index';
-import { MediaHashMismatchError, mediaStorageService } from '@/services/media-storage/MediaStorageService';
+import {
+  MediaHashMismatchError,
+  mediaStorageService,
+} from '@/services/media-storage/MediaStorageService';
 import { storyPermissionService } from '@/services/stories/StoryPermissionService';
 import {
   BlobNotReferencedError,

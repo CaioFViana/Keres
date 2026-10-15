@@ -20,7 +20,10 @@ import {
   SHOWCASE_PATH_PREFIX,
 } from './services/static-delivery/hostedClient';
 import { deliverDistFile } from './services/static-delivery/distStaticDelivery';
-import { hostedClientDelivery, hostedClientDeliveryInput } from './services/static-delivery/hostedClientDelivery';
+import {
+  hostedClientDelivery,
+  hostedClientDeliveryInput,
+} from './services/static-delivery/hostedClientDelivery';
 import { sendStaticDelivery } from './services/static-delivery/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';

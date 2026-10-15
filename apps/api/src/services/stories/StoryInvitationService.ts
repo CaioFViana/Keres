@@ -8,7 +8,10 @@ import { emitUserEvent } from '@/modules/web-socket/webSocket.route';
 import { AppError } from '@/utils/errors';
 import { storyNsfwService } from './StoryNsfwService';
 import { storyPermissionService } from './StoryPermissionService';
-import { TierLimitExceededError, tierEnforcementService } from '@/services/tiers/TierEnforcementService';
+import {
+  TierLimitExceededError,
+  tierEnforcementService,
+} from '@/services/tiers/TierEnforcementService';
 import { ACTIVE_ACCOUNT } from '@/services/accounts/UserService';
 
 type PermissionType = 'reader' | 'writer';

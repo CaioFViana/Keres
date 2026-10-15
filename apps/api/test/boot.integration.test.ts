@@ -283,7 +283,9 @@ describe('a server that sells plans, and its default plan', () => {
     const warn = spyOn(logger, 'warn').mockImplementation(() => undefined);
     const before = getPaymentConnector();
     // The settings row is made on first use; the test changes it directly, so it has to be there.
-    const { registrationSettingsService } = await import('@/services/admin/RegistrationSettingsService');
+    const { registrationSettingsService } = await import(
+      '@/services/admin/RegistrationSettingsService'
+    );
     await registrationSettingsService.getOrCreate();
 
     // No payments: a default plan is nobody's business here.

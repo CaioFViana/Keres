@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { attemptLimits } from '@/db/schema';
-import { createPersistentAttemptLimiter, pruneAttemptLimits } from '@/services/auth/AttemptLimitService';
+import {
+  createPersistentAttemptLimiter,
+  pruneAttemptLimits,
+} from '@/services/auth/AttemptLimitService';
 import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);

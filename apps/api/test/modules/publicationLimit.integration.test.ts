@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '@/db';
 import { publicationLog, registrationSettings, showcaseSettings, tiers, users } from '@/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
-import { TierLimitExceededError, tierEnforcementService } from '@/services/tiers/TierEnforcementService';
+import {
+  TierLimitExceededError,
+  tierEnforcementService,
+} from '@/services/tiers/TierEnforcementService';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
 import { installBunShim } from '@test/helpers/bunShim';
 import { promoteToAdmin, truncateAll } from '@test/helpers/database';

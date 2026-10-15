@@ -33,9 +33,11 @@ import {
   validateUploadedManuscript,
   validateUploadedReader,
 } from './publicationCompile';
-import { TierLimitExceededError, tierEnforcementService } from '@/services/tiers/TierEnforcementService';
+import {
+  TierLimitExceededError,
+  tierEnforcementService,
+} from '@/services/tiers/TierEnforcementService';
 import { StoryExportImportService } from '@/services/stories/StoryExportImportService';
-
 /** One manuscript or reader is compiled at a time: the memory a book costs is not worth multiplying. */
 const compileGate = createExclusiveGate();
 

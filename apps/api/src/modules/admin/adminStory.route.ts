@@ -1,6 +1,9 @@
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '@/index';
-import { ADMIN_ENTITY_DEFAULT_PAGE_SIZE, adminStoryService } from '@/services/admin/AdminStoryService';
+import {
+  ADMIN_ENTITY_DEFAULT_PAGE_SIZE,
+  adminStoryService,
+} from '@/services/admin/AdminStoryService';
 import { requireAdmin } from '@/utils/adminAuth';
 import { AppError } from '@/utils/errors';
 

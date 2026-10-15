@@ -10,6 +10,7 @@ const ROBOTO = join(
   '..',
   '..',
   '..',
+  '..',
   'packages',
   'shared',
   'test',

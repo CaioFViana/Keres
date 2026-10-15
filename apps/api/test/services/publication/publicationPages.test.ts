@@ -1,7 +1,11 @@
 import type { CompileStoryReaderInput, FullStoryExportType } from '@keres/shared';
 import { MAX_MANUSCRIPT_BYTES } from '@keres/shared';
 import { describe, expect, it, vi } from 'vitest';
-import { staleSketchPages, withCover, withScenePages } from '@/services/publication/publicationPages';
+import {
+  staleSketchPages,
+  withCover,
+  withScenePages,
+} from '@/services/publication/publicationPages';
 
 /** The header of a PNG: its size is all the pipeline reads before handing the bytes on. */
 function pngHeader(width: number, height: number): Uint8Array {

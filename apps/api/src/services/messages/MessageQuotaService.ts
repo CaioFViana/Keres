@@ -4,7 +4,10 @@ import { and, count, eq, gte, lt } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '@/db';
 import { messageLog } from '@/db/schema';
-import { TierLimitExceededError, tierEnforcementService } from '@/services/tiers/TierEnforcementService';
+import {
+  TierLimitExceededError,
+  tierEnforcementService,
+} from '@/services/tiers/TierEnforcementService';
 
 export type MessageQuotaKind = 'direct' | 'admin';
 

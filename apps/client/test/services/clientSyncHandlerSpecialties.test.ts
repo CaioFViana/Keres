@@ -8,7 +8,7 @@ import { CharacterRelationClientSyncHandler } from '@/src/services/entity-sync-h
 import { GalleryClientSyncHandler } from '@/src/services/entity-sync-handlers/GalleryClientSyncHandler';
 import { LocationRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/LocationRelationClientSyncHandler';
 import { StorySchemaFieldClientSyncHandler } from '@/src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
-import { mediaFileService } from '@/src/services/MediaFileService';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = 'story-sync-specialties';

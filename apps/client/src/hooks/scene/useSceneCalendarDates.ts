@@ -12,8 +12,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

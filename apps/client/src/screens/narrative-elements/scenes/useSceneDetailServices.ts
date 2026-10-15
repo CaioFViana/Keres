@@ -3,29 +3,32 @@ import { useDrizzle } from '@/src/db';
 import {
   createChapterService,
   type ChapterService,
-} from '@/src/services/storymanagement/ChapterService';
+} from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import {
   createCharacterSceneService,
   type CharacterSceneServiceInterface,
-} from '@/src/services/storymanagement/CharacterSceneService';
+} from '@/src/services/storymanagement/entities/CharacterSceneService';
 import {
   createChoiceService,
   type ChoiceService,
-} from '@/src/services/storymanagement/ChoiceService';
+} from '@/src/services/storymanagement/choices-stats/ChoiceService';
 import {
   createEffectService,
   type EffectService,
-} from '@/src/services/storymanagement/EffectService';
+} from '@/src/services/storymanagement/choices-stats/EffectService';
 import {
   createItemJourneyService,
   type ItemJourneyService,
-} from '@/src/services/storymanagement/ItemJourneyService';
-import { createItemService, type ItemService } from '@/src/services/storymanagement/ItemService';
+} from '@/src/services/storymanagement/entities/ItemJourneyService';
+import {
+  createItemService,
+  type ItemService,
+} from '@/src/services/storymanagement/entities/ItemService';
 import {
   createLocationService,
   type LocationService,
-} from '@/src/services/storymanagement/LocationService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+} from '@/src/services/storymanagement/entities/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useCharacterStore } from '@/src/state/story/characterStore';
 
 /** Owns service lifecycles and the story-scoped character cache used by Scene detail. */

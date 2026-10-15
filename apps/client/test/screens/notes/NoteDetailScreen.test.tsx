@@ -190,23 +190,23 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('@/src/services/EntityService', () => ({
+jest.mock('@/src/services/entity-solvers/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: (...args: unknown[]) => mockGetEntityIdentifier(...args) },
 }));
-jest.mock('@/src/services/storymanagement/NoteService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/NoteService', () => ({
   __esModule: true,
   createNoteService: () => ({ getById: mockGetNoteById }),
 }));
-jest.mock('@/src/services/storymanagement/NoteRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/NoteRelationService', () => ({
   __esModule: true,
   createNoteRelationService: () => ({ getRelationsForNote: mockGetRelationsForNote }),
 }));
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({}),
 }));
-jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));

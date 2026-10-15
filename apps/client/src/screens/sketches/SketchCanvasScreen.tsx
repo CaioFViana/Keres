@@ -50,7 +50,7 @@ import { useSketchExport } from '@/src/screens/sketches/useSketchExport';
 import { useSketchSelection } from '@/src/screens/sketches/useSketchSelection';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { SketchStackParamList } from '@/src/navigation/MainSystemStack';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useSketchDraftStore } from '@/src/state/drafts/sketchDraftStore';
 import {

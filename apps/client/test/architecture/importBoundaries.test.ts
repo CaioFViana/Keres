@@ -133,9 +133,12 @@ const PRESENTATIONAL_SEEDS = [
 
 describe('import boundaries', () => {
   it('keeps sync engine policy in the application composition root', () => {
-    const engine = readFileSync(join(SOURCE_ROOT, 'services/SyncEngineService.ts'), 'utf8');
+    const engine = readFileSync(join(SOURCE_ROOT, 'services/sync/SyncEngineService.ts'), 'utf8');
     const composition = readFileSync(join(SOURCE_ROOT, 'services/sync/appSyncEngine.ts'), 'utf8');
-    const realtime = readFileSync(join(SOURCE_ROOT, 'services/ServerRealtimeService.ts'), 'utf8');
+    const realtime = readFileSync(
+      join(SOURCE_ROOT, 'services/servers/ServerRealtimeService.ts'),
+      'utf8',
+    );
 
     expect(engine).toContain(
       'public constructor(private readonly dependencies: SyncEngineDependencies)',

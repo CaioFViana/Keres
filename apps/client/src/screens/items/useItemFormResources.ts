@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useDrizzle } from '@/src/db';
-import { createItemService, type ItemService } from '@/src/services/storymanagement/ItemService';
+import {
+  createItemService,
+  type ItemService,
+} from '@/src/services/storymanagement/entities/ItemService';
 
 /** Owns the item service used by the form. */
 export function useItemFormResources() {

@@ -1,6 +1,6 @@
 import type { SceneSelect } from '@/src/db/schema';
-import type { SceneService } from '@/src/services/storymanagement/SceneService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

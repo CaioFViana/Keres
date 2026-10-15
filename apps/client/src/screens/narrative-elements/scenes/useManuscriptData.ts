@@ -8,14 +8,14 @@ import type {
   RouteStepSelect,
   SceneSelect,
 } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createRouteService } from '@/src/services/storymanagement/RouteService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import {
   loadChoiceAnnotations as fetchChoiceAnnotations,
   type ChoiceAnnotationLines,
-} from '@/src/utils/choiceAnnotations';
+} from '@/src/services/storymanagement/choices-stats/choiceAnnotations';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 

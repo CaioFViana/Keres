@@ -1,7 +1,7 @@
 import type { ChapterType } from '@keres/shared';
 import type { ChapterSelect } from '@/src/db/schema';
-import type { ChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import type { ChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

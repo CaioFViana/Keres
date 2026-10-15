@@ -220,31 +220,31 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getAllByStoryId: mockGetJourneys }),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getAllByStoryId: mockGetScenes }),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getAllByStoryId: mockGetChapters }),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getAllByStoryId: mockGetChoices }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getAllByStoryId: mockGetCharacters }),
 }));
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));

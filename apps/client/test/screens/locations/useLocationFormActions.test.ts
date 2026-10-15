@@ -17,10 +17,10 @@ jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
 jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/forms/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -48,7 +48,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import { useLocationFormActions } from '@/src/screens/locations/useLocationFormActions';
 import type { LocationFormState } from '@/src/screens/locations/useLocationFormState';
-import type { LocationService } from '@/src/services/storymanagement/LocationService';
+import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
 
 const createState = (overrides: Partial<LocationFormState> = {}): LocationFormState =>
   ({

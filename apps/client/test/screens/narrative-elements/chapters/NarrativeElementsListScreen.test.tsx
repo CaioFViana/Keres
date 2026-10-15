@@ -203,7 +203,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({
     getAllByStoryId: mockGetAllChapters,
@@ -211,7 +211,7 @@ jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({
     getAllByStoryId: mockGetAllScenes,
@@ -219,7 +219,7 @@ jest.mock('@/src/services/storymanagement/SceneService', () => ({
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({
     getAllByStoryId: mockGetAllChoices,
@@ -227,12 +227,12 @@ jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
 
-jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));

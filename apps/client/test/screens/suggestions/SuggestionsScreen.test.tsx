@@ -93,8 +93,8 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('@/src/services/storymanagement/SuggestionService', () => {
-  const types = jest.requireActual('@/src/services/storymanagement/suggestionTypes');
+jest.mock('@/src/services/storymanagement/suggestions/SuggestionService', () => {
+  const types = jest.requireActual('@/src/services/storymanagement/suggestions/suggestionTypes');
   return {
     __esModule: true,
     ...types,
@@ -110,7 +110,7 @@ jest.mock('@/src/services/storymanagement/SuggestionService', () => {
     }),
   };
 });
-jest.mock('@/src/services/storymanagement/StorySchemaFieldService', () => ({
+jest.mock('@/src/services/storymanagement/entities/StorySchemaFieldService', () => ({
   __esModule: true,
   createStorySchemaFieldService: () => ({
     getFieldsByStoryAndEntityType: mockGetFieldsByStoryAndEntityType,

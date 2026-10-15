@@ -10,7 +10,7 @@ const mockFavoriteService = {
   ),
 };
 
-jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/FavoriteService', () => ({
   createFavoriteService: jest.fn(() => mockFavoriteService),
 }));
 

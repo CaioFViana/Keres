@@ -7,7 +7,7 @@ const mockPatchDraft = jest.fn();
 jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadDraft(...args),
   patchEntityFormSecondaryDraft: (...args: unknown[]) => mockPatchDraft(...args),
 }));

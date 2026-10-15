@@ -121,15 +121,15 @@ jest.mock('@/src/hooks/comments/useEntityComments', () => ({
     updateComment: jest.fn(),
   }),
 }));
-jest.mock('@/src/services/EntityService', () => ({
+jest.mock('@/src/services/entity-solvers/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: (...args: unknown[]) => mockGetEntityIdentifier(...args) },
 }));
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getById: mockGetTagById }),
 }));
-jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getRelationsForTag: mockGetRelationsForTag }),
 }));

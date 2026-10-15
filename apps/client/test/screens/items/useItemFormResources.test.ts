@@ -2,7 +2,7 @@ const mockDb = {};
 const mockCreateItemService: jest.Mock = jest.fn(() => ({ id: 'item-service' }));
 
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   createItemService: (...args: unknown[]) => mockCreateItemService(...args),
 }));
 

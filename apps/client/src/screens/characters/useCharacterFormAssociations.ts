@@ -6,14 +6,14 @@ import type { AppDrizzleClient } from '@/src/db';
 import type { CharacterSelect } from '@/src/db/schemas/characters';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
-import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
-import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
+import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/relations/CharacterRelationService';
+import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
-} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
-import { createModeService } from '@/src/services/storymanagement/ModeService';
-import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
+import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

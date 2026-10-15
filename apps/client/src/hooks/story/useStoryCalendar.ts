@@ -8,7 +8,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { StoryCalendarSelect } from '@/src/db/schema';
-import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
+import { createStoryCalendarService } from '@/src/services/storymanagement/scenes-chapters/StoryCalendarService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';

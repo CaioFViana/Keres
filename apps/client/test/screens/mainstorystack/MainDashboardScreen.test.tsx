@@ -33,7 +33,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/account/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   updateClientSettings: (...args: unknown[]) => mockUpdateClientSettings(...args),
@@ -88,11 +88,11 @@ jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('@/src/services/storymanagement/StoryContentMetricsService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService', () => ({
   __esModule: true,
   createStoryContentMetricsService: () => ({ getContentCounts: mockGetContentCounts }),
 }));
-jest.mock('@/src/services/storymanagement/StoryAnalysisService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryAnalysisService', () => ({
   __esModule: true,
   createStoryAnalysisService: () => ({ analyzeStoryCheap: mockAnalyzeStoryCheap }),
 }));

@@ -2,7 +2,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
-import type { TagService } from '@/src/services/storymanagement/TagService';
+import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 
 type UseTagFormStateOptions = {
   tagId?: string;

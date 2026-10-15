@@ -4,7 +4,7 @@ const mockCreateTagService = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   createTagService: (...args: unknown[]) => mockCreateTagService(...args),
 }));
 

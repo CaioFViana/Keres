@@ -1,13 +1,13 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/account/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   updateClientSettings: jest.fn(),
 }));
 
-import * as ClientSettingsService from '@/src/services/ClientSettingsService';
+import * as ClientSettingsService from '@/src/services/account/ClientSettingsService';
 import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';

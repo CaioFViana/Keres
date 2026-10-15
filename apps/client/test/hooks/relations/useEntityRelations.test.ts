@@ -12,23 +12,23 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 jest.mock('@/src/state/ui/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/NoteService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/NoteService', () => ({
   __esModule: true,
   createNoteService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/NoteRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/NoteRelationService', () => ({
   __esModule: true,
   createNoteRelationService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   __esModule: true,
   readEntityFormSecondaryDraft: jest.fn(async () => null),
   patchEntityFormSecondaryDraft: jest.fn(async () => undefined),
@@ -42,11 +42,11 @@ import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
-} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
-import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
-import { createNoteService } from '@/src/services/storymanagement/NoteService';
-import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
-import { createTagService } from '@/src/services/storymanagement/TagService';
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';

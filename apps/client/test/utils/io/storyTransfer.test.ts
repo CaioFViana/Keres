@@ -10,7 +10,7 @@ import {
   exportFileLanguage,
 } from '@/src/utils/io/storyTransfer';
 
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
 }));
 

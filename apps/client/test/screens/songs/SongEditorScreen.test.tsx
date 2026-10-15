@@ -125,7 +125,7 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('@/src/services/storymanagement/SongService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ updateSong: mockUpdateSong, deleteSong: mockDeleteSong }),
 }));

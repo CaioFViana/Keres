@@ -34,23 +34,23 @@ import { useStableServer } from '@/src/screens/enterstack/useStableServer';
 import { useServerTagEditor } from '@/src/screens/enterstack/useServerTagEditor';
 import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
 import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
-import { exportAccountData } from '@/src/services/AccountDataExportService';
-import { createServerService } from '@/src/services/ServerService';
+import { exportAccountData } from '@/src/services/account/AccountDataExportService';
+import { createServerService } from '@/src/services/servers/ServerService';
 import {
   acceptLegal,
   fetchLegalStatus,
   fetchServerPrivacy,
   fetchServerTerms,
   type ServerTerms,
-} from '@/src/services/ServerTermsService';
+} from '@/src/services/servers/ServerTermsService';
 import {
   AccountDeletionCleanupError,
   deleteServerAccount,
-} from '@/src/services/DeleteAccountService';
-import { isOfflineError } from '@/src/services/apiClient';
+} from '@/src/services/account/DeleteAccountService';
+import { isOfflineError } from '@/src/services/api/apiClient';
 import { useIsConversationUnseen } from '@/src/state/ui/unseenMessagesStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { userApiService } from '@/src/services/UserApiService';
+import { userApiService } from '@/src/services/api/UserApiService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

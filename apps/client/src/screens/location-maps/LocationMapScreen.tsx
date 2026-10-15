@@ -42,10 +42,10 @@ import { useLocationMapTrajectories } from '@/src/screens/location-maps/useLocat
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
-import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createLocationMapService } from '@/src/services/storymanagement/entities/LocationMapService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';

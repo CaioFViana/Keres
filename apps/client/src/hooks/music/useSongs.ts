@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SongSelect } from '@/src/db/schema';
-import { createSceneMusicService } from '@/src/services/storymanagement/SceneMusicService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { createSongService } from '@/src/services/storymanagement/SongService';
+import { createSceneMusicService } from '@/src/services/storymanagement/media-music/SceneMusicService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /** The songs of a story, by title. Reloads when a song is made, changed or deleted. */

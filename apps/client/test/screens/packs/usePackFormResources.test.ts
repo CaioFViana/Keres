@@ -7,10 +7,10 @@ const mockShowNotification = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   createPackService: (...args: unknown[]) => mockCreatePackService(...args),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: (...args: unknown[]) => mockCreateStoryService(...args),
 }));
 jest.mock('react-i18next', () => ({

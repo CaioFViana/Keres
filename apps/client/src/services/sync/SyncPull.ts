@@ -15,11 +15,11 @@ import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
-import { getEntityTable, toEntityColumns } from '@/src/services/entityTableRegistry';
+import { getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
 import {
   findContestedFields,
   mergeLocalOperationPayloads,
-} from '@/src/services/SyncConflictService';
+} from '@/src/services/sync/SyncConflictService';
 import {
   detachLandedOperation,
   raiseConflictsServerVersion,

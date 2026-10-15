@@ -2,9 +2,9 @@ import { sectionLabels } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SceneMusicSelect } from '@/src/db/schema';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createSceneMusicService } from '@/src/services/storymanagement/SceneMusicService';
-import { createSongService } from '@/src/services/storymanagement/SongService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createSceneMusicService } from '@/src/services/storymanagement/media-music/SceneMusicService';
+import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /** What a piece of music points at: a song of the story, an audio file or a link of the Gallery. */

@@ -6,8 +6,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { manualSyncRefusalText } from '@/src/services/sync/manualSyncMessage';
-import type { PackService } from '@/src/services/storymanagement/PackService';
-import type { StoryService } from '@/src/services/storymanagement/StoryService';
+import type { PackService } from '@/src/services/storymanagement/packs/PackService';
+import type { StoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { StoryFormState } from './useStoryFormState';
 

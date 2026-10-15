@@ -16,7 +16,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
-import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';

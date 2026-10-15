@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import * as schema from '@/src/db/schema';
-import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
 import {
   entityBase,
   seedLocalStory,

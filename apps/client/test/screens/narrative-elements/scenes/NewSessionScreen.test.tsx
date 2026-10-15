@@ -69,13 +69,13 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({
     getAllByStoryId: (...args: unknown[]) => mockGetChapters(...args),
   }),
 }));
-jest.mock('@/src/services/storymanagement/SessionService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SessionService', () => ({
   __esModule: true,
   startSession: (...args: unknown[]) => mockStartSession(...args),
 }));

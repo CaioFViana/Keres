@@ -48,7 +48,7 @@ import { useNewSectionWords } from '@/src/screens/songs/useNewSectionWords';
 import { type PlaybackVoice, useSongPlayback } from '@/src/hooks/music/useSongPlayback';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { SongStackParamList } from '@/src/navigation/MainSystemStacks';
-import { createSongService } from '@/src/services/storymanagement/SongService';
+import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { flushPendingCanvasDrafts } from '@/src/services/canvasDraftPersistence';
-import { flushPendingEditorDrafts } from '@/src/services/EditorDraftService';
+import { flushPendingCanvasDrafts } from '@/src/services/drafts/canvasDraftPersistence';
+import { flushPendingEditorDrafts } from '@/src/services/drafts/EditorDraftService';
 import { useSketchDraftStore } from '@/src/state/drafts/sketchDraftStore';
 
 /**

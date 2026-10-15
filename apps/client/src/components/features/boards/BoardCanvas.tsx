@@ -34,7 +34,7 @@ import {
   boardNodeSize,
   type BoardGalleryMediaById,
 } from '@/src/utils/board/boardLayout';
-import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
 import type { BoardCardAppearance } from '@/src/utils/board/boardPinAppearance';
 import BoardNodeView from './BoardNode';
 

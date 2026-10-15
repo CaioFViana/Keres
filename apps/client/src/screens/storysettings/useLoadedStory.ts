@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 

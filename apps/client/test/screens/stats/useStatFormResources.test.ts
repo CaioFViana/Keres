@@ -5,7 +5,7 @@ const mockUseStoryStats = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/StatService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/StatService', () => ({
   createStatService: (...args: unknown[]) => mockCreateStatService(...args),
 }));
 jest.mock('@/src/hooks/story/useStoryStats', () => ({

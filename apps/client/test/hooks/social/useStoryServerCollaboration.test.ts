@@ -36,23 +36,23 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(() => mockServerService),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => mockStoryService),
 }));
-jest.mock('@/src/services/FriendshipService', () => ({
+jest.mock('@/src/services/social/FriendshipService', () => ({
   __esModule: true,
   createFriendshipService: jest.fn(() => mockFriendshipService),
 }));
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   isOfflineError: jest.fn(() => false),
 }));
-jest.mock('@/src/services/StoryPermissionService', () => ({
+jest.mock('@/src/services/social/StoryPermissionService', () => ({
   __esModule: true,
   storyPermissionApi: {
     getCollaborators: (...args: unknown[]) => mockApi.getCollaborators(...args),
@@ -62,11 +62,11 @@ jest.mock('@/src/services/StoryPermissionService', () => ({
     leaveStory: (...args: unknown[]) => mockApi.leaveStory(...args),
   },
 }));
-jest.mock('@/src/services/StoryInvitationApiService', () => ({
+jest.mock('@/src/services/api/StoryInvitationApiService', () => ({
   __esModule: true,
   storyInvitationApi: { invite: (...args: unknown[]) => mockInvite(...args) },
 }));
-jest.mock('@/src/services/storyInvitationActions', () => ({
+jest.mock('@/src/services/social/storyInvitationActions', () => ({
   __esModule: true,
   closeStoryInvitation: (...args: unknown[]) => mockCloseInvitation(...args),
 }));
@@ -85,7 +85,7 @@ jest.mock('@/src/hooks/social/useStoryInvitations', () => {
   };
 });
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('@/src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/social/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
@@ -439,7 +439,7 @@ describe('useStoryServerCollaboration', () => {
     });
 
     it('says so when offline', async () => {
-      const { isOfflineError } = jest.requireMock('@/src/services/apiClient') as {
+      const { isOfflineError } = jest.requireMock('@/src/services/api/apiClient') as {
         isOfflineError: jest.Mock;
       };
       const view = await asCollaborator();
@@ -468,7 +468,7 @@ describe('useStoryServerCollaboration', () => {
   });
 
   it('unlinks from the server only after confirmation, and distinguishes offline', async () => {
-    const { isOfflineError } = jest.requireMock('@/src/services/apiClient') as {
+    const { isOfflineError } = jest.requireMock('@/src/services/api/apiClient') as {
       isOfflineError: jest.Mock;
     };
     mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };

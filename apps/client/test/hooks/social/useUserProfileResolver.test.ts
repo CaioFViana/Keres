@@ -8,7 +8,7 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
-jest.mock('@/src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/api/FriendshipApiService', () => ({
   __esModule: true,
   friendshipApiService: { getUserDetails: jest.fn() },
 }));
@@ -16,7 +16,7 @@ jest.mock('@/src/services/FriendshipApiService', () => ({
 import { renderHook } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useUserProfileResolver } from '@/src/hooks/social/useUserProfileResolver';
-import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

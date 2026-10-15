@@ -1,8 +1,8 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
-import type { ConflictSummary } from '@/src/services/ConflictSummaryService';
-import type { PendingConflict } from '@/src/services/SyncConflictService';
+import type { ConflictSummary } from '@/src/services/sync/ConflictSummaryService';
+import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

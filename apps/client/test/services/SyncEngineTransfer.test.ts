@@ -7,27 +7,27 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(),
 }));
 
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(),
 }));
 
-jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/FavoriteService', () => ({
   __esModule: true,
   createFavoriteService: jest.fn(),
 }));
 
-jest.mock('@/src/services/storymanagement/CommentService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/CommentService', () => ({
   __esModule: true,
   createCommentService: jest.fn(),
 }));
 
-jest.mock('@/src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/media/MediaSyncService', () => ({
   __esModule: true,
   createMediaSyncService: () => ({
     syncStoryMedia: jest.fn(async () => ({
@@ -42,11 +42,11 @@ jest.mock('@/src/services/MediaSyncService', () => ({
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createCommentService } from '@/src/services/storymanagement/CommentService';
-import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
-import { createServerService } from '@/src/services/ServerService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import type { SyncEngineService } from '@/src/services/SyncEngineService';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
 import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
 import { isPlanLimitMessage } from '@/src/services/sync/StoryTransfer';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';

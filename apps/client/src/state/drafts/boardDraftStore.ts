@@ -8,14 +8,14 @@ import {
   readBoundEditorDraft,
   scheduleWriteEditorDraft,
   writeEditorDraftNow,
-} from '@/src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 import {
   clearAllCanvasDrafts,
   clearCanvasDraft,
   readCanvasDraft,
   scheduleWriteCanvasDraft,
   writeCanvasDraftNow,
-} from '@/src/services/canvasDraftPersistence';
+} from '@/src/services/drafts/canvasDraftPersistence';
 
 export interface BoardDraft {
   boardId: string;

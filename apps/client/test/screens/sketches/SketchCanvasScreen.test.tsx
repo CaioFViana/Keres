@@ -164,13 +164,13 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('@/src/services/storymanagement/SketchService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SketchService', () => ({
   createSketchService: () => ({ getById: mockGetSketch, updateSketch: mockUpdateSketch }),
 }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   createGalleryService: () => ({}),
 }));
-jest.mock('@/src/services/MediaFileService', () => ({ mediaFileService: {} }));
+jest.mock('@/src/services/media/MediaFileService', () => ({ mediaFileService: {} }));
 jest.mock('@/src/utils/io/storyTransfer', () => ({
   buildSketchFileName: () => 'sketch.svg',
   deliverMapExport: jest.fn(),

@@ -24,7 +24,7 @@ import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
 } from '@/src/navigation/MainSystemStack';
-import type { LocationWithTags } from '@/src/services/storymanagement/LocationService';
+import type { LocationWithTags } from '@/src/services/storymanagement/entities/LocationService';
 import { useLocationStore } from '@/src/state/story/locationStore';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

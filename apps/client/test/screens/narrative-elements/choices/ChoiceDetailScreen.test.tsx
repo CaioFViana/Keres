@@ -165,34 +165,34 @@ jest.mock('react-i18next', () => {
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getById: mockGetChoiceById }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: () => ({
     getChoiceCheckGroupsByChoiceId: mockGetCheckGroupsByChoiceId,
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: () => ({ getChoiceChecksByGroupId: mockGetChecksByGroupId }),
 }));
 
-jest.mock('@/src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: () => ({ getEffectsByEntity: mockGetEffectsByEntity }),
 }));
 
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getAllByStoryId: mockGetAllScenesByStoryId }),
 }));
 
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getItemsByStoryId: mockGetItemsByStoryId }),
 }));

@@ -127,11 +127,11 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getById: mockGetScene }),
 }));
-jest.mock('@/src/services/storymanagement/ScenePageService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ScenePageService', () => ({
   __esModule: true,
   createScenePageService: () => ({
     createPage: mockCreatePage,

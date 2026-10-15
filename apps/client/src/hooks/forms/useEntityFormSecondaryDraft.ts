@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import {
   clearEntityFormSecondaryDraft,
   writeEntityFormSecondaryDraft,
-} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
 
 type UseEntityFormSecondaryDraftOptions = {
   storyId?: string;

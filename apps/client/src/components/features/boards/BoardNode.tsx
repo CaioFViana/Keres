@@ -17,7 +17,7 @@ import {
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMedia,
 } from '@/src/utils/board/boardLayout';
-import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
 
 const DRAG_THRESHOLD = 5;
 

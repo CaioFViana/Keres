@@ -1,5 +1,5 @@
 /** @jest-environment node */
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
@@ -7,8 +7,8 @@ jest.mock('@/src/services/MediaFileService', () => ({
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createLocationMapService } from '@/src/services/storymanagement/entities/LocationMapService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import {
   entityBase,
   seedLocalStory,

@@ -4,7 +4,7 @@ const mockCreateRouteService = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
   createRouteService: (...args: unknown[]) => mockCreateRouteService(...args),
 }));
 

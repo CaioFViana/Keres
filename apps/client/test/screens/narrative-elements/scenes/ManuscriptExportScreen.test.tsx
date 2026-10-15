@@ -76,7 +76,7 @@ jest.mock('@/src/state/story/storyStore', () => ({
 }));
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: async () => mockLocations }),
 }));
@@ -85,7 +85,7 @@ const mockLoadManuscriptPages = jest.fn();
 const mockLoadManuscriptCover = jest.fn(async (..._args: unknown[]) => null as unknown);
 let mockStoryCover: string | null = null;
 let mockPageBytes = new Map<string, number[]>();
-jest.mock('@/src/services/storymanagement/ManuscriptPagesService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ManuscriptPagesService', () => ({
   __esModule: true,
   loadManuscriptPages: (...args: unknown[]) => mockLoadManuscriptPages(...args),
   loadManuscriptCover: (...args: unknown[]) => mockLoadManuscriptCover(...args),
@@ -94,7 +94,7 @@ jest.mock('@/src/services/storymanagement/ManuscriptPagesService', () => ({
 let mockHasMusic = false;
 let mockHasSongs = false;
 const mockLoadManuscriptMusic = jest.fn();
-jest.mock('@/src/services/storymanagement/ManuscriptMusicService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/ManuscriptMusicService', () => ({
   __esModule: true,
   loadManuscriptMusic: (...args: unknown[]) => mockLoadManuscriptMusic(...args),
   storyMusicFacts: async () => ({ hasMusic: mockHasMusic, hasSungSongs: mockHasSongs }),

@@ -11,7 +11,7 @@ const mockAlert = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: () => null,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
 jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: () => {} }));
@@ -48,7 +48,7 @@ jest.mock('@/src/state/story/storyStore', () => ({
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   createTagService: () => ({ getById: mockGet, createTag: mockCreate }),
 }));
 jest.mock('@/src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => 'ColorPicker');

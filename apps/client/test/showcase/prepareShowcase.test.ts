@@ -11,7 +11,7 @@ const mockStoryState = { setSelectedStory: jest.fn() };
 const mockStoryService = { getAllStories: jest.fn(), getStoryById: jest.fn() };
 const mockExampleService = { installExampleStory: jest.fn() };
 
-jest.mock('@/src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/account/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   createClientSettings: jest.fn(),
@@ -22,11 +22,11 @@ jest.mock('@/src/exampleStories/generated/registry', () => ({
     return mockRegistry;
   },
 }));
-jest.mock('@/src/services/storymanagement/ExampleStoryService', () => ({
+jest.mock('@/src/services/storymanagement/packs/ExampleStoryService', () => ({
   __esModule: true,
   createExampleStoryService: jest.fn(() => mockExampleService),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => mockStoryService),
 }));
@@ -47,7 +47,10 @@ jest.mock('@/src/utils/format/i18n', () => ({
   default: { changeLanguage: jest.fn() },
 }));
 
-import { createClientSettings, getClientSettings } from '@/src/services/ClientSettingsService';
+import {
+  createClientSettings,
+  getClientSettings,
+} from '@/src/services/account/ClientSettingsService';
 import { prepareShowcase } from '@/src/showcase/prepareShowcase';
 import i18n from '@/src/utils/format/i18n';
 

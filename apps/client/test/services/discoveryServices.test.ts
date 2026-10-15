@@ -4,9 +4,9 @@
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import { AttributeType } from '@keres/shared';
-import { createGlobalSearchService } from '@/src/services/storymanagement/GlobalSearchService';
-import { createSongService } from '@/src/services/storymanagement/SongService';
-import { createStoryAnalysisService } from '@/src/services/storymanagement/StoryAnalysisService';
+import { createGlobalSearchService } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
+import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
+import { createStoryAnalysisService } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
 import {
   entityBase,
   seedLocalStory,

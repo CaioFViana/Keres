@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { ArcMembershipKind } from '@/src/services/storymanagement/StoryArcService';
+import type { ArcMembershipKind } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /**

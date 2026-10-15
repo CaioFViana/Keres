@@ -4,7 +4,7 @@
 jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
 }));
-jest.mock('@/src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/media/MediaSyncService', () => ({
   createMediaSyncService: () => ({
     syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
   }),

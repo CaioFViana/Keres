@@ -98,7 +98,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/FriendshipService', () => ({
+jest.mock('@/src/services/social/FriendshipService', () => ({
   createFriendshipService: () => ({
     getAllFriendships: (...args: unknown[]) => mockGetAllFriendships(...args),
     acceptFriendRequest: (...args: unknown[]) => mockAccept(...args),
@@ -116,12 +116,12 @@ jest.mock('@/src/components/features/story/StoryInvitationList/StoryInvitationLi
 }));
 
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('@/src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/social/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),

@@ -12,7 +12,7 @@ import {
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useGalleryMedia } from '@/src/hooks/media/useGalleryMedia';
 import { useSongs } from '@/src/hooks/music/useSongs';
-import type { SceneMusicTarget } from '@/src/services/storymanagement/SceneMusicService';
+import type { SceneMusicTarget } from '@/src/services/storymanagement/media-music/SceneMusicService';
 import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '@/src/components/features/scenes/scenePickerStyleDefs';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';

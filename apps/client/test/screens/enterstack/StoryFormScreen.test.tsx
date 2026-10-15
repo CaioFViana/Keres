@@ -97,7 +97,7 @@ jest.mock('@/src/state/app/shippedPacksInstallerStore', () => ({
     typeof selector === 'function' ? selector(mockInstallerState) : mockInstallerState,
 }));
 
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({
     getStoryById: (...args: unknown[]) => mockGetStoryById(...args),
     createStory: (...args: unknown[]) => mockCreateStory(...args),
@@ -106,14 +106,14 @@ jest.mock('@/src/services/storymanagement/StoryService', () => ({
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   createPackService: () => ({
     listPacks: (...args: unknown[]) => mockListPacks(...args),
     findConflicts: (...args: unknown[]) => mockFindConflicts(...args),
     createStoryWithPacks: (...args: unknown[]) => mockCreateStoryWithPacks(...args),
   }),
   // The real module drags the i18n init chain with it; the real predicate is pinned in
-  // `test/services/PackService.test.ts` instead, and only its shape matters here.
+  // `test/services/storymanagement/packs/PackService.test.ts` instead, and only its shape matters here.
   packHasExtras: (counts?: { extras?: Record<string, number> }) =>
     !!counts?.extras && Object.values(counts.extras).some((count) => count > 0),
 }));

@@ -16,7 +16,7 @@ jest.mock('expo-audio', () => ({
   useAudioPlayer: () => mockPlayer,
   useAudioPlayerStatus: () => mockStatus,
 }));
-jest.mock('@/src/services/SongAudioService', () => ({
+jest.mock('@/src/services/media/SongAudioService', () => ({
   __esModule: true,
   createSongAudioService: () => ({
     render: (...args: unknown[]) => mockRender(...args),

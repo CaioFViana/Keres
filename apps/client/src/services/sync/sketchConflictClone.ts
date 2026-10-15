@@ -2,8 +2,8 @@ import { emptySketchContent, generateSketchLocalId, validateSketchContent } from
 import { and, eq, ne } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import type { PendingConflict } from '@/src/services/SyncConflictService';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
+import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 
 /**
  * Keep the server's sketch, and this device's drawing as a new sketch beside it: two drawings

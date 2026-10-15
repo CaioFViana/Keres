@@ -4,9 +4,9 @@
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import { scenePageViewOf } from '@/src/hooks/scene/useScenePages';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createScenePageService } from '@/src/services/storymanagement/scenes-chapters/ScenePageService';
+import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import {
   entityBase,
   seedLocalStory,

@@ -1,6 +1,6 @@
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
@@ -15,7 +15,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { useChapterNames } from '@/src/hooks/chapter/useChapterNames';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

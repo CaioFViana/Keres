@@ -2,8 +2,8 @@ import { normalizeUserTag, USER_TAG_MAX_LENGTH, USER_TAG_MIN_LENGTH } from '@ker
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ServerSelect } from '@/src/db/schema';
-import { isOfflineError } from '@/src/services/apiClient';
-import { userApiService } from '@/src/services/UserApiService';
+import { isOfflineError } from '@/src/services/api/apiClient';
+import { userApiService } from '@/src/services/api/UserApiService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 
 /** What the editor needs of the service that stores the server locally. */

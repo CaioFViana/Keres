@@ -4,7 +4,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => ({})) }));
-jest.mock('@/src/services/storymanagement/SuggestionService', () => ({
+jest.mock('@/src/services/storymanagement/suggestions/SuggestionService', () => ({
   createSuggestionService: jest.fn(),
 }));
 jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
@@ -18,7 +18,7 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
-import { createSuggestionService } from '@/src/services/storymanagement/SuggestionService';
+import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

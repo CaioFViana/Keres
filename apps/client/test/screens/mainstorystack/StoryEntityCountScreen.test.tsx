@@ -49,14 +49,14 @@ jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('@/src/services/storymanagement/StoryEntityCountService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryEntityCountService', () => ({
   __esModule: true,
   createStoryEntityCountService: () => ({
     countForStory: mockCountForStory,
     countFreeForStory: mockCountRelations,
   }),
 }));
-jest.mock('@/src/services/StoryPlanService', () => ({
+jest.mock('@/src/services/payments/StoryPlanService', () => ({
   __esModule: true,
   createStoryPlanService: () => ({ getPlan: mockGetPlan }),
 }));

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
 import { users } from '@/src/db/schema';
-import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

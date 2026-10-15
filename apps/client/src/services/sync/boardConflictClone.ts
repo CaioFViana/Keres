@@ -2,8 +2,8 @@ import { validateBoardContent } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import type { PendingConflict } from '@/src/services/SyncConflictService';
-import { createBoardService } from '@/src/services/storymanagement/BoardService';
+import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
+import { createBoardService } from '@/src/services/storymanagement/entities/BoardService';
 
 /**
  * Keep the server's board, and this device's drawing as a new board beside it: two layouts cannot

@@ -6,9 +6,9 @@ import {
   readEditorDraft,
   resetEditorDraftDbForTests,
   setEditorDraftDb,
-} from '@/src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 import { useBoardDraftStore } from '@/src/state/drafts/boardDraftStore';
-import { readCanvasDraft, writeCanvasDraftNow } from '@/src/services/canvasDraftPersistence';
+import { readCanvasDraft, writeCanvasDraftNow } from '@/src/services/drafts/canvasDraftPersistence';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 jest.mock('@react-native-async-storage/async-storage', () =>

@@ -7,7 +7,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/services/MessageService', () => ({
+jest.mock('@/src/services/social/MessageService', () => ({
   __esModule: true,
   MESSAGES_CHANGED: 'messages_changed',
   createMessageService: () => mockService,

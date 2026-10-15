@@ -13,7 +13,7 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector: (state: { userId: string }) => unknown) =>
     selector({ userId: 'user-1' }),
 }));
-jest.mock('@/src/services/storymanagement/SongService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ updateSong: mockUpdateSong }),
 }));

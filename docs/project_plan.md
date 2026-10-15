@@ -361,7 +361,7 @@ This section was originally a list of next steps, written before any implementat
 - ~~Define migrations in `packages/db` (Drizzle).~~ Migrations live in `apps/api/src/db/` (Postgres) and `apps/client/src/db/` (local SQLite) - there is no `packages/db`.
 - ~~Create Zod contracts in `packages/shared`.~~
 - ~~Implement the base CRUD routes (users, stories, characters).~~ Full CRUD for every entity listed in the "Data structure" section, not just the original three.
-- ~~Develop the synchronization engine.~~ See `apps/api/src/services/entity-sync-handlers/` and `apps/client/src/services/SyncEngineService.ts`/`entity-sync-handlers/`.
+- ~~Develop the synchronization engine.~~ See `apps/api/src/services/entity-sync-handlers/` and `apps/client/src/services/sync/SyncEngineService.ts`/`entity-sync-handlers/`.
 - ~~Create a desktop app with integrated SQLite (Tauri/Electron).~~ Electron, packaging the client's web build (SQLite through expo-sqlite/OPFS, not a separate native binding) - see `docs/file_structure.md`.
 
 For the current state and work in progress, there is no roadmap maintained in this folder at the moment - consult the repository's commit/branch history.

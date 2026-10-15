@@ -23,7 +23,7 @@ import type {
   MainSystemDrawerParamList,
   NotesStackParamList,
 } from '@/src/navigation/MainSystemStack';
-import type { NoteWithTags } from '@/src/services/storymanagement/NoteService';
+import type { NoteWithTags } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 import { useNoteStore } from '@/src/state/story/noteStore';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 

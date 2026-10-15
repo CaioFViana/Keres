@@ -10,11 +10,11 @@ jest.mock('react-i18next', () => ({
     i18n: { language: 'pt-BR' },
   }),
 }));
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),
 }));
-jest.mock('@/src/services/PaymentService', () => ({
+jest.mock('@/src/services/payments/PaymentService', () => ({
   __esModule: true,
   cancelSubscription: (...args: unknown[]) => mockCancel(...args),
 }));

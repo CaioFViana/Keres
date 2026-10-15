@@ -6,7 +6,7 @@ import {
   type Inbox,
   type MessageContact,
   MESSAGES_CHANGED,
-} from '@/src/services/MessageService';
+} from '@/src/services/social/MessageService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import {
   useEntityEventSubscriptions,

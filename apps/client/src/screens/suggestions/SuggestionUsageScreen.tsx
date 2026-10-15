@@ -22,11 +22,11 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
-import type { SuggestionUsage } from '@/src/services/storymanagement/SuggestionService';
+import type { SuggestionUsage } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import {
   createSuggestionService,
   isNamedListType,
-} from '@/src/services/storymanagement/SuggestionService';
+} from '@/src/services/storymanagement/suggestions/SuggestionService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

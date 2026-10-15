@@ -12,13 +12,13 @@ jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
 jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: () => ({ modes: mockModes }),
 }));
-jest.mock('@/src/services/storymanagement/ModeService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ModeService', () => ({
   createModeService: jest.fn(() => ({ id: 'mode-service' })),
 }));
-jest.mock('@/src/services/storymanagement/StatRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/StatRelationService', () => ({
   createStatRelationService: jest.fn(() => ({ id: 'stat-relation-service' })),
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadDraft(...args),
   patchEntityFormSecondaryDraft: (...args: unknown[]) => mockPatchDraft(...args),
 }));

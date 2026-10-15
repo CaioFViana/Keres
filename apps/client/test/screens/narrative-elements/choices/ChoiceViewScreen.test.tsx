@@ -134,47 +134,47 @@ jest.mock('react-i18next', () => {
   };
 });
 
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getChoicesByStoryId: mockGetChoicesByStoryId }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getChaptersByStoryId: mockGetChaptersByStoryId }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: () => ({ getAllByStoryId: mockGetCheckGroups }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: () => ({ getAllByStoryId: mockGetChecks }),
 }));
 
-jest.mock('@/src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: () => ({ getAllByStoryId: mockGetEffects }),
 }));
 
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getItemsByStoryId: mockGetItemsByStoryId }),
 }));
 
-jest.mock('@/src/services/storymanagement/PlotService', () => ({
+jest.mock('@/src/services/storymanagement/entities/PlotService', () => ({
   __esModule: true,
   createPlotService: () => ({ getAllByStoryId: mockGetPlots }),
 }));
 
-jest.mock('@/src/services/storymanagement/PlotSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/PlotSceneService', () => ({
   __esModule: true,
   createPlotSceneService: () => ({ getAllByStoryId: mockGetPlotScenes }),
 }));

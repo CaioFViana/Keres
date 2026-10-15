@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { MenuBadges } from '@/src/navigation/drawerMenuModel';
-import { createPublicationService } from '@/src/services/PublicationService';
+import { createPublicationService } from '@/src/services/publication/PublicationService';
 
 /**
  * What the story's menu says about its entries without opening them: the history shows the changes still to

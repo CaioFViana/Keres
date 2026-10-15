@@ -1,10 +1,10 @@
 const mockFlushEditor = jest.fn();
 const mockFlushCanvas = jest.fn();
-jest.mock('@/src/services/EditorDraftService', () => ({
+jest.mock('@/src/services/drafts/EditorDraftService', () => ({
   __esModule: true,
   flushPendingEditorDrafts: (...args: unknown[]) => mockFlushEditor(...args),
 }));
-jest.mock('@/src/services/canvasDraftPersistence', () => ({
+jest.mock('@/src/services/drafts/canvasDraftPersistence', () => ({
   __esModule: true,
   flushPendingCanvasDrafts: (...args: unknown[]) => mockFlushCanvas(...args),
 }));

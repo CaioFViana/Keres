@@ -199,7 +199,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/services/storymanagement/WorldRuleService', () => ({
+jest.mock('@/src/services/storymanagement/entities/WorldRuleService', () => ({
   __esModule: true,
   createWorldRuleService: () => ({ getById: mockGetWorldRuleById }),
 }));

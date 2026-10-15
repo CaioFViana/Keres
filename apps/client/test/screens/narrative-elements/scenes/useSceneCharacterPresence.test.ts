@@ -17,7 +17,7 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
-jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: jest.fn(() => mockService),
 }));

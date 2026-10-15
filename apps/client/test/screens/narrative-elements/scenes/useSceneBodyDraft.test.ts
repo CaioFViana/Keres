@@ -6,14 +6,14 @@ import {
   readStoredSceneBodyText,
   useSceneBodyDraft,
 } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
-import * as EditorDraftService from '@/src/services/EditorDraftService';
+import * as EditorDraftService from '@/src/services/drafts/EditorDraftService';
 import {
   SCENE_BODY_DRAFT_FIELD,
   readEditorDraft,
   resetEditorDraftDbForTests,
   setEditorDraftDb,
   writeEditorDraft,
-} from '@/src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;

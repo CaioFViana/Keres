@@ -1,12 +1,12 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/media/MediaSyncService', () => ({
   __esModule: true,
   createMediaSyncService: jest.fn(),
 }));
 
-import { createMediaSyncService } from '@/src/services/MediaSyncService';
+import { createMediaSyncService } from '@/src/services/media/MediaSyncService';
 import { SyncMedia } from '@/src/services/sync/SyncMedia';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

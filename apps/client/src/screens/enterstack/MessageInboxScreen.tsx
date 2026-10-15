@@ -11,7 +11,7 @@ import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useMessageInbox } from '@/src/screens/enterstack/useMessageInbox';
 import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
-import type { InboxEntry, MessageContact } from '@/src/services/MessageService';
+import type { InboxEntry, MessageContact } from '@/src/services/social/MessageService';
 import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';

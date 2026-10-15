@@ -5,7 +5,7 @@ const mockConfirmDelete = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: () => null,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
 jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => ({
 import { act, renderHook } from '@testing-library/react-native';
 import { useTagFormActions } from '@/src/screens/tags/useTagFormActions';
 import type { TagFormState } from '@/src/screens/tags/useTagFormState';
-import type { TagService } from '@/src/services/storymanagement/TagService';
+import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 
 const createState = (overrides: Partial<TagFormState> = {}): TagFormState =>
   ({

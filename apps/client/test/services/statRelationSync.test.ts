@@ -3,7 +3,7 @@
  */
 import { asc, eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
+import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**

@@ -3,17 +3,17 @@
  */
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
-import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
-import { createCommentService } from '@/src/services/storymanagement/CommentService';
-import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
-import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
-import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
-import { createSeeAlsoRelationService } from '@/src/services/storymanagement/SeeAlsoRelationService';
-import { createTagService } from '@/src/services/storymanagement/TagService';
-import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
-import { StoryReadOnlyError } from '@/src/utils/syncUtils';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createSeeAlsoRelationService } from '@/src/services/storymanagement/relations/SeeAlsoRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { StoryReadOnlyError } from '@/src/services/sync/syncUtils';
 import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

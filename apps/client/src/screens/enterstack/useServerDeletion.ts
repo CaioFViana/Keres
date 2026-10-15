@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { OwnedServerStory } from '@/src/services/ServerService';
-import { ServerHasOwnedStoriesError } from '@/src/services/ServerService';
+import type { OwnedServerStory } from '@/src/services/servers/ServerService';
+import { ServerHasOwnedStoriesError } from '@/src/services/servers/ServerService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 
 /** What the deletion needs of the service that stores the servers locally. */

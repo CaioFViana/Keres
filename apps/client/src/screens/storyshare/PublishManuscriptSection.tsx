@@ -6,7 +6,7 @@ import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import { StyleSheet, Text, View } from 'react-native';
 import ManuscriptExportOptions from '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import { SCREENPLAY_EXPORT_FORMATS } from '@/src/components/features/manuscript/export/manuscriptExport';
-import { SERVER_MANUSCRIPT_FORMATS } from '@/src/services/PublicationApiService';
+import { SERVER_MANUSCRIPT_FORMATS } from '@/src/services/api/PublicationApiService';
 import type { ThemeColors } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

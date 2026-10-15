@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useSuggestions } from '@/src/hooks/entity/useSuggestions';
-import type { SuggestionType } from '@/src/services/storymanagement/SuggestionService';
+import type { SuggestionType } from '@/src/services/storymanagement/suggestions/SuggestionService';
 
 /**
  * Catalog state of the suggestion inputs: the picker's visibility and search, plus the catalog

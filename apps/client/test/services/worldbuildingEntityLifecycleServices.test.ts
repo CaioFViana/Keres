@@ -3,11 +3,11 @@
  */
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
-import { createNoteService } from '@/src/services/storymanagement/NoteService';
-import { createTagService } from '@/src/services/storymanagement/TagService';
-import { createWorldRuleService } from '@/src/services/storymanagement/WorldRuleService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createWorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
 import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

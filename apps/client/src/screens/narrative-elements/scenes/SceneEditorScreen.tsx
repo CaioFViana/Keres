@@ -33,8 +33,11 @@ import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
-import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/EditorDraftService';
-import { createSceneService, type SceneService } from '@/src/services/storymanagement/SceneService';
+import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/drafts/EditorDraftService';
+import {
+  createSceneService,
+  type SceneService,
+} from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

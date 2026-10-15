@@ -163,7 +163,7 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => ({}),
 }));
 
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getById: mockGetById, updateScene: mockUpdateScene }),
 }));

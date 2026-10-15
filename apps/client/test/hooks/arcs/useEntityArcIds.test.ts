@@ -1,6 +1,6 @@
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: jest.fn(),
 }));
@@ -16,7 +16,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useEntityArcIds } from '@/src/hooks/arcs/useEntityArcIds';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const service = {

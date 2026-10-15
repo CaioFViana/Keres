@@ -11,7 +11,7 @@ import {
   resetEditorDraftDbForTests,
   setEditorDraftDb,
   writeEditorDraft,
-} from '@/src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 type Fields = { name: string; description: string | null };

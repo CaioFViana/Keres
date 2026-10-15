@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ServerPaymentSelect, ServerSelect } from '@/src/db/schema';
-import { createPaymentHistoryService } from '@/src/services/PaymentHistoryService';
-import { PAYMENTS_CHANGED } from '@/src/services/PaymentService';
+import { createPaymentHistoryService } from '@/src/services/payments/PaymentHistoryService';
+import { PAYMENTS_CHANGED } from '@/src/services/payments/PaymentService';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,

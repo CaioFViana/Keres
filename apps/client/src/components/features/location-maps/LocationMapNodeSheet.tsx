@@ -17,7 +17,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme, type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { getCommonCardStyles } from '@/src/theme/commonStyles';
-import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
 import type {
   LocationMapChildRelation,
   LocationMapParentRelation,

@@ -5,10 +5,10 @@ const mockCreateCharacterRelationService: jest.Mock = jest.fn(() => ({
 }));
 
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   createCharacterService: (...args: unknown[]) => mockCreateCharacterService(...args),
 }));
-jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/CharacterRelationService', () => ({
   createCharacterRelationService: (...args: unknown[]) =>
     mockCreateCharacterRelationService(...args),
 }));

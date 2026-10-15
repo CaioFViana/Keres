@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
-import { acceptStoryInvitation, closeStoryInvitation } from '@/src/services/storyInvitationActions';
+import {
+  acceptStoryInvitation,
+  closeStoryInvitation,
+} from '@/src/services/social/storyInvitationActions';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import type { ServerStoryInvitation } from '@/src/services/StoryInvitationService';
+import type { ServerStoryInvitation } from '@/src/services/social/StoryInvitationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useStoryInvitations } from './useStoryInvitations';
 

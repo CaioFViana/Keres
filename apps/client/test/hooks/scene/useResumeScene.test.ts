@@ -12,11 +12,11 @@ jest.mock('@react-navigation/native', () => ({
   },
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getLastEdited: mockGetLastEdited }),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getById: mockGetChapter }),
 }));

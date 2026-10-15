@@ -104,7 +104,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
 const mockCreateCalendar = jest.fn(async () => ({ id: 'calendar-1' }));
 const mockUpdateCalendar = jest.fn(async () => ({ id: 'calendar-1' }));
 const mockGetById = jest.fn(async () => undefined as unknown);
-jest.mock('@/src/services/storymanagement/StoryCalendarService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryCalendarService', () => ({
   __esModule: true,
   createStoryCalendarService: () => ({
     createCalendar: mockCreateCalendar,

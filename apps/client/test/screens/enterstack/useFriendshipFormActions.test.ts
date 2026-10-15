@@ -9,10 +9,10 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('@/src/services/UserApiService', () => ({
+jest.mock('@/src/services/api/UserApiService', () => ({
   userApiService: { getUserByTag: (...args: unknown[]) => mockGetUserByTag(...args) },
 }));
-jest.mock('@/src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/api/FriendshipApiService', () => ({
   friendshipApiService: {
     sendFriendRequest: (...args: unknown[]) => mockSendFriendRequest(...args),
   },
@@ -32,7 +32,7 @@ import {
 } from '@/src/screens/enterstack/useFriendshipFormActions';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import type { FriendshipFormState } from '@/src/screens/enterstack/useFriendshipFormState';
-import type { FriendshipService } from '@/src/services/FriendshipService';
+import type { FriendshipService } from '@/src/services/social/FriendshipService';
 
 const selectedServer = {
   id: 'server-1',

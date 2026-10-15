@@ -23,7 +23,7 @@ import type {
   BoardStackParamList,
   MainSystemDrawerParamList,
 } from '@/src/navigation/MainSystemStack';
-import { createBoardService } from '@/src/services/storymanagement/BoardService';
+import { createBoardService } from '@/src/services/storymanagement/entities/BoardService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

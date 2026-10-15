@@ -113,7 +113,7 @@ const mockGetLocations = jest.fn();
 const mockGetGalleries = jest.fn();
 const mockGetRelations = jest.fn();
 const mockGetMaps = jest.fn();
-jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationMapService', () => ({
   __esModule: true,
   createLocationMapService: () => ({
     getById: mockGetById,
@@ -121,19 +121,19 @@ jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
     updateMap: jest.fn(),
   }),
 }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetLocations }),
 }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({ getGalleriesByStoryId: mockGetGalleries }),
 }));
-jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({ getAllRelationsForStory: mockGetRelations }),
 }));
-jest.mock('@/src/utils/boardEntitySummary', () => ({
+jest.mock('@/src/services/storymanagement/entities/boardEntitySummary', () => ({
   __esModule: true,
   loadBoardEntitySummary: jest.fn(async () => ({ title: 'A fortaleza', body: 'Resumo local' })),
 }));

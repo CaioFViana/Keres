@@ -17,7 +17,7 @@ jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({
     updateStory: (...args: unknown[]) => mockUpdateStory(...args),
   }),

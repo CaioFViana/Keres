@@ -26,7 +26,7 @@ import {
   cjkPackState,
   downloadCjkPack,
   loadCjkMatrix,
-} from '@/src/services/cjkFontPack';
+} from '@/src/services/platform-web/cjkFontPack';
 import {
   deliverScreenplay,
   exportManuscript,
@@ -44,17 +44,17 @@ import {
 } from '@/src/components/features/manuscript/export/screenplayExport';
 import { useDrizzle } from '@/src/db';
 import type { LocationSelect } from '@/src/db/schema';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 import {
   loadManuscriptMusic,
   storyMusicFacts,
   withManuscriptMusic,
-} from '@/src/services/storymanagement/ManuscriptMusicService';
+} from '@/src/services/storymanagement/media-music/ManuscriptMusicService';
 import {
   estimateManuscriptPageBytes,
   loadManuscriptCover,
   loadManuscriptPages,
-} from '@/src/services/storymanagement/ManuscriptPagesService';
+} from '@/src/services/storymanagement/scenes-chapters/ManuscriptPagesService';
 import { songPrintOf } from '@/src/components/features/manuscript/export/songPrintOf';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

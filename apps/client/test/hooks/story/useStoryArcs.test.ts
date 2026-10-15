@@ -18,7 +18,7 @@ jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: jest.fn(() => ({ setTheme: mockSetTheme })),
 }));
-jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: jest.fn(() => ({ getArcsForStory: mockGetArcsForStory })),
 }));

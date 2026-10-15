@@ -3,7 +3,7 @@ import { type MutableRefObject, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { SketchSelect } from '@/src/db/schema';
-import { saveSketchSnapshot } from '@/src/services/storymanagement/SketchSnapshotService';
+import { saveSketchSnapshot } from '@/src/services/storymanagement/media-music/SketchSnapshotService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useTheme } from '@/src/theme';
 import { renderSketchSvg } from '@/src/utils/sketch/sketchSvg';

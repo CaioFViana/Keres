@@ -1,7 +1,10 @@
 import { useRef } from 'react';
 import { useDrizzle } from '@/src/db';
-import { createFriendshipService, type FriendshipService } from '@/src/services/FriendshipService';
-import { createServerService } from '@/src/services/ServerService';
+import {
+  createFriendshipService,
+  type FriendshipService,
+} from '@/src/services/social/FriendshipService';
+import { createServerService } from '@/src/services/servers/ServerService';
 
 type ServerService = ReturnType<typeof createServerService>;
 

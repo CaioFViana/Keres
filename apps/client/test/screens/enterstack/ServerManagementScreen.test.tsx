@@ -70,13 +70,13 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,

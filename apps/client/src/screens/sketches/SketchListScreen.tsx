@@ -18,7 +18,7 @@ import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { SketchStackParamList } from '@/src/navigation/MainSystemStack';
 import { filterByNameAndDescription } from '@/src/utils/search/filterByNameAndDescription';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import type { ThemeColors } from '@/src/theme';

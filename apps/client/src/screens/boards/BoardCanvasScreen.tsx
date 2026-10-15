@@ -31,15 +31,18 @@ import { decodeBoardPinValue, useBoardPinOptions } from '@/src/screens/boards/us
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { BoardStackParamList } from '@/src/navigation/MainSystemStack';
-import { createBoardService } from '@/src/services/storymanagement/BoardService';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createBoardService } from '@/src/services/storymanagement/entities/BoardService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { useBoardDraftStore } from '@/src/state/drafts/boardDraftStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { loadBoardEntitySummary, type BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import {
+  loadBoardEntitySummary,
+  type BoardEntitySummary,
+} from '@/src/services/storymanagement/entities/boardEntitySummary';
 import type { BoardGalleryMedia, BoardGalleryMediaById } from '@/src/utils/board/boardLayout';
 import { galleryMediaForNode, nextStaggeredPosition } from '@/src/utils/board/boardLayout';
 import type { NavigableEntityType } from '@/src/utils/entity/entityNavigation';

@@ -30,10 +30,10 @@ import {
   galleryGridLayout,
   galleryScrollbarWidth,
 } from '@/src/utils/ui/galleryGridLayout';
-import { createGalleryLink } from '@/src/services/galleryLink';
-import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
-import { mediaFileService } from '@/src/services/MediaFileService';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createGalleryLink } from '@/src/services/media/galleryLink';
+import { importPickedMediaAssets } from '@/src/services/media/galleryMediaImport';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { useGalleryStore } from '@/src/state/story/galleryStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

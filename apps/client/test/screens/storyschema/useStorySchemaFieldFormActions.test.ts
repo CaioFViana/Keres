@@ -12,7 +12,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import { useStorySchemaFieldFormActions } from '@/src/screens/storyschema/useStorySchemaFieldFormActions';
 import type { StorySchemaFieldFormState } from '@/src/screens/storyschema/useStorySchemaFieldFormState';
-import type { StorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 
 const createState = (
   overrides: Partial<StorySchemaFieldFormState> = {},

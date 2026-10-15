@@ -7,7 +7,7 @@ const mockSaveEntityWithSecondaryData = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: () => null,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
 jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
@@ -19,7 +19,7 @@ jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
 jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/forms/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -45,7 +45,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import { useItemJourneyFormActions } from '@/src/screens/itemJourneys/useItemJourneyFormActions';
 import type { ItemJourneyFormState } from '@/src/screens/itemJourneys/useItemJourneyFormState';
-import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 
 const createState = (overrides: Partial<ItemJourneyFormState> = {}): ItemJourneyFormState =>
   ({

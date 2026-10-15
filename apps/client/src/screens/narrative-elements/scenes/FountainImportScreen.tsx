@@ -11,7 +11,10 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { importFountain, titleCase } from '@/src/services/storymanagement/FountainImportService';
+import {
+  importFountain,
+  titleCase,
+} from '@/src/services/storymanagement/scenes-chapters/FountainImportService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

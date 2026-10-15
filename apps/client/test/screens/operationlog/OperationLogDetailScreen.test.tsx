@@ -46,11 +46,11 @@ jest.mock('@/src/hooks/social/useUserDisplayName', () => ({
   __esModule: true,
   useUserDisplayName: () => mockUserDisplayName,
 }));
-jest.mock('@/src/services/EntityService', () => ({
+jest.mock('@/src/services/entity-solvers/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: (...args: unknown[]) => mockGetEntityIdentifier(...args) },
 }));
-jest.mock('@/src/services/OperationLogService', () => ({
+jest.mock('@/src/services/sync/OperationLogService', () => ({
   __esModule: true,
   createOperationLogService: () => ({ getOperationLogById: mockGetOperationLogById }),
 }));

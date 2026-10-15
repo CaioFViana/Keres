@@ -19,11 +19,11 @@ import type { StorySelect } from '@/src/db/schema';
 import type {
   PublishManuscriptOptions,
   PublishReaderOptions,
-} from '@/src/services/PublicationApiService';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { storyMusicFacts } from '@/src/services/storymanagement/ManuscriptMusicService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
+} from '@/src/services/api/PublicationApiService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { storyMusicFacts } from '@/src/services/storymanagement/media-music/ManuscriptMusicService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 
 /** A work of the story the person can release on its own. */
 export type PublishableArc = {

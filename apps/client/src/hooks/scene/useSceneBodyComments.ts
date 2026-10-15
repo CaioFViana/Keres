@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { CommentSelect } from '@/src/db/schema';
-import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/EditorDraftService';
+import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/drafts/EditorDraftService';
 import type {
   CommentService,
   CreateCommentInput,
-} from '@/src/services/storymanagement/CommentService';
+} from '@/src/services/storymanagement/notes-tags-comments/CommentService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useCommentSurface } from '@/src/hooks/comments/useCommentSurface';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';

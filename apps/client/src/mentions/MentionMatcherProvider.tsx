@@ -11,7 +11,7 @@ import {
   type MentionableEntity,
   type MentionMatcher,
 } from '@/src/utils/entity/entityMentions';
-import { loadEntityOptions } from '@/src/utils/entityOptions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 import { debounce } from '@/src/utils/sync/debounce';
 import {
   buildAmbiguousMentionIndex,

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { DESKTOP_MEDIA_URI_PREFIX, resolveBlobUri } from '@/src/services/webMediaStore';
+import {
+  DESKTOP_MEDIA_URI_PREFIX,
+  resolveBlobUri,
+} from '@/src/services/platform-web/webMediaStore';
 
 /**
  * Resolves several media paths into renderable URIs at once (the board resolves one at a time;

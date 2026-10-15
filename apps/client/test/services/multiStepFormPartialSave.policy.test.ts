@@ -5,7 +5,7 @@
  * identity retention, ordered secondary writes, in-session retry without duplication,
  * and the requirement that success signalling stays outside the coordinator.
  */
-import { saveEntityWithSecondaryData } from '@/src/services/storymanagement/EntityFormSaveCoordinator';
+import { saveEntityWithSecondaryData } from '@/src/services/storymanagement/forms/EntityFormSaveCoordinator';
 
 describe('multi-step form partial-save policy', () => {
   const entityFlows = [

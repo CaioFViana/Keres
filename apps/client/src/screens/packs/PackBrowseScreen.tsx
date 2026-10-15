@@ -14,9 +14,9 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { packApiService, type RemotePack } from '@/src/services/PackApiService';
-import { createServerService } from '@/src/services/ServerService';
-import { createPackService } from '@/src/services/storymanagement/PackService';
+import { packApiService, type RemotePack } from '@/src/services/api/PackApiService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createPackService } from '@/src/services/storymanagement/packs/PackService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';

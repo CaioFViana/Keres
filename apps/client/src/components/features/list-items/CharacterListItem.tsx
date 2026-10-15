@@ -1,7 +1,7 @@
 import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { Text, View } from 'react-native';
-import type { CharacterWithTags } from '@/src/services/storymanagement/CharacterService';
+import type { CharacterWithTags } from '@/src/services/storymanagement/entities/CharacterService';
 import { useTheme } from '@/src/theme';
 import { truncate } from '@/src/utils/format/stringUtils';
 

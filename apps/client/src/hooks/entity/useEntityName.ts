@@ -2,7 +2,7 @@ import type { OperationLogEntityType } from '@keres/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { EntityService } from '@/src/services/EntityService';
+import { EntityService } from '@/src/services/entity-solvers/EntityService';
 
 interface UseEntityNameResult {
   entityName: string | undefined;

@@ -4,7 +4,7 @@ const mockCreateChapterService = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   createChapterService: (...args: unknown[]) => mockCreateChapterService(...args),
 }));
 

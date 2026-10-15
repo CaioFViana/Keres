@@ -51,17 +51,20 @@ jest.mock('@/src/db', () => {
   };
 });
 jest.mock('@/src/db/migrate', () => ({ __esModule: true, migrate: jest.fn() }));
-jest.mock('@/src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: { hydrateTokens: jest.fn() },
   setAuthDb: jest.fn(),
 }));
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: { setTokenProvider: jest.fn() },
 }));
-jest.mock('@/src/services/webMediaStore', () => ({ __esModule: true, hydrate: jest.fn() }));
-jest.mock('@/src/services/HostedCookieSession', () => ({
+jest.mock('@/src/services/platform-web/webMediaStore', () => ({
+  __esModule: true,
+  hydrate: jest.fn(),
+}));
+jest.mock('@/src/services/auth/HostedCookieSession', () => ({
   __esModule: true,
   restoreHostedCookieSession: jest.fn(),
 }));
@@ -112,8 +115,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import App from '@/src/App';
 import { initializeDrizzle, useDrizzle } from '@/src/db';
 import { migrate } from '@/src/db/migrate';
-import { authTokenManager } from '@/src/services/AuthTokenManager';
-import { restoreHostedCookieSession } from '@/src/services/HostedCookieSession';
+import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
+import { restoreHostedCookieSession } from '@/src/services/auth/HostedCookieSession';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { isColorLight } from '@/src/theme/commonStyles';

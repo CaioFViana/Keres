@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ServerSelect } from '@/src/db/schemas/servers';
-import { fetchVerificationStatus } from '@/src/services/AgeVerificationApiService';
+import { fetchVerificationStatus } from '@/src/services/api/AgeVerificationApiService';
 
 /** The states in which the person still has to do something about the age check of the account on a server. */
 export type VerificationNotice = 'pending' | 'rejected' | 'expired';

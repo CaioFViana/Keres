@@ -121,7 +121,7 @@ jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
-jest.mock('@/src/services/storymanagement/BoardService', () => ({
+jest.mock('@/src/services/storymanagement/entities/BoardService', () => ({
   createBoardService: () => ({
     getBoardsForStory: mockGetBoards,
     createBoard: mockCreateBoard,

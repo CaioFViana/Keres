@@ -5,7 +5,7 @@ const mockShowNotification = jest.fn();
 jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
-jest.mock('@/src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/media/MediaSyncService', () => ({
   createMediaSyncService: () => ({
     syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
   }),
@@ -15,8 +15,8 @@ import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
-import type { SyncEngineService } from '@/src/services/SyncEngineService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

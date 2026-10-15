@@ -173,22 +173,22 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ breakpoint: mockBreakpoint.current }),
 }));
-jest.mock('@/src/services/galleryLink', () => ({
+jest.mock('@/src/services/media/galleryLink', () => ({
   __esModule: true,
   createGalleryLink: (...args: unknown[]) => mockCreateGalleryLink(...args),
 }));
-jest.mock('@/src/services/galleryMediaImport', () => ({
+jest.mock('@/src/services/media/galleryMediaImport', () => ({
   __esModule: true,
   importPickedMediaAssets: (...args: unknown[]) => mockImportPickedMediaAssets(...args),
 }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: {
     pick: (...args: unknown[]) => mockPick(...args),
     pickDocuments: (...args: unknown[]) => mockPickDocuments(...args),
   },
 }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({}),
 }));

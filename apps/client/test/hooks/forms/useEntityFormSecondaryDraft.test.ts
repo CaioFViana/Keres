@@ -3,10 +3,10 @@ import { act, renderHook } from '@testing-library/react-native';
 import {
   clearEntityFormSecondaryDraft,
   writeEntityFormSecondaryDraft,
-} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
 
-jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   __esModule: true,
   writeEntityFormSecondaryDraft: jest.fn(),
   clearEntityFormSecondaryDraft: jest.fn(),

@@ -4,7 +4,7 @@ const mockPost = jest.fn();
 const mockSetTokenProvider = jest.fn();
 const mockSetActiveServer = jest.fn();
 
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   createKeresAxiosInstance: () => ({
     get: (...args: unknown[]) => mockGet(...args),
@@ -14,7 +14,7 @@ jest.mock('@/src/services/apiClient', () => ({
   }),
 }));
 
-jest.mock('@/src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: {},
 }));
@@ -22,7 +22,7 @@ jest.mock('@/src/services/AuthTokenManager', () => ({
 import {
   PUBLISH_UPLOAD_TIMEOUT_MS,
   publicationApiService,
-} from '@/src/services/PublicationApiService';
+} from '@/src/services/api/PublicationApiService';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://s.example' } as never;
 

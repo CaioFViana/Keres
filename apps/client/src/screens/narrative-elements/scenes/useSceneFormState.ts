@@ -4,9 +4,9 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AppDrizzleClient, SceneSelect } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
-import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
-import { readEntityFormSecondaryDraft } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
-import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import type { StorySchemaField } from '@keres/shared';
 
 type UseSceneFormStateOptions = {

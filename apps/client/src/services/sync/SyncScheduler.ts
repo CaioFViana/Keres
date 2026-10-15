@@ -1,4 +1,4 @@
-import { isAbortError, isOfflineError } from '@/src/services/apiClient';
+import { isAbortError, isOfflineError } from '@/src/services/api/apiClient';
 
 /** Normal cadence while the server is responding. */
 export const SYNC_INTERVAL_MS = 30_000;

@@ -17,11 +17,11 @@ import type { AppDrizzleClient } from './db';
 import { DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
-import apiClient from './services/apiClient';
-import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
-import { setEditorDraftDb } from './services/EditorDraftService';
-import { restoreHostedCookieSession } from './services/HostedCookieSession';
-import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
+import apiClient from './services/api/apiClient';
+import { authTokenManager, setAuthDb } from './services/auth/AuthTokenManager';
+import { setEditorDraftDb } from './services/drafts/EditorDraftService';
+import { restoreHostedCookieSession } from './services/auth/HostedCookieSession';
+import { hydrate as hydrateWebMediaStore } from './services/platform-web/webMediaStore';
 import { useUserSettingsStore } from './state/app/userSettingsStore';
 import {
   runSqliteWebSmokeProbe,

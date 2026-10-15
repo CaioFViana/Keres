@@ -1,14 +1,14 @@
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
-import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createEffectService } from '@/src/services/storymanagement/EffectService';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { createModeService } from '@/src/services/storymanagement/ModeService';
-import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
-import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
-import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
+import { createPlotSceneService } from '@/src/services/storymanagement/entities/PlotSceneService';
+import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { STORY_ID, type SyncDevice, USER_ID } from './syncDevices';
 import {
   attemptFor,

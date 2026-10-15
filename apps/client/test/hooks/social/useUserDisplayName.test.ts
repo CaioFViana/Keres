@@ -8,11 +8,11 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(),
 }));
-jest.mock('@/src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/api/FriendshipApiService', () => ({
   __esModule: true,
   friendshipApiService: { getUserDetails: jest.fn() },
 }));
@@ -20,8 +20,8 @@ jest.mock('@/src/services/FriendshipApiService', () => ({
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
-import { friendshipApiService } from '@/src/services/FriendshipApiService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 const storyService = { getStoryById: jest.fn() };

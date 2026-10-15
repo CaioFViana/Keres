@@ -2,9 +2,9 @@ import { sceneHeadingPlan } from '@keres/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useSceneArcMedium } from '@/src/hooks/scene/useSceneArcMedium';
 

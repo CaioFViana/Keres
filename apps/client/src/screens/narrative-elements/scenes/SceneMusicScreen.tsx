@@ -31,8 +31,8 @@ import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSyste
 import {
   createSceneMusicService,
   type SceneMusicTarget,
-} from '@/src/services/storymanagement/SceneMusicService';
-import { createSongService } from '@/src/services/storymanagement/SongService';
+} from '@/src/services/storymanagement/media-music/SceneMusicService';
+import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

@@ -6,7 +6,7 @@ import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { TFunction } from 'i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import { columnsOf, getEntityTable } from '@/src/services/entityTableRegistry';
+import { columnsOf, getEntityTable } from '@/src/db/entityTableRegistry';
 import {
   loadStoryVocabulary,
   fromStoryNoun,

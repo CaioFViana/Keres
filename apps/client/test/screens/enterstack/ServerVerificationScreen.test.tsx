@@ -54,7 +54,7 @@ jest.mock('@/src/screens/enterstack/useServerStatuses', () => ({
 }));
 
 // The service's error classes are real, so the screen's own checks on them are the ones tested.
-jest.mock('@/src/services/AgeVerificationApiService', () => {
+jest.mock('@/src/services/api/AgeVerificationApiService', () => {
   class AgeVerificationConflictError extends Error {}
   class AgeVerificationUnavailableError extends Error {}
   return {
@@ -66,7 +66,7 @@ jest.mock('@/src/services/AgeVerificationApiService', () => {
   };
 });
 
-jest.mock('@/src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   authTokenManager: {
     getTokens: (...args: unknown[]) => mockGetTokens(...args),
     refreshAccessToken: (...args: unknown[]) => mockRefreshAccessToken(...args),
@@ -85,7 +85,7 @@ import { AppState, Linking } from 'react-native';
 import {
   AgeVerificationConflictError,
   AgeVerificationUnavailableError,
-} from '@/src/services/AgeVerificationApiService';
+} from '@/src/services/api/AgeVerificationApiService';
 import ServerVerificationScreen from '@/src/screens/enterstack/ServerVerificationScreen';
 
 const server = { id: 'srv-1', url: 'https://s.example', name: 'Main' };

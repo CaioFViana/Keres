@@ -7,7 +7,7 @@ import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
-import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { ItemJourneyFormState } from './useItemJourneyFormState';
 

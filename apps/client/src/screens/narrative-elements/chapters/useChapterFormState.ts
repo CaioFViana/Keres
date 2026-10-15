@@ -5,9 +5,9 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
-import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
-import { readEntityFormSecondaryDraft } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
-import type { ChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import type { ChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 
 type UseChapterFormStateOptions = {
   initialChapterId?: string;

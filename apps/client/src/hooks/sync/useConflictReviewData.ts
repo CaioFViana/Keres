@@ -5,12 +5,12 @@ import {
   buildConflictSummaries,
   collectConflictEntityRefs,
   collectEntityRefs,
-} from '@/src/services/ConflictSummaryService';
+} from '@/src/services/sync/ConflictSummaryService';
 import {
   createEntityNameBatchResolver,
   createEntitySnapshotResolver,
-} from '@/src/services/EntityNameBatchResolver';
-import type { PendingConflict } from '@/src/services/SyncConflictService';
+} from '@/src/services/entity-solvers/EntityNameBatchResolver';
+import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
 
 export function useConflictReviewData(conflicts: PendingConflict[]) {
   const { t } = useTranslation();

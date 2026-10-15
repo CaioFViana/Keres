@@ -4,7 +4,7 @@ const mockCreateWorldRuleService = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/WorldRuleService', () => ({
+jest.mock('@/src/services/storymanagement/entities/WorldRuleService', () => ({
   createWorldRuleService: (...args: unknown[]) => mockCreateWorldRuleService(...args),
 }));
 

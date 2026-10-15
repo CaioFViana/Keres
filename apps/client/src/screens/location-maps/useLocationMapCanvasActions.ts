@@ -8,7 +8,7 @@ import type { useDrizzle } from '@/src/db';
 import type { MultiSelectOption } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { GallerySelect, LocationMapSelect, LocationSelect } from '@/src/db/schema';
 import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
-import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
+import { createLocationMapService } from '@/src/services/storymanagement/entities/LocationMapService';
 import type { NotificationType } from '@/src/state/ui/notificationStore';
 import {
   LOCATION_MAP_IMAGE_DEFAULT_HEIGHT,
@@ -21,7 +21,7 @@ import {
   appendLocationsToMap,
   appendMarkersToMap,
 } from '@/src/utils/location-map/locationMapContent';
-import { imageSizeOf } from '@/src/utils/locationMapMedia';
+import { imageSizeOf } from '@/src/services/media/locationMapMedia';
 import { clampCanvasWorldCoordinate } from '@/src/utils/canvas/canvasDragBounds';
 
 type GalleryMediaById = Record<

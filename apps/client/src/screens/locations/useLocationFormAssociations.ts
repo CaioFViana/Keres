@@ -6,9 +6,9 @@ import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
-} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
-import type { LocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
-import type { LocationService } from '@/src/services/storymanagement/LocationService';
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import type { LocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { createULID } from '@/src/utils/entity/entityUtils';
 

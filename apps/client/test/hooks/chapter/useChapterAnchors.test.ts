@@ -13,23 +13,23 @@ jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));
-jest.mock('@/src/services/storymanagement/ChapterAnchorService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterAnchorService', () => ({
   __esModule: true,
   createChapterAnchorService: jest.fn(() => mockAnchorService),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useChapterAnchors } from '@/src/hooks/chapter/useChapterAnchors';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 
 const input = {
   startSceneId: 'scene-1',

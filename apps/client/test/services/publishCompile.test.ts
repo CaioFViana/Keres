@@ -12,7 +12,7 @@ import {
   renderPublishManuscript,
   renderPublishReader,
   type PublishCompileRows,
-} from '@/src/services/storymanagement/PublishCompileService';
+} from '@/src/services/storymanagement/scenes-chapters/PublishCompileService';
 
 jest.mock('@/src/utils/io/pdfFontAssets', () => ({
   __esModule: true,

@@ -267,7 +267,7 @@ jest.mock('@/src/screens/boards/useBoardCanvasLayout', () => ({
   }),
 }));
 
-jest.mock('@/src/utils/boardEntitySummary', () => ({
+jest.mock('@/src/services/storymanagement/entities/boardEntitySummary', () => ({
   loadBoardEntitySummary: (...a: any[]) => mockLoadSummary(...a),
 }));
 
@@ -298,10 +298,10 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('@/src/services/storymanagement/BoardService', () => ({
+jest.mock('@/src/services/storymanagement/entities/BoardService', () => ({
   createBoardService: () => ({ getById: mockGetBoard, updateBoard: mockUpdateBoard }),
 }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   createGalleryService: () => ({ getGalleriesByStoryId: mockGetGalleries }),
 }));
 

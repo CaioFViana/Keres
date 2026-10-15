@@ -6,18 +6,18 @@ import apiClient, {
   apiUrl,
   isOfflineError,
   isVerificationPendingError,
-} from '@/src/services/apiClient';
-import { authTokenManager, setAuthDb } from '@/src/services/AuthTokenManager';
-import { setEditorDraftDb } from '@/src/services/EditorDraftService';
-import { createFriendshipService } from '@/src/services/FriendshipService';
-import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
-import { createServerService } from '@/src/services/ServerService';
+} from '@/src/services/api/apiClient';
+import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
+import { setEditorDraftDb } from '@/src/services/drafts/EditorDraftService';
+import { createFriendshipService } from '@/src/services/social/FriendshipService';
+import { createStoryInvitationService } from '@/src/services/social/StoryInvitationService';
+import { createServerService } from '@/src/services/servers/ServerService';
 import { useFlushDraftsOnBackground } from '@/src/hooks/sync/useFlushDraftsOnBackground';
 import { usePaymentDueWatcher } from '@/src/hooks/billing/usePaymentDueWatcher';
 import { usePlanUsageWatcher } from '@/src/hooks/billing/usePlanUsageWatcher';
-import { ServerRealtimeService } from '@/src/services/ServerRealtimeService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import type { ServerStoryPreview } from '@/src/services/SyncEngineService';
+import { ServerRealtimeService } from '@/src/services/servers/ServerRealtimeService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import type { ServerStoryPreview } from '@/src/services/sync/SyncEngineService';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';

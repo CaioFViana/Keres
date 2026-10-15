@@ -1,7 +1,7 @@
 import type { MediaType } from '@keres/shared';
 import type { GallerySelect } from '@/src/db/schemas/galleries';
-import type { GalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import type { GalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 
 export type { FavoriteFilterState } from '@/src/types/entityFilters';

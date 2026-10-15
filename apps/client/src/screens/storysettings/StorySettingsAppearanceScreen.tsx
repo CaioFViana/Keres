@@ -15,7 +15,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

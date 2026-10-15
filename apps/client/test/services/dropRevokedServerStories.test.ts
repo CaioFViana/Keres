@@ -4,7 +4,7 @@ const mockFetchStories = jest.fn(async () => undefined);
 const mockNotify = jest.fn();
 const mockEmit = jest.fn();
 
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => ({ discardCollaboratedCopy: mockDiscard })),
 }));
@@ -25,7 +25,7 @@ jest.mock('@/src/utils/format/i18n', () => ({
   default: { t: (key: string, params?: { title: string }) => `${key}:${params?.title}` },
 }));
 
-import { noteAccessRevocation } from '@/src/services/accessRevocation';
+import { noteAccessRevocation } from '@/src/services/social/accessRevocation';
 import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
 
 const server = { id: 'server-1' } as never;

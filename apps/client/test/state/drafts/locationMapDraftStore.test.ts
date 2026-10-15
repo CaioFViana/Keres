@@ -2,12 +2,12 @@
  * @jest-environment node
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { readCanvasDraft, writeCanvasDraftNow } from '@/src/services/canvasDraftPersistence';
+import { readCanvasDraft, writeCanvasDraftNow } from '@/src/services/drafts/canvasDraftPersistence';
 import {
   readEditorDraft,
   resetEditorDraftDbForTests,
   setEditorDraftDb,
-} from '@/src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

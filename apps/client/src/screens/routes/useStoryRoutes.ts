@@ -7,13 +7,13 @@ import type {
   RouteStepSelect,
   SceneSelect,
 } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '@/src/services/storymanagement/EffectService';
-import { createRouteService } from '@/src/services/storymanagement/RouteService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import {

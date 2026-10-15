@@ -86,7 +86,7 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('@/src/services/storymanagement/SongService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ createSong: mockCreateSong }),
 }));
@@ -95,7 +95,7 @@ jest.mock('@/src/utils/io/storyTransfer', () => ({
   pickTextFile: () => mockPickTextFile(),
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));
-jest.mock('@/src/services/storymanagement/CueSheetService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/CueSheetService', () => ({
   __esModule: true,
   loadCueSheet: (...args: unknown[]) => mockLoadCueSheet(...args),
 }));

@@ -6,17 +6,17 @@ import { Linking } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ServerSelect, StorySelect } from '@/src/db/schema';
-import { isAbortError, isOfflineError } from '@/src/services/apiClient';
+import { isAbortError, isOfflineError } from '@/src/services/api/apiClient';
 import {
   type CompiledPublishUpload,
   publicationApiService,
   type PublishManuscriptOptions,
   type PublishReaderOptions,
   type StoryShowcaseState,
-} from '@/src/services/PublicationApiService';
-import { createPublicationService } from '@/src/services/PublicationService';
-import { createServerService } from '@/src/services/ServerService';
-import { compilePublishArtifacts } from '@/src/services/storymanagement/PublishCompileService';
+} from '@/src/services/api/PublicationApiService';
+import { createPublicationService } from '@/src/services/publication/PublicationService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { compilePublishArtifacts } from '@/src/services/storymanagement/scenes-chapters/PublishCompileService';
 import { fetchServerStoryPreviews } from '@/src/services/sync/StoryTransfer';
 import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';

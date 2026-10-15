@@ -2,8 +2,8 @@ import type { MediaType } from '@keres/shared';
 import { useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { GallerySelect, SketchSelect } from '@/src/db/schema';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 
 const IMAGE_TYPES: readonly MediaType[] = ['image'];
 

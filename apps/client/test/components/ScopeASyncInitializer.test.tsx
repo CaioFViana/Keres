@@ -18,7 +18,7 @@ const mockApiClient = {
   setBaseUrl: jest.fn(),
   get: jest.fn(async (): Promise<any> => null),
 };
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   // Mock factories run before this module's consts initialize: every mock value must be read
   // lazily (a getter/closure), never captured into the factory's return value.
@@ -34,7 +34,7 @@ jest.mock('@/src/services/apiClient', () => ({
 
 const mockAuthTokenManager = { name: 'auth-token-manager' };
 const mockSetAuthDb = jest.fn();
-jest.mock('@/src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   get authTokenManager() {
     return mockAuthTokenManager;
   },
@@ -42,14 +42,14 @@ jest.mock('@/src/services/AuthTokenManager', () => ({
 }));
 
 const mockSyncFriendships = jest.fn(async () => {});
-jest.mock('@/src/services/FriendshipService', () => ({
+jest.mock('@/src/services/social/FriendshipService', () => ({
   createFriendshipService: () => ({ syncFriendshipsWithServer: mockSyncFriendships }),
 }));
 
 const mockGetAllServers = jest.fn(async () => [] as unknown[]);
 const mockRefreshToken = jest.fn(async (server: unknown) => server);
 const mockGetServerById = jest.fn(async (_id: string) => null as unknown);
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: mockGetAllServers,
     refreshServerToken: mockRefreshToken,
@@ -73,14 +73,14 @@ const mockPaymentDueWatcher = jest.fn();
 jest.mock('@/src/hooks/billing/usePaymentDueWatcher', () => ({
   usePaymentDueWatcher: (...args: unknown[]) => mockPaymentDueWatcher(...args),
 }));
-jest.mock('@/src/services/ServerRealtimeService', () => ({
+jest.mock('@/src/services/servers/ServerRealtimeService', () => ({
   get ServerRealtimeService() {
     return mockRealtimeClass;
   },
 }));
 
 const mockGetAllStories = jest.fn(async () => [] as unknown[]);
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({ getAllStories: mockGetAllStories }),
 }));
 
@@ -119,7 +119,7 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
 
 const mockFetchStories = jest.fn();
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('@/src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/social/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));

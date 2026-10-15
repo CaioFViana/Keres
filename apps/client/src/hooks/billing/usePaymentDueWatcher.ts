@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
-import { loadPaymentOverview, PAYMENTS_CHANGED } from '@/src/services/PaymentService';
-import { warnAboutPayment } from '@/src/services/PaymentWarningService';
-import { createServerService } from '@/src/services/ServerService';
+import { loadPaymentOverview, PAYMENTS_CHANGED } from '@/src/services/payments/PaymentService';
+import { warnAboutPayment } from '@/src/services/payments/PaymentWarningService';
+import { createServerService } from '@/src/services/servers/ServerService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

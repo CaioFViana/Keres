@@ -15,12 +15,15 @@ import SharePackModal from '@/src/components/features/packs/SharePackModal/Share
 import { useDrizzle } from '@/src/db';
 import type { PackVisibility } from '@keres/shared';
 import type { ServerSelect } from '@/src/db/schema';
-import { packApiService } from '@/src/services/PackApiService';
-import { createServerService } from '@/src/services/ServerService';
+import { packApiService } from '@/src/services/api/PackApiService';
+import { createServerService } from '@/src/services/servers/ServerService';
 import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { createPackService, type PackSummary } from '@/src/services/storymanagement/PackService';
-import { packExtrasChips } from '@/src/utils/packChips';
+import {
+  createPackService,
+  type PackSummary,
+} from '@/src/services/storymanagement/packs/PackService';
+import { packExtrasChips } from '@/src/services/storymanagement/packs/packChips';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';

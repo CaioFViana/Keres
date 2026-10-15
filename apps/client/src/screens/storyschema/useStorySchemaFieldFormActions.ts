@@ -5,7 +5,7 @@ import type { RefObject } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
-import type { StorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { StorySchemaFieldFormState } from './useStorySchemaFieldFormState';
 

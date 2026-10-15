@@ -130,20 +130,20 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('@/src/services/PublicationService', () => ({
+jest.mock('@/src/services/publication/PublicationService', () => ({
   createPublicationService: () => ({
     getPublicationsForStory: (...args: unknown[]) => mockGetPubs(...args),
     syncPublicationsWithServer: (...args: unknown[]) => mockSyncPubs(...args),
   }),
 }));
 
-jest.mock('@/src/services/PublicationApiService', () => ({
+jest.mock('@/src/services/api/PublicationApiService', () => ({
   publicationApiService: {
     getStoryShowcase: (...args: unknown[]) => mockGetShowcase(...args),
     isShowcaseEnabled: (...args: unknown[]) => mockShowcaseEnabled(...args),
@@ -156,13 +156,13 @@ jest.mock('@/src/services/PublicationApiService', () => ({
   SERVER_MANUSCRIPT_FORMATS: ['docx', 'pdf', 'epub', 'html', 'md', 'txt'],
 }));
 
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   createChapterService: () => ({
     getAllByStoryId: (...args: unknown[]) => mockGetChapters(...args),
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   createSceneService: () => ({
     getAllByStoryId: (...args: unknown[]) => mockGetScenes(...args),
   }),
@@ -172,7 +172,7 @@ jest.mock('@/src/services/sync/StoryTransfer', () => ({
   fetchServerStoryPreviews: (...args: unknown[]) => mockFetchPreviews(...args),
 }));
 
-jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   createStoryArcService: () => ({
     getArcsForStory: (...args: unknown[]) => mockGetArcs(...args),
   }),
@@ -204,7 +204,7 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
   };
 });
 
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: {},
   apiUrl: (base: string, path: string) => `${base}${path}`,
@@ -220,11 +220,11 @@ jest.mock('@/src/state/sync/connectivityStore', () => ({
     typeof selector === 'function' ? selector(mockConnectivity) : mockConnectivity,
 }));
 
-jest.mock('@/src/services/storymanagement/PublishCompileService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/PublishCompileService', () => ({
   compilePublishArtifacts: (...args: unknown[]) => mockCompilePublishArtifacts(...args),
 }));
 let mockSungSongs = false;
-jest.mock('@/src/services/storymanagement/ManuscriptMusicService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/ManuscriptMusicService', () => ({
   storyMusicFacts: async () => ({ hasMusic: mockSungSongs, hasSungSongs: mockSungSongs }),
 }));
 jest.mock('@/src/state/app/userSettingsStore', () => ({

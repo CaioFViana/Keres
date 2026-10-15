@@ -17,10 +17,10 @@ jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
 jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/forms/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -48,7 +48,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import { useCharacterFormActions } from '@/src/screens/characters/useCharacterFormActions';
 import type { CharacterFormState } from '@/src/screens/characters/useCharacterFormState';
-import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
+import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
 
 const createState = (overrides: Partial<CharacterFormState> = {}): CharacterFormState =>
   ({

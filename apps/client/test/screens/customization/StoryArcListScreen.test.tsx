@@ -53,7 +53,7 @@ jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (value: string) => value }),
 }));
-jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: () => ({
     ensureDefaultArc: mockEnsureDefaultArc,

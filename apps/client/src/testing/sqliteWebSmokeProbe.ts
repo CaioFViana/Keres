@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { Platform } from 'react-native';
 import * as schema from '@/src/db/schema';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 
 const RESULT_KEY = '__KERES_SQLITE_WEB_SMOKE_RESULT__';
 

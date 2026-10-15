@@ -3,7 +3,7 @@ import { useDrizzle } from '@/src/db';
 import {
   createStorySchemaFieldService,
   type StorySchemaFieldService,
-} from '@/src/services/storymanagement/StorySchemaFieldService';
+} from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 
 /** Owns the story-schema field service used by the form. */
 export function useStorySchemaFieldFormResources() {

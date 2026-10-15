@@ -16,10 +16,10 @@ jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
 jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/forms/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -33,7 +33,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import { useNoteFormActions } from '@/src/screens/notes/useNoteFormActions';
 import type { NoteFormState } from '@/src/screens/notes/useNoteFormState';
-import type { NoteService } from '@/src/services/storymanagement/NoteService';
+import type { NoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 
 const createState = (overrides: Partial<NoteFormState> = {}): NoteFormState =>
   ({

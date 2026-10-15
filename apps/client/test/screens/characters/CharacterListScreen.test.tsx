@@ -173,17 +173,17 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('@/src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     getCharacterRelationsByStoryId: mockGetCharacterRelationsByStoryId,
   }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({
     getAllByStoryId: mockGetAllCharactersByStoryId,

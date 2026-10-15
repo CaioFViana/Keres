@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import type { FriendshipWithServer } from '@/src/services/FriendshipService';
+import type { FriendshipWithServer } from '@/src/services/social/FriendshipService';
 import { useTheme } from '@/src/theme';
 import { getCommonCardStyles } from '@/src/theme/commonStyles';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';

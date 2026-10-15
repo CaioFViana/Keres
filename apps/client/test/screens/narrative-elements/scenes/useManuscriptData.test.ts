@@ -17,22 +17,22 @@ jest.mock('@/src/db', () => {
   };
 });
 
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getAllByStoryId: mockGetChapters }),
 }));
 
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getAllByStoryId: mockGetScenes }),
 }));
 
-jest.mock('@/src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
   __esModule: true,
   createRouteService: () => ({ getAllByStoryId: mockGetRoutes, getSteps: mockGetSteps }),
 }));
 
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getAllByStoryId: mockGetChoices }),
 }));

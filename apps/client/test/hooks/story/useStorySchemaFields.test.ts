@@ -1,13 +1,13 @@
 /** @jest-environment node */
 jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
-jest.mock('@/src/services/storymanagement/StorySchemaFieldService', () => ({
+jest.mock('@/src/services/storymanagement/entities/StorySchemaFieldService', () => ({
   createStorySchemaFieldService: jest.fn(),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
-import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const service = { getFieldsByStoryAndEntityType: jest.fn() };

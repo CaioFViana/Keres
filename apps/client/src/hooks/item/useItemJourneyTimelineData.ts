@@ -7,11 +7,11 @@ import type {
   ItemJourneySelect,
   SceneSelect,
 } from '@/src/db/schema';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 export function useItemJourneyTimelineData(storyId: string, itemId: string) {

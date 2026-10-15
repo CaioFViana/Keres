@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ServerSelect } from '@/src/db/schema';
-import { isOfflineError } from '@/src/services/apiClient';
-import { cancelSubscription } from '@/src/services/PaymentService';
+import { isOfflineError } from '@/src/services/api/apiClient';
+import { cancelSubscription } from '@/src/services/payments/PaymentService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { formatPlanDate } from '@/src/utils/billing/paymentPlans';
 

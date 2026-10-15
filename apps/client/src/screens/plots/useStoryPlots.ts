@@ -7,11 +7,11 @@ import type {
   PlotSelect,
   SceneSelect,
 } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
-import { createPlotService } from '@/src/services/storymanagement/PlotService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createPlotSceneService } from '@/src/services/storymanagement/entities/PlotSceneService';
+import { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { buildNarrativeProjection, type NarrativePresentationOrder } from '@keres/shared';

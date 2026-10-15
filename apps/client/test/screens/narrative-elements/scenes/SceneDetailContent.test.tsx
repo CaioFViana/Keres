@@ -14,7 +14,7 @@ import type {
   SceneSelect,
   TagSelect,
 } from '@/src/db/schema';
-import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');

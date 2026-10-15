@@ -6,7 +6,7 @@ import { MAX_SYNC_PULL_BATCH, type StoryUpdate } from '@keres/shared';
 import * as schema from '@/src/db/schema';
 import type { OperationLogSelect } from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
-import { recordLocalOperation } from '@/src/utils/syncUtils';
+import { recordLocalOperation } from '@/src/services/sync/syncUtils';
 import { SyncPull, type FetchRemoteUpdatesInput } from '@/src/services/sync/SyncPull';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

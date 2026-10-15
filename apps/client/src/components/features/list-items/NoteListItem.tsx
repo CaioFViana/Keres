@@ -1,7 +1,7 @@
 import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { StyleSheet, Text, View } from 'react-native';
-import type { NoteWithTags } from '@/src/services/storymanagement/NoteService';
+import type { NoteWithTags } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';

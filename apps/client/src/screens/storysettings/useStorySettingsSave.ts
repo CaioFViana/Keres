@@ -6,7 +6,7 @@ import { useDrizzle } from '@/src/db';
 import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { manualSyncRefusalText } from '@/src/services/sync/manualSyncMessage';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';

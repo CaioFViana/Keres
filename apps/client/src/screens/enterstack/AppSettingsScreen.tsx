@@ -17,7 +17,7 @@ import {
   clientPrivacyFor,
 } from '@/src/legal/privacyPolicy';
 import { setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
-import { clearEverythingOutsideDatabase } from '@/src/services/LocalDataReset';
+import { clearEverythingOutsideDatabase } from '@/src/services/account/LocalDataReset';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
@@ -33,15 +33,15 @@ import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import { resetDatabase, useDrizzle } from '@/src/db'; // Import resetDatabase
 import { servers } from '@/src/db/schema';
 import type { SettingsStackParamList } from '@/src/navigation/StorySelectionStack';
-import { authTokenManager, setAuthDb } from '@/src/services/AuthTokenManager';
-import { setEditorDraftDb } from '@/src/services/EditorDraftService';
-import { mediaFileService } from '@/src/services/MediaFileService';
+import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
+import { setEditorDraftDb } from '@/src/services/drafts/EditorDraftService';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
 import {
   CJK_PACK_SIZE_LABEL,
   cjkPackState,
   deleteCjkPack,
   downloadCjkPack,
-} from '@/src/services/cjkFontPack';
+} from '@/src/services/platform-web/cjkFontPack';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { useGuideStore } from '@/src/state/ui/guideStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';

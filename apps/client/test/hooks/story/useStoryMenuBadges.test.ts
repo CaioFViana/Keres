@@ -15,7 +15,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockTranslation,
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/services/PublicationService', () => ({
+jest.mock('@/src/services/publication/PublicationService', () => ({
   __esModule: true,
   createPublicationService: () => ({
     getPublicationsForStory: (...args: unknown[]) => mockGetPublications(...args),

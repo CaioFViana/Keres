@@ -4,12 +4,12 @@ import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { ServerSelect } from '@/src/db/schema';
 import i18n from '@/src/utils/format/i18n';
-import { createKeresAxiosInstance } from '@/src/services/apiClient';
-import { authTokenManager } from '@/src/services/AuthTokenManager';
-import { createServerService } from '@/src/services/ServerService';
-import { createCommentService } from '@/src/services/storymanagement/CommentService';
-import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createKeresAxiosInstance } from '@/src/services/api/apiClient';
+import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import type { SyncNotifier } from './SyncNotifier';
 
 export interface ServerStoryPreview {

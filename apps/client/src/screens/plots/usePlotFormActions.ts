@@ -4,8 +4,8 @@ import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type {
   createPlotSceneService,
   SavePlotScene,
-} from '@/src/services/storymanagement/PlotSceneService';
-import type { createPlotService } from '@/src/services/storymanagement/PlotService';
+} from '@/src/services/storymanagement/entities/PlotSceneService';
+import type { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 import type { PlotFormState } from './usePlotFormState';

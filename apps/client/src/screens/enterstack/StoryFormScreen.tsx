@@ -17,7 +17,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { packHasExtras } from '@/src/services/storymanagement/PackService';
+import { packHasExtras } from '@/src/services/storymanagement/packs/PackService';
 import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

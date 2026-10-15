@@ -2,10 +2,10 @@
  * @jest-environment node
  */
 import * as schema from '@/src/db/schema';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
-import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
 import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

@@ -3,9 +3,9 @@
  */
 import { asc, eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createSyncConflictService } from '@/src/services/SyncConflictService';
+import { createSyncConflictService } from '@/src/services/sync/SyncConflictService';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
-import { recordLocalOperation } from '@/src/utils/syncUtils';
+import { recordLocalOperation } from '@/src/services/sync/syncUtils';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';

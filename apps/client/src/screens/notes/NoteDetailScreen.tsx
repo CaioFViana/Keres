@@ -18,7 +18,7 @@ import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesLi
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
 import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -36,10 +36,10 @@ import {
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { EntityService } from '@/src/services/EntityService'; // Import EntityService
-import { createNoteService } from '@/src/services/storymanagement/NoteService';
-import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
-import { createTagService } from '@/src/services/storymanagement/TagService';
+import { EntityService } from '@/src/services/entity-solvers/EntityService'; // Import EntityService
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
 import { useTheme } from '@/src/theme';
 

@@ -4,8 +4,11 @@ import {
   createPackService,
   type PackService,
   type PackSummary,
-} from '@/src/services/storymanagement/PackService';
-import { createStoryService, type StoryService } from '@/src/services/storymanagement/StoryService';
+} from '@/src/services/storymanagement/packs/PackService';
+import {
+  createStoryService,
+  type StoryService,
+} from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 
 /** Owns the story and pack services plus create-mode pack lookups. */

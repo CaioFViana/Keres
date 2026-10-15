@@ -5,7 +5,7 @@ import type {
   CommentService,
   CommentTarget,
   CreateCommentInput,
-} from '@/src/services/storymanagement/CommentService';
+} from '@/src/services/storymanagement/notes-tags-comments/CommentService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useCommentSurface } from './useCommentSurface';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';

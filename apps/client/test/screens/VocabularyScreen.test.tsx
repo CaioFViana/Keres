@@ -40,11 +40,11 @@ jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ activeArc: mockActiveArc }),
 }));
-jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: () => ({ updateArc: mockUpdateArc }),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));

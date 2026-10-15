@@ -14,14 +14,14 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({
     getById: (...args: unknown[]) => mockGetById(...args),
     getGalleriesByStoryId: (...args: unknown[]) => mockGetImages(...args),
   }),
 }));
-jest.mock('@/src/services/storymanagement/SketchService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SketchService', () => ({
   __esModule: true,
   createSketchService: () => ({
     getSketchesForStory: (...args: unknown[]) => mockGetSketches(...args),

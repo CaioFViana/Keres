@@ -2,7 +2,7 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

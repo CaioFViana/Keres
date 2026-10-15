@@ -18,7 +18,7 @@ import {
 import { getCommonCardStyles } from '@/src/theme/commonStyles';
 import { useTheme } from '@/src/theme';
 import { boardPinTypeKey } from '@/src/utils/board/boardPinAppearance';
-import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
 import type { BoardGalleryMedia } from '@/src/utils/board/boardLayout';
 import BoardNodeSheetGalleryPreview from './BoardNodeSheetGalleryPreview';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';

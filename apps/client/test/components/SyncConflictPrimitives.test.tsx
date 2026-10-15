@@ -4,8 +4,8 @@ import ConflictDetailSheet from '@/src/components/features/sync/ConflictDetailSh
 import ConflictFieldDiffSheet from '@/src/components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet';
 import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
 import ConflictRow from '@/src/components/features/sync/SyncConflictReviewSheet/ConflictRow';
-import type { ConflictSummary } from '@/src/services/ConflictSummaryService';
-import type { PendingConflict } from '@/src/services/SyncConflictService';
+import type { ConflictSummary } from '@/src/services/sync/ConflictSummaryService';
+import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

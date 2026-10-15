@@ -1,13 +1,13 @@
 import { Image, Platform } from 'react-native';
 
-jest.mock('@/src/services/webMediaStore', () => ({
+jest.mock('@/src/services/platform-web/webMediaStore', () => ({
   __esModule: true,
   DESKTOP_MEDIA_URI_PREFIX: 'desktop-media:',
   resolveBlobUri: jest.fn(),
 }));
 
-import { resolveBlobUri } from '@/src/services/webMediaStore';
-import { imageSizeOf, resolveImagePath } from '@/src/utils/locationMapMedia';
+import { resolveBlobUri } from '@/src/services/platform-web/webMediaStore';
+import { imageSizeOf, resolveImagePath } from '@/src/services/media/locationMapMedia';
 
 const originalOS = Platform.OS;
 

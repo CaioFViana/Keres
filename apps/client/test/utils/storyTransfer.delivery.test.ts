@@ -7,10 +7,10 @@ jest.mock('expo-file-system', () => ({
 jest.mock('expo-file-system/legacy', () => ({ readAsStringAsync: jest.fn() }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
 }));
-jest.mock('@/src/utils/storyMediaBundle', () => ({
+jest.mock('@/src/services/media/storyMediaBundle', () => ({
   extractStoryZip: jest.fn(),
 }));
 
@@ -20,7 +20,7 @@ import { File } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
-import { extractStoryZip } from '@/src/utils/storyMediaBundle';
+import { extractStoryZip } from '@/src/services/media/storyMediaBundle';
 import {
   deliverMapExport,
   deliverStoryExport,

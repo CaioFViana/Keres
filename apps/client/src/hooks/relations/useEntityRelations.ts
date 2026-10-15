@@ -4,16 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { TagSelect } from '@/src/db/schema';
-import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
-import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
-import { createNoteService } from '@/src/services/storymanagement/NoteService';
-import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
-import { createTagService } from '@/src/services/storymanagement/TagService';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
   type EntityFormSecondaryDraft,
-} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { createULID } from '@/src/utils/entity/entityUtils';

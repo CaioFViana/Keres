@@ -6,16 +6,16 @@ jest.mock('expo-file-system', () => ({
 }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { readBytes: jest.fn() },
 }));
-jest.mock('@/src/utils/storyMediaBundle', () => ({
+jest.mock('@/src/services/media/storyMediaBundle', () => ({
   extractStoryZip: jest.fn(),
 }));
 
 import { Platform } from 'react-native';
-import { mediaFileService } from '@/src/services/MediaFileService';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
 import {
   buildStandaloneBoardSvg,
   buildStandaloneLocationMapSvg,

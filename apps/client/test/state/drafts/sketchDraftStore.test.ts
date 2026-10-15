@@ -13,8 +13,8 @@ import {
   readEditorDraft,
   resetEditorDraftDbForTests,
   setEditorDraftDb,
-} from '@/src/services/EditorDraftService';
-import { readCanvasDraft } from '@/src/services/canvasDraftPersistence';
+} from '@/src/services/drafts/EditorDraftService';
+import { readCanvasDraft } from '@/src/services/drafts/canvasDraftPersistence';
 import { useSketchDraftStore } from '@/src/state/drafts/sketchDraftStore';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

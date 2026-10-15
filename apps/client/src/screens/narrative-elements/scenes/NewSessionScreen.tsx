@@ -13,8 +13,8 @@ import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBotto
 import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { startSession } from '@/src/services/storymanagement/SessionService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { startSession } from '@/src/services/storymanagement/scenes-chapters/SessionService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

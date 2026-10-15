@@ -23,7 +23,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import { usePackFormActions } from '@/src/screens/packs/usePackFormActions';
 import type { PackFormState } from '@/src/screens/packs/usePackFormState';
-import type { PackService } from '@/src/services/storymanagement/PackService';
+import type { PackService } from '@/src/services/storymanagement/packs/PackService';
 
 const createState = (overrides: Partial<PackFormState> = {}): PackFormState =>
   ({

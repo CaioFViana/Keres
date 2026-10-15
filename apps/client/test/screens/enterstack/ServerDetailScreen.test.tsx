@@ -89,7 +89,7 @@ jest.mock('@/src/screens/enterstack/useAccountPlan', () => ({
 }));
 const mockFetchAgeInfo = jest.fn();
 const mockFetchVerificationStatus = jest.fn();
-jest.mock('@/src/services/AgeVerificationApiService', () => ({
+jest.mock('@/src/services/api/AgeVerificationApiService', () => ({
   __esModule: true,
   fetchAgeVerificationInfo: (...args: unknown[]) => mockFetchAgeInfo(...args),
   fetchVerificationStatus: (...args: unknown[]) => mockFetchVerificationStatus(...args),
@@ -98,7 +98,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/ServerService', () => {
+jest.mock('@/src/services/servers/ServerService', () => {
   class ServerHasOwnedStoriesError extends Error {
     ownedStories: Array<{ title: string }>;
     constructor(ownedStories: Array<{ title: string }>) {
@@ -117,7 +117,7 @@ jest.mock('@/src/services/ServerService', () => {
   };
 });
 
-jest.mock('@/src/services/DeleteAccountService', () => {
+jest.mock('@/src/services/account/DeleteAccountService', () => {
   class AccountDeletionCleanupError extends Error {}
   return {
     AccountDeletionCleanupError,
@@ -125,12 +125,12 @@ jest.mock('@/src/services/DeleteAccountService', () => {
   };
 });
 
-jest.mock('@/src/services/AccountDataExportService', () => ({
+jest.mock('@/src/services/account/AccountDataExportService', () => ({
   __esModule: true,
   exportAccountData: (...args: unknown[]) => mockExportAccountData(...args),
 }));
 
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,
@@ -143,7 +143,7 @@ jest.mock('@/src/services/apiClient', () => ({
   }),
 }));
 
-jest.mock('@/src/services/UserApiService', () => ({
+jest.mock('@/src/services/api/UserApiService', () => ({
   userApiService: {
     updateOwnTag: (...args: unknown[]) => mockUpdateOwnTag(...args),
     getOwnProfile: (...args: unknown[]) => mockGetOwnProfile(...args),
@@ -160,7 +160,7 @@ jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import ServerDetailScreen from '@/src/screens/enterstack/ServerDetailScreen';
-import { AccountDeletionCleanupError } from '@/src/services/DeleteAccountService';
+import { AccountDeletionCleanupError } from '@/src/services/account/DeleteAccountService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
@@ -902,7 +902,9 @@ describe('ServerDetailScreen', () => {
         expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'),
       );
 
-      const { ServerHasOwnedStoriesError } = jest.requireMock('@/src/services/ServerService') as {
+      const { ServerHasOwnedStoriesError } = jest.requireMock(
+        '@/src/services/servers/ServerService',
+      ) as {
         ServerHasOwnedStoriesError: new (s: Array<{ title: string }>) => Error;
       };
       mockDeleteServer.mockRejectedValueOnce(new ServerHasOwnedStoriesError([{ title: 'Epic' }]));

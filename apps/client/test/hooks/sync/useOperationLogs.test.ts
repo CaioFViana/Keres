@@ -20,7 +20,7 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
-jest.mock('@/src/services/OperationLogService', () => ({
+jest.mock('@/src/services/sync/OperationLogService', () => ({
   __esModule: true,
   createOperationLogService: jest.fn(() => mockService),
 }));

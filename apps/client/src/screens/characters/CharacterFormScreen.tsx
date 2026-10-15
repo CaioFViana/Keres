@@ -10,7 +10,7 @@ import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSeco
 import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
 import type { CharacterStackParamList } from '@/src/navigation/MainSystemStack';
-import { readEntityFormSecondaryDraft } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

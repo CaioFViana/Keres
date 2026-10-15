@@ -3,7 +3,7 @@ import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useArcChangeReload } from '@/src/hooks/lists/useArcChangeReload';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 
 export type AppearsInArcKind = 'character' | 'location' | 'item';
 

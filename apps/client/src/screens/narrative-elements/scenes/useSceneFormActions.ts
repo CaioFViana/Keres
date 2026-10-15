@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
-import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { parseTimingInput } from '@/src/utils/scene/sceneTimingInput';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { SceneFormState } from './useSceneFormState';

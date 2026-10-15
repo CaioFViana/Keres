@@ -3,14 +3,14 @@ import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { isOfflineError } from '@/src/services/apiClient';
+import { isOfflineError } from '@/src/services/api/apiClient';
 import {
   conversationKey,
   createMessageService,
   type MessagePeerRef,
   MESSAGES_CHANGED,
   setOpenConversation,
-} from '@/src/services/MessageService';
+} from '@/src/services/social/MessageService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';

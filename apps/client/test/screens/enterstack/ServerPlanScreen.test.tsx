@@ -63,7 +63,7 @@ jest.mock('@/src/screens/enterstack/useSwitchQuote', () => ({
 jest.mock('@/src/screens/enterstack/usePlanCancellation', () => ({
   usePlanCancellation: (...args: unknown[]) => mockCancelRenewal(...args),
 }));
-jest.mock('@/src/services/PaymentService', () => ({
+jest.mock('@/src/services/payments/PaymentService', () => ({
   __esModule: true,
   verifyPlayPurchase: jest.fn().mockResolvedValue({ active: false, subscription: null }),
 }));

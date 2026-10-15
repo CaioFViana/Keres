@@ -8,7 +8,7 @@ import { useDrizzle } from '@/src/db';
 import {
   createShippedPackService,
   type ShippedPackPreview,
-} from '@/src/services/storymanagement/ShippedPackService';
+} from '@/src/services/storymanagement/packs/ShippedPackService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
@@ -16,7 +16,7 @@ import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/common
 import { layout } from '@/src/theme/layout';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { packExtrasChips } from '@/src/utils/packChips';
+import { packExtrasChips } from '@/src/services/storymanagement/packs/packChips';
 
 interface ShippedPacksContentProps {
   /**

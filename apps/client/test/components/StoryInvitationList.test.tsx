@@ -38,7 +38,7 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('@/src/services/storyInvitationActions', () => ({
+jest.mock('@/src/services/social/storyInvitationActions', () => ({
   __esModule: true,
   acceptStoryInvitation: (...args: unknown[]) => mockAccept(...args),
   closeStoryInvitation: (...args: unknown[]) => mockClose(...args),

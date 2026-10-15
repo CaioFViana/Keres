@@ -5,7 +5,7 @@ import {
   readBoundEditorDraft,
   scheduleWriteEditorDraft,
   writeEditorDraftNow,
-} from '@/src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 
 export const FORM_DRAFT_FIELD = 'form';
 /** Draft key for not-yet-created entities: one pending creation per type per story. */

@@ -2,16 +2,16 @@ const mockServers = jest.fn();
 const mockLoad = jest.fn();
 const mockWarn = jest.fn();
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   __esModule: true,
   createServerService: () => ({ getAllServers: (...args: unknown[]) => mockServers(...args) }),
 }));
-jest.mock('@/src/services/PaymentService', () => ({
+jest.mock('@/src/services/payments/PaymentService', () => ({
   __esModule: true,
   PAYMENTS_CHANGED: 'payments_changed',
   loadPaymentOverview: (...args: unknown[]) => mockLoad(...args),
 }));
-jest.mock('@/src/services/PaymentWarningService', () => ({
+jest.mock('@/src/services/payments/PaymentWarningService', () => ({
   __esModule: true,
   warnAboutPayment: (...args: unknown[]) => mockWarn(...args),
 }));

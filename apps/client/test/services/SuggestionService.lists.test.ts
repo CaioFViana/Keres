@@ -6,11 +6,11 @@ import {
   LIST_CATALOG_TYPE,
   createSuggestionService,
   namedListDisplayKey,
-} from '@/src/services/storymanagement/SuggestionService';
+} from '@/src/services/storymanagement/suggestions/SuggestionService';
 import {
   customAttributeSuggestionType,
   parseNamedListCatalogValue,
-} from '@/src/services/storymanagement/suggestionTypes';
+} from '@/src/services/storymanagement/suggestions/suggestionTypes';
 import {
   entityBase,
   TEST_STORY_ID,

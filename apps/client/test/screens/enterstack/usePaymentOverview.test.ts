@@ -1,5 +1,5 @@
 const mockLoad = jest.fn();
-jest.mock('@/src/services/PaymentService', () => ({
+jest.mock('@/src/services/payments/PaymentService', () => ({
   __esModule: true,
   PAYMENTS_CHANGED: 'payments_changed',
   loadPaymentOverview: (...args: unknown[]) => mockLoad(...args),

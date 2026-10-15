@@ -1,30 +1,30 @@
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
   __esModule: true,
   createRouteService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(),
 }));
@@ -40,13 +40,13 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '@/src/services/storymanagement/EffectService';
-import { createRouteService } from '@/src/services/storymanagement/RouteService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

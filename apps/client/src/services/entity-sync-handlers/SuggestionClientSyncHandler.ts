@@ -2,7 +2,7 @@ import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@k
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
-import { omitClientProtectedFields, toEntityColumns } from '@/src/services/entityTableRegistry';
+import { omitClientProtectedFields, toEntityColumns } from '@/src/db/entityTableRegistry';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class SuggestionClientSyncHandler implements ClientSyncEntityHandler {

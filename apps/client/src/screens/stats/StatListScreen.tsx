@@ -18,14 +18,14 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
-import { createStatService } from '@/src/services/storymanagement/StatService';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

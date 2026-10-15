@@ -14,7 +14,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import type { StatsStackParamList } from '@/src/navigation/StatsStack';
-import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

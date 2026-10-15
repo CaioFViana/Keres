@@ -6,9 +6,12 @@ import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryListStore } from '@/src/state/story/storyListStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import i18n from '@/src/utils/format/i18n';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { takeAccessRevocation, type AccessRevocationReason } from '@/src/services/accessRevocation';
-import type { ServerStoryPreview } from '@/src/services/SyncEngineService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import {
+  takeAccessRevocation,
+  type AccessRevocationReason,
+} from '@/src/services/social/accessRevocation';
+import type { ServerStoryPreview } from '@/src/services/sync/SyncEngineService';
 
 const REVOCATION_MESSAGE_KEYS: Record<AccessRevocationReason, string> = {
   'nsfw-story': 'story_access_revoked_nsfw',

@@ -20,7 +20,7 @@ import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useConversation } from '@/src/screens/enterstack/useConversation';
 import { useKeyboardOverlap } from '@/src/hooks/ui/useKeyboardOverlap';
 import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
-import type { MessagePeerRef } from '@/src/services/MessageApiService';
+import type { MessagePeerRef } from '@/src/services/api/MessageApiService';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 

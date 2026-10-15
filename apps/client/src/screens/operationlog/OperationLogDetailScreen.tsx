@@ -20,8 +20,8 @@ import type { OperationLogSelect } from '@/src/db/schema'; // Ensure this path i
 import { useEntityName } from '@/src/hooks/entity/useEntityName';
 import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
 import type { OperationLogStackParamList } from '@/src/navigation/MainSystemStack'; // Corrected import path
-import { EntityService } from '@/src/services/EntityService';
-import { createOperationLogService } from '@/src/services/OperationLogService';
+import { EntityService } from '@/src/services/entity-solvers/EntityService';
+import { createOperationLogService } from '@/src/services/sync/OperationLogService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { layout } from '@/src/theme/layout';

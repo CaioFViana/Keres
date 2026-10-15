@@ -3,8 +3,8 @@ import { useDrizzle } from '@/src/db';
 import {
   createCharacterRelationService,
   type CharacterRelationServiceInterface,
-} from '@/src/services/storymanagement/CharacterRelationService';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+} from '@/src/services/storymanagement/relations/CharacterRelationService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
 
 /** Owns the character and character-relation services used by the form. */
 export function useCharacterFormResources() {

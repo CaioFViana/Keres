@@ -69,11 +69,11 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: mockIsCompact }),
 }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetAllLocationsByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({
     getAllRelationsForStory: mockGetAllRelationsForStory,

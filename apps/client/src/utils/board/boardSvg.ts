@@ -15,7 +15,7 @@ import {
   type BoardGalleryMediaById,
 } from './boardLayout';
 import { boardPinAppearanceType } from './boardPinAppearance';
-import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
 import {
   escapeSvgXml,
   roundSvg,

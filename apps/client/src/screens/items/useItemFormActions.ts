@@ -8,7 +8,7 @@ import type { RefObject } from 'react';
 import { useRef } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
 import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
-import type { ItemService } from '@/src/services/storymanagement/ItemService';
+import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { ItemFormState } from './useItemFormState';
 

@@ -108,20 +108,20 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/StoryContentMetricsService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService', () => ({
   createStoryContentMetricsService: () => ({
     getCatalogCounts: (...args: unknown[]) => mockGetCatalogCounts(...args),
     getContentCounts: (...args: unknown[]) => mockGetContentCounts(...args),
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({
     updateStoryFavoriteStatus: (...args: unknown[]) => mockUpdateFavorite(...args),
   }),

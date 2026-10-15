@@ -4,7 +4,7 @@ import {
   createStoryInvitationService,
   STORY_INVITATIONS_CHANGED,
   type ServerStoryInvitation,
-} from '@/src/services/StoryInvitationService';
+} from '@/src/services/social/StoryInvitationService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /**

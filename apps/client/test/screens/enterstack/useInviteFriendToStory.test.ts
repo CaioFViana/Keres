@@ -8,10 +8,10 @@ const mockDb = { query: { stories: { findMany: (...args: unknown[]) => mockFindM
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('@/src/services/StoryInvitationApiService', () => ({
+jest.mock('@/src/services/api/StoryInvitationApiService', () => ({
   storyInvitationApi: { invite: (...args: unknown[]) => mockInvite(...args) },
 }));
-jest.mock('@/src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/social/StoryInvitationService', () => ({
   createStoryInvitationService: () => ({
     syncWithServer: (...args: unknown[]) => mockSync(...args),
   }),

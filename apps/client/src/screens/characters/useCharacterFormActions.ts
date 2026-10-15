@@ -9,7 +9,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { CharacterStackParamList } from '@/src/navigation/MainSystemStack';
-import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
+import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { CharacterFormState } from './useCharacterFormState';
 

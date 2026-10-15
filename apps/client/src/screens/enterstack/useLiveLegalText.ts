@@ -3,7 +3,7 @@ import {
   fetchServerPrivacy,
   fetchServerTerms,
   type ServerTerms,
-} from '@/src/services/ServerTermsService';
+} from '@/src/services/servers/ServerTermsService';
 
 /**
  * A server's terms or privacy policy in the language the app has NOW, for reading.

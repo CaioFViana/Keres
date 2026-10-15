@@ -26,9 +26,9 @@ import {
   useEntityInitialLoad,
 } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
-import { EntityService } from '@/src/services/EntityService'; // Import EntityService
-import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService'; // Import createTagRelationService
-import { createTagService } from '@/src/services/storymanagement/TagService'; // Import createTagService
+import { EntityService } from '@/src/services/entity-solvers/EntityService'; // Import EntityService
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService'; // Import createTagRelationService
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService'; // Import createTagService
 import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
 import type { ThemeColors } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';

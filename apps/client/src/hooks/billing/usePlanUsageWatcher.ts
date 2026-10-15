@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
-import { refreshPlanUsage } from '@/src/services/PlanUsageService';
+import { refreshPlanUsage } from '@/src/services/payments/PlanUsageService';
 import { usePlanUsageStore } from '@/src/state/app/planUsageStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

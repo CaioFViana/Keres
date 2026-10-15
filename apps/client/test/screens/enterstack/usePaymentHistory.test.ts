@@ -3,7 +3,7 @@ const mockSync = jest.fn();
 const mockDb = {};
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/services/PaymentHistoryService', () => ({
+jest.mock('@/src/services/payments/PaymentHistoryService', () => ({
   __esModule: true,
   createPaymentHistoryService: () => ({
     getForServer: (...args: unknown[]) => mockGetForServer(...args),

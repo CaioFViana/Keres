@@ -87,11 +87,11 @@ jest.mock('@/src/db/migrate', () => ({
   migrate: (...args: unknown[]) => mockMigrate(...args),
 }));
 
-jest.mock('@/src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   setAuthDb: (...args: unknown[]) => mockSetAuthDb(...args),
 }));
 
-jest.mock('@/src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/account/ClientSettingsService', () => ({
   createClientSettings: (...args: unknown[]) => mockCreateClientSettings(...args),
 }));
 

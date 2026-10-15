@@ -89,7 +89,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationMapService', () => ({
   __esModule: true,
   createLocationMapService: () => ({
     getMapsForStory: mockGetMapsForStory,

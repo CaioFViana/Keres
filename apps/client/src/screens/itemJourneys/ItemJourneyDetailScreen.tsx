@@ -33,7 +33,7 @@ import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 import { useCharacterStore } from '@/src/state/story/characterStore';
 import { useItemStore } from '@/src/state/story/itemStore';
 import { useSceneStore } from '@/src/state/story/sceneStore';

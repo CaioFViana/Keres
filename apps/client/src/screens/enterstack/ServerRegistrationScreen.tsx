@@ -27,25 +27,31 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '@/src/db';
-import { redeemRecoveryCode } from '@/src/services/AuthApiService';
-import { authTokenManager } from '@/src/services/AuthTokenManager';
-import { fetchAgeVerificationInfo } from '@/src/services/AgeVerificationApiService';
-import { hostedApiOrigin, usesHttpOnlyCookieSession } from '@/src/services/browserCookieSession';
+import { redeemRecoveryCode } from '@/src/services/api/AuthApiService';
+import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
+import { fetchAgeVerificationInfo } from '@/src/services/api/AgeVerificationApiService';
+import {
+  hostedApiOrigin,
+  usesHttpOnlyCookieSession,
+} from '@/src/services/auth/browserCookieSession';
 import {
   createServerService,
   ServerHasOwnedStoriesError,
   ServerUrlAlreadyRegisteredError,
   ServerUrlNotSecureError,
-} from '@/src/services/ServerService';
+} from '@/src/services/servers/ServerService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { authenticateWithKeresServer, keresAuthAlertMessage } from '@/src/utils/keresServerAuth';
-import { accountNeedsVerification } from '@/src/utils/ageVerificationRouting';
+import {
+  authenticateWithKeresServer,
+  keresAuthAlertMessage,
+} from '@/src/services/auth/keresServerAuth';
+import { accountNeedsVerification } from '@/src/services/auth/ageVerificationRouting';
 import { blocksNewAccounts } from '@/src/utils/auth/ageVerificationRules';
-import { fetchServerPrivacy, fetchServerTerms } from '@/src/services/ServerTermsService';
+import { fetchServerPrivacy, fetchServerTerms } from '@/src/services/servers/ServerTermsService';
 import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/auth/serverUrl';
 
 type RootStackParamList = {

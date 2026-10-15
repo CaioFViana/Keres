@@ -8,7 +8,7 @@ import type { RefObject } from 'react';
 import { useRef } from 'react';
 import type { AppDrizzleClient } from '@/src/db';
 import type { WorldRulesStackParamList } from '@/src/navigation/MainSystemStack';
-import type { WorldRuleService } from '@/src/services/storymanagement/WorldRuleService';
+import type { WorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { WorldRuleFormState } from './useWorldRuleFormState';
 

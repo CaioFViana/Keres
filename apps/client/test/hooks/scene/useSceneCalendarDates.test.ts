@@ -17,11 +17,11 @@ jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: jest.fn(() => ({ definition: null })),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(() => mockSceneService),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(() => mockChapterService),
 }));

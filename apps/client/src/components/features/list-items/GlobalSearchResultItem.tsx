@@ -3,7 +3,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import type { GlobalSearchResult } from '@/src/services/storymanagement/GlobalSearchService';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
 import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 
 interface GlobalSearchResultItemProps {

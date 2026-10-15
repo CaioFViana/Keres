@@ -39,11 +39,11 @@ import type { ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createTagService } from '@/src/services/storymanagement/TagService';
-import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import {
   createChapterListItemRenderer,

@@ -4,7 +4,7 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { TagsStackParamList } from '@/src/navigation/MainSystemStack';
-import type { TagService } from '@/src/services/storymanagement/TagService';
+import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import type { TagFormState } from './useTagFormState';
 
 type TagNavigation = NativeStackNavigationProp<TagsStackParamList, 'TagForm'>;

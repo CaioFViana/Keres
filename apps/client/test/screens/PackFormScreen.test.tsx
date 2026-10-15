@@ -6,7 +6,7 @@ import React from 'react';
  * and the three refusals that stop an empty or nameless pack being written.
  *
  * `PackService` is a double here on purpose - what it does with a selection is covered against a
- * real database in `test/services/PackService.test.ts`. What matters here is which selection the
+ * real database in `test/services/storymanagement/packs/PackService.test.ts`. What matters here is which selection the
  * screen hands it.
  */
 
@@ -99,7 +99,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     getAllStories: async () => [
@@ -112,7 +112,7 @@ const mockCreatePack = jest.fn(async () => 'pack-1');
 const mockReextract = jest.fn(async () => undefined);
 const mockUpdateDetails = jest.fn(async () => undefined);
 const mockListPacks = jest.fn(async () => [] as unknown[]);
-jest.mock('@/src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   __esModule: true,
   createPackService: () => ({
     createPack: mockCreatePack,

@@ -122,7 +122,7 @@ jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
-jest.mock('@/src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
   createRouteService: () => ({ save: mockSaveRoute, replaceSteps: mockReplaceSteps }),
 }));
 

@@ -264,11 +264,11 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getAllByStoryId: mockGetCharacters }),
 }));
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getById: mockGetItemById }),
 }));

@@ -104,7 +104,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/services/storymanagement/SongService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ getById: mockGetSong }),
 }));
@@ -120,11 +120,11 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getById: mockGetScene }),
 }));
-jest.mock('@/src/services/storymanagement/SceneMusicService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SceneMusicService', () => ({
   __esModule: true,
   createSceneMusicService: () => ({
     addMusic: mockAddMusic,

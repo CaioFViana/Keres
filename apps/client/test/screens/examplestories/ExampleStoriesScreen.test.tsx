@@ -70,14 +70,14 @@ jest.mock('@/src/hooks/ui/useLanguageLabel', () => ({
   __esModule: true,
   useLanguageLabel: () => (language: string) => `label-${language}`,
 }));
-jest.mock('@/src/services/storymanagement/ExampleStoryService', () => ({
+jest.mock('@/src/services/storymanagement/packs/ExampleStoryService', () => ({
   __esModule: true,
   createExampleStoryService: () => ({
     listExampleStories: mockListExampleStories,
     installExampleStory: mockInstallExampleStory,
   }),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: (...args: unknown[]) => mockCreateStoryService(...args),
 }));

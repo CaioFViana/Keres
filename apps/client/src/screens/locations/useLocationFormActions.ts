@@ -9,7 +9,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
-import type { LocationService } from '@/src/services/storymanagement/LocationService';
+import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { LocationFormState } from './useLocationFormState';
 

@@ -16,7 +16,7 @@ jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
 jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -45,7 +45,7 @@ jest.mock('@keres/shared', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useSceneFormActions } from '@/src/screens/narrative-elements/scenes/useSceneFormActions';
 import type { SceneFormState } from '@/src/screens/narrative-elements/scenes/useSceneFormState';
 

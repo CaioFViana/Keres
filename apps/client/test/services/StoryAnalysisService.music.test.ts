@@ -3,10 +3,10 @@
  */
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createSceneMusicService } from '@/src/services/storymanagement/SceneMusicService';
-import { createSongService } from '@/src/services/storymanagement/SongService';
-import { createStoryAnalysisService } from '@/src/services/storymanagement/StoryAnalysisService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createSceneMusicService } from '@/src/services/storymanagement/media-music/SceneMusicService';
+import { createSongService } from '@/src/services/storymanagement/media-music/SongService';
+import { createStoryAnalysisService } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
 import {
   entityBase,
   seedLocalStory,

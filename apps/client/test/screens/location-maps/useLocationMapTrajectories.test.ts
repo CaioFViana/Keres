@@ -13,13 +13,13 @@ const journeys = [
   { id: 'j-1', itemId: 'item-1', sceneId: 's-1', isDeleted: false },
   { id: 'j-2', itemId: 'item-1', sceneId: 's-3', isDeleted: false },
 ];
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   createSceneService: () => ({ getAllByStoryId: async () => scenes }),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   createChapterService: () => ({ getAllByStoryId: async () => [{ id: 'ch-1', index: 1 }] }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterSceneService', () => ({
   createCharacterSceneService: () => ({
     getRelationsByStoryId: async () => [
       { characterId: 'char-1', sceneId: 's-1', isDeleted: false },
@@ -28,20 +28,20 @@ jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
     ],
   }),
 }));
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   createItemService: () => ({
     getAllByStoryId: async () => [{ id: 'item-1', name: 'Sword', isDeleted: false }],
   }),
 }));
-jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   createItemJourneyService: () => ({ getAllByStoryId: async () => journeys }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   createCharacterService: () => ({
     getAllByStoryId: async () => [{ id: 'char-1', name: 'Aragorn', isDeleted: false }],
   }),
 }));
-jest.mock('@/src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
   createRouteService: () => ({ getAllByStoryId: async () => [], getSteps: async () => [] }),
 }));
 

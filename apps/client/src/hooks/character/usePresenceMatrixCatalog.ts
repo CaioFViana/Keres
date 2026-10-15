@@ -7,12 +7,12 @@ import type {
   ItemSelect,
   SceneSelect,
 } from '@/src/db/schema';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { createItemService } from '@/src/services/storymanagement/ItemService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 
 export function usePresenceMatrixCatalog(
   storyId: string | undefined,

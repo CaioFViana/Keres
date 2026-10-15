@@ -1,8 +1,8 @@
 import type {
   LocationService,
   LocationWithTags,
-} from '@/src/services/storymanagement/LocationService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
+} from '@/src/services/storymanagement/entities/LocationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 
 export const useLocationStore = createEntityStore<'locations', LocationWithTags, LocationService>({

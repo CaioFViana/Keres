@@ -5,7 +5,7 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { ARRANGED } from '@keres/shared';
-import { omitClientProtectedFields, toEntityColumns } from '@/src/services/entityTableRegistry';
+import { omitClientProtectedFields, toEntityColumns } from '@/src/db/entityTableRegistry';
 
 /**
  * Pure sync helpers, free of database and network access so they stay unit-testable.

@@ -1,6 +1,6 @@
 import type { AppDrizzleClient } from '@/src/db';
-import type { KeresAxiosInstance } from '@/src/services/apiClient';
-import type { SyncConflictService } from '@/src/services/SyncConflictService';
+import type { KeresAxiosInstance } from '@/src/services/api/apiClient';
+import type { SyncConflictService } from '@/src/services/sync/SyncConflictService';
 import type { SyncNotifier } from './SyncNotifier';
 
 /** Mutable sync state exposed through getters so modules always see the current configuration. */

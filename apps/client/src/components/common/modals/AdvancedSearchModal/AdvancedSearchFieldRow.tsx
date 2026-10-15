@@ -12,7 +12,7 @@ import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryD
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useEntityPickerOptions } from '@/src/hooks/lists/useEntityPickerOptions';
-import type { SuggestionType } from '@/src/services/storymanagement/SuggestionService';
+import type { SuggestionType } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import { useTheme } from '@/src/theme';
 
 /** Advanced-search fields have a dynamic target type, but selection remains MultiSelectPill. */

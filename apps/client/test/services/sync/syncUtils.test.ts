@@ -1,0 +1,713 @@
+/**
+ * @jest-environment node
+ */
+import { asc, eq } from 'drizzle-orm';
+import { operationLogs, stories, syncConflicts } from '@/src/db/schema';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import {
+  assertStoryIsOwned,
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  MAX_RETAINED_SYNCED_OPERATIONS,
+  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
+  StoryOwnerOnlyError,
+  StoryReadOnlyError,
+  trimSyncedOperationLogs,
+} from '@/src/services/sync/syncUtils';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+
+let database: TestDatabase;
+
+async function seedStory(overrides: Partial<typeof stories.$inferInsert> = {}) {
+  const now = new Date();
+  await database.db.insert(stories).values({
+    id: STORY_ID,
+    userId: 'local-user',
+    title: 'A Queda',
+    type: 'linear',
+    createdAt: now,
+    updatedAt: now,
+    version: 1,
+    isDeleted: false,
+    ...overrides,
+  });
+}
+
+const readStory = () => database.db.query.stories.findFirst({ where: eq(stories.id, STORY_ID) });
+
+beforeEach(async () => {
+  database = await createTestDatabase();
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  database.close();
+  jest.restoreAllMocks();
+});
+
+/**
+ * The operation log is what the push sends; its numbering is what gives synchronization its order. A
+ * repeated `operationVersion` or a `lastOperationLog` that does not advance corrupts what the server
+ * receives, and it is invisible until the next synchronization.
+ */
+describe('recordLocalOperation', () => {
+  it('records the operation with everything the push needs', async () => {
+    await seedStory();
+
+    await recordLocalOperation(database.db, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {
+      name: 'Keres',
+    });
+
+    const [log] = await database.db.query.operationLogs.findMany();
+    expect(log).toMatchObject({
+      storyId: STORY_ID,
+      userId: 'user-1',
+      operationType: 'create',
+      entityType: 'Character',
+      entityId: 'char-1',
+      isSynced: false,
+      serverOperationVersion: 0,
+    });
+    expect(JSON.parse(log.payload)).toEqual({ name: 'Keres' });
+  });
+
+  it('numbers the first operation of a story as 1', async () => {
+    await seedStory();
+
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
+
+    const [log] = await database.db.query.operationLogs.findMany();
+    expect(log.operationVersion).toBe(1);
+  });
+
+  it('numbers each operation one past the story cursor', async () => {
+    await seedStory({ lastOperationLog: 7 });
+
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'update',
+      'Character',
+      'char-1',
+      {},
+    );
+
+    const [log] = await database.db.query.operationLogs.findMany();
+    expect(log.operationVersion).toBe(8);
+  });
+
+  it('advances the story cursor, so the next operation does not reuse the number', async () => {
+    await seedStory();
+
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'update',
+      'Character',
+      'char-1',
+      {},
+    );
+
+    const logs = await database.db.query.operationLogs.findMany();
+    expect(logs.map((log) => log.operationVersion).sort()).toEqual([1, 2]);
+    expect((await readStory())!.lastOperationLog).toBe(2);
+  });
+
+  it('gives every operation its own id', async () => {
+    await seedStory();
+
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-2',
+      {},
+    );
+
+    const logs = await database.db.query.operationLogs.findMany();
+    expect(new Set(logs.map((log) => log.id)).size).toBe(2);
+  });
+
+  it('touches the story updatedAt, so the list screens reorder', async () => {
+    await seedStory({ updatedAt: new Date(0) });
+
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
+
+    expect((await readStory())!.updatedAt.getTime()).toBeGreaterThan(0);
+  });
+
+  it('announces the change, so an open operation log screen refreshes', async () => {
+    await seedStory();
+    const listener = jest.fn();
+    entityEventEmitter.on('operation_log_updated', listener);
+
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'create',
+      'Character',
+      'char-1',
+      {},
+    );
+    entityEventEmitter.off('operation_log_updated', listener);
+
+    expect(listener).toHaveBeenCalledWith(STORY_ID);
+  });
+
+  it('stores the payload as JSON that survives a round trip', async () => {
+    await seedStory();
+    const payload = { name: 'Keres', tags: ['a', 'b'], nested: { deep: true }, missing: null };
+
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'user-1',
+      'update',
+      'Character',
+      'char-1',
+      payload,
+    );
+
+    const [log] = await database.db.query.operationLogs.findMany();
+    expect(JSON.parse(log.payload)).toEqual(payload);
+  });
+
+  it('does nothing but complain when there is no database', async () => {
+    await expect(
+      recordLocalOperation(null as never, STORY_ID, 'user-1', 'create', 'Character', 'char-1', {}),
+    ).resolves.toBeUndefined();
+    expect(console.error).toHaveBeenCalled();
+  });
+
+  /** An operation for a story that is not here belongs to no sequence and could never push. */
+  it('refuses to record for a story it cannot find, queueing nothing', async () => {
+    await expect(
+      recordLocalOperation(
+        database.db,
+        'nao-existe',
+        'user-1',
+        'create',
+        'Character',
+        'char-1',
+        {},
+      ),
+    ).rejects.toThrow('is not here');
+
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+  });
+});
+
+/**
+ * An edit made while the entity's conflict is open rests on the held operations. Pushed on its own it
+ * would land before the decision, and the resolution would then write over it locally.
+ */
+describe('recordLocalOperation with a pending conflict on the entity', () => {
+  async function seedConflict(overrides: Partial<typeof syncConflicts.$inferInsert> = {}) {
+    await database.db.insert(syncConflicts).values({
+      id: 'conflict-1',
+      storyId: STORY_ID,
+      entityType: 'Character',
+      entityId: 'char-1',
+      reason: 'concurrent_edit',
+      localOperationType: 'update',
+      localOperationIds: JSON.stringify(['held-op']),
+      localValues: JSON.stringify({ name: 'Held' }),
+      serverValues: JSON.stringify({ name: 'Server' }),
+      clientVersion: 1,
+      serverVersion: 2,
+      status: 'pending',
+      detectedAt: new Date(),
+      ...overrides,
+    });
+  }
+  const record = (payload: Record<string, unknown>, type: 'update' | 'delete' = 'update') =>
+    recordLocalOperation(database.db, STORY_ID, 'user-1', type, 'Character', 'char-1', payload);
+  const readConflict = () =>
+    database.db.query.syncConflicts.findFirst({ where: eq(syncConflicts.id, 'conflict-1') });
+
+  it('holds the new edit in the conflict, so the decision covers the latest intent', async () => {
+    await seedStory();
+    await seedConflict();
+
+    await record({ description: 'Newer', version: 4 });
+
+    const [op] = await database.db.query.operationLogs.findMany();
+    expect(op).toMatchObject({ isSynced: false, conflictState: 'conflicted' });
+    const conflict = await readConflict();
+    expect(JSON.parse(conflict!.localOperationIds)).toEqual(['held-op', op!.id]);
+    expect(JSON.parse(conflict!.localValues)).toEqual({ name: 'Held', description: 'Newer' });
+    expect(conflict!.localOperationType).toBe('update');
+  });
+
+  it('turns the held decision into a deletion when the user deletes meanwhile', async () => {
+    await seedStory();
+    await seedConflict();
+
+    await record({ id: 'char-1', isDeleted: true, version: 4 }, 'delete');
+
+    expect((await readConflict())!.localOperationType).toBe('delete');
+  });
+
+  it('leaves the edit pushable next to a quarantine, whose resolution discards', async () => {
+    await seedStory();
+    await seedConflict({ reason: 'validation', serverValues: null });
+
+    await record({ description: 'Valid', version: 4 });
+
+    const [op] = await database.db.query.operationLogs.findMany();
+    expect(op!.conflictState).toBeNull();
+    expect(JSON.parse((await readConflict())!.localOperationIds)).toEqual(['held-op']);
+  });
+
+  it('leaves the edit pushable next to a resolved conflict', async () => {
+    await seedStory();
+    await seedConflict({ id: 'conflict-2', status: 'resolved' });
+
+    await record({ description: 'Valid', version: 4 });
+
+    const [op] = await database.db.query.operationLogs.findMany();
+    expect(op!.conflictState).toBeNull();
+  });
+
+  it('allows a story that was never linked to a server', async () => {
+    await seedStory({ serverId: null, myRole: null });
+
+    await expect(assertStoryIsWritable(database.db, STORY_ID)).resolves.toBeUndefined();
+  });
+
+  it.each(['owner', 'writer'] as const)(
+    'allows a linked story where the user is %s',
+    async (myRole) => {
+      await seedStory({ serverId: 'server-1', myRole });
+
+      await expect(assertStoryIsWritable(database.db, STORY_ID)).resolves.toBeUndefined();
+    },
+  );
+
+  it('refuses a linked story where the user is only a reader', async () => {
+    await seedStory({ serverId: 'server-1', myRole: 'reader' });
+
+    await expect(assertStoryIsWritable(database.db, STORY_ID)).rejects.toBeInstanceOf(
+      StoryReadOnlyError,
+    );
+  });
+
+  it('fails closed while the role has not resolved yet', async () => {
+    await seedStory({ serverId: 'server-1', myRole: null });
+
+    await expect(assertStoryIsWritable(database.db, STORY_ID)).rejects.toBeInstanceOf(
+      StoryReadOnlyError,
+    );
+  });
+
+  it('allows a story it cannot find, since there is nothing to protect', async () => {
+    await expect(assertStoryIsWritable(database.db, 'nao-existe')).resolves.toBeUndefined();
+  });
+});
+
+/**
+ * A story's policy and identity belong to its owner on the server alone. Without this guard, a writer
+ * would write type/favoriteBehavior/allowReaderComments (or delete the story) locally and the push
+ * would come back `unauthorized` on every cycle.
+ */
+describe('assertStoryIsOwned', () => {
+  it('allows a story that was never linked to a server', async () => {
+    await seedStory({ serverId: null, myRole: null });
+
+    await expect(assertStoryIsOwned(database.db, STORY_ID)).resolves.toBeUndefined();
+  });
+
+  it('allows a linked story where the user is the owner', async () => {
+    await seedStory({ serverId: 'server-1', myRole: 'owner' });
+
+    await expect(assertStoryIsOwned(database.db, STORY_ID)).resolves.toBeUndefined();
+  });
+
+  it.each(['writer', 'reader'] as const)(
+    'refuses a linked story where the user is only a %s',
+    async (myRole) => {
+      await seedStory({ serverId: 'server-1', myRole });
+
+      await expect(assertStoryIsOwned(database.db, STORY_ID)).rejects.toBeInstanceOf(
+        StoryOwnerOnlyError,
+      );
+    },
+  );
+
+  it('fails closed while the role has not resolved yet', async () => {
+    await seedStory({ serverId: 'server-1', myRole: null });
+
+    await expect(assertStoryIsOwned(database.db, STORY_ID)).rejects.toBeInstanceOf(
+      StoryOwnerOnlyError,
+    );
+  });
+
+  it('allows a story it cannot find, since there is nothing to protect', async () => {
+    await expect(assertStoryIsOwned(database.db, 'nao-existe')).resolves.toBeUndefined();
+  });
+});
+
+/**
+ * Retention is what stops the on-device log from growing forever - one row per save, soon with
+ * scene prose inside the payloads. The trim must only ever eat synchronized, conflict-free
+ * history: pending operations are the queue, and conflicted ones are the conflict screen's
+ * evidence.
+ */
+describe('trimSyncedOperationLogs', () => {
+  let sequence = 0;
+
+  async function seedLog(overrides: Partial<typeof operationLogs.$inferInsert> = {}) {
+    sequence += 1;
+    await database.db.insert(operationLogs).values({
+      id: `log-${sequence}`,
+      storyId: STORY_ID,
+      userId: 'local-user',
+      operationVersion: sequence,
+      operationType: 'update',
+      entityType: 'Scene',
+      entityId: 'scene-1',
+      payload: JSON.stringify({ version: sequence }),
+      // Same instant on purpose: the trim must order by operationVersion, never createdAt.
+      createdAt: new Date(1_700_000_000_000),
+      isSynced: true,
+      serverOperationVersion: sequence,
+      ...overrides,
+    });
+  }
+
+  const remainingVersions = async () =>
+    (
+      await database.db.query.operationLogs.findMany({
+        where: eq(operationLogs.storyId, STORY_ID),
+        columns: { operationVersion: true },
+        orderBy: [asc(operationLogs.operationVersion)],
+      })
+    ).map((row) => row.operationVersion);
+
+  beforeEach(async () => {
+    sequence = 0;
+    // Caught-up cursors: these tests pin the keep-N budget and the ordering, so every row
+    // sits below the cursor and is eligible. Cursor gating itself is pinned below.
+    await seedStory({ lastServerSyncedLog: 1000, lastPublicFavoriteLog: 1000 });
+  });
+
+  it('keeps the newest synced operations and drops the rest', async () => {
+    for (let version = 1; version <= 5; version += 1) {
+      await seedLog({ operationVersion: version });
+    }
+
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 3);
+
+    expect(removed).toBe(2);
+    expect(await remainingVersions()).toEqual([3, 4, 5]);
+  });
+
+  it('orders by the server version, so a late-synced op survives and no-op 0s trim first', async () => {
+    // The local counter and the server's versions are different spaces: row 1 synced late
+    // (its echo still matters to the next pull) while row 4 is an idempotent no-op at
+    // version 0 (no pull can ever carry 0). Ordering by the counter would keep the
+    // worse pair.
+    await seedLog({ operationVersion: 1, serverOperationVersion: 100 });
+    await seedLog({ operationVersion: 2, serverOperationVersion: 2 });
+    await seedLog({ operationVersion: 3, serverOperationVersion: 3 });
+    await seedLog({ operationVersion: 4, serverOperationVersion: 0 });
+
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 2);
+
+    expect(removed).toBe(2);
+    expect(await remainingVersions()).toEqual([1, 3]);
+  });
+
+  it('keeps every operation that is still waiting for the server', async () => {
+    await seedLog({ operationVersion: 1, isSynced: false });
+    await seedLog({ operationVersion: 2, isSynced: true });
+    await seedLog({ operationVersion: 3, isSynced: true });
+
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 1);
+
+    expect(removed).toBe(1);
+    expect(await remainingVersions()).toEqual([1, 3]);
+  });
+
+  it.each(['conflicted', 'abandoned'] as const)(
+    'never trims a %s operation, whatever its age',
+    async (conflictState) => {
+      await seedLog({ operationVersion: 1, conflictState });
+      await seedLog({ operationVersion: 2 });
+      await seedLog({ operationVersion: 3 });
+
+      const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 1);
+
+      expect(removed).toBe(1);
+      expect(await remainingVersions()).toEqual([1, 3]);
+    },
+  );
+
+  it('does nothing when the synchronized history fits the budget', async () => {
+    await seedLog({ operationVersion: 1 });
+    await seedLog({ operationVersion: 2 });
+
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 2);
+
+    expect(removed).toBe(0);
+    expect(await remainingVersions()).toEqual([1, 2]);
+  });
+
+  it('leaves other stories alone', async () => {
+    await seedLog({ operationVersion: 1 });
+    await seedLog({ operationVersion: 2, storyId: 'outra-historia' });
+
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 0);
+
+    expect(removed).toBe(1);
+    const other = await database.db.query.operationLogs.findMany({
+      where: eq(operationLogs.storyId, 'outra-historia'),
+    });
+    expect(other).toHaveLength(1);
+  });
+
+  it('retains 100 synchronized operations by default', async () => {
+    expect(MAX_RETAINED_SYNCED_OPERATIONS).toBe(100);
+    for (let version = 1; version <= 102; version += 1) {
+      await seedLog({ operationVersion: version });
+    }
+
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID);
+
+    expect(removed).toBe(2);
+    expect(await remainingVersions()).toHaveLength(100);
+  });
+
+  it('does nothing but complain when there is no database', async () => {
+    await expect(trimSyncedOperationLogs(null as never, STORY_ID)).resolves.toBe(0);
+    expect(console.error).toHaveBeenCalled();
+  });
+
+  it('keeps a synced op past the cursor: its echo has not arrived yet', async () => {
+    await database.db
+      .update(stories)
+      .set({ lastServerSyncedLog: 2 })
+      .where(eq(stories.id, STORY_ID));
+    await seedLog({ operationVersion: 1, serverOperationVersion: 1 });
+    await seedLog({ operationVersion: 2, serverOperationVersion: 2 });
+    await seedLog({ operationVersion: 3, serverOperationVersion: 3 });
+
+    // Budget 1 would drop two rows by recency alone - but row 3 sits past the cursor, so its
+    // echo is still outstanding and only row 1 may go.
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 1);
+
+    expect(removed).toBe(1);
+    expect(await remainingVersions()).toEqual([2, 3]);
+  });
+
+  it('holds favorites until the public-favorites cursor passes them too', async () => {
+    await database.db
+      .update(stories)
+      .set({ lastServerSyncedLog: 10, lastPublicFavoriteLog: 2 })
+      .where(eq(stories.id, STORY_ID));
+    await seedLog({ operationVersion: 1, entityType: 'Favorite', serverOperationVersion: 1 });
+    await seedLog({ operationVersion: 2, entityType: 'Favorite', serverOperationVersion: 5 });
+    await seedLog({ operationVersion: 3, entityType: 'Scene', serverOperationVersion: 5 });
+
+    // The scene row is below the main cursor and trims; the favorite at 5 is below the main
+    // cursor too, but the historical path can still deliver it (public cursor 2), so it stays.
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 0);
+
+    expect(removed).toBe(2);
+    expect(await remainingVersions()).toEqual([2]);
+  });
+});
+
+describe('getUserIdForOperation', () => {
+  const serverService = (idUser: string | null) =>
+    ({
+      getServerById: jest.fn(async () =>
+        idUser === null ? undefined : { id: 'server-1', idUser },
+      ),
+    }) as never;
+
+  it('uses the server account id for a synced story', async () => {
+    await seedStory({ serverId: 'server-1' });
+
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService('server-user'),
+      STORY_ID,
+      'local-user',
+    );
+
+    expect(userId).toBe('server-user');
+  });
+
+  it('falls back to the local id for a story that was never synced', async () => {
+    await seedStory({ serverId: null });
+
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService('server-user'),
+      STORY_ID,
+      'local-user',
+    );
+
+    expect(userId).toBe('local-user');
+  });
+
+  it('falls back to the local id when the server is not signed in', async () => {
+    await seedStory({ serverId: 'server-1' });
+
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService(null),
+      STORY_ID,
+      'local-user',
+    );
+
+    expect(userId).toBe('local-user');
+  });
+
+  it('falls back to the local id for a story it cannot find', async () => {
+    const userId = await getUserIdForOperation(
+      database.db,
+      serverService('server-user'),
+      'nao-existe',
+      'local-user',
+    );
+
+    expect(userId).toBe('local-user');
+  });
+});
+
+/**
+ * The entity write and the operation that syncs it are one unit: a failure (or the app dying)
+ * between them used to leave a changed row with nothing to send it.
+ */
+describe('runLocalWrite', () => {
+  const titleOf = async () => (await readStory())?.title;
+
+  it('commits the write and its operation together', async () => {
+    await seedStory();
+
+    await runLocalWrite(database.db, STORY_ID, () => {
+      database.db.update(stories).set({ title: 'Nova' }).where(eq(stories.id, STORY_ID)).run();
+      recordLocalOperationSync(database.db, STORY_ID, 'user-1', 'update', 'Story', STORY_ID, {
+        title: 'Nova',
+      });
+    });
+
+    expect(await titleOf()).toBe('Nova');
+    expect(await database.db.query.operationLogs.findMany()).toHaveLength(1);
+  });
+
+  it('rolls both back when anything in the unit fails', async () => {
+    await seedStory();
+
+    await expect(
+      runLocalWrite(database.db, STORY_ID, () => {
+        database.db.update(stories).set({ title: 'Meio' }).where(eq(stories.id, STORY_ID)).run();
+        recordLocalOperationSync(database.db, STORY_ID, 'user-1', 'update', 'Story', STORY_ID, {
+          title: 'Meio',
+        });
+        throw new Error('crash between the two');
+      }),
+    ).rejects.toThrow('crash between the two');
+
+    expect(await titleOf()).toBe('A Queda');
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+    expect((await readStory())?.lastOperationLog).toBe(0);
+  });
+
+  it('refuses to log an operation for a story that is not here, rolling the unit back', async () => {
+    await seedStory();
+
+    await expect(
+      runLocalWrite(database.db, STORY_ID, () => {
+        database.db.update(stories).set({ title: 'Órfã' }).where(eq(stories.id, STORY_ID)).run();
+        recordLocalOperationSync(database.db, 'elsewhere', 'user-1', 'update', 'Story', STORY_ID, {
+          title: 'Órfã',
+        });
+      }),
+    ).rejects.toThrow(/story elsewhere is not here/);
+
+    expect(await titleOf()).toBe('A Queda');
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+  });
+
+  it('refuses an asynchronous unit, rolling back what it already wrote', async () => {
+    await seedStory();
+
+    await expect(
+      runLocalWrite(database.db, STORY_ID, (async () => {
+        database.db.update(stories).set({ title: 'Async' }).where(eq(stories.id, STORY_ID)).run();
+      }) as never),
+    ).rejects.toThrow(/synchronous/);
+
+    expect(await titleOf()).toBe('A Queda');
+  });
+
+  it('announces the operation only after the unit committed', async () => {
+    await seedStory();
+    const seenInside: number[] = [];
+    const listener = async () => {
+      seenInside.push((await database.db.query.operationLogs.findMany()).length);
+    };
+    entityEventEmitter.on('operation_log_updated', listener);
+    try {
+      await expect(
+        runLocalWrite(database.db, STORY_ID, () => {
+          recordLocalOperationSync(database.db, STORY_ID, 'user-1', 'update', 'Story', STORY_ID, {
+            title: 'x',
+          });
+          throw new Error('rolled back');
+        }),
+      ).rejects.toThrow('rolled back');
+      // A rolled-back unit announced nothing.
+      expect(seenInside).toEqual([]);
+    } finally {
+      entityEventEmitter.off('operation_log_updated', listener);
+    }
+  });
+});

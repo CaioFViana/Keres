@@ -76,13 +76,13 @@ jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({
     importFullStory: (...args: unknown[]) => mockImportFullStory(...args),
   }),
 }));
 
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   mediaFileService: {
     writeDownloaded: (...args: unknown[]) => mockWriteDownloaded(...args),
   },

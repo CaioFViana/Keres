@@ -65,18 +65,18 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/services/storymanagement/StoryAnalysisService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryAnalysisService', () => ({
   __esModule: true,
   createStoryAnalysisService: () => ({
     analyzeStoryCheap: mockAnalyzeStoryCheap,
     analyzeStoryFull: mockAnalyzeStoryFull,
   }),
 }));
-jest.mock('@/src/services/storymanagement/StoryIndexService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryIndexService', () => ({
   __esModule: true,
   createStoryIndexService: () => ({ normalizeIndexes: mockNormalizeIndexes }),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));

@@ -5,11 +5,11 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   __esModule: true,
   createAttributeValueService: jest.fn(),
 }));
-jest.mock('@/src/services/EntityService', () => ({
+jest.mock('@/src/services/entity-solvers/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: jest.fn() },
 }));
@@ -26,8 +26,8 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 import { AttributeType } from '@keres/shared';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useCustomAttributeValues } from '@/src/hooks/entity/useCustomAttributeValues';
-import { EntityService } from '@/src/services/EntityService';
-import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { EntityService } from '@/src/services/entity-solvers/EntityService';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const getValuesForEntity = jest.fn();

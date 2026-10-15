@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 

@@ -4,7 +4,7 @@
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import { comments, favorites, operationLogs, servers, stories } from '@/src/db/schema';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import {
   entityBase,
   seedLocalStory,

@@ -2,8 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { StorySelect } from '@/src/db/schema';
-import { createPackService, type PackService } from '@/src/services/storymanagement/PackService';
-import { createStoryService, type StoryService } from '@/src/services/storymanagement/StoryService';
+import {
+  createPackService,
+  type PackService,
+} from '@/src/services/storymanagement/packs/PackService';
+import {
+  createStoryService,
+  type StoryService,
+} from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 
 /** Owns pack/story services and the source-story lookup list. */

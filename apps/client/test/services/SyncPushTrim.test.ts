@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/utils/syncUtils', () => {
-  const actual = jest.requireActual('@/src/utils/syncUtils');
+jest.mock('@/src/services/sync/syncUtils', () => {
+  const actual = jest.requireActual('@/src/services/sync/syncUtils');
   return {
     ...actual,
     trimSyncedOperationLogs: jest.fn((...args: unknown[]) =>
@@ -15,7 +15,7 @@ import * as schema from '@/src/db/schema';
 import type { OperationLogSelect } from '@/src/db/schema';
 import { SyncPush } from '@/src/services/sync/SyncPush';
 import type { SyncNotifier } from '@/src/services/sync/SyncNotifier';
-import { trimSyncedOperationLogs } from '@/src/utils/syncUtils';
+import { trimSyncedOperationLogs } from '@/src/services/sync/syncUtils';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';

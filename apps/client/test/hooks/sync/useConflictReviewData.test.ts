@@ -11,13 +11,13 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('@/src/services/ConflictSummaryService', () => ({
+jest.mock('@/src/services/sync/ConflictSummaryService', () => ({
   __esModule: true,
   collectConflictEntityRefs: (...args: unknown[]) => mockCollectConflictEntityRefs(...args),
   collectEntityRefs: (...args: unknown[]) => mockCollectEntityRefs(...args),
   buildConflictSummaries: (...args: unknown[]) => mockBuildConflictSummaries(...args),
 }));
-jest.mock('@/src/services/EntityNameBatchResolver', () => ({
+jest.mock('@/src/services/entity-solvers/EntityNameBatchResolver', () => ({
   __esModule: true,
   createEntitySnapshotResolver: jest.fn(() => ({
     resolveMany: (...args: unknown[]) => mockResolveSnapshots(...args),

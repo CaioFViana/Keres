@@ -46,18 +46,18 @@ import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
-import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService'; // Import CharacterService
-import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '@/src/services/storymanagement/ItemService';
-import { createItemService } from '@/src/services/storymanagement/ItemService'; // Import ItemService
-import type { LocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
-import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import createSceneService
+import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService'; // Import CharacterSceneService
+import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService'; // Import CharacterService
+import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService'; // Import ItemService
+import type { LocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService'; // Import createSceneService
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

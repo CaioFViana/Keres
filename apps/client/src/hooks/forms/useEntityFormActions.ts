@@ -7,11 +7,11 @@ import type { StorySchemaEntityType, StorySchemaField } from '@keres/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
-import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import {
   type PersistedEntity,
   saveEntityWithSecondaryData,
-} from '@/src/services/storymanagement/EntityFormSaveCoordinator';
+} from '@/src/services/storymanagement/forms/EntityFormSaveCoordinator';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { type ConfirmDeleteOptions, useConfirmDelete } from '@/src/hooks/ui/useConfirmDelete';

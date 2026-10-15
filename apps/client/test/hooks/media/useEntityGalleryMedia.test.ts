@@ -2,15 +2,17 @@
 jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
 jest.mock('@/src/state/story/storyStore', () => ({ useStoryStore: jest.fn() }));
 jest.mock('@/src/state/app/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   createGalleryService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/GalleryRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/GalleryRelationService', () => ({
   createGalleryRelationService: jest.fn(),
 }));
-jest.mock('@/src/services/galleryMediaImport', () => ({ importPickedMediaAssets: jest.fn() }));
-jest.mock('@/src/services/galleryLink', () => ({ createGalleryLink: jest.fn() }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/galleryMediaImport', () => ({
+  importPickedMediaAssets: jest.fn(),
+}));
+jest.mock('@/src/services/media/galleryLink', () => ({ createGalleryLink: jest.fn() }));
+jest.mock('@/src/services/media/MediaFileService', () => ({
   mediaFileService: { pick: jest.fn(), pickDocuments: jest.fn() },
 }));
 jest.mock('@react-navigation/native', () => ({
@@ -23,11 +25,11 @@ const mockDispatch = jest.fn();
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useEntityGalleryMedia } from '@/src/hooks/media/useEntityGalleryMedia';
-import { createGalleryLink } from '@/src/services/galleryLink';
-import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
-import { mediaFileService } from '@/src/services/MediaFileService';
-import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createGalleryLink } from '@/src/services/media/galleryLink';
+import { importPickedMediaAssets } from '@/src/services/media/galleryMediaImport';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { createGalleryRelationService } from '@/src/services/storymanagement/relations/GalleryRelationService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

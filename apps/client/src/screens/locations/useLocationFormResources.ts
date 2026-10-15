@@ -3,8 +3,8 @@ import { useDrizzle } from '@/src/db';
 import {
   createLocationRelationService,
   type LocationRelationService,
-} from '@/src/services/storymanagement/LocationRelationService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
+} from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
 
 /** Owns the location and location-relation services used by the form. */
 export function useLocationFormResources() {

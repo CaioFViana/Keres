@@ -10,7 +10,7 @@ const mockInitItem = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   createChoiceService: (...args: unknown[]) => mockCreateChoiceService(...args),
 }));
 jest.mock('@/src/state/story/sceneStore', () => ({

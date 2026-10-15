@@ -1,13 +1,13 @@
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/services/storymanagement/SuggestionService', () => ({
+jest.mock('@/src/services/storymanagement/suggestions/SuggestionService', () => ({
   __esModule: true,
   createSuggestionService: jest.fn(),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useSuggestions } from '@/src/hooks/entity/useSuggestions';
-import { createSuggestionService } from '@/src/services/storymanagement/SuggestionService';
+import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
 
 const getSuggestions = jest.fn();
 

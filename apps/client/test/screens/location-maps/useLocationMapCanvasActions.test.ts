@@ -10,11 +10,11 @@ jest.mock('@/src/utils/location-map/locationMapContent', () => ({
   appendLocationsToMap: (...args: unknown[]) => mockAppendLocations(...args),
   appendMarkersToMap: (...args: unknown[]) => mockAppendMarkers(...args),
 }));
-jest.mock('@/src/utils/locationMapMedia', () => ({
+jest.mock('@/src/services/media/locationMapMedia', () => ({
   __esModule: true,
   imageSizeOf: (...args: unknown[]) => mockImageSize(...args),
 }));
-jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationMapService', () => ({
   __esModule: true,
   createLocationMapService: jest.fn(() => ({ createMap: mockCreateMap })),
 }));

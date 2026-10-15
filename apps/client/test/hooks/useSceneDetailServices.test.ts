@@ -1,33 +1,33 @@
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(),
 }));
@@ -38,14 +38,14 @@ jest.mock('@/src/state/story/characterStore', () => ({
 
 import { renderHook } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
-import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
-import { createEffectService } from '@/src/services/storymanagement/EffectService';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { createItemService } from '@/src/services/storymanagement/ItemService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useCharacterStore } from '@/src/state/story/characterStore';
 import { useSceneDetailServices } from '@/src/screens/narrative-elements/scenes/useSceneDetailServices';
 

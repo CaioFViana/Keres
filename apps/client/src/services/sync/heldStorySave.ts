@@ -7,7 +7,7 @@ import type { PushOutcomeReport } from './SyncPush';
 /**
  * What a save of the story's own record reports when the server did not get it because the save waits in a pending
  * conflict. A local edit of an entity that has an open conflict joins that conflict instead of being pushed (see
- * `findConflictHoldingEdits` in `utils/syncUtils.ts`), so the cycle sends nothing and the push reports nothing. Without
+ * `findConflictHoldingEdits` in `services/sync/syncUtils.ts`), so the cycle sends nothing and the push reports nothing. Without
  * this the save would show success over a change the server never received, and the refusal that caused the conflict
  * would never be named again.
  *

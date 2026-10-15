@@ -4,7 +4,7 @@ import {
   loadPaymentOverview,
   PAYMENTS_CHANGED,
   type PaymentOverview,
-} from '@/src/services/PaymentService';
+} from '@/src/services/payments/PaymentService';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,

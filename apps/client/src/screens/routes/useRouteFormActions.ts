@@ -3,7 +3,7 @@ import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
-import type { createRouteService } from '@/src/services/storymanagement/RouteService';
+import type { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 import type { RouteFormState } from './useRouteFormState';
 
 type RouteService = ReturnType<typeof createRouteService>;

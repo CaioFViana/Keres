@@ -15,9 +15,9 @@ import type { ChapterSelect, PlotSelect, SceneSelect, TagSelect } from '@/src/db
 import type { ItemSelect } from '@/src/db/schemas/items';
 import type { TagSelect as TagRow } from '@/src/db/schemas/tags';
 import type { WorldRuleWithTags } from '@/src/db/schemas/worldRules';
-import type { CharacterWithTags } from '@/src/services/storymanagement/CharacterService';
-import type { LocationWithTags } from '@/src/services/storymanagement/LocationService';
-import type { NoteWithTags } from '@/src/services/storymanagement/NoteService';
+import type { CharacterWithTags } from '@/src/services/storymanagement/entities/CharacterService';
+import type { LocationWithTags } from '@/src/services/storymanagement/entities/LocationService';
+import type { NoteWithTags } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

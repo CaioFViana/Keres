@@ -1,22 +1,22 @@
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/StatService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/StatService', () => ({
   __esModule: true,
   createStatService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/StatStrengthService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/StatStrengthService', () => ({
   __esModule: true,
   createStatStrengthService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/ModeService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ModeService', () => ({
   __esModule: true,
   createModeService: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/StatRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/StatRelationService', () => ({
   __esModule: true,
   createStatRelationService: jest.fn(),
 }));
@@ -31,11 +31,11 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createModeService } from '@/src/services/storymanagement/ModeService';
-import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
-import { createStatService } from '@/src/services/storymanagement/StatService';
-import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
+import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
 import { useStoryStats } from '@/src/hooks/story/useStoryStats';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

@@ -22,7 +22,7 @@ const mockCharacterStore = {
 };
 
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   createItemJourneyService: (...args: unknown[]) => mockCreateItemJourneyService(...args),
 }));
 jest.mock('@/src/state/story/itemStore', () => ({ useItemStore: () => mockItemStore }));

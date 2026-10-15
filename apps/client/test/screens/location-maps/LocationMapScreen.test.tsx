@@ -274,20 +274,20 @@ jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationMapService', () => ({
   createLocationMapService: () => ({
     getById: mockGetMap,
     updateMap: mockUpdateMap,
     getMapsForStory: jest.fn().mockResolvedValue([]),
   }),
 }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   createLocationService: () => ({ getAllByStoryId: jest.fn().mockResolvedValue([]) }),
 }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   createGalleryService: () => ({ getGalleriesByStoryId: jest.fn().mockResolvedValue([]) }),
 }));
-jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   createLocationRelationService: () => ({
     getAllRelationsForStory: jest.fn().mockResolvedValue([]),
   }),

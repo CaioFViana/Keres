@@ -1,6 +1,6 @@
 import type { TagSelect } from '@/src/db/schemas/tags';
-import type { TagService } from '@/src/services/storymanagement/TagService';
-import { createTagService } from '@/src/services/storymanagement/TagService';
+import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 
 export type { FavoriteFilterState } from '@/src/types/entityFilters';

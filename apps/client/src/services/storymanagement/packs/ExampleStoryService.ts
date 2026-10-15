@@ -1,0 +1,77 @@
+import { FullStoryExportSchema, reviveDates } from '@keres/shared';
+import type { AppDrizzleClient } from '@/src/db';
+import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
+import type { ExampleStoryEntry } from '@/src/exampleStories/types';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+
+/**
+ * Installs an example story (packaged with the app) into the user's repertoire.
+ *
+ * It reuses the same story import/export infrastructure instead of duplicating it: each example's
+ * content is already in the `FullStoryExportSchema` format (the same as an exported
+ * `.json` file), so "installing" is literally "importing" - checking whether the story already
+ * exists (the same check as `ImportExportScreen`) and calling `importFullStory`. Examples have
+ * no media (see `exampleStories/`), so there is nothing equivalent to the `.zip` flow.
+ */
+
+export type InstallExampleStoryResult =
+  | { status: 'installed'; storyId: string }
+  | { status: 'not_found' }
+  /** The story's file could not be fetched (a web build that went offline before it was needed). */
+  | { status: 'load_failed' }
+  | { status: 'invalid_content' };
+
+export interface ExampleStoryServiceInterface {
+  listExampleStories(): ExampleStoryEntry[];
+  installExampleStory(
+    userId: string,
+    slug: string,
+    language: string,
+  ): Promise<InstallExampleStoryResult>;
+}
+
+export const createExampleStoryService = (db: AppDrizzleClient): ExampleStoryServiceInterface => {
+  const storyService = createStoryService(db);
+
+  return {
+    listExampleStories(): ExampleStoryEntry[] {
+      return exampleStoryRegistry;
+    },
+
+    async installExampleStory(
+      userId: string,
+      slug: string,
+      language: string,
+    ): Promise<InstallExampleStoryResult> {
+      const entry = exampleStoryRegistry.find((candidate) => candidate.slug === slug);
+      const languageEntry = entry?.languages.find((candidate) => candidate.language === language);
+      if (!languageEntry) {
+        console.error(`ExampleStoryService: example story not found: ${slug}/${language}.`);
+        return { status: 'not_found' };
+      }
+
+      let story: unknown;
+      try {
+        story = await languageEntry.load();
+      } catch (loadError) {
+        console.error(`ExampleStoryService: could not load ${slug}/${language}.`, loadError);
+        return { status: 'load_failed' };
+      }
+
+      // The packaged JSON never had its dates revived (it is a `.json` module, just like the
+      // `JSON.parse` of a file chosen by the user) - the same care as `pickStoryExportFile`.
+      const parsed = FullStoryExportSchema.safeParse(reviveDates(story));
+      if (!parsed.success) {
+        console.error(
+          `ExampleStoryService: bundled content for ${slug}/${language} failed validation.`,
+          parsed.error,
+        );
+        return { status: 'invalid_content' };
+      }
+
+      // The local import creates the copy and remaps its IDs, examples included.
+      const storyId = await storyService.importFullStory(userId, parsed.data, null);
+      return { status: 'installed', storyId };
+    },
+  };
+};

@@ -20,7 +20,7 @@ test file that covers it. Paths are relative to the repo root.
    (`turns an update without a version into a visible conflict and takes it out of
    the queue`,
    `quarantines a corrupted payload without aborting the push of the rest`),
-   `apps/client/test/services/SyncConflictService.test.ts`
+   `apps/client/test/services/sync/SyncConflictService.test.ts`
    (`validation quarantine without a server snapshot`,
    `folding a validation quarantine into a pending conflict`).
    Area: push + conflicts.
@@ -170,7 +170,7 @@ test file that covers it. Paths are relative to the repo root.
 17. **Sync-history trim failure** — trimming synced logs past the newest 100 is
     best-effort; a trim error is logged and never fails the push that just succeeded.
     Test: none dedicated — trim itself is covered in
-    `apps/client/test/services/syncUtils.test.ts`
+    `apps/client/test/services/sync/syncUtils.test.ts`
     (`keeps the newest synced operations and drops the rest`); the swallow-on-error path
     in `SyncPush.pushPendingOperations` has no direct test. Area: push (gap).
 
@@ -238,7 +238,7 @@ test file that covers it. Paths are relative to the repo root.
     saved. A live same-named board with byte-identical content — other than the
     conflict's own row — is that copy: the create is skipped and the keepServer
     half finishes, instead of a duplicate board per attempt. Test:
-    `apps/client/test/services/SyncConflictService.test.ts`
+    `apps/client/test/services/sync/SyncConflictService.test.ts`
     (`creates no second copy when the resolution is retried after the clone
     committed`). Area: conflicts.
 

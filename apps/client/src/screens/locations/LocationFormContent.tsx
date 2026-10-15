@@ -23,7 +23,7 @@ import type {
   StorySchemaFieldSelect,
   TagSelect,
 } from '@/src/db/schema';
-import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
 
 type LocationFormCopy = {
   saveLabel: string;

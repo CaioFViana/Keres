@@ -3,13 +3,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking } from 'react-native';
 import type { ServerSelect } from '@/src/db/schema';
-import { isOfflineError } from '@/src/services/apiClient';
+import { isOfflineError } from '@/src/services/api/apiClient';
 import {
   getCheckout,
   PAYMENTS_CHANGED,
   startCheckout,
   verifyPlayPurchase,
-} from '@/src/services/PaymentService';
+} from '@/src/services/payments/PaymentService';
 import { playDriver } from '@/src/utils/billing/playPurchase';
 import { PlayPurchaseError, type PlayPurchaseTicket } from '@/src/utils/billing/playPurchaseTypes';
 import { offerForPlayProduct } from '@/src/utils/billing/paymentPlans';

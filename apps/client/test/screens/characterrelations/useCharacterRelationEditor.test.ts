@@ -5,7 +5,7 @@ const mockSave = jest.fn();
 const mockDelete = jest.fn();
 const mockAlert = jest.fn();
 
-jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     saveCharacterRelation: (...args: unknown[]) => mockSave(...args),

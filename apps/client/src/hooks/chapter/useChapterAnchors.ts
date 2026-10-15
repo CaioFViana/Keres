@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ChapterAnchorSelect } from '@/src/db/schema';
-import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterAnchorService } from '@/src/services/storymanagement/scenes-chapters/ChapterAnchorService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 
 export type ChapterAnchorRow = ChapterAnchorSelect;

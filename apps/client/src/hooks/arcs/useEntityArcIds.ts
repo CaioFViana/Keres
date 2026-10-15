@@ -5,7 +5,7 @@ import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycl
 import {
   createStoryArcService,
   type ArcMembershipKind,
-} from '@/src/services/storymanagement/StoryArcService';
+} from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 
 /** Bulk arc membership for every linked entity of one kind; unlinked entities are absent. */
 export function useEntityArcIds(storyId: string, kind: ArcMembershipKind) {

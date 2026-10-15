@@ -173,7 +173,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/services/storymanagement/StoryCalendarService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryCalendarService', () => ({
   __esModule: true,
   createStoryCalendarService: () => ({
     setPrimary: mockSetPrimary,
@@ -181,7 +181,7 @@ jest.mock('@/src/services/storymanagement/StoryCalendarService', () => ({
     deleteCalendar: mockDeleteCalendar,
   }),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     updateStory: mockUpdateStory,

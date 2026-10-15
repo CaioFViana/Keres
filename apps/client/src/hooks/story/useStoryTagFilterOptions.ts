@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { TagSelect } from '@/src/db/schema';
-import { createTagService } from '@/src/services/storymanagement/TagService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /**

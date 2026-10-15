@@ -68,7 +68,7 @@ jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
   pickTextFile: (...args: unknown[]) => mockPick(...args),
 }));
-jest.mock('@/src/services/storymanagement/FountainImportService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/FountainImportService', () => ({
   __esModule: true,
   importFountain: (...args: unknown[]) => mockImport(...args),
   titleCase: (name: string) => name.charAt(0) + name.slice(1).toLowerCase(),

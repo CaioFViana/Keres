@@ -10,7 +10,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: jest.fn(() => mockService),
 }));

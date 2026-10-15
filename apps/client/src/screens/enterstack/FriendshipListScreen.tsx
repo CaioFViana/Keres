@@ -17,10 +17,10 @@ import type {
   FriendshipStackParamList,
   StorySelectionDrawerParamList,
 } from '@/src/navigation/StorySelectionStack';
-import type { FriendshipWithServer } from '@/src/services/FriendshipService';
-import { createFriendshipService } from '@/src/services/FriendshipService';
-import { createServerService } from '@/src/services/ServerService';
-import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
+import type { FriendshipWithServer } from '@/src/services/social/FriendshipService';
+import { createFriendshipService } from '@/src/services/social/FriendshipService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createStoryInvitationService } from '@/src/services/social/StoryInvitationService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useHasUnseenMessages } from '@/src/state/ui/unseenMessagesStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -28,7 +28,10 @@ import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { type FriendshipListRow, groupFriendshipsByServer } from '@/src/utils/friendshipGroups';
+import {
+  type FriendshipListRow,
+  groupFriendshipsByServer,
+} from '@/src/services/social/friendshipGroups';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,

@@ -29,18 +29,18 @@ import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
-import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
-import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService'; // Service for CharacterScene
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '@/src/services/storymanagement/ItemService';
-import { createItemService } from '@/src/services/storymanagement/ItemService'; // Import ItemService
-import type { LocationService } from '@/src/services/storymanagement/LocationService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/relations/CharacterRelationService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService'; // Import CharacterRelationService
+import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService'; // Service for CharacterScene
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService'; // Import ItemService
+import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService'; // Import LocationService
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore'; // Import useUserSettingsStore
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';

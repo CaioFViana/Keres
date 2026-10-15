@@ -3,16 +3,16 @@ import type {
   LocationMapConnection,
   LocationMapContains,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import { mediaFileService } from '@/src/services/MediaFileService';
-import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
 import type { SvgExportColors } from '@/src/utils/svg/svgExport';
 import type { BoardGalleryMediaById } from '@/src/utils/board/boardLayout';
 import { renderBoardSvg, type BoardSvgOptions } from '@/src/utils/board/boardSvg';
 import {
   buildLocationMapSvg as buildLocationMapSvgFile,
   type LocationMapExportMedia,
-} from '@/src/utils/locationMapExport';
-import { bytesToBase64 } from '@/src/utils/locationMapMedia';
+} from '@/src/services/media/locationMapExport';
+import { bytesToBase64 } from '@/src/services/media/locationMapMedia';
 
 interface BuildLocationMapSvgOptions {
   title: string;

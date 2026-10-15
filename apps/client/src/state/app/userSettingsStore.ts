@@ -3,7 +3,10 @@ import type { GregorianDateDisplayFormat } from '@keres/shared';
 import { create } from 'zustand';
 import type { AppDrizzleClient } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
-import { getClientSettings, updateClientSettings } from '@/src/services/ClientSettingsService';
+import {
+  getClientSettings,
+  updateClientSettings,
+} from '@/src/services/account/ClientSettingsService';
 import type { FirstStoryProgress, TutorialProgress } from '@/src/utils/ui/tutorialProgress';
 import { normalizeLocalUsername } from '@/src/utils/auth/localUsername';
 import {

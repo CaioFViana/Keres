@@ -89,7 +89,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/ServerService', () => {
+jest.mock('@/src/services/servers/ServerService', () => {
   class ServerHasOwnedStoriesError extends Error {
     ownedStories: Array<{ title: string }>;
     constructor(ownedStories: Array<{ title: string }>) {
@@ -105,38 +105,38 @@ jest.mock('@/src/services/ServerService', () => {
   };
 });
 
-jest.mock('@/src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   authTokenManager: {
     getTokens: (...args: unknown[]) => mockGetTokens(...args),
     updateTokens: (...args: unknown[]) => mockUpdateTokens(...args),
   },
 }));
 
-jest.mock('@/src/services/AuthApiService', () => ({
+jest.mock('@/src/services/api/AuthApiService', () => ({
   redeemRecoveryCode: (...args: unknown[]) => mockRedeem(...args),
 }));
 
 const mockFetchAgeInfo = jest.fn();
 const mockFetchVerificationStatus = jest.fn();
-jest.mock('@/src/services/AgeVerificationApiService', () => ({
+jest.mock('@/src/services/api/AgeVerificationApiService', () => ({
   __esModule: true,
   fetchAgeVerificationInfo: (...args: unknown[]) => mockFetchAgeInfo(...args),
   fetchVerificationStatus: (...args: unknown[]) => mockFetchVerificationStatus(...args),
 }));
 
-jest.mock('@/src/services/browserCookieSession', () => ({
+jest.mock('@/src/services/auth/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: () => mockCookie.hosted,
   hostedApiOrigin: () => mockCookie.origin,
 }));
 
-jest.mock('@/src/utils/keresServerAuth', () => ({
+jest.mock('@/src/services/auth/keresServerAuth', () => ({
   authenticateWithKeresServer: (...args: unknown[]) => mockAuthenticate(...args),
   keresAuthAlertMessage: () => 'auth-failed-message',
 }));
 
 const mockFetchServerTerms = jest.fn();
 const mockFetchServerPrivacy = jest.fn();
-jest.mock('@/src/services/ServerTermsService', () => ({
+jest.mock('@/src/services/servers/ServerTermsService', () => ({
   fetchServerTerms: (...args: unknown[]) => mockFetchServerTerms(...args),
   fetchServerPrivacy: (...args: unknown[]) => mockFetchServerPrivacy(...args),
 }));
@@ -587,7 +587,7 @@ describe('ServerRegistrationScreen', () => {
 
   it('surfaces save failures on the form', async () => {
     const { ServerUrlAlreadyRegisteredError } = jest.requireMock(
-      '@/src/services/ServerService',
+      '@/src/services/servers/ServerService',
     ) as { ServerUrlAlreadyRegisteredError: new () => Error };
     mockServerService.createServer.mockRejectedValue(new ServerUrlAlreadyRegisteredError());
     const view = await render(<ServerRegistrationScreen />);

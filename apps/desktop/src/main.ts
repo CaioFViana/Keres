@@ -714,7 +714,7 @@ export function registerMediaIpcHandlers() {
 
   // Lists every file as a "media/<storyId>/<file>" relative path (matching the layout
   // webMediaRelativePath in MediaFileService.ts writes), for webMediaStore's boot-time
-  // existence cache (see hydrate() in apps/client/src/services/webMediaStore.ts).
+  // existence cache (see hydrate() in apps/client/src/services/platform-web/webMediaStore.ts).
   ipcMain.handle('media:list-all', async (event) => {
     assertTrustedRenderer(event);
     const results: string[] = [];

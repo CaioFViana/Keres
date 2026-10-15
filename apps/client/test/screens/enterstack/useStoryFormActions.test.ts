@@ -20,9 +20,9 @@ import { act, renderHook } from '@testing-library/react-native';
 import { useStoryFormActions } from '@/src/screens/enterstack/useStoryFormActions';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 import type { StoryFormState } from '@/src/screens/enterstack/useStoryFormState';
-import type { PackService } from '@/src/services/storymanagement/PackService';
+import type { PackService } from '@/src/services/storymanagement/packs/PackService';
 import type { PushOutcomeReport } from '@/src/services/sync/SyncPush';
-import type { StoryService } from '@/src/services/storymanagement/StoryService';
+import type { StoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 
 const createIdentity = (overrides: Record<string, unknown> = {}) =>
   ({

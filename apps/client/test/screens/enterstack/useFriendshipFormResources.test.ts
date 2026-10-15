@@ -3,10 +3,10 @@ const mockCreateFriendshipService: jest.Mock = jest.fn(() => ({ id: 'friendship-
 const mockCreateServerService: jest.Mock = jest.fn(() => ({ id: 'server-service' }));
 
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('@/src/services/FriendshipService', () => ({
+jest.mock('@/src/services/social/FriendshipService', () => ({
   createFriendshipService: (...args: unknown[]) => mockCreateFriendshipService(...args),
 }));
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: (...args: unknown[]) => mockCreateServerService(...args),
 }));
 

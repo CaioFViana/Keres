@@ -8,7 +8,7 @@ const mockFavoriteService = { getBehavior: jest.fn(), getFavoriterIds: jest.fn()
 const mockResolveProfile = jest.fn();
 
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/FavoriteService', () => ({
   __esModule: true,
   createFavoriteService: jest.fn(() => mockFavoriteService),
 }));

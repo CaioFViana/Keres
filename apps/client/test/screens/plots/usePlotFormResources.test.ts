@@ -6,10 +6,10 @@ const mockUseStoryPlots = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/PlotService', () => ({
+jest.mock('@/src/services/storymanagement/entities/PlotService', () => ({
   createPlotService: (...args: unknown[]) => mockCreatePlotService(...args),
 }));
-jest.mock('@/src/services/storymanagement/PlotSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/PlotSceneService', () => ({
   createPlotSceneService: (...args: unknown[]) => mockCreatePlotSceneService(...args),
 }));
 jest.mock('@/src/screens/plots/useStoryPlots', () => ({

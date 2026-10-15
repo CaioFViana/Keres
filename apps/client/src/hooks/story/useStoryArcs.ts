@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

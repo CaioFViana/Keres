@@ -132,7 +132,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   authTokenManager: {
     clearAllAuth: (...args: unknown[]) => mockClearAllAuth(...args),
   },
@@ -140,15 +140,15 @@ jest.mock('@/src/services/AuthTokenManager', () => ({
 }));
 
 // The screen reads the real font pack state; only what the reset deletes is replaced.
-jest.mock('@/src/services/cjkFontPack', () => ({
-  ...jest.requireActual('@/src/services/cjkFontPack'),
+jest.mock('@/src/services/platform-web/cjkFontPack', () => ({
+  ...jest.requireActual('@/src/services/platform-web/cjkFontPack'),
   deleteCjkPack: jest.fn(async () => undefined),
 }));
-jest.mock('@/src/services/SongAudioService', () => ({
-  ...jest.requireActual('@/src/services/SongAudioService'),
+jest.mock('@/src/services/media/SongAudioService', () => ({
+  ...jest.requireActual('@/src/services/media/SongAudioService'),
   defaultSongAudioStore: () => ({ prune: jest.fn(async () => undefined) }),
 }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   mediaFileService: {
     deleteAllMedia: (...args: unknown[]) => mockDeleteAllMedia(...args),
   },

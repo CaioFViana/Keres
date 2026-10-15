@@ -170,7 +170,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getById: mockGetItemJourneyById }),
 }));

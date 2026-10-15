@@ -12,13 +12,13 @@ import type {
   RouteStepSelect,
   SceneSelect,
 } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
-import { createItemService } from '@/src/services/storymanagement/ItemService';
-import { createRouteService } from '@/src/services/storymanagement/RouteService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 
 interface UseLocationMapTrajectoriesOptions {
   storyId: string | undefined;

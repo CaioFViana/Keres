@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { isOfflineError } from '@/src/services/apiClient';
-import { createServerService } from '@/src/services/ServerService';
+import { isOfflineError } from '@/src/services/api/apiClient';
+import { createServerService } from '@/src/services/servers/ServerService';
 import type { ReportType } from '@keres/shared';
-import { storyReportApi } from '@/src/services/StoryReportApiService';
+import { storyReportApi } from '@/src/services/api/StoryReportApiService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 

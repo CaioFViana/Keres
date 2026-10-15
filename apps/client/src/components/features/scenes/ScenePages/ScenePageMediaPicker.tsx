@@ -12,7 +12,7 @@ import {
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
 import { useScenePageChoices } from '@/src/hooks/media/useGalleryMedia';
-import type { ScenePageMedia } from '@/src/services/storymanagement/ScenePageService';
+import type { ScenePageMedia } from '@/src/services/storymanagement/scenes-chapters/ScenePageService';
 import { useTheme } from '@/src/theme';
 import { scenePickerStyleDefs } from '@/src/components/features/scenes/scenePickerStyleDefs';
 import ScenePageThumb from './ScenePageThumb';

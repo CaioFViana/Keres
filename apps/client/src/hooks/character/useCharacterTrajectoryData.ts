@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, RouteSelect, RouteStepSelect } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createRouteService } from '@/src/services/storymanagement/RouteService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 
 export interface CharacterTrajectoryData {
   chapters: ChapterSelect[];

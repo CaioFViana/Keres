@@ -2,8 +2,8 @@ import type { SeeAlsoEntityType } from '@keres/shared';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/SeeAlsoRelationService';
-import { createSeeAlsoRelationService } from '@/src/services/storymanagement/SeeAlsoRelationService';
+import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/relations/SeeAlsoRelationService';
+import { createSeeAlsoRelationService } from '@/src/services/storymanagement/relations/SeeAlsoRelationService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 

@@ -10,7 +10,7 @@ jest.mock('@/src/services/sync/dropRevokedServerStories', () => ({
   __esModule: true,
   dropRevokedServerStories: (...args: unknown[]) => (mockDropRevoked as jest.Mock)(...args),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => ({})),
 }));

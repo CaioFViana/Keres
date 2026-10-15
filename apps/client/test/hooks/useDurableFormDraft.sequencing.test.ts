@@ -2,7 +2,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { useState } from 'react';
 
-jest.mock('@/src/services/EditorDraftService', () => ({
+jest.mock('@/src/services/drafts/EditorDraftService', () => ({
   clearBoundEditorDraft: jest.fn(async () => {}),
   isEditorDraftDbBound: jest.fn(() => true),
   readBoundEditorDraft: jest.fn(),
@@ -15,7 +15,7 @@ import {
   clearBoundEditorDraft,
   readBoundEditorDraft,
   scheduleWriteEditorDraft,
-} from '@/src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 
 type Fields = { name: string };
 

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { SuggestionType } from '@/src/services/storymanagement/SuggestionService';
+import type { SuggestionType } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { typography } from '@/src/theme/tokens';

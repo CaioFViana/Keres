@@ -194,7 +194,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({
     getById: mockGetChapterById,
@@ -202,12 +202,12 @@ jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   }),
 }));
 
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));
 
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetAllLocationsByStoryId }),
 }));

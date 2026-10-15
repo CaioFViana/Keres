@@ -8,8 +8,8 @@ import {
   AgeVerificationUnavailableError,
   fetchVerificationStatus,
   retryVerification,
-} from '@/src/services/AgeVerificationApiService';
-import { authTokenManager } from '@/src/services/AuthTokenManager';
+} from '@/src/services/api/AgeVerificationApiService';
+import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 

@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import { buildStoryZipBytes } from '@/src/utils/storyMediaBundle';
+import { buildStoryZipBytes } from '@/src/services/media/storyMediaBundle';
 import {
   buildExportFileName,
   buildExportZipFileName,

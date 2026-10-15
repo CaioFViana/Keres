@@ -71,20 +71,20 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getServerById: (...args: unknown[]) => mockGetServerById(...args),
   }),
 }));
 
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: {},
   apiUrl: (base: string, path: string) => `${base}${path}`,
   isOfflineError: (err: unknown) => !!(err as { isOffline?: boolean } | null)?.isOffline,
 }));
 
-jest.mock('@/src/services/UserApiService', () => ({
+jest.mock('@/src/services/api/UserApiService', () => ({
   userApiService: {
     getOwnProfile: (...args: unknown[]) => mockGetOwnProfile(...args),
     updateProfile: (...args: unknown[]) => mockUpdateProfile(...args),

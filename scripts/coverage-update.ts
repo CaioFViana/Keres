@@ -50,9 +50,9 @@ const scopedReports: Record<string, { reports: [string, string][]; prefixes: str
     reports: reports.client,
     prefixes: [
       'src/services/sync/',
-      'src/services/SyncEngineService.ts',
-      'src/services/SyncConflictService.ts',
-      'src/services/ConflictSummaryService.ts',
+      'src/services/sync/SyncEngineService.ts',
+      'src/services/sync/SyncConflictService.ts',
+      'src/services/sync/ConflictSummaryService.ts',
     ],
   },
   clientSyncHandlers: {

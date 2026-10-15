@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useDrizzle } from '@/src/db';
 import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
-import { createPlotService } from '@/src/services/storymanagement/PlotService';
-import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
+import { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
+import { createPlotSceneService } from '@/src/services/storymanagement/entities/PlotSceneService';
 
 /** Owns plot services and the story-scoped plot/scene lookup data used by the form. */
 export function usePlotFormResources(

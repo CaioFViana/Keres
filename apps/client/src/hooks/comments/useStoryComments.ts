@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { CommentSelect } from '@/src/db/schema';
-import { createCommentService } from '@/src/services/storymanagement/CommentService';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 

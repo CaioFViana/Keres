@@ -1,7 +1,7 @@
 /** @jest-environment node */
 import { and, asc, count, eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import {
   entityBase,
   seedLocalStory,

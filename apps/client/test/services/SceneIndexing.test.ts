@@ -3,8 +3,8 @@
  */
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { createStoryIndexService } from '@/src/services/storymanagement/StoryIndexService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createStoryIndexService } from '@/src/services/storymanagement/story-lifecycle/StoryIndexService';
 import {
   entityBase,
   seedLocalStory,

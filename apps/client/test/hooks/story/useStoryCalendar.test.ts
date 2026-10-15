@@ -1,6 +1,6 @@
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('@/src/services/storymanagement/StoryCalendarService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryCalendarService', () => ({
   __esModule: true,
   createStoryCalendarService: jest.fn(),
 }));
@@ -16,7 +16,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
+import { createStoryCalendarService } from '@/src/services/storymanagement/scenes-chapters/StoryCalendarService';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

@@ -23,11 +23,11 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => ({ userId: 'user' })),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: jest.fn(() => mockGroupService),
 }));
-jest.mock('@/src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: jest.fn(() => mockCheckService),
 }));

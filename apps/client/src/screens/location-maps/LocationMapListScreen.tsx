@@ -22,7 +22,7 @@ import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
 } from '@/src/navigation/MainSystemStack';
-import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
+import { createLocationMapService } from '@/src/services/storymanagement/entities/LocationMapService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

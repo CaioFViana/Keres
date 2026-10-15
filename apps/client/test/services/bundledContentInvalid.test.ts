@@ -17,8 +17,8 @@ jest.mock('@/src/shippedPacks/generated/registry', () => ({
   shippedPackRegistry: [{ slug: 'broken', languages: [{ language: 'en', pack: { nope: true } }] }],
 }));
 
-import { createExampleStoryService } from '@/src/services/storymanagement/ExampleStoryService';
-import { createShippedPackService } from '@/src/services/storymanagement/ShippedPackService';
+import { createExampleStoryService } from '@/src/services/storymanagement/packs/ExampleStoryService';
+import { createShippedPackService } from '@/src/services/storymanagement/packs/ShippedPackService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**

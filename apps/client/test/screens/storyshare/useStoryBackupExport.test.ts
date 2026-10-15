@@ -10,13 +10,13 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     exportFullStory: (...args: unknown[]) => mockExportFullStory(...args),
   }),
 }));
-jest.mock('@/src/utils/storyMediaBundle', () => ({
+jest.mock('@/src/services/media/storyMediaBundle', () => ({
   __esModule: true,
   buildStoryZipBytes: (...args: unknown[]) => mockBuildZipBytes(...args),
 }));

@@ -7,7 +7,7 @@ const mockGetChapters = jest.fn(async () => [
   { id: 'ch-1', index: 1, isDeleted: false },
   { id: 'ch-2', index: 2, isDeleted: true },
 ]);
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   createChapterService: () => ({ getAllByStoryId: mockGetChapters }),
 }));
 const mockGetRoutes = jest.fn(async () => [
@@ -18,7 +18,7 @@ const mockGetSteps = jest.fn(async () => [
   { sceneId: 's-1', position: 1, isDeleted: false },
   { sceneId: 's-9', position: 2, isDeleted: true },
 ]);
-jest.mock('@/src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
   createRouteService: () => ({ getAllByStoryId: mockGetRoutes, getSteps: mockGetSteps }),
 }));
 

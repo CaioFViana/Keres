@@ -21,7 +21,7 @@ import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import {
   createSuggestionService,
   customAttributeSuggestionType,
@@ -29,7 +29,7 @@ import {
   namedListDisplayKey,
   WORLD_PIECE_CATEGORY_TYPE,
   WORLD_PIECE_TYPE_PREFIX,
-} from '@/src/services/storymanagement/SuggestionService';
+} from '@/src/services/storymanagement/suggestions/SuggestionService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';

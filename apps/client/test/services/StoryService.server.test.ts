@@ -1,17 +1,17 @@
 /** @jest-environment node */
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   createKeresAxiosInstance: jest.fn(),
   isOfflineError: jest.fn(() => false),
 }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
 
 import * as schema from '@/src/db/schema';
 import { eq } from 'drizzle-orm';
-import { createKeresAxiosInstance } from '@/src/services/apiClient';
-import { mediaFileService } from '@/src/services/MediaFileService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createKeresAxiosInstance } from '@/src/services/api/apiClient';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

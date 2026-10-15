@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { ScenePageSelect, SketchSelect } from '@/src/db/schema';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createScenePageService } from '@/src/services/storymanagement/scenes-chapters/ScenePageService';
+import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 /** A page with what it shows: the Gallery medium to draw, or the Sketch to draw, and its name. */

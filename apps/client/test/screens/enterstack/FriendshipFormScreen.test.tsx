@@ -85,23 +85,23 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('@/src/services/FriendshipService', () => ({
+jest.mock('@/src/services/social/FriendshipService', () => ({
   createFriendshipService: () => ({
     addFriendship: (...args: unknown[]) => mockAddFriendship(...args),
   }),
 }));
 
-jest.mock('@/src/services/UserApiService', () => ({
+jest.mock('@/src/services/api/UserApiService', () => ({
   userApiService: { getUserByTag: (...args: unknown[]) => mockGetUserByTag(...args) },
 }));
 
-jest.mock('@/src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/api/FriendshipApiService', () => ({
   friendshipApiService: {
     sendFriendRequest: (...args: unknown[]) => mockSendFriendRequest(...args),
   },

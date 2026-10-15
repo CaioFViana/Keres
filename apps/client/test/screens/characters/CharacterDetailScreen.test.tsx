@@ -91,38 +91,38 @@ jest.mock('@/src/hooks/story/useStoryStats', () => ({
   __esModule: true,
   useStoryStats: () => ({ modes: mockStatModes, stats: [] }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({
     getById: mockGetCharacterById,
     getAllByStoryId: mockGetAllCharactersByStoryId,
   }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     getRelationsForCharacter: mockGetRelationsForCharacter,
   }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: () => ({
     getRelationsForCharacter: mockGetCharacterSceneRelations,
   }),
 }));
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getAllByStoryId: mockGetAllItemsByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getAllByStoryId: mockGetAllItemJourneysByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetAllLocationsByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));

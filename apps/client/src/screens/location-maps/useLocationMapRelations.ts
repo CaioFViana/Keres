@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { LocationMapNodeConnection } from '@/src/components/features/location-maps/LocationMapNodeSheet';
 import type { AppDrizzleClient } from '@/src/db';
 import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
-import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
 import {
   computeAncestorIds,
   computeDescendantIds,

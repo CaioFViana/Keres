@@ -61,7 +61,7 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/services/storymanagement/GlobalSearchService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/GlobalSearchService', () => ({
   __esModule: true,
   createGlobalSearchService: () => ({ searchAllEntities: mockSearchAllEntities }),
 }));

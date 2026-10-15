@@ -29,7 +29,7 @@ jest.mock('@react-navigation/native-stack', () => ({
   }),
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('@/src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/account/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
 }));
@@ -72,7 +72,7 @@ jest.mock('@/src/navigation/StorySelectionStack', () => ({
 
 import AppNavigator from '@/src/navigation/AppNavigator';
 import { useDrizzle } from '@/src/db';
-import { getClientSettings } from '@/src/services/ClientSettingsService';
+import { getClientSettings } from '@/src/services/account/ClientSettingsService';
 import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
 import { useThemeStore } from '@/src/state/ui/themeStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

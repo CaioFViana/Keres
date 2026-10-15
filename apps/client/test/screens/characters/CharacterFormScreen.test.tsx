@@ -35,7 +35,7 @@ jest.mock('@/src/hooks/forms/useEntityFormSecondaryDraft', () => ({
     clearSecondaryDraft: jest.fn(),
   }),
 }));
-jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   __esModule: true,
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadSecondaryDraft(...args),
 }));

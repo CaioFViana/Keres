@@ -5,7 +5,7 @@ jest.mock('drizzle-orm/expo-sqlite', () => ({
   __esModule: true,
   drizzle: jest.fn(),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(),
 }));
@@ -16,7 +16,7 @@ jest.mock('@/src/db/schema', () => ({
 }));
 
 import { drizzle } from 'drizzle-orm/expo-sqlite';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import {
   runSqliteWebSmokeProbe,
   shouldRunSqliteWebSmokeProbe,

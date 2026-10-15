@@ -7,7 +7,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('@/src/utils/entityOptions', () => ({
+jest.mock('@/src/services/entity-solvers/entityOptions', () => ({
   __esModule: true,
   loadEntityOptions: jest.fn(),
 }));
@@ -24,7 +24,7 @@ import {
   encodeBoardPinValue,
   useBoardPinOptions,
 } from '@/src/screens/boards/useBoardPinOptions';
-import { loadEntityOptions } from '@/src/utils/entityOptions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 
 const selectReturning = (...results: unknown[][]) => {
   const all = jest.fn();

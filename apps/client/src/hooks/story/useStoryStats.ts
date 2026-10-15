@@ -7,11 +7,11 @@ import type {
   StatSelect,
   StatStrengthSelect,
 } from '@/src/db/schema';
-import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
-import { createModeService } from '@/src/services/storymanagement/ModeService';
-import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
-import { createStatService } from '@/src/services/storymanagement/StatService';
-import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
+import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import { resolveLadder, type StatTier } from '@keres/shared/graphs/statLadder';

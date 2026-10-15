@@ -32,7 +32,7 @@ In branching stories (Interactive Fiction/CYOA), the author has full control ove
 
 ### 2.3. Conversion between the two types
 
-A story's type can be converted by the user themselves (the Story Settings screen), implemented in `StoryService.convertStoryType`/`checkLinearCompatibility` (`apps/client/src/services/storymanagement/storyTypeConversion.ts`):
+A story's type can be converted by the user themselves (the Story Settings screen), implemented in `StoryService.convertStoryType`/`checkLinearCompatibility` (`apps/client/src/services/storymanagement/story-lifecycle/storyTypeConversion.ts`):
 
 *   **Linear -> Branching**: always allowed. An explicit choice is generated for each pair of consecutive scenes (by `index`, within each chapter), including a "bridge" choice between a chapter's last scene and the next chapter's first - it is what preserves the sequence between chapters as explicit, editable data.
 *   **Branching -> Linear**: only when the choice graph is compatible with a simple sequence - no forks (more than one choice leaving the same scene), no convergences (more than one choice arriving at the same scene), no cycles, no scenes disconnected from the rest of the chapter, and no chapter-crossing choices outside the "last scene of chapter M -> first scene of chapter M+1" pattern. When compatible, the scenes are reindexed following the chain found and every choice in the story is deleted.

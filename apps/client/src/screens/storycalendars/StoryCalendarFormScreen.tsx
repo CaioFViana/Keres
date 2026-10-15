@@ -19,7 +19,7 @@ import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type { CalendarsStackParamList } from '@/src/navigation/CalendarsStack';
-import { createStoryCalendarService } from '@/src/services/storymanagement/StoryCalendarService';
+import { createStoryCalendarService } from '@/src/services/storymanagement/scenes-chapters/StoryCalendarService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
 import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
-import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import {
   computeAncestorIds,

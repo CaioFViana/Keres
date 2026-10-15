@@ -17,7 +17,7 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => ({ userId: 'user' })),
 }));
-jest.mock('@/src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(() => mockEffectService),
 }));

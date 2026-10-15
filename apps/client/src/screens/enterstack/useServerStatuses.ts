@@ -2,8 +2,8 @@ import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { pingServer, type ServerWithStatus } from '@/src/services/ServerStatusService';
-import { createServerService } from '@/src/services/ServerService';
+import { pingServer, type ServerWithStatus } from '@/src/services/servers/ServerStatusService';
+import { createServerService } from '@/src/services/servers/ServerService';
 
 /** How often the servers are read again and pinged while the screen is in front. */
 const REFRESH_INTERVAL_MS = 7000;

@@ -23,11 +23,11 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),
 }));
-jest.mock('@/src/services/MessageService', () => ({
+jest.mock('@/src/services/social/MessageService', () => ({
   __esModule: true,
   MESSAGES_CHANGED: 'messages_changed',
   conversationKey: (serverId: string, peer: { kind: string; userId?: string }) =>

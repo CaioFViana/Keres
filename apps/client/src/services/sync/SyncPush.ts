@@ -11,13 +11,13 @@ import { and, asc, eq, inArray, isNull, max } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
-import { trimSyncedOperationLogs } from '@/src/utils/syncUtils';
-import { columnsOf, getEntityTable, toEntityColumns } from '@/src/services/entityTableRegistry';
+import { trimSyncedOperationLogs } from '@/src/services/sync/syncUtils';
+import { columnsOf, getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
 import { raiseConflictsServerVersion, withoutDerivedPosition } from './syncConflictHelpers';
 import {
   findContestedFields,
   mergeLocalOperationPayloads,
-} from '@/src/services/SyncConflictService';
+} from '@/src/services/sync/SyncConflictService';
 import type { SyncContext } from './SyncContext';
 import { foldIntoTwin, isFoldableDuplicate } from './duplicateFold';
 import { foldRoutePaths } from './routePaths';

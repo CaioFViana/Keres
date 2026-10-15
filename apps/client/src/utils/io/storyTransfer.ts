@@ -15,8 +15,8 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
-import type { ExtractedZipMedia } from '@/src/utils/storyMediaBundle';
-import { extractStoryZip } from '@/src/utils/storyMediaBundle';
+import type { ExtractedZipMedia } from '@/src/services/media/storyMediaBundle';
+import { extractStoryZip } from '@/src/services/media/storyMediaBundle';
 import { StoryImportError } from './StoryImportError';
 import {
   fitRasterSize,

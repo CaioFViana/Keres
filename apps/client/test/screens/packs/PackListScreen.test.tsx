@@ -35,7 +35,7 @@ jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   __esModule: true,
   createPackService: () => ({
     listPacks: mockListPacks,
@@ -43,11 +43,11 @@ jest.mock('@/src/services/storymanagement/PackService', () => ({
     deletePack: mockDeletePack,
   }),
 }));
-jest.mock('@/src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   __esModule: true,
   createServerService: () => ({ getAllServers: mockGetAllServers }),
 }));
-jest.mock('@/src/services/PackApiService', () => ({
+jest.mock('@/src/services/api/PackApiService', () => ({
   __esModule: true,
   packApiService: { upload: (...args: unknown[]) => mockUpload(...args) },
 }));

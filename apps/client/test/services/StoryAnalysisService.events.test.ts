@@ -3,7 +3,7 @@
  */
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import { createStoryAnalysisService } from '@/src/services/storymanagement/StoryAnalysisService';
+import { createStoryAnalysisService } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
 import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

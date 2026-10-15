@@ -14,7 +14,7 @@ jest.mock('expo-image-manipulator', () => ({
   ImageManipulator: { manipulate: jest.fn() },
   SaveFormat: { JPEG: 'jpeg' },
 }));
-jest.mock('@/src/services/webMediaStore', () => ({
+jest.mock('@/src/services/platform-web/webMediaStore', () => ({
   DESKTOP_MEDIA_URI_PREFIX: 'desktop-media:',
   deleteDirectory: jest.fn(),
   deleteFile: jest.fn(),
@@ -28,19 +28,21 @@ jest.mock('@/src/services/webMediaStore', () => ({
   writeBytes: jest.fn(),
 }));
 // The `<video>` capture itself is covered by webVideoThumbnail.test.ts; here only the wiring.
-jest.mock('@/src/services/webVideoThumbnail', () => ({ captureVideoThumbnail: jest.fn() }));
+jest.mock('@/src/services/platform-web/webVideoThumbnail', () => ({
+  captureVideoThumbnail: jest.fn(),
+}));
 // Likewise the picture capture (webImageThumbnail.test.ts); the size rule stays the real one.
-jest.mock('@/src/services/webImageThumbnail', () => ({
-  ...jest.requireActual('@/src/services/webImageThumbnail'),
+jest.mock('@/src/services/platform-web/webImageThumbnail', () => ({
+  ...jest.requireActual('@/src/services/platform-web/webImageThumbnail'),
   captureImageThumbnail: jest.fn(),
 }));
 
 import { ImageManipulator } from 'expo-image-manipulator';
 import { createVideoPlayer } from 'expo-video';
-import { mediaFileService, UnsupportedMediaError } from '@/src/services/MediaFileService';
-import * as webMediaStore from '@/src/services/webMediaStore';
-import { captureImageThumbnail } from '@/src/services/webImageThumbnail';
-import { captureVideoThumbnail } from '@/src/services/webVideoThumbnail';
+import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
+import * as webMediaStore from '@/src/services/platform-web/webMediaStore';
+import { captureImageThumbnail } from '@/src/services/platform-web/webImageThumbnail';
+import { captureVideoThumbnail } from '@/src/services/platform-web/webVideoThumbnail';
 
 const store = webMediaStore as jest.Mocked<typeof webMediaStore>;
 

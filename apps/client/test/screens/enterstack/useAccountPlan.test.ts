@@ -1,5 +1,5 @@
 const mockGetOwnPlan = jest.fn();
-jest.mock('@/src/services/UserApiService', () => ({
+jest.mock('@/src/services/api/UserApiService', () => ({
   userApiService: { getOwnPlan: (...args: unknown[]) => mockGetOwnPlan(...args) },
 }));
 

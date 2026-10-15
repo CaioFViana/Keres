@@ -9,7 +9,7 @@ import { and, eq, inArray, or } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import type { GallerySelect } from '@/src/db/schema';
-import { mediaFileService } from '@/src/services/MediaFileService';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**

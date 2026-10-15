@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { StorySchemaFieldSelect } from '@/src/db/schema';
-import { EntityService } from '@/src/services/EntityService';
-import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { EntityService } from '@/src/services/entity-solvers/EntityService';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 

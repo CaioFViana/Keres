@@ -34,7 +34,7 @@ import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
-import { createWorldRuleService } from '@/src/services/storymanagement/WorldRuleService';
+import { createWorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 

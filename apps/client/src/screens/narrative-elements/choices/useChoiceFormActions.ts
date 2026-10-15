@@ -7,7 +7,7 @@ import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
-import type { ChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import type { ChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
 import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { ChoiceFormState } from './useChoiceFormState';
 

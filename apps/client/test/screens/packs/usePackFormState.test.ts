@@ -11,7 +11,7 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { StorySelect } from '@/src/db/schema';
 import { usePackFormState } from '@/src/screens/packs/usePackFormState';
-import type { PackService } from '@/src/services/storymanagement/PackService';
+import type { PackService } from '@/src/services/storymanagement/packs/PackService';
 
 const createPackServiceRef = () => ({
   current: {

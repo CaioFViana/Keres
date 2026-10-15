@@ -5,7 +5,7 @@ const mockConfirmDelete = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: () => null,
 }));
-jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
 jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({

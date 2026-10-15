@@ -102,18 +102,18 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: true }),
 }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { deleteLocal: (...args: unknown[]) => mockDeleteLocal(...args) },
 }));
-jest.mock('@/src/services/storymanagement/GalleryRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/GalleryRelationService', () => ({
   __esModule: true,
   createGalleryRelationService: () => ({
     getOwnersForGallery: mockGetOwnersForGallery,
     setOwnersForGallery: mockSetOwnersForGallery,
   }),
 }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({
     getById: mockGetById,
@@ -157,7 +157,7 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('@/src/utils/openGalleryExternally', () => ({
+jest.mock('@/src/services/media/openGalleryExternally', () => ({
   __esModule: true,
   openGalleryExternally: (...args: unknown[]) => mockOpenGalleryExternally(...args),
 }));

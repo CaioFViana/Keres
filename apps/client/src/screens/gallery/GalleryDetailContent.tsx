@@ -29,10 +29,10 @@ import {
 import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
-import { mediaFileService } from '@/src/services/MediaFileService';
-import type { GalleryOwnerRef } from '@/src/services/storymanagement/GalleryRelationService';
-import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import type { GalleryOwnerRef } from '@/src/services/storymanagement/relations/GalleryRelationService';
+import { createGalleryRelationService } from '@/src/services/storymanagement/relations/GalleryRelationService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
@@ -40,7 +40,7 @@ import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { typography } from '@/src/theme/tokens';
 import { AppAlert } from '@/src/state/ui/AppAlert';
-import { openGalleryExternally } from '@/src/utils/openGalleryExternally';
+import { openGalleryExternally } from '@/src/services/media/openGalleryExternally';
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return '—';

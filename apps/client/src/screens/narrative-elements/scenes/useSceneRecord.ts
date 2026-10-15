@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 
 /** A scene of the local database: `undefined` while it is read, `null` when it is missing or deleted. */
 export function useSceneRecord(sceneId: string): SceneSelect | null | undefined {

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schemas/servers';
-import { storyInvitationApi } from '@/src/services/StoryInvitationApiService';
-import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
+import { storyInvitationApi } from '@/src/services/api/StoryInvitationApiService';
+import { createStoryInvitationService } from '@/src/services/social/StoryInvitationService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 

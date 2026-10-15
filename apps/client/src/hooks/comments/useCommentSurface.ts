@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useDrizzle } from '@/src/db';
 import type { CommentSelect } from '@/src/db/schema';
-import type { CommentService } from '@/src/services/storymanagement/CommentService';
-import { createCommentService } from '@/src/services/storymanagement/CommentService';
+import type { CommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 

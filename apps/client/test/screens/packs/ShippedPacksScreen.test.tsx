@@ -56,7 +56,7 @@ jest.mock('@/src/hooks/ui/useLanguageLabel', () => ({
   __esModule: true,
   useLanguageLabel: () => (language: string) => `label-${language}`,
 }));
-jest.mock('@/src/services/storymanagement/ShippedPackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/ShippedPackService', () => ({
   __esModule: true,
   createShippedPackService: () => ({
     previewShippedPacks: mockPreviewShippedPacks,

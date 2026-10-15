@@ -5,10 +5,10 @@ const mockCreateLocationRelationService: jest.Mock = jest.fn(() => ({
 }));
 
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   createLocationService: (...args: unknown[]) => mockCreateLocationService(...args),
 }));
-jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   createLocationRelationService: (...args: unknown[]) => mockCreateLocationRelationService(...args),
 }));
 

@@ -10,19 +10,19 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockTranslation,
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/services/storymanagement/SketchService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/SketchService', () => ({
   __esModule: true,
   createSketchService: () => ({ createSketch: mockCreateSketch }),
 }));
-jest.mock('@/src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => mockGalleryService,
 }));
-jest.mock('@/src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { pickImages: (...args: unknown[]) => mockPickImages(...args) },
 }));
-jest.mock('@/src/services/galleryMediaImport', () => ({
+jest.mock('@/src/services/media/galleryMediaImport', () => ({
   __esModule: true,
   importPickedMediaAssets: (...args: unknown[]) => mockImport(...args),
 }));

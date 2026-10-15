@@ -42,7 +42,7 @@ import type {
   TagSelect,
 } from '@/src/db/schema';
 import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
-import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
 
 export type CharacterDetailContentProps = {
   character: CharacterSelect;

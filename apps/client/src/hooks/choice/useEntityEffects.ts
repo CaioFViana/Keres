@@ -2,7 +2,7 @@ import type { Effect } from '@keres/shared/entities/Effect';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

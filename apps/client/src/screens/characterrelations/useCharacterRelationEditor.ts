@@ -2,7 +2,7 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '@/src/db';
-import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

@@ -20,8 +20,11 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { AttributeType, deriveAttributeKey } from '@keres/shared';
 import { useStorySchemaFieldFormState } from '@/src/screens/storyschema/useStorySchemaFieldFormState';
-import { resetEditorDraftDbForTests, setEditorDraftDb } from '@/src/services/EditorDraftService';
-import type { StorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import {
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '@/src/services/drafts/EditorDraftService';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;

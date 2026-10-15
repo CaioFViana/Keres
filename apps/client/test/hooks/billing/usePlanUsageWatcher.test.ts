@@ -2,7 +2,7 @@ const mockRefresh = jest.fn();
 const mockClear = jest.fn();
 const mockListeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
-jest.mock('@/src/services/PlanUsageService', () => ({
+jest.mock('@/src/services/payments/PlanUsageService', () => ({
   __esModule: true,
   refreshPlanUsage: (...args: unknown[]) => mockRefresh(...args),
 }));

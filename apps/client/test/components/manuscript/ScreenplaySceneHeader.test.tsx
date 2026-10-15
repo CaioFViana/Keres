@@ -32,23 +32,23 @@ jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ effectiveArc: mockEffectiveMedium ? { medium: mockEffectiveMedium } : null }),
 }));
-jest.mock('@/src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getById: async () => mockChapter }),
 }));
-jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: () => ({ getById: async () => mockArc }),
 }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getById: async () => mockLocation }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: () => ({ getRelationsForScene: async () => mockRelations }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getById: async (id: string) => mockCharacters[id] }),
 }));

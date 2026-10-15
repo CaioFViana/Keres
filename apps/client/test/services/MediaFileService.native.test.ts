@@ -136,7 +136,7 @@ import * as FileSystem from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
 import { ImageManipulator } from 'expo-image-manipulator';
 import { createVideoPlayer } from 'expo-video';
-import { mediaFileService, UnsupportedMediaError } from '@/src/services/MediaFileService';
+import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
 
 /** Wires the `createVideoPlayer -> generateThumbnailsAsync -> manipulate -> saveAsync` chain. */
 function mockThumbnailChain(frameUri = 'file://cache/frame.jpg') {

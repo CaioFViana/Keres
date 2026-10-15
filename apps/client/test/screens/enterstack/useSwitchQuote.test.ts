@@ -1,6 +1,6 @@
 const mockQuote = jest.fn();
 
-jest.mock('@/src/services/PaymentService', () => ({
+jest.mock('@/src/services/payments/PaymentService', () => ({
   __esModule: true,
   getSwitchQuote: (...args: unknown[]) => mockQuote(...args),
 }));

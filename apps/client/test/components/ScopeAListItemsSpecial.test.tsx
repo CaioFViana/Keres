@@ -9,7 +9,7 @@ import GalleryGridItem, {
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
 import type { CommentSelect, GallerySelect, OperationLogSelect } from '@/src/db/schema';
-import type { GlobalSearchResult } from '@/src/services/storymanagement/GlobalSearchService';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

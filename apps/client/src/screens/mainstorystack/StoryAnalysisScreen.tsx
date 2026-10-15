@@ -24,10 +24,10 @@ import type {
   MainSystemDrawerParamList,
   StoryAnalysisStackParamList,
 } from '@/src/navigation/MainSystemStack';
-import type { StoryAnalysisReport } from '@/src/services/storymanagement/StoryAnalysisService';
-import { createStoryAnalysisService } from '@/src/services/storymanagement/StoryAnalysisService';
-import { createStoryIndexService } from '@/src/services/storymanagement/StoryIndexService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import type { StoryAnalysisReport } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
+import { createStoryAnalysisService } from '@/src/services/storymanagement/story-lifecycle/StoryAnalysisService';
+import { createStoryIndexService } from '@/src/services/storymanagement/story-lifecycle/StoryIndexService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { type ThemeColors, useTheme } from '@/src/theme';

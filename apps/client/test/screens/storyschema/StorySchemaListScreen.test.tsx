@@ -77,7 +77,7 @@ jest.mock('@/src/hooks/story/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => mockFields,
 }));
-jest.mock('@/src/services/storymanagement/StorySchemaFieldService', () => ({
+jest.mock('@/src/services/storymanagement/entities/StorySchemaFieldService', () => ({
   __esModule: true,
   createStorySchemaFieldService: () => ({
     deleteField: mockDeleteField,

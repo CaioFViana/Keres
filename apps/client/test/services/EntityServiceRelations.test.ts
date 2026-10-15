@@ -4,8 +4,8 @@
 import { AttributeType, OperationLogEntityType } from '@keres/shared';
 import type { TFunction } from 'i18next';
 import * as schema from '@/src/db/schema';
-import { EntityService } from '@/src/services/EntityService';
-import { resolveRelationEntityName } from '@/src/services/EntityIdentifierResolver';
+import { EntityService } from '@/src/services/entity-solvers/EntityService';
+import { resolveRelationEntityName } from '@/src/services/entity-solvers/EntityIdentifierResolver';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';

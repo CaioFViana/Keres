@@ -146,10 +146,10 @@ jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
-jest.mock('@/src/services/storymanagement/StatService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/StatService', () => ({
   createStatService: () => ({ deleteStat: mockDeleteStat, reorderStats: mockReorderStats }),
 }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
 

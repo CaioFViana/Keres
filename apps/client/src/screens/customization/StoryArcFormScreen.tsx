@@ -12,7 +12,7 @@ import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { ArcsStackParamList } from '@/src/navigation/ArcsStack';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';

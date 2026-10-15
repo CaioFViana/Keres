@@ -93,7 +93,7 @@ jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
-jest.mock('@/src/services/storymanagement/StatStrengthService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/StatStrengthService', () => ({
   createStatStrengthService: () => ({ replaceLadder: mockReplaceLadder }),
 }));
 

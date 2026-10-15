@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import * as schema from '@/src/db/schema';
-import { createModeService } from '@/src/services/storymanagement/ModeService';
+import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
 import {
   entityBase,
   seedLocalStory,

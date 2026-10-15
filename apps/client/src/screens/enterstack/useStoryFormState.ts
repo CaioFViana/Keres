@@ -4,7 +4,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoryStart } from '@/src/components/features/story/StoryStartChoice';
-import type { StoryService } from '@/src/services/storymanagement/StoryService';
+import type { StoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 
 type UseStoryFormStateOptions = {
   initialStoryId?: string;

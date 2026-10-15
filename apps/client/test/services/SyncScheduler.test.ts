@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { NO_RESPONSE_ERROR } from '@/src/services/apiClient';
+import { NO_RESPONSE_ERROR } from '@/src/services/api/apiClient';
 import {
   FAILED_RETRY_MAX_MS,
   LIVE_SYNC_INTERVAL_MS,

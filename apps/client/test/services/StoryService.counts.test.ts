@@ -3,7 +3,7 @@
  */
 import { AttributeType } from '@keres/shared';
 import * as schema from '@/src/db/schema';
-import { createStoryContentMetricsService } from '@/src/services/storymanagement/StoryContentMetricsService';
+import { createStoryContentMetricsService } from '@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService';
 import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 

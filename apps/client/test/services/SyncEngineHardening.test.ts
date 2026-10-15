@@ -13,7 +13,7 @@ const mockSyncStoryMedia = jest.fn(async () => ({
   failed: 0,
   offline: false,
 }));
-jest.mock('@/src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/media/MediaSyncService', () => ({
   createMediaSyncService: () => ({ syncStoryMedia: mockSyncStoryMedia }),
 }));
 
@@ -21,7 +21,7 @@ import { rankBetween } from '@keres/shared';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-import type { SyncEngineService } from '@/src/services/SyncEngineService';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
 import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';

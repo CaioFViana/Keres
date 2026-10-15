@@ -268,11 +268,11 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: mockIsCompact }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getCharactersByStoryId: mockGetCharactersByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     getCharacterRelationsByStoryId: mockGetCharacterRelationsByStoryId,

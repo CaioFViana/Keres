@@ -11,7 +11,7 @@ import type {
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { FavoriteEntityType } from '@keres/shared';
-import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
+import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
 
 /** The filter/sort state a fetch is run against. */
 export interface EntityQueryParams {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { Text, View } from 'react-native';
-import type { LocationWithTags } from '@/src/services/storymanagement/LocationService'; // Will be created soon
+import type { LocationWithTags } from '@/src/services/storymanagement/entities/LocationService'; // Will be created soon
 import { useTheme } from '@/src/theme';
 import { truncate } from '@/src/utils/format/stringUtils';
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';

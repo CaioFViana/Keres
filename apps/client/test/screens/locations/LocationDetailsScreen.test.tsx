@@ -78,14 +78,14 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('@/src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({
     getById: mockGetLocationById,
     getAllByStoryId: mockGetAllLocationsByStoryId,
   }),
 }));
-jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({
     getAllRelationsForStory: mockGetAllLocationRelations,
@@ -94,25 +94,25 @@ jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
     removeRelation: mockRemoveRelation,
   }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getAllByStoryId: mockGetAllCharactersByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: () => ({
     getRelationsByStoryId: mockGetCharacterSceneRelations,
   }),
 }));
-jest.mock('@/src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getAllByStoryId: mockGetAllItemsByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getAllByStoryId: mockGetAllItemJourneysByStoryId }),
 }));
-jest.mock('@/src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));

@@ -30,7 +30,7 @@ import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSyste
 import {
   createScenePageService,
   type ScenePageMedia,
-} from '@/src/services/storymanagement/ScenePageService';
+} from '@/src/services/storymanagement/scenes-chapters/ScenePageService';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';

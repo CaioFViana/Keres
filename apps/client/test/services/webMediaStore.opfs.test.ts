@@ -10,7 +10,7 @@ import {
   readBytes,
   writeBlob,
   writeBytes,
-} from '@/src/services/webMediaStore';
+} from '@/src/services/platform-web/webMediaStore';
 
 type Entry =
   | { kind: 'file'; data: Uint8Array }

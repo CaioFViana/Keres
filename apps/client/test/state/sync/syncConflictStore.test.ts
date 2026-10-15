@@ -8,7 +8,7 @@ const mockService = {
   resolveKeepServerAndCloneBoard: jest.fn(async () => undefined),
   dismissConflict: jest.fn(async () => undefined),
 };
-jest.mock('@/src/services/SyncConflictService', () => ({
+jest.mock('@/src/services/sync/SyncConflictService', () => ({
   createSyncConflictService: () => mockService,
 }));
 

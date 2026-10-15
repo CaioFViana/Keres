@@ -7,10 +7,10 @@ const mockCreatePackService: jest.Mock = jest.fn(() => ({
 }));
 
 jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: (...args: unknown[]) => mockCreateStoryService(...args),
 }));
-jest.mock('@/src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   createPackService: (...args: unknown[]) => mockCreatePackService(...args),
 }));
 

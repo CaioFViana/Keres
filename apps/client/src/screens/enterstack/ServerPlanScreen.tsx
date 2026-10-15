@@ -21,7 +21,7 @@ import { useSwitchQuote } from '@/src/screens/enterstack/useSwitchQuote';
 import { usePlanCheckout } from '@/src/screens/enterstack/usePlanCheckout';
 import { useServerStatuses } from '@/src/screens/enterstack/useServerStatuses';
 import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
-import { verifyPlayPurchase } from '@/src/services/PaymentService';
+import { verifyPlayPurchase } from '@/src/services/payments/PaymentService';
 import { type ThemeColors } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import {

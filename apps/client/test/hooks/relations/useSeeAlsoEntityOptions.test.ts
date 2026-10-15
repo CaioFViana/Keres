@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
-jest.mock('@/src/utils/entityOptions', () => ({
+jest.mock('@/src/services/entity-solvers/entityOptions', () => ({
   __esModule: true,
   loadEntityOptions: jest.fn(),
 }));
@@ -20,7 +20,7 @@ import {
   encodeSeeAlsoValue,
   useSeeAlsoEntityOptions,
 } from '@/src/hooks/relations/useSeeAlsoEntityOptions';
-import { loadEntityOptions } from '@/src/utils/entityOptions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 
 beforeEach(() => {
   jest.clearAllMocks();

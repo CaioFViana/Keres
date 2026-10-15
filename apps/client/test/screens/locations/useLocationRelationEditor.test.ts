@@ -6,7 +6,7 @@ const mockAddConnection = jest.fn();
 const mockRemoveRelation = jest.fn();
 const mockAlert = jest.fn();
 
-jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({
     setParent: (...args: unknown[]) => mockSetParent(...args),

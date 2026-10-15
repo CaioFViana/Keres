@@ -7,10 +7,10 @@ import {
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
-import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
-import { mediaFileService } from '@/src/services/MediaFileService';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { importPickedMediaAssets } from '@/src/services/media/galleryMediaImport';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
 import { sketchSizeForPageFormat } from '@/src/utils/sketch/sketchPageSize';
 
 /** What picking pictures came to: the Gallery media they are now, in the order they were chosen. */

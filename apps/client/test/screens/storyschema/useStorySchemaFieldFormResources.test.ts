@@ -4,7 +4,7 @@ const mockCreateStorySchemaFieldService = jest.fn();
 jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('@/src/services/storymanagement/StorySchemaFieldService', () => ({
+jest.mock('@/src/services/storymanagement/entities/StorySchemaFieldService', () => ({
   createStorySchemaFieldService: (...args: unknown[]) => mockCreateStorySchemaFieldService(...args),
 }));
 

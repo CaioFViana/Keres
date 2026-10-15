@@ -1,10 +1,10 @@
 const mockGetShared = jest.fn();
 const mockGetConversations = jest.fn();
 
-jest.mock('@/src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/api/FriendshipApiService', () => ({
   friendshipApiService: { getSharedStories: (...args: unknown[]) => mockGetShared(...args) },
 }));
-jest.mock('@/src/services/MessageApiService', () => ({
+jest.mock('@/src/services/api/MessageApiService', () => ({
   messageApi: { getConversations: (...args: unknown[]) => mockGetConversations(...args) },
 }));
 

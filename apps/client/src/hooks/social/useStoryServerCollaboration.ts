@@ -3,18 +3,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { ServerSelect } from '@/src/db/schema';
-import { isOfflineError } from '@/src/services/apiClient';
-import { createFriendshipService } from '@/src/services/FriendshipService';
-import { createServerService } from '@/src/services/ServerService';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import type { StoryCollaborator } from '@/src/services/StoryPermissionService';
-import { storyPermissionApi } from '@/src/services/StoryPermissionService';
-import { closeStoryInvitation } from '@/src/services/storyInvitationActions';
-import { storyInvitationApi } from '@/src/services/StoryInvitationApiService';
+import { isOfflineError } from '@/src/services/api/apiClient';
+import { createFriendshipService } from '@/src/services/social/FriendshipService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import type { StoryCollaborator } from '@/src/services/social/StoryPermissionService';
+import { storyPermissionApi } from '@/src/services/social/StoryPermissionService';
+import { closeStoryInvitation } from '@/src/services/social/storyInvitationActions';
+import { storyInvitationApi } from '@/src/services/api/StoryInvitationApiService';
 import {
   createStoryInvitationService,
   type ServerStoryInvitation,
-} from '@/src/services/StoryInvitationService';
+} from '@/src/services/social/StoryInvitationService';
 import { syncEngine } from '@/src/services/sync/appSyncEngine';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useStoryStore } from '@/src/state/story/storyStore';

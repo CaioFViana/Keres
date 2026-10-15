@@ -40,7 +40,7 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => ({
   __esModule: true,
   useEntityInitialLoad: jest.fn(),
 }));
-jest.mock('@/src/utils/entityOptions', () => ({
+jest.mock('@/src/services/entity-solvers/entityOptions', () => ({
   __esModule: true,
   loadEntityOptions: jest.fn(),
 }));
@@ -69,7 +69,7 @@ import {
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
-import { loadEntityOptions } from '@/src/utils/entityOptions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 
 const rowsByTable: Record<string, Record<string, unknown>[]> = {};
 

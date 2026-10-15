@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useDrizzle } from '@/src/db';
-import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 import { useCharacterStore } from '@/src/state/story/characterStore';
 import { useItemStore } from '@/src/state/story/itemStore';
 import { useSceneStore } from '@/src/state/story/sceneStore';

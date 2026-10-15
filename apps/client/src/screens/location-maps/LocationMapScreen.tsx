@@ -22,37 +22,37 @@ import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/Overlay
 import TrajectoryPickerSheet from '@/src/components/features/location-maps/TrajectoryPickerSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import type {
   GallerySelect,
   LocationMapSelect,
   LocationRelationSelect,
   LocationSelect,
-} from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
-import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
-import { useLocationMapExport } from '../../hooks/useLocationMapExport';
-import { exportFileLanguage } from '../../utils/storyTransfer';
-import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
-import { useLocationMapImageUris } from '../../hooks/useLocationMapImageUris';
-import { useLocationMapNodeSummary } from '../../hooks/useLocationMapNodeSummary';
-import { useLocationMapTrajectories } from '../../hooks/useLocationMapTrajectories';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { createLocationMapService } from '../../services/storymanagement/LocationMapService';
-import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { createLocationService } from '../../services/storymanagement/LocationService';
-import { useLocationMapDraftStore } from '../../state/locationMapDraftStore';
-import { useNotificationStore } from '../../state/notificationStore';
-import { readShowcaseRequest } from '../../showcase/showcaseRequest';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { removeLocationMapPoint } from '../../utils/locationMapContent';
+} from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useLocationMapRelations } from '@/src/hooks/useLocationMapRelations';
+import { useLocationMapCanvasActions } from '@/src/hooks/useLocationMapCanvasActions';
+import { useLocationMapExport } from '@/src/hooks/useLocationMapExport';
+import { exportFileLanguage } from '@/src/utils/storyTransfer';
+import { useCanvasOverlayActions } from '@/src/hooks/useCanvasOverlayActions';
+import { useLocationMapImageUris } from '@/src/hooks/useLocationMapImageUris';
+import { useLocationMapNodeSummary } from '@/src/hooks/useLocationMapNodeSummary';
+import { useLocationMapTrajectories } from '@/src/hooks/useLocationMapTrajectories';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
+import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/LocationService';
+import { useLocationMapDraftStore } from '@/src/state/locationMapDraftStore';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { removeLocationMapPoint } from '@/src/utils/locationMapContent';
 const LocationMapScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();

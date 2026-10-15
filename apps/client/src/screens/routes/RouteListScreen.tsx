@@ -6,14 +6,14 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import {
   ScreenError,
   ScreenLoading,
-} from '../../components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryRoutes } from '../../hooks/useStoryRoutes';
-import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryRoutes } from '@/src/hooks/useStoryRoutes';
+import type { PlotsStackParamList } from '@/src/navigation/MainSystemStack';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'Routes'>;

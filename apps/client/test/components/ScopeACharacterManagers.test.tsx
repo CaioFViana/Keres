@@ -2,11 +2,11 @@ import { render } from '@testing-library/react-native';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React from 'react';
-import type { SceneSelect } from '../../src/db/schema';
-import CharacterSceneManager from '../../src/components/features/characters/CharacterManager/CharacterSceneManager';
-import SceneCharacterManager from '../../src/components/features/characters/CharacterManager/SceneCharacterManager';
+import type { SceneSelect } from '@/src/db/schema';
+import CharacterSceneManager from '@/src/components/features/characters/CharacterManager/CharacterSceneManager';
+import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -24,7 +24,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: (type: string) => ({
     entity: type,
     entities: `${type}s`,
@@ -33,17 +33,17 @@ jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
 }));
 
 const mockNavigateToDetail = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
 
 const mockChapterNameOf = jest.fn((_chapterId: string | null | undefined) => 'Chapter One');
-jest.mock('../../src/hooks/useChapterNames', () => ({
+jest.mock('@/src/hooks/useChapterNames', () => ({
   useChapterNames: () => mockChapterNameOf,
 }));
 
 const mockRelationManager = jest.fn();
-jest.mock('../../src/components/features/relations/RelationManager/RelationManager', () => ({
+jest.mock('@/src/components/features/relations/RelationManager/RelationManager', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockRelationManager(props);

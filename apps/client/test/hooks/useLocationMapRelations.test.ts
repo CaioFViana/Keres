@@ -10,13 +10,13 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('../../src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: jest.fn(() => mockService),
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useLocationMapRelations } from '../../src/hooks/useLocationMapRelations';
+import { useLocationMapRelations } from '@/src/hooks/useLocationMapRelations';
 
 const relations = [
   {

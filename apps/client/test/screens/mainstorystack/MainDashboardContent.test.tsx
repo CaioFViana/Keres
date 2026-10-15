@@ -2,10 +2,10 @@ import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
-import { MainDashboardContent } from '../../../src/screens/mainstorystack/MainDashboardContent';
+import { MainDashboardContent } from '@/src/screens/mainstorystack/MainDashboardContent';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -19,7 +19,7 @@ jest.mock('../../../src/theme', () => {
   };
 });
 
-jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () => {
+jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -32,7 +32,7 @@ jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () =
   };
 });
 
-jest.mock('../../../src/components/features/arcs/UniverseWorksSection', () => {
+jest.mock('@/src/components/features/arcs/UniverseWorksSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -44,7 +44,7 @@ jest.mock('../../../src/components/features/arcs/UniverseWorksSection', () => {
   };
 });
 
-jest.mock('../../../src/components/common/display/SummaryCard/SummaryCard', () => {
+jest.mock('@/src/components/common/display/SummaryCard/SummaryCard', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -66,20 +66,17 @@ jest.mock('../../../src/components/common/display/SummaryCard/SummaryCard', () =
   };
 });
 
-jest.mock(
-  '../../../src/components/features/operation-log/OperationLogList/OperationLogList',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({ storyId, limit }: { storyId: string; limit: number }) => (
-        <Text testID="oplog">{`oplog:${storyId}:${limit}`}</Text>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/operation-log/OperationLogList/OperationLogList', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ storyId, limit }: { storyId: string; limit: number }) => (
+      <Text testID="oplog">{`oplog:${storyId}:${limit}`}</Text>
+    ),
+  };
+});
 
-jest.mock('../../../src/components/features/sync/SyncConflictBanner/SyncConflictBanner', () => {
+jest.mock('@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -91,23 +88,20 @@ jest.mock('../../../src/components/features/sync/SyncConflictBanner/SyncConflict
   };
 });
 
-jest.mock(
-  '../../../src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({ visible, onClose }: { visible: boolean; onClose: () => void }) => (
-        <>
-          <Text testID="conflict-sheet">{visible ? 'sheet-open' : 'sheet-closed'}</Text>
-          <Text testID="conflict-sheet-close" onPress={onClose}>
-            close
-          </Text>
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ visible, onClose }: { visible: boolean; onClose: () => void }) => (
+      <>
+        <Text testID="conflict-sheet">{visible ? 'sheet-open' : 'sheet-closed'}</Text>
+        <Text testID="conflict-sheet-close" onPress={onClose}>
+          close
+        </Text>
+      </>
+    ),
+  };
+});
 
 const t = ((key: string) => key) as unknown as TFunction;
 

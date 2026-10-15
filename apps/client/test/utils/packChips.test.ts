@@ -1,5 +1,5 @@
-import type { PackContentCounts } from '../../src/services/storymanagement/PackService';
-import { packExtrasChips } from '../../src/utils/packChips';
+import type { PackContentCounts } from '@/src/services/storymanagement/PackService';
+import { packExtrasChips } from '@/src/utils/packChips';
 
 const countsOf = (extras: PackContentCounts['extras']): PackContentCounts => ({
   customAttributes: 0,

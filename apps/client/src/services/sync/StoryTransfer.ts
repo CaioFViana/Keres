@@ -1,15 +1,15 @@
 import type { EffectiveStoryRole } from '@keres/shared';
 import { and, eq, lte } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
-import type { ServerSelect } from '../../db/schema';
-import i18n from '../../utils/i18n';
-import { createKeresAxiosInstance } from '../apiClient';
-import { authTokenManager } from '../AuthTokenManager';
-import { createServerService } from '../ServerService';
-import { createCommentService } from '../storymanagement/CommentService';
-import { createFavoriteService } from '../storymanagement/FavoriteService';
-import { createStoryService } from '../storymanagement/StoryService';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { ServerSelect } from '@/src/db/schema';
+import i18n from '@/src/utils/i18n';
+import { createKeresAxiosInstance } from '@/src/services/apiClient';
+import { authTokenManager } from '@/src/services/AuthTokenManager';
+import { createServerService } from '@/src/services/ServerService';
+import { createCommentService } from '@/src/services/storymanagement/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import type { SyncNotifier } from './SyncNotifier';
 
 export interface ServerStoryPreview {

@@ -5,9 +5,9 @@ import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { getLanguageOptions } from '../../../../utils/i18n';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { getLanguageOptions } from '@/src/utils/i18n';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface StoryFieldsFormProps {

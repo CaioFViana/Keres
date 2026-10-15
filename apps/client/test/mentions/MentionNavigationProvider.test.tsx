@@ -5,15 +5,15 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: jest.fn(),
 }));
-jest.mock('../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entityNavigation', () => ({
   __esModule: true,
   navigateToEntityDetail: jest.fn(),
 }));
 
 import { useNavigation } from '@react-navigation/native';
-import { MentionNavigationContext } from '../../src/mentions/MentionContext';
-import { MentionNavigationProvider } from '../../src/mentions/MentionNavigationProvider';
-import { navigateToEntityDetail } from '../../src/utils/entityNavigation';
+import { MentionNavigationContext } from '@/src/mentions/MentionContext';
+import { MentionNavigationProvider } from '@/src/mentions/MentionNavigationProvider';
+import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
 
 describe('MentionNavigationProvider', () => {
   it('opens a mention through the drawer navigation object', async () => {

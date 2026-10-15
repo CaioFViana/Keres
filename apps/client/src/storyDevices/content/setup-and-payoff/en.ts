@@ -1,4 +1,4 @@
-import type { StoryDevicePage } from '../../types';
+import type { StoryDevicePage } from '@/src/storyDevices/types';
 const page: StoryDevicePage = {
   id: 'setup-and-payoff',
   title: 'Setup and payoff',

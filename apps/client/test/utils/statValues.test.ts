@@ -1,8 +1,4 @@
-import {
-  indexStatValues,
-  resolveCharacterStats,
-  resolveStatValue,
-} from '../../src/utils/statValues';
+import { indexStatValues, resolveCharacterStats, resolveStatValue } from '@/src/utils/statValues';
 
 const index = indexStatValues([
   { characterId: 'ilda', modeId: null, statId: 'courage', value: 100 },

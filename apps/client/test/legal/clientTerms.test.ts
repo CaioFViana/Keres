@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { CLIENT_TERMS_VERSION, CLIENT_TERMS, clientTermsFor } from '../../src/legal/clientTerms';
+import { CLIENT_TERMS_VERSION, CLIENT_TERMS, clientTermsFor } from '@/src/legal/clientTerms';
 
 /**
  * The app's terms ship in the bundle in both languages: a missing or lopsided copy would ask

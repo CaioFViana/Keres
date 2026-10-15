@@ -2,8 +2,8 @@ import { AttributeType } from '@keres/shared';
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { Platform } from 'react-native';
-import * as schema from '../db/schema';
-import { createStoryService } from '../services/storymanagement/StoryService';
+import * as schema from '@/src/db/schema';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
 
 const RESULT_KEY = '__KERES_SQLITE_WEB_SMOKE_RESULT__';
 

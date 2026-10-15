@@ -1,8 +1,8 @@
 import { avatarColorFromSeed, DEFAULT_AVATAR_ICON } from '@keres/shared';
 import React from 'react';
 import { View } from 'react-native';
-import { isColorLight } from '../../../../theme/commonStyles';
-import MapIcon from '../MapIcon/MapIcon';
+import { isColorLight } from '@/src/theme/commonStyles';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 
 /**
  * The default icon, the fallback palette and the colour seed live in `@keres/shared`: the public site

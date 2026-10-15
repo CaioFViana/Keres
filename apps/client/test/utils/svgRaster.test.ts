@@ -5,7 +5,7 @@ import {
   sanitizeSvgForRaster,
   withPngExtension,
   withSvgExtension,
-} from '../../src/utils/svgRaster';
+} from '@/src/utils/svgRaster';
 
 describe('parseSvgRootSize', () => {
   it('reads the standalone document size off the root tag', () => {

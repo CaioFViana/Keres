@@ -3,7 +3,7 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { screenGuides } from '../../src/guides/registry';
+import { screenGuides } from '@/src/guides/registry';
 
 const SOURCE_ROOT = resolve(__dirname, '../../src');
 

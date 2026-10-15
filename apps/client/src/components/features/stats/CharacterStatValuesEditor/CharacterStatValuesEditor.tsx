@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import ResponsiveGrid from '../../../layout/ResponsiveGrid/ResponsiveGrid';
-import TextInput from '../../../common/inputs/TextInput/TextInput';
-import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
-import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import type { StoryStatsData } from '../../../../hooks/useStoryStats';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { AppAlert } from '../../../../utils/AppAlert';
+import ResponsiveGrid from '@/src/components/layout/ResponsiveGrid/ResponsiveGrid';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
 import { formatStatNumber, formatTierLabel } from '@keres/shared/graphs/statLadder';
-import { StatLadderBar } from '../StatLadderBar/StatLadderBar';
-import { resolveStatValue } from '../../../../utils/statValues';
+import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
+import { resolveStatValue } from '@/src/utils/statValues';
 
 /**
  * A character's stat values, per mode.

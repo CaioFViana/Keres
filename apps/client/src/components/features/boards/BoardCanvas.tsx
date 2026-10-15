@@ -25,17 +25,17 @@ import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdge
 import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
 import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import { useDraggedItemFrame } from '@/src/hooks/useDraggedItemFrame';
-import { useTheme } from '../../../theme';
-import { boardEdgeGeometry } from '../../../utils/boardEdges';
-import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
-import { visibleCanvasStamps } from '../../../utils/canvasOverlayStamps';
+import { useTheme } from '@/src/theme';
+import { boardEdgeGeometry } from '@/src/utils/boardEdges';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
+import { visibleCanvasStamps } from '@/src/utils/canvasOverlayStamps';
 import {
   boardCanvasBounds,
   boardNodeSize,
   type BoardGalleryMediaById,
-} from '../../../utils/boardLayout';
-import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
-import type { BoardCardAppearance } from '../../../utils/boardPinAppearance';
+} from '@/src/utils/boardLayout';
+import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import type { BoardCardAppearance } from '@/src/utils/boardPinAppearance';
 import BoardNodeView from './BoardNode';
 
 export type BoardCanvasHandle = CanvasViewportHandle;

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import SongFactsFields from '../../../../src/components/features/songs/SongFactsFields';
+import SongFactsFields from '@/src/components/features/songs/SongFactsFields';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
       options?.min !== undefined ? `${key}:${options.min}-${options.max}` : key,
   }),
 }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -23,7 +23,7 @@ jest.mock('../../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return { __esModule: true, default: TextInput };
 });

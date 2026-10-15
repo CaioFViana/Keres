@@ -21,10 +21,10 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return { Ionicons: ({ name }: { name: string }) => <Text testID={`icon-${name}`}>{name}</Text> };
 });
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ isDarkMode: false, colors: mockColors }),
 }));
-jest.mock('../../src/components/common/display/Avatar/Avatar', () => ({
+jest.mock('@/src/components/common/display/Avatar/Avatar', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -38,13 +38,13 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 import { act, fireEvent, render } from '@testing-library/react-native';
-import ConversationListItem from '../../src/components/features/messages/ConversationListItem';
-import FriendChatButton from '../../src/components/features/messages/FriendChatButton';
-import ServerDrawerIcon from '../../src/components/features/messages/ServerDrawerIcon';
-import UnseenMark from '../../src/components/features/messages/UnseenMark';
-import ServerActionRow from '../../src/components/features/servers/ServerActionRow';
-import ServerListItem from '../../src/components/features/servers/ServerListItem';
-import { useUnseenMessagesStore } from '../../src/state/unseenMessagesStore';
+import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
+import FriendChatButton from '@/src/components/features/messages/FriendChatButton';
+import ServerDrawerIcon from '@/src/components/features/messages/ServerDrawerIcon';
+import UnseenMark from '@/src/components/features/messages/UnseenMark';
+import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
+import ServerListItem from '@/src/components/features/servers/ServerListItem';
+import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
 
 const setUnseen = (unseen: Record<string, string>) =>
   act(async () => {

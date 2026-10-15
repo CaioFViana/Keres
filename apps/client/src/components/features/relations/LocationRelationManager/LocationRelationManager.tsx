@@ -3,16 +3,16 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
-import { useTheme, type ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import Button from '@/src/components/common/controls/Button/Button';
 import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
-import { AppAlert } from '../../../../utils/AppAlert';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 interface LocationRelationManagerProps {
   currentLocationId: string;

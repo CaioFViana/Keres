@@ -1,7 +1,7 @@
 import { getTierCountedEntityTypes, getTierFreeEntityTypes } from '@keres/shared';
 import { and, count, eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { getEntityTable } from '../entityTableRegistry';
+import type { AppDrizzleClient } from '@/src/db';
+import { getEntityTable } from '@/src/services/entityTableRegistry';
 
 export interface StoryEntityCounts {
   /** The sum of `byType`. */

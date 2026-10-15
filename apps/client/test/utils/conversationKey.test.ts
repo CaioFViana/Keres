@@ -5,7 +5,7 @@ import {
   adminConversationKey,
   conversationKey,
   directConversationKey,
-} from '../../src/utils/conversationKey';
+} from '@/src/utils/conversationKey';
 
 describe('conversationKey', () => {
   it('names a conversation by its server and who it is with', () => {

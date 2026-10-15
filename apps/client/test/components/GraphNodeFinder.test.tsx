@@ -1,5 +1,5 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       text: '#111',
@@ -12,7 +12,7 @@ jest.mock('../../src/theme', () => ({
   }),
   getCommonInputStyles: () => ({ input: {} }),
 }));
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput: RNTextInput } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -25,7 +25,7 @@ import GraphNodeFinder, {
   findOptions,
   foldForSearch,
   MAX_FINDER_RESULTS,
-} from '../../src/components/features/graphs/GraphNodeFinder/GraphNodeFinder';
+} from '@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder';
 
 const OPTIONS = [
   { id: '1', label: 'João da Silva' },

@@ -11,18 +11,18 @@ import {
   View,
 } from 'react-native';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useDrizzle } from '../../db';
-import type { ServerSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { packApiService, type RemotePack } from '../../services/PackApiService';
-import { createServerService } from '../../services/ServerService';
-import { createPackService } from '../../services/storymanagement/PackService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { layout } from '../../theme/layout';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+import { useDrizzle } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { packApiService, type RemotePack } from '@/src/services/PackApiService';
+import { createServerService } from '@/src/services/ServerService';
+import { createPackService } from '@/src/services/storymanagement/PackService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 /**
  * Packs shared on a server.

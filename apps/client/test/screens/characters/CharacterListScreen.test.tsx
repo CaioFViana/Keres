@@ -144,72 +144,72 @@ jest.mock('@/src/components/features/relations/CharacterRelationRows', () => ({
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('../../../src/hooks/useEntityArcIds', () => ({
+jest.mock('@/src/hooks/useEntityArcIds', () => ({
   __esModule: true,
   useEntityArcIds: (...args: unknown[]) => mockUseEntityArcIds(...args),
 }));
-jest.mock('../../../src/hooks/useOpenPresenceMatrixViewer', () => ({
+jest.mock('@/src/hooks/useOpenPresenceMatrixViewer', () => ({
   __esModule: true,
   useOpenPresenceMatrixViewer: () => ({ openCharacterList: mockOpenCharacterList }),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     getCharacterRelationsByStoryId: mockGetCharacterRelationsByStoryId,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({
     getAllByStoryId: mockGetAllCharactersByStoryId,
   }),
 }));
-jest.mock('../../../src/state/characterStore', () => ({
+jest.mock('@/src/state/characterStore', () => ({
   __esModule: true,
   useCharacterStore: jest.fn(),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: object) => unknown) => mockUseStoryStore(selector),
 }));
-jest.mock('../../../src/showcase/showcaseRequest', () => ({
+jest.mock('@/src/showcase/showcaseRequest', () => ({
   __esModule: true,
   readShowcaseRequest: () => mockReadShowcaseRequest(),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#fff' } }),
 }));
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
@@ -220,7 +220,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import CharactersScreen from '../../../src/screens/characters/CharacterListScreen';
+import CharactersScreen from '@/src/screens/characters/CharacterListScreen';
 
 const freshListState = () => ({
   listProps: {},

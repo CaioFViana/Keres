@@ -18,21 +18,21 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema'; // Import TagSelect
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { TagSelect } from '@/src/db/schema'; // Import TagSelect
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { EntityService } from '../../services/EntityService'; // Import EntityService
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import createTagRelationService
-import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
-import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
-import type { ThemeColors } from '../../theme';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { EntityService } from '@/src/services/EntityService'; // Import EntityService
+import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService'; // Import createTagRelationService
+import { createTagService } from '@/src/services/storymanagement/TagService'; // Import createTagService
+import { useStoryStore } from '@/src/state/storyStore'; // Import useStoryStore
+import type { ThemeColors } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 import type { TagsScreenNavigationProp } from './TagListScreen';
 

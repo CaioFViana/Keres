@@ -7,13 +7,13 @@ import {
   readBoundEditorDraft,
   scheduleWriteEditorDraft,
   writeEditorDraftNow,
-} from '../services/EditorDraftService';
+} from '@/src/services/EditorDraftService';
 import {
   clearCanvasDraft,
   readCanvasDraft,
   scheduleWriteCanvasDraft,
   writeCanvasDraftNow,
-} from '../services/canvasDraftPersistence';
+} from '@/src/services/canvasDraftPersistence';
 
 export interface LocationMapDraft {
   mapId: string;

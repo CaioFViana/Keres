@@ -1,17 +1,17 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import CommentList from '@/src/components/features/comments/CommentList/CommentList';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import type { CommentSelect } from '../../db/schema';
-import { useStoryStore } from '../../state/storyStore';
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import type { NavigableEntityType } from '../../utils/entityNavigation';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import type { CommentSelect } from '@/src/db/schema';
+import { useStoryStore } from '@/src/state/storyStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 /**

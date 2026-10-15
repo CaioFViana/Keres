@@ -2,11 +2,7 @@
  * @jest-environment node
  */
 import { getStorySyncEntityTypes } from '@keres/shared';
-import {
-  ENTITY_TABLES,
-  getEntityTable,
-  toEntityColumns,
-} from '../../src/services/entityTableRegistry';
+import { ENTITY_TABLES, getEntityTable, toEntityColumns } from '@/src/services/entityTableRegistry';
 
 describe('entity table registry', () => {
   it('provides a SQLite table adapter for every story-synchronized entity', () => {

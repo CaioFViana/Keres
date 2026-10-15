@@ -3,22 +3,22 @@ import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
 import { ActivityIndicator, FlatList, Keyboard, StyleSheet, Text, View } from 'react-native';
 import { entityFieldMetadata, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
-import GuideAnchor from '../../../../guides/GuideAnchor';
-import { useTheme } from '../../../../theme';
-import { countActiveCriteria, withoutCriterion } from '../../../../utils/advancedSearchCriteria';
+import GuideAnchor from '@/src/guides/GuideAnchor';
+import { useTheme } from '@/src/theme';
+import { countActiveCriteria, withoutCriterion } from '@/src/utils/advancedSearchCriteria';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../../../types/entityFilters';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '@/src/types/entityFilters';
 import ActiveFilterChips from './ActiveFilterChips';
 import { GuidedEmptyState, NoResultsState } from './ListEmptyStates';
 import type { GuidedEmptyStateAction } from './ListEmptyStates';
 import ListSearchField from './ListSearchField';
 import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilterButton/FavoriteFilterButton';
 import { FiltersButton, SortDirectionButton } from './ListToolbarButtons';
-import { SearchHighlightContext } from '../SearchHighlight/SearchHighlight';
+import { SearchHighlightContext } from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
 
 export type { GuidedEmptyStateAction } from './ListEmptyStates';
 

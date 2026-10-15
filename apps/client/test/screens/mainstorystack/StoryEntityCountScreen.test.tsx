@@ -36,45 +36,45 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/services/storymanagement/StoryEntityCountService', () => ({
+jest.mock('@/src/services/storymanagement/StoryEntityCountService', () => ({
   __esModule: true,
   createStoryEntityCountService: () => ({
     countForStory: mockCountForStory,
     countFreeForStory: mockCountRelations,
   }),
 }));
-jest.mock('../../../src/services/StoryPlanService', () => ({
+jest.mock('@/src/services/StoryPlanService', () => ({
   __esModule: true,
   createStoryPlanService: () => ({ getPlan: mockGetPlan }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: mockColors }),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
   }),
 }));
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -97,7 +97,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-import StoryEntityCountScreen from '../../../src/screens/mainstorystack/StoryEntityCountScreen';
+import StoryEntityCountScreen from '@/src/screens/mainstorystack/StoryEntityCountScreen';
 
 describe('StoryEntityCountScreen', () => {
   afterEach(() => {

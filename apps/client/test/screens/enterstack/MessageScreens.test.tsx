@@ -49,26 +49,26 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: (...args: unknown[]) => mockNavigate(...args) }),
   useRoute: () => mockRoute,
 }));
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: (options: unknown) => mockHeader(options),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../../src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
-jest.mock('../../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   useScreenAnchor: () => null,
   useGuideAnchor: () => null,
 }));
-jest.mock('../../../src/hooks/useKeyboardOverlap', () => ({
+jest.mock('@/src/hooks/useKeyboardOverlap', () => ({
   useKeyboardOverlap: (...args: unknown[]) => mockUseKeyboardOverlap(...args),
 }));
-jest.mock('../../../src/hooks/useConversation', () => ({
+jest.mock('@/src/hooks/useConversation', () => ({
   useConversation: (...args: unknown[]) => mockUseConversation(...args),
 }));
-jest.mock('../../../src/hooks/useMessageInbox', () => ({
+jest.mock('@/src/hooks/useMessageInbox', () => ({
   useMessageInbox: () => mockUseMessageInbox(),
 }));
 jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
@@ -100,8 +100,8 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import ConversationScreen, {
   keyboardRoom,
   liftAboveKeyboard,
-} from '../../../src/screens/enterstack/ConversationScreen';
-import MessageInboxScreen from '../../../src/screens/enterstack/MessageInboxScreen';
+} from '@/src/screens/enterstack/ConversationScreen';
+import MessageInboxScreen from '@/src/screens/enterstack/MessageInboxScreen';
 
 const conversation = (over: Record<string, unknown> = {}) => ({
   messages: [
@@ -454,7 +454,7 @@ describe('MessageInboxScreen', () => {
 });
 
 describe('MessageInboxScreen: which conversation has news', () => {
-  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
 
   beforeEach(() => {
     mockUseMessageInbox.mockReturnValue(inboxState());

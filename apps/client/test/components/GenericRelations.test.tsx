@@ -1,11 +1,11 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import GenericRelationDisplay from '../../src/components/features/relations/RelationManager/GenericRelationDisplay';
-import RelationAttributeLine from '../../src/components/features/relations/RelationManager/RelationAttributeLine';
-import RelationManager from '../../src/components/features/relations/RelationManager/RelationManager';
-import { relationSectionStyleDefs } from '../../src/components/features/relations/RelationManager/relationSectionStyles';
+import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
+import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
+import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager';
+import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -36,7 +36,7 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View: RNView } = jest.requireActual('react-native');
   return {

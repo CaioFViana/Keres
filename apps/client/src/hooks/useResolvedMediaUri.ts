@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { DESKTOP_MEDIA_URI_PREFIX, resolveBlobUri } from '../services/webMediaStore';
+import { DESKTOP_MEDIA_URI_PREFIX, resolveBlobUri } from '@/src/services/webMediaStore';
 
 /**
  * Resolves a media `localPath`/`thumbnailPath` into something `<Image>`/`<video>`/`<audio>` can load.

@@ -3,14 +3,19 @@
  */
 import { compareRanked } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   createScenePageService,
   groupPagesByScene,
   pageHasMedia,
-} from '../../src/services/storymanagement/ScenePageService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/ScenePageService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

@@ -5,11 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import type { FriendshipWithServer } from '../../../services/FriendshipService';
-import { useTheme } from '../../../theme';
-import { getCommonCardStyles } from '../../../theme/commonStyles';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import FriendChatButton from '../messages/FriendChatButton';
+import type { FriendshipWithServer } from '@/src/services/FriendshipService';
+import { useTheme } from '@/src/theme';
+import { getCommonCardStyles } from '@/src/theme/commonStyles';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import FriendChatButton from '@/src/components/features/messages/FriendChatButton';
 import FriendActionsModal, { type FriendAction } from './FriendActionsModal';
 
 export interface FriendshipRowActions {

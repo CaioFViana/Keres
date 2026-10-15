@@ -2,12 +2,12 @@
  * @jest-environment node
  */
 import { getTableColumns, getTableName } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   purgeStoryLocally,
   STORY_CHILD_TABLES,
-} from '../../src/services/storymanagement/storyLocalPurge';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/storyLocalPurge';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = 'story-to-purge';
 const OTHER_STORY_ID = 'other-story';

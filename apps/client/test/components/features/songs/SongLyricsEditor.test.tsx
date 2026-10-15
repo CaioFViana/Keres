@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import SongLyricsEditor from '../../../../src/components/features/songs/SongLyricsEditor';
+import SongLyricsEditor from '@/src/components/features/songs/SongLyricsEditor';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('react-i18next', () => ({
@@ -9,7 +9,7 @@ jest.mock('react-i18next', () => ({
       options ? `${key}:${JSON.stringify(options)}` : key,
   }),
 }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -24,7 +24,7 @@ jest.mock('../../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return { __esModule: true, default: TextInput };
 });

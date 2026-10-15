@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
-import ManuscriptExportScreen from '../screens/narrative-elements/scenes/ManuscriptExportScreen';
-import StoryPublishScreen from '../screens/storyshare/StoryPublishScreen';
-import StoryShareIndexScreen from '../screens/storyshare/StoryShareIndexScreen';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import ManuscriptExportScreen from '@/src/screens/narrative-elements/scenes/ManuscriptExportScreen';
+import StoryPublishScreen from '@/src/screens/storyshare/StoryPublishScreen';
+import StoryShareIndexScreen from '@/src/screens/storyshare/StoryShareIndexScreen';
 
 export type StoryShareStackParamList = {
   StoryShareIndex: undefined;

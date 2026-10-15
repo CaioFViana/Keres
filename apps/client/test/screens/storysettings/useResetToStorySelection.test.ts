@@ -11,7 +11,7 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
 }));
 
-import { useResetToStorySelection } from '../../../src/screens/storysettings/useResetToStorySelection';
+import { useResetToStorySelection } from '@/src/screens/storysettings/useResetToStorySelection';
 
 it('resets the root navigator, however many navigators the screen sits inside', async () => {
   const root = { dispatch: jest.fn(), getParent: jest.fn(() => undefined) };

@@ -2,11 +2,11 @@ import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import HighlightedText, {
   SearchHighlightContext,
-} from '../../../src/components/common/lists/SearchHighlight/SearchHighlight';
-import ListItemTitle from '../../../src/components/features/list-items/ListItemTitle';
+} from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
+import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({

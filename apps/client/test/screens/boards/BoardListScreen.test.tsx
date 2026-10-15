@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import BoardListScreen from '../../../src/screens/boards/BoardListScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import BoardListScreen from '@/src/screens/boards/BoardListScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -22,7 +22,7 @@ jest.mock('@react-navigation/native', () => ({
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -31,7 +31,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -51,7 +51,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/features/boards/BoardCreateModal', () => {
+jest.mock('@/src/components/features/boards/BoardCreateModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -73,7 +73,7 @@ jest.mock('../../../src/components/features/boards/BoardCreateModal', () => {
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStoryId ? { id: mockStoryId } : null,
@@ -85,21 +85,21 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (s: any) => any) => {
     const state = { userId: 'user-1', exportFormat: 'svg' };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (s: any) => any) => {
     const state = { showNotification: mockNotify };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -108,20 +108,20 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
-jest.mock('../../../src/db', () => ({ useDrizzle: () => ({}) }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
-jest.mock('../../../src/services/storymanagement/BoardService', () => ({
+jest.mock('@/src/services/storymanagement/BoardService', () => ({
   createBoardService: () => ({
     getBoardsForStory: mockGetBoards,
     createBoard: mockCreateBoard,

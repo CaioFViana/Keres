@@ -9,7 +9,7 @@ import type {
   ScenePageInsert,
   SongInsert,
   TagRelationInsert,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import {
   characterRelations,
   characterScenes,
@@ -21,7 +21,7 @@ import {
   scenePages,
   songs,
   tagRelations,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import type { SQLiteStoryPackageImportContext } from './SQLiteStoryPackageImportContext';
 
 /**

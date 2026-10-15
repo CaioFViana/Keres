@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { keepPageOutOfBackForwardCache } from '../../src/utils/pageLifecycle';
+import { keepPageOutOfBackForwardCache } from '@/src/utils/pageLifecycle';
 
 describe('keepPageOutOfBackForwardCache', () => {
   const original = Platform.OS;

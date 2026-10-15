@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { createCommentFieldBindings } from '../../src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
 
 it('uses the displayed text as the snapshot and preserves field permissions and mention origin', async () => {
   const addComment = jest.fn(async () => {});

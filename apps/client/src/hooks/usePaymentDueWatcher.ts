@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import type { AppDrizzleClient } from '../db';
-import { loadPaymentOverview, PAYMENTS_CHANGED } from '../services/PaymentService';
-import { warnAboutPayment } from '../services/PaymentWarningService';
-import { createServerService } from '../services/ServerService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import { loadPaymentOverview, PAYMENTS_CHANGED } from '@/src/services/PaymentService';
+import { warnAboutPayment } from '@/src/services/PaymentWarningService';
+import { createServerService } from '@/src/services/ServerService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /**
  * Reminds the user, once, that a paid period is about to end or has run out - and only if they allowed it

@@ -1,15 +1,15 @@
 const mockGetShared = jest.fn();
 const mockGetConversations = jest.fn();
 
-jest.mock('../../src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/FriendshipApiService', () => ({
   friendshipApiService: { getSharedStories: (...args: unknown[]) => mockGetShared(...args) },
 }));
-jest.mock('../../src/services/MessageApiService', () => ({
+jest.mock('@/src/services/MessageApiService', () => ({
   messageApi: { getConversations: (...args: unknown[]) => mockGetConversations(...args) },
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useFriendActivity } from '../../src/hooks/useFriendActivity';
+import { useFriendActivity } from '@/src/hooks/useFriendActivity';
 
 const server = { id: 'srv-1' } as never;
 const message = { id: 'm1', body: 'oi', createdAt: '2026-10-01T10:00:00Z', mine: true };

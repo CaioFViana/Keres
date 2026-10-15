@@ -9,26 +9,26 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockTranslation,
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../src/services/storymanagement/SketchService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/storymanagement/SketchService', () => ({
   __esModule: true,
   createSketchService: () => ({ createSketch: mockCreateSketch }),
 }));
-jest.mock('../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => mockGalleryService,
 }));
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { pickImages: (...args: unknown[]) => mockPickImages(...args) },
 }));
-jest.mock('../../src/services/galleryMediaImport', () => ({
+jest.mock('@/src/services/galleryMediaImport', () => ({
   __esModule: true,
   importPickedMediaAssets: (...args: unknown[]) => mockImport(...args),
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useAddScenePages } from '../../src/hooks/useAddScenePages';
+import { useAddScenePages } from '@/src/hooks/useAddScenePages';
 
 const setup = (overrides: Partial<Parameters<typeof useAddScenePages>[0]> = {}) =>
   renderHook(() =>

@@ -23,24 +23,24 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => mockNavigation,
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
-jest.mock('../../../src/screens/storysettings/useResetToStorySelection', () => ({
+jest.mock('@/src/screens/storysettings/useResetToStorySelection', () => ({
   __esModule: true,
   useResetToStorySelection: () => mockResetToStorySelection,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit, canManageStoryPolicy: mockCanManageStoryPolicy }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     getStoryById: mockGetStoryById,
@@ -48,18 +48,18 @@ jest.mock('../../../src/services/storymanagement/StoryService', () => ({
     deleteStory: mockDeleteStory,
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = { selectedStory: mockSelectedStory, setSelectedStory: mockSetSelectedStory };
     return selector ? selector(state) : state;
   },
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -73,11 +73,11 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAppAlert(...args) },
 }));
-jest.mock('../../../src/components/common', () => {
+jest.mock('@/src/components/common', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -96,7 +96,7 @@ jest.mock('../../../src/components/common', () => {
     ),
   };
 });
-jest.mock('../../../src/components/features/gallery/GalleryCoverField', () => {
+jest.mock('@/src/components/features/gallery/GalleryCoverField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -114,7 +114,7 @@ jest.mock('../../../src/components/features/gallery/GalleryCoverField', () => {
   };
 });
 jest.mock(
-  '../../../src/components/features/story/StoryCollaborationSection/StoryCollaborationSection',
+  '@/src/components/features/story/StoryCollaborationSection/StoryCollaborationSection',
   () => {
     const { Text } = require('react-native');
     return {
@@ -136,7 +136,7 @@ jest.mock(
     };
   },
 );
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -144,7 +144,7 @@ jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () 
     ScreenError: ({ message }: { message: string }) => <Text testID="screen-error">{message}</Text>,
   };
 });
-jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -171,8 +171,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 
-import StorySettingsCollaborationScreen from '../../../src/screens/storysettings/StorySettingsCollaborationScreen';
-import StorySettingsIndexScreen from '../../../src/screens/storysettings/StorySettingsIndexScreen';
+import StorySettingsCollaborationScreen from '@/src/screens/storysettings/StorySettingsCollaborationScreen';
+import StorySettingsIndexScreen from '@/src/screens/storysettings/StorySettingsIndexScreen';
 
 function alertButtons(callIndex: number): { text: string; onPress?: () => void }[] {
   return mockAppAlert.mock.calls[callIndex][2] as { text: string; onPress?: () => void }[];

@@ -2,32 +2,32 @@
  * @jest-environment node
  */
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(),
 }));
 
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(),
 }));
 
-jest.mock('../../src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
   __esModule: true,
   createFavoriteService: jest.fn(),
 }));
 
-jest.mock('../../src/services/storymanagement/CommentService', () => ({
+jest.mock('@/src/services/storymanagement/CommentService', () => ({
   __esModule: true,
   createCommentService: jest.fn(),
 }));
 
-jest.mock('../../src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/MediaSyncService', () => ({
   __esModule: true,
   createMediaSyncService: () => ({
     syncStoryMedia: jest.fn(async () => ({
@@ -41,15 +41,15 @@ jest.mock('../../src/services/MediaSyncService', () => ({
 
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createCommentService } from '../../src/services/storymanagement/CommentService';
-import { createFavoriteService } from '../../src/services/storymanagement/FavoriteService';
-import { createServerService } from '../../src/services/ServerService';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import type { SyncEngineService } from '../../src/services/SyncEngineService';
-import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
-import { isPlanLimitMessage } from '../../src/services/sync/StoryTransfer';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createCommentService } from '@/src/services/storymanagement/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
+import { createServerService } from '@/src/services/ServerService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import type { SyncEngineService } from '@/src/services/SyncEngineService';
+import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
+import { isPlanLimitMessage } from '@/src/services/sync/StoryTransfer';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 /** Forma completa de `ServerSelect`, para os testes chamarem a API real sem cast. */

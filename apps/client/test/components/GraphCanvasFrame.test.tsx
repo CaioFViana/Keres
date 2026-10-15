@@ -4,9 +4,9 @@ import { Animated, PanResponder, StyleSheet, View } from 'react-native';
 import GraphCanvasFrame, {
   graphCanvasPlaneStyle,
   suppressNativeDragOnContainer,
-} from '../../src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+} from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { background: '#111' } }),
 }));
 

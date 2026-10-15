@@ -2,12 +2,12 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createAttributeValueService } from '../../src/services/storymanagement/AttributeValueService';
-import { startSession } from '../../src/services/storymanagement/SessionService';
-import { createStorySchemaFieldService } from '../../src/services/storymanagement/StorySchemaFieldService';
-import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { startSession } from '@/src/services/storymanagement/SessionService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

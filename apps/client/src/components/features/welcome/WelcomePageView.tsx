@@ -9,9 +9,9 @@ import Animated, {
   useAnimatedStyle,
   type SharedValue,
 } from 'react-native-reanimated';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import type { ClientFlavor } from '../../../utils/clientFlavor';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { ClientFlavor } from '@/src/utils/clientFlavor';
 import WelcomeHero from './WelcomeHero';
 import {
   WELCOME_TITLE_KEYS,

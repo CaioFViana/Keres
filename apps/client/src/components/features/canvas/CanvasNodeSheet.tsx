@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
-import { getCommonCardStyles } from '../../../theme/commonStyles';
-import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
+import { useTheme } from '@/src/theme';
+import { getCommonCardStyles } from '@/src/theme/commonStyles';
+import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
 
 /** Styles shared by the node sheets of the canvases (board pins and map points). */
 export const getCanvasNodeSheetStyles = (colors: ThemeColors) =>

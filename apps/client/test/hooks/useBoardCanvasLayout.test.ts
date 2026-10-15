@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { useState } from 'react';
 import type { BoardContentType } from '@keres/shared';
-import { useBoardCanvasLayout } from '../../src/hooks/useBoardCanvasLayout';
+import { useBoardCanvasLayout } from '@/src/hooks/useBoardCanvasLayout';
 
 describe('useBoardCanvasLayout', () => {
   it('moves a node inside the world bounds without changing other nodes', async () => {

@@ -1,5 +1,5 @@
 import type { EnrichedFriendship, Friendship, SharedStory } from '@keres/shared'; // Assuming Friendship is the type returned by the API
-import type { ServerSelect } from '../db/schemas/servers';
+import type { ServerSelect } from '@/src/db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 

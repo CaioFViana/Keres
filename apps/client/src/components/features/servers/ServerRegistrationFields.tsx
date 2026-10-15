@@ -10,7 +10,7 @@ import {
   type StyleProp,
   type TextStyle,
 } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 export type ServerAuthMode = 'login' | 'register' | 'recover';

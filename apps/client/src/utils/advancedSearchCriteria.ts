@@ -1,4 +1,4 @@
-import type { AdvancedSearchCriteria } from '../types/entityFilters';
+import type { AdvancedSearchCriteria } from '@/src/types/entityFilters';
 
 export type { AdvancedSearchCriteria };
 

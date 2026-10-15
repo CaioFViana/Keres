@@ -1,10 +1,10 @@
 import { normalizeUserTag, USER_TAG_MAX_LENGTH, USER_TAG_MIN_LENGTH } from '@keres/shared';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ServerSelect } from '../db/schema';
-import { isOfflineError } from '../services/apiClient';
-import { userApiService } from '../services/UserApiService';
-import { AppAlert } from '../utils/AppAlert';
+import type { ServerSelect } from '@/src/db/schema';
+import { isOfflineError } from '@/src/services/apiClient';
+import { userApiService } from '@/src/services/UserApiService';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 /** What the editor needs of the service that stores the server locally. */
 interface TagStore {

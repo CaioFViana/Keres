@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CommentListItem from '@/src/components/features/list-items/CommentListItem';
-import type { CommentSelect } from '../../../../db/schema';
-import { useStoryComments } from '../../../../hooks/useStoryComments';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import type { CommentSelect } from '@/src/db/schema';
+import { useStoryComments } from '@/src/hooks/useStoryComments';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface CommentListProps {
   storyId: string;

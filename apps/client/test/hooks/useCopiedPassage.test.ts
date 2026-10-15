@@ -1,5 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
-import { readCopiedPassage } from '../../src/hooks/useCopiedPassage';
+import { readCopiedPassage } from '@/src/hooks/useCopiedPassage';
 
 const copied = (text: string) =>
   (Clipboard.getStringAsync as jest.Mock).mockResolvedValueOnce(text);

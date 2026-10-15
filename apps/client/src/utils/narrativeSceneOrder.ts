@@ -1,4 +1,4 @@
-import type { ChapterSelect, SceneSelect } from '../db/schema';
+import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 
 /** Sentinel id for the list bucket of scenes that belong to no chapter. Not a stored row. */
 export const UNCHAPTERED_GROUP_ID = '__unchaptered__';

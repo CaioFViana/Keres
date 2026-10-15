@@ -1,4 +1,4 @@
-import { orderItemJourneysByNarrative } from '../../src/utils/itemJourneyOrder';
+import { orderItemJourneysByNarrative } from '@/src/utils/itemJourneyOrder';
 
 const chapters = [
   { id: 'c1', name: 'One', index: 0 },

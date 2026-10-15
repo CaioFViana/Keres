@@ -21,7 +21,7 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
@@ -76,20 +76,20 @@ jest.mock('@/src/components/features/location-maps/LocationMapCreateModal', () =
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   __esModule: true,
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
   __esModule: true,
   createLocationMapService: () => ({
     getMapsForStory: mockGetMapsForStory,
@@ -98,20 +98,20 @@ jest.mock('../../../src/services/storymanagement/LocationMapService', () => ({
     deleteMap: mockDeleteMap,
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: { selectedStory: unknown }) => unknown) =>
     selector({ selectedStory: mockStoryId ? { id: mockStoryId } : undefined }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -123,7 +123,7 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -132,8 +132,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 
-import LocationMapListScreen from '../../../src/screens/location-maps/LocationMapListScreen';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import LocationMapListScreen from '@/src/screens/location-maps/LocationMapListScreen';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const makeMap = (overrides = {}) => ({
   id: 'map-1',

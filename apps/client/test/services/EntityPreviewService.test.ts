@@ -1,6 +1,6 @@
 const mockGetEntityTable = jest.fn();
 const mockSummarize = jest.fn();
-jest.mock('../../src/services/entityTableRegistry', () => ({
+jest.mock('@/src/services/entityTableRegistry', () => ({
   __esModule: true,
   getEntityTable: (...args: unknown[]) => mockGetEntityTable(...args),
 }));
@@ -9,7 +9,7 @@ jest.mock('@keres/shared', () => ({
   summarizeBoardEntity: (...args: unknown[]) => mockSummarize(...args),
 }));
 
-import { createEntityPreviewService } from '../../src/services/EntityPreviewService';
+import { createEntityPreviewService } from '@/src/services/EntityPreviewService';
 
 beforeEach(() => {
   jest.clearAllMocks();

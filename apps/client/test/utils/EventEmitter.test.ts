@@ -1,4 +1,4 @@
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 // A module singleton, shared by every service: without clearing it, one test leaks into the next
 // exactly as a forgotten listener would leak between screens.

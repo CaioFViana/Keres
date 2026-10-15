@@ -15,19 +15,19 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { CommentSelect } from '../../../../db/schema';
-import { useAuthorProfiles } from '../../../../hooks/useAuthorProfiles';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { layout } from '../../../../theme/layout';
-import { typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { AppAlert } from '../../../../utils/AppAlert';
-import type { CommentCriticality } from '../../../../utils/commentCriticality';
+import type { CommentSelect } from '@/src/db/schema';
+import { useAuthorProfiles } from '@/src/hooks/useAuthorProfiles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import type { CommentCriticality } from '@/src/utils/commentCriticality';
 import {
   CRITICALITY_ICONS,
   CRITICALITY_LEVELS,
   DEFAULT_CRITICALITY,
-} from '../../../../utils/commentCriticality';
+} from '@/src/utils/commentCriticality';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface CommentThreadModalProps {

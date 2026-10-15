@@ -15,8 +15,8 @@ import {
   setEditorDraftDb,
   writeEditorDraft,
   writeEditorDraftNow,
-} from '../../src/services/EditorDraftService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/EditorDraftService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

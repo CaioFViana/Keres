@@ -7,23 +7,23 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import Button from '@/src/components/common/controls/Button/Button';
-import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
-import { useTheme } from '../../../../theme';
+import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useTheme } from '@/src/theme';
 import {
   activeCriteria,
   isActiveCriterion,
   type AdvancedSearchCriteria,
-} from '../../../../utils/advancedSearchCriteria';
+} from '@/src/utils/advancedSearchCriteria';
 import {
   buildSearchFields,
   criterionKey,
   fieldLabelText,
   type AdvancedSearchScope,
-} from '../../../../utils/advancedSearchFields';
-import { CUSTOM_FIELD_METADATA_PREFIX } from '../../../../utils/customAttributeFieldMetadata';
+} from '@/src/utils/advancedSearchFields';
+import { CUSTOM_FIELD_METADATA_PREFIX } from '@/src/utils/customAttributeFieldMetadata';
 import AdvancedSearchFieldRow, { isRenderableField } from './AdvancedSearchFieldRow';
 
-export type { AdvancedSearchScope } from '../../../../utils/advancedSearchFields';
+export type { AdvancedSearchScope } from '@/src/utils/advancedSearchFields';
 
 interface AdvancedSearchModalProps {
   entityName: string;

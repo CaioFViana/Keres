@@ -4,8 +4,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import type { FriendshipWithServer } from '../../../services/FriendshipService';
-import { useTheme } from '../../../theme';
+import type { FriendshipWithServer } from '@/src/services/FriendshipService';
+import { useTheme } from '@/src/theme';
 
 const STATUS_KEYS: Record<string, string> = {
   [FriendStatus.PENDING]: 'status_pending',

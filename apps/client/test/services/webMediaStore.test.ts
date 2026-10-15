@@ -11,7 +11,7 @@ import {
   readBytes,
   resolveBlobUri,
   writeBytes,
-} from '../../src/services/webMediaStore';
+} from '@/src/services/webMediaStore';
 
 const bridge = {
   deleteDirectory: jest.fn(),

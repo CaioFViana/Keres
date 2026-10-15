@@ -1,5 +1,5 @@
 /** @jest-environment node */
-jest.mock('../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   __esModule: true,
   useDrizzle: jest.fn(),
 }));
@@ -7,24 +7,24 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/utils/entityOptions', () => ({
+jest.mock('@/src/utils/entityOptions', () => ({
   __esModule: true,
   loadEntityOptions: jest.fn(),
 }));
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (entityType: string) => entityType }),
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import type { MultiSelectGroup } from '../../src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useDrizzle } from '../../src/db';
+import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { useDrizzle } from '@/src/db';
 import {
   decodeBoardPinValue,
   encodeBoardPinValue,
   useBoardPinOptions,
-} from '../../src/hooks/useBoardPinOptions';
-import { loadEntityOptions } from '../../src/utils/entityOptions';
+} from '@/src/hooks/useBoardPinOptions';
+import { loadEntityOptions } from '@/src/utils/entityOptions';
 
 const selectReturning = (...results: unknown[][]) => {
   const all = jest.fn();

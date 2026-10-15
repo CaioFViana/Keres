@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-import { withoutPendingParentEdges } from '../../../src/screens/locations/useLocationFormAssociations';
-import type { LocationRelationSelect } from '../../../src/db/schema';
+import { withoutPendingParentEdges } from '@/src/screens/locations/useLocationFormAssociations';
+import type { LocationRelationSelect } from '@/src/db/schema';
 
 const edge = (
   partial: Partial<LocationRelationSelect> &

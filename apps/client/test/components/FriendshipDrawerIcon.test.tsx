@@ -10,7 +10,7 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return { Ionicons: ({ name }: { name: string }) => <Text testID={`icon-${name}`}>{name}</Text> };
 });
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ isDarkMode: false, colors: mockColors }),
 }));
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -23,8 +23,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 import { act, render } from '@testing-library/react-native';
-import FriendshipDrawerIcon from '../../src/components/features/messages/FriendshipDrawerIcon';
-import { useUnseenMessagesStore } from '../../src/state/unseenMessagesStore';
+import FriendshipDrawerIcon from '@/src/components/features/messages/FriendshipDrawerIcon';
+import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
 
 beforeEach(() => {
   useUnseenMessagesStore.getState().reset();

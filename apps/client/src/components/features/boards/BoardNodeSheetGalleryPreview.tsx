@@ -1,14 +1,14 @@
 import { Image } from 'expo-image';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import ImageZoomViewer from '../media/MediaPlayer/ImageZoomViewer';
-import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
-import { useTheme } from '../../../theme';
+import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
+import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useTheme } from '@/src/theme';
 import {
   galleryDisplayPath,
   galleryHasImage,
   type BoardGalleryMedia,
-} from '../../../utils/boardLayout';
+} from '@/src/utils/boardLayout';
 
 interface Props {
   /** The gallery's media, when the sheet's pin is a Gallery pin - otherwise nothing renders. */

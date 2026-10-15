@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface DrawerIconWithMarkProps {
   name: React.ComponentProps<typeof Ionicons>['name'];

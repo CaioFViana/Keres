@@ -11,9 +11,9 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonChipStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { space, typography } from '../../../theme/tokens';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { space, typography } from '@/src/theme/tokens';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface Props {

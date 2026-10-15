@@ -65,40 +65,40 @@ jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: jest.fn(), colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
-jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDrizzle }));
-jest.mock('../../../src/hooks/usePaymentOverview', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDrizzle }));
+jest.mock('@/src/hooks/usePaymentOverview', () => ({
   usePaymentOverview: (...args: unknown[]) => mockPaymentOverview(...args),
 }));
-jest.mock('../../../src/hooks/useAccountPlan', () => ({
+jest.mock('@/src/hooks/useAccountPlan', () => ({
   useAccountPlan: (...args: unknown[]) => mockAccountPlan(...args),
 }));
 const mockFetchAgeInfo = jest.fn();
 const mockFetchVerificationStatus = jest.fn();
-jest.mock('../../../src/services/AgeVerificationApiService', () => ({
+jest.mock('@/src/services/AgeVerificationApiService', () => ({
   __esModule: true,
   fetchAgeVerificationInfo: (...args: unknown[]) => mockFetchAgeInfo(...args),
   fetchVerificationStatus: (...args: unknown[]) => mockFetchVerificationStatus(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/ServerService', () => {
+jest.mock('@/src/services/ServerService', () => {
   class ServerHasOwnedStoriesError extends Error {
     ownedStories: Array<{ title: string }>;
     constructor(ownedStories: Array<{ title: string }>) {
@@ -117,7 +117,7 @@ jest.mock('../../../src/services/ServerService', () => {
   };
 });
 
-jest.mock('../../../src/services/DeleteAccountService', () => {
+jest.mock('@/src/services/DeleteAccountService', () => {
   class AccountDeletionCleanupError extends Error {}
   return {
     AccountDeletionCleanupError,
@@ -125,12 +125,12 @@ jest.mock('../../../src/services/DeleteAccountService', () => {
   };
 });
 
-jest.mock('../../../src/services/AccountDataExportService', () => ({
+jest.mock('@/src/services/AccountDataExportService', () => ({
   __esModule: true,
   exportAccountData: (...args: unknown[]) => mockExportAccountData(...args),
 }));
 
-jest.mock('../../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,
@@ -143,14 +143,14 @@ jest.mock('../../../src/services/apiClient', () => ({
   }),
 }));
 
-jest.mock('../../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: {
     updateOwnTag: (...args: unknown[]) => mockUpdateOwnTag(...args),
     getOwnProfile: (...args: unknown[]) => mockGetOwnProfile(...args),
   },
 }));
 
-jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return {
     __esModule: true,
@@ -159,10 +159,10 @@ jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
 });
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ServerDetailScreen from '../../../src/screens/enterstack/ServerDetailScreen';
-import { AccountDeletionCleanupError } from '../../../src/services/DeleteAccountService';
-import { useUserSettingsStore } from '../../../src/state/userSettingsStore';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import ServerDetailScreen from '@/src/screens/enterstack/ServerDetailScreen';
+import { AccountDeletionCleanupError } from '@/src/services/DeleteAccountService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = {
   id: 'srv-1',
@@ -673,7 +673,7 @@ describe('ServerDetailScreen', () => {
     });
 
     it("badges the way to the messages when this server's administrators wrote", async () => {
-      const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+      const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
       await act(async () => {
         useUnseenMessagesStore.setState({ unseen: { 'srv-1|admin': '09' } });
       });
@@ -902,9 +902,9 @@ describe('ServerDetailScreen', () => {
         expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'),
       );
 
-      const { ServerHasOwnedStoriesError } = jest.requireMock(
-        '../../../src/services/ServerService',
-      ) as { ServerHasOwnedStoriesError: new (s: Array<{ title: string }>) => Error };
+      const { ServerHasOwnedStoriesError } = jest.requireMock('@/src/services/ServerService') as {
+        ServerHasOwnedStoriesError: new (s: Array<{ title: string }>) => Error;
+      };
       mockDeleteServer.mockRejectedValueOnce(new ServerHasOwnedStoriesError([{ title: 'Epic' }]));
       await fireEvent.press(view.getByTestId('server-action-delete'));
       await waitFor(() => expect(mockAlert.mock.calls.at(-1)![0]).toBe('delete_server_title'));

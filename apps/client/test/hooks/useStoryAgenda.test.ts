@@ -19,17 +19,17 @@ jest.mock('@keres/shared', () => ({
   dayNumberForElapsed: jest.fn((_definition, epoch, elapsed) => epoch + elapsed / 86_400),
   gregorianDayNumberForElapsed: jest.fn((epoch, elapsed) => epoch + elapsed / 86_400),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));
-jest.mock('../../src/hooks/useStoryTimeline', () => ({
+jest.mock('@/src/hooks/useStoryTimeline', () => ({
   __esModule: true,
   useStoryTimeline: jest.fn(() => mockTimeline),
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useStoryAgenda } from '../../src/hooks/useStoryAgenda';
+import { useStoryAgenda } from '@/src/hooks/useStoryAgenda';
 
 describe('useStoryAgenda', () => {
   it('derives sorted scene and unique event entries from the shared timeline', async () => {

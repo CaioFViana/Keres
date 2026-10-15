@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { NO_RESPONSE_ERROR } from '../../src/services/apiClient';
+import { NO_RESPONSE_ERROR } from '@/src/services/apiClient';
 import {
   FAILED_RETRY_MAX_MS,
   LIVE_SYNC_INTERVAL_MS,
@@ -9,8 +9,8 @@ import {
   SYNC_INTERVAL_MS,
   SyncScheduler,
   failedRetryDelayMs,
-} from '../../src/services/sync/SyncScheduler';
-import type { SyncCycleOutcome } from '../../src/services/sync/SyncScheduler';
+} from '@/src/services/sync/SyncScheduler';
+import type { SyncCycleOutcome } from '@/src/services/sync/SyncScheduler';
 
 const flush = async () => {
   for (let index = 0; index < 8; index += 1) await Promise.resolve();

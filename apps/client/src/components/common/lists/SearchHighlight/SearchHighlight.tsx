@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { Text } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { splitByTerm } from '../../../../utils/highlightMatches';
+import { useTheme } from '@/src/theme';
+import { splitByTerm } from '@/src/utils/highlightMatches';
 
 /**
  * The term a list is searched for. `GenericFilterSortList` provides it around its rows and

@@ -2,11 +2,11 @@ import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { ItemSelect } from '../../../db/schemas/items';
-import type { TagSelect } from '../../../db/schema';
-import { useTheme, type ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { truncate } from '../../../utils/stringUtils';
+import type { ItemSelect } from '@/src/db/schemas/items';
+import type { TagSelect } from '@/src/db/schema';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { truncate } from '@/src/utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';

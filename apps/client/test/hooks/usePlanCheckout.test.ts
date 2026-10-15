@@ -11,18 +11,18 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'pt' } }),
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),
 }));
-jest.mock('../../src/services/PaymentService', () => ({
+jest.mock('@/src/services/PaymentService', () => ({
   __esModule: true,
   PAYMENTS_CHANGED: 'payments_changed',
   startCheckout: (...args: unknown[]) => mockStart(...args),
   getCheckout: (...args: unknown[]) => mockGet(...args),
   verifyPlayPurchase: (...args: unknown[]) => mockVerify(...args),
 }));
-jest.mock('../../src/utils/playPurchase', () => ({
+jest.mock('@/src/utils/playPurchase', () => ({
   __esModule: true,
   playDriver: {
     available: true,
@@ -34,9 +34,9 @@ jest.mock('../../src/utils/playPurchase', () => ({
 
 import { act, renderHook } from '@testing-library/react-native';
 import { Linking } from 'react-native';
-import { CHECKOUT_POLL_MS, usePlanCheckout } from '../../src/hooks/usePlanCheckout';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
-import { PlayPurchaseError } from '../../src/utils/playPurchaseTypes';
+import { CHECKOUT_POLL_MS, usePlanCheckout } from '@/src/hooks/usePlanCheckout';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { PlayPurchaseError } from '@/src/utils/playPurchaseTypes';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const request = { tierId: 'tier-1', interval: 'monthly' as const, methodId: 'pix' };

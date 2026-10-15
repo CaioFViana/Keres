@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: { get: jest.fn(), post: jest.fn() },
   apiUrl: (server: string, endpoint: string) => `${server}/api${endpoint}`,
@@ -15,12 +15,12 @@ jest.mock('@keres/shared', () => ({
 }));
 
 import { canTalkToServer } from '@keres/shared';
-import apiClient from '../../src/services/apiClient';
+import apiClient from '@/src/services/apiClient';
 import {
   authenticateWithKeresServer,
   keresAuthAlertMessage,
   type KeresAuthFailure,
-} from '../../src/utils/keresServerAuth';
+} from '@/src/utils/keresServerAuth';
 
 const mockGet = apiClient.get as jest.Mock;
 const mockPost = apiClient.post as jest.Mock;

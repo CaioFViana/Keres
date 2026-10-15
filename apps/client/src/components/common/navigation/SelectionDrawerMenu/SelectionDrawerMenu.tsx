@@ -1,15 +1,12 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GuideDrawerId } from '../../../../guides/types';
-import type { MenuBadges } from '../../../../navigation/drawerMenuModel';
-import { buildStorySelectionMenu } from '../../../../navigation/storySelectionMenu';
-import {
-  useHasUnseenAdminMessages,
-  useHasUnseenMessages,
-} from '../../../../state/unseenMessagesStore';
-import { isServerless } from '../../../../utils/clientFlavor';
-import GroupedDrawerMenu from '../GroupedDrawerMenu/GroupedDrawerMenu';
+import type { GuideDrawerId } from '@/src/guides/types';
+import type { MenuBadges } from '@/src/navigation/drawerMenuModel';
+import { buildStorySelectionMenu } from '@/src/navigation/storySelectionMenu';
+import { useHasUnseenAdminMessages, useHasUnseenMessages } from '@/src/state/unseenMessagesStore';
+import { isServerless } from '@/src/utils/clientFlavor';
+import GroupedDrawerMenu from '@/src/components/common/navigation/GroupedDrawerMenu/GroupedDrawerMenu';
 
 interface SelectionDrawerMenuProps {
   state: DrawerContentComponentProps['state'];

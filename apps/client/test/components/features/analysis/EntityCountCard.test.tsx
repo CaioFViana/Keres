@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
       options?.name ? `${key}:${options.name}` : key,
   }),
 }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -27,7 +27,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-import EntityCountCard from '../../../../src/components/features/analysis/EntityCountCard/EntityCountCard';
+import EntityCountCard from '@/src/components/features/analysis/EntityCountCard/EntityCountCard';
 
 const labels: Record<string, string> = {
   Character: 'Characters',

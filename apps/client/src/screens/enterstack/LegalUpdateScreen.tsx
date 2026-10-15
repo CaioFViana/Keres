@@ -5,26 +5,26 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { type ClientLegalBehind, legalIsBehind } from '../../legal/clientLegalStatus';
+import { type ClientLegalBehind, legalIsBehind } from '@/src/legal/clientLegalStatus';
 import {
   CLIENT_TERMS_UPDATED_AT,
   CLIENT_TERMS_VERSION,
   clientTermsFor,
-} from '../../legal/clientTerms';
+} from '@/src/legal/clientTerms';
 import {
   type ClientLegalDocument,
   getAcceptedClientLegal,
   setAcceptedClientLegal,
-} from '../../legal/clientTermsAcceptance';
+} from '@/src/legal/clientTermsAcceptance';
 import {
   CLIENT_PRIVACY_UPDATED_AT,
   CLIENT_PRIVACY_VERSION,
   clientPrivacyFor,
-} from '../../legal/privacyPolicy';
-import { type ThemeColors, useTheme } from '../../theme';
-import { space, typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { useDocumentTitle } from '../../utils/documentTitle';
+} from '@/src/legal/privacyPolicy';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { space, typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useDocumentTitle } from '@/src/utils/documentTitle';
 
 type RootStackParamList = {
   LegalUpdate: undefined;

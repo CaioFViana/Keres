@@ -1,5 +1,5 @@
 import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
-import { useExportFormatPromptStore } from '../state/exportFormatPromptStore';
+import { useExportFormatPromptStore } from '@/src/state/exportFormatPromptStore';
 
 /**
  * Asks which file to export - SVG or PNG - every time, and resolves `null` when the user closes the

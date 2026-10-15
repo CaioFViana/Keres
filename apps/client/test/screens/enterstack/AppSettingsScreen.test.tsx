@@ -97,42 +97,42 @@ jest.mock('expo-sqlite', () => ({
   useSQLiteContext: () => mockSqliteDb,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
   resetDatabase: (...args: unknown[]) => mockResetDatabase(...args),
 }));
 
 let mockServerless = false;
-jest.mock('../../../src/utils/clientFlavor', () => ({
-  ...jest.requireActual('../../../src/utils/clientFlavor'),
+jest.mock('@/src/utils/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/clientFlavor'),
   isServerless: () => mockServerless,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   authTokenManager: {
     clearAllAuth: (...args: unknown[]) => mockClearAllAuth(...args),
   },
@@ -140,46 +140,46 @@ jest.mock('../../../src/services/AuthTokenManager', () => ({
 }));
 
 // The screen reads the real font pack state; only what the reset deletes is replaced.
-jest.mock('../../../src/services/cjkFontPack', () => ({
-  ...jest.requireActual('../../../src/services/cjkFontPack'),
+jest.mock('@/src/services/cjkFontPack', () => ({
+  ...jest.requireActual('@/src/services/cjkFontPack'),
   deleteCjkPack: jest.fn(async () => undefined),
 }));
-jest.mock('../../../src/services/SongAudioService', () => ({
-  ...jest.requireActual('../../../src/services/SongAudioService'),
+jest.mock('@/src/services/SongAudioService', () => ({
+  ...jest.requireActual('@/src/services/SongAudioService'),
   defaultSongAudioStore: () => ({ prune: jest.fn(async () => undefined) }),
 }));
-jest.mock('../../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: {
     deleteAllMedia: (...args: unknown[]) => mockDeleteAllMedia(...args),
   },
 }));
 
-jest.mock('../../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   syncEngine: { reset: (...args: unknown[]) => mockSyncReset(...args) },
 }));
 
-jest.mock('../../../src/state/resetAllClientStores', () => ({
+jest.mock('@/src/state/resetAllClientStores', () => ({
   resetAllClientStores: (...args: unknown[]) => mockResetAllClientStores(...args),
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
-jest.mock('../../../src/state/themeStore', () => ({
+jest.mock('@/src/state/themeStore', () => ({
   useThemeStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockThemeState) : mockThemeState,
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) => {
     const state = { showNotification: (...args: unknown[]) => mockShowNotification(...args) };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: { changeLanguage: (...args: unknown[]) => mockChangeLanguage(...args) },
   getLanguageOptions: () => [
@@ -195,7 +195,7 @@ type PillProps = {
   placeholder: string;
 };
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -227,13 +227,10 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import SettingsScreen from '../../../src/screens/enterstack/AppSettingsScreen';
-import {
-  getAcceptedClientLegal,
-  setAcceptedClientLegal,
-} from '../../../src/legal/clientTermsAcceptance';
-import { useMusicToolsStore } from '../../../src/state/musicToolsStore';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import SettingsScreen from '@/src/screens/enterstack/AppSettingsScreen';
+import { getAcceptedClientLegal, setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import { useMusicToolsStore } from '@/src/state/musicToolsStore';
 
 type AlertButton = { text: string; onPress?: () => void | Promise<void> };
 

@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 import { useCallback, type MutableRefObject } from 'react';
-import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { AppAlert } from '../../utils/AppAlert';
+import type { LocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 interface LocationRelationActionsParams {
   relationServiceRef: MutableRefObject<LocationRelationService | null>;

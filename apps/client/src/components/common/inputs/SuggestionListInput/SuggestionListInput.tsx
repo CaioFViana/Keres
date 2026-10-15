@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { typography } from '../../../../theme/tokens';
+import type { SuggestionType } from '@/src/services/storymanagement/SuggestionService';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { typography } from '@/src/theme/tokens';
 import { getContrastTextColor } from '@keres/shared';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import SuggestionCatalogModal from '../SuggestionCatalogModal/SuggestionCatalogModal';
-import { useSuggestionCatalog } from '../SuggestionCatalogModal/useSuggestionCatalog';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import SuggestionCatalogModal from '@/src/components/common/inputs/SuggestionCatalogModal/SuggestionCatalogModal';
+import { useSuggestionCatalog } from '@/src/components/common/inputs/SuggestionCatalogModal/useSuggestionCatalog';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface SuggestionListInputProps {
   values: string[];

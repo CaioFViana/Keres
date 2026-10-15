@@ -1,10 +1,10 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { loadBoardEntitySummary } from '../../src/utils/boardEntitySummary';
-import { seedLocalStory, TEST_STORY_ID, entityBase } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { loadBoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import { seedLocalStory, TEST_STORY_ID, entityBase } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 describe('loadBoardEntitySummary', () => {
   let database: TestDatabase;

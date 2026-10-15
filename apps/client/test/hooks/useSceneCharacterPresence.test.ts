@@ -8,26 +8,26 @@ const mockService = {
 const mockAlert = jest.fn();
 const mockSettings = { userId: 'user-1' };
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
-jest.mock('../../src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: jest.fn(() => mockService),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useSceneCharacterPresence } from '../../src/hooks/useSceneCharacterPresence';
+import { useSceneCharacterPresence } from '@/src/hooks/useSceneCharacterPresence';
 
 const relation = { id: 'relation-1', characterId: 'character-1', sceneId: 'scene-1' } as any;
 

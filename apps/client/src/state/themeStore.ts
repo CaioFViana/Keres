@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { AppDrizzleClient } from '../db';
-import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
+import type { AppDrizzleClient } from '@/src/db';
+import { getClientSettings, updateClientSettings } from '@/src/services/ClientSettingsService';
 
 /** Durable dark-mode flag: every change writes through to `client_settings` first. */
 interface ThemeState {

@@ -18,11 +18,11 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     },
   },
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: {
     language: 'en',
@@ -30,7 +30,7 @@ jest.mock('../../src/utils/i18n', () => ({
   },
 }));
 
-import { warnAboutPayment } from '../../src/services/PaymentWarningService';
+import { warnAboutPayment } from '@/src/services/PaymentWarningService';
 
 const server = { id: 'server-1', name: 'Home' };
 const now = new Date('2026-04-01T12:00:00.000Z');

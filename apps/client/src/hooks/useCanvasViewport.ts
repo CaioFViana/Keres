@@ -4,7 +4,7 @@ import type { View } from 'react-native';
 import { Animated, PanResponder, Platform } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
-import { capturePointer, releasePointer } from '../utils/pointerCapture';
+import { capturePointer, releasePointer } from '@/src/utils/pointerCapture';
 import { attachCanvasWebInput } from './canvasWebInput';
 import { useCanvasAutoPan } from './useCanvasAutoPan';
 import { useCanvasCameraMoves } from './useCanvasCameraMoves';

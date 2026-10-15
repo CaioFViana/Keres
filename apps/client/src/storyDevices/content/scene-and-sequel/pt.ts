@@ -1,4 +1,4 @@
-import type { StoryDevicePage } from '../../types';
+import type { StoryDevicePage } from '@/src/storyDevices/types';
 const page: StoryDevicePage = {
   id: 'scene-and-sequel',
   title: 'Cena e sequência',

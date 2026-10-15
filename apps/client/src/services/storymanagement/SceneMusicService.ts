@@ -1,18 +1,18 @@
 import type { SceneMusicRole } from '@keres/shared';
 import { compareRanked, rankBetween } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { SceneMusicInsert, SceneMusicSelect } from '../../db/schema';
-import { sceneMusic, scenes } from '../../db/schema';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { SceneMusicInsert, SceneMusicSelect } from '@/src/db/schema';
+import { sceneMusic, scenes } from '@/src/db/schema';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import { softDeleteRowSync } from './softDelete';
 
 /** What a link points at: a Song of the story, or a medium of its Gallery (an audio file, a link). */

@@ -4,23 +4,23 @@ const mockAppendMarkers = jest.fn();
 const mockImageSize = jest.fn();
 const mockCreateMap = jest.fn();
 
-jest.mock('../../src/utils/locationMapContent', () => ({
+jest.mock('@/src/utils/locationMapContent', () => ({
   __esModule: true,
   appendImagesToMap: (...args: unknown[]) => mockAppendImages(...args),
   appendLocationsToMap: (...args: unknown[]) => mockAppendLocations(...args),
   appendMarkersToMap: (...args: unknown[]) => mockAppendMarkers(...args),
 }));
-jest.mock('../../src/utils/locationMapMedia', () => ({
+jest.mock('@/src/utils/locationMapMedia', () => ({
   __esModule: true,
   imageSizeOf: (...args: unknown[]) => mockImageSize(...args),
 }));
-jest.mock('../../src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
   __esModule: true,
   createLocationMapService: jest.fn(() => ({ createMap: mockCreateMap })),
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useLocationMapCanvasActions } from '../../src/hooks/useLocationMapCanvasActions';
+import { useLocationMapCanvasActions } from '@/src/hooks/useLocationMapCanvasActions';
 
 let currentContent: any;
 const setContent = jest.fn((update) => {

@@ -2,10 +2,15 @@
  * @jest-environment node
  */
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import * as schema from '../../src/db/schema';
-import { createCharacterRelationService } from '../../src/services/storymanagement/CharacterRelationService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The character-relation service: one relation per pair, whichever column each id sits in.

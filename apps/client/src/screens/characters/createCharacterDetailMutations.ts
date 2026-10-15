@@ -2,10 +2,10 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
-import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
-import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
+import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 export type CharacterDetailMutationsProps = {
   characterRelationServiceRef: RefObject<CharacterRelationServiceInterface | null>;

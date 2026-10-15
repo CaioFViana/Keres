@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
-import type { CommentSelect } from '../db/schema';
-import { createCommentService } from '../services/storymanagement/CommentService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import type { CommentSelect } from '@/src/db/schema';
+import { createCommentService } from '@/src/services/storymanagement/CommentService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /** Paginated story-wide comment list. Search stays with the caller. */

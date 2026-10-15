@@ -1,6 +1,6 @@
 import type { LocationMapContentType } from '@keres/shared';
 import { useMemo } from 'react';
-import type { GallerySelect, LocationSelect } from '../db/schema';
+import type { GallerySelect, LocationSelect } from '@/src/db/schema';
 import { useResolvedMediaUris } from './useResolvedMediaUris';
 
 /**

@@ -6,11 +6,11 @@ import {
   type ManuscriptPage,
   readImageInfo,
 } from '@keres/shared';
-import type { AppDrizzleClient } from '../../db';
-import { renderSketchSvg } from '../../utils/sketchSvg';
-import type { SvgExportColors } from '../../utils/svgExport';
-import { fitRasterSize, rasterizeMapSvg } from '../../utils/svgRaster';
-import { mediaFileService } from '../MediaFileService';
+import type { AppDrizzleClient } from '@/src/db';
+import { renderSketchSvg } from '@/src/utils/sketchSvg';
+import type { SvgExportColors } from '@/src/utils/svgExport';
+import { fitRasterSize, rasterizeMapSvg } from '@/src/utils/svgRaster';
+import { mediaFileService } from '@/src/services/MediaFileService';
 import { createGalleryService } from './GalleryService';
 import { createScenePageService, groupPagesByScene } from './ScenePageService';
 import { createSketchService } from './SketchService';

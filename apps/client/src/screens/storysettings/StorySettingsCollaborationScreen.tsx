@@ -10,9 +10,9 @@ import { useNavigation } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryStore } from '../../state/storyStore';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryStore } from '@/src/state/storyStore';
 import { useLoadedStory } from './useLoadedStory';
 import { useResetToStorySelection } from './useResetToStorySelection';
 import { useStorySettingsSave } from './useStorySettingsSave';

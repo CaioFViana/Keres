@@ -1,6 +1,6 @@
 import type { BoardEntitySummary, BoardPinEntity } from '@keres/shared';
-import type { AppDrizzleClient } from '../db';
-import { createEntityPreviewService } from '../services/EntityPreviewService';
+import type { AppDrizzleClient } from '@/src/db';
+import { createEntityPreviewService } from '@/src/services/EntityPreviewService';
 
 /**
  * Compatibility facade for board and map screens. The service owns database access; entity

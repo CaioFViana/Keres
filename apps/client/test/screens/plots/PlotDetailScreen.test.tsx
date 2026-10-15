@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import PlotDetailScreen from '../../../src/screens/plots/PlotDetailScreen';
+import PlotDetailScreen from '@/src/screens/plots/PlotDetailScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -21,7 +21,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -41,35 +41,28 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock(
-  '../../../src/components/features/relations/RelationManager/GenericRelationDisplay',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({ title, relations, getRelatedItem, getRelationItemId, onItemPress }: any) => (
-        <>
-          <Text testID="grd-title">{title}</Text>
-          <Text testID="grd-count">{String(relations.length)}</Text>
-          {relations.map((relation: any) => {
-            const item = getRelatedItem(getRelationItemId(relation));
-            return item ? (
-              <Text
-                key={relation.id}
-                testID={`grd-${relation.id}`}
-                onPress={() => onItemPress(item)}
-              >
-                {item.name}
-              </Text>
-            ) : null;
-          })}
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/relations/RelationManager/GenericRelationDisplay', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ title, relations, getRelatedItem, getRelationItemId, onItemPress }: any) => (
+      <>
+        <Text testID="grd-title">{title}</Text>
+        <Text testID="grd-count">{String(relations.length)}</Text>
+        {relations.map((relation: any) => {
+          const item = getRelatedItem(getRelationItemId(relation));
+          return item ? (
+            <Text key={relation.id} testID={`grd-${relation.id}`} onPress={() => onItemPress(item)}>
+              {item.name}
+            </Text>
+          ) : null;
+        })}
+      </>
+    ),
+  };
+});
 
-jest.mock('../../../src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -77,7 +70,7 @@ jest.mock('../../../src/components/features/mentions/EntityMetadataWithBacklinks
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -89,11 +82,11 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/hooks/useStoryPlots', () => ({
+jest.mock('@/src/hooks/useStoryPlots', () => ({
   useStoryPlots: () => mockPlotsData,
 }));
 
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -102,17 +95,17 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: () => ({ entity: 'Chapter' }),
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

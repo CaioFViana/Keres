@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { PanResponder } from 'react-native';
-import SketchSlider from '../../src/components/features/sketches/SketchSlider';
+import SketchSlider from '@/src/components/features/sketches/SketchSlider';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#fff',

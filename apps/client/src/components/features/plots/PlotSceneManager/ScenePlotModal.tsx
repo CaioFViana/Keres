@@ -8,11 +8,11 @@ import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useTheme, type ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface SceneOption {

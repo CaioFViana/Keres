@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
-import { createServerService } from '../services/ServerService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { createServerService } from '@/src/services/ServerService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /**
  * Whether this device has at least one registered server.

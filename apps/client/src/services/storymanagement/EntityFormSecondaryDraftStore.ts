@@ -6,7 +6,7 @@ import {
   readBoundEditorDraft,
   SECONDARY_DRAFT_FIELD,
   writeEditorDraftNow,
-} from '../EditorDraftService';
+} from '@/src/services/EditorDraftService';
 
 /**
  * Durable secondary-data draft for multi-step entity forms.

@@ -1,5 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -13,22 +13,22 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
-import { useEntityArcScope } from '../../hooks/useEntityArcScope';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryTagFilterOptions } from '../../hooks/useStoryTagFilterOptions';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
+import { useEntityArcScope } from '@/src/hooks/useEntityArcScope';
+import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/useStoryTagFilterOptions';
 import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import type { LocationWithTags } from '../../services/storymanagement/LocationService';
-import { useLocationStore } from '../../state/locationStore';
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/navigation/MainSystemStack';
+import type { LocationWithTags } from '@/src/services/storymanagement/LocationService';
+import { useLocationStore } from '@/src/state/locationStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<

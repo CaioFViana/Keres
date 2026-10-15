@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
-import PlanLimitsCard from '../../src/components/features/servers/PlanLimitsCard';
+import PlanLimitsCard from '@/src/components/features/servers/PlanLimitsCard';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { border: '#ddd', card: '#fff', text: '#111', textSecondary: '#555', error: '#f00' },
   }),

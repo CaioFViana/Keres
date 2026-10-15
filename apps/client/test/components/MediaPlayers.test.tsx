@@ -1,11 +1,11 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Image, PanResponder } from 'react-native';
-import AudioPreviewPlayer from '../../src/components/features/media/MediaPlayer/AudioPreviewPlayer';
-import ImageZoomViewer from '../../src/components/features/media/MediaPlayer/ImageZoomViewer';
-import VideoPreviewPlayer from '../../src/components/features/media/MediaPlayer/VideoPreviewPlayer';
+import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/AudioPreviewPlayer';
+import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
+import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {

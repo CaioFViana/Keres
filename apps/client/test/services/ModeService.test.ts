@@ -3,27 +3,27 @@ const mockWritable = jest.fn();
 const mockPrepare = jest.fn();
 const mockOperation = jest.fn();
 const mockEmit = jest.fn();
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(() => mockServerService),
 }));
-jest.mock('../../src/utils/syncUtils', () => ({
+jest.mock('@/src/utils/syncUtils', () => ({
   __esModule: true,
   assertStoryIsWritable: (...args: unknown[]) => mockWritable(...args),
   getUserIdForOperation: jest.fn().mockResolvedValue('actor'),
   recordLocalOperationSync: (...args: unknown[]) => mockOperation(...args),
   runLocalWrite: (_db: unknown, _storyId: unknown, unit: () => unknown) => Promise.resolve(unit()),
 }));
-jest.mock('../../src/utils/entityUtils', () => ({
+jest.mock('@/src/utils/entityUtils', () => ({
   __esModule: true,
   prepareNewEntityData: (...args: unknown[]) => mockPrepare(...args),
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
 
-import { createModeService } from '../../src/services/storymanagement/ModeService';
+import { createModeService } from '@/src/services/storymanagement/ModeService';
 
 function queryChain(rows: unknown) {
   return {

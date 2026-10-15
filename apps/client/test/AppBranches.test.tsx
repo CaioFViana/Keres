@@ -40,7 +40,7 @@ jest.mock('react-native-safe-area-context', () => ({
   // runtime, so no react import is needed here.
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('../src/db', () => {
+jest.mock('@/src/db', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   return {
@@ -50,44 +50,44 @@ jest.mock('../src/db', () => {
     useDrizzle: jest.fn(),
   };
 });
-jest.mock('../src/db/migrate', () => ({ __esModule: true, migrate: jest.fn() }));
-jest.mock('../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/db/migrate', () => ({ __esModule: true, migrate: jest.fn() }));
+jest.mock('@/src/services/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: { hydrateTokens: jest.fn() },
   setAuthDb: jest.fn(),
 }));
-jest.mock('../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: { setTokenProvider: jest.fn() },
 }));
-jest.mock('../src/services/webMediaStore', () => ({ __esModule: true, hydrate: jest.fn() }));
-jest.mock('../src/services/HostedCookieSession', () => ({
+jest.mock('@/src/services/webMediaStore', () => ({ __esModule: true, hydrate: jest.fn() }));
+jest.mock('@/src/services/HostedCookieSession', () => ({
   __esModule: true,
   restoreHostedCookieSession: jest.fn(),
 }));
-jest.mock('../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
-jest.mock('../src/testing/sqliteWebSmokeProbe', () => ({
+jest.mock('@/src/testing/sqliteWebSmokeProbe', () => ({
   __esModule: true,
   runSqliteWebSmokeProbe: jest.fn(),
   shouldRunSqliteWebSmokeProbe: false,
 }));
-jest.mock('../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: jest.fn(),
 }));
-jest.mock('../src/theme/commonStyles', () => ({ __esModule: true, isColorLight: jest.fn() }));
-jest.mock('../src/theme/ThemeProvider', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({ __esModule: true, isColorLight: jest.fn() }));
+jest.mock('@/src/theme/ThemeProvider', () => ({
   __esModule: true,
   ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: { t: jest.fn((key: string) => key), changeLanguage: jest.fn() },
 }));
-jest.mock('../src/navigation/AppNavigator', () => {
+jest.mock('@/src/navigation/AppNavigator', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
@@ -109,15 +109,15 @@ import { NavigationBar } from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import App from '../src/App';
-import { initializeDrizzle, useDrizzle } from '../src/db';
-import { migrate } from '../src/db/migrate';
-import { authTokenManager } from '../src/services/AuthTokenManager';
-import { restoreHostedCookieSession } from '../src/services/HostedCookieSession';
-import { useUserSettingsStore } from '../src/state/userSettingsStore';
-import { useTheme } from '../src/theme';
-import { isColorLight } from '../src/theme/commonStyles';
-import i18n from '../src/utils/i18n';
+import App from '@/src/App';
+import { initializeDrizzle, useDrizzle } from '@/src/db';
+import { migrate } from '@/src/db/migrate';
+import { authTokenManager } from '@/src/services/AuthTokenManager';
+import { restoreHostedCookieSession } from '@/src/services/HostedCookieSession';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { isColorLight } from '@/src/theme/commonStyles';
+import i18n from '@/src/utils/i18n';
 
 const db = { name: 'sqlite' };
 const drizzle = { name: 'drizzle' };

@@ -5,10 +5,10 @@ import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { PlotSelect } from '../../../db/schema';
-import type { ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { truncate } from '../../../utils/stringUtils';
+import type { PlotSelect } from '@/src/db/schema';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { truncate } from '@/src/utils/stringUtils';
 
 interface PlotListItemProps {
   plot: PlotSelect;

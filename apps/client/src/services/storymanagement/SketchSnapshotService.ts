@@ -6,13 +6,13 @@ import {
   type SketchDocument,
   validateSketchContent,
 } from '@keres/shared';
-import type { AppDrizzleClient } from '../../db';
-import type { SketchSelect } from '../../db/schema';
-import { renderSketchSvg } from '../../utils/sketchSvg';
-import type { SvgExportColors } from '../../utils/svgExport';
-import { buildSketchFileName } from '../../utils/storyTransfer';
-import { fitRasterSize, rasterizeMapSvg } from '../../utils/svgRaster';
-import { mediaFileService } from '../MediaFileService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { SketchSelect } from '@/src/db/schema';
+import { renderSketchSvg } from '@/src/utils/sketchSvg';
+import type { SvgExportColors } from '@/src/utils/svgExport';
+import { buildSketchFileName } from '@/src/utils/storyTransfer';
+import { fitRasterSize, rasterizeMapSvg } from '@/src/utils/svgRaster';
+import { mediaFileService } from '@/src/services/MediaFileService';
 import { createGalleryService } from './GalleryService';
 import { createSketchService } from './SketchService';
 

@@ -84,8 +84,8 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
@@ -93,57 +93,57 @@ jest.mock('../../../src/theme', () => {
 });
 
 const mockCompact: { current: boolean } = { current: true };
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: mockCompact.current }),
 }));
 
-jest.mock('../../../src/hooks/useNavigateAcrossStacks', () => ({
+jest.mock('@/src/hooks/useNavigateAcrossStacks', () => ({
   useNavigateAcrossStacks:
     () =>
     (...args: unknown[]) =>
       mockNavigateAcross(...args),
 }));
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1', title: 'Epic' } }),
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
 const mockBackHandlerOptions = jest.fn();
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: (options: unknown) => mockBackHandlerOptions(options),
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('../../../src/services/PublicationService', () => ({
+jest.mock('@/src/services/PublicationService', () => ({
   createPublicationService: () => ({
     getPublicationsForStory: (...args: unknown[]) => mockGetPubs(...args),
     syncPublicationsWithServer: (...args: unknown[]) => mockSyncPubs(...args),
   }),
 }));
 
-jest.mock('../../../src/services/PublicationApiService', () => ({
+jest.mock('@/src/services/PublicationApiService', () => ({
   publicationApiService: {
     getStoryShowcase: (...args: unknown[]) => mockGetShowcase(...args),
     isShowcaseEnabled: (...args: unknown[]) => mockShowcaseEnabled(...args),
@@ -156,29 +156,29 @@ jest.mock('../../../src/services/PublicationApiService', () => ({
   SERVER_MANUSCRIPT_FORMATS: ['docx', 'pdf', 'epub', 'html', 'md', 'txt'],
 }));
 
-jest.mock('../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   createChapterService: () => ({
     getAllByStoryId: (...args: unknown[]) => mockGetChapters(...args),
   }),
 }));
 
-jest.mock('../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   createSceneService: () => ({
     getAllByStoryId: (...args: unknown[]) => mockGetScenes(...args),
   }),
 }));
 
-jest.mock('../../../src/services/sync/StoryTransfer', () => ({
+jest.mock('@/src/services/sync/StoryTransfer', () => ({
   fetchServerStoryPreviews: (...args: unknown[]) => mockFetchPreviews(...args),
 }));
 
-jest.mock('../../../src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
   createStoryArcService: () => ({
     getArcsForStory: (...args: unknown[]) => mockGetArcs(...args),
   }),
 }));
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -204,7 +204,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: {},
   apiUrl: (base: string, path: string) => `${base}${path}`,
@@ -215,24 +215,24 @@ jest.mock('../../../src/services/apiClient', () => ({
     (err as { name?: string; code?: string })?.code === 'ERR_CANCELED',
 }));
 
-jest.mock('../../../src/state/connectivityStore', () => ({
+jest.mock('@/src/state/connectivityStore', () => ({
   useConnectivityStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockConnectivity) : mockConnectivity,
 }));
 
-jest.mock('../../../src/services/storymanagement/PublishCompileService', () => ({
+jest.mock('@/src/services/storymanagement/PublishCompileService', () => ({
   compilePublishArtifacts: (...args: unknown[]) => mockCompilePublishArtifacts(...args),
 }));
 let mockSungSongs = false;
-jest.mock('../../../src/services/storymanagement/ManuscriptMusicService', () => ({
+jest.mock('@/src/services/storymanagement/ManuscriptMusicService', () => ({
   storyMusicFacts: async () => ({ hasMusic: mockSungSongs, hasSungSongs: mockSungSongs }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector({ userId: 'user-1' }) : { userId: 'user-1' },
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
@@ -244,9 +244,9 @@ jest.mock('expo-clipboard', () => ({
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Linking, StyleSheet } from 'react-native';
-import StoryPublishScreen from '../../../src/screens/storyshare/StoryPublishScreen';
-import { buildStoryPublicUrl } from '../../../src/screens/storyshare/useStoryPublishing';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import StoryPublishScreen from '@/src/screens/storyshare/StoryPublishScreen';
+import { buildStoryPublicUrl } from '@/src/screens/storyshare/useStoryPublishing';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://s.example///' };
 const story = {

@@ -1,13 +1,13 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import CanvasLine from '../../src/components/features/graphs/CanvasLine/CanvasLine';
-import GraphCanvasControls from '../../src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
-import GraphEmptyState from '../../src/components/features/graphs/GraphEmptyState/GraphEmptyState';
-import GraphConnectionModal from '../../src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
-import GraphNodeSheet from '../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import CanvasLine from '@/src/components/features/graphs/CanvasLine/CanvasLine';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
+import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
+import GraphConnectionModal from '@/src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
+import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -28,7 +28,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -37,7 +37,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -61,7 +61,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,

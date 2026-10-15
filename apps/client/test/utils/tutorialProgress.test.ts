@@ -8,7 +8,7 @@ import {
   TUTORIAL_PROGRESS_VERSION,
   withFirstStoryProgress,
   withTutorialSeen,
-} from '../../src/utils/tutorialProgress';
+} from '@/src/utils/tutorialProgress';
 
 describe('parseTutorialProgress', () => {
   it('reads the seen ids in first-seen order', () => {

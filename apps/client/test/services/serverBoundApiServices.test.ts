@@ -9,18 +9,18 @@ const mockClient = {
   setTokenProvider: jest.fn(),
   setActiveServer: jest.fn(),
 };
-jest.mock('../../src/services/apiClient', () => ({ createKeresAxiosInstance: jest.fn() }));
-jest.mock('../../src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
+jest.mock('@/src/services/apiClient', () => ({ createKeresAxiosInstance: jest.fn() }));
+jest.mock('@/src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
 
-import { FriendshipApiService } from '../../src/services/FriendshipApiService';
+import { FriendshipApiService } from '@/src/services/FriendshipApiService';
 import {
   PublicationApiService,
   type PublishManuscriptOptions,
-} from '../../src/services/PublicationApiService';
-import { createKeresAxiosInstance } from '../../src/services/apiClient';
-import { storyInvitationApi } from '../../src/services/StoryInvitationApiService';
-import { storyPermissionApi } from '../../src/services/StoryPermissionService';
-import { UserApiService } from '../../src/services/UserApiService';
+} from '@/src/services/PublicationApiService';
+import { createKeresAxiosInstance } from '@/src/services/apiClient';
+import { storyInvitationApi } from '@/src/services/StoryInvitationApiService';
+import { storyPermissionApi } from '@/src/services/StoryPermissionService';
+import { UserApiService } from '@/src/services/UserApiService';
 
 const server = { id: 'server', idUser: 'me', url: 'https://target.test' } as any;
 

@@ -5,19 +5,19 @@ import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { mediaFileService } from '../../services/MediaFileService';
-import { createStoryService } from '../../services/storymanagement/StoryService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryListStore } from '../../state/storyListStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { typography } from '../../theme/tokens';
-import { createULID } from '../../utils/entityUtils';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { pickStoryExportFile, StoryImportError } from '../../utils/storyTransfer';
+import { useDrizzle } from '@/src/db';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryListStore } from '@/src/state/storyListStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { createULID } from '@/src/utils/entityUtils';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { pickStoryExportFile, StoryImportError } from '@/src/utils/storyTransfer';
 
 /**
  * Bringing a story in from a file. Taking one out is done from inside the story (Publish and export), where

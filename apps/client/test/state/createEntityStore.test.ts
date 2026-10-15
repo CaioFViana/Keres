@@ -10,17 +10,17 @@ const mockFavoriteService = {
   ),
 };
 
-jest.mock('../../src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
   createFavoriteService: jest.fn(() => mockFavoriteService),
 }));
 
 let mockUserId: string | null = 'user-1';
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => ({ userId: mockUserId }) },
 }));
 
-import { createEntityStore, type EntityQueryParams } from '../../src/state/createEntityStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { createEntityStore, type EntityQueryParams } from '@/src/state/createEntityStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 interface Tag {
   id: string;

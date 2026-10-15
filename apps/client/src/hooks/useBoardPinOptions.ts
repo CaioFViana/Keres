@@ -7,10 +7,10 @@ import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useDrizzle } from '../db';
-import { boards, chapters, galleries, worldRules } from '../db/schema';
-import { loadEntityOptions } from '../utils/entityOptions';
-import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
+import { useDrizzle } from '@/src/db';
+import { boards, chapters, galleries, worldRules } from '@/src/db/schema';
+import { loadEntityOptions } from '@/src/utils/entityOptions';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 type BoardPinGroup =

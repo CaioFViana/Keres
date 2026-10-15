@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
-import TermsModal from '../../src/components/features/servers/TermsModal/TermsModal';
+import TermsModal from '@/src/components/features/servers/TermsModal/TermsModal';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -11,8 +11,8 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 
-jest.mock('../../src/theme', () => {
-  const actual = jest.requireActual('../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -76,7 +76,7 @@ const isAcceptDisabled = () =>
   Boolean(screen.getByTestId('terms-modal-accept').props.accessibilityState?.disabled);
 
 // The real minimum: the setup file zeroes it for every other suite.
-jest.mock('../../src/legal/readingGate', () => ({ __esModule: true, MIN_READ_SECONDS: 12 }));
+jest.mock('@/src/legal/readingGate', () => ({ __esModule: true, MIN_READ_SECONDS: 12 }));
 const MIN_READ_SECONDS = 12;
 
 describe('TermsModal scroll gate', () => {

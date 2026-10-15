@@ -1,13 +1,13 @@
-import type { AppDrizzleClient } from '../db';
-import { createClientSettings, getClientSettings } from '../services/ClientSettingsService';
-import { exampleStoryRegistry } from '../exampleStories/generated/registry';
-import { createExampleStoryService } from '../services/storymanagement/ExampleStoryService';
-import { createStoryService } from '../services/storymanagement/StoryService';
+import type { AppDrizzleClient } from '@/src/db';
+import { createClientSettings, getClientSettings } from '@/src/services/ClientSettingsService';
+import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
+import { createExampleStoryService } from '@/src/services/storymanagement/ExampleStoryService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import type { Story } from '@keres/shared/entities/Story';
-import { useStoryStore } from '../state/storyStore';
-import { useThemeStore } from '../state/themeStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import i18n from '../utils/i18n';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useThemeStore } from '@/src/state/themeStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import i18n from '@/src/utils/i18n';
 import type { ShowcaseRequest } from './showcaseRequest';
 
 /**

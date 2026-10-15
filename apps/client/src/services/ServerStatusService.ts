@@ -1,4 +1,4 @@
-import type { ServerSelect } from '../db/schema';
+import type { ServerSelect } from '@/src/db/schema';
 import apiClient, { apiUrl } from './apiClient';
 
 export type ServerPingStatus = 'idle' | 'pending' | 'online' | 'offline';

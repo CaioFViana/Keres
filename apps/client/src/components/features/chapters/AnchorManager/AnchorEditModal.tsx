@@ -13,7 +13,7 @@ import { SCENE_POSITIONS } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { type ThemeColors, useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**

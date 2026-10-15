@@ -1,11 +1,11 @@
 /** @jest-environment node */
-jest.mock('../../src/db', () => ({ useDrizzle: jest.fn() }));
-jest.mock('../../src/utils/entityOptions', () => ({ loadEntityOptions: jest.fn() }));
+jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
+jest.mock('@/src/utils/entityOptions', () => ({ loadEntityOptions: jest.fn() }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '../../src/db';
-import { useEntityPickerOptions } from '../../src/hooks/useEntityPickerOptions';
-import { loadEntityOptions } from '../../src/utils/entityOptions';
+import { useDrizzle } from '@/src/db';
+import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
+import { loadEntityOptions } from '@/src/utils/entityOptions';
 
 beforeEach(() => {
   jest.clearAllMocks();

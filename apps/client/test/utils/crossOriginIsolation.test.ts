@@ -1,4 +1,4 @@
-import { ensureCrossOriginIsolation, workerUrlOf } from '../../src/utils/crossOriginIsolation';
+import { ensureCrossOriginIsolation, workerUrlOf } from '@/src/utils/crossOriginIsolation';
 
 function makeEnv(overrides: { crossOriginIsolated?: boolean; flag?: string | null } = {}) {
   const store = new Map<string, string>();

@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../db';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { useCharacterStore } from '../../state/characterStore';
-import { useItemStore } from '../../state/itemStore';
-import { useSceneStore } from '../../state/sceneStore';
+import { useDrizzle } from '@/src/db';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { useCharacterStore } from '@/src/state/characterStore';
+import { useItemStore } from '@/src/state/itemStore';
+import { useSceneStore } from '@/src/state/sceneStore';
 
 /** Owns the item-journey service and the story-scoped lookup stores used by the form. */
 export function useItemJourneyFormResources(storyId?: string) {

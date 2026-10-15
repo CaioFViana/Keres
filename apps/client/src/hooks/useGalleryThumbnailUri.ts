@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { mediaFileService } from '../services/MediaFileService';
-import { wantsImageThumbnail } from '../services/webImageThumbnail';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { wantsImageThumbnail } from '@/src/services/webImageThumbnail';
 import { useResolvedMediaUri } from './useResolvedMediaUri';
 
 /** What it takes to pick the picture a list shows for one medium. */

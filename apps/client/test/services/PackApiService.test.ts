@@ -5,11 +5,11 @@ const mockClient = {
   post: jest.fn(),
   delete: jest.fn(),
 };
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   createKeresAxiosInstance: jest.fn(() => mockClient),
 }));
-jest.mock('../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: {},
 }));
@@ -18,7 +18,7 @@ jest.mock('@keres/shared', () => ({
   validatePackContent: jest.fn((content) => ({ ...content, valid: true })),
 }));
 
-import { PackApiService } from '../../src/services/PackApiService';
+import { PackApiService } from '@/src/services/PackApiService';
 
 const server = { url: 'https://server.test' } as never;
 

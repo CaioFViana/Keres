@@ -3,11 +3,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import LocationMapImageView from '../../src/components/features/location-maps/LocationMapImageView';
-import LocationMapNodeSheet from '../../src/components/features/location-maps/LocationMapNodeSheet';
-import LocationMapNodeView from '../../src/components/features/location-maps/LocationMapNodeView';
+import LocationMapImageView from '@/src/components/features/location-maps/LocationMapImageView';
+import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
+import LocationMapNodeView from '@/src/components/features/location-maps/LocationMapNodeView';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -36,7 +36,7 @@ jest.mock('expo-image', () => ({
 const mockImage = jest.fn();
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -44,7 +44,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -56,7 +56,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -67,7 +67,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => ({
+jest.mock('@/src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     const RN = jest.requireActual('react-native');
@@ -75,7 +75,7 @@ jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput'
   },
 }));
 
-jest.mock('../../src/components/common/inputs/IconPickerInput/IconPickerInput', () => ({
+jest.mock('@/src/components/common/inputs/IconPickerInput/IconPickerInput', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     const RN = jest.requireActual('react-native');

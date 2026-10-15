@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-type Store = typeof import('../../src/services/webMediaStore');
+type Store = typeof import('@/src/services/webMediaStore');
 /** The store keeps its URL cache in module state: each test gets a fresh copy of it. */
 let store: Store;
 
@@ -35,7 +35,7 @@ const revokeObjectURL = jest.fn();
 
 beforeEach(() => {
   jest.resetModules();
-  store = require('../../src/services/webMediaStore');
+  store = require('@/src/services/webMediaStore');
   jest.useFakeTimers();
   urlCounter = 0;
   run += 1;

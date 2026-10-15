@@ -1,7 +1,7 @@
 import { and, asc, eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { ChapterSelect, SceneSelect } from '../../db/schema';
-import { chapters, choices, scenes } from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
+import { chapters, choices, scenes } from '@/src/db/schema';
 
 /**
  * Validation and support for the story type conversion (Linear <-> Branching).

@@ -33,7 +33,7 @@ const mockDb = {};
 const mockI18n = { t: (key: string) => key };
 const mockUseScreenTour = jest.fn();
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -80,21 +80,21 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => ({
     return react.createElement(native.View, { testID: 'modal-visible' }, children);
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: mockCompact.current }),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/services/storymanagement/SuggestionService', () => {
-  const types = jest.requireActual('../../../src/services/storymanagement/suggestionTypes');
+jest.mock('@/src/services/storymanagement/SuggestionService', () => {
+  const types = jest.requireActual('@/src/services/storymanagement/suggestionTypes');
   return {
     __esModule: true,
     ...types,
@@ -110,21 +110,21 @@ jest.mock('../../../src/services/storymanagement/SuggestionService', () => {
     }),
   };
 });
-jest.mock('../../../src/services/storymanagement/StorySchemaFieldService', () => ({
+jest.mock('@/src/services/storymanagement/StorySchemaFieldService', () => ({
   __esModule: true,
   createStorySchemaFieldService: () => ({
     getFieldsByStoryAndEntityType: mockGetFieldsByStoryAndEntityType,
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -140,11 +140,11 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ label: mockLabel }),
 }));
@@ -153,7 +153,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockI18n,
 }));
 
-import SuggestionsScreen from '../../../src/screens/suggestions/SuggestionsScreen';
+import SuggestionsScreen from '@/src/screens/suggestions/SuggestionsScreen';
 
 const namedLists = [
   { type: HERBS, name: 'Herbs' },

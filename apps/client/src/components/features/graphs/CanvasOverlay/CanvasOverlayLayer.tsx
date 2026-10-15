@@ -24,8 +24,8 @@ import { DashPathEffect, Group, Path, Text as SkiaText } from '@shopify/react-na
 import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
 import { balloonPath, balloonText } from '@keres/shared/graphs/canvasBalloon';
-import { measureEdgeLabelWidth } from '../SkiaEdgeCanvas/measureEdgeLabelWidth';
-import { polygonPointsToPath } from '../SkiaEdgeCanvas/polygonPointsToPath';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
 
 interface CanvasOverlayLayerProps {
   overlays: readonly CanvasOverlayType[] | undefined;

@@ -8,20 +8,20 @@ import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-na
 import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilterButton/FavoriteFilterButton';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
-import { useDrizzle } from '../../db';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type { GlobalSearchResult } from '../../services/storymanagement/GlobalSearchService';
-import { createGlobalSearchService } from '../../services/storymanagement/GlobalSearchService';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import type { FavoriteFilterState } from '../../types/entityFilters';
-import { debounce } from '../../utils/debounce';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useDrizzle } from '@/src/db';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/GlobalSearchService';
+import { createGlobalSearchService } from '@/src/services/storymanagement/GlobalSearchService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import type { FavoriteFilterState } from '@/src/types/entityFilters';
+import { debounce } from '@/src/utils/debounce';
+import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
+import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<

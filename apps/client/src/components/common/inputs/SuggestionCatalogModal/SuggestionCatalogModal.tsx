@@ -11,8 +11,8 @@ import {
 import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export type SuggestionCatalogEntry = [string, number];
 

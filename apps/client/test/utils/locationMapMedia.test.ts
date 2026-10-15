@@ -1,4 +1,4 @@
-import { bytesToBase64 } from '../../src/utils/locationMapMedia';
+import { bytesToBase64 } from '@/src/utils/locationMapMedia';
 
 describe('location map media', () => {
   it('encodes ordinary bytes and payloads larger than one conversion chunk', () => {

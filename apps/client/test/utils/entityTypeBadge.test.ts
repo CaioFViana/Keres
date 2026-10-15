@@ -1,5 +1,5 @@
 import { getTierCountedEntityTypes, getTierFreeEntityTypes } from '@keres/shared';
-import { getEntityTypeBadge, isLinkEntityType } from '../../src/utils/entityTypeBadge';
+import { getEntityTypeBadge, isLinkEntityType } from '@/src/utils/entityTypeBadge';
 
 describe('getEntityTypeBadge', () => {
   it('gives a type its own icon, and the links between types the shared link icon', () => {

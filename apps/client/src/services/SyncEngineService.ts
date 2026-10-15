@@ -1,8 +1,8 @@
 import type { CreateStoryUpdate, EffectiveStoryRole, Favorite, StoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../db';
-import * as schema from '../db/schema';
-import type { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { ServerSelect } from '@/src/db/schema';
 import type { KeresAxiosInstance, TokenProvider } from './apiClient';
 import {
   isAbortError,

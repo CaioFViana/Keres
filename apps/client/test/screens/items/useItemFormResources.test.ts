@@ -1,13 +1,13 @@
 const mockDb = {};
 const mockCreateItemService: jest.Mock = jest.fn(() => ({ id: 'item-service' }));
 
-jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('../../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   createItemService: (...args: unknown[]) => mockCreateItemService(...args),
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useItemFormResources } from '../../../src/screens/items/useItemFormResources';
+import { useItemFormResources } from '@/src/screens/items/useItemFormResources';
 
 beforeEach(() => {
   jest.clearAllMocks();

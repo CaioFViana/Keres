@@ -4,8 +4,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../../theme';
-import type { FavoriteFilterState } from '../../../../types/entityFilters';
+import { useTheme } from '@/src/theme';
+import type { FavoriteFilterState } from '@/src/types/entityFilters';
 
 const ICON: Record<FavoriteFilterState, keyof typeof Ionicons.glyphMap> = {
   all: 'star-outline',

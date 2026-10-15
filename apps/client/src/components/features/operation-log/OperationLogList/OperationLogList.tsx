@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { OperationLogSelect } from '../../../../db/schema';
-import { useOperationLogs } from '../../../../hooks/useOperationLogs';
-import { useTheme, type ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { useOperationLogs } from '@/src/hooks/useOperationLogs';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

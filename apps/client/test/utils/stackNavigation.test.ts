@@ -1,5 +1,5 @@
-import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
-import { navigateAcrossStacks, navigatorWithRoute } from '../../src/utils/stackNavigation';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { navigateAcrossStacks, navigatorWithRoute } from '@/src/utils/stackNavigation';
 
 /** A drawer showing `focused`, whose stack currently shows `screen`. */
 function drawerOf(focused: string, screen?: { name: string; params?: object }) {

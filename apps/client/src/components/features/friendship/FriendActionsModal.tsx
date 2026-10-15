@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 export interface FriendAction {

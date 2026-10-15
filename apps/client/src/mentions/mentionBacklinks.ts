@@ -1,11 +1,11 @@
 import { excerptAroundMatch } from '@keres/shared';
-import type { NavigableEntityType } from '../utils/entityNavigation';
+import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 import {
   findAmbiguousNameOccurrences,
   splitTextIntoMentionSegments,
   type MentionableEntity,
   type MentionMatcher,
-} from '../utils/entityMentions';
+} from '@/src/utils/entityMentions';
 
 export interface MentionTextSource extends MentionableEntity {
   fields: Record<string, string | null | undefined>;

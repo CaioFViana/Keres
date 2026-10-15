@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import type { AppDrizzleClient } from '../db';
-import { refreshPlanUsage } from '../services/PlanUsageService';
-import { usePlanUsageStore } from '../state/planUsageStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import { refreshPlanUsage } from '@/src/services/PlanUsageService';
+import { usePlanUsageStore } from '@/src/state/planUsageStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /** Edits come in bursts (a form saving several rows): one look at the plan after they settle. */
 const SETTLE_MS = 2000;

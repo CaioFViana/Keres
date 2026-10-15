@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import type { ThemeColors } from '../../../theme';
+import type { ThemeColors } from '@/src/theme';
 
 /** The card of a server's facts, a list of label and value rows: the plan's, and the server's own. */
 export const serverCardStyleDefs = (colors: ThemeColors) => ({

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { type ThemeColors, useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import IconPickerModal from '@/src/components/common/inputs/IconPickerInput/IconPickerModal';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface IconPickerInputProps {
   onSelectIcon: (icon: string) => void;

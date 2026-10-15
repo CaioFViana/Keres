@@ -12,9 +12,9 @@ import {
   renderPublishManuscript,
   renderPublishReader,
   type PublishCompileRows,
-} from '../../src/services/storymanagement/PublishCompileService';
+} from '@/src/services/storymanagement/PublishCompileService';
 
-jest.mock('../../src/utils/pdfFontAssets', () => ({
+jest.mock('@/src/utils/pdfFontAssets', () => ({
   __esModule: true,
   pdfFontMatrices: async () => null,
 }));

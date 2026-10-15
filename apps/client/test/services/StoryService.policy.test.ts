@@ -1,20 +1,20 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   createKeresAxiosInstance: jest.fn(),
   isOfflineError: jest.fn(() => false),
 }));
 
-import { choices } from '../../src/db/schema';
-import { createKeresAxiosInstance } from '../../src/services/apiClient';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { StoryOwnerOnlyError } from '../../src/utils/syncUtils';
-import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { choices } from '@/src/db/schema';
+import { createKeresAxiosInstance } from '@/src/services/apiClient';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { StoryOwnerOnlyError } from '@/src/utils/syncUtils';
+import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

@@ -27,24 +27,24 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDrizzle } from '../../db';
-import type { CharacterSelect, ItemSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { CharacterSelect, ItemSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityInitialLoad,
   useEntityEventSubscriptions,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createItemService } from '../../services/storymanagement/ItemService';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
 
 export type ItemDetailScreenParamList = {

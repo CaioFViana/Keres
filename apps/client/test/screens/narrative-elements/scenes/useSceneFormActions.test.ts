@@ -13,19 +13,19 @@ jest.mock('@/src/hooks/useAsyncOperation', () => ({
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: () => ({
     created: 'created',
     updated: 'updated',
@@ -45,9 +45,9 @@ jest.mock('@keres/shared', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import type { SceneService } from '../../../../src/services/storymanagement/SceneService';
-import { useSceneFormActions } from '../../../../src/screens/narrative-elements/scenes/useSceneFormActions';
-import type { SceneFormState } from '../../../../src/screens/narrative-elements/scenes/useSceneFormState';
+import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import { useSceneFormActions } from '@/src/screens/narrative-elements/scenes/useSceneFormActions';
+import type { SceneFormState } from '@/src/screens/narrative-elements/scenes/useSceneFormState';
 
 const createState = (overrides: Partial<SceneFormState> = {}): SceneFormState =>
   ({

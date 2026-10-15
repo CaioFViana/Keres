@@ -14,14 +14,14 @@ import { MAP_ICON_OPTIONS } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme, type ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { getCommonCardStyles } from '../../../theme/commonStyles';
-import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { getCommonCardStyles } from '@/src/theme/commonStyles';
+import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
 import type {
   LocationMapChildRelation,
   LocationMapParentRelation,
-} from '../../../utils/locationMapRelations';
+} from '@/src/utils/locationMapRelations';
 
 export interface LocationMapNodeConnection {
   relationId: string;

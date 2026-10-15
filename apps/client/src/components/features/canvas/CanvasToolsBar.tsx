@@ -2,10 +2,10 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
 import type { OverlayDrawTool } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import type { ThemeColors } from '../../../theme';
-import { layout } from '../../../theme/layout';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import type { ThemeColors } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export interface CanvasToolsBarProps {
   testID: string;

@@ -1,12 +1,12 @@
 /** @jest-environment node */
-import type { GuideDrawerHandle } from '../../src/navigation/drawerGuideRegistry';
+import type { GuideDrawerHandle } from '@/src/navigation/drawerGuideRegistry';
 import {
   __resetGuideDrawersForTests,
   getGuideDrawer,
   registerGuideDrawer,
   scrollDrawerToRect,
   unregisterGuideDrawer,
-} from '../../src/navigation/drawerGuideRegistry';
+} from '@/src/navigation/drawerGuideRegistry';
 
 const handle = (overrides: Partial<GuideDrawerHandle> = {}): GuideDrawerHandle => ({
   navigation: {} as never,

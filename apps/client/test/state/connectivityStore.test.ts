@@ -2,13 +2,13 @@
  * @jest-environment node
  */
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
-jest.mock('../../src/utils/i18n', () => ({ t: (key: string) => key }));
+jest.mock('@/src/utils/i18n', () => ({ t: (key: string) => key }));
 
-import { useConnectivityStore } from '../../src/state/connectivityStore';
+import { useConnectivityStore } from '@/src/state/connectivityStore';
 
 const store = () => useConnectivityStore.getState();
 

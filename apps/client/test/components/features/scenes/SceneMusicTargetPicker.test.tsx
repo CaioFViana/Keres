@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import SceneMusicTargetPicker from '../../../../src/components/features/scenes/SceneMusic/SceneMusicTargetPicker';
+import SceneMusicTargetPicker from '@/src/components/features/scenes/SceneMusic/SceneMusicTargetPicker';
 
 const mockUseSongs = jest.fn();
 const mockUseGalleryMedia = jest.fn();
@@ -12,7 +12,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -25,7 +25,7 @@ jest.mock('../../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
@@ -33,11 +33,11 @@ jest.mock('../../../../src/components/layout/ResponsiveModal/ResponsiveModal', (
       visible ? <View>{children}</View> : null,
   };
 });
-jest.mock('../../../../src/hooks/useSongs', () => ({
+jest.mock('@/src/hooks/useSongs', () => ({
   __esModule: true,
   useSongs: (...args: unknown[]) => mockUseSongs(...args),
 }));
-jest.mock('../../../../src/hooks/useGalleryMedia', () => ({
+jest.mock('@/src/hooks/useGalleryMedia', () => ({
   __esModule: true,
   useGalleryMedia: (...args: unknown[]) => mockUseGalleryMedia(...args),
 }));

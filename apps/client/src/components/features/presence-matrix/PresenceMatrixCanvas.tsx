@@ -1,10 +1,10 @@
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import CanvasLine from '../graphs/CanvasLine/CanvasLine';
-import GraphCanvasFrame from '../graphs/GraphCanvasFrame/GraphCanvasFrame';
-import type { CanvasViewportHandle } from '../../../hooks/useCanvasViewport';
-import { useCanvasViewport } from '../../../hooks/useCanvasViewport';
-import { useTheme } from '../../../theme';
+import CanvasLine from '@/src/components/features/graphs/CanvasLine/CanvasLine';
+import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
+import { useCanvasViewport } from '@/src/hooks/useCanvasViewport';
+import { useTheme } from '@/src/theme';
 import { spatialRectIntersects } from '@keres/shared';
 import type { PresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import {

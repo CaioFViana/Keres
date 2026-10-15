@@ -1,5 +1,5 @@
 import { AttributeType } from '@keres/shared';
-import { customAttributeMentionFields } from '../../src/mentions/customAttributeMentions';
+import { customAttributeMentionFields } from '@/src/mentions/customAttributeMentions';
 
 const fields = [
   {

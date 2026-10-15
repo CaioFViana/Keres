@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   ChoiceSelect,
   RouteSelect,
   RouteStepSelect,
   SceneSelect,
-} from '../db/schema';
-import { createChapterService } from '../services/storymanagement/ChapterService';
-import { createChoiceService } from '../services/storymanagement/ChoiceService';
-import { createChoiceCheckGroupService } from '../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '../services/storymanagement/EffectService';
-import { createRouteService } from '../services/storymanagement/RouteService';
-import { createSceneService } from '../services/storymanagement/SceneService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createRouteService } from '@/src/services/storymanagement/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import {
   type ChoiceCheck,

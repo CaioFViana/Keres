@@ -5,8 +5,8 @@ import {
   encodeSketchDocument,
   type SketchDocument,
 } from '@keres/shared';
-import SketchCanvasScreen from '../../../src/screens/sketches/SketchCanvasScreen';
-import { useSketchToolStore } from '../../../src/state/sketchToolStore';
+import SketchCanvasScreen from '@/src/screens/sketches/SketchCanvasScreen';
+import { useSketchToolStore } from '@/src/state/sketchToolStore';
 
 const mockGoBack = jest.fn();
 const mockNotify = jest.fn();
@@ -57,17 +57,17 @@ const mockI18n = { language: 'en' };
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT, i18n: mockI18n }),
 }));
-jest.mock('../../../src/hooks/useSketchCompact', () => ({
-  ...jest.requireActual('../../../src/hooks/useSketchCompact'),
+jest.mock('@/src/hooks/useSketchCompact', () => ({
+  ...jest.requireActual('@/src/hooks/useSketchCompact'),
   useSketchCompact: () => false,
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
-jest.mock('../../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   useScreenAnchor: () => undefined,
   useGuideAnchor: () => undefined,
 }));
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -86,7 +86,7 @@ jest.mock('../../../src/theme', () => {
   };
 });
 
-jest.mock('../../../src/components/features/sketches/SketchCanvas', () => {
+jest.mock('@/src/components/features/sketches/SketchCanvas', () => {
   const React = require('react');
   return {
     __esModule: true,
@@ -113,40 +113,40 @@ for (const name of [
     default: () => null,
   }));
 }
-jest.mock('../../../src/components/features/graphs/CanvasOverlay/OverlaySheet', () => ({
+jest.mock('@/src/components/features/graphs/CanvasOverlay/OverlaySheet', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../../src/components/features/sketches/sketchRaster', () => ({
+jest.mock('@/src/components/features/sketches/sketchRaster', () => ({
   rasterizeSketch: (...args: unknown[]) => mockRasterize(...args),
   sampleRasterColor: () => '#336699',
 }));
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = { selectedStory: { id: 'story-1' } };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('../../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/userSettingsStore', () => {
   const state = { userId: 'user-1', exportFormat: 'svg' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
   (useUserSettingsStore as any).getState = () => state;
   return { useUserSettingsStore };
 });
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (s: any) => any) => {
     const state = { showNotification: mockNotify };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('../../../src/state/sketchDraftStore', () => ({
+jest.mock('@/src/state/sketchDraftStore', () => ({
   useSketchDraftStore: {
     getState: () => ({ hydrate: mockHydrate, remember: mockRemember }),
   },
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -154,29 +154,29 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
     loading: false,
   }),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: ({ renderActions }: any = {}) => {
     (global as any).__headerActions = renderActions;
   },
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/db', () => {
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('../../../src/services/storymanagement/SketchService', () => ({
+jest.mock('@/src/services/storymanagement/SketchService', () => ({
   createSketchService: () => ({ getById: mockGetSketch, updateSketch: mockUpdateSketch }),
 }));
-jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   createGalleryService: () => ({}),
 }));
-jest.mock('../../../src/services/MediaFileService', () => ({ mediaFileService: {} }));
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({ mediaFileService: {} }));
+jest.mock('@/src/utils/storyTransfer', () => ({
   buildSketchFileName: () => 'sketch.svg',
   deliverMapExport: jest.fn(),
   deliverSvgMap: jest.fn(),
 }));
-jest.mock('../../../src/utils/svgRaster', () => ({
+jest.mock('@/src/utils/svgRaster', () => ({
   fitRasterSize: () => ({ width: 10, height: 10 }),
   rasterizeMapSvg: jest.fn(),
 }));
@@ -231,14 +231,12 @@ describe('SketchCanvasScreen', () => {
   }
 
   it('goes back to the page that opened it when there is one, and one screen back otherwise', async () => {
-    const { useBackButtonHandler } = jest.requireMock(
-      '../../../src/hooks/useBackButtonHandler',
-    ) as {
+    const { useBackButtonHandler } = jest.requireMock('@/src/hooks/useBackButtonHandler') as {
       useBackButtonHandler: jest.Mock;
     };
     const { useHeaderBackActionStore } = jest.requireActual(
-      '../../../src/state/headerBackActionStore',
-    ) as typeof import('../../../src/state/headerBackActionStore');
+      '@/src/state/headerBackActionStore',
+    ) as typeof import('@/src/state/headerBackActionStore');
     await open();
     const onBack = useBackButtonHandler.mock.calls.at(-1)?.[0].onBack as () => void;
 

@@ -1,10 +1,10 @@
 /** @jest-environment node */
 import { sql } from 'drizzle-orm';
-import { tags } from '../../src/db/schema';
+import { tags } from '@/src/db/schema';
 import {
   buildAdvancedSearchConditions,
   buildNativeAdvancedSearchConditions,
-} from '../../src/services/storymanagement/advancedSearchConditions';
+} from '@/src/services/storymanagement/advancedSearchConditions';
 
 describe('advanced search conditions', () => {
   it('uses handler-declared native metadata and ignores unknown fields', () => {

@@ -1,4 +1,4 @@
-import type { HelpPage } from '../../types';
+import type { HelpPage } from '@/src/help/types';
 const page: HelpPage = {
   id: 'import-export',
   title: 'Importar e exportar',

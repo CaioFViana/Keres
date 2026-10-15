@@ -1,18 +1,18 @@
 import type { ClientSettings, MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
 import { create } from 'zustand';
-import type { AppDrizzleClient } from '../db';
-import type { ServerSelect } from '../db/schema';
-import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
-import type { FirstStoryProgress, TutorialProgress } from '../utils/tutorialProgress';
-import { normalizeLocalUsername } from '../utils/localUsername';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
+import { getClientSettings, updateClientSettings } from '@/src/services/ClientSettingsService';
+import type { FirstStoryProgress, TutorialProgress } from '@/src/utils/tutorialProgress';
+import { normalizeLocalUsername } from '@/src/utils/localUsername';
 import {
   defaultTutorialProgress,
   encodeTutorialProgress,
   parseTutorialProgress,
   withFirstStoryProgress,
   withTutorialSeen,
-} from '../utils/tutorialProgress';
+} from '@/src/utils/tutorialProgress';
 
 /**
  * Device-level settings, durable in the `client_settings` table.

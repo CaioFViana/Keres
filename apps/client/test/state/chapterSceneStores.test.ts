@@ -1,11 +1,16 @@
 /** @jest-environment node */
-import * as schema from '../../src/db/schema';
-import { resetAllClientStores } from '../../src/state/resetAllClientStores';
-import { useChapterStore } from '../../src/state/chapterStore';
-import { useSceneStore } from '../../src/state/sceneStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { resetAllClientStores } from '@/src/state/resetAllClientStores';
+import { useChapterStore } from '@/src/state/chapterStore';
+import { useSceneStore } from '@/src/state/sceneStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The chapter and scene stores' structural actions: reorder and type conversion.

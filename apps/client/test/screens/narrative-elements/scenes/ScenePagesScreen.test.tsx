@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import type { ScenePageView } from '../../../../src/hooks/useScenePages';
-import ScenePagesScreen from '../../../../src/screens/narrative-elements/scenes/ScenePagesScreen';
+import type { ScenePageView } from '@/src/hooks/useScenePages';
+import ScenePagesScreen from '@/src/screens/narrative-elements/scenes/ScenePagesScreen';
 
 const mockGoBack = jest.fn();
 const mockCreatePage = jest.fn();
@@ -53,7 +53,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     isDarkMode: false,
@@ -69,69 +69,69 @@ jest.mock('../../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonContainerStyles: () => ({ container: {} }),
 }));
-jest.mock('../../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   __esModule: true,
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: typeof mockHeader) => {
     mockHeader = args;
   },
 }));
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../../src/hooks/useSceneArcMedium', () => ({
+jest.mock('@/src/hooks/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
-jest.mock('../../../../src/hooks/useSceneArcPageFormat', () => ({
+jest.mock('@/src/hooks/useSceneArcPageFormat', () => ({
   __esModule: true,
   useSceneArcPageFormat: () => 'comic-us',
 }));
-jest.mock('../../../../src/hooks/useNavigateAcrossStacks', () => ({
+jest.mock('@/src/hooks/useNavigateAcrossStacks', () => ({
   __esModule: true,
   useNavigateAcrossStacks: () => mockNavigateAcross,
 }));
-jest.mock('../../../../src/hooks/useAddScenePages', () => ({
+jest.mock('@/src/hooks/useAddScenePages', () => ({
   __esModule: true,
   useAddScenePages: () => ({ drawNewPage: mockDrawNewPage, uploadPictures: mockUploadPictures }),
 }));
-jest.mock('../../../../src/hooks/useScenePages', () => ({
+jest.mock('@/src/hooks/useScenePages', () => ({
   __esModule: true,
   useScenePages: () => ({ pages: mockViews, loading: false, reload: jest.fn() }),
 }));
-jest.mock('../../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   __esModule: true,
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getById: mockGetScene }),
 }));
-jest.mock('../../../../src/services/storymanagement/ScenePageService', () => ({
+jest.mock('@/src/services/storymanagement/ScenePageService', () => ({
   __esModule: true,
   createScenePageService: () => ({
     createPage: mockCreatePage,
@@ -141,7 +141,7 @@ jest.mock('../../../../src/services/storymanagement/ScenePageService', () => ({
     deletePage: mockDeletePage,
   }),
 }));
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -149,18 +149,18 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
     ScreenError: ({ message }: { message: string }) => <Text testID="screen-error">{message}</Text>,
   };
 });
-jest.mock('../../../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
     default: ({ children }: { children: ReactNode }) => <View>{children}</View>,
   };
 });
-jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageThumb', () => ({
+jest.mock('@/src/components/features/scenes/ScenePages/ScenePageThumb', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageAddSheet', () => {
+jest.mock('@/src/components/features/scenes/ScenePages/ScenePageAddSheet', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -183,7 +183,7 @@ jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageAddShe
     },
   };
 });
-jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageMediaPicker', () => {
+jest.mock('@/src/components/features/scenes/ScenePages/ScenePageMediaPicker', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -200,7 +200,7 @@ jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePageMediaP
     },
   };
 });
-jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return { __esModule: true, default: TextInput };
 });

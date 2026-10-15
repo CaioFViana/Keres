@@ -1,8 +1,8 @@
 import type { AccountPlan } from '@keres/shared';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { ServerSelect } from '../db/schema';
-import { userApiService } from '../services/UserApiService';
-import { PAYMENTS_CHANGED } from '../utils/paymentEvents';
+import type { ServerSelect } from '@/src/db/schema';
+import { userApiService } from '@/src/services/UserApiService';
+import { PAYMENTS_CHANGED } from '@/src/utils/paymentEvents';
 import { useEntityEventSubscriptions, useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**

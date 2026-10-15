@@ -2,10 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { StorySchemaEntityType } from '@keres/shared';
 import { AttributeType, decodeAttributeValue } from '@keres/shared';
-import type { StorySchemaFieldSelect } from '../../../../db/schema';
-import type { ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
+import type { StorySchemaFieldSelect } from '@/src/db/schema';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 
 export type CustomAttributeValues = Record<string, string | null>;

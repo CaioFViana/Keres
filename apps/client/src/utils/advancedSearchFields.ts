@@ -1,6 +1,6 @@
 import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import type { StorySchemaFieldSelect } from '../db/schema';
+import type { StorySchemaFieldSelect } from '@/src/db/schema';
 import { buildCustomAttributeFieldMetadata } from './customAttributeFieldMetadata';
 
 /** One kind of entity the list searches by field. A combined list (chapters and scenes) has several. */

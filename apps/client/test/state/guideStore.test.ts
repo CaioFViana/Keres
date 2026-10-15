@@ -1,6 +1,6 @@
 /** @jest-environment node */
-import type { Guide } from '../../src/guides/types';
-import { useGuideStore } from '../../src/state/guideStore';
+import type { Guide } from '@/src/guides/types';
+import { useGuideStore } from '@/src/state/guideStore';
 
 const guide = (id: string, stepCount: number): Guide => ({
   id,

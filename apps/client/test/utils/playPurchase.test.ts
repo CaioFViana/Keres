@@ -1,4 +1,4 @@
-import { playDriver } from '../../src/utils/playPurchase';
+import { playDriver } from '@/src/utils/playPurchase';
 
 describe('the stub store driver (no purchase runtime here)', () => {
   it('is unavailable, refuses to buy and has nothing to reconcile', async () => {

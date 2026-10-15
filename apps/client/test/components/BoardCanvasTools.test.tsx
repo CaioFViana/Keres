@@ -1,6 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import BoardCanvasTools from '../../src/components/features/boards/BoardCanvasTools';
+import BoardCanvasTools from '@/src/components/features/boards/BoardCanvasTools';
 
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
@@ -9,7 +9,7 @@ if (!(global as any).requestAnimationFrame) {
   };
 }
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -24,7 +24,7 @@ jest.mock('../../src/theme', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -35,14 +35,14 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
     default: (props: Record<string, unknown>) => <RN.View testID="multi-select-pill" {...props} />,
   };
 });
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
@@ -54,10 +54,10 @@ jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   })),
 }));
 
-import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 
 const mockScreenAnchor = jest.fn();
-jest.mock('../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: jest.fn(() => () => {}),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),

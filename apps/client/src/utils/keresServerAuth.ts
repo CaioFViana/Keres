@@ -4,7 +4,7 @@ import {
   canTalkToServer,
   type AccountVerificationStatus,
 } from '@keres/shared';
-import apiClient, { apiUrl } from '../services/apiClient';
+import apiClient, { apiUrl } from '@/src/services/apiClient';
 
 export type KeresAuthFailure = {
   ok: false;

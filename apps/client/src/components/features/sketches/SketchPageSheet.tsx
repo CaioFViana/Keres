@@ -9,10 +9,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import type { ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { getCommonChipStyles } from '../../../theme/commonStyles';
-import { space, typography } from '../../../theme/tokens';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { getCommonChipStyles } from '@/src/theme/commonStyles';
+import { space, typography } from '@/src/theme/tokens';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface SketchPageSheetProps {

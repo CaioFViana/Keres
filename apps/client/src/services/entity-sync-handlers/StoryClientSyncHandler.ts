@@ -1,8 +1,8 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, Story, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import * as schema from '../../db/schema';
-import { omitClientProtectedFields, toEntityColumns } from '../entityTableRegistry';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import { omitClientProtectedFields, toEntityColumns } from '@/src/services/entityTableRegistry';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class StoryClientSyncHandler implements ClientSyncEntityHandler {

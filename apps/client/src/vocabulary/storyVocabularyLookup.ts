@@ -1,8 +1,8 @@
 import type { StoryVocabulary, StoryVocabularyEntityType } from '@keres/shared/entities/Story';
 import { and, eq } from 'drizzle-orm';
 import i18n, { type TFunction } from 'i18next';
-import type { AppDrizzleClient } from '../db';
-import { stories, storyArcs } from '../db/schemas';
+import type { AppDrizzleClient } from '@/src/db';
+import { stories, storyArcs } from '@/src/db/schemas';
 import { resolveEffectiveVocabulary } from './effectiveVocabulary';
 import {
   agreeStoryTerm,

@@ -2,17 +2,14 @@
  * @jest-environment node
  */
 import { fountainFromBody, planFountainImport } from '@keres/shared';
-import {
-  importFountain,
-  titleCase,
-} from '../../src/services/storymanagement/FountainImportService';
-import { createCharacterSceneService } from '../../src/services/storymanagement/CharacterSceneService';
-import { createCharacterService } from '../../src/services/storymanagement/CharacterService';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { createLocationService } from '../../src/services/storymanagement/LocationService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { importFountain, titleCase } from '@/src/services/storymanagement/FountainImportService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createLocationService } from '@/src/services/storymanagement/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const SCRIPT = [
   'Title: Kettle',

@@ -25,9 +25,9 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { SketchSelectionActions } from '../components/features/sketches/SketchOptionsBar';
-import { useNotificationStore } from '../state/notificationStore';
-import { useSketchToolStore } from '../state/sketchToolStore';
+import type { SketchSelectionActions } from '@/src/components/features/sketches/SketchOptionsBar';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useSketchToolStore } from '@/src/state/sketchToolStore';
 
 const DUPLICATE_OFFSET = 18;
 

@@ -3,14 +3,11 @@ import { DrawerContentScrollView } from '@react-navigation/drawer';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ScrollView } from 'react-native';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
-import type { GuideDrawerId } from '../../../../guides/types';
-import {
-  registerGuideDrawer,
-  unregisterGuideDrawer,
-} from '../../../../navigation/drawerGuideRegistry';
-import type { ThemeColors } from '../../../../theme';
+import type { GuideDrawerId } from '@/src/guides/types';
+import { registerGuideDrawer, unregisterGuideDrawer } from '@/src/navigation/drawerGuideRegistry';
+import type { ThemeColors } from '@/src/theme';
 import { AnchoredDrawerItemList } from './AnchoredDrawerItemList';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export const DRAWER_MIN_WIDTH = 280;
 export const DRAWER_DEFAULT_WIDTH = 280;

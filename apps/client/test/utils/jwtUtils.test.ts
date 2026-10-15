@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, jest } from '@jest/globals';
-import { decodeJwt, isJwtExpired } from '../../src/utils/jwtUtils';
+import { decodeJwt, isJwtExpired } from '@/src/utils/jwtUtils';
 
 const tokenWithPayload = (payload: object) => `header.${btoa(JSON.stringify(payload))}.signature`;
 let warnSpy: jest.Spied<typeof console.warn>;

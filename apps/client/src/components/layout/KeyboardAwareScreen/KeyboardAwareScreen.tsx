@@ -9,8 +9,8 @@ import {
   StyleSheet,
   TextInput as RNTextInput,
 } from 'react-native';
-import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
-import { KeyboardHandledContext } from '../../../hooks/useKeyboardOverlap';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { KeyboardHandledContext } from '@/src/hooks/useKeyboardOverlap';
 
 /** Exposes `scrollToFocusedInput` to descendants so custom inputs can request a scroll-into-view pass. */
 export const KeyboardAwareContext = React.createContext<(() => void) | null>(null);

@@ -8,14 +8,14 @@ const mockDb = {
   },
 };
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/hooks/useUserProfileResolver', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/hooks/useUserProfileResolver', () => ({
   __esModule: true,
   useUserProfileResolver: jest.fn(() => mockResolveProfile),
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useAuthorProfiles } from '../../src/hooks/useAuthorProfiles';
+import { useAuthorProfiles } from '@/src/hooks/useAuthorProfiles';
 
 beforeEach(() => {
   jest.clearAllMocks();

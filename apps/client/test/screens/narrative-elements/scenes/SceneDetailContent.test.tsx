@@ -4,8 +4,8 @@ import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
-import type { CommentableDetailFieldProps } from '../../../../src/components/features/comments/CommentableDetailField/CommentableDetailField';
-import { SceneDetailContent } from '../../../../src/screens/narrative-elements/scenes/SceneDetailContent';
+import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import { SceneDetailContent } from '@/src/screens/narrative-elements/scenes/SceneDetailContent';
 import type {
   CharacterSelect,
   ChoiceSelect,
@@ -13,11 +13,11 @@ import type {
   ItemSelect,
   SceneSelect,
   TagSelect,
-} from '../../../../src/db/schema';
-import type { SaveNoteRelation } from '../../../../src/services/storymanagement/NoteRelationService';
+} from '@/src/db/schema';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
 
-jest.mock('../../../../src/theme', () => {
-  const actual = jest.requireActual('../../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -35,17 +35,17 @@ jest.mock('../../../../src/theme', () => {
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePagesEntry', () => ({
+jest.mock('@/src/components/features/scenes/ScenePages/ScenePagesEntry', () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock('../../../../src/components/features/scenes/SceneMusic/SceneMusicEntry', () => ({
+jest.mock('@/src/components/features/scenes/SceneMusic/SceneMusicEntry', () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -57,7 +57,7 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', () => {
+jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -85,7 +85,7 @@ jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', (
   };
 });
 
-jest.mock('../../../../src/components/layout/ScreenSection/ScreenSection', () => {
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -99,7 +99,7 @@ jest.mock('../../../../src/components/layout/ScreenSection/ScreenSection', () =>
 });
 
 jest.mock(
-  '../../../../src/components/features/comments/CommentableDetailField/CommentableDetailField',
+  '@/src/components/features/comments/CommentableDetailField/CommentableDetailField',
   () => {
     const { Text } = require('react-native');
     return {
@@ -111,45 +111,37 @@ jest.mock(
   },
 );
 
-jest.mock(
-  '../../../../src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({ entityId }: { entityId: string }) => (
-        <Text testID="custom-attrs">{entityId}</Text>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ entityId }: { entityId: string }) => <Text testID="custom-attrs">{entityId}</Text>,
+  };
+});
 
-jest.mock(
-  '../../../../src/components/features/characters/CharacterManager/SceneCharacterManager',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        characterRelations: unknown[];
-        availableCharacters: CharacterSelect[];
-        currentStoryId: string;
-        currentSceneId: string;
-      }) => (
-        <Text testID="scene-characters">
-          {JSON.stringify({
-            relations: props.characterRelations.length,
-            names: props.availableCharacters.map((c) => c.name),
-            storyId: props.currentStoryId,
-            sceneId: props.currentSceneId,
-          })}
-        </Text>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/characters/CharacterManager/SceneCharacterManager', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      characterRelations: unknown[];
+      availableCharacters: CharacterSelect[];
+      currentStoryId: string;
+      currentSceneId: string;
+    }) => (
+      <Text testID="scene-characters">
+        {JSON.stringify({
+          relations: props.characterRelations.length,
+          names: props.availableCharacters.map((c) => c.name),
+          storyId: props.currentStoryId,
+          sceneId: props.currentSceneId,
+        })}
+      </Text>
+    ),
+  };
+});
 
-jest.mock('../../../../src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
+jest.mock('@/src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -169,7 +161,7 @@ jest.mock('../../../../src/components/features/gallery/GalleryManager/EntityGall
   };
 });
 
-jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -177,7 +169,7 @@ jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBackli
   };
 });
 
-jest.mock('../../../../src/components/features/items/ItemManager/ItemSceneManager', () => {
+jest.mock('@/src/components/features/items/ItemManager/ItemSceneManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -197,7 +189,7 @@ jest.mock('../../../../src/components/features/items/ItemManager/ItemSceneManage
   };
 });
 
-jest.mock('../../../../src/components/features/notes/NoteManager/NoteRelationManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager/NoteRelationManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -213,7 +205,7 @@ jest.mock('../../../../src/components/features/notes/NoteManager/NoteRelationMan
 });
 
 jest.mock(
-  '../../../../src/components/features/scenes/SceneNavigationControls/SceneNavigationControls',
+  '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls',
   () => {
     const { Text } = require('react-native');
     return {
@@ -245,7 +237,7 @@ jest.mock(
   },
 );
 
-jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -253,7 +245,7 @@ jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoMan
   };
 });
 
-jest.mock('../../../../src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
+jest.mock('@/src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

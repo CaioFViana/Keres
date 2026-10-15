@@ -2,10 +2,15 @@
  * @jest-environment node
  */
 import { MAX_PRIMARY_STATS } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import { createStatService } from '../../src/services/storymanagement/StatService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createStatService } from '@/src/services/storymanagement/StatService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The stat service: the primary-stat ceiling and the update/delete paths.

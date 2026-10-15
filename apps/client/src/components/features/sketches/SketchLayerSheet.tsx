@@ -10,10 +10,10 @@ import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 
 import Button from '@/src/components/common/controls/Button/Button';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { typography } from '../../../theme/tokens';
-import { AppAlert } from '../../../utils/AppAlert';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { AppAlert } from '@/src/utils/AppAlert';
 import SketchSlider from './SketchSlider';
 
 interface SketchLayerSheetProps {

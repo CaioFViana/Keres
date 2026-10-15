@@ -1,10 +1,15 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { createModeService } from '../../src/services/storymanagement/ModeService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createModeService } from '@/src/services/storymanagement/ModeService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The mode delete cascade, against the real database.

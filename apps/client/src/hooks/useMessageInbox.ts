@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import {
   createMessageService,
   type Inbox,
   type MessageContact,
   MESSAGES_CHANGED,
-} from '../services/MessageService';
-import { useNotificationStore } from '../state/notificationStore';
+} from '@/src/services/MessageService';
+import { useNotificationStore } from '@/src/state/notificationStore';
 import { useEntityEventSubscriptions, useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 const EMPTY_INBOX: Inbox = { entries: [], unreachableServerIds: [] };

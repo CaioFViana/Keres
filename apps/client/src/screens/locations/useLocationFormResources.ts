@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import {
   createLocationRelationService,
   type LocationRelationService,
-} from '../../services/storymanagement/LocationRelationService';
-import { createLocationService } from '../../services/storymanagement/LocationService';
+} from '@/src/services/storymanagement/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/LocationService';
 
 /** Owns the location and location-relation services used by the form. */
 export function useLocationFormResources() {

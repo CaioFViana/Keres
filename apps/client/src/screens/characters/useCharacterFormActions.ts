@@ -7,10 +7,10 @@ import type { StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../../db';
-import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
-import type { CharacterService } from '../../services/storymanagement/CharacterService';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import type { AppDrizzleClient } from '@/src/db';
+import type { CharacterStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { CharacterFormState } from './useCharacterFormState';
 
 type CharacterNavigation = NativeStackNavigationProp<CharacterStackParamList, 'CharacterForm'>;

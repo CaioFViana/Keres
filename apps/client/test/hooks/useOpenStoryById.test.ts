@@ -11,23 +11,23 @@ jest.mock('@react-navigation/native', () => ({
     replace: (name: string, params: unknown) => ({ type: 'REPLACE', name, params }),
   },
 }));
-jest.mock('../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => ({
     query: { stories: { findFirst: (...args: unknown[]) => mockFindFirst(...args) } },
   }),
 }));
-jest.mock('../../src/theme', () => ({ useTheme: () => ({ setTheme: mockSetTheme }) }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/theme', () => ({ useTheme: () => ({ setTheme: mockSetTheme }) }));
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: {
     getState: () => ({ setSelectedStory: (...args: unknown[]) => mockSetSelectedStory(...args) }),
   },
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useOpenStoryById } from '../../src/hooks/useOpenStoryById';
+import { useOpenStoryById } from '@/src/hooks/useOpenStoryById';
 
 beforeEach(() => jest.clearAllMocks());
 

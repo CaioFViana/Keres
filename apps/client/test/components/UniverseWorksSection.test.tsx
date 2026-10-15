@@ -1,9 +1,9 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
-import type { StoryArcSelect } from '../../src/db/schema';
-import UniverseWorksSection from '../../src/components/features/arcs/UniverseWorksSection';
+import type { StoryArcSelect } from '@/src/db/schema';
+import UniverseWorksSection from '@/src/components/features/arcs/UniverseWorksSection';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/components/common/display/CoverImage/CoverImage', () => {
+jest.mock('@/src/components/common/display/CoverImage/CoverImage', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -24,7 +24,7 @@ jest.mock('react-i18next', () => ({
       options ? `${key}:${JSON.stringify(options)}` : key,
   }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -38,7 +38,7 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({
     term: (_type: string, plural?: boolean) => (plural ? 'Arcs' : 'Arc'),
   }),

@@ -11,7 +11,7 @@ import {
   offerForPlayProduct,
   offersFrom,
   playProductForOffer,
-} from '../../src/utils/paymentPlans';
+} from '@/src/utils/paymentPlans';
 
 const tier = (over: Record<string, unknown>) => ({
   id: 'tier-1',

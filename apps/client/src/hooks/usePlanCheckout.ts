@@ -2,17 +2,17 @@ import type { BillingInterval, Checkout, CheckoutCreate, PublicTier } from '@ker
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking } from 'react-native';
-import type { ServerSelect } from '../db/schema';
-import { isOfflineError } from '../services/apiClient';
+import type { ServerSelect } from '@/src/db/schema';
+import { isOfflineError } from '@/src/services/apiClient';
 import {
   getCheckout,
   PAYMENTS_CHANGED,
   startCheckout,
   verifyPlayPurchase,
-} from '../services/PaymentService';
-import { playDriver } from '../utils/playPurchase';
-import { PlayPurchaseError, type PlayPurchaseTicket } from '../utils/playPurchaseTypes';
-import { offerForPlayProduct } from '../utils/paymentPlans';
+} from '@/src/services/PaymentService';
+import { playDriver } from '@/src/utils/playPurchase';
+import { PlayPurchaseError, type PlayPurchaseTicket } from '@/src/utils/playPurchaseTypes';
+import { offerForPlayProduct } from '@/src/utils/paymentPlans';
 import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
 
 /** How often an open payment is asked about while the person is on the screen: the provider may be slow to tell. */

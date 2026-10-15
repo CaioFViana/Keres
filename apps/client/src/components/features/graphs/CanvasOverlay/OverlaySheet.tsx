@@ -15,9 +15,9 @@ import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/Co
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { space, typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { space, typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface OverlaySheetProps {
   overlay: CanvasOverlayType;

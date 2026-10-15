@@ -2,9 +2,9 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import type { LocationMapContentType } from '@keres/shared';
 import { MAX_LOCATION_MAP_ANNOTATION_LENGTH } from '@keres/shared';
 import React from 'react';
-import LocationMapConnectionModal from '../../src/components/features/location-maps/LocationMapConnectionModal';
-import LocationMapMarkerConnectionModal from '../../src/components/features/location-maps/LocationMapMarkerConnectionModal';
-import LocationMapTools from '../../src/components/features/location-maps/LocationMapTools';
+import LocationMapConnectionModal from '@/src/components/features/location-maps/LocationMapConnectionModal';
+import LocationMapMarkerConnectionModal from '@/src/components/features/location-maps/LocationMapMarkerConnectionModal';
+import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
@@ -13,7 +13,7 @@ if (!(global as any).requestAnimationFrame) {
   };
 }
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -30,7 +30,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -42,7 +42,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -75,7 +75,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
 });
 
 const mockGraphConnectionModal = jest.fn();
-jest.mock('../../src/components/features/graphs/GraphConnectionModal/GraphConnectionModal', () => {
+jest.mock('@/src/components/features/graphs/GraphConnectionModal/GraphConnectionModal', () => {
   const RN = jest.requireActual('react-native');
   return function MockGraphConnectionModal(props: Record<string, unknown>) {
     mockGraphConnectionModal(props);
@@ -83,7 +83,7 @@ jest.mock('../../src/components/features/graphs/GraphConnectionModal/GraphConnec
   };
 });
 
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
@@ -95,10 +95,10 @@ jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   })),
 }));
 
-import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 
 const mockScreenAnchor = jest.fn();
-jest.mock('../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: jest.fn(() => () => {}),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),

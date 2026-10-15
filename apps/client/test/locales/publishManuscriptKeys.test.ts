@@ -1,6 +1,6 @@
 /** @jest-environment node */
-import en from '../../src/locales/en.json';
-import pt from '../../src/locales/pt.json';
+import en from '@/src/locales/en.json';
+import pt from '@/src/locales/pt.json';
 
 const KEYS = [
   'export_manuscript_format_html',

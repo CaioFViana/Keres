@@ -1,16 +1,16 @@
 import { act, cleanup, fireEvent, render, within } from '@testing-library/react-native';
 import { FlatList, StyleSheet, Text } from 'react-native';
 import TestRenderer from 'react-test-renderer';
-import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
+import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
 import type {
   ChapterSelect,
   CommentSelect,
   RouteSelect,
   RouteStepSelect,
   SceneSelect,
-} from '../../../../src/db/schema';
-import MarkedText from '../../../../src/components/common/display/MarkedText/MarkedText';
-import ManuscriptScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptScreen';
+} from '@/src/db/schema';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
+import ManuscriptScreen from '@/src/screens/narrative-elements/scenes/ManuscriptScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -66,12 +66,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string; actions?: readonly HeaderAction[] }) => {
     mockHeaderTitle = args.title;
@@ -79,7 +79,7 @@ jest.mock('../../../../src/hooks/useScreenHeader', () => ({
   },
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = {
@@ -90,7 +90,7 @@ jest.mock('../../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../../src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({
     arcs: mockArcs,
@@ -102,18 +102,18 @@ jest.mock('../../../../src/hooks/useStoryArcs', () => ({
   }),
 }));
 
-jest.mock('../../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryNavigatorData', () => ({
+jest.mock('@/src/hooks/useStoryNavigatorData', () => ({
   __esModule: true,
   useStoryNavigatorData: () => mockNavigatorData,
 }));
 
 const mockLoadChoiceAnnotations = jest.fn(async () => new Map());
-jest.mock('../../../../src/hooks/useManuscriptData', () => ({
+jest.mock('@/src/hooks/useManuscriptData', () => ({
   __esModule: true,
   useManuscriptData: () => ({
     ...mockManuscriptData,
@@ -121,7 +121,7 @@ jest.mock('../../../../src/hooks/useManuscriptData', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useSceneBodyComments', () => ({
+jest.mock('@/src/hooks/useSceneBodyComments', () => ({
   __esModule: true,
   useSceneBodyComments: () => ({
     commentsBySceneId: mockCommentsBySceneId,
@@ -134,20 +134,17 @@ jest.mock('../../../../src/hooks/useSceneBodyComments', () => ({
   }),
 }));
 
-jest.mock(
-  '../../../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
-  () => ({
-    __esModule: true,
-    default: (props: unknown) => {
-      mockThreadProps = props as typeof mockThreadProps;
-      return null;
-    },
-  }),
-);
+jest.mock('@/src/components/features/comments/CommentThreadModal/CommentThreadModal', () => ({
+  __esModule: true,
+  default: (props: unknown) => {
+    mockThreadProps = props as typeof mockThreadProps;
+    return null;
+  },
+}));
 
 // The index modal renders for real; only its surface is stubbed, since the shared
 // modal needs safe-area providers the screen harness does not set up.
-jest.mock('../../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
@@ -156,7 +153,7 @@ jest.mock('../../../../src/components/layout/ResponsiveModal/ResponsiveModal', (
   };
 });
 
-jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -190,7 +187,7 @@ jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectP
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -219,7 +216,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -234,7 +231,7 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock('../../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));

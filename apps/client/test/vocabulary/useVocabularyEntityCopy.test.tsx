@@ -4,14 +4,14 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(),
 }));
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: jest.fn(),
 }));
 
 import { useTranslation } from 'react-i18next';
-import { useStoryVocabulary } from '../../src/vocabulary/useStoryVocabulary';
-import { useVocabularyEntityCopy } from '../../src/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 
 const t = jest.fn((key: string, options?: Record<string, unknown>) => ({ key, options }));
 

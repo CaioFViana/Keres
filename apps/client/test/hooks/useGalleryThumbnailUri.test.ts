@@ -1,10 +1,10 @@
 /** @jest-environment node */
-jest.mock('../../src/services/webMediaStore', () => ({
+jest.mock('@/src/services/webMediaStore', () => ({
   __esModule: true,
   DESKTOP_MEDIA_URI_PREFIX: 'desktop-media:',
   resolveBlobUri: jest.fn(async (path: string) => `blob:${path}`),
 }));
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: {
     thumbnailPathFor: jest.fn(
@@ -20,8 +20,8 @@ import { Platform } from 'react-native';
 import {
   type GalleryThumbnailSource,
   useGalleryThumbnailUri,
-} from '../../src/hooks/useGalleryThumbnailUri';
-import { mediaFileService } from '../../src/services/MediaFileService';
+} from '@/src/hooks/useGalleryThumbnailUri';
+import { mediaFileService } from '@/src/services/MediaFileService';
 
 const service = mediaFileService as jest.Mocked<typeof mediaFileService>;
 

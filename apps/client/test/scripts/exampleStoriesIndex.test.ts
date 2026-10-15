@@ -2,10 +2,7 @@
  * @jest-environment node
  */
 import { join } from 'node:path';
-import {
-  readExampleStoryMeta,
-  renderExampleStoriesIndex,
-} from '../../scripts/lib/exampleStoriesIndex';
+import { readExampleStoryMeta, renderExampleStoriesIndex } from '@/scripts/lib/exampleStoriesIndex';
 
 const contentDir = join(__dirname, '../../src/exampleStories/content');
 

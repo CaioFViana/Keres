@@ -1,6 +1,6 @@
 import { Platform, StyleSheet } from 'react-native';
 import type { ThemeColors } from '@keres/shared';
-import { saturateColor } from '../utils/colorMath';
+import { saturateColor } from '@/src/utils/colorMath';
 
 // Compatibility re-export: color analysis stays in the pure utility module so it can be
 // shared by themed and non-themed components without an import cycle.

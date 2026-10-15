@@ -6,7 +6,7 @@ jest.mock('@/src/hooks/useAsyncOperation', () => ({
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -17,12 +17,12 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useStoryFormActions } from '../../../src/screens/enterstack/useStoryFormActions';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import type { StoryFormState } from '../../../src/screens/enterstack/useStoryFormState';
-import type { PackService } from '../../../src/services/storymanagement/PackService';
-import type { PushOutcomeReport } from '../../../src/services/sync/SyncPush';
-import type { StoryService } from '../../../src/services/storymanagement/StoryService';
+import { useStoryFormActions } from '@/src/screens/enterstack/useStoryFormActions';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import type { StoryFormState } from '@/src/screens/enterstack/useStoryFormState';
+import type { PackService } from '@/src/services/storymanagement/PackService';
+import type { PushOutcomeReport } from '@/src/services/sync/SyncPush';
+import type { StoryService } from '@/src/services/storymanagement/StoryService';
 
 const createIdentity = (overrides: Record<string, unknown> = {}) =>
   ({
@@ -88,7 +88,7 @@ const mockSyncStoryNow = jest.fn<Promise<PushOutcomeReport>, [string]>(async () 
   conflicts: 0,
   refusals: [],
 }));
-jest.mock('../../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   syncEngine: { syncStoryNow: (storyId: string) => mockSyncStoryNow(storyId) },
 }));
 

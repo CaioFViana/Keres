@@ -6,7 +6,7 @@ import {
   transformCenteredOn,
   transformFittingRect,
   wheelZoomFactor,
-} from '../../src/hooks/canvasCameraMath';
+} from '@/src/hooks/canvasCameraMath';
 
 const VIEWPORT = { width: 400, height: 300 };
 const LIMITS = { minScale: 0.15, maxScale: 2.5 };

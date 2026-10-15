@@ -1,9 +1,9 @@
 import { emptySketchContent, generateSketchLocalId, validateSketchContent } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
-import type { PendingConflict } from '../SyncConflictService';
-import { createSketchService } from '../storymanagement/SketchService';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { PendingConflict } from '@/src/services/SyncConflictService';
+import { createSketchService } from '@/src/services/storymanagement/SketchService';
 
 /**
  * Keep the server's sketch, and this device's drawing as a new sketch beside it: two drawings

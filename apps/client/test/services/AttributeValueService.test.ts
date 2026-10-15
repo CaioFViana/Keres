@@ -3,9 +3,9 @@
  */
 import { AttributeType } from '@keres/shared';
 import { asc, eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createAttributeValueService } from '../../src/services/storymanagement/AttributeValueService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const FIELD_ID = '01ARZ3NDEKTSV4RRFFQ69G5FIE';

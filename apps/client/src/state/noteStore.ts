@@ -1,8 +1,8 @@
-import type { NoteService, NoteWithTags } from '../services/storymanagement/NoteService';
-import { createNoteService } from '../services/storymanagement/NoteService';
+import type { NoteService, NoteWithTags } from '@/src/services/storymanagement/NoteService';
+import { createNoteService } from '@/src/services/storymanagement/NoteService';
 import { createEntityStore } from './createEntityStore';
 
-export type { FavoriteFilterState } from '../types/entityFilters';
+export type { FavoriteFilterState } from '@/src/types/entityFilters';
 
 export const useNoteStore = createEntityStore<'notes', NoteWithTags, NoteService>({
   collectionKey: 'notes',

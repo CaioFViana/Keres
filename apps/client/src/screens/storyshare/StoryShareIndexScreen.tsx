@@ -5,17 +5,17 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryBackupExport } from '../../hooks/useStoryBackupExport';
-import type { StoryShareStackParamList } from '../../navigation/StoryShareStack';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useHeaderBackActionStore } from '../../state/headerBackActionStore';
-import { useStoryStore } from '../../state/storyStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { isServerless } from '../../utils/clientFlavor';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryBackupExport } from '@/src/hooks/useStoryBackupExport';
+import type { StoryShareStackParamList } from '@/src/navigation/StoryShareStack';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { isServerless } from '@/src/utils/clientFlavor';
 
 /**
  * Where the story leaves the app: published on the server's page, as the manuscript document, or as a copy

@@ -1,9 +1,9 @@
-import type { AppDrizzleClient } from '../../db';
-import type { ServerSelect } from '../../db/schema';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import type { KeresAxiosInstance } from '../apiClient';
-import type { MediaSyncService } from '../MediaSyncService';
-import { createMediaSyncService } from '../MediaSyncService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import type { KeresAxiosInstance } from '@/src/services/apiClient';
+import type { MediaSyncService } from '@/src/services/MediaSyncService';
+import { createMediaSyncService } from '@/src/services/MediaSyncService';
 
 interface SyncMediaContext {
   db: () => AppDrizzleClient | null;

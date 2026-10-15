@@ -4,8 +4,8 @@ import { DrawerItem } from '@react-navigation/drawer';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { drawerAnchorId } from '../../../../guides/anchorRegistry';
-import type { GuideDrawerId } from '../../../../guides/types';
+import { drawerAnchorId } from '@/src/guides/anchorRegistry';
+import type { GuideDrawerId } from '@/src/guides/types';
 import {
   badgeNeedsAttention,
   isLeafActive,
@@ -13,11 +13,11 @@ import {
   type MenuBadges,
   type MenuGroup,
   type MenuLeaf,
-} from '../../../../navigation/drawerMenuModel';
-import { nestedFocusOf, openMenuLeaf } from '../../../../navigation/openMenuLeaf';
-import { useGuideAnchor } from '../../../../guides/useGuideAnchor';
-import { useTheme } from '../../../../theme';
-import { AnchoredDrawerRow } from '../ResizableDrawerContent/AnchoredDrawerItemList';
+} from '@/src/navigation/drawerMenuModel';
+import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/openMenuLeaf';
+import { useGuideAnchor } from '@/src/guides/useGuideAnchor';
+import { useTheme } from '@/src/theme';
+import { AnchoredDrawerRow } from '@/src/components/common/navigation/ResizableDrawerContent/AnchoredDrawerItemList';
 import { useDrawerGroupState } from './useDrawerGroupState';
 
 interface GroupedDrawerMenuProps {

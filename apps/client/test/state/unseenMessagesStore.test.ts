@@ -16,7 +16,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
-import { useUnseenMessagesStore } from '../../src/state/unseenMessagesStore';
+import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
 
 const KEY = '@keres/messages-seen';
 const store = () => useUnseenMessagesStore.getState();

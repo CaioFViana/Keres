@@ -1,4 +1,4 @@
-import { promiseWithTimeout } from '../../src/utils/promiseWithTimeout';
+import { promiseWithTimeout } from '@/src/utils/promiseWithTimeout';
 
 describe('promiseWithTimeout', () => {
   it('resolves with the original value', async () => {

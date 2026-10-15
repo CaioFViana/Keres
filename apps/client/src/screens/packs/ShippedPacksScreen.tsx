@@ -1,6 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useTranslation } from 'react-i18next';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import ShippedPacksContent from './ShippedPacksContent';
 
 /**

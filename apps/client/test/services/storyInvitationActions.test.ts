@@ -4,33 +4,30 @@ const mockRefresh = jest.fn();
 const mockImport = jest.fn();
 const mockEngine = {};
 
-jest.mock('../../src/services/StoryInvitationApiService', () => ({
+jest.mock('@/src/services/StoryInvitationApiService', () => ({
   __esModule: true,
   storyInvitationApi: {
     accept: (...args: unknown[]) => mockApi.accept(...args),
     remove: (...args: unknown[]) => mockApi.remove(...args),
   },
 }));
-jest.mock('../../src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockRefresh }),
 }));
-jest.mock('../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   __esModule: true,
   // A getter: the factory runs before `mockEngine` is initialized.
   get syncEngine() {
     return mockEngine;
   },
 }));
-jest.mock('../../src/services/sync/importNewServerStories', () => ({
+jest.mock('@/src/services/sync/importNewServerStories', () => ({
   __esModule: true,
   importNewServerStories: (...args: unknown[]) => mockImport(...args),
 }));
 
-import {
-  acceptStoryInvitation,
-  closeStoryInvitation,
-} from '../../src/services/storyInvitationActions';
+import { acceptStoryInvitation, closeStoryInvitation } from '@/src/services/storyInvitationActions';
 
 const server = { id: 'server-1' } as never;
 const db = {} as never;

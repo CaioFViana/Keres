@@ -8,41 +8,38 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import Button from '../../../components/common/controls/Button/Button';
-import type { HeaderAction } from '../../../components/common/navigation/HeaderActions/HeaderActions';
-import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
-import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
-import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
-import { SceneBodyFooter } from '../../../components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
-import { SceneBodyToolbar } from '../../../components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
+import Button from '@/src/components/common/controls/Button/Button';
+import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
+import CommentThreadModal from '@/src/components/features/comments/CommentThreadModal/CommentThreadModal';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
+import { SceneBodyFooter } from '@/src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
+import { SceneBodyToolbar } from '@/src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
 import {
   ScreenplaySceneHeader,
   useScreenplaySceneContext,
-} from '../../../components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
-import type { SceneSelect } from '../../../db/schema';
-import { useDrizzle } from '../../../db';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityComments } from '../../../hooks/useEntityComments';
+} from '@/src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
+import type { SceneSelect } from '@/src/db/schema';
+import { useDrizzle } from '@/src/db';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../../hooks/useEntityRefreshLifecycle';
-import { useSceneBodyDraft } from '../../../hooks/useSceneBodyDraft';
-import { useScreenTour } from '../../../guides/useScreenTour';
-import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import { useStoryRole } from '../../../hooks/useStoryRole';
-import { useWebSelectionClip } from '../../../hooks/useWebSelectionClip';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { SCENE_BODY_DRAFT_FIELD } from '../../../services/EditorDraftService';
-import {
-  createSceneService,
-  type SceneService,
-} from '../../../services/storymanagement/SceneService';
-import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { useTheme } from '../../../theme';
-import { AppAlert } from '../../../utils/AppAlert';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useSceneBodyDraft } from '@/src/hooks/useSceneBodyDraft';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useWebSelectionClip } from '@/src/hooks/useWebSelectionClip';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/EditorDraftService';
+import { createSceneService, type SceneService } from '@/src/services/storymanagement/SceneService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
@@ -57,9 +54,9 @@ type EditorMode = 'write' | 'read' | 'review';
  * scene is opened for writing, not when the app starts.
  */
 const RichBodyEditor = lazy(() =>
-  import('../../../components/features/manuscript/RichBodyEditor/RichBodyEditor').then(
-    (module) => ({ default: module.RichBodyEditor }),
-  ),
+  import('@/src/components/features/manuscript/RichBodyEditor/RichBodyEditor').then((module) => ({
+    default: module.RichBodyEditor,
+  })),
 );
 
 const MODES: {

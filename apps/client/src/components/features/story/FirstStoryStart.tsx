@@ -3,8 +3,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../theme';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useTheme } from '@/src/theme';
 
 interface FirstStoryStartProps {
   onBlank: () => void;

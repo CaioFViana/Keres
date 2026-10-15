@@ -13,9 +13,9 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 export interface MultiSelectOption {

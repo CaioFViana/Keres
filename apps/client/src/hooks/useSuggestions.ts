@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
-import { createSuggestionService } from '../services/storymanagement/SuggestionService';
+import { useDrizzle } from '@/src/db';
+import { createSuggestionService } from '@/src/services/storymanagement/SuggestionService';
 
 /** Catalog of saved + in-story values for a suggestion type. Reload is owned by the caller. */
 export function useSuggestions(storyId: string | undefined, type: string | undefined) {

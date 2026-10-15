@@ -4,12 +4,12 @@ import GuideSpotlight, {
   roundedRectSvg,
   SPOTLIGHT_RADIUS,
   spotlightDimSvg,
-} from '../../src/components/common/feedback/GuideHost/GuideSpotlight';
+} from '@/src/components/common/feedback/GuideHost/GuideSpotlight';
 
 const RECT = { x: 10, y: 100, width: 200, height: 40 };
 
 let mockReady = true;
-jest.mock('../../src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
+jest.mock('@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
   __esModule: true,
   useCanvasKitReady: () => mockReady,
 }));

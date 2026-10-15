@@ -1,5 +1,5 @@
 import { PAGE_FORMAT_ASPECT, PAGE_FORMATS } from '@keres/shared';
-import { sketchSizeForPageFormat } from '../../src/utils/sketchPageSize';
+import { sketchSizeForPageFormat } from '@/src/utils/sketchPageSize';
 
 describe('sketchSizeForPageFormat', () => {
   it('uses the Sketch papers that are the page: A5 and the 16:9 frame', () => {

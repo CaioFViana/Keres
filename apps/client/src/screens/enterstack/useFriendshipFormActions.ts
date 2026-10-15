@@ -4,12 +4,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
-import { friendshipApiService } from '../../services/FriendshipApiService';
-import type { FriendshipService } from '../../services/FriendshipService';
-import { userApiService } from '../../services/UserApiService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { AppAlert } from '../../utils/AppAlert';
+import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
+import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import type { FriendshipService } from '@/src/services/FriendshipService';
+import { userApiService } from '@/src/services/UserApiService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 import type { FriendshipFormState } from './useFriendshipFormState';
 
 type FriendshipNavigation = NativeStackNavigationProp<FriendshipStackParamList, 'FriendshipList'>;

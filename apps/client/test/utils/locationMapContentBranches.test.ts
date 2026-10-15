@@ -8,7 +8,7 @@ import {
   appendMarkersToMap,
   removeLocationMapPoint,
   setLocationMapRelationText,
-} from '../../src/utils/locationMapContent';
+} from '@/src/utils/locationMapContent';
 
 const base = { images: [], nodes: [] } as any;
 

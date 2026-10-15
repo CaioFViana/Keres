@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface FriendSharedStoriesProps {
   friendName: string;

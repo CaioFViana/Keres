@@ -6,29 +6,29 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import FriendshipRow from '../../components/features/friendship/FriendshipRow';
-import ServerFriendsHeader from '../../components/features/friendship/ServerFriendsHeader';
-import StoryInvitationList from '../../components/features/story/StoryInvitationList/StoryInvitationList';
-import { useDrizzle } from '../../db';
-import type { ServerSelect } from '../../db/schemas/servers';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
+import FriendshipRow from '@/src/components/features/friendship/FriendshipRow';
+import ServerFriendsHeader from '@/src/components/features/friendship/ServerFriendsHeader';
+import StoryInvitationList from '@/src/components/features/story/StoryInvitationList/StoryInvitationList';
+import { useDrizzle } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useFriendshipActionHandler } from '@/src/hooks/useFriendshipActionHandler';
 import type {
   FriendshipStackParamList,
   StorySelectionDrawerParamList,
-} from '../../navigation/StorySelectionStack';
-import type { FriendshipWithServer } from '../../services/FriendshipService';
-import { createFriendshipService } from '../../services/FriendshipService';
-import { createServerService } from '../../services/ServerService';
-import { createStoryInvitationService } from '../../services/StoryInvitationService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useHasUnseenMessages } from '../../state/unseenMessagesStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { type FriendshipListRow, groupFriendshipsByServer } from '../../utils/friendshipGroups';
+} from '@/src/navigation/StorySelectionStack';
+import type { FriendshipWithServer } from '@/src/services/FriendshipService';
+import { createFriendshipService } from '@/src/services/FriendshipService';
+import { createServerService } from '@/src/services/ServerService';
+import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useHasUnseenMessages } from '@/src/state/unseenMessagesStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { type FriendshipListRow, groupFriendshipsByServer } from '@/src/utils/friendshipGroups';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,

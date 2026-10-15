@@ -1,11 +1,11 @@
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../../db';
-import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
-import { AppAlert } from '../../utils/AppAlert';
-import { createULID } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { createULID } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 interface EditorTarget {
   /** The character whose relations are being edited: the node that was in focus. */

@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import FavoriteFilterButton from '../../../src/components/common/controls/FavoriteFilterButton/FavoriteFilterButton';
+import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilterButton/FavoriteFilterButton';
 
 const mockColors = {
   primary: '#111111',
@@ -19,7 +19,7 @@ const mockColors = {
   onError: '#ffffff',
 };
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ isDarkMode: false, colors: mockColors }),
 }));
 

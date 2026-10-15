@@ -4,8 +4,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
-import { useTheme } from '../../../../theme';
-import { useStoryVocabulary } from '../../../../vocabulary/useStoryVocabulary';
+import { useTheme } from '@/src/theme';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 
 interface AnalysisChipProps {
   issueCount: number;

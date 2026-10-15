@@ -25,24 +25,24 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
   useIsFocused: () => true,
 }));
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
-jest.mock('../../../src/hooks/useServerStatuses', () => ({
+jest.mock('@/src/hooks/useServerStatuses', () => ({
   useServerStatuses: (...args: unknown[]) => mockStatuses(...args),
 }));
-jest.mock('../../../src/hooks/usePaymentHistory', () => ({
+jest.mock('@/src/hooks/usePaymentHistory', () => ({
   usePaymentHistory: (...args: unknown[]) => mockHistory(...args),
 }));
 
 import { render } from '@testing-library/react-native';
-import ServerPaymentHistoryScreen from '../../../src/screens/enterstack/ServerPaymentHistoryScreen';
+import ServerPaymentHistoryScreen from '@/src/screens/enterstack/ServerPaymentHistoryScreen';
 
 const has = (text: string) => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 

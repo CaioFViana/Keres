@@ -1,13 +1,13 @@
-import type { AppDrizzleClient } from '../db';
-import type { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
 import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { createMessageService } from './MessageService';
 import { createPublicationService } from './PublicationService';
 import { createStoryInvitationService } from './StoryInvitationService';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { PAYMENTS_CHANGED } from '../utils/paymentEvents';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { PAYMENTS_CHANGED } from '@/src/utils/paymentEvents';
 import type { ServerStoryPreview } from './SyncEngineService';
 import { type AccessRevocationReason, noteAccessRevocation } from './accessRevocation';
 import { importNewServerStories } from './sync/importNewServerStories';

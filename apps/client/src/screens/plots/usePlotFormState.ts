@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
-import type { createPlotService } from '../../services/storymanagement/PlotService';
+import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import type { createPlotService } from '@/src/services/storymanagement/PlotService';
 
 type PlotService = ReturnType<typeof createPlotService>;
 

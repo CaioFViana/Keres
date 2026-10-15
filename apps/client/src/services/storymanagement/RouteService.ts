@@ -1,17 +1,17 @@
 import type { Route, RouteStep } from '@keres/shared';
 import { validateRouteSteps } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, RouteInsert, RouteStepInsert } from '../../db';
-import { choices, routeSteps, routes, scenes, stories } from '../../db/schema';
-import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient, RouteInsert, RouteStepInsert } from '@/src/db';
+import { choices, routeSteps, routes, scenes, stories } from '@/src/db/schema';
+import { createULID, getChangedFields } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export type SaveRoute = Pick<Route, 'storyId' | 'name' | 'details'> & { id?: string };
 

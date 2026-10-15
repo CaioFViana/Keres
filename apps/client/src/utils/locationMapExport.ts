@@ -1,5 +1,5 @@
 import type { LocationMapContentType } from '@keres/shared';
-import { mediaFileService } from '../services/MediaFileService';
+import { mediaFileService } from '@/src/services/MediaFileService';
 import { bytesToBase64 } from './locationMapMedia';
 import { renderLocationMapSvg } from './locationMapSvg';
 import type { LocationMapSvgOptions } from './locationMapSvg';

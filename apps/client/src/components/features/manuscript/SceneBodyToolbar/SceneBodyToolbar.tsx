@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 import type { ManuscriptMark } from '@keres/shared';
 
 export type ManuscriptBlockAction = 'bullet' | 'ordered';

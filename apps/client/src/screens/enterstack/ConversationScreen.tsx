@@ -14,15 +14,15 @@ import {
   Text,
   View,
 } from 'react-native';
-import MessageBubble from '../../components/features/messages/MessageBubble';
-import MessageComposer from '../../components/features/messages/MessageComposer';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useConversation } from '../../hooks/useConversation';
-import { useKeyboardOverlap } from '../../hooks/useKeyboardOverlap';
-import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
-import type { MessagePeerRef } from '../../services/MessageApiService';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import MessageBubble from '@/src/components/features/messages/MessageBubble';
+import MessageComposer from '@/src/components/features/messages/MessageComposer';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useConversation } from '@/src/hooks/useConversation';
+import { useKeyboardOverlap } from '@/src/hooks/useKeyboardOverlap';
+import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { MessagePeerRef } from '@/src/services/MessageApiService';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 
 /** The least room left above the keyboard, on top of what is measured, on any platform. */
 const KEYBOARD_ROOM_MIN = 40;

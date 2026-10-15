@@ -1,6 +1,6 @@
 import type { AgeVerificationInfo } from '@keres/shared';
 import { useEffect, useState } from 'react';
-import { fetchAgeVerificationInfo } from '../services/AgeVerificationApiService';
+import { fetchAgeVerificationInfo } from '@/src/services/AgeVerificationApiService';
 
 /**
  * How a server handles age right now, read while `enabled`. Null until it answers, and when it cannot be read:

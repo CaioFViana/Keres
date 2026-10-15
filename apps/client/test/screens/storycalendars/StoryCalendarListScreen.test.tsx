@@ -44,7 +44,7 @@ const mockHeaderConfig: {
 const mockDb = {};
 const mockUseScreenTour = jest.fn();
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -123,34 +123,34 @@ jest.mock('@/src/components/common/inputs/DatePickerInput/DatePickerInput', () =
     ),
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => mockCalendarState.current,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1', dateDisplayFormat: 'iso' }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: mockStory.current, setSelectedStory: mockSetSelectedStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -169,11 +169,11 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/services/storymanagement/StoryCalendarService', () => ({
+jest.mock('@/src/services/storymanagement/StoryCalendarService', () => ({
   __esModule: true,
   createStoryCalendarService: () => ({
     setPrimary: mockSetPrimary,
@@ -181,7 +181,7 @@ jest.mock('../../../src/services/storymanagement/StoryCalendarService', () => ({
     deleteCalendar: mockDeleteCalendar,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     updateStory: mockUpdateStory,
@@ -193,8 +193,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockI18n,
 }));
 
-import StoryCalendarListScreen from '../../../src/screens/storycalendars/StoryCalendarListScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import StoryCalendarListScreen from '@/src/screens/storycalendars/StoryCalendarListScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const epochDay = partsToDayNumber(definition, { year: 2, month: 1, day: 1 });
 

@@ -3,11 +3,11 @@ import type { StoryPlan } from '@keres/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { typography } from '../../../../theme/tokens';
-import { getEntityTypeBadge } from '../../../../utils/entityTypeBadge';
-import { planUsageLevel } from '../../../../utils/planUsage';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { getEntityTypeBadge } from '@/src/utils/entityTypeBadge';
+import { planUsageLevel } from '@/src/utils/planUsage';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 type SortKey = 'name' | 'count';
 type SortDirection = 'asc' | 'desc';

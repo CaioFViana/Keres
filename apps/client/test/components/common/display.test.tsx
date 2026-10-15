@@ -1,21 +1,18 @@
 import { avatarColorFromSeed } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
-import Avatar from '../../../src/components/common/display/Avatar/Avatar';
-import CollapsibleCard from '../../../src/components/common/display/CollapsibleCard/CollapsibleCard';
-import DetailField from '../../../src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '../../../src/components/common/display/EntityMetadata/EntityMetadata';
-import EntityRelationList from '../../../src/components/common/display/EntityRelationList/EntityRelationList';
-import SummaryCard from '../../../src/components/common/display/SummaryCard/SummaryCard';
-import TagList from '../../../src/components/common/display/TagList/TagList';
-import {
-  MentionMatcherContext,
-  MentionNavigationContext,
-} from '../../../src/mentions/MentionContext';
-import { EMPTY_MENTION_MATCHER } from '../../../src/utils/entityMentions';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
+import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
+import TagList from '@/src/components/common/display/TagList/TagList';
+import { MentionMatcherContext, MentionNavigationContext } from '@/src/mentions/MentionContext';
+import { EMPTY_MENTION_MATCHER } from '@/src/utils/entityMentions';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -55,13 +52,13 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MIcon',
 }));
 
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({
     term: (type: string, plural = false) => (plural ? `${type}s` : type),
   }),
 }));
 
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,

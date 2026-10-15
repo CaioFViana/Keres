@@ -1,5 +1,5 @@
-import type { AppDrizzleClient } from '../db';
-import type { ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
 import { storyInvitationApi } from './StoryInvitationApiService';
 import { createStoryInvitationService, type ServerStoryInvitation } from './StoryInvitationService';
 import { syncEngine } from './sync/appSyncEngine';

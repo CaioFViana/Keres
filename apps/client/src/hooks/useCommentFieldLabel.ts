@@ -2,8 +2,8 @@ import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { eq } from 'drizzle-orm';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import { storySchemaFields } from '../db/schema';
+import { useDrizzle } from '@/src/db';
+import { storySchemaFields } from '@/src/db/schema';
 
 /**
  * Resolves a comment field's friendly, translated label: for native fields it uses

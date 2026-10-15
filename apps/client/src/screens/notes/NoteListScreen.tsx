@@ -13,18 +13,18 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryTagFilterOptions } from '../../hooks/useStoryTagFilterOptions';
-import { useTitleDateSortOptions } from '../../hooks/useTitleDateSortOptions';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/useStoryTagFilterOptions';
+import { useTitleDateSortOptions } from '@/src/hooks/useTitleDateSortOptions';
 import type {
   MainSystemDrawerParamList,
   NotesStackParamList,
-} from '../../navigation/MainSystemStack';
-import type { NoteWithTags } from '../../services/storymanagement/NoteService';
-import { useNoteStore } from '../../state/noteStore';
+} from '@/src/navigation/MainSystemStack';
+import type { NoteWithTags } from '@/src/services/storymanagement/NoteService';
+import { useNoteStore } from '@/src/state/noteStore';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<

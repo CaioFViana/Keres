@@ -1,12 +1,12 @@
 /** @jest-environment node */
-jest.mock('../../src/state/galleryMediaViewerStore', () => ({
+jest.mock('@/src/state/galleryMediaViewerStore', () => ({
   __esModule: true,
   useGalleryMediaViewerStore: jest.fn(),
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useOpenGalleryMediaViewer } from '../../src/hooks/useOpenGalleryMediaViewer';
-import { useGalleryMediaViewerStore } from '../../src/state/galleryMediaViewerStore';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
+import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
 
 const open = jest.fn();
 

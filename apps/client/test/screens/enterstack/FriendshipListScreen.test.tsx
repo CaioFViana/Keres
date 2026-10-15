@@ -70,35 +70,35 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/FriendshipService', () => ({
+jest.mock('@/src/services/FriendshipService', () => ({
   createFriendshipService: () => ({
     getAllFriendships: (...args: unknown[]) => mockGetAllFriendships(...args),
     acceptFriendRequest: (...args: unknown[]) => mockAccept(...args),
@@ -110,38 +110,38 @@ jest.mock('../../../src/services/FriendshipService', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/features/story/StoryInvitationList/StoryInvitationList', () => ({
+jest.mock('@/src/components/features/story/StoryInvitationList/StoryInvitationList', () => ({
   __esModule: true,
   default: () => null,
 }));
 
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('../../../src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import FriendshipListScreen from '../../../src/screens/enterstack/FriendshipListScreen';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import FriendshipListScreen from '@/src/screens/enterstack/FriendshipListScreen';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', idUser: 'me-on-server', name: 'Main' };
 
@@ -314,7 +314,7 @@ describe('FriendshipListScreen', () => {
   });
 
   it('changes the inbox icon when a message has not been opened', async () => {
-    const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+    const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
     const view = await render(<FriendshipListScreen />);
     await focusLast();
     await view.findByText('friends_title · 1');
@@ -563,7 +563,7 @@ describe('FriendshipListScreen', () => {
 });
 
 describe('FriendshipListScreen: which chat has news', () => {
-  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
   const bo = friendship({
     id: 'f6',
     status: FriendStatus.FRIEND,

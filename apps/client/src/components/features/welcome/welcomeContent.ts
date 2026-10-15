@@ -1,6 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
-import type { ClientFlavor } from '../../../utils/clientFlavor';
-import { isOfficialApp } from '../../../utils/clientFlavor';
+import type { ClientFlavor } from '@/src/utils/clientFlavor';
+import { isOfficialApp } from '@/src/utils/clientFlavor';
 
 export type WelcomePageId = 'what' | 'where' | 'name';
 

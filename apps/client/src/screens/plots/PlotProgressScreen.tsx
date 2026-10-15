@@ -7,16 +7,16 @@ import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useStoryPlots } from '../../hooks/useStoryPlots';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { deliverMapExport } from '../../utils/storyTransfer';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useStoryPlots } from '@/src/hooks/useStoryPlots';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { deliverMapExport } from '@/src/utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
-import { chooseExportFormat } from '../../utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 
 /**
  * How much of the story each plot covers. **Coverage**, not participation: a scene may

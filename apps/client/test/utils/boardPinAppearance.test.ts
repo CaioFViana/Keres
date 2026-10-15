@@ -6,7 +6,7 @@ import {
   boardPinTypeKey,
   getBoardPinAppearance,
   worldPieceSectionFromBoardPinGroup,
-} from '../../src/utils/boardPinAppearance';
+} from '@/src/utils/boardPinAppearance';
 
 it('treats a Chapter pin as an Event when the live row is an event', () => {
   expect(boardPinAppearanceType('entity', 'Chapter', 'event')).toBe('Event');

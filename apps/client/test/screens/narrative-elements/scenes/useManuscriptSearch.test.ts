@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-native';
 import type { FlatList, Text, View } from 'react-native';
 import type { ManuscriptSection } from '@keres/shared';
-import { useManuscriptSearch } from '../../../../src/screens/narrative-elements/scenes/useManuscriptSearch';
+import { useManuscriptSearch } from '@/src/screens/narrative-elements/scenes/useManuscriptSearch';
 
 const sections: ManuscriptSection[] = [
   {

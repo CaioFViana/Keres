@@ -1,4 +1,4 @@
-import { galleryGridLayout, galleryScrollbarWidth } from '../../src/utils/galleryGridLayout';
+import { galleryGridLayout, galleryScrollbarWidth } from '@/src/utils/galleryGridLayout';
 
 /** The widest the row of cards may be: the list's 10 px per side, and a grid's 5 px of row padding. */
 const roomFor = (width: number, numColumns: number, scrollbar = 0) =>

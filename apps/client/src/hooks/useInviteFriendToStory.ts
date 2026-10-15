@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import type { ServerSelect } from '../db/schemas/servers';
-import { storyInvitationApi } from '../services/StoryInvitationApiService';
-import { createStoryInvitationService } from '../services/StoryInvitationService';
-import { useNotificationStore } from '../state/notificationStore';
-import { AppAlert } from '../utils/AppAlert';
+import { useDrizzle } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import { storyInvitationApi } from '@/src/services/StoryInvitationApiService';
+import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 export type InviteRole = 'reader' | 'writer';
 export type InvitableStory = { id: string; title: string };

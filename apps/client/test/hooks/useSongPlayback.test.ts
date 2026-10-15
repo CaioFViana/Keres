@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { lineAt, useSongPlayback } from '../../src/hooks/useSongPlayback';
+import { lineAt, useSongPlayback } from '@/src/hooks/useSongPlayback';
 
 const mockPlayer = {
   pause: jest.fn(),
@@ -16,7 +16,7 @@ jest.mock('expo-audio', () => ({
   useAudioPlayer: () => mockPlayer,
   useAudioPlayerStatus: () => mockStatus,
 }));
-jest.mock('../../src/services/SongAudioService', () => ({
+jest.mock('@/src/services/SongAudioService', () => ({
   __esModule: true,
   createSongAudioService: () => ({
     render: (...args: unknown[]) => mockRender(...args),

@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { ThemeColors } from '../../../theme';
-import { useTheme } from '../../../theme';
-import UnseenMark from '../messages/UnseenMark';
+import type { ThemeColors } from '@/src/theme';
+import { useTheme } from '@/src/theme';
+import UnseenMark from '@/src/components/features/messages/UnseenMark';
 
 export interface ServerActionRowProps {
   icon: ComponentProps<typeof Ionicons>['name'];

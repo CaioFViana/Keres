@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { cardLayout, cardMode } from '../../src/guides/cardPlacement';
+import { cardLayout, cardMode } from '@/src/guides/cardPlacement';
 
 const window = {
   windowWidth: 400,

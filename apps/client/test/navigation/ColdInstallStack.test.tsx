@@ -17,13 +17,13 @@ jest.mock('@react-navigation/native-stack', () => ({
     },
   }),
 }));
-jest.mock('../../src/screens/enterstack/ColdInstallScreen', () => ({
+jest.mock('@/src/screens/enterstack/ColdInstallScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
 
-import ColdInstallNavigator from '../../src/navigation/ColdInstallStack';
-import ColdInstallScreen from '../../src/screens/enterstack/ColdInstallScreen';
+import ColdInstallNavigator from '@/src/navigation/ColdInstallStack';
+import ColdInstallScreen from '@/src/screens/enterstack/ColdInstallScreen';
 
 beforeEach(() => {
   mockNavigatorProps.length = 0;

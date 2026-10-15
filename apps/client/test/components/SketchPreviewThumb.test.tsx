@@ -2,7 +2,7 @@ import { encodeSketchDocument, type SketchDocument } from '@keres/shared';
 import { cleanup, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { Platform } from 'react-native';
-import SketchPreviewThumb from '../../src/components/features/sketches/SketchPreviewThumb';
+import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreviewThumb';
 
 const mockMakeSvg = jest.fn();
 

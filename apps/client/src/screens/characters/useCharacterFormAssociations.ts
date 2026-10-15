@@ -2,20 +2,20 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../../db';
-import type { CharacterSelect } from '../../db/schemas/characters';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
-import type { CharacterService } from '../../services/storymanagement/CharacterService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { CharacterSelect } from '@/src/db/schemas/characters';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useStoryStats } from '@/src/hooks/useStoryStats';
+import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
+import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
-} from '../../services/storymanagement/EntityFormSecondaryDraftStore';
-import { createModeService } from '../../services/storymanagement/ModeService';
-import { createStatRelationService } from '../../services/storymanagement/StatRelationService';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+import { createModeService } from '@/src/services/storymanagement/ModeService';
+import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 type UseCharacterFormAssociationsOptions = {
   /** Route id when opening an existing character — used to restore durable pending relations. */

@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import Database from 'better-sqlite3';
-import { initializeDrizzle, resetDatabase } from '../../src/db';
+import { initializeDrizzle, resetDatabase } from '@/src/db';
 
 function expoLikeDatabase(raw: Database.Database) {
   return {

@@ -11,11 +11,11 @@ import {
   View,
 } from 'react-native';
 import { CanvasActionBarButton } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
-import { useSketchCompact } from '../../../hooks/useSketchCompact';
-import { isStrokeTool, useSketchToolStore, type SketchTool } from '../../../state/sketchToolStore';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { layout } from '../../../theme/layout';
+import { useSketchCompact } from '@/src/hooks/useSketchCompact';
+import { isStrokeTool, useSketchToolStore, type SketchTool } from '@/src/state/sketchToolStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { layout } from '@/src/theme/layout';
 import SketchSlider from './SketchSlider';
 
 const BRUSH_ICONS: Record<SketchBrushId, keyof typeof Ionicons.glyphMap> = {

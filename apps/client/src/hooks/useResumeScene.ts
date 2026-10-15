@@ -1,8 +1,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
-import { useDrizzle } from '../db';
-import { createChapterService } from '../services/storymanagement/ChapterService';
-import { createSceneService } from '../services/storymanagement/SceneService';
+import { useDrizzle } from '@/src/db';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
 
 export interface ResumeScene {
   id: string;

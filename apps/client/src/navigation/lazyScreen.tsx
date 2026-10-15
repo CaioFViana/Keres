@@ -1,5 +1,5 @@
 import { type ComponentType, lazy, Suspense } from 'react';
-import { ScreenLoading } from '../components/common/feedback/ScreenState/ScreenState';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 
 /**
  * A navigator screen whose code loads the first time it is opened, not when the app starts. The module has to be

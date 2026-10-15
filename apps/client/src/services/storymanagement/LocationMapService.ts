@@ -1,19 +1,19 @@
 import type { LocationMapContentType } from '@keres/shared';
 import { validateLocationMapContent } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { LocationMapInsert, LocationMapSelect } from '../../db/schema';
-import { locationMaps } from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { LocationMapInsert, LocationMapSelect } from '@/src/db/schema';
+import { locationMaps } from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export interface LocationMapService {
   getMapsForStory(storyId: string): Promise<LocationMapSelect[]>;

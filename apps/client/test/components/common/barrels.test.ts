@@ -1,12 +1,12 @@
-import * as common from '../../../src/components/common';
-import * as controls from '../../../src/components/common/controls';
-import * as display from '../../../src/components/common/display';
-import * as feedback from '../../../src/components/common/feedback';
-import * as forms from '../../../src/components/common/forms';
-import * as inputs from '../../../src/components/common/inputs';
-import * as lists from '../../../src/components/common/lists';
-import * as modals from '../../../src/components/common/modals';
-import * as navigation from '../../../src/components/common/navigation';
+import * as common from '@/src/components/common';
+import * as controls from '@/src/components/common/controls';
+import * as display from '@/src/components/common/display';
+import * as feedback from '@/src/components/common/feedback';
+import * as forms from '@/src/components/common/forms';
+import * as inputs from '@/src/components/common/inputs';
+import * as lists from '@/src/components/common/lists';
+import * as modals from '@/src/components/common/modals';
+import * as navigation from '@/src/components/common/navigation';
 
 describe('component barrels', () => {
   it('re-exports every common group', () => {

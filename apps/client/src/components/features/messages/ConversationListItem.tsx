@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../theme';
-import type { ThemeColors } from '../../../theme';
-import Avatar from '../../common/display/Avatar/Avatar';
+import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import UnseenMark from './UnseenMark';
 
 export interface ConversationListItemProps {

@@ -1,21 +1,21 @@
 import type { SQL } from 'drizzle-orm';
 import { and, asc, count, eq, inArray, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { ChoiceInsert, ChoiceSelect } from '../../db/schemas/choices';
-import { choices } from '../../db/schemas/choices';
-import { scenes } from '../../db/schemas/scenes';
-import { stories } from '../../db/schemas/stories';
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ChoiceInsert, ChoiceSelect } from '@/src/db/schemas/choices';
+import { choices } from '@/src/db/schemas/choices';
+import { scenes } from '@/src/db/schemas/scenes';
+import { stories } from '@/src/db/schemas/stories';
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
-import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '@/src/types/entityFilters';
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
 import { applyListSort, storyEntityConditions } from './storyEntityListQuery';
 import { softDeleteRowSync } from './softDelete';

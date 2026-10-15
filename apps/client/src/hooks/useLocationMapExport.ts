@@ -6,16 +6,16 @@ import type {
   LocationMapConnection,
   LocationMapContains,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import type { LocationMapSelect } from '../db/schema';
-import type { NotificationType } from '../state/notificationStore';
-import type { SvgExportColors } from '../utils/svgExport';
+import type { LocationMapSelect } from '@/src/db/schema';
+import type { NotificationType } from '@/src/state/notificationStore';
+import type { SvgExportColors } from '@/src/utils/svgExport';
 import {
   buildLocationMapFileName,
   deliverMapExport,
   type ExportFileLanguage,
-} from '../utils/storyTransfer';
-import { buildStandaloneLocationMapSvg } from '../utils/storyMapSvgExport';
-import { chooseExportFormat } from '../utils/exportFormatPrompt';
+} from '@/src/utils/storyTransfer';
+import { buildStandaloneLocationMapSvg } from '@/src/utils/storyMapSvgExport';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 
 type GalleryMediaById = Record<
   string,

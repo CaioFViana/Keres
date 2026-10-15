@@ -7,8 +7,8 @@ import {
   collectConflictEntityRefs,
   collectEntityRefs,
   RELATION_ENTITY_TYPES,
-} from '../../src/services/ConflictSummaryService';
-import type { PendingConflict } from '../../src/services/SyncConflictService';
+} from '@/src/services/ConflictSummaryService';
+import type { PendingConflict } from '@/src/services/SyncConflictService';
 
 const t = ((key: string) => key) as unknown as TFunction;
 

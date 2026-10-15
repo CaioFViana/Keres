@@ -40,9 +40,9 @@ import type {
   LocationSelect,
   SceneSelect,
   TagSelect,
-} from '../../../db/schema';
-import type { SaveNoteRelation } from '../../../services/storymanagement/NoteRelationService';
-import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
+} from '@/src/db/schema';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
+import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 

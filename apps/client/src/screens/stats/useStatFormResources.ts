@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../db';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import { createStatService, type StatService } from '../../services/storymanagement/StatService';
+import { useDrizzle } from '@/src/db';
+import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { createStatService, type StatService } from '@/src/services/storymanagement/StatService';
 
 /** Owns the stat service and story-scoped stats lookup used by the form. */
 export function useStatFormResources(storyId?: string) {

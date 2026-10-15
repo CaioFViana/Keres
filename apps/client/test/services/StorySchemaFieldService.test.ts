@@ -2,10 +2,15 @@
  * @jest-environment node
  */
 import { AttributeType } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import { createStorySchemaFieldService } from '../../src/services/storymanagement/StorySchemaFieldService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The custom-attribute field service's update path and delete edges.

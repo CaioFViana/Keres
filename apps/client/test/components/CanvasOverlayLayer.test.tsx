@@ -3,11 +3,11 @@ import type { SkFont } from '@shopify/react-native-skia';
 import { matchFont } from '@shopify/react-native-skia';
 import type { BoardContentType, CanvasOverlayType, SpatialRect } from '@keres/shared';
 import { StyleSheet, View } from 'react-native';
-import BoardCanvas from '../../src/components/features/boards/BoardCanvas';
-import CanvasOverlayLayer from '../../src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
-import CanvasStampView from '../../src/components/features/graphs/CanvasOverlay/CanvasStampView';
+import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
+import CanvasOverlayLayer from '@/src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
+import CanvasStampView from '@/src/components/features/graphs/CanvasOverlay/CanvasStampView';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#000',
@@ -34,7 +34,7 @@ jest.mock('@expo/vector-icons', () => {
       }),
   };
 });
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
 
 type Root = RenderResult['container'];
 

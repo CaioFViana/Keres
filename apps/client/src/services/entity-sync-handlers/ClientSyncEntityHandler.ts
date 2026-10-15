@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 
 /**
  * Contract every entity's pull-path handler implements (see `registerClientSyncHandlers`).

@@ -2,15 +2,15 @@ const mockRefresh = jest.fn();
 const mockClear = jest.fn();
 const mockListeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
-jest.mock('../../src/services/PlanUsageService', () => ({
+jest.mock('@/src/services/PlanUsageService', () => ({
   __esModule: true,
   refreshPlanUsage: (...args: unknown[]) => mockRefresh(...args),
 }));
-jest.mock('../../src/state/planUsageStore', () => ({
+jest.mock('@/src/state/planUsageStore', () => ({
   __esModule: true,
   usePlanUsageStore: { getState: () => ({ clear: mockClear }) },
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (event: string, listener: (...args: unknown[]) => void) => {
@@ -24,7 +24,7 @@ jest.mock('../../src/utils/EventEmitter', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { usePlanUsageWatcher } from '../../src/hooks/usePlanUsageWatcher';
+import { usePlanUsageWatcher } from '@/src/hooks/usePlanUsageWatcher';
 
 const db = {} as never;
 const story = { id: 'story-1', serverId: 'server-1' };

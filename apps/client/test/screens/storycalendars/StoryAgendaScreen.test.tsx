@@ -74,7 +74,7 @@ jest.mock('@/src/hooks/useScreenHeader', () => ({
     mockHeaderConfig.current = config as never;
   },
 }));
-jest.mock('../../../src/screens/storycalendars/AgendaDateLookup', () => {
+jest.mock('@/src/screens/storycalendars/AgendaDateLookup', () => {
   const { Text } = require('react-native');
   const stub = (marker: string) =>
     function MockAgendaDateLookup(props: { cursor: number; onMonthChange: (day: number) => void }) {
@@ -94,33 +94,33 @@ jest.mock('../../../src/screens/storycalendars/AgendaDateLookup', () => {
     GregorianCalendarDateLookup: stub('gregorian-lookup'),
   };
 });
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useStoryAgenda', () => ({
+jest.mock('@/src/hooks/useStoryAgenda', () => ({
   __esModule: true,
   useStoryAgenda: () => mockAgendaState.current,
 }));
-jest.mock('../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => mockCalendarState.current,
 }));
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: mockSelectedStory.current }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ dateDisplayFormat: 'iso' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -143,7 +143,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockI18n,
 }));
 
-import StoryAgendaScreen from '../../../src/screens/storycalendars/StoryAgendaScreen';
+import StoryAgendaScreen from '@/src/screens/storycalendars/StoryAgendaScreen';
 
 const sceneEntries = () => [
   { id: 'scene-1', dayNumber: sceneDay, kind: 'scene', name: 'Opening', summary: 'It begins' },

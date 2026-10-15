@@ -2,9 +2,9 @@ import type { LocationMapContentType, LocationMapNodeType } from '@keres/shared'
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LocationMapNodeConnection } from '@/src/components/features/location-maps/LocationMapNodeSheet';
-import type { AppDrizzleClient } from '../db';
-import type { LocationRelationSelect, LocationSelect } from '../db/schema';
-import { createLocationRelationService } from '../services/storymanagement/LocationRelationService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
 import {
   computeAncestorIds,
   computeDescendantIds,
@@ -12,7 +12,7 @@ import {
   deriveConnections,
   deriveContains,
   deriveParent,
-} from '../utils/locationMapRelations';
+} from '@/src/utils/locationMapRelations';
 
 type Notify = (message: string, type?: 'success' | 'warning' | 'error') => void;
 

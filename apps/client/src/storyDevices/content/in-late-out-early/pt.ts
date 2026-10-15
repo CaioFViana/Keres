@@ -1,4 +1,4 @@
-import type { StoryDevicePage } from '../../types';
+import type { StoryDevicePage } from '@/src/storyDevices/types';
 const page: StoryDevicePage = {
   id: 'in-late-out-early',
   title: 'Entre tarde, saia cedo',

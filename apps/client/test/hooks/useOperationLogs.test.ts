@@ -7,7 +7,7 @@ const mockService = {
   getFavoriteBehavior: jest.fn(),
 };
 
-jest.mock('../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   __esModule: true,
   useDrizzle: jest.fn(() => mockDb),
   worldRules: { id: 'id', section: 'section', storyId: 'storyId' },
@@ -16,23 +16,23 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
-jest.mock('../../src/services/OperationLogService', () => ({
+jest.mock('@/src/services/OperationLogService', () => ({
   __esModule: true,
   createOperationLogService: jest.fn(() => mockService),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return { useEntityInitialLoad: (load: () => void) => React.useEffect(load, [load]) };
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '../../src/db';
-import { useOperationLogs } from '../../src/hooks/useOperationLogs';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { useOperationLogs } from '@/src/hooks/useOperationLogs';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

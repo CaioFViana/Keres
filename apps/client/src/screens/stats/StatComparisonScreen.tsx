@@ -6,31 +6,31 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Button from '../../components/common/controls/Button/Button';
+import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill, {
   SingleSelectPill,
-} from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { StatRadarChart } from '../../components/features/stats/StatRadarChart/StatRadarChart';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type { StatsStackParamList } from '../../navigation/StatsStack';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { deliverMapExport } from '../../utils/storyTransfer';
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useStoryStats } from '@/src/hooks/useStoryStats';
+import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { StatsStackParamList } from '@/src/navigation/StatsStack';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
+import { deliverMapExport } from '@/src/utils/storyTransfer';
 import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
 } from '@keres/shared/graphs/statRadarLayout';
 import { renderStatRadarSvg } from '@keres/shared/graphs/statRadarSvg';
-import { resolveStatValue } from '../../utils/statValues';
-import { chooseExportFormat } from '../../utils/exportFormatPrompt';
+import { resolveStatValue } from '@/src/utils/statValues';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<
   StatsStackParamList,

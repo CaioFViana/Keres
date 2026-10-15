@@ -4,7 +4,7 @@
 import * as sharedSchemas from '@keres/shared';
 import { getTableColumns, is } from 'drizzle-orm';
 import { SQLiteTable } from 'drizzle-orm/sqlite-core';
-import * as clientSchema from '../../src/db/schema';
+import * as clientSchema from '@/src/db/schema';
 
 /**
  * An entity is described three times: the client's SQLite table, the shared zod schema the sync wire and the

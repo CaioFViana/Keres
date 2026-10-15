@@ -1,17 +1,17 @@
 import type { SeeAlsoEntityType } from '@keres/shared';
 import { isSameEntity, SELF_LINK_ERROR, sortEntityPair } from '@keres/shared';
 import { and, eq, or, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, SeeAlsoRelationSelect } from '../../db';
-import { seeAlsoRelations } from '../../db';
-import { createULID } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient, SeeAlsoRelationSelect } from '@/src/db';
+import { seeAlsoRelations } from '@/src/db';
+import { createULID } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export interface SeeAlsoEntityRef {
   entityType: SeeAlsoEntityType;

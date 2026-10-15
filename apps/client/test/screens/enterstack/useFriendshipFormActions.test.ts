@@ -3,16 +3,16 @@ const mockNotify = jest.fn();
 const mockGetUserByTag = jest.fn();
 const mockSendFriendRequest = jest.fn();
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('../../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: { getUserByTag: (...args: unknown[]) => mockGetUserByTag(...args) },
 }));
-jest.mock('../../../src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/FriendshipApiService', () => ({
   friendshipApiService: {
     sendFriendRequest: (...args: unknown[]) => mockSendFriendRequest(...args),
   },
@@ -29,10 +29,10 @@ import { act, renderHook } from '@testing-library/react-native';
 import {
   FRIEND_TAG_LOOKUP_DELAY_MS,
   useFriendshipFormActions,
-} from '../../../src/screens/enterstack/useFriendshipFormActions';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import type { FriendshipFormState } from '../../../src/screens/enterstack/useFriendshipFormState';
-import type { FriendshipService } from '../../../src/services/FriendshipService';
+} from '@/src/screens/enterstack/useFriendshipFormActions';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import type { FriendshipFormState } from '@/src/screens/enterstack/useFriendshipFormState';
+import type { FriendshipService } from '@/src/services/FriendshipService';
 
 const selectedServer = {
   id: 'server-1',

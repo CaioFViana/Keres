@@ -16,12 +16,12 @@ import type {
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { packHasExtras } from '../../services/storymanagement/PackService';
-import { useShippedPacksInstallerStore } from '../../state/shippedPacksInstallerStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { packHasExtras } from '@/src/services/storymanagement/PackService';
+import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { useStoryFormActions } from './useStoryFormActions';
 import { useStoryFormResources } from './useStoryFormResources';
 import { useStoryFormState } from './useStoryFormState';

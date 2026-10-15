@@ -3,8 +3,8 @@ import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
-import { useTheme } from '../../../theme';
-import { capturePointer, releasePointer } from '../../../utils/pointerCapture';
+import { useTheme } from '@/src/theme';
+import { capturePointer, releasePointer } from '@/src/utils/pointerCapture';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;

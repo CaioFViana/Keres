@@ -19,10 +19,10 @@ import {
 } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { useIconRecents } from '../../../../hooks/useIconRecents';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useIconRecents } from '@/src/hooks/useIconRecents';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 /**
  * The list lives in `@keres/shared` because the public site draws the same avatar - see

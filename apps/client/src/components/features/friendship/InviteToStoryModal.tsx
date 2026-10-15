@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 type Role = 'reader' | 'writer';

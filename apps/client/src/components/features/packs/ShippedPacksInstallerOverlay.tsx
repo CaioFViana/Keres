@@ -1,7 +1,7 @@
 import React from 'react';
 import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
-import ShippedPacksContent from '../../../screens/packs/ShippedPacksContent';
-import { useShippedPacksInstallerStore } from '../../../state/shippedPacksInstallerStore';
+import ShippedPacksContent from '@/src/screens/packs/ShippedPacksContent';
+import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
 
 /**
  * Mounts the shipped-packs catalogue offered from the story form, on top of everything, without

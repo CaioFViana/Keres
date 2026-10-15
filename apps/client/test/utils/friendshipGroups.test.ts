@@ -1,7 +1,7 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import type { ServerSelect } from '../../src/db/schemas/servers';
-import type { FriendshipWithServer } from '../../src/services/FriendshipService';
-import { groupFriendshipsByServer } from '../../src/utils/friendshipGroups';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import type { FriendshipWithServer } from '@/src/services/FriendshipService';
+import { groupFriendshipsByServer } from '@/src/utils/friendshipGroups';
 
 const server = (id: string, idUser: string) =>
   ({ id, idUser, name: id }) as unknown as ServerSelect;

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, renderHook } from '@testing-library/react-native';
-import { useIconRecents } from '../../src/hooks/useIconRecents';
+import { useIconRecents } from '@/src/hooks/useIconRecents';
 
 beforeEach(async () => {
   await AsyncStorage.clear();

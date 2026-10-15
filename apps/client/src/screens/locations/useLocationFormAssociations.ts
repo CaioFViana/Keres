@@ -1,16 +1,16 @@
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
-} from '../../services/storymanagement/EntityFormSecondaryDraftStore';
-import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import type { LocationService } from '../../services/storymanagement/LocationService';
-import { AppAlert } from '../../utils/AppAlert';
-import { createULID } from '../../utils/entityUtils';
+} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+import type { LocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import type { LocationService } from '@/src/services/storymanagement/LocationService';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { createULID } from '@/src/utils/entityUtils';
 
 const makePendingLocationRelation = (
   storyId: string,

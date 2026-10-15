@@ -1,8 +1,8 @@
 import { galleryHasFile, type MediaBlobStatusResponseType } from '@keres/shared';
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
-import type { AppDrizzleClient } from '../db';
-import type { GallerySelect, ServerSelect } from '../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import type { GallerySelect, ServerSelect } from '@/src/db/schema';
 import type { KeresAxiosInstance } from './apiClient';
 import { getServerAccessToken, isOfflineError } from './apiClient';
 import { mediaFileService } from './MediaFileService';

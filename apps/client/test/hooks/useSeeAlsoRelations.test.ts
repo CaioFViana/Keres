@@ -1,16 +1,16 @@
 /** @jest-environment node */
-jest.mock('../../src/db', () => ({ useDrizzle: jest.fn() }));
-jest.mock('../../src/state/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
-jest.mock('../../src/services/storymanagement/SeeAlsoRelationService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
+jest.mock('@/src/state/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
+jest.mock('@/src/services/storymanagement/SeeAlsoRelationService', () => ({
   createSeeAlsoRelationService: jest.fn(),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '../../src/db';
-import { useSeeAlsoRelations } from '../../src/hooks/useSeeAlsoRelations';
-import { createSeeAlsoRelationService } from '../../src/services/storymanagement/SeeAlsoRelationService';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { useSeeAlsoRelations } from '@/src/hooks/useSeeAlsoRelations';
+import { createSeeAlsoRelationService } from '@/src/services/storymanagement/SeeAlsoRelationService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const service = {
   getRelationsForEntity: jest.fn(),

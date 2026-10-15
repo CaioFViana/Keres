@@ -14,16 +14,16 @@ import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryPlots } from '../../hooks/useStoryPlots';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { deliverMapExport } from '../../utils/storyTransfer';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useStoryPlots } from '@/src/hooks/useStoryPlots';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { deliverMapExport } from '@/src/utils/storyTransfer';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
-import { chooseExportFormat } from '../../utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 
 /** Same cap as the presence matrix: the two charts are read side by side. */
 const MAX_VISIBLE_SERIES = 12;

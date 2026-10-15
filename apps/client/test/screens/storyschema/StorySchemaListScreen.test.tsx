@@ -24,16 +24,16 @@ jest.mock('@expo/vector-icons', () => ({
     return react.createElement(native.Text, { testID: `icon-${name}` }, name);
   },
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock(
-  '../../../src/components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal',
+  '@/src/components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal',
   () => ({
     __esModule: true,
     StorySchemaFieldReorderModal: (props: {
@@ -64,35 +64,35 @@ jest.mock(
     },
   }),
 );
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => mockFields,
 }));
-jest.mock('../../../src/services/storymanagement/StorySchemaFieldService', () => ({
+jest.mock('@/src/services/storymanagement/StorySchemaFieldService', () => ({
   __esModule: true,
   createStorySchemaFieldService: () => ({
     deleteField: mockDeleteField,
     reorderFields: mockReorderFields,
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStoryId ? { id: mockStoryId } : null }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -107,11 +107,11 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
@@ -122,7 +122,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import StorySchemaListScreen from '../../../src/screens/storyschema/StorySchemaListScreen';
+import StorySchemaListScreen from '@/src/screens/storyschema/StorySchemaListScreen';
 
 function headerActions() {
   const header = mockUseScreenHeader.mock.calls[mockUseScreenHeader.mock.calls.length - 1][0] as {

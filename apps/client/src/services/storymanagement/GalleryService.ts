@@ -1,19 +1,19 @@
 import type { GalleryOwnerEntity, MediaType } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { GalleryInsert, GallerySelect, MediaTransferState } from '../../db/schema';
-import { galleries, galleryRelations } from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { GalleryInsert, GallerySelect, MediaTransferState } from '@/src/db/schema';
+import { galleries, galleryRelations } from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import { createGalleryRelationService } from './GalleryRelationService';
 import { countActiveStoryEntities } from './storyEntityCount';
 import {
@@ -22,7 +22,7 @@ import {
   normalizeFavoriteUpdate,
   persistInitialFavorite,
 } from './favoriteBehaviorUtils';
-import type { FavoriteFilterState } from '../../types/entityFilters';
+import type { FavoriteFilterState } from '@/src/types/entityFilters';
 import { softDeleteRowSync } from './softDelete';
 
 export type { FavoriteFilterState };

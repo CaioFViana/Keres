@@ -1,12 +1,12 @@
 import type { SyncConflictReason } from '@keres/shared';
 import { findContestedFields, syncConflictValuesDiffer } from '@keres/shared';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../db';
-import * as schema from '../db/schema';
-import type { SyncConflictSelect } from '../db/schema';
-import { createULID } from '../utils/entityUtils';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { withOpLogLock } from '../utils/opLogMutex';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { SyncConflictSelect } from '@/src/db/schema';
+import { createULID } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { withOpLogLock } from '@/src/utils/opLogMutex';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';
 import { cloneConflictBoard } from './sync/boardConflictClone';
 import { cloneConflictSketch } from './sync/sketchConflictClone';

@@ -8,9 +8,9 @@ import Animated, {
   useAnimatedReaction,
   withTiming,
 } from 'react-native-reanimated';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 
 interface CollapsibleCardProps {
   title: string;

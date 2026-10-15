@@ -1,5 +1,5 @@
-import { KERES_ICON_PATHS } from '../../src/utils/keresIconPaths';
-import { buildKeresSvgMarkup, keresIconDataUri } from '../../src/utils/keresIconMarkup';
+import { KERES_ICON_PATHS } from '@/src/utils/keresIconPaths';
+import { buildKeresSvgMarkup, keresIconDataUri } from '@/src/utils/keresIconMarkup';
 
 const shapes = KERES_ICON_PATHS['castle'];
 

@@ -1,10 +1,10 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { View } from 'react-native';
-import { HelpBlockRenderer } from '../../src/components/features/help/HelpBlockRenderer/HelpBlockRenderer';
+import { HelpBlockRenderer } from '@/src/components/features/help/HelpBlockRenderer/HelpBlockRenderer';
 
 const mockOpenPage = jest.fn();
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       border: '#ddd',

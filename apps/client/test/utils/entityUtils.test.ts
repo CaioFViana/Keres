@@ -1,4 +1,4 @@
-import { createULID, getChangedFields, prepareNewEntityData } from '../../src/utils/entityUtils';
+import { createULID, getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
 
 describe('createULID', () => {
   it('produces a 26-character Crockford ULID that the shared schemas accept', () => {

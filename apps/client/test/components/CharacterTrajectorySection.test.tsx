@@ -1,11 +1,11 @@
 import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
-import CharacterTrajectorySection from '../../src/components/features/trajectories/CharacterTrajectorySection';
+import CharacterTrajectorySection from '@/src/components/features/trajectories/CharacterTrajectorySection';
 
 const mockTrajectoryData = jest.fn();
-jest.mock('../../src/hooks/useCharacterTrajectoryData', () => ({
+jest.mock('@/src/hooks/useCharacterTrajectoryData', () => ({
   useCharacterTrajectoryData: (...args: unknown[]) => mockTrajectoryData(...args),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       primary: '#85f',
@@ -24,7 +24,7 @@ jest.mock('react-i18next', () => ({
 }));
 // The card itself animates; what matters here is the title it gets, and that it starts closed.
 const mockCard = jest.fn();
-jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
+jest.mock('@/src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const ReactActual = require('react');
   const { View, Text } = jest.requireActual('react-native');
@@ -41,7 +41,7 @@ jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard',
     },
   };
 });
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text, TouchableOpacity } = jest.requireActual('react-native');
   const ReactActual = jest.requireActual('react');
   return {
@@ -69,7 +69,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 const mockNavigate = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 

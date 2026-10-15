@@ -5,19 +5,19 @@ const mockCountForStory = jest.fn();
 const mockGetPlan = jest.fn();
 const mockNotify = jest.fn();
 
-jest.mock('../../src/services/storymanagement/StoryEntityCountService', () => ({
+jest.mock('@/src/services/storymanagement/StoryEntityCountService', () => ({
   __esModule: true,
   createStoryEntityCountService: () => ({ countForStory: mockCountForStory }),
 }));
-jest.mock('../../src/services/StoryPlanService', () => ({
+jest.mock('@/src/services/StoryPlanService', () => ({
   __esModule: true,
   createStoryPlanService: () => ({ getPlan: mockGetPlan }),
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: {
     t: (key: string, options: { used: number; limit: number }) =>
@@ -29,8 +29,8 @@ import {
   PLAN_CACHE_MS,
   refreshPlanUsage,
   resetPlanUsageState,
-} from '../../src/services/PlanUsageService';
-import { usePlanUsageStore } from '../../src/state/planUsageStore';
+} from '@/src/services/PlanUsageService';
+import { usePlanUsageStore } from '@/src/state/planUsageStore';
 
 const db = {} as never;
 const story = { id: 'story-1', serverId: 'server-1' };

@@ -1,9 +1,9 @@
 import type { Story } from '@keres/shared/entities/Story';
-import type { AppDrizzleClient } from '../db';
-import type { ServerSelect } from '../db/schema';
-import { useStoryListStore } from '../state/storyListStore';
-import { useStoryStore } from '../state/storyStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
+import { useStoryListStore } from '@/src/state/storyListStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { authTokenManager } from './AuthTokenManager';
 import { createServerService } from './ServerService';
 import { createStoryService, type StoryService } from './storymanagement/StoryService';

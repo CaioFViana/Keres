@@ -6,15 +6,15 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { StorySettingsStackParamList } from '../../navigation/StorySettingsStack';
-import { createStoryService } from '../../services/storymanagement/StoryService';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { AppAlert } from '../../utils/AppAlert';
-import { isServerless } from '../../utils/clientFlavor';
+import { useDrizzle } from '@/src/db';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { isServerless } from '@/src/utils/clientFlavor';
 import { useResetToStorySelection } from './useResetToStorySelection';
 
 type Entry = {

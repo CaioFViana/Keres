@@ -3,9 +3,9 @@ import * as SkiaMock from '@shopify/react-native-skia';
 import { Asset } from 'expo-asset';
 import React from 'react';
 import { View } from 'react-native';
-import mediumTtf from '../../assets/fonts/Roboto-Medium.ttf';
-import regularTtf from '../../assets/fonts/Roboto-Regular.ttf';
-import { useEdgeFont } from '../../src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont.web';
+import mediumTtf from '@/assets/fonts/Roboto-Medium.ttf';
+import regularTtf from '@/assets/fonts/Roboto-Regular.ttf';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont.web';
 
 jest.mock('expo-asset', () => ({
   Asset: { loadAsync: () => Promise.resolve([]) },

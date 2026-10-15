@@ -1,5 +1,5 @@
 import type { LocationMapContentType } from '@keres/shared';
-import type { LocationRelationSelect } from '../db/schema';
+import type { LocationRelationSelect } from '@/src/db/schema';
 import type {
   LocationMapConnection,
   LocationMapContains,

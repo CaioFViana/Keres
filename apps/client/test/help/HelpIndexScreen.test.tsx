@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { HelpIndexScreen } from '../../src/screens/help/HelpIndexScreen';
+import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
 
 const mockNavigate = jest.fn();
 
@@ -9,7 +9,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: jest.fn(),
 }));
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -23,9 +23,9 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
+jest.mock('@/src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
 
-jest.mock('../../src/utils/debounce', () => ({
+jest.mock('@/src/utils/debounce', () => ({
   debounce: (callback: (...args: any[]) => void) => {
     const immediate = (...args: any[]) => callback(...args);
     immediate.cancel = jest.fn();

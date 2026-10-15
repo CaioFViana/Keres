@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../../db';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { useItemStore } from '../../../state/itemStore';
-import { useSceneStore } from '../../../state/sceneStore';
+import { useDrizzle } from '@/src/db';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { useItemStore } from '@/src/state/itemStore';
+import { useSceneStore } from '@/src/state/sceneStore';
 
 /** Owns the choice service and the story-scoped lookup stores used by the form. */
 export function useChoiceFormResources(storyId?: string) {

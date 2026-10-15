@@ -1,11 +1,7 @@
 /**
  * @jest-environment node
  */
-import {
-  MAX_SCENE_TIMING,
-  isTimingInput,
-  parseTimingInput,
-} from '../../src/utils/sceneTimingInput';
+import { MAX_SCENE_TIMING, isTimingInput, parseTimingInput } from '@/src/utils/sceneTimingInput';
 
 describe('isTimingInput', () => {
   it.each(['', '-', '0', '42', '-7', '2147483647'])('accepts %p as in-progress input', (value) => {

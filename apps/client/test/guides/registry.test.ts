@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { getScreenGuide, screenGuides } from '../../src/guides/registry';
+import { getScreenGuide, screenGuides } from '@/src/guides/registry';
 
 describe('screenGuides', () => {
   it('registers the pilot tours by route name', () => {
@@ -91,7 +91,7 @@ describe('screenGuides', () => {
     process.env.EXPO_PUBLIC_SERVERLESS = '1';
     try {
       jest.isolateModules(() => {
-        const serverless: typeof screenGuides = require('../../src/guides/registry').screenGuides;
+        const serverless: typeof screenGuides = require('@/src/guides/registry').screenGuides;
         expect(stepIds(serverless)).toEqual(['stories', 'drawer-create', 'drawer-system']);
       });
     } finally {

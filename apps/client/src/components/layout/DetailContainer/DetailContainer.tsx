@@ -7,8 +7,11 @@ import {
   useOccurrenceLandingController,
 } from '@/src/hooks/useOccurrenceLanding';
 import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
-import { screenLayoutStyles, type ContentWidth } from '../ScreenContainer/ScreenContainer';
-import ScreenTitle from '../ScreenTitle/ScreenTitle';
+import {
+  screenLayoutStyles,
+  type ContentWidth,
+} from '@/src/components/layout/ScreenContainer/ScreenContainer';
+import ScreenTitle from '@/src/components/layout/ScreenTitle/ScreenTitle';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface DetailContainerProps extends ScrollViewProps {

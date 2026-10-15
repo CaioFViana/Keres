@@ -1,11 +1,11 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import React from 'react';
-import GalleryMediaViewerOverlay from '../../src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
-import EntityGalleryManager from '../../src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import type { GallerySelect } from '../../src/db/schema';
-import { useGalleryMediaViewerStore } from '../../src/state/galleryMediaViewerStore';
+import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
+import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
+import type { GallerySelect } from '@/src/db/schema';
+import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -26,17 +26,17 @@ jest.mock('react-i18next', () => ({
 jest.mock('expo-image', () => ({ Image: () => null }));
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 
 const mockUseEntityGalleryMedia = jest.fn();
-jest.mock('../../src/hooks/useEntityGalleryMedia', () => ({
+jest.mock('@/src/hooks/useEntityGalleryMedia', () => ({
   useEntityGalleryMedia: (...args: unknown[]) => mockUseEntityGalleryMedia(...args),
 }));
 
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) => {
     const state = { showNotification: mockShowNotification };
     return selector ? selector(state) : state;
@@ -44,7 +44,7 @@ jest.mock('../../src/state/notificationStore', () => ({
 }));
 
 const mockAddMediaModal = jest.fn();
-jest.mock('../../src/components/features/gallery/GalleryAddMediaModal', () => ({
+jest.mock('@/src/components/features/gallery/GalleryAddMediaModal', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockAddMediaModal(props);
@@ -53,7 +53,7 @@ jest.mock('../../src/components/features/gallery/GalleryAddMediaModal', () => ({
 }));
 
 const mockAddLinkModal = jest.fn();
-jest.mock('../../src/components/features/gallery/GalleryAddLinkModal', () => ({
+jest.mock('@/src/components/features/gallery/GalleryAddLinkModal', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockAddLinkModal(props);
@@ -62,7 +62,7 @@ jest.mock('../../src/components/features/gallery/GalleryAddLinkModal', () => ({
 }));
 
 const mockAttachExistingModal = jest.fn();
-jest.mock('../../src/components/features/gallery/GalleryAttachExistingModal', () => ({
+jest.mock('@/src/components/features/gallery/GalleryAttachExistingModal', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockAttachExistingModal(props);
@@ -71,7 +71,7 @@ jest.mock('../../src/components/features/gallery/GalleryAttachExistingModal', ()
 }));
 
 const mockFullscreenModal = jest.fn();
-jest.mock('../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal', () => {
+jest.mock('@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -83,7 +83,7 @@ jest.mock('../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenMod
 });
 
 const mockGalleryDetailContent = jest.fn();
-jest.mock('../../src/screens/gallery/GalleryDetailContent', () => ({
+jest.mock('@/src/screens/gallery/GalleryDetailContent', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockGalleryDetailContent(props);

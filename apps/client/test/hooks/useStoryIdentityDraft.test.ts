@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { useStoryIdentityDraft } from '../../src/hooks/useStoryIdentityDraft';
+import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
 
 describe('useStoryIdentityDraft', () => {
   it('starts with the form-safe defaults and lets each field be edited', async () => {

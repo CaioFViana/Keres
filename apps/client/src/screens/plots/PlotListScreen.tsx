@@ -1,5 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -13,20 +13,20 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
-import type { PlotSelect } from '../../db/schema';
-import { useScreenTour } from '../../guides/useScreenTour';
-import type { AdvancedSearchCriteria } from '../../utils/advancedSearchCriteria';
-import { plotMatches } from '../../utils/plotSearch';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryPlots } from '../../hooks/useStoryPlots';
-import { useStoryRole } from '../../hooks/useStoryRole';
+import type { PlotSelect } from '@/src/db/schema';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import type { AdvancedSearchCriteria } from '@/src/utils/advancedSearchCriteria';
+import { plotMatches } from '@/src/utils/plotSearch';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryPlots } from '@/src/hooks/useStoryPlots';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
 import type {
   MainSystemDrawerParamList,
   PlotsStackParamList,
-} from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import type { ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+} from '@/src/navigation/MainSystemStack';
+import { useStoryStore } from '@/src/state/storyStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type PlotsScreenNavigationProp = CompositeNavigationProp<

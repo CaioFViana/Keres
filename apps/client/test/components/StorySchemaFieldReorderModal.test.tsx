@@ -5,8 +5,8 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import { act, render } from '@testing-library/react-native';
-import { StorySchemaFieldReorderModal } from '../../src/components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
-import type { StorySchemaFieldSelect } from '../../src/db/schema';
+import { StorySchemaFieldReorderModal } from '@/src/components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
+import type { StorySchemaFieldSelect } from '@/src/db/schema';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -14,7 +14,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockReorderProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/common/modals/ReorderModal/ReorderModal', () => {
+jest.mock('@/src/components/common/modals/ReorderModal/ReorderModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

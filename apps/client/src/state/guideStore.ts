@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Guide } from '../guides/types';
+import type { Guide } from '@/src/guides/types';
 
 export interface ActiveTour {
   guide: Guide;

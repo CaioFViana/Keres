@@ -7,13 +7,13 @@ jest.mock('react-native-safe-area-context', () => ({
 import { AttributeType } from '@keres/shared';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import AdvancedSearchModal from '../../../src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
-import ReorderModal from '../../../src/components/common/modals/ReorderModal/ReorderModal';
-import type { StorySchemaFieldSelect } from '../../../src/db/schema';
-import { useStorySchemaFields } from '../../../src/hooks/useStorySchemaFields';
+import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
+import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
+import type { StorySchemaFieldSelect } from '@/src/db/schema';
+import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -53,7 +53,7 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MIcon',
 }));
 
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,
@@ -64,11 +64,11 @@ jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/useStorySchemaFields', () => ({
   useStorySchemaFields: jest.fn(() => []),
 }));
 
-jest.mock('../../../src/hooks/useEntityPickerOptions', () => ({
+jest.mock('@/src/hooks/useEntityPickerOptions', () => ({
   useEntityPickerOptions: () => ({
     options: [{ id: 'e1', name: 'Ent One' }],
     loading: false,
@@ -76,7 +76,7 @@ jest.mock('../../../src/hooks/useEntityPickerOptions', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -85,7 +85,7 @@ jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () =
   };
 });
 
-jest.mock('../../../src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
+jest.mock('@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -104,7 +104,7 @@ jest.mock('../../../src/components/common/inputs/SuggestionTextInput/SuggestionT
   };
 });
 
-jest.mock('../../../src/components/common/inputs/DatePickerInput/DatePickerInput', () => {
+jest.mock('@/src/components/common/inputs/DatePickerInput/DatePickerInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -130,7 +130,7 @@ jest.mock('../../../src/components/common/inputs/DatePickerInput/DatePickerInput
   };
 });
 
-jest.mock('../../../src/components/common/inputs/StoryDateInput/StoryDateInput', () => {
+jest.mock('@/src/components/common/inputs/StoryDateInput/StoryDateInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -149,7 +149,7 @@ jest.mock('../../../src/components/common/inputs/StoryDateInput/StoryDateInput',
   };
 });
 
-jest.mock('../../../src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => {
+jest.mock('@/src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {

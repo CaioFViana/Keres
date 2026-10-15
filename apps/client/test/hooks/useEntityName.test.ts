@@ -1,19 +1,19 @@
 /** @jest-environment node */
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
 jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
-jest.mock('../../src/services/EntityService', () => ({
+jest.mock('@/src/services/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityName: jest.fn() },
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { OperationLogEntityType } from '@keres/shared';
-import { useDrizzle } from '../../src/db';
-import { useEntityName } from '../../src/hooks/useEntityName';
-import { EntityService } from '../../src/services/EntityService';
+import { useDrizzle } from '@/src/db';
+import { useEntityName } from '@/src/hooks/useEntityName';
+import { EntityService } from '@/src/services/EntityService';
 
 const db = { marker: 'db' };
 const getEntityName = EntityService.getEntityName as jest.Mock;

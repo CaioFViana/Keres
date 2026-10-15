@@ -6,10 +6,10 @@ import { StackActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useRef } from 'react';
-import type { AppDrizzleClient } from '../../db';
-import type { ItemStackParamList } from '../../navigation/MainSystemStack';
-import type { ItemService } from '../../services/storymanagement/ItemService';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
+import type { ItemService } from '@/src/services/storymanagement/ItemService';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { ItemFormState } from './useItemFormState';
 
 type ItemNavigation = NativeStackNavigationProp<ItemStackParamList, 'ItemForm'>;

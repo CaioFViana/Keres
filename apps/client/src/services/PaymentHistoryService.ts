@@ -1,9 +1,9 @@
 import type { PaymentHistoryItem } from '@keres/shared';
 import { desc, eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../db';
-import type { ServerPaymentSelect, ServerSelect } from '../db/schema';
-import { serverPayments } from '../db/schema';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ServerPaymentSelect, ServerSelect } from '@/src/db/schema';
+import { serverPayments } from '@/src/db/schema';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { isOfflineError } from './apiClient';
 import { paymentApi } from './PaymentApiService';
 

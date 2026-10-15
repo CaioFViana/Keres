@@ -6,13 +6,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useItemJourneyFormState } from '../../../src/screens/itemJourneys/useItemJourneyFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '../../../src/services/EditorDraftService';
-import type { ItemJourneyService } from '../../../src/services/storymanagement/ItemJourneyService';
-import { createTestDatabase, type TestDatabase } from '../../helpers/testDb';
+import { useItemJourneyFormState } from '@/src/screens/itemJourneys/useItemJourneyFormState';
+import { resetEditorDraftDbForTests, setEditorDraftDb } from '@/src/services/EditorDraftService';
+import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

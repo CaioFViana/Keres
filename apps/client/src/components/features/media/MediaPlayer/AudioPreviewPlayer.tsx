@@ -3,9 +3,9 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { useCallback, useMemo, useState } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme, type ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 
 interface AudioPreviewPlayerProps {
   uri: string;

@@ -3,8 +3,8 @@ import { DEFAULT_ARC_MEDIUM, type ArcMedium } from '@keres/shared/metadata/ArcMe
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { StoryStart } from '../../components/features/story/StoryStartChoice';
-import type { StoryService } from '../../services/storymanagement/StoryService';
+import type { StoryStart } from '@/src/components/features/story/StoryStartChoice';
+import type { StoryService } from '@/src/services/storymanagement/StoryService';
 
 type UseStoryFormStateOptions = {
   initialStoryId?: string;

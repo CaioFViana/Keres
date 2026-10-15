@@ -3,9 +3,9 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { typography } from '../../../theme/tokens';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 
 export interface SketchMenuItem {
   id: string;

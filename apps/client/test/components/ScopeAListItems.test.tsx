@@ -1,25 +1,25 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import ChapterListItem from '../../src/components/features/list-items/ChapterListItem';
-import CharacterListItem from '../../src/components/features/list-items/CharacterListItem';
-import ItemListItem from '../../src/components/features/list-items/ItemListItem';
-import ListItemTitle from '../../src/components/features/list-items/ListItemTitle';
-import LocationListItem from '../../src/components/features/list-items/LocationListItem';
-import NoteListItem from '../../src/components/features/list-items/NoteListItem';
-import PlotListItem from '../../src/components/features/list-items/PlotListItem';
-import SceneListItem from '../../src/components/features/list-items/SceneListItem';
-import TagListItem from '../../src/components/features/list-items/TagListItem';
-import WorldRuleListItem from '../../src/components/features/list-items/WorldRuleListItem';
-import type { ChapterSelect, PlotSelect, SceneSelect, TagSelect } from '../../src/db/schema';
-import type { ItemSelect } from '../../src/db/schemas/items';
-import type { TagSelect as TagRow } from '../../src/db/schemas/tags';
-import type { WorldRuleWithTags } from '../../src/db/schemas/worldRules';
-import type { CharacterWithTags } from '../../src/services/storymanagement/CharacterService';
-import type { LocationWithTags } from '../../src/services/storymanagement/LocationService';
-import type { NoteWithTags } from '../../src/services/storymanagement/NoteService';
+import ChapterListItem from '@/src/components/features/list-items/ChapterListItem';
+import CharacterListItem from '@/src/components/features/list-items/CharacterListItem';
+import ItemListItem from '@/src/components/features/list-items/ItemListItem';
+import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
+import LocationListItem from '@/src/components/features/list-items/LocationListItem';
+import NoteListItem from '@/src/components/features/list-items/NoteListItem';
+import PlotListItem from '@/src/components/features/list-items/PlotListItem';
+import SceneListItem from '@/src/components/features/list-items/SceneListItem';
+import TagListItem from '@/src/components/features/list-items/TagListItem';
+import WorldRuleListItem from '@/src/components/features/list-items/WorldRuleListItem';
+import type { ChapterSelect, PlotSelect, SceneSelect, TagSelect } from '@/src/db/schema';
+import type { ItemSelect } from '@/src/db/schemas/items';
+import type { TagSelect as TagRow } from '@/src/db/schemas/tags';
+import type { WorldRuleWithTags } from '@/src/db/schemas/worldRules';
+import type { CharacterWithTags } from '@/src/services/storymanagement/CharacterService';
+import type { LocationWithTags } from '@/src/services/storymanagement/LocationService';
+import type { NoteWithTags } from '@/src/services/storymanagement/NoteService';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -39,7 +39,7 @@ jest.mock('react-i18next', () => ({
 
 const mockGenericItem = jest.fn();
 jest.mock(
-  '../../src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions',
+  '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions',
   () => {
     const RN = jest.requireActual('react-native');
     return {
@@ -61,7 +61,7 @@ jest.mock(
   },
 );
 
-jest.mock('../../src/components/common/display/TagList/TagList', () => {
+jest.mock('@/src/components/common/display/TagList/TagList', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,

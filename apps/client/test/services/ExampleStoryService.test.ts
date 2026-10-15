@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-import { createExampleStoryService } from '../../src/services/storymanagement/ExampleStoryService';
-import { exampleStoryRegistry } from '../../src/exampleStories/generated/registry';
+import { createExampleStoryService } from '@/src/services/storymanagement/ExampleStoryService';
+import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
 import {
   CURRENT_STORY_FORMAT_VERSION,
   findStoryExportIntegrityViolations,
@@ -12,10 +12,10 @@ import {
   sectionLabels,
   StorySchema,
 } from '@keres/shared';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 import { statSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildStoryAnalysisReport } from '../../src/utils/storyAnalysisChecks';
+import { buildStoryAnalysisReport } from '@/src/utils/storyAnalysisChecks';
 
 let database: TestDatabase;
 

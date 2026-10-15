@@ -1,8 +1,8 @@
 import { type CueSheetRow, type SyllableLanguage, songSeconds, sungWords } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { chapters, scenes } from '../../db/schema';
-import { sortScenesNarratively } from '../../utils/narrativeSceneOrder';
+import type { AppDrizzleClient } from '@/src/db';
+import { chapters, scenes } from '@/src/db/schema';
+import { sortScenesNarratively } from '@/src/utils/narrativeSceneOrder';
 import { createGalleryService } from './GalleryService';
 import { createSceneMusicService } from './SceneMusicService';
 import { createSongService } from './SongService';

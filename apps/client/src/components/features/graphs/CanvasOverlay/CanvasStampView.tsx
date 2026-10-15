@@ -2,7 +2,7 @@ import { CANVAS_OVERLAY_STAMP_DEFAULT_SIZE, type CanvasOverlayType } from '@kere
 import React, { useMemo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 type StampOverlay = Extract<CanvasOverlayType, { kind: 'stamp' }>;
 

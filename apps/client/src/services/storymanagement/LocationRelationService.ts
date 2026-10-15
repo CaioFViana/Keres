@@ -1,15 +1,15 @@
-import { createULID } from '../../utils/entityUtils';
+import { createULID } from '@/src/utils/entityUtils';
 import { and, eq, or, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
-import { locationRelations } from '../../db';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient, LocationRelationSelect } from '@/src/db';
+import { locationRelations } from '@/src/db';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 /** Same defensive limit as the server-side handler - see LocationRelationSyncHandler.ts (API). */
 const MAX_ANCESTOR_WALK = 500;

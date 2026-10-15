@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/MediaFileService', () => {
+jest.mock('@/src/services/MediaFileService', () => {
   class MockUnsupportedMediaError extends Error {}
   return {
     mediaFileService: { exists: jest.fn(), importAsset: jest.fn() },
@@ -9,8 +9,8 @@ jest.mock('../../src/services/MediaFileService', () => {
   };
 });
 
-import { mediaFileService, UnsupportedMediaError } from '../../src/services/MediaFileService';
-import { importPickedMediaAssets } from '../../src/services/galleryMediaImport';
+import { mediaFileService, UnsupportedMediaError } from '@/src/services/MediaFileService';
+import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
 
 const mockMediaFileService = mediaFileService as jest.Mocked<typeof mediaFileService>;
 

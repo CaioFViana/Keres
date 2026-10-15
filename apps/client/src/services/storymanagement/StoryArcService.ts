@@ -1,18 +1,18 @@
 import { DEFAULT_ARC_MEDIUM } from '@keres/shared';
 import { and, asc, eq, isNotNull, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { StoryArcInsert, StoryArcSelect } from '../../db/schema';
-import { chapters, characterScenes, itemJourneys, scenes, storyArcs } from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StoryArcInsert, StoryArcSelect } from '@/src/db/schema';
+import { chapters, characterScenes, itemJourneys, scenes, storyArcs } from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export type ArcMembershipKind = 'character' | 'location' | 'item';
 

@@ -7,7 +7,7 @@ import {
   IMAGE_THUMBNAIL_MAX_EDGE,
   IMAGE_THUMBNAIL_MIN_BYTES,
   wantsImageThumbnail,
-} from '../../src/services/webImageThumbnail';
+} from '@/src/services/webImageThumbnail';
 
 type Globals = {
   createImageBitmap?: unknown;

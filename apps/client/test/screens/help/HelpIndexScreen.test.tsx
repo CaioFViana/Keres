@@ -12,7 +12,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/components/features/help/HelpSearchBar/HelpSearchBar', () => ({
+jest.mock('@/src/components/features/help/HelpSearchBar/HelpSearchBar', () => ({
   __esModule: true,
   HelpSearchBar: (props: {
     value: string;
@@ -33,7 +33,7 @@ jest.mock('../../../src/components/features/help/HelpSearchBar/HelpSearchBar', (
     );
   },
 }));
-jest.mock('../../../src/components/features/help/HelpSearchBar/HighlightedText', () => ({
+jest.mock('@/src/components/features/help/HelpSearchBar/HighlightedText', () => ({
   __esModule: true,
   HighlightedText: ({ text }: { text: string }) => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -41,7 +41,7 @@ jest.mock('../../../src/components/features/help/HelpSearchBar/HighlightedText',
     return react.createElement(native.Text, { testID: 'highlighted' }, text);
   },
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -54,7 +54,7 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/debounce', () => ({
+jest.mock('@/src/utils/debounce', () => ({
   __esModule: true,
   debounce: (fn: (value: string) => void) => {
     const debounced = (value: string) => fn(value);
@@ -62,7 +62,7 @@ jest.mock('../../../src/utils/debounce', () => ({
     return debounced;
   },
 }));
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: (...args: unknown[]) => mockSetDocumentTitle(...args),
 }));
@@ -71,8 +71,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-import { HelpIndexScreen } from '../../../src/screens/help/HelpIndexScreen';
-import type { DocLibrary } from '../../../src/help/library';
+import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
+import type { DocLibrary } from '@/src/help/library';
 
 const pages = [
   {

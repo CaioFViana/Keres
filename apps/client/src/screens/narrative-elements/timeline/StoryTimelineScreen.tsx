@@ -12,9 +12,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 
 const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });

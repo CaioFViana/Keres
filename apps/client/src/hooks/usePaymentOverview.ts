@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { ServerSelect } from '../db/schema';
+import type { ServerSelect } from '@/src/db/schema';
 import {
   loadPaymentOverview,
   PAYMENTS_CHANGED,
   type PaymentOverview,
-} from '../services/PaymentService';
+} from '@/src/services/PaymentService';
 import { useEntityEventSubscriptions, useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**

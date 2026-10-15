@@ -1,7 +1,7 @@
 import { FullStoryExportSchema, reviveDates } from '@keres/shared';
-import type { AppDrizzleClient } from '../../db';
-import { exampleStoryRegistry } from '../../exampleStories/generated/registry';
-import type { ExampleStoryEntry } from '../../exampleStories/types';
+import type { AppDrizzleClient } from '@/src/db';
+import { exampleStoryRegistry } from '@/src/exampleStories/generated/registry';
+import type { ExampleStoryEntry } from '@/src/exampleStories/types';
 import { createStoryService } from './StoryService';
 
 /**

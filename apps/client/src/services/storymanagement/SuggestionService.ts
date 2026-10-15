@@ -1,16 +1,16 @@
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { deriveAttributeKey } from '@keres/shared';
-import type { AppDrizzleClient, SuggestionInsert, SuggestionSelect } from '../../db';
-import { suggestions } from '../../db';
-import { createULID } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient, SuggestionInsert, SuggestionSelect } from '@/src/db';
+import { suggestions } from '@/src/db';
+import { createULID } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import {
   createSuggestionUsageService,
   isNativeSuggestionType,

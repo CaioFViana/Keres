@@ -1,12 +1,12 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   createEntityNameBatchResolver,
   createEntitySnapshotResolver,
-} from '../../src/services/EntityNameBatchResolver';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/EntityNameBatchResolver';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

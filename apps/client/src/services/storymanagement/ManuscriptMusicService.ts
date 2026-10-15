@@ -1,5 +1,5 @@
 import type { ManuscriptSceneMusic } from '@keres/shared';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '@/src/db';
 import { createGalleryService } from './GalleryService';
 import { createSceneMusicService } from './SceneMusicService';
 import { createSongService } from './SongService';

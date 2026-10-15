@@ -15,30 +15,30 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useDrizzle } from '../../db';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
+import { useDrizzle } from '@/src/db';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
 import type {
   MainSystemDrawerParamList,
   StoryAnalysisStackParamList,
-} from '../../navigation/MainSystemStack';
-import type { StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
-import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
-import { createStoryIndexService } from '../../services/storymanagement/StoryIndexService';
-import { createStoryService } from '../../services/storymanagement/StoryService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { typography } from '../../theme/tokens';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import type { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
-import { StoryAnalysisCancelledError } from '../../utils/storyAnalysisChecks';
+} from '@/src/navigation/MainSystemStack';
+import type { StoryAnalysisReport } from '@/src/services/storymanagement/StoryAnalysisService';
+import { createStoryAnalysisService } from '@/src/services/storymanagement/StoryAnalysisService';
+import { createStoryIndexService } from '@/src/services/storymanagement/StoryIndexService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { commonDetailStyleDefs, getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
+import type { StoryAnalysisCategory, StoryAnalysisFinding } from '@/src/utils/storyAnalysisChecks';
+import { StoryAnalysisCancelledError } from '@/src/utils/storyAnalysisChecks';
 
 /**
  * The structural analysis report: it is not search, it is finding what the writer would hardly notice

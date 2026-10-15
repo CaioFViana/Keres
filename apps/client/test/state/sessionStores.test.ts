@@ -1,18 +1,18 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   updateClientSettings: jest.fn(),
 }));
 
-import * as ClientSettingsService from '../../src/services/ClientSettingsService';
-import { useGalleryMediaViewerStore } from '../../src/state/galleryMediaViewerStore';
-import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
-import { useLocationMapDraftStore } from '../../src/state/locationMapDraftStore';
-import { usePresenceMatrixViewerStore } from '../../src/state/presenceMatrixViewerStore';
-import { useThemeStore } from '../../src/state/themeStore';
+import * as ClientSettingsService from '@/src/services/ClientSettingsService';
+import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useLocationMapDraftStore } from '@/src/state/locationMapDraftStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/presenceMatrixViewerStore';
+import { useThemeStore } from '@/src/state/themeStore';
 
 const settingsService = ClientSettingsService as unknown as {
   getClientSettings: jest.Mock;

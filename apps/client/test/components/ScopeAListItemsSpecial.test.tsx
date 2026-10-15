@@ -2,16 +2,16 @@ import { fireEvent, render, type RenderResult } from '@testing-library/react-nat
 import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType } from '@keres/shared';
-import CommentListItem from '../../src/components/features/list-items/CommentListItem';
+import CommentListItem from '@/src/components/features/list-items/CommentListItem';
 import GalleryGridItem, {
   iconForGalleryMedia,
-} from '../../src/components/features/list-items/GalleryGridItem';
-import GlobalSearchResultItem from '../../src/components/features/list-items/GlobalSearchResultItem';
-import OperationLogListItem from '../../src/components/features/list-items/OperationLogListItem';
-import type { CommentSelect, GallerySelect, OperationLogSelect } from '../../src/db/schema';
-import type { GlobalSearchResult } from '../../src/services/storymanagement/GlobalSearchService';
+} from '@/src/components/features/list-items/GalleryGridItem';
+import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
+import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
+import type { CommentSelect, GallerySelect, OperationLogSelect } from '@/src/db/schema';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/GlobalSearchService';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -38,30 +38,30 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Icon',
 }));
 
-jest.mock('../../src/components/common/display/Avatar/Avatar', () => () => null);
+jest.mock('@/src/components/common/display/Avatar/Avatar', () => () => null);
 
 const mockUseEntityName = jest.fn();
-jest.mock('../../src/hooks/useEntityName', () => ({
+jest.mock('@/src/hooks/useEntityName', () => ({
   useEntityName: (...args: unknown[]) => mockUseEntityName(...args),
 }));
 
 const mockUseCommentFieldLabel = jest.fn();
-jest.mock('../../src/hooks/useCommentFieldLabel', () => ({
+jest.mock('@/src/hooks/useCommentFieldLabel', () => ({
   useCommentFieldLabel: (...args: unknown[]) => mockUseCommentFieldLabel(...args),
 }));
 
 const mockUseAuthorProfiles = jest.fn();
-jest.mock('../../src/hooks/useAuthorProfiles', () => ({
+jest.mock('@/src/hooks/useAuthorProfiles', () => ({
   useAuthorProfiles: (...args: unknown[]) => mockUseAuthorProfiles(...args),
 }));
 
 const mockUseUserDisplayName = jest.fn();
-jest.mock('../../src/hooks/useUserDisplayName', () => ({
+jest.mock('@/src/hooks/useUserDisplayName', () => ({
   useUserDisplayName: (...args: unknown[]) => mockUseUserDisplayName(...args),
 }));
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 

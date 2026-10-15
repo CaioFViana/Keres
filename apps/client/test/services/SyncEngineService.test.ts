@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
@@ -14,20 +14,20 @@ const mockSyncStoryMedia = jest.fn(async () => ({
   failed: 0,
   offline: false,
 }));
-jest.mock('../../src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/MediaSyncService', () => ({
   createMediaSyncService: () => ({ syncStoryMedia: mockSyncStoryMedia }),
 }));
 
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
-import { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from '../../src/services/SyncEngineService';
-import type { SyncCycleOutcome } from '../../src/services/sync/SyncScheduler';
-import type { SyncEngineService } from '../../src/services/SyncEngineService';
-import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from '@/src/services/SyncEngineService';
+import type { SyncCycleOutcome } from '@/src/services/sync/SyncScheduler';
+import type { SyncEngineService } from '@/src/services/SyncEngineService';
+import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const SERVER = { id: 'server-1', url: 'http://servidor' };

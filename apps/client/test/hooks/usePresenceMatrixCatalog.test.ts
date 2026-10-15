@@ -7,34 +7,34 @@ const mockCharacterSceneService = { getRelationsByStoryId: jest.fn() };
 const mockItemService = { getAllByStoryId: jest.fn() };
 const mockJourneyService = { getItemJourneysByItemId: jest.fn() };
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: jest.fn(() => mockCharacterService),
 }));
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(() => mockSceneService),
 }));
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(() => mockChapterService),
 }));
-jest.mock('../../src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: jest.fn(() => mockCharacterSceneService),
 }));
-jest.mock('../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   __esModule: true,
   createItemService: jest.fn(() => mockItemService),
 }));
-jest.mock('../../src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: jest.fn(() => mockJourneyService),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { usePresenceMatrixCatalog } from '../../src/hooks/usePresenceMatrixCatalog';
+import { usePresenceMatrixCatalog } from '@/src/hooks/usePresenceMatrixCatalog';
 
 beforeEach(() => {
   jest.clearAllMocks();

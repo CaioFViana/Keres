@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import type { ArcMembershipKind } from '../services/storymanagement/StoryArcService';
-import { useStoryStore } from '../state/storyStore';
-import type { AdvancedSearchCriteria } from '../types/entityFilters';
-import { entityBelongsToActiveArc } from '../utils/storyArcFilter';
+import type { ArcMembershipKind } from '@/src/services/storymanagement/StoryArcService';
+import { useStoryStore } from '@/src/state/storyStore';
+import type { AdvancedSearchCriteria } from '@/src/types/entityFilters';
+import { entityBelongsToActiveArc } from '@/src/utils/storyArcFilter';
 import { useArcSearchScope } from './useArcSearchScope';
 import { useEntityArcIds } from './useEntityArcIds';
 

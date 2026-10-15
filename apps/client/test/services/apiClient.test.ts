@@ -3,7 +3,7 @@ const mockConnectivity = {
   reportUnreachable: jest.fn(),
 };
 
-jest.mock('../../src/state/connectivityStore', () => ({
+jest.mock('@/src/state/connectivityStore', () => ({
   useConnectivityStore: { getState: () => mockConnectivity },
 }));
 
@@ -21,8 +21,8 @@ import apiClientDefault, {
   updateServerTokenCache,
   VERIFICATION_PENDING_EVENT,
   type TokenProvider,
-} from '../../src/services/apiClient';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+} from '@/src/services/apiClient';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const SERVER = { id: 'server-1', name: 'Casa', url: 'http://localhost:3000' } as any;
 

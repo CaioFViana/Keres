@@ -30,11 +30,11 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('@/src/components/common', () => ({
@@ -256,7 +256,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 
-import StoryArcFormScreen from '../../../src/screens/customization/StoryArcFormScreen';
+import StoryArcFormScreen from '@/src/screens/customization/StoryArcFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

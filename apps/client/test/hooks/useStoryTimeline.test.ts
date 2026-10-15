@@ -14,16 +14,16 @@ const mockRender = jest.fn();
 const mockBuildFileName = jest.fn((..._args: unknown[]) => 'Story.svg');
 let mockLanguage = 'en';
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT, i18n: { language: mockLanguage } })),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn((selector) => selector(mockStoryState)),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: Object.assign(
     jest.fn((selector) => selector(mockSettings)),
@@ -32,11 +32,11 @@ jest.mock('../../src/state/userSettingsStore', () => ({
     },
   ),
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: jest.fn((selector) => selector({ showNotification: mockNotify })),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: jest.fn(() => ({
     colors: {
@@ -48,30 +48,30 @@ jest.mock('../../src/theme', () => ({
     },
   })),
 }));
-jest.mock('../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: jest.fn(() => ({ definition: null, calendars: [], describeDay: jest.fn() })),
 }));
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(() => mockChapterService),
 }));
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(() => mockSceneService),
 }));
-jest.mock('../../src/services/storymanagement/ChapterAnchorService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterAnchorService', () => ({
   __esModule: true,
   createChapterAnchorService: jest.fn(() => mockAnchorService),
 }));
-jest.mock('../../src/utils/storyArcFilter', () => ({
+jest.mock('@/src/utils/storyArcFilter', () => ({
   __esModule: true,
   chapterBelongsToArc: jest.fn(() => true),
   sceneBelongsToActiveArc: jest.fn(() => true),
 }));
-jest.mock('../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('../../src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/storyTransfer'),
   buildStoryTimelineFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
@@ -90,9 +90,9 @@ jest.mock('@keres/shared/graphs/storyTimelineSvg', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryCalendar } from '../../src/hooks/useStoryCalendar';
-import { useStoryTimeline } from '../../src/hooks/useStoryTimeline';
-import { withSilencedConsole } from '../helpers/silenceConsole';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useStoryTimeline } from '@/src/hooks/useStoryTimeline';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 beforeEach(() => {
   jest.clearAllMocks();

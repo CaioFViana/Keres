@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import LeadSheetView from '../../../../src/components/features/songs/LeadSheetView';
+import LeadSheetView from '@/src/components/features/songs/LeadSheetView';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
       options?.count !== undefined ? `${key}:${options.count}` : key,
   }),
 }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: { text: '#111', textSecondary: '#555', primary: '#00f', border: '#ccc' },

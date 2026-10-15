@@ -2,13 +2,13 @@
  * @jest-environment node
  */
 import type { SyncConflict } from '@keres/shared';
-import type { OperationLogSelect } from '../../src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
 import {
   createStillOnItsWay,
   inSettlingOrder,
   onlyMissingReference,
   waitingOperationIds,
-} from '../../src/services/sync/pushRefusals';
+} from '@/src/services/sync/pushRefusals';
 
 const refusal = (reason: string, clientOperationId?: string): SyncConflict =>
   ({ reason, clientOperationId }) as unknown as SyncConflict;

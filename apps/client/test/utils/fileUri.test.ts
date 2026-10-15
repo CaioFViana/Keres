@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { decodeFileUriOnce } from '../../src/utils/fileUri';
+import { decodeFileUriOnce } from '@/src/utils/fileUri';
 
 // The shape storage URIs take inside Expo Go on Android: the `@anonymous/<slug>` segment
 // of `documentDirectory` arrives percent-encoded, and the `Directory` -> `File` nesting

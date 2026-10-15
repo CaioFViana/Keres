@@ -1,26 +1,26 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import type { ServerSelect } from '../db/schema';
-import { isOfflineError } from '../services/apiClient';
-import { createFriendshipService } from '../services/FriendshipService';
-import { createServerService } from '../services/ServerService';
-import { createStoryService } from '../services/storymanagement/StoryService';
-import type { StoryCollaborator } from '../services/StoryPermissionService';
-import { storyPermissionApi } from '../services/StoryPermissionService';
-import { closeStoryInvitation } from '../services/storyInvitationActions';
-import { storyInvitationApi } from '../services/StoryInvitationApiService';
+import { useDrizzle } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
+import { isOfflineError } from '@/src/services/apiClient';
+import { createFriendshipService } from '@/src/services/FriendshipService';
+import { createServerService } from '@/src/services/ServerService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import type { StoryCollaborator } from '@/src/services/StoryPermissionService';
+import { storyPermissionApi } from '@/src/services/StoryPermissionService';
+import { closeStoryInvitation } from '@/src/services/storyInvitationActions';
+import { storyInvitationApi } from '@/src/services/StoryInvitationApiService';
 import {
   createStoryInvitationService,
   type ServerStoryInvitation,
-} from '../services/StoryInvitationService';
-import { syncEngine } from '../services/sync/appSyncEngine';
-import { useNotificationStore } from '../state/notificationStore';
-import { useStoryStore } from '../state/storyStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { AppAlert } from '../utils/AppAlert';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/services/StoryInvitationService';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useStoryInvitations } from './useStoryInvitations';
 
 /**

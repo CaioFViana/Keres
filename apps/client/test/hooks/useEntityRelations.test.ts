@@ -1,9 +1,9 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('../../src/state/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
+jest.mock('@/src/state/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
@@ -11,24 +11,24 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
-jest.mock('../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
+jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/NoteService', () => ({
+jest.mock('@/src/services/storymanagement/NoteService', () => ({
   __esModule: true,
   createNoteService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/NoteRelationService', () => ({
+jest.mock('@/src/services/storymanagement/NoteRelationService', () => ({
   __esModule: true,
   createNoteRelationService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
   __esModule: true,
   readEntityFormSecondaryDraft: jest.fn(async () => null),
   patchEntityFormSecondaryDraft: jest.fn(async () => undefined),
@@ -37,20 +37,20 @@ jest.mock('../../src/services/storymanagement/EntityFormSecondaryDraftStore', ()
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '../../src/db';
-import { useEntityRelations } from '../../src/hooks/useEntityRelations';
+import { useDrizzle } from '@/src/db';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
-} from '../../src/services/storymanagement/EntityFormSecondaryDraftStore';
-import { createNoteRelationService } from '../../src/services/storymanagement/NoteRelationService';
-import { createNoteService } from '../../src/services/storymanagement/NoteService';
-import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
-import { createTagService } from '../../src/services/storymanagement/TagService';
-import { useStoryStore } from '../../src/state/storyStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { AppAlert } from '../../src/utils/AppAlert';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
+import { createNoteService } from '@/src/services/storymanagement/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/TagService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const STORY_ID = 'story-1';
 const ENTITY_ID = 'rule-1';

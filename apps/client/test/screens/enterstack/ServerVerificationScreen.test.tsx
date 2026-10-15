@@ -38,23 +38,23 @@ jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/hooks/useServerStatuses', () => ({
+jest.mock('@/src/hooks/useServerStatuses', () => ({
   useServerStatuses: (...args: unknown[]) => mockStatuses(...args),
 }));
 
 // The service's error classes are real, so the screen's own checks on them are the ones tested.
-jest.mock('../../../src/services/AgeVerificationApiService', () => {
+jest.mock('@/src/services/AgeVerificationApiService', () => {
   class AgeVerificationConflictError extends Error {}
   class AgeVerificationUnavailableError extends Error {}
   return {
@@ -66,7 +66,7 @@ jest.mock('../../../src/services/AgeVerificationApiService', () => {
   };
 });
 
-jest.mock('../../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   authTokenManager: {
     getTokens: (...args: unknown[]) => mockGetTokens(...args),
     refreshAccessToken: (...args: unknown[]) => mockRefreshAccessToken(...args),
@@ -74,7 +74,7 @@ jest.mock('../../../src/services/AuthTokenManager', () => ({
   },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: {
     getState: () => ({ setActiveServer: (...args: unknown[]) => mockSetActiveServer(...args) }),
   },
@@ -85,8 +85,8 @@ import { AppState, Linking } from 'react-native';
 import {
   AgeVerificationConflictError,
   AgeVerificationUnavailableError,
-} from '../../../src/services/AgeVerificationApiService';
-import ServerVerificationScreen from '../../../src/screens/enterstack/ServerVerificationScreen';
+} from '@/src/services/AgeVerificationApiService';
+import ServerVerificationScreen from '@/src/screens/enterstack/ServerVerificationScreen';
 
 const server = { id: 'srv-1', url: 'https://s.example', name: 'Main' };
 const pending = {

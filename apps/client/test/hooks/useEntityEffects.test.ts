@@ -8,27 +8,27 @@ const mockEffectService = {
 };
 const mockAlert = jest.fn();
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => ({ userId: 'user' })),
 }));
-jest.mock('../../src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(() => mockEffectService),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useEntityEffects } from '../../src/hooks/useEntityEffects';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useEntityEffects } from '@/src/hooks/useEntityEffects';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

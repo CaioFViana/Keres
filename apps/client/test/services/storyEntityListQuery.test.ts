@@ -2,14 +2,14 @@
  * @jest-environment node
  */
 import { and, asc, desc } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   applyKeyedListSort,
   applyListSort,
   storyEntityConditions,
-} from '../../src/services/storymanagement/storyEntityListQuery';
-import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/storyEntityListQuery';
+import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The shared list pieces that the story entity services build their queries from: the scope to one

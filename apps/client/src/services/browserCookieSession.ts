@@ -1,4 +1,4 @@
-import { isHostedByApi } from '../utils/clientFlavor';
+import { isHostedByApi } from '@/src/utils/clientFlavor';
 
 /**
  * A session by HttpOnly cookie, only on the web client co-hosted by the API (HTML marked with

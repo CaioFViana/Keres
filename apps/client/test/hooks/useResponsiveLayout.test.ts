@@ -16,7 +16,7 @@ import {
   getResponsiveBreakpoint,
   RESPONSIVE_BREAKPOINTS,
   useResponsiveLayout,
-} from '../../src/hooks/useResponsiveLayout';
+} from '@/src/hooks/useResponsiveLayout';
 
 const dimensions = useWindowDimensions as unknown as jest.Mock;
 

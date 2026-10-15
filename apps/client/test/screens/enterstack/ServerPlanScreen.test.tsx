@@ -39,44 +39,44 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
   useIsFocused: () => true,
 }));
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
-jest.mock('../../../src/hooks/useServerStatuses', () => ({
+jest.mock('@/src/hooks/useServerStatuses', () => ({
   useServerStatuses: (...args: unknown[]) => mockStatuses(...args),
 }));
-jest.mock('../../../src/hooks/usePaymentOverview', () => ({
+jest.mock('@/src/hooks/usePaymentOverview', () => ({
   usePaymentOverview: (...args: unknown[]) => mockOverview(...args),
 }));
-jest.mock('../../../src/hooks/usePlanCheckout', () => ({
+jest.mock('@/src/hooks/usePlanCheckout', () => ({
   usePlanCheckout: (...args: unknown[]) => mockCheckout(...args),
 }));
-jest.mock('../../../src/hooks/useSwitchQuote', () => ({
+jest.mock('@/src/hooks/useSwitchQuote', () => ({
   useSwitchQuote: (...args: unknown[]) => mockSwitchQuote(...args),
 }));
-jest.mock('../../../src/hooks/usePlanCancellation', () => ({
+jest.mock('@/src/hooks/usePlanCancellation', () => ({
   usePlanCancellation: (...args: unknown[]) => mockCancelRenewal(...args),
 }));
-jest.mock('../../../src/services/PaymentService', () => ({
+jest.mock('@/src/services/PaymentService', () => ({
   __esModule: true,
   verifyPlayPurchase: jest.fn().mockResolvedValue({ active: false, subscription: null }),
 }));
 // The device filter defaults to the web build here, so the redirect methods show;
 // one test below switches it to a phone without a purchase runtime.
-jest.mock('../../../src/utils/paymentMethodVisibility', () => {
-  const actual = jest.requireActual('../../../src/utils/paymentMethodVisibility');
+jest.mock('@/src/utils/paymentMethodVisibility', () => {
+  const actual = jest.requireActual('@/src/utils/paymentMethodVisibility');
   return { ...actual, devicePaymentCapabilities: jest.fn() };
 });
 
 import { fireEvent, render, within } from '@testing-library/react-native';
-import ServerPlanScreen from '../../../src/screens/enterstack/ServerPlanScreen';
-import { devicePaymentCapabilities } from '../../../src/utils/paymentMethodVisibility';
+import ServerPlanScreen from '@/src/screens/enterstack/ServerPlanScreen';
+import { devicePaymentCapabilities } from '@/src/utils/paymentMethodVisibility';
 
 const mockDeviceCaps = devicePaymentCapabilities as jest.Mock;
 

@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import type {
   CharacterSelect,
   ChapterSelect,
   ItemJourneySelect,
   ItemSelect,
   SceneSelect,
-} from '../db/schema';
-import { createCharacterSceneService } from '../services/storymanagement/CharacterSceneService';
-import { createCharacterService } from '../services/storymanagement/CharacterService';
-import { createChapterService } from '../services/storymanagement/ChapterService';
-import { createItemJourneyService } from '../services/storymanagement/ItemJourneyService';
-import { createItemService } from '../services/storymanagement/ItemService';
-import { createSceneService } from '../services/storymanagement/SceneService';
+} from '@/src/db/schema';
+import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
 
 export function usePresenceMatrixCatalog(
   storyId: string | undefined,

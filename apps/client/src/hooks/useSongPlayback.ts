@@ -16,8 +16,8 @@ import {
 } from '@keres/shared';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createSongAudioService } from '../services/SongAudioService';
-import { PREVIEW_MAX_SECONDS } from '../utils/songPlayback';
+import { createSongAudioService } from '@/src/services/SongAudioService';
+import { PREVIEW_MAX_SECONDS } from '@/src/utils/songPlayback';
 
 export type PlaybackPhase = 'idle' | 'preparing' | 'playing';
 

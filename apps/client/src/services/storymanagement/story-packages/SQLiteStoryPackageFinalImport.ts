@@ -5,7 +5,7 @@ import type {
   StatRelationInsert,
   StatStrengthInsert,
   SeeAlsoRelationInsert,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import {
   comments,
   favorites,
@@ -14,7 +14,7 @@ import {
   statRelations,
   stats,
   statStrengths,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import type { SQLiteStoryPackageImportContext } from './SQLiteStoryPackageImportContext';
 
 /**

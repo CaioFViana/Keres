@@ -7,21 +7,21 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(),
   deleteItemAsync: jest.fn(),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => mockUserSettings },
 }));
-jest.mock('../../src/services/browserCookieSession', () => ({
+jest.mock('@/src/services/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: jest.fn(),
   canRefreshSessionWithCookie: jest.fn(),
 }));
 
 import axios from 'axios';
-import { authTokenManager, setAuthDb } from '../../src/services/AuthTokenManager';
+import { authTokenManager, setAuthDb } from '@/src/services/AuthTokenManager';
 import {
   canRefreshSessionWithCookie,
   usesHttpOnlyCookieSession,
-} from '../../src/services/browserCookieSession';
-import { tokenVault } from '../../src/services/TokenVault';
+} from '@/src/services/browserCookieSession';
+import { tokenVault } from '@/src/services/TokenVault';
 
 const mockUserSettings = {
   activeServer: null as { id: string; url: string } | null,

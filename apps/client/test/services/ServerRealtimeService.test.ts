@@ -1,33 +1,33 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   createKeresAxiosInstance: jest.fn(),
   apiBaseUrl: (serverUrl: string) => `${serverUrl.replace(/\/+$/, '')}/api`,
   apiUrl: (serverUrl: string, endpoint: string) =>
     `${serverUrl.replace(/\/+$/, '')}/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`,
 }));
-jest.mock('../../src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
-jest.mock('../../src/services/FriendshipService', () => ({ createFriendshipService: jest.fn() }));
-jest.mock('../../src/services/PublicationService', () => ({ createPublicationService: jest.fn() }));
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
+jest.mock('@/src/services/FriendshipService', () => ({ createFriendshipService: jest.fn() }));
+jest.mock('@/src/services/PublicationService', () => ({ createPublicationService: jest.fn() }));
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: jest.fn(),
 }));
-jest.mock('../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/storyListStore', () => ({
   useStoryListStore: { getState: jest.fn() },
 }));
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('../../src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
 
-import { createKeresAxiosInstance } from '../../src/services/apiClient';
-import { createFriendshipService } from '../../src/services/FriendshipService';
-import { createPublicationService } from '../../src/services/PublicationService';
-import { ServerRealtimeService } from '../../src/services/ServerRealtimeService';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { useStoryListStore } from '../../src/state/storyListStore';
+import { createKeresAxiosInstance } from '@/src/services/apiClient';
+import { createFriendshipService } from '@/src/services/FriendshipService';
+import { createPublicationService } from '@/src/services/PublicationService';
+import { ServerRealtimeService } from '@/src/services/ServerRealtimeService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { useStoryListStore } from '@/src/state/storyListStore';
 
 const mockClient = {
   post: jest.fn(),
@@ -299,7 +299,7 @@ describe('catalog-driven resubscription', () => {
 
 describe('payments.changed', () => {
   it('tells whoever shows the plan which server changed, and does nothing else', async () => {
-    const { entityEventEmitter } = jest.requireActual('../../src/utils/EventEmitter');
+    const { entityEventEmitter } = jest.requireActual('@/src/utils/EventEmitter');
     const listener = jest.fn();
     entityEventEmitter.on('payments_changed', listener);
     const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
@@ -509,7 +509,7 @@ describe('subscriptions, failures and reconnects', () => {
   });
 
   it('tells whoever shows the collaborators that they changed, with the story and the server', async () => {
-    const { entityEventEmitter } = jest.requireActual('../../src/utils/EventEmitter');
+    const { entityEventEmitter } = jest.requireActual('@/src/utils/EventEmitter');
     const heard = jest.fn();
     entityEventEmitter.on('story_collaborators_changed', heard);
     const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);

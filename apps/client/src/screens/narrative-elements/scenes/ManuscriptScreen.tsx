@@ -16,23 +16,23 @@ import {
   linearManuscriptSections,
   routeManuscriptSections,
 } from '@keres/shared';
-import MarkedText from '../../../components/common/display/MarkedText/MarkedText';
-import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
-import { ManuscriptReviewTools } from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
-import { ManuscriptSearchToolbar } from '../../../components/features/manuscript/ManuscriptSearchToolbar/ManuscriptSearchToolbar';
-import ManuscriptExplorer from '../../../components/features/manuscript/ManuscriptExplorer/ManuscriptExplorer';
-import ManuscriptIndexModal from '../../../components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
-import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
-import { useScreenTour } from '../../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useManuscriptData } from '../../../hooks/useManuscriptData';
-import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useStoryStore } from '../../../state/storyStore';
-import { useTheme } from '../../../theme';
-import { sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import { ManuscriptReviewTools } from '@/src/components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
+import { ManuscriptSearchToolbar } from '@/src/components/features/manuscript/ManuscriptSearchToolbar/ManuscriptSearchToolbar';
+import ManuscriptExplorer from '@/src/components/features/manuscript/ManuscriptExplorer/ManuscriptExplorer';
+import ManuscriptIndexModal from '@/src/components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useManuscriptData } from '@/src/hooks/useManuscriptData';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
 import {
   manuscriptModeHeaderActions,
   useManuscriptReview,

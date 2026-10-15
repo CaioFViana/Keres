@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-native';
 import type { BoardNodeType } from '@keres/shared';
-import type { BoardPinOption } from '../../src/hooks/useBoardPinOptions';
-import { useBoardNodeTitles } from '../../src/hooks/useBoardNodeTitles';
+import type { BoardPinOption } from '@/src/hooks/useBoardPinOptions';
+import { useBoardNodeTitles } from '@/src/hooks/useBoardNodeTitles';
 
 const nodes = [
   { id: 'note', kind: 'note', title: '  ', x: 0, y: 0 },

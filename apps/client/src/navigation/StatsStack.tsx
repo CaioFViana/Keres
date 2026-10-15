@@ -1,10 +1,10 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
-import StatFormScreen from '../screens/stats/StatFormScreen';
-import StatLadderScreen from '../screens/stats/StatLadderScreen';
-import StatListScreen from '../screens/stats/StatListScreen';
-import StatRankingScreen from '../screens/stats/StatRankingScreen';
-import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
+import StatComparisonScreen from '@/src/screens/stats/StatComparisonScreen';
+import StatFormScreen from '@/src/screens/stats/StatFormScreen';
+import StatLadderScreen from '@/src/screens/stats/StatLadderScreen';
+import StatListScreen from '@/src/screens/stats/StatListScreen';
+import StatRankingScreen from '@/src/screens/stats/StatRankingScreen';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 
 export type StatsStackParamList = {
   StatList: undefined;

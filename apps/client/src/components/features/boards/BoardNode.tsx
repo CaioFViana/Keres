@@ -3,18 +3,18 @@ import type { BoardNodeType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../theme';
-import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
-import { capturePointer, releasePointer } from '../../../utils/pointerCapture';
-import { getBoardPinAppearance, type BoardCardAppearance } from '../../../utils/boardPinAppearance';
+import { useTheme } from '@/src/theme';
+import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { capturePointer, releasePointer } from '@/src/utils/pointerCapture';
+import { getBoardPinAppearance, type BoardCardAppearance } from '@/src/utils/boardPinAppearance';
 import {
   boardNodeSize,
   galleryDisplayPath,
   galleryHasImage,
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMedia,
-} from '../../../utils/boardLayout';
-import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
+} from '@/src/utils/boardLayout';
+import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
 
 const DRAG_THRESHOLD = 5;
 

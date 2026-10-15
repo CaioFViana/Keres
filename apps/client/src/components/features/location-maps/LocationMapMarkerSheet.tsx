@@ -13,9 +13,9 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import type { ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { space } from '../../../theme/tokens';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { space } from '@/src/theme/tokens';
 
 /** Keeps focus rings and input borders inside the rounded ResponsiveModal surface. */
 export const LOCATION_MAP_MARKER_SHEET_INNER_PADDING = 2;

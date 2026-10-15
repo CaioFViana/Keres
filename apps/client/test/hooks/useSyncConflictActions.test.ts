@@ -6,14 +6,14 @@ const mockStore = {
   keepServerAndCloneBoard: jest.fn(),
 };
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/state/syncConflictStore', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/state/syncConflictStore', () => ({
   __esModule: true,
   useSyncConflictStore: jest.fn((selector) => selector(mockStore)),
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useSyncConflictActions } from '../../src/hooks/useSyncConflictActions';
+import { useSyncConflictActions } from '@/src/hooks/useSyncConflictActions';
 
 describe('useSyncConflictActions', () => {
   it('binds conflict-store actions to the current database', async () => {

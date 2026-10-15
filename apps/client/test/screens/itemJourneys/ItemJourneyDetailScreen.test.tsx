@@ -34,7 +34,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { itemJourneyId: 'journey-1' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
@@ -135,12 +135,12 @@ jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () =
     return react.createElement(native.Text, { testID: 'entity-metadata' }, 'metadata');
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     canComment: false,
@@ -152,7 +152,7 @@ jest.mock('../../../src/hooks/useEntityComments', () => ({
     updateComment: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [],
@@ -162,43 +162,43 @@ jest.mock('../../../src/hooks/useEntityRelations', () => ({
     deleteNoteRelation: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToEntity,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getById: mockGetItemJourneyById }),
 }));
-jest.mock('../../../src/state/itemStore', () => ({
+jest.mock('@/src/state/itemStore', () => ({
   __esModule: true,
   useItemStore: () => storeStub('items')(),
 }));
-jest.mock('../../../src/state/sceneStore', () => ({
+jest.mock('@/src/state/sceneStore', () => ({
   __esModule: true,
   useSceneStore: () => storeStub('scenes')(),
 }));
-jest.mock('../../../src/state/characterStore', () => ({
+jest.mock('@/src/state/characterStore', () => ({
   __esModule: true,
   useCharacterStore: () => storeStub('characters')(),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { textSecondary: '#666' } }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) => (entity === 'Item' ? mockItemCopy : mockSceneCopy),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ agree: mockAgree, term: mockTerm }),
 }));
@@ -207,8 +207,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 
-import ItemJourneyDetailScreen from '../../../src/screens/itemJourneys/ItemJourneyDetailScreen';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import ItemJourneyDetailScreen from '@/src/screens/itemJourneys/ItemJourneyDetailScreen';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const makeJourney = (overrides = {}) => ({
   id: 'journey-1',

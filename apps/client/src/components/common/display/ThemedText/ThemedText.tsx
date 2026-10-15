@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, type TextProps } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { typography } from '../../../../theme/tokens';
+import { useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
 
 /** The colour a text carries, by what it says rather than by hex: the palette decides the value. */
 export type TextTone = 'default' | 'secondary' | 'primary' | 'error' | 'onPrimary';

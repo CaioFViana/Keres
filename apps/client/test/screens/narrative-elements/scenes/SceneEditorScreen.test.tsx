@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { ScrollView, StyleSheet } from 'react-native';
-import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
-import SceneEditorScreen from '../../../../src/screens/narrative-elements/scenes/SceneEditorScreen';
-import type { SceneSelect } from '../../../../src/db/schema';
+import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
+import SceneEditorScreen from '@/src/screens/narrative-elements/scenes/SceneEditorScreen';
+import type { SceneSelect } from '@/src/db/schema';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -50,7 +50,7 @@ let mockScreenplay = {
   plan: { source: 'none', heading: null as string | null },
 };
 jest.mock(
-  '../../../../src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader',
+  '@/src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader',
   () => {
     const { Text } = require('react-native');
     return {
@@ -63,19 +63,19 @@ jest.mock(
   },
 );
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string; actions?: readonly HeaderAction[] }) => {
     mockHeaderArgs = args;
   },
 }));
 
-jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -92,12 +92,12 @@ jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('../../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: mockCommentsByField,
@@ -110,19 +110,19 @@ jest.mock('../../../../src/hooks/useEntityComments', () => ({
   }),
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: { id: 'story-1' } }),
 }));
 
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 
 // The draft lifecycle itself is covered node-side in `useSceneBodyDraft.test.ts` (the real
 // SQLite driver cannot load in this environment); here the hook is a wired seam.
-jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
+jest.mock('@/src/hooks/useSceneBodyDraft', () => ({
   __esModule: true,
   useSceneBodyDraft: (options: {
     savedBody: string | null;
@@ -158,17 +158,17 @@ jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
   },
 }));
 
-jest.mock('../../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   __esModule: true,
   useDrizzle: () => ({}),
 }));
 
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getById: mockGetById, updateScene: mockUpdateScene }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -188,12 +188,12 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => {
   const copies: Record<string, object> = {};
   return {
     __esModule: true,
@@ -213,7 +213,7 @@ jest.mock('react-i18next', () => {
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -228,38 +228,35 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock(
-  '../../../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        visible: boolean;
-        comments: { id: string }[];
-        fieldValueSnapshot: string;
-        onSubmit: (input: {
-          commentText: string;
-          excerptText: string | null;
-          criticality: number;
-        }) => Promise<void>;
-      }) =>
-        props.visible ? (
-          <>
-            <Text testID="comments-modal">{`comments:${props.comments.length}`}</Text>
-            <Text
-              testID="comments-submit"
-              onPress={() =>
-                props.onSubmit({ commentText: 'Needs a beat', excerptText: null, criticality: 1 })
-              }
-            >
-              submit
-            </Text>
-          </>
-        ) : null,
-    };
-  },
-);
+jest.mock('@/src/components/features/comments/CommentThreadModal/CommentThreadModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      visible: boolean;
+      comments: { id: string }[];
+      fieldValueSnapshot: string;
+      onSubmit: (input: {
+        commentText: string;
+        excerptText: string | null;
+        criticality: number;
+      }) => Promise<void>;
+    }) =>
+      props.visible ? (
+        <>
+          <Text testID="comments-modal">{`comments:${props.comments.length}`}</Text>
+          <Text
+            testID="comments-submit"
+            onPress={() =>
+              props.onSubmit({ commentText: 'Needs a beat', excerptText: null, criticality: 1 })
+            }
+          >
+            submit
+          </Text>
+        </>
+      ) : null,
+  };
+});
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

@@ -2,19 +2,19 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-jest.mock('../../src/services/MediaFileService', () => ({
+import * as schema from '@/src/db/schema';
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
 import {
   createServerService,
   ServerHasOwnedStoriesError,
   ServerUrlAlreadyRegisteredError,
-} from '../../src/services/ServerService';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import { useStoryStore } from '../../src/state/storyStore';
-import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/ServerService';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

@@ -5,8 +5,8 @@ import {
   OccurrenceLandingContext,
   useOccurrenceFlash,
   useOccurrenceLandingController,
-} from '../../src/hooks/useOccurrenceLanding';
-import type { OccurrenceTarget } from '../../src/utils/occurrenceTarget';
+} from '@/src/hooks/useOccurrenceLanding';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 
 type MeasureCallback = (x: number, y: number, width: number, height: number) => void;
 

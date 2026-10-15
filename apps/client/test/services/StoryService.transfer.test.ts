@@ -1,5 +1,5 @@
 /** @jest-environment node */
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
@@ -7,11 +7,11 @@ jest.mock('../../src/services/MediaFileService', () => ({
 import { AttributeType } from '@keres/shared';
 import { FullStoryExportSchema } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { entityBase, seedLocalStory } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { entityBase, seedLocalStory } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';

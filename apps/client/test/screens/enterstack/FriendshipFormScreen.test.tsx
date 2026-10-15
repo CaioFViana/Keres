@@ -48,60 +48,60 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('../../../src/services/FriendshipService', () => ({
+jest.mock('@/src/services/FriendshipService', () => ({
   createFriendshipService: () => ({
     addFriendship: (...args: unknown[]) => mockAddFriendship(...args),
   }),
 }));
 
-jest.mock('../../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: { getUserByTag: (...args: unknown[]) => mockGetUserByTag(...args) },
 }));
 
-jest.mock('../../../src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/FriendshipApiService', () => ({
   friendshipApiService: {
     sendFriendRequest: (...args: unknown[]) => mockSendFriendRequest(...args),
   },
@@ -114,7 +114,7 @@ type PillProps = {
   placeholder: string;
 };
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -136,8 +136,8 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
 });
 
 import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
-import FriendshipFormScreen from '../../../src/screens/enterstack/FriendshipFormScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import FriendshipFormScreen from '@/src/screens/enterstack/FriendshipFormScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const mainServer = { id: 'srv-1', name: 'Main', tag: 'main', idUser: 'me-on-server' };
 const otherServer = { id: 'srv-2', name: 'Backup', tag: null, idUser: 'me-on-backup' };

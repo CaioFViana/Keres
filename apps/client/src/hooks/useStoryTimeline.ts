@@ -42,7 +42,7 @@ import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryCalendar } from './useStoryCalendar';
-import { chooseExportFormat } from '../utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);

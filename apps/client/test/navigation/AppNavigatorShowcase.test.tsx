@@ -28,28 +28,28 @@ jest.mock('@react-navigation/native-stack', () => ({
     },
   }),
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('../../src/services/ClientSettingsService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
+jest.mock('@/src/services/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
-jest.mock('../../src/state/themeStore', () => ({
+jest.mock('@/src/state/themeStore', () => ({
   __esModule: true,
   useThemeStore: jest.fn(),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#101010' } }),
 }));
-jest.mock('../../src/showcase/prepareShowcase', () => ({
+jest.mock('@/src/showcase/prepareShowcase', () => ({
   __esModule: true,
   prepareShowcase: (...args: unknown[]) => mockPrepareShowcase(...args),
 }));
-jest.mock('../../src/showcase/showcaseRequest', () => ({
+jest.mock('@/src/showcase/showcaseRequest', () => ({
   __esModule: true,
   readShowcaseRequest: jest.fn(),
 }));
@@ -57,25 +57,25 @@ jest.mock('@/src/components/features/app/SyncInitializer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('../../src/navigation/ColdInstallStack', () => ({
+jest.mock('@/src/navigation/ColdInstallStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/navigation/MainSystemStack', () => ({
+jest.mock('@/src/navigation/MainSystemStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/navigation/StorySelectionStack', () => ({
+jest.mock('@/src/navigation/StorySelectionStack', () => ({
   __esModule: true,
   default: () => null,
 }));
 
-import AppNavigator from '../../src/navigation/AppNavigator';
-import { useDrizzle } from '../../src/db';
-import { getClientSettings } from '../../src/services/ClientSettingsService';
-import { readShowcaseRequest } from '../../src/showcase/showcaseRequest';
-import { useThemeStore } from '../../src/state/themeStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
+import AppNavigator from '@/src/navigation/AppNavigator';
+import { useDrizzle } from '@/src/db';
+import { getClientSettings } from '@/src/services/ClientSettingsService';
+import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { useThemeStore } from '@/src/state/themeStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 const db = { marker: 'db' };
 const initializeSettings = jest.fn();

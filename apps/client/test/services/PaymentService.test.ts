@@ -9,7 +9,7 @@ const mockApi = {
   cancelSubscription: jest.fn(),
   getSwitchQuote: jest.fn(),
 };
-jest.mock('../../src/services/PaymentApiService', () => ({
+jest.mock('@/src/services/PaymentApiService', () => ({
   __esModule: true,
   paymentApi: {
     getInfo: (...args: unknown[]) => mockApi.getInfo(...args),
@@ -28,7 +28,7 @@ import {
   loadPaymentOverview,
   PAYMENTS_CHANGED,
   startCheckout,
-} from '../../src/services/PaymentService';
+} from '@/src/services/PaymentService';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const info = (over: Record<string, unknown> = {}) => ({

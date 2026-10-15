@@ -3,12 +3,12 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import type { SceneSelect } from '../../../../db/schema';
-import { useChapterNames } from '../../../../hooks/useChapterNames';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { useTheme } from '../../../../theme';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
-import { createULID } from '../../../../utils/entityUtils';
+import type { SceneSelect } from '@/src/db/schema';
+import { useChapterNames } from '@/src/hooks/useChapterNames';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useTheme } from '@/src/theme';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { createULID } from '@/src/utils/entityUtils';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager';
 

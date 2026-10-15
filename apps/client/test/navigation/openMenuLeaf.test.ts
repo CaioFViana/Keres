@@ -1,6 +1,6 @@
-import type { MenuLeaf } from '../../src/navigation/mainDrawerMenu';
-import { nestedFocusOf, openMenuLeaf } from '../../src/navigation/openMenuLeaf';
-import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
+import type { MenuLeaf } from '@/src/navigation/mainDrawerMenu';
+import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/openMenuLeaf';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 
 const stateOf = (routes: object[], index = 0) => ({ index, routes }) as never;
 

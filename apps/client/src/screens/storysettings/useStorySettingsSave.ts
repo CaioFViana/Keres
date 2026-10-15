@@ -2,14 +2,14 @@ import type { Story } from '@keres/shared/entities/Story';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../db';
-import { useAsyncOperation } from '../../hooks/useAsyncOperation';
-import { syncEngine } from '../../services/sync/appSyncEngine';
-import { manualSyncRefusalText } from '../../services/sync/manualSyncMessage';
-import { createStoryService } from '../../services/storymanagement/StoryService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { AppAlert } from '../../utils/AppAlert';
+import { useDrizzle } from '@/src/db';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+import { manualSyncRefusalText } from '@/src/services/sync/manualSyncMessage';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 export type StoryFieldsPatch = Partial<
   Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>

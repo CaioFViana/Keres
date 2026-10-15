@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import { operationLogs, stories } from '../../src/db/schema';
-import { createOperationLogService } from '../../src/services/OperationLogService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { operationLogs, stories } from '@/src/db/schema';
+import { createOperationLogService } from '@/src/services/OperationLogService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const OTHER_STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAW';

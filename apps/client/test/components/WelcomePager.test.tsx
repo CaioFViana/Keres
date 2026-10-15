@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-native';
-import { useWelcomePager } from '../../src/components/features/welcome/WelcomePager';
+import { useWelcomePager } from '@/src/components/features/welcome/WelcomePager';
 
 // What the UI thread would call: captured so the tests can play a scroll by hand.
 type ScrollHandlers = {

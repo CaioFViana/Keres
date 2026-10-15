@@ -1,7 +1,7 @@
 import type { EffectiveStoryRole } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**

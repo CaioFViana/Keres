@@ -11,12 +11,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import type { GallerySelect } from '../../../../db/schema';
-import { useEntityGalleryMedia } from '../../../../hooks/useEntityGalleryMedia';
-import { useGalleryThumbnailUri } from '../../../../hooks/useGalleryThumbnailUri';
-import { useNotificationStore } from '../../../../state/notificationStore';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import type { GallerySelect } from '@/src/db/schema';
+import { useEntityGalleryMedia } from '@/src/hooks/useEntityGalleryMedia';
+import { useGalleryThumbnailUri } from '@/src/hooks/useGalleryThumbnailUri';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import GalleryAddMediaModal, {
   type EntityMediaAddKind,
 } from '@/src/components/features/gallery/GalleryAddMediaModal';

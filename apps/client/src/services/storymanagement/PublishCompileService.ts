@@ -8,10 +8,13 @@ import {
   sceneMatchesArc,
 } from '@keres/shared';
 import type { TFunction } from 'i18next';
-import type { AppDrizzleClient } from '../../db';
-import type { StorySelect } from '../../db/schema';
-import { pdfFontMatrices } from '../../utils/pdfFontAssets';
-import type { PublishManuscriptOptions, PublishReaderOptions } from '../PublicationApiService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StorySelect } from '@/src/db/schema';
+import { pdfFontMatrices } from '@/src/utils/pdfFontAssets';
+import type {
+  PublishManuscriptOptions,
+  PublishReaderOptions,
+} from '@/src/services/PublicationApiService';
 import { createChapterService } from './ChapterService';
 import { createChoiceService } from './ChoiceService';
 import { createChoiceCheckGroupService } from './ChoiceCheckGroupService';
@@ -23,7 +26,7 @@ import { loadManuscriptMusic } from './ManuscriptMusicService';
 import { loadManuscriptCover, loadManuscriptPages } from './ManuscriptPagesService';
 import { createSceneService } from './SceneService';
 import { createStoryArcService } from './StoryArcService';
-import { describeChoiceAnnotations } from '../../utils/choiceAnnotations';
+import { describeChoiceAnnotations } from '@/src/utils/choiceAnnotations';
 
 /** A locally compiled manuscript: the bytes plus how the server must file them. */
 export interface CompiledPublishManuscript {

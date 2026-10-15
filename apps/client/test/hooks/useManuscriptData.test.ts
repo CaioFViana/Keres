@@ -1,7 +1,7 @@
 /** @jest-environment node */
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useManuscriptData } from '../../src/hooks/useManuscriptData';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useManuscriptData } from '@/src/hooks/useManuscriptData';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const mockGetChapters = jest.fn();
 const mockGetScenes = jest.fn();
@@ -9,7 +9,7 @@ const mockGetRoutes = jest.fn();
 const mockGetChoices = jest.fn();
 const mockGetSteps = jest.fn();
 
-jest.mock('../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return {
     __esModule: true,
@@ -17,27 +17,27 @@ jest.mock('../../src/db', () => {
   };
 });
 
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getAllByStoryId: mockGetChapters }),
 }));
 
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getAllByStoryId: mockGetScenes }),
 }));
 
-jest.mock('../../src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/RouteService', () => ({
   __esModule: true,
   createRouteService: () => ({ getAllByStoryId: mockGetRoutes, getSteps: mockGetSteps }),
 }));
 
-jest.mock('../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getAllByStoryId: mockGetChoices }),
 }));
 
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,

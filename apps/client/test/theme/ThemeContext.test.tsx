@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import { ThemeContext, useTheme } from '../../src/theme/ThemeContext';
+import { ThemeContext, useTheme } from '@/src/theme/ThemeContext';
 
 describe('useTheme', () => {
   it('throws outside a provider', async () => {

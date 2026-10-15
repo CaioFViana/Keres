@@ -11,16 +11,16 @@ jest.mock('react-i18next', () => ({
 }));
 const mockT = (key: string) => key;
 const mockTranslation = { t: mockT };
-jest.mock('../../src/state/unseenMessagesStore', () => ({
+jest.mock('@/src/state/unseenMessagesStore', () => ({
   __esModule: true,
   useHasUnseenAdminMessages: () => mockUnseenAdmin,
   useHasUnseenMessages: () => mockUnseenMessages,
 }));
-jest.mock('../../src/utils/clientFlavor', () => ({
+jest.mock('@/src/utils/clientFlavor', () => ({
   __esModule: true,
   isServerless: () => mockServerless,
 }));
-jest.mock('../../src/components/common/navigation/GroupedDrawerMenu/GroupedDrawerMenu', () => ({
+jest.mock('@/src/components/common/navigation/GroupedDrawerMenu/GroupedDrawerMenu', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockGroupedProps = props;
@@ -28,7 +28,7 @@ jest.mock('../../src/components/common/navigation/GroupedDrawerMenu/GroupedDrawe
   },
 }));
 
-import SelectionDrawerMenu from '../../src/components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
+import SelectionDrawerMenu from '@/src/components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
 
 const renderMenu = () =>
   render(

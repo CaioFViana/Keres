@@ -4,18 +4,18 @@ import { useTranslation } from 'react-i18next';
 import Button from '@/src/components/common/controls/Button/Button';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import ManuscriptExportOptions from '../../../components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
+import ManuscriptExportOptions from '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import {
   MANUSCRIPT_EXPORT_FORMATS,
   SCREENPLAY_EXPORT_FORMATS,
-} from '../../../components/features/manuscript/export/manuscriptExport';
+} from '@/src/components/features/manuscript/export/manuscriptExport';
 import {
   applyPreset,
   defaultExportSettings,
-} from '../../../components/features/manuscript/export/manuscriptExportSettings';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import { useStoryStore } from '../../../state/storyStore';
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useStoryStore } from '@/src/state/storyStore';
 import { useManuscriptExport } from './useManuscriptExport';
 
 /**

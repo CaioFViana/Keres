@@ -2,12 +2,12 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import type { BoardContentType } from '@keres/shared';
 import { MAX_BOARD_TITLE_LENGTH } from '@keres/shared';
 import React from 'react';
-import BoardCanvasHeaderActions from '../../src/components/features/boards/BoardCanvasHeaderActions';
-import BoardConnectionModal from '../../src/components/features/boards/BoardConnectionModal';
-import BoardCreateModal from '../../src/components/features/boards/BoardCreateModal';
-import LocationMapCreateModal from '../../src/components/features/location-maps/LocationMapCreateModal';
+import BoardCanvasHeaderActions from '@/src/components/features/boards/BoardCanvasHeaderActions';
+import BoardConnectionModal from '@/src/components/features/boards/BoardConnectionModal';
+import BoardCreateModal from '@/src/components/features/boards/BoardCreateModal';
+import LocationMapCreateModal from '@/src/components/features/location-maps/LocationMapCreateModal';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -27,14 +27,14 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockScreenAnchor = jest.fn();
-jest.mock('../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: (id: string) => mockScreenAnchor(id),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
 }));
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View: RNView } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -43,7 +43,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -70,7 +70,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
 });
 
 const mockGraphConnectionModal = jest.fn();
-jest.mock('../../src/components/features/graphs/GraphConnectionModal/GraphConnectionModal', () => {
+jest.mock('@/src/components/features/graphs/GraphConnectionModal/GraphConnectionModal', () => {
   const RN = jest.requireActual('react-native');
   return function MockGraphConnectionModal(props: Record<string, unknown>) {
     mockGraphConnectionModal(props);

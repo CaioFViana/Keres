@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react-native';
-import EntityMetadataWithBacklinks from '../../src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadataWithBacklinks from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 
 const mockMetadataProps = { current: null as Record<string, unknown> | null };
 const mockBacklinksSectionProps = { current: null as Record<string, unknown> | null };
-jest.mock('../../src/components/common/display/EntityMetadata/EntityMetadata', () => {
+jest.mock('@/src/components/common/display/EntityMetadata/EntityMetadata', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -14,7 +14,7 @@ jest.mock('../../src/components/common/display/EntityMetadata/EntityMetadata', (
     },
   };
 });
-jest.mock('../../src/components/features/mentions/MentionBacklinksSection', () => {
+jest.mock('@/src/components/features/mentions/MentionBacklinksSection', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

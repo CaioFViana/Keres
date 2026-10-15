@@ -1,7 +1,7 @@
 import { asc, desc, eq, or, sql, type SQL } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
-import { columnsOf } from '../entityTableRegistry';
-import type { FavoriteFilterState, SortDirection } from '../../types/entityFilters';
+import { columnsOf } from '@/src/services/entityTableRegistry';
+import type { FavoriteFilterState, SortDirection } from '@/src/types/entityFilters';
 
 /**
  * The list queries of the story entity services share a shape: scope to one story, drop the

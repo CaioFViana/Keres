@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
-import ScenePagesEntry from '../../../../src/components/features/scenes/ScenePages/ScenePagesEntry';
+import ScenePagesEntry from '@/src/components/features/scenes/ScenePages/ScenePagesEntry';
 
 const mockOnOpen = jest.fn();
 let mockMedium: string | null = null;
@@ -12,17 +12,17 @@ jest.mock('react-i18next', () => ({
       options?.count !== undefined ? `${key}:${options.count}` : key,
   }),
 }));
-jest.mock('../../../../src/hooks/useSceneArcMedium', () => ({
+jest.mock('@/src/hooks/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
-jest.mock('../../../../src/hooks/useScenePages', () => ({
+jest.mock('@/src/hooks/useScenePages', () => ({
   __esModule: true,
   useScenePages: () => ({
     pages: Array.from({ length: mockPageCount }, (_, index) => ({ page: { id: `p${index}` } })),
   }),
 }));
-jest.mock('../../../../src/components/common/display/DetailField/DetailField', () => {
+jest.mock('@/src/components/common/display/DetailField/DetailField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

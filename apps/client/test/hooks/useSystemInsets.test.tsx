@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
-import { useSystemInsets } from '../../src/hooks/useSystemInsets';
+import { useSystemInsets } from '@/src/hooks/useSystemInsets';
 
 function Probe() {
   const insets = useSystemInsets();

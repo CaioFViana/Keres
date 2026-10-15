@@ -3,15 +3,15 @@ import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { GuideDrawerId } from '../../../../guides/types';
-import { useStoryMenuBadges } from '../../../../hooks/useStoryMenuBadges';
-import { buildMainDrawerMenu } from '../../../../navigation/mainDrawerMenu';
-import { nestedFocusOf, openMenuLeaf } from '../../../../navigation/openMenuLeaf';
-import { useStoryStore } from '../../../../state/storyStore';
-import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { useTheme } from '../../../../theme';
-import { useStoryVocabulary } from '../../../../vocabulary/useStoryVocabulary';
-import GroupedDrawerMenu from '../GroupedDrawerMenu/GroupedDrawerMenu';
+import type { GuideDrawerId } from '@/src/guides/types';
+import { useStoryMenuBadges } from '@/src/hooks/useStoryMenuBadges';
+import { buildMainDrawerMenu } from '@/src/navigation/mainDrawerMenu';
+import { nestedFocusOf, openMenuLeaf } from '@/src/navigation/openMenuLeaf';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import GroupedDrawerMenu from '@/src/components/common/navigation/GroupedDrawerMenu/GroupedDrawerMenu';
 
 interface MainDrawerMenuProps {
   state: DrawerContentComponentProps['state'];

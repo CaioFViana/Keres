@@ -61,35 +61,35 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: (options: unknown) => mockHeader(options),
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/FriendshipService', () => ({
+jest.mock('@/src/services/FriendshipService', () => ({
   createFriendshipService: () => ({
     getAllFriendships: (...args: unknown[]) => mockGetAllFriendships(...args),
     acceptFriendRequest: (...args: unknown[]) => mockAccept(...args),
@@ -101,14 +101,14 @@ jest.mock('../../../src/services/FriendshipService', () => ({
   }),
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
 const mockCompact: { current: boolean } = { current: false };
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: mockCompact.current }),
 }));
 
@@ -119,7 +119,7 @@ const NO_ACTIVITY = {
   loading: false,
 };
 const mockActivity = { current: { ...NO_ACTIVITY } };
-jest.mock('../../../src/hooks/useFriendActivity', () => ({
+jest.mock('@/src/hooks/useFriendActivity', () => ({
   useFriendActivity: () => mockActivity.current,
 }));
 
@@ -131,12 +131,12 @@ const mockInvitationActions = {
 const mockInvitations: {
   current: { received: unknown[]; sent: unknown[]; busyId: string | null };
 } = { current: { received: [], sent: [], busyId: null } };
-jest.mock('../../../src/hooks/useStoryInvitationList', () => ({
+jest.mock('@/src/hooks/useStoryInvitationList', () => ({
   useStoryInvitationList: () => ({ ...mockInvitations.current, ...mockInvitationActions }),
 }));
 
 const mockOpenStory = jest.fn();
-jest.mock('../../../src/hooks/useOpenStoryById', () => ({
+jest.mock('@/src/hooks/useOpenStoryById', () => ({
   useOpenStoryById: () => mockOpenStory,
 }));
 
@@ -148,7 +148,7 @@ const mockInviteState: {
     invite: jest.Mock;
   };
 } = { current: { stories: null, busy: false, invite: jest.fn(async () => true) } };
-jest.mock('../../../src/hooks/useInviteFriendToStory', () => ({
+jest.mock('@/src/hooks/useInviteFriendToStory', () => ({
   useInviteFriendToStory: (options: unknown) => {
     mockInviteHook(options);
     return mockInviteState.current;
@@ -156,7 +156,7 @@ jest.mock('../../../src/hooks/useInviteFriendToStory', () => ({
 }));
 
 const mockInviteModal = jest.fn();
-jest.mock('../../../src/components/features/friendship/InviteToStoryModal', () => {
+jest.mock('@/src/components/features/friendship/InviteToStoryModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -172,7 +172,7 @@ jest.mock('../../../src/components/features/friendship/InviteToStoryModal', () =
   };
 });
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
@@ -180,8 +180,8 @@ jest.mock('../../../src/state/notificationStore', () => ({
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import FriendDetailScreen from '../../../src/screens/enterstack/FriendDetailScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import FriendDetailScreen from '@/src/screens/enterstack/FriendDetailScreen';
 
 const server = { id: 'srv-1', idUser: 'me-on-server', name: 'Main' };
 
@@ -805,7 +805,7 @@ describe('FriendDetailScreen', () => {
 });
 
 describe('FriendDetailScreen: news from this friend', () => {
-  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
   const friendOf = (over: Record<string, unknown> = {}) =>
     friendship({
       status: FriendStatus.FRIEND,

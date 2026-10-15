@@ -9,11 +9,11 @@ import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearch
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import type { SQL } from 'drizzle-orm';
 import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { attributeValues, chapters, scenes, storySchemaFields } from '../../db/schema';
-import { columnsOf, getEntityTable } from '../entityTableRegistry';
-import type { OccurrenceTarget } from '../../utils/occurrenceTarget';
-import { truncate } from '../../utils/stringUtils';
+import type { AppDrizzleClient } from '@/src/db';
+import { attributeValues, chapters, scenes, storySchemaFields } from '@/src/db/schema';
+import { columnsOf, getEntityTable } from '@/src/services/entityTableRegistry';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { truncate } from '@/src/utils/stringUtils';
 import { createFavoriteService } from './FavoriteService';
 import { createStoryArcService } from './StoryArcService';
 

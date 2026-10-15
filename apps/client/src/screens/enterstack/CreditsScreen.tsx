@@ -9,8 +9,8 @@ import {
 } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 // Colour only, no underline: the same link treatment as entity mentions elsewhere.

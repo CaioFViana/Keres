@@ -12,25 +12,25 @@ import { ScreenError } from '@/src/components/common/feedback/ScreenState/Screen
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CanvasListRow from '@/src/components/features/canvas/CanvasListRow';
 import LocationMapCreateModal from '@/src/components/features/location-maps/LocationMapCreateModal';
-import { useDrizzle } from '../../db';
-import type { LocationMapSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { filterByNameAndDescription } from '../../utils/filterByNameAndDescription';
+import { useDrizzle } from '@/src/db';
+import type { LocationMapSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { filterByNameAndDescription } from '@/src/utils/filterByNameAndDescription';
 import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import { createLocationMapService } from '../../services/storymanagement/LocationMapService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { AppAlert } from '../../utils/AppAlert';
+} from '@/src/navigation/MainSystemStack';
+import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 type Navigation = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,

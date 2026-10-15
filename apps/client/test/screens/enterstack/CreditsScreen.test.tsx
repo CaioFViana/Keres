@@ -6,8 +6,8 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -24,12 +24,12 @@ jest.mock('../../../src/theme', () => {
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
 const mockBackHandler = jest.fn();
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: (options: unknown) => mockBackHandler(options),
 }));
 
@@ -41,7 +41,7 @@ import {
   THIRD_PARTY_CREDITS,
 } from '@keres/shared';
 import { Linking } from 'react-native';
-import CreditsScreen from '../../../src/screens/enterstack/CreditsScreen';
+import CreditsScreen from '@/src/screens/enterstack/CreditsScreen';
 
 describe('CreditsScreen', () => {
   beforeEach(() => {

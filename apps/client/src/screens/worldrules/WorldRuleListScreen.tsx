@@ -13,17 +13,17 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import WorldRuleListItem from '@/src/components/features/list-items/WorldRuleListItem'; // Will create this later
-import type { WorldRuleWithTags } from '../../db/schemas/worldRules';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryTagFilterOptions } from '../../hooks/useStoryTagFilterOptions';
-import { useTitleDateSortOptions } from '../../hooks/useTitleDateSortOptions';
+import type { WorldRuleWithTags } from '@/src/db/schemas/worldRules';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/useStoryTagFilterOptions';
+import { useTitleDateSortOptions } from '@/src/hooks/useTitleDateSortOptions';
 import type {
   MainSystemDrawerParamList,
   WorldRulesStackParamList,
-} from '../../navigation/MainSystemStack'; // Will create/update this later
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/navigation/MainSystemStack'; // Will create/update this later
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 export type WorldRulesScreenNavigationProp = CompositeNavigationProp<

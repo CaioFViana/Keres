@@ -1,9 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import type { ChoiceSelect, SceneSelect } from '../../src/db/schema';
-import ChapterSceneBranchTree from '../../src/components/features/chapters/ChapterSceneBranchTree';
-import ChapterScenesList from '../../src/components/features/chapters/ChapterScenesList';
+import type { ChoiceSelect, SceneSelect } from '@/src/db/schema';
+import ChapterSceneBranchTree from '@/src/components/features/chapters/ChapterSceneBranchTree';
+import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -21,7 +21,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockSceneListItem = jest.fn();
-jest.mock('../../src/components/features/list-items/SceneListItem', () => {
+jest.mock('@/src/components/features/list-items/SceneListItem', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   const { Text, TouchableOpacity, View } = jest.requireActual('react-native');

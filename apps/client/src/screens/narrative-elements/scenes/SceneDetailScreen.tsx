@@ -15,28 +15,28 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import type { SceneSelect } from '../../../db/schema';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import type { SceneSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { stripManuscriptMarkers } from '@keres/shared';
-import { readStoredSceneBodyText } from '../../../hooks/useSceneBodyDraft';
-import { useEntityComments } from '../../../hooks/useEntityComments';
-import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
-import { useOpenGalleryMediaViewer } from '../../../hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '../../../hooks/useStoryRole';
-import { useStoryStore } from '../../../state/storyStore';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
-import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
-import { useSceneCalendarDates } from '../../../hooks/useSceneCalendarDates';
+import { readStoredSceneBodyText } from '@/src/hooks/useSceneBodyDraft';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../../hooks/useEntityRefreshLifecycle';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import type { NarrativeElementsScreenNavigationProp } from '../chapters/NarrativeElementsListScreen';
-import { describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NarrativeElementsScreenNavigationProp } from '@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
+import { describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
 import { SceneDetailContent } from './SceneDetailContent';
 import { useSceneDetailServices } from './useSceneDetailServices';
 

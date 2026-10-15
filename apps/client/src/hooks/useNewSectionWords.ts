@@ -1,5 +1,5 @@
 import { type SectionWords, sectionWordsFor } from '@keres/shared';
-import { useStoryStore } from '../state/storyStore';
+import { useStoryStore } from '@/src/state/storyStore';
 
 /**
  * The words that name a section the writer adds ("Verse", "Verso"): those of the language of the

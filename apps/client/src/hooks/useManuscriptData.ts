@@ -1,22 +1,22 @@
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   ChoiceSelect,
   RouteSelect,
   RouteStepSelect,
   SceneSelect,
-} from '../db/schema';
-import { createChapterService } from '../services/storymanagement/ChapterService';
-import { createChoiceService } from '../services/storymanagement/ChoiceService';
-import { createRouteService } from '../services/storymanagement/RouteService';
-import { createSceneService } from '../services/storymanagement/SceneService';
+} from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createRouteService } from '@/src/services/storymanagement/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import {
   loadChoiceAnnotations as fetchChoiceAnnotations,
   type ChoiceAnnotationLines,
-} from '../utils/choiceAnnotations';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/utils/choiceAnnotations';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /**

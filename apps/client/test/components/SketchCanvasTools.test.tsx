@@ -1,18 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import SketchCanvasTools from '../../src/components/features/sketches/SketchCanvasTools';
-import { useSketchCompact } from '../../src/hooks/useSketchCompact';
+import SketchCanvasTools from '@/src/components/features/sketches/SketchCanvasTools';
+import { useSketchCompact } from '@/src/hooks/useSketchCompact';
 
-jest.mock('../../src/hooks/useSketchCompact', () => ({
-  ...jest.requireActual('../../src/hooks/useSketchCompact'),
+jest.mock('@/src/hooks/useSketchCompact', () => ({
+  ...jest.requireActual('@/src/hooks/useSketchCompact'),
   useSketchCompact: jest.fn(() => false),
 }));
-jest.mock('../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   useScreenAnchor: () => undefined,
   useGuideAnchor: () => undefined,
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#fff',
@@ -24,7 +24,7 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return { __esModule: true, default: ({ children }: any) => <View>{children}</View> };
 });

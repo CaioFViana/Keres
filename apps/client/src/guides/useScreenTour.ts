@@ -1,8 +1,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { readShowcaseRequest } from '../showcase/showcaseRequest';
-import { useGuideStore } from '../state/guideStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
+import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { useGuideStore } from '@/src/state/guideStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { getScreenGuide } from './registry';
 import { shouldStartTour } from './shouldStartTour';
 

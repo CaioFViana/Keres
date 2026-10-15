@@ -6,18 +6,18 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type { StatsStackParamList } from '../../navigation/StatsStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryStats } from '@/src/hooks/useStoryStats';
+import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { StatsStackParamList } from '@/src/navigation/StatsStack';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
-import { buildStatRanking } from '../../utils/statRanking';
+import { buildStatRanking } from '@/src/utils/statRanking';
 
 type StatRankingNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatRanking'>;
 

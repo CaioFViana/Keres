@@ -1,9 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import StoryCollaborationSection from '../../src/components/features/story/StoryCollaborationSection/StoryCollaborationSection';
-import StoryFieldsForm from '../../src/components/features/story/StoryFieldsForm/StoryFieldsForm';
+import StoryCollaborationSection from '@/src/components/features/story/StoryCollaborationSection/StoryCollaborationSection';
+import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -39,12 +39,12 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: true, isMedium: false, isWide: false }),
 }));
 
-jest.mock('../../src/components/common', () => {
+jest.mock('@/src/components/common', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
   return {
@@ -71,7 +71,7 @@ jest.mock('../../src/components/common', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -84,7 +84,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -97,7 +97,7 @@ jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -108,7 +108,7 @@ jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () =
 });
 
 let mockCollaboration: any = null;
-jest.mock('../../src/hooks/useStoryServerCollaboration', () => ({
+jest.mock('@/src/hooks/useStoryServerCollaboration', () => ({
   __esModule: true,
   useStoryServerCollaboration: (...args: unknown[]) => {
     (mockCollaborationCalls as unknown[]).push(args);

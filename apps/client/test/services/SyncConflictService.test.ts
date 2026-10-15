@@ -2,15 +2,15 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   createSyncConflictService,
   findContestedFields,
   mergeLocalOperationPayloads,
   type RecordConflictInput,
-} from '../../src/services/SyncConflictService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+} from '@/src/services/SyncConflictService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const ENTITY_ID = 'char-1';

@@ -14,48 +14,48 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import DeleteAccountModal from '../../components/features/servers/DeleteAccountModal/DeleteAccountModal';
-import PlanLimitsCard from '../../components/features/servers/PlanLimitsCard';
-import PlanStatusCard from '../../components/features/servers/PlanStatusCard';
-import ServerActionRow from '../../components/features/servers/ServerActionRow';
-import TermsModal from '../../components/features/servers/TermsModal/TermsModal';
-import { serverCardStyleDefs } from '../../components/features/servers/serverCardStyleDefs';
-import ServerStatusPill from '../../components/features/servers/ServerStatusPill';
-import { useDrizzle } from '../../db';
-import { useAccountPlan } from '../../hooks/useAccountPlan';
-import { useAccountVerificationNotice } from '../../hooks/useAccountVerificationNotice';
-import { useAgeVerificationInfo } from '../../hooks/useAgeVerificationInfo';
-import { formatDateTime } from '../../utils/formatDateTime';
-import { usePaymentOverview } from '../../hooks/usePaymentOverview';
-import { useServerDeletion } from '../../hooks/useServerDeletion';
-import { useLiveLegalText } from '../../hooks/useLiveLegalText';
-import { useServerStatuses } from '../../hooks/useServerStatuses';
-import { useStableServer } from '../../hooks/useStableServer';
-import { useServerTagEditor } from '../../hooks/useServerTagEditor';
-import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
+import DeleteAccountModal from '@/src/components/features/servers/DeleteAccountModal/DeleteAccountModal';
+import PlanLimitsCard from '@/src/components/features/servers/PlanLimitsCard';
+import PlanStatusCard from '@/src/components/features/servers/PlanStatusCard';
+import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
+import TermsModal from '@/src/components/features/servers/TermsModal/TermsModal';
+import { serverCardStyleDefs } from '@/src/components/features/servers/serverCardStyleDefs';
+import ServerStatusPill from '@/src/components/features/servers/ServerStatusPill';
+import { useDrizzle } from '@/src/db';
+import { useAccountPlan } from '@/src/hooks/useAccountPlan';
+import { useAccountVerificationNotice } from '@/src/hooks/useAccountVerificationNotice';
+import { useAgeVerificationInfo } from '@/src/hooks/useAgeVerificationInfo';
+import { formatDateTime } from '@/src/utils/formatDateTime';
+import { usePaymentOverview } from '@/src/hooks/usePaymentOverview';
+import { useServerDeletion } from '@/src/hooks/useServerDeletion';
+import { useLiveLegalText } from '@/src/hooks/useLiveLegalText';
+import { useServerStatuses } from '@/src/hooks/useServerStatuses';
+import { useStableServer } from '@/src/hooks/useStableServer';
+import { useServerTagEditor } from '@/src/hooks/useServerTagEditor';
+import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
 import { ACCOUNT_DELETION_GRACE_DAYS } from '@keres/shared';
-import { exportAccountData } from '../../services/AccountDataExportService';
-import { createServerService } from '../../services/ServerService';
+import { exportAccountData } from '@/src/services/AccountDataExportService';
+import { createServerService } from '@/src/services/ServerService';
 import {
   acceptLegal,
   fetchLegalStatus,
   fetchServerPrivacy,
   fetchServerTerms,
   type ServerTerms,
-} from '../../services/ServerTermsService';
+} from '@/src/services/ServerTermsService';
 import {
   AccountDeletionCleanupError,
   deleteServerAccount,
-} from '../../services/DeleteAccountService';
-import { isOfflineError } from '../../services/apiClient';
-import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { userApiService } from '../../services/UserApiService';
-import { AppAlert } from '../../utils/AppAlert';
-import { type ThemeColors, useTheme } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { typography } from '../../theme/tokens';
-import { adminConversationKey } from '../../utils/conversationKey';
+} from '@/src/services/DeleteAccountService';
+import { isOfflineError } from '@/src/services/apiClient';
+import { useIsConversationUnseen } from '@/src/state/unseenMessagesStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { userApiService } from '@/src/services/UserApiService';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { adminConversationKey } from '@/src/utils/conversationKey';
 
 type ServerDetailRouteProp = RouteProp<ServerManagementStackParamList, 'ServerDetail'>;
 type ServerDetailNavigationProp = NativeStackNavigationProp<

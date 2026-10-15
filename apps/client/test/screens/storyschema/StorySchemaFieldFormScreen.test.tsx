@@ -40,7 +40,7 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
   useRoute: () => ({ params: mockRouteParams }),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
@@ -185,23 +185,23 @@ jest.mock('@/src/components/common/forms/CustomAttributeFields/AttributeValueInp
     );
   },
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => [{ id: 'f-0' }, { id: 'f-1' }],
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: {} }),
 }));
@@ -209,20 +209,20 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-jest.mock('../../../src/screens/storyschema/useStorySchemaFieldFormResources', () => ({
+jest.mock('@/src/screens/storyschema/useStorySchemaFieldFormResources', () => ({
   __esModule: true,
   useStorySchemaFieldFormResources: () => ({ storySchemaFieldServiceRef: mockServiceRef }),
 }));
-jest.mock('../../../src/screens/storyschema/useStorySchemaFieldFormState', () => ({
+jest.mock('@/src/screens/storyschema/useStorySchemaFieldFormState', () => ({
   __esModule: true,
   useStorySchemaFieldFormState: (...args: unknown[]) => mockUseFieldFormState(...args),
 }));
-jest.mock('../../../src/screens/storyschema/useStorySchemaFieldFormActions', () => ({
+jest.mock('@/src/screens/storyschema/useStorySchemaFieldFormActions', () => ({
   __esModule: true,
   useStorySchemaFieldFormActions: (...args: unknown[]) => mockUseFieldFormActions(...args),
 }));
 
-import StorySchemaFieldFormScreen from '../../../src/screens/storyschema/StorySchemaFieldFormScreen';
+import StorySchemaFieldFormScreen from '@/src/screens/storyschema/StorySchemaFieldFormScreen';
 
 const freshFormState = () => ({
   name: '',

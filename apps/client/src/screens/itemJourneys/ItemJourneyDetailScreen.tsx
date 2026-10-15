@@ -22,27 +22,27 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import TagList from '@/src/components/common/display/TagList/TagList';
-import { useDrizzle } from '../../db';
-import type { ItemJourneySelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { ItemJourneySelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityInitialLoad,
   useEntityEventSubscriptions,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { useCharacterStore } from '../../state/characterStore';
-import { useItemStore } from '../../state/itemStore';
-import { useSceneStore } from '../../state/sceneStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { layout } from '../../theme/layout';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import type { ItemStackParamList } from '../../navigation/MainSystemStack';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { useCharacterStore } from '@/src/state/characterStore';
+import { useItemStore } from '@/src/state/itemStore';
+import { useSceneStore } from '@/src/state/sceneStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type ItemJourneyDetailScreenParamList = {

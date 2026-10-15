@@ -18,11 +18,11 @@ jest.mock('@expo/vector-icons', () => ({
     return react.createElement(native.Text, { testID: `icon-${name}` }, name);
   },
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -56,30 +56,30 @@ jest.mock('@/src/components/features/list-items/GlobalSearchResultItem', () => (
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/services/storymanagement/GlobalSearchService', () => ({
+jest.mock('@/src/services/storymanagement/GlobalSearchService', () => ({
   __esModule: true,
   createGlobalSearchService: () => ({ searchAllEntities: mockSearchAllEntities }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     label: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
   }),
 }));
-jest.mock('../../../src/utils/debounce', () => ({
+jest.mock('@/src/utils/debounce', () => ({
   __esModule: true,
   debounce: (fn: (value: string) => void) => {
     const debounced = (value: string) => fn(value);
@@ -87,11 +87,11 @@ jest.mock('../../../src/utils/debounce', () => ({
     return debounced;
   },
 }));
-jest.mock('../../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entityNavigation', () => ({
   __esModule: true,
   navigateToEntityDetail: (...args: unknown[]) => mockNavigateToEntityDetail(...args),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -108,7 +108,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import GlobalSearchScreen from '../../../src/screens/globalsearch/GlobalSearchScreen';
+import GlobalSearchScreen from '@/src/screens/globalsearch/GlobalSearchScreen';
 
 const makeResult = (overrides = {}) => ({
   id: 'char-1',

@@ -1,34 +1,34 @@
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/RouteService', () => ({
   __esModule: true,
   createRouteService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -40,15 +40,15 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { createChoiceService } from '../../src/services/storymanagement/ChoiceService';
-import { createChoiceCheckGroupService } from '../../src/services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../src/services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '../../src/services/storymanagement/EffectService';
-import { createRouteService } from '../../src/services/storymanagement/RouteService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { useStoryRoutes } from '../../src/hooks/useStoryRoutes';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createRouteService } from '@/src/services/storymanagement/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { useStoryRoutes } from '@/src/hooks/useStoryRoutes';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const route = { id: 'route', storyId: 'story', isDeleted: false } as never;
 const sceneA = { id: 'scene-a', storyId: 'story', isDeleted: false } as never;

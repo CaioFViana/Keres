@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface ServerRecoveryCodesPanelProps {
   codes: string[];

@@ -3,8 +3,8 @@ import { PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import type { LocationMapImageType } from '@keres/shared';
-import { useTheme } from '../../../theme';
-import { capturePointer, releasePointer } from '../../../utils/pointerCapture';
+import { useTheme } from '@/src/theme';
+import { capturePointer, releasePointer } from '@/src/utils/pointerCapture';
 
 const DRAG_THRESHOLD = 5;
 

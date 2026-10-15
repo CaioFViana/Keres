@@ -7,16 +7,16 @@ import {
   type PackVisibility,
 } from '@keres/shared';
 import { and, desc, eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
-import type { PackSelect } from '../../db/schema';
-import { createULID } from '../../utils/entityUtils';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { PackSelect } from '@/src/db/schema';
+import { createULID } from '@/src/utils/entityUtils';
 import {
   buildStoryBundleFromPacks,
   findPackConflicts,
   type NewStoryData,
   type PackConflict,
-} from '../../utils/packBundle';
+} from '@/src/utils/packBundle';
 import { createSuggestionService } from './SuggestionService';
 import { createStoryService } from './StoryService';
 

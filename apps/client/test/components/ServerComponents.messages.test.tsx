@@ -38,15 +38,15 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return { Ionicons: ({ name }: { name: string }) => <Text testID={`icon-${name}`}>{name}</Text> };
 });
-jest.mock('../../src/theme', () => {
-  const actual = jest.requireActual('../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
 
 import { fireEvent, render } from '@testing-library/react-native';
-import ServerActionRow from '../../src/components/features/servers/ServerActionRow';
-import ServerListItem from '../../src/components/features/servers/ServerListItem';
-import ServerStatusPill from '../../src/components/features/servers/ServerStatusPill';
+import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
+import ServerListItem from '@/src/components/features/servers/ServerListItem';
+import ServerStatusPill from '@/src/components/features/servers/ServerStatusPill';
 
 describe('ServerStatusPill', () => {
   it.each([

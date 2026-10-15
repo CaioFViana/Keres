@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
-import { useUserSettingsStore } from '../../../src/state/userSettingsStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 const mockNavigate = jest.fn();
 const mockDispatch = jest.fn();
@@ -32,13 +32,13 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../src/services/ClientSettingsService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   updateClientSettings: (...args: unknown[]) => mockUpdateClientSettings(...args),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
@@ -46,7 +46,7 @@ let mockRole: string | null = 'owner';
 let mockCanManage = true;
 let mockCanReport = false;
 const mockReport = jest.fn();
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({
     role: mockRole,
@@ -61,19 +61,19 @@ let mockResume: { id: string; name: string; chapterName: string | null; editedAt
   chapterName: 'Arrival',
   editedAt: new Date('2026-10-08T10:00:00.000Z'),
 };
-jest.mock('../../../src/hooks/useResumeScene', () => ({
+jest.mock('@/src/hooks/useResumeScene', () => ({
   __esModule: true,
   useResumeScene: () => mockResume,
 }));
-jest.mock('../../../src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: [] }),
 }));
-jest.mock('../../../src/hooks/useStoryReport', () => ({
+jest.mock('@/src/hooks/useStoryReport', () => ({
   __esModule: true,
   useStoryReport: () => ({ canReport: mockCanReport, sending: false, report: mockReport }),
 }));
-jest.mock('../../../src/components/features/story/ReportStoryModal/ReportStoryModal', () => {
+jest.mock('@/src/components/features/story/ReportStoryModal/ReportStoryModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -84,32 +84,32 @@ jest.mock('../../../src/components/features/story/ReportStoryModal/ReportStoryMo
     ),
   };
 });
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/services/storymanagement/StoryContentMetricsService', () => ({
+jest.mock('@/src/services/storymanagement/StoryContentMetricsService', () => ({
   __esModule: true,
   createStoryContentMetricsService: () => ({ getContentCounts: mockGetContentCounts }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryAnalysisService', () => ({
+jest.mock('@/src/services/storymanagement/StoryAnalysisService', () => ({
   __esModule: true,
   createStoryAnalysisService: () => ({ analyzeStoryCheap: mockAnalyzeStoryCheap }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/syncConflictStore', () => ({
   __esModule: true,
   useSyncConflictStore: (selector: (state: { conflicts: { id: string }[] }) => unknown) =>
     selector({ conflicts: mockConflicts }),
 }));
-jest.mock('../../../src/screens/mainstorystack/MainDashboardContent', () => ({
+jest.mock('@/src/screens/mainstorystack/MainDashboardContent', () => ({
   __esModule: true,
   MainDashboardContent: (props: {
     story: { id: string } | null;
@@ -224,7 +224,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import MainDashboardScreen from '../../../src/screens/mainstorystack/MainDashboardScreen';
+import MainDashboardScreen from '@/src/screens/mainstorystack/MainDashboardScreen';
 
 const fullCounts = {
   characterCount: 3,

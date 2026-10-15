@@ -3,16 +3,16 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: jest.fn(),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
+jest.mock('@/src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useFriendshipActionHandler } from '../../src/hooks/useFriendshipActionHandler';
-import { useNotificationStore } from '../../src/state/notificationStore';
-import { AppAlert } from '../../src/utils/AppAlert';
+import { useFriendshipActionHandler } from '@/src/hooks/useFriendshipActionHandler';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 const showNotification = jest.fn();
 const alert = (AppAlert as unknown as { alert: jest.Mock }).alert;

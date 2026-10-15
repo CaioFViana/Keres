@@ -9,7 +9,7 @@ jest.mock('expo-image-manipulator', () => ({
 }));
 
 import * as DocumentPicker from 'expo-document-picker';
-import { mediaFileService, UnsupportedMediaError } from '../../src/services/MediaFileService';
+import { mediaFileService, UnsupportedMediaError } from '@/src/services/MediaFileService';
 
 const getDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
 

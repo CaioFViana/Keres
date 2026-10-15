@@ -2,18 +2,18 @@ import type { ChatMessage, MessageLimits } from '@keres/shared';
 import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import { isOfflineError } from '../services/apiClient';
+import { useDrizzle } from '@/src/db';
+import { isOfflineError } from '@/src/services/apiClient';
 import {
   conversationKey,
   createMessageService,
   type MessagePeerRef,
   MESSAGES_CHANGED,
   setOpenConversation,
-} from '../services/MessageService';
-import { useNotificationStore } from '../state/notificationStore';
-import { useUnseenMessagesStore } from '../state/unseenMessagesStore';
-import { AppAlert } from '../utils/AppAlert';
+} from '@/src/services/MessageService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 import { useEntityEventSubscriptions, useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /** The HTTP status of a failed call, which the client's axios wrapper keeps on `response`. */

@@ -1,5 +1,5 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
-import type { GuideDrawerId, GuideRect } from '../guides/types';
+import type { GuideDrawerId, GuideRect } from '@/src/guides/types';
 
 /** The navigation object a drawer content receives (emit, dispatch, navigate, getState). */
 export type GuideDrawerNavigation = DrawerContentComponentProps['navigation'];

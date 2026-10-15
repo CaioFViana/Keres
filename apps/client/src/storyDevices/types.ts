@@ -3,4 +3,4 @@ export type {
   HelpFieldRow as StoryDeviceFieldRow,
   HelpPage as StoryDevicePage,
   HelpSection as StoryDeviceSection,
-} from '../help/types';
+} from '@/src/help/types';

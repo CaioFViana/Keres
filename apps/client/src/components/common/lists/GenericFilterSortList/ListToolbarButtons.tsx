@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getOnColorForFill } from '@keres/shared';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 /** Opens the field filters. It says what it is and how many fields are narrowing the list. */
 export const FiltersButton: React.FC<{ count: number; onPress: () => void }> = ({

@@ -8,18 +8,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 import SyncInitializer from '@/src/components/features/app/SyncInitializer';
-import { useDrizzle } from '../db';
-import { legalIsBehind } from '../legal/clientLegalStatus';
-import { getAcceptedClientLegal } from '../legal/clientTermsAcceptance';
-import LegalUpdateScreen from '../screens/enterstack/LegalUpdateScreen';
-import { getClientSettings } from '../services/ClientSettingsService';
-import { VERIFICATION_PENDING_EVENT } from '../services/apiClient';
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
-import { useThemeStore } from '../state/themeStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
-import { readShowcaseRequest } from '../showcase/showcaseRequest';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { legalIsBehind } from '@/src/legal/clientLegalStatus';
+import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import LegalUpdateScreen from '@/src/screens/enterstack/LegalUpdateScreen';
+import { getClientSettings } from '@/src/services/ClientSettingsService';
+import { VERIFICATION_PENDING_EVENT } from '@/src/services/apiClient';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useThemeStore } from '@/src/state/themeStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { readShowcaseRequest } from '@/src/showcase/showcaseRequest';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
 import { buildNavigationTheme } from './navigationTheme';
@@ -128,7 +128,7 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
         if (showcase) {
           // A late import: the showcase drags the whole story services along, and none of that
           // needs to exist when the app opens normally (which is always, apart from the screen capture).
-          const { prepareShowcase } = await import('../showcase/prepareShowcase');
+          const { prepareShowcase } = await import('@/src/showcase/prepareShowcase');
           const ready = await prepareShowcase(drizzleDb, showcase);
           setShowcaseReady(ready);
           setIsColdInstallNeeded(!ready);

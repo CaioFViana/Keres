@@ -48,7 +48,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 const mockLayout = { width: 600 };
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: mockLayout.width,
     isCompact: mockLayout.width < 768,
@@ -58,8 +58,8 @@ jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
 }));
 
 const mockFlavor = { current: 'native' as 'native' | 'desktop' | 'web' | 'serverless-web' };
-jest.mock('../../../src/utils/clientFlavor', () => ({
-  ...jest.requireActual('../../../src/utils/clientFlavor'),
+jest.mock('@/src/utils/clientFlavor', () => ({
+  ...jest.requireActual('@/src/utils/clientFlavor'),
   getClientFlavor: () => mockFlavor.current,
 }));
 
@@ -71,35 +71,35 @@ jest.mock('expo-sqlite', () => ({
   useSQLiteContext: () => mockSqliteDb,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/db/migrate', () => ({
+jest.mock('@/src/db/migrate', () => ({
   migrate: (...args: unknown[]) => mockMigrate(...args),
 }));
 
-jest.mock('../../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   setAuthDb: (...args: unknown[]) => mockSetAuthDb(...args),
 }));
 
-jest.mock('../../../src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/ClientSettingsService', () => ({
   createClientSettings: (...args: unknown[]) => mockCreateClientSettings(...args),
 }));
 
-jest.mock('../../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   syncEngine: { bindDatabase: (...args: unknown[]) => mockBindDatabase(...args) },
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
@@ -108,7 +108,7 @@ const mockTheme = { darkMode: false };
 const mockPreviewDarkMode = jest.fn((value: boolean) => {
   mockTheme.darkMode = value;
 });
-jest.mock('../../../src/state/themeStore', () => ({
+jest.mock('@/src/state/themeStore', () => ({
   useThemeStore: (selector: (state: unknown) => unknown) =>
     selector({
       initializeTheme: (...args: unknown[]) => mockInitializeTheme(...args),
@@ -117,16 +117,16 @@ jest.mock('../../../src/state/themeStore', () => ({
     }),
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ initializeSettings: (...args: unknown[]) => mockInitializeSettings(...args) }),
 }));
 
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/documentTitle', () => ({
   useDocumentTitle: (...args: unknown[]) => mockUseDocumentTitle(...args),
 }));
 
-jest.mock('../../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: { language: 'en', changeLanguage: (...args: unknown[]) => mockChangeLanguage(...args) },
   getLanguageOptions: () => [
@@ -135,7 +135,7 @@ jest.mock('../../../src/utils/i18n', () => ({
   ],
 }));
 
-jest.mock('../../../src/components/common', () => {
+jest.mock('@/src/components/common', () => {
   const { Text, TextInput } = require('react-native');
   return {
     Button: ({
@@ -183,9 +183,9 @@ jest.mock('../../../src/components/common', () => {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, configure, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler, Linking } from 'react-native';
-import { CLIENT_TERMS_VERSION } from '../../../src/legal/clientTerms';
-import { CLIENT_PRIVACY_VERSION } from '../../../src/legal/privacyPolicy';
-import ColdInstallScreen from '../../../src/screens/enterstack/ColdInstallScreen';
+import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
+import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
+import ColdInstallScreen from '@/src/screens/enterstack/ColdInstallScreen';
 
 /** The step on screen, as the dots report it (1-based). */
 const stepOf = (view: Awaited<ReturnType<typeof render>>) =>

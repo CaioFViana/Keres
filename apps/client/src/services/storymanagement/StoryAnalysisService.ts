@@ -1,16 +1,16 @@
 import { sectionLabels } from '@keres/shared';
 import { and, eq, inArray, isNotNull, or } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
 import type {
   RunStoryAnalysisOptions,
   StoryAnalysisFinding,
   StoryAnalysisInput,
-} from '../../utils/storyAnalysisChecks';
+} from '@/src/utils/storyAnalysisChecks';
 import {
   buildCheapStoryAnalysisFindings,
   buildStoryAnalysisReport,
-} from '../../utils/storyAnalysisChecks';
+} from '@/src/utils/storyAnalysisChecks';
 
 export interface StoryAnalysisReport {
   findings: StoryAnalysisFinding[];

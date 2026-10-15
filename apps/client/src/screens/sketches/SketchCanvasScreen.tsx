@@ -39,26 +39,26 @@ import SketchLayerSheet from '@/src/components/features/sketches/SketchLayerShee
 import SketchOptionsBar from '@/src/components/features/sketches/SketchOptionsBar';
 import SketchPageSheet from '@/src/components/features/sketches/SketchPageSheet';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useDrizzle } from '../../db';
-import type { SketchSelect } from '../../db/schema';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useCanvasHistory } from '../../hooks/useCanvasHistory';
-import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
-import { useSketchDrawing } from '../../hooks/useSketchDrawing';
-import { useSketchExport } from '../../hooks/useSketchExport';
-import { useSketchSelection } from '../../hooks/useSketchSelection';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { SketchStackParamList } from '../../navigation/MainSystemStack';
-import { createSketchService } from '../../services/storymanagement/SketchService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useSketchDraftStore } from '../../state/sketchDraftStore';
-import { isObjectTool, useSketchToolStore, type SketchTool } from '../../state/sketchToolStore';
-import { useHeaderBackActionStore } from '../../state/headerBackActionStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+import { useDrizzle } from '@/src/db';
+import type { SketchSelect } from '@/src/db/schema';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useCanvasHistory } from '@/src/hooks/useCanvasHistory';
+import { useCanvasOverlayActions } from '@/src/hooks/useCanvasOverlayActions';
+import { useSketchDrawing } from '@/src/hooks/useSketchDrawing';
+import { useSketchExport } from '@/src/hooks/useSketchExport';
+import { useSketchSelection } from '@/src/hooks/useSketchSelection';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import type { SketchStackParamList } from '@/src/navigation/MainSystemStack';
+import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useSketchDraftStore } from '@/src/state/sketchDraftStore';
+import { isObjectTool, useSketchToolStore, type SketchTool } from '@/src/state/sketchToolStore';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 /** Placeholder until the row loads; never rendered or saved. */
 const EMPTY_DOC: SketchDocument = {

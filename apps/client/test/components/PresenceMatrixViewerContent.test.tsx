@@ -1,9 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import PresenceMatrixViewerContent from '../../src/components/features/presence-matrix/PresenceMatrixViewerContent';
-import { MAX_VISIBLE_SERIES } from '../../src/components/features/presence-matrix/presenceMatrixConstants';
+import PresenceMatrixViewerContent from '@/src/components/features/presence-matrix/PresenceMatrixViewerContent';
+import { MAX_VISIBLE_SERIES } from '@/src/components/features/presence-matrix/presenceMatrixConstants';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -34,7 +34,7 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -44,7 +44,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -55,7 +55,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 });
 
 const mockCanvasProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/features/presence-matrix/PresenceMatrixCanvas', () => {
+jest.mock('@/src/components/features/presence-matrix/PresenceMatrixCanvas', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -68,7 +68,7 @@ jest.mock('../../src/components/features/presence-matrix/PresenceMatrixCanvas', 
 });
 
 const mockSheetProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
+jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
   return {
@@ -85,19 +85,19 @@ jest.mock('../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', 
 });
 
 let mockStory: any = null;
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: any) => unknown) => selector({ selectedStory: mockStory }),
 }));
 
 const mockNotify = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: any) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
 
-jest.mock('../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/userSettingsStore', () => {
   const hook = (selector: (state: any) => unknown) => selector({ exportFormat: 'svg' });
   return {
     __esModule: true,
@@ -107,7 +107,7 @@ jest.mock('../../src/state/userSettingsStore', () => {
   };
 });
 
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (type: string, plural = false) => (plural ? `${type}s` : type),
@@ -115,14 +115,14 @@ jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
 }));
 
 const mockDeliver = jest.fn();
-jest.mock('../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
 
 let mockCatalog: any = null;
 const mockCatalogCalls: unknown[][] = [];
-jest.mock('../../src/hooks/usePresenceMatrixCatalog', () => ({
+jest.mock('@/src/hooks/usePresenceMatrixCatalog', () => ({
   __esModule: true,
   usePresenceMatrixCatalog: (...args: unknown[]) => {
     mockCatalogCalls.push(args);

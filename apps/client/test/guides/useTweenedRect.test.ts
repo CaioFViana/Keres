@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useTweenedRect } from '../../src/guides/useTweenedRect';
+import { useTweenedRect } from '@/src/guides/useTweenedRect';
 
 const a = { x: 0, y: 100, width: 100, height: 40 };
 const b = { x: 200, y: 500, width: 300, height: 80 };

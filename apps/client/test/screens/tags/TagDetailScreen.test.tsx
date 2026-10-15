@@ -18,7 +18,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { tagId: 'tag-1' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
@@ -104,12 +104,12 @@ jest.mock('@/src/components/features/favorites/FavoritedByList/FavoritedByList',
     return react.createElement(native.Text, { testID: 'favorited-marker' }, 'favorited');
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     canComment: false,
@@ -121,23 +121,23 @@ jest.mock('../../../src/hooks/useEntityComments', () => ({
     updateComment: jest.fn(),
   }),
 }));
-jest.mock('../../../src/services/EntityService', () => ({
+jest.mock('@/src/services/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: (...args: unknown[]) => mockGetEntityIdentifier(...args) },
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getById: mockGetTagById }),
 }));
-jest.mock('../../../src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getRelationsForTag: mockGetRelationsForTag }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { text: '#111', textSecondary: '#666' } }),
 }));
@@ -146,8 +146,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 
-import TagDetailScreen from '../../../src/screens/tags/TagDetailScreen';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import TagDetailScreen from '@/src/screens/tags/TagDetailScreen';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const makeTag = (overrides = {}) => ({
   id: 'tag-1',

@@ -2,8 +2,8 @@
  * @jest-environment node
  */
 import { asc, eq } from 'drizzle-orm';
-import { operationLogs, stories, syncConflicts } from '../../src/db/schema';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { operationLogs, stories, syncConflicts } from '@/src/db/schema';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsOwned,
   assertStoryIsWritable,
@@ -15,8 +15,8 @@ import {
   StoryOwnerOnlyError,
   StoryReadOnlyError,
   trimSyncedOperationLogs,
-} from '../../src/utils/syncUtils';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/utils/syncUtils';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 

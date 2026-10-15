@@ -8,10 +8,10 @@ import {
   decodeSeeAlsoValue,
   encodeSeeAlsoValue,
   useSeeAlsoEntityOptions,
-} from '../../../../hooks/useSeeAlsoEntityOptions';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { useSeeAlsoRelations } from '../../../../hooks/useSeeAlsoRelations';
-import { ENTITY_TYPE_ICONS } from '../../../../utils/entityTypeIcons';
+} from '@/src/hooks/useSeeAlsoEntityOptions';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useSeeAlsoRelations } from '@/src/hooks/useSeeAlsoRelations';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
 
 interface SeeAlsoManagerProps {
   storyId: string;

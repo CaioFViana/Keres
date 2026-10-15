@@ -4,15 +4,15 @@
 jest.mock('react-native', () => ({
   Linking: { openURL: jest.fn() },
 }));
-jest.mock('../../src/services/webMediaStore', () => ({
+jest.mock('@/src/services/webMediaStore', () => ({
   DESKTOP_MEDIA_URI_PREFIX: 'desktop-media:',
   openInOs: jest.fn(),
   resolveBlobUri: jest.fn(),
 }));
 
 import { Linking } from 'react-native';
-import { openInOs, resolveBlobUri } from '../../src/services/webMediaStore';
-import { openGalleryExternally } from '../../src/utils/openGalleryExternally';
+import { openInOs, resolveBlobUri } from '@/src/services/webMediaStore';
+import { openGalleryExternally } from '@/src/utils/openGalleryExternally';
 
 const openURL = Linking.openURL as jest.Mock;
 const openInOsMock = openInOs as jest.Mock;

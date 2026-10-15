@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { AppAlertButton } from '../../../../state/appAlertStore';
-import { useAppAlertStore } from '../../../../state/appAlertStore';
-import type { ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
+import type { AppAlertButton } from '@/src/state/appAlertStore';
+import { useAppAlertStore } from '@/src/state/appAlertStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 
 /**
  * Renders what `AppAlert.alert()` asked for (see utils/AppAlert.ts). Mounted once near the

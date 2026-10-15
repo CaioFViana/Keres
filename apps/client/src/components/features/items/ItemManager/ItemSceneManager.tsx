@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { ItemJourney, Item } from '@keres/shared/entities/Item';
 import type { Character } from '@keres/shared/entities/Character';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
-import { useTheme } from '../../../../theme';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
+import { useTheme } from '@/src/theme';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 
 interface ItemSceneManagerProps {
   itemJourneys: ItemJourney[];

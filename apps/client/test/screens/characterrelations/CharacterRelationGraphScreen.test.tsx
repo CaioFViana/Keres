@@ -36,11 +36,11 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
@@ -263,16 +263,16 @@ jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () =
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: mockIsCompact }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getCharactersByStoryId: mockGetCharactersByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     getCharacterRelationsByStoryId: mockGetCharacterRelationsByStoryId,
@@ -280,24 +280,24 @@ jest.mock('../../../src/services/storymanagement/CharacterRelationService', () =
     deleteCharacterRelation: (...args: unknown[]) => mockDeleteRelation(...args),
   }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/userSettingsStore', () => {
   const store = () => ({ userId: 'user-1' });
   store.getState = () => ({ exportFormat: 'svg' });
   return { __esModule: true, useUserSettingsStore: store };
 });
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock(
@@ -342,7 +342,7 @@ jest.mock(
     },
   }),
 );
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -356,13 +356,13 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('../../../src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/storyTransfer'),
   buildCharacterRelationMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
@@ -373,8 +373,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT, i18n: { language: mockLanguage } }),
 }));
 
-import CharacterRelationGraphScreen from '../../../src/screens/characterrelations/CharacterRelationGraphScreen';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import CharacterRelationGraphScreen from '@/src/screens/characterrelations/CharacterRelationGraphScreen';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

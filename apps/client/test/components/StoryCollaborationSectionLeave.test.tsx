@@ -1,13 +1,13 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import StoryCollaborationSection from '../../src/components/features/story/StoryCollaborationSection/StoryCollaborationSection';
+import StoryCollaborationSection from '@/src/components/features/story/StoryCollaborationSection/StoryCollaborationSection';
 
 const mockLeave = jest.fn();
 let mockCollaboration: Record<string, unknown> = {};
 
-jest.mock('../../src/hooks/useStoryServerCollaboration', () => ({
+jest.mock('@/src/hooks/useStoryServerCollaboration', () => ({
   useStoryServerCollaboration: () => mockCollaboration,
 }));
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: false }),
 }));
 // The barrel pulls in half of the app: only the two controls the section draws are needed.
@@ -28,7 +28,7 @@ jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => ({
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       border: '#ddd',

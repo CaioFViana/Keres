@@ -2,9 +2,9 @@ import type { Tag } from '@keres/shared/entities/Tag';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEntityFormActions } from '../../hooks/useEntityFormActions';
-import type { TagsStackParamList } from '../../navigation/MainSystemStack';
-import type { TagService } from '../../services/storymanagement/TagService';
+import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
+import type { TagsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { TagService } from '@/src/services/storymanagement/TagService';
 import type { TagFormState } from './useTagFormState';
 
 type TagNavigation = NativeStackNavigationProp<TagsStackParamList, 'TagForm'>;

@@ -12,11 +12,11 @@ import DashboardSection from '@/src/components/layout/DashboardSection/Dashboard
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { typography } from '../../theme/tokens';
-import { getLanguageOptions } from '../../utils/i18n';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { getLanguageOptions } from '@/src/utils/i18n';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type MainDashboardContentProps = {

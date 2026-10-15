@@ -1,7 +1,7 @@
 import React from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 
 interface ResponsiveGridProps {
   children: React.ReactNode;

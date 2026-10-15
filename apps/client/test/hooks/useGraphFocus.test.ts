@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { act, renderHook } from '@testing-library/react-native';
-import { useGraphFocus } from '../../src/hooks/useGraphFocus';
+import { useGraphFocus } from '@/src/hooks/useGraphFocus';
 
 type Edge = { from: string; to: string };
 const ends = (edge: Edge) => [edge.from, edge.to] as const;

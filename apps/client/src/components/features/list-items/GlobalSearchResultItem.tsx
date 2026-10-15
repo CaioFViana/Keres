@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import type { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
-import { ENTITY_TYPE_ICONS } from '../../../utils/entityTypeIcons';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/GlobalSearchService';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
 
 interface GlobalSearchResultItemProps {
   result: GlobalSearchResult;

@@ -23,36 +23,36 @@ const mockApi = {
   leaveStory: jest.fn(),
 };
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn(() => mockStoryState),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(() => mockSettings),
 }));
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(() => mockServerService),
 }));
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => mockStoryService),
 }));
-jest.mock('../../src/services/FriendshipService', () => ({
+jest.mock('@/src/services/FriendshipService', () => ({
   __esModule: true,
   createFriendshipService: jest.fn(() => mockFriendshipService),
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   isOfflineError: jest.fn(() => false),
 }));
-jest.mock('../../src/services/StoryPermissionService', () => ({
+jest.mock('@/src/services/StoryPermissionService', () => ({
   __esModule: true,
   storyPermissionApi: {
     getCollaborators: (...args: unknown[]) => mockApi.getCollaborators(...args),
@@ -62,20 +62,20 @@ jest.mock('../../src/services/StoryPermissionService', () => ({
     leaveStory: (...args: unknown[]) => mockApi.leaveStory(...args),
   },
 }));
-jest.mock('../../src/services/StoryInvitationApiService', () => ({
+jest.mock('@/src/services/StoryInvitationApiService', () => ({
   __esModule: true,
   storyInvitationApi: { invite: (...args: unknown[]) => mockInvite(...args) },
 }));
-jest.mock('../../src/services/storyInvitationActions', () => ({
+jest.mock('@/src/services/storyInvitationActions', () => ({
   __esModule: true,
   closeStoryInvitation: (...args: unknown[]) => mockCloseInvitation(...args),
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
 // The hook reads the invitations from the local copy; a settable list stands in for it.
-jest.mock('../../src/hooks/useStoryInvitations', () => {
+jest.mock('@/src/hooks/useStoryInvitations', () => {
   const { create } = require('zustand');
   const store = create(() => ({ invitations: [] as unknown[] }));
   return {
@@ -85,24 +85,24 @@ jest.mock('../../src/hooks/useStoryInvitations', () => {
   };
 });
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('../../src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
-jest.mock('../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   __esModule: true,
   syncEngine: { uploadNewStoryToServer: jest.fn() },
 }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryServerCollaboration } from '../../src/hooks/useStoryServerCollaboration';
-import { syncEngine } from '../../src/services/sync/appSyncEngine';
+import { useStoryServerCollaboration } from '@/src/hooks/useStoryServerCollaboration';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
 // @ts-expect-error - only the mock exports it
-import { mockInvitationList } from '../../src/hooks/useStoryInvitations';
+import { mockInvitationList } from '@/src/hooks/useStoryInvitations';
 
 const mockUpload = syncEngine.uploadNewStoryToServer as jest.Mock;
 
@@ -371,7 +371,7 @@ describe('useStoryServerCollaboration', () => {
   });
 
   it('reads the collaborators again when the server says they changed, for this story only', async () => {
-    const { entityEventEmitter } = jest.requireActual('../../src/utils/EventEmitter');
+    const { entityEventEmitter } = jest.requireActual('@/src/utils/EventEmitter');
     mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
     const view = await renderHook(() => useStoryServerCollaboration('story-1'));
     await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
@@ -439,7 +439,7 @@ describe('useStoryServerCollaboration', () => {
     });
 
     it('says so when offline', async () => {
-      const { isOfflineError } = jest.requireMock('../../src/services/apiClient') as {
+      const { isOfflineError } = jest.requireMock('@/src/services/apiClient') as {
         isOfflineError: jest.Mock;
       };
       const view = await asCollaborator();
@@ -468,7 +468,7 @@ describe('useStoryServerCollaboration', () => {
   });
 
   it('unlinks from the server only after confirmation, and distinguishes offline', async () => {
-    const { isOfflineError } = jest.requireMock('../../src/services/apiClient') as {
+    const { isOfflineError } = jest.requireMock('@/src/services/apiClient') as {
       isOfflineError: jest.Mock;
     };
     mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };

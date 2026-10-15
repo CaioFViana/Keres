@@ -1,6 +1,6 @@
 const mockAlert = jest.fn();
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -9,10 +9,10 @@ jest.mock('react-i18next', () => ({
 
 import { AttributeType } from '@keres/shared';
 import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import { useStorySchemaFieldFormActions } from '../../../src/screens/storyschema/useStorySchemaFieldFormActions';
-import type { StorySchemaFieldFormState } from '../../../src/screens/storyschema/useStorySchemaFieldFormState';
-import type { StorySchemaFieldService } from '../../../src/services/storymanagement/StorySchemaFieldService';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useStorySchemaFieldFormActions } from '@/src/screens/storyschema/useStorySchemaFieldFormActions';
+import type { StorySchemaFieldFormState } from '@/src/screens/storyschema/useStorySchemaFieldFormState';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
 
 const createState = (
   overrides: Partial<StorySchemaFieldFormState> = {},

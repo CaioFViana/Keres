@@ -10,11 +10,11 @@ import { and, eq } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useDrizzle, worldRules } from '../db';
-import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
-import { loadEntityOptions } from '../utils/entityOptions';
-import { ENTITY_TYPE_ICONS } from '../utils/entityTypeIcons';
-import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
+import { useDrizzle, worldRules } from '@/src/db';
+import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/SeeAlsoRelationService';
+import { loadEntityOptions } from '@/src/utils/entityOptions';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 
 export interface SeeAlsoEntityOption {

@@ -1,5 +1,5 @@
 import type { StoryVocabulary } from '@keres/shared/entities/Story';
-import { resolveEffectiveVocabulary } from '../../src/vocabulary/effectiveVocabulary';
+import { resolveEffectiveVocabulary } from '@/src/vocabulary/effectiveVocabulary';
 
 const term = (singular: string, plural: string) => ({
   singular,

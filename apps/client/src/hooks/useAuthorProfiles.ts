@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
-import { servers, stories } from '../db/schema';
+import { useDrizzle } from '@/src/db';
+import { servers, stories } from '@/src/db/schema';
 import type { ResolvedUserProfile } from './useUserProfileResolver';
 import { useUserProfileResolver } from './useUserProfileResolver';
 

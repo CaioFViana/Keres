@@ -17,18 +17,18 @@ jest.mock('@react-navigation/native-stack', () => ({
     },
   }),
 }));
-jest.mock('../../src/screens/help/HelpIndexScreen', () => ({
+jest.mock('@/src/screens/help/HelpIndexScreen', () => ({
   __esModule: true,
   HelpIndexScreen: jest.fn(() => null),
 }));
-jest.mock('../../src/screens/help/HelpPageScreen', () => ({
+jest.mock('@/src/screens/help/HelpPageScreen', () => ({
   __esModule: true,
   HelpPageScreen: jest.fn(() => null),
 }));
 
-import HelpStackNavigator from '../../src/navigation/HelpStack';
-import { HelpIndexScreen } from '../../src/screens/help/HelpIndexScreen';
-import { HelpPageScreen } from '../../src/screens/help/HelpPageScreen';
+import HelpStackNavigator from '@/src/navigation/HelpStack';
+import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
+import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

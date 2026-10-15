@@ -6,7 +6,7 @@ import type { TFunction } from 'i18next';
 import {
   MANUAL_SYNC_LISTED_REFUSALS,
   manualSyncRefusalText,
-} from '../../src/services/sync/manualSyncMessage';
+} from '@/src/services/sync/manualSyncMessage';
 
 /** Keys come back as they are, with the values they were given, so the assertions can read them. */
 const t = jest.fn((key: string, values?: Record<string, unknown>) =>

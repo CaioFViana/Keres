@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { PlanUsageSummary } from '../utils/planUsage';
+import type { PlanUsageSummary } from '@/src/utils/planUsage';
 
 interface PlanUsageState {
   /** The story the summary is about; a screen of another story ignores it. */

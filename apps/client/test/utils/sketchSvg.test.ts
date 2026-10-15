@@ -11,7 +11,7 @@ import {
   type SketchDocument,
   type SketchStroke,
 } from '@keres/shared';
-import { renderSketchSvg } from '../../src/utils/sketchSvg';
+import { renderSketchSvg } from '@/src/utils/sketchSvg';
 
 const COLORS = {
   background: '#ffffff',

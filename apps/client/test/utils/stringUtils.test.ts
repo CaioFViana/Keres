@@ -1,4 +1,4 @@
-import { truncate } from '../../src/utils/stringUtils';
+import { truncate } from '@/src/utils/stringUtils';
 
 describe('truncate', () => {
   it('returns the text untouched when it fits', () => {

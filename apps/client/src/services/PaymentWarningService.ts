@@ -1,9 +1,9 @@
 import type { Subscription } from '@keres/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ServerSelect } from '../db/schema';
-import { useNotificationStore } from '../state/notificationStore';
-import i18n from '../utils/i18n';
-import { evaluatePaymentNotice } from '../utils/paymentPlans';
+import type { ServerSelect } from '@/src/db/schema';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import i18n from '@/src/utils/i18n';
+import { evaluatePaymentNotice } from '@/src/utils/paymentPlans';
 
 const warnedKey = (serverId: string, paidUntil: string, kind: string) =>
   `keres:payment-warned:${serverId}:${paidUntil}:${kind}`;

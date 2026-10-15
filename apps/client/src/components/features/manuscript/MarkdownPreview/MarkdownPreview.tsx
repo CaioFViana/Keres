@@ -8,9 +8,9 @@ import {
 import { useMemo } from 'react';
 import type React from 'react';
 import { StyleSheet, Text, View, type TextStyle } from 'react-native';
-import MarkedText from '../../../common/display/MarkedText/MarkedText';
-import { useTheme } from '../../../../theme';
-import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
+import { useTheme } from '@/src/theme';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
 
 function decorationLine(marks: ManuscriptMark[]): TextStyle['textDecorationLine'] {
   const underline = marks.includes('underline');

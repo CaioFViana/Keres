@@ -1,15 +1,15 @@
 const mockUseDrizzle = jest.fn();
 const mockCreateStorySchemaFieldService = jest.fn();
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('../../../src/services/storymanagement/StorySchemaFieldService', () => ({
+jest.mock('@/src/services/storymanagement/StorySchemaFieldService', () => ({
   createStorySchemaFieldService: (...args: unknown[]) => mockCreateStorySchemaFieldService(...args),
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useStorySchemaFieldFormResources } from '../../../src/screens/storyschema/useStorySchemaFieldFormResources';
+import { useStorySchemaFieldFormResources } from '@/src/screens/storyschema/useStorySchemaFieldFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'story-schema-field-service' };

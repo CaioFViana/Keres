@@ -1,10 +1,10 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import CharacterRelationModal from '../../src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
+import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -26,12 +26,12 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({ select: 'Select a character' }),
 }));
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -41,7 +41,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
+jest.mock('@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -51,7 +51,7 @@ jest.mock('../../src/components/common/inputs/SuggestionTextInput/SuggestionText
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {
@@ -61,7 +61,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/FormActions/FormActions', () => {
+jest.mock('@/src/components/common/controls/FormActions/FormActions', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

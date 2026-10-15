@@ -1,16 +1,16 @@
 import type { GalleryOwnerEntity } from '@keres/shared';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
-import type { GallerySelect } from '../db/schema';
-import { importPickedMediaAssets } from '../services/galleryMediaImport';
-import { createGalleryLink } from '../services/galleryLink';
-import { mediaFileService } from '../services/MediaFileService';
-import { createGalleryRelationService } from '../services/storymanagement/GalleryRelationService';
-import { createGalleryService } from '../services/storymanagement/GalleryService';
-import { useStoryStore } from '../state/storyStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import type { GallerySelect } from '@/src/db/schema';
+import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
+import { createGalleryLink } from '@/src/services/galleryLink';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /**
  * The media linked to an entity (a character, location, note, scene, item or World Piece), with the means

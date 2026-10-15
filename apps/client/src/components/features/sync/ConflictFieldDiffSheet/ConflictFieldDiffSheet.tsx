@@ -2,16 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
-import type { PendingConflict } from '../../../../services/SyncConflictService';
-import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
+import type { ConflictSummary } from '@/src/services/ConflictSummaryService';
+import type { PendingConflict } from '@/src/services/SyncConflictService';
+import { useSyncConflictActions } from '@/src/hooks/useSyncConflictActions';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { AppAlert } from '@/src/utils/AppAlert';
-import ConflictSheetFrame from '../ConflictSheetFrame/ConflictSheetFrame';
+import ConflictSheetFrame from '@/src/components/features/sync/ConflictSheetFrame/ConflictSheetFrame';
 
 /** De qual lado vem o valor escolhido para um campo em disputa. */
 type FieldChoice = 'local' | 'server';

@@ -6,7 +6,7 @@ import {
   remapSketchCoverGalleryId,
   type FullStoryExportType,
 } from '@keres/shared';
-import { createULID } from '../utils/entityUtils';
+import { createULID } from '@/src/utils/entityUtils';
 
 type EntityWithId = { id: string };
 

@@ -1,6 +1,6 @@
 import { and, count, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { boards, choices, plots, scenes, stories } from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import { boards, choices, plots, scenes, stories } from '@/src/db/schema';
 import { createChapterService } from './ChapterService';
 import { createCharacterService } from './CharacterService';
 import { createChoiceService } from './ChoiceService';

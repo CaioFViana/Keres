@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import LocationMapScreen from '../../../src/screens/location-maps/LocationMapScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import LocationMapScreen from '@/src/screens/location-maps/LocationMapScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
@@ -28,12 +28,12 @@ const mockI18n = { language: 'en' };
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT, i18n: mockI18n }),
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: jest.fn(),
 }));
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -53,7 +53,7 @@ jest.mock('../../../src/theme', () => {
 });
 
 // ---- the heavy children: what the screen decides is what is under test, not how they draw ----
-jest.mock('../../../src/components/features/location-maps/LocationMapCanvas', () => {
+jest.mock('@/src/components/features/location-maps/LocationMapCanvas', () => {
   const { Text } = require('react-native');
   const React = require('react');
   return {
@@ -68,7 +68,7 @@ jest.mock('../../../src/components/features/location-maps/LocationMapCanvas', ()
     }),
   };
 });
-jest.mock('../../../src/components/features/location-maps/LocationMapHeaderActions', () => {
+jest.mock('@/src/components/features/location-maps/LocationMapHeaderActions', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -85,7 +85,7 @@ jest.mock('../../../src/components/features/location-maps/LocationMapHeaderActio
     ),
   };
 });
-jest.mock('../../../src/components/features/location-maps/LocationMapTools', () => {
+jest.mock('@/src/components/features/location-maps/LocationMapTools', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -96,57 +96,51 @@ jest.mock('../../../src/components/features/location-maps/LocationMapTools', () 
     ),
   };
 });
-jest.mock('../../../src/components/features/location-maps/LocationMapConnectionModal', () => ({
+jest.mock('@/src/components/features/location-maps/LocationMapConnectionModal', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../../src/components/features/location-maps/LocationMapNodeSheet', () => ({
+jest.mock('@/src/components/features/location-maps/LocationMapNodeSheet', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock(
-  '../../../src/components/features/location-maps/LocationMapMarkerConnectionModal',
-  () => ({
-    __esModule: true,
-    default: () => null,
-  }),
-);
-jest.mock('../../../src/components/features/location-maps/LocationMapMarkerSheetSection', () => ({
+jest.mock('@/src/components/features/location-maps/LocationMapMarkerConnectionModal', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../../src/components/features/graphs/CanvasOverlay/OverlaySheet', () => ({
+jest.mock('@/src/components/features/location-maps/LocationMapMarkerSheetSection', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../../src/components/features/location-maps/TrajectoryPickerSheet', () => ({
+jest.mock('@/src/components/features/graphs/CanvasOverlay/OverlaySheet', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock(
-  '../../../src/components/features/graphs/GraphCanvasControls/GraphCanvasControls',
-  () => ({
-    __esModule: true,
-    default: () => null,
-  }),
-);
+jest.mock('@/src/components/features/location-maps/TrajectoryPickerSheet', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 
 // ---- the hooks around the document ----
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: jest.fn(),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: ({ renderActions }: any = {}) => {
     (global as any).__headerActions = renderActions;
   },
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   useStoryRole: () => ({ role: 'owner', canEdit: mockCanEdit, loading: false }),
 }));
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => jest.fn(),
 }));
-jest.mock('../../../src/hooks/useLocationMapRelations', () => ({
+jest.mock('@/src/hooks/useLocationMapRelations', () => ({
   useLocationMapRelations: () => ({
     connections: [],
     contains: [],
@@ -166,16 +160,16 @@ jest.mock('../../../src/hooks/useLocationMapRelations', () => ({
     handleRemoveRelation: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useLocationMapExport', () => ({
+jest.mock('@/src/hooks/useLocationMapExport', () => ({
   useLocationMapExport: () => jest.fn(),
 }));
-jest.mock('../../../src/hooks/useLocationMapImageUris', () => ({
+jest.mock('@/src/hooks/useLocationMapImageUris', () => ({
   useLocationMapImageUris: () => ({ galleryMediaById: {}, imageUris: {}, nodeNames: {} }),
 }));
-jest.mock('../../../src/hooks/useLocationMapNodeSummary', () => ({
+jest.mock('@/src/hooks/useLocationMapNodeSummary', () => ({
   useLocationMapNodeSummary: () => ({ selectedNode: null, selectedNodeSummary: null }),
 }));
-jest.mock('../../../src/hooks/useLocationMapTrajectories', () => ({
+jest.mock('@/src/hooks/useLocationMapTrajectories', () => ({
   useLocationMapTrajectories: () => ({
     hasSelection: false,
     setPickerOpen: jest.fn(),
@@ -190,7 +184,7 @@ jest.mock('../../../src/hooks/useLocationMapTrajectories', () => ({
     routeId: null,
   }),
 }));
-jest.mock('../../../src/hooks/useCanvasOverlayActions', () => ({
+jest.mock('@/src/hooks/useCanvasOverlayActions', () => ({
   useCanvasOverlayActions: () => ({
     selectMode: false,
     drawTool: null,
@@ -210,7 +204,7 @@ jest.mock('../../../src/hooks/useCanvasOverlayActions', () => ({
   }),
 }));
 // "Add marker" is the one edit this test needs: it puts a node into the document through the screen's own setContent.
-jest.mock('../../../src/hooks/useLocationMapCanvasActions', () => ({
+jest.mock('@/src/hooks/useLocationMapCanvasActions', () => ({
   useLocationMapCanvasActions: (args: any) => ({
     imageOptions: [],
     locationOptions: [],
@@ -246,54 +240,54 @@ jest.mock('../../../src/hooks/useLocationMapCanvasActions', () => ({
 }));
 
 // ---- stores, services, the rest ----
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = { selectedStory: { id: 'story-1', type: 'linear' } };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('../../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/userSettingsStore', () => {
   const state = { userId: 'user-1' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
   (useUserSettingsStore as any).getState = () => state;
   return { useUserSettingsStore };
 });
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (s: any) => any) => {
     const state = { showNotification: mockNotify };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
-jest.mock('../../../src/state/locationMapDraftStore', () => ({
+jest.mock('@/src/state/locationMapDraftStore', () => ({
   useLocationMapDraftStore: {
     getState: () => ({ hydrate: mockHydrate, remember: mockRemember }),
   },
 }));
-jest.mock('../../../src/showcase/showcaseRequest', () => ({
+jest.mock('@/src/showcase/showcaseRequest', () => ({
   readShowcaseRequest: () => null,
 }));
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   exportFileLanguage: () => 'en',
 }));
-jest.mock('../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('../../../src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/LocationMapService', () => ({
   createLocationMapService: () => ({
     getById: mockGetMap,
     updateMap: mockUpdateMap,
     getMapsForStory: jest.fn().mockResolvedValue([]),
   }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationService', () => ({
   createLocationService: () => ({ getAllByStoryId: jest.fn().mockResolvedValue([]) }),
 }));
-jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   createGalleryService: () => ({ getGalleriesByStoryId: jest.fn().mockResolvedValue([]) }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
   createLocationRelationService: () => ({
     getAllRelationsForStory: jest.fn().mockResolvedValue([]),
   }),

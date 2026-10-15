@@ -3,13 +3,13 @@
  */
 const mockGet = jest.fn();
 
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,
 }));
 
-import { pingServer } from '../../src/services/ServerStatusService';
+import { pingServer } from '@/src/services/ServerStatusService';
 
 const server = { id: 'srv-1', url: 'https://a.example' } as never;
 

@@ -1,4 +1,4 @@
-import { planLimitLines } from '../../src/utils/planLimitLines';
+import { planLimitLines } from '@/src/utils/planLimitLines';
 
 const t = (key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${options.count}` : key;

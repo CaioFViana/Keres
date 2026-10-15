@@ -1,10 +1,15 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { createTagService } from '../../src/services/storymanagement/TagService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createTagService } from '@/src/services/storymanagement/TagService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The tag service's listing, sort switch and mutation edges.

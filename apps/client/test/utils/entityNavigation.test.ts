@@ -1,6 +1,6 @@
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
-import { navigateToEntityDetail, type NavigableEntityType } from '../../src/utils/entityNavigation';
-import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
+import { navigateToEntityDetail, type NavigableEntityType } from '@/src/utils/entityNavigation';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 
 const ENTITY_TYPES: NavigableEntityType[] = [
   'Character',

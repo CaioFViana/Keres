@@ -1,9 +1,9 @@
 import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PackService } from '../../services/storymanagement/PackService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { AppAlert } from '../../utils/AppAlert';
+import type { PackService } from '@/src/services/storymanagement/PackService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 import type { PackFormState } from './usePackFormState';
 
 type UsePackFormActionsOptions = {

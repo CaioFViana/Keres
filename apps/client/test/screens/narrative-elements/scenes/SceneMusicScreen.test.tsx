@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import type { SceneMusicView } from '../../../../src/hooks/useSceneMusic';
-import SceneMusicScreen from '../../../../src/screens/narrative-elements/scenes/SceneMusicScreen';
+import type { SceneMusicView } from '@/src/hooks/useSceneMusic';
+import SceneMusicScreen from '@/src/screens/narrative-elements/scenes/SceneMusicScreen';
 
 const mockGoBack = jest.fn();
 const mockAddMusic = jest.fn();
@@ -42,7 +42,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     isDarkMode: false,
@@ -58,73 +58,73 @@ jest.mock('../../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonContainerStyles: () => ({ container: {} }),
 }));
-jest.mock('../../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   __esModule: true,
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: typeof mockHeader) => {
     mockHeader = args;
   },
 }));
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../../src/hooks/useSceneArcMedium', () => ({
+jest.mock('@/src/hooks/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
-jest.mock('../../../../src/hooks/useSceneMusic', () => ({
+jest.mock('@/src/hooks/useSceneMusic', () => ({
   __esModule: true,
   useSceneMusic: () => ({ views: mockViews, loading: false, reload: jest.fn() }),
 }));
-jest.mock('../../../../src/hooks/useSongPlayback', () => ({
+jest.mock('@/src/hooks/useSongPlayback', () => ({
   __esModule: true,
   useSongPlayback: () => ({ ...mockPlayback, play: mockPlay, stop: mockStop }),
 }));
-jest.mock('../../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenMedia,
 }));
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../../src/services/storymanagement/SongService', () => ({
+jest.mock('@/src/services/storymanagement/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ getById: mockGetSong }),
 }));
-jest.mock('../../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   __esModule: true,
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getById: mockGetScene }),
 }));
-jest.mock('../../../../src/services/storymanagement/SceneMusicService', () => ({
+jest.mock('@/src/services/storymanagement/SceneMusicService', () => ({
   __esModule: true,
   createSceneMusicService: () => ({
     addMusic: mockAddMusic,
@@ -134,7 +134,7 @@ jest.mock('../../../../src/services/storymanagement/SceneMusicService', () => ({
     deleteMusic: mockDeleteMusic,
   }),
 }));
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -142,14 +142,14 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
     ScreenError: ({ message }: { message: string }) => <Text testID="screen-error">{message}</Text>,
   };
 });
-jest.mock('../../../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
     default: ({ children }: { children: ReactNode }) => <View>{children}</View>,
   };
 });
-jest.mock('../../../../src/components/features/scenes/SceneMusic/SceneMusicTargetPicker', () => {
+jest.mock('@/src/components/features/scenes/SceneMusic/SceneMusicTargetPicker', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -164,11 +164,11 @@ jest.mock('../../../../src/components/features/scenes/SceneMusic/SceneMusicTarge
       ) : null,
   };
 });
-jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return { __esModule: true, default: TextInput };
 });
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

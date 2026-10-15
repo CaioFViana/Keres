@@ -5,7 +5,7 @@ import {
   isHostedByApi,
   isOfficialApp,
   isServerless,
-} from '../../src/utils/clientFlavor';
+} from '@/src/utils/clientFlavor';
 
 const original = {
   os: Platform.OS,

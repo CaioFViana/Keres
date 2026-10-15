@@ -4,12 +4,12 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { layout } from '../../../../theme/layout';
-import { space, typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import ModalHeader from '../../../layout/ModalHeader/ModalHeader';
-import ResponsiveModal from '../../../layout/ResponsiveModal/ResponsiveModal';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { space, typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
 interface ReorderModalProps<T> {
   isVisible: boolean;

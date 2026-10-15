@@ -1,9 +1,9 @@
 import type { ArcMedium, EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
 import { DEFAULT_ARC_MEDIUM, STORY_OWNER_ONLY_FIELDS } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { StoryInsert, StorySelect } from '../../db/schema';
-import type { ServerSelect } from '../../db/schemas/servers';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StoryInsert, StorySelect } from '@/src/db/schema';
+import type { ServerSelect } from '@/src/db/schemas/servers';
 import {
   choices,
   comments,
@@ -14,11 +14,11 @@ import {
   stories,
   storyPermissions,
   syncConflicts,
-} from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import i18n from '../../utils/i18n';
+} from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import i18n from '@/src/utils/i18n';
 import {
   assertStoryIsOwned,
   assertStoryIsWritable,
@@ -26,11 +26,11 @@ import {
   recordLocalOperationSync,
   runLocalWrite,
   StoryOwnerOnlyError,
-} from '../../utils/syncUtils';
-import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
-import { authTokenManager } from '../AuthTokenManager';
-import { mediaFileService } from '../MediaFileService';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createKeresAxiosInstance, isOfflineError } from '@/src/services/apiClient';
+import { authTokenManager } from '@/src/services/AuthTokenManager';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createServerService } from '@/src/services/ServerService';
 import { createChoiceService } from './ChoiceService';
 import { createCommentService } from './CommentService';
 import { createFavoriteService } from './FavoriteService';

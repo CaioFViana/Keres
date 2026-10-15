@@ -1,6 +1,6 @@
 import { getTableColumns } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
-import * as schema from '../db/schema';
+import * as schema from '@/src/db/schema';
 
 /**
  * A map from entity name (the same one used in the operation log and in the

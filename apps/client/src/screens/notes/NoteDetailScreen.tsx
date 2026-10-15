@@ -25,23 +25,23 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema';
-import type { NoteSelect } from '../../db/schemas/notes';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { TagSelect } from '@/src/db/schema';
+import type { NoteSelect } from '@/src/db/schemas/notes';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { EntityService } from '../../services/EntityService'; // Import EntityService
-import { createNoteService } from '../../services/storymanagement/NoteService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
-import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
-import { useTheme } from '../../theme';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { EntityService } from '@/src/services/EntityService'; // Import EntityService
+import { createNoteService } from '@/src/services/storymanagement/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/TagService';
+import { useStoryStore } from '@/src/state/storyStore'; // Import useStoryStore
+import { useTheme } from '@/src/theme';
 
 import type { NotesScreenNavigationProp } from './NoteListScreen';
 

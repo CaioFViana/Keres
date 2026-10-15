@@ -3,10 +3,10 @@
  */
 import { AttributeType, validatePackContent } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createPackService, packHasExtras } from '../../src/services/storymanagement/PackService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createPackService, packHasExtras } from '@/src/services/storymanagement/PackService';
+import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * A pack is the *shape* of a story plus, when asked, element skeletons as extras.

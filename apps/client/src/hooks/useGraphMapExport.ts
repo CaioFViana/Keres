@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNotificationStore } from '../state/notificationStore';
-import { chooseExportFormat } from '../utils/exportFormatPrompt';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 import {
   deliverMapExport,
   exportFileLanguage,
   type ExportFileLanguage,
-} from '../utils/storyTransfer';
+} from '@/src/utils/storyTransfer';
 
 type Options = {
   /** The story whose title names the file; nothing is exported while it is missing. */

@@ -6,7 +6,7 @@ import {
   canRefreshSessionWithCookie,
   hostedApiOrigin,
   usesHttpOnlyCookieSession,
-} from '../../src/services/browserCookieSession';
+} from '@/src/services/browserCookieSession';
 
 const originalOS = Platform.OS;
 

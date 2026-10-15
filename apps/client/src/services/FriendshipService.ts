@@ -7,10 +7,10 @@ import { users } from '@/src/db/schemas/users'; // Import users schema and UserI
 import type { EnrichedFriendship, UserPublicInfo } from '@keres/shared'; // Keep EnrichedFriendship for API interaction
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { eq, inArray, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../db';
-import { useNotificationStore } from '../state/notificationStore'; // Import notification store and types
-import { createULID } from '../utils/entityUtils';
-import { entityEventEmitter } from '../utils/EventEmitter'; // Import entityEventEmitter
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import { useNotificationStore } from '@/src/state/notificationStore'; // Import notification store and types
+import { createULID } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter'; // Import entityEventEmitter
 import { isOfflineError } from './apiClient';
 import { friendshipApiService } from './FriendshipApiService'; // Import the API service
 import { userApiService } from './UserApiService';

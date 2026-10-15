@@ -1,20 +1,20 @@
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { CharacterInsert, CharacterSelect, TagSelect } from '../../db/schema';
-import { characters, characterRelations, tagRelations, tags } from '../../db/schema'; // Import CharacterInsert and stories
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
-import { entityEventEmitter } from '../../utils/EventEmitter'; // Import characterEventEmitter
+import type { AppDrizzleClient } from '@/src/db';
+import type { CharacterInsert, CharacterSelect, TagSelect } from '@/src/db/schema';
+import { characters, characterRelations, tagRelations, tags } from '@/src/db/schema'; // Import CharacterInsert and stories
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils'; // Import Create and prepareNewEntityData
+import { entityEventEmitter } from '@/src/utils/EventEmitter'; // Import characterEventEmitter
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService'; // Import ServerService and createServerService
-import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
-import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService'; // Import ServerService and createServerService
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '@/src/types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '@/src/utils/attributeSearchPredicate';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
 import { storyEntityConditions } from './storyEntityListQuery';

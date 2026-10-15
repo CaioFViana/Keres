@@ -1,8 +1,8 @@
 import { inspectContiguousOneBasedIndexes, type ChapterType } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { ChapterSelect, SceneSelect } from '../../db/schema';
-import { chapters, scenes } from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
+import { chapters, scenes } from '@/src/db/schema';
 
 /**
  * The numbering of chapters and scenes: chapters 1..N in the story, scenes 1..M within the chapter,

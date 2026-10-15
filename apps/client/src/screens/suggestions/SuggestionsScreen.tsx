@@ -14,14 +14,14 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import SuggestionGroupChooser, { type SuggestionGroup } from './SuggestionGroupChooser';
-import type { SuggestionSelect } from '../../db/schema';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { createStorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
+import type { SuggestionSelect } from '@/src/db/schema';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
 import {
   createSuggestionService,
   customAttributeSuggestionType,
@@ -29,17 +29,17 @@ import {
   namedListDisplayKey,
   WORLD_PIECE_CATEGORY_TYPE,
   WORLD_PIECE_TYPE_PREFIX,
-} from '../../services/storymanagement/SuggestionService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/services/storymanagement/SuggestionService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 type StorySuggestion = [value: string, usageCount: number];

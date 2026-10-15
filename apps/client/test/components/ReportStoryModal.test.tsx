@@ -5,11 +5,11 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
-import ReportStoryModal from '../../src/components/features/story/ReportStoryModal/ReportStoryModal';
+import ReportStoryModal from '@/src/components/features/story/ReportStoryModal/ReportStoryModal';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -34,7 +34,7 @@ jest.mock('react-i18next', () => {
 
 // The real input pulls the keyboard-aware layout context; a bare field keeps this test about
 // the dialog's own logic (trimming, gating, closing).
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput: RNTextInput } = require('react-native');
   return {
     __esModule: true,

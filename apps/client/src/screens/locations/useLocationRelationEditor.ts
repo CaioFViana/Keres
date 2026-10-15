@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../../db';
-import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
-import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { AppAlert } from '../../utils/AppAlert';
-import { computeAncestorIds, computeDescendantIds } from '../../utils/locationMapRelations';
+import type { AppDrizzleClient } from '@/src/db';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { computeAncestorIds, computeDescendantIds } from '@/src/utils/locationMapRelations';
 
 export type LocationRelationEditKind = 'parent' | 'child' | 'connection';
 

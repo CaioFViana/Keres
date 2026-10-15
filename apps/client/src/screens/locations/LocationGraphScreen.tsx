@@ -1,5 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { useNavigation } from '@react-navigation/native';
 import { useGraphDataLoader } from '@/src/hooks/useGraphDataLoader';
 import { useGraphFocus } from '@/src/hooks/useGraphFocus';
@@ -22,16 +22,16 @@ import { graphMapHeaderStyleDefs } from '@/src/components/features/graphs/graphM
 import type { LocationGraphCanvasHandle } from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import LocationGraphCanvas from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useDrizzle } from '../../db';
-import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { createLocationService } from '../../services/storymanagement/LocationService';
-import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import { useDrizzle } from '@/src/db';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { createLocationService } from '@/src/services/storymanagement/LocationService';
+import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import {
   degreeById,
   limitFocusSelection,
@@ -46,7 +46,7 @@ import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayo
 import { collapseLocationGraph } from '@keres/shared/graphs/locationGraphCollapse';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
-import { buildLocationGraphMapFileName } from '../../utils/storyTransfer';
+import { buildLocationGraphMapFileName } from '@/src/utils/storyTransfer';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 import { useLocationRelationEditor } from './useLocationRelationEditor';
 import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';

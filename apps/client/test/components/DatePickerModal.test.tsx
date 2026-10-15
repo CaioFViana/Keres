@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import DatePickerModal from '../../src/components/common/inputs/DatePickerInput/DatePickerModal';
+import DatePickerModal from '@/src/components/common/inputs/DatePickerInput/DatePickerModal';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -22,7 +22,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 let mockUse24HourTime = true;
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: { use24HourTime: boolean }) => unknown) =>
     selector({ use24HourTime: mockUse24HourTime }),

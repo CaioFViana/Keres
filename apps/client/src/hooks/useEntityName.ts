@@ -1,8 +1,8 @@
 import type { OperationLogEntityType } from '@keres/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import { EntityService } from '../services/EntityService';
+import { useDrizzle } from '@/src/db';
+import { EntityService } from '@/src/services/EntityService';
 
 interface UseEntityNameResult {
   entityName: string | undefined;

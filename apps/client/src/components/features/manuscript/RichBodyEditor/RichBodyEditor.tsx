@@ -8,8 +8,8 @@ import {
   type HtmlStyle,
   type TextShortcut,
 } from 'react-native-enriched-html';
-import { useTheme } from '../../../../theme';
-import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
+import { useTheme } from '@/src/theme';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
 
 export type RichBodyEditorProps = {
   /** Initial HTML (uncontrolled input: later edits live natively, streamed out). */

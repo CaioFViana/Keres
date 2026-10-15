@@ -18,10 +18,10 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface DatePickerModalProps {
   /** Canonical value, or anything else - a value this picker cannot read is kept, not erased. */

@@ -2,16 +2,16 @@
 import { MAX_SCENE_BODY_LENGTH } from '@keres/shared';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
-import { readStoredSceneBodyText, useSceneBodyDraft } from '../../src/hooks/useSceneBodyDraft';
-import * as EditorDraftService from '../../src/services/EditorDraftService';
+import { readStoredSceneBodyText, useSceneBodyDraft } from '@/src/hooks/useSceneBodyDraft';
+import * as EditorDraftService from '@/src/services/EditorDraftService';
 import {
   SCENE_BODY_DRAFT_FIELD,
   readEditorDraft,
   resetEditorDraftDbForTests,
   setEditorDraftDb,
   writeEditorDraft,
-} from '../../src/services/EditorDraftService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/EditorDraftService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

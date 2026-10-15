@@ -43,7 +43,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -56,35 +56,35 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (key: string) => `term:${key}` }),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ suggestLiteraryDevices: false }),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1' } }),
 }));
-jest.mock('../../src/hooks/useStoryMenuBadges', () => ({
+jest.mock('@/src/hooks/useStoryMenuBadges', () => ({
   __esModule: true,
   useStoryMenuBadges: () => mockBadges,
 }));
-jest.mock('../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: () => undefined,
 }));
-jest.mock('../../src/navigation/openMenuLeaf', () => ({
+jest.mock('@/src/navigation/openMenuLeaf', () => ({
   __esModule: true,
   nestedFocusOf: () => mockFocused,
   openMenuLeaf: (...args: unknown[]) => mockOpenLeaf(...args),
 }));
 
-import MainDrawerMenu from '../../src/components/common/navigation/MainDrawerMenu/MainDrawerMenu';
+import MainDrawerMenu from '@/src/components/common/navigation/MainDrawerMenu/MainDrawerMenu';
 
 const renderMenu = (props: Partial<React.ComponentProps<typeof MainDrawerMenu>> = {}) =>
   render(

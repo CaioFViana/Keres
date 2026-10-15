@@ -9,7 +9,7 @@ import type {
   Subscription,
   SwitchQuote,
 } from '@keres/shared';
-import type { ServerSelect } from '../db/schemas/servers';
+import type { ServerSelect } from '@/src/db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 

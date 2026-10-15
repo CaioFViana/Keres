@@ -2,11 +2,16 @@
  * @jest-environment node
  */
 import { and, eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { softDeleteRowSync } from '../../src/services/storymanagement/softDelete';
-import { runLocalWrite } from '../../src/utils/syncUtils';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { softDeleteRowSync } from '@/src/services/storymanagement/softDelete';
+import { runLocalWrite } from '@/src/utils/syncUtils';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

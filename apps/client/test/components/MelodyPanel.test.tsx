@@ -1,12 +1,12 @@
 import { parseMelody } from '@keres/shared';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import LeadSheetView from '../../src/components/features/songs/LeadSheetView';
-import MelodyPanel from '../../src/components/features/songs/MelodyPanel';
+import LeadSheetView from '@/src/components/features/songs/LeadSheetView';
+import MelodyPanel from '@/src/components/features/songs/MelodyPanel';
 
 const mockAlert = jest.fn();
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -17,7 +17,7 @@ jest.mock('react-i18next', () => ({
       options ? `${key}:${JSON.stringify(options)}` : key,
   }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -32,7 +32,7 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return { __esModule: true, default: TextInput };
 });

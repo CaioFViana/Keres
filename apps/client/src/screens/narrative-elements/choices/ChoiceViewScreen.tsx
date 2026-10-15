@@ -11,32 +11,32 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   ChoiceSelect,
   PlotSceneSelect,
   PlotSelect,
   SceneSelect,
-} from '../../../db/schema';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useGraphStoryReload } from '../../../hooks/useGraphStoryReload';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { createChapterService } from '../../../services/storymanagement/ChapterService';
-import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { createEffectService } from '../../../services/storymanagement/EffectService';
-import { createItemService } from '../../../services/storymanagement/ItemService';
-import { createPlotSceneService } from '../../../services/storymanagement/PlotSceneService';
-import { createPlotService } from '../../../services/storymanagement/PlotService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { useStoryStore } from '../../../state/storyStore';
-import { useTheme } from '../../../theme';
-import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import { buildStoryMapFileName } from '../../../utils/storyTransfer';
+} from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useGraphStoryReload } from '@/src/hooks/useGraphStoryReload';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
+import { createPlotService } from '@/src/services/storymanagement/PlotService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { describeChoiceCheck, describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
+import { buildStoryMapFileName } from '@/src/utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
 import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 

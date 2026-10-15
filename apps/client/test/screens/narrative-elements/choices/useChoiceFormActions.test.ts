@@ -7,7 +7,7 @@ const mockSaveEntityWithSecondaryData = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: () => null,
 }));
-jest.mock('../../../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
 jest.mock('@/src/hooks/useAsyncOperation', () => ({
@@ -16,19 +16,19 @@ jest.mock('@/src/hooks/useAsyncOperation', () => ({
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../../src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: (entity: string) =>
     entity === 'Scene'
       ? { required: 'scene required' }
@@ -47,10 +47,10 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../../helpers/silenceConsole';
-import { useChoiceFormActions } from '../../../../src/screens/narrative-elements/choices/useChoiceFormActions';
-import type { ChoiceFormState } from '../../../../src/screens/narrative-elements/choices/useChoiceFormState';
-import type { ChoiceService } from '../../../../src/services/storymanagement/ChoiceService';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useChoiceFormActions } from '@/src/screens/narrative-elements/choices/useChoiceFormActions';
+import type { ChoiceFormState } from '@/src/screens/narrative-elements/choices/useChoiceFormState';
+import type { ChoiceService } from '@/src/services/storymanagement/ChoiceService';
 
 const createState = (overrides: Partial<ChoiceFormState> = {}): ChoiceFormState =>
   ({

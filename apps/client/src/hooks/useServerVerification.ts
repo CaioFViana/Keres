@@ -2,16 +2,16 @@ import type { AccountVerificationResponse } from '@keres/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState } from 'react-native';
-import type { ServerSelect } from '../db/schemas/servers';
+import type { ServerSelect } from '@/src/db/schemas/servers';
 import {
   AgeVerificationConflictError,
   AgeVerificationUnavailableError,
   fetchVerificationStatus,
   retryVerification,
-} from '../services/AgeVerificationApiService';
-import { authTokenManager } from '../services/AuthTokenManager';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/services/AgeVerificationApiService';
+import { authTokenManager } from '@/src/services/AuthTokenManager';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /** How often the verification is asked about while the screen is in front. */
 export const VERIFICATION_POLL_MS = 5000;

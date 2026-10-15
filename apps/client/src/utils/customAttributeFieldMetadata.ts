@@ -1,6 +1,6 @@
 import { AttributeType, isSuggestionAttributeType } from '@keres/shared';
 import type { FieldType, EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import type { StorySchemaFieldSelect } from '../db/schema';
+import type { StorySchemaFieldSelect } from '@/src/db/schema';
 
 /** Distinguishes a custom-field search key (`custom:<fieldId>`) from a native column name. */
 export const CUSTOM_FIELD_METADATA_PREFIX = 'custom:';

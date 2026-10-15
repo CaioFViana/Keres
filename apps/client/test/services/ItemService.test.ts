@@ -1,10 +1,10 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { createItemService } from '../../src/services/storymanagement/ItemService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The item service's listing: search, favorite filter, column sort and whole-story read.

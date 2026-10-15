@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface FavoriteButtonProps {
   isFavorite: boolean;

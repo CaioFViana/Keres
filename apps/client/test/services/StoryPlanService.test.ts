@@ -5,15 +5,15 @@ const mockGetServerById = jest.fn();
 const mockGet = jest.fn();
 const mockIsOffline = jest.fn();
 
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: () => ({ getServerById: mockGetServerById }),
 }));
-jest.mock('../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: {},
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),
   createKeresAxiosInstance: () => ({
@@ -23,7 +23,7 @@ jest.mock('../../src/services/apiClient', () => ({
   }),
 }));
 
-import { createStoryPlanService } from '../../src/services/StoryPlanService';
+import { createStoryPlanService } from '@/src/services/StoryPlanService';
 
 const service = createStoryPlanService({} as never);
 const plan = {

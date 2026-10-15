@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
-import type { FavoriteFilterState, SortDirection } from '../../../types/entityFilters';
-import { UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
+import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
+import type { FavoriteFilterState, SortDirection } from '@/src/types/entityFilters';
+import { UNCHAPTERED_GROUP_ID } from '@/src/utils/narrativeSceneOrder';
 import {
   type AdvancedNarrativeMatches,
   matchesChoiceQuery,

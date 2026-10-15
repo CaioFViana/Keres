@@ -21,18 +21,18 @@ const mockCharacterStore = {
   initializeService: jest.fn(),
 };
 
-jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('../../../src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
+jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   createItemJourneyService: (...args: unknown[]) => mockCreateItemJourneyService(...args),
 }));
-jest.mock('../../../src/state/itemStore', () => ({ useItemStore: () => mockItemStore }));
-jest.mock('../../../src/state/sceneStore', () => ({ useSceneStore: () => mockSceneStore }));
-jest.mock('../../../src/state/characterStore', () => ({
+jest.mock('@/src/state/itemStore', () => ({ useItemStore: () => mockItemStore }));
+jest.mock('@/src/state/sceneStore', () => ({ useSceneStore: () => mockSceneStore }));
+jest.mock('@/src/state/characterStore', () => ({
   useCharacterStore: () => mockCharacterStore,
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useItemJourneyFormResources } from '../../../src/screens/itemJourneys/useItemJourneyFormResources';
+import { useItemJourneyFormResources } from '@/src/screens/itemJourneys/useItemJourneyFormResources';
 
 beforeEach(() => {
   jest.clearAllMocks();

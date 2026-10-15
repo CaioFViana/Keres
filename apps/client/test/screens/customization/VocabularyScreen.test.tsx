@@ -10,7 +10,7 @@ let mockSelectedStory: { id: string; vocabulary: null } | null = {
   vocabulary: null,
 };
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -18,15 +18,15 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ goBack: jest.fn() }),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true, canManageStoryPolicy: true }),
 }));
@@ -42,19 +42,19 @@ jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({
     selectedStory: mockSelectedStory,
     setSelectedStory: mockSetSelectedStory,
   }),
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
 jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({}),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -93,7 +93,7 @@ jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () 
   },
 }));
 
-import VocabularyScreen from '../../../src/screens/customization/VocabularyScreen';
+import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,18 +1,18 @@
 import type { PlotScene } from '@keres/shared/entities/PlotScene';
 import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, PlotSceneInsert } from '../../db';
-import { plotScenes } from '../../db';
-import * as schema from '../../db/schema';
-import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient, PlotSceneInsert } from '@/src/db';
+import { plotScenes } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import { createULID, getChangedFields } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export type SavePlotScene = Pick<PlotScene, 'storyId' | 'plotId' | 'sceneId' | 'note'> & {
   id?: string;

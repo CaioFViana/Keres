@@ -1,7 +1,7 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import {
   ISO_DATE_PATTERN,
@@ -15,19 +15,19 @@ import { useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import type { OperationLogSelect } from '../../db/schema'; // Ensure this path is correct
-import { useEntityName } from '../../hooks/useEntityName';
-import { useUserDisplayName } from '../../hooks/useUserDisplayName';
-import type { OperationLogStackParamList } from '../../navigation/MainSystemStack'; // Corrected import path
-import { EntityService } from '../../services/EntityService';
-import { createOperationLogService } from '../../services/OperationLogService';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { layout } from '../../theme/layout';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import type { OperationLogSelect } from '@/src/db/schema'; // Ensure this path is correct
+import { useEntityName } from '@/src/hooks/useEntityName';
+import { useUserDisplayName } from '@/src/hooks/useUserDisplayName';
+import type { OperationLogStackParamList } from '@/src/navigation/MainSystemStack'; // Corrected import path
+import { EntityService } from '@/src/services/EntityService';
+import { createOperationLogService } from '@/src/services/OperationLogService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */

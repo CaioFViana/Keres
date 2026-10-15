@@ -1,9 +1,9 @@
 import { useRef } from 'react';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import {
   createStorySchemaFieldService,
   type StorySchemaFieldService,
-} from '../../services/storymanagement/StorySchemaFieldService';
+} from '@/src/services/storymanagement/StorySchemaFieldService';
 
 /** Owns the story-schema field service used by the form. */
 export function useStorySchemaFieldFormResources() {

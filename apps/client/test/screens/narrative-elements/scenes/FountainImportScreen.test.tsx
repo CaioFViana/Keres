@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import FountainImportScreen from '../../../../src/screens/narrative-elements/scenes/FountainImportScreen';
+import FountainImportScreen from '@/src/screens/narrative-elements/scenes/FountainImportScreen';
 
 const mockGoBack = jest.fn();
 const mockImport = jest.fn();
@@ -18,36 +18,36 @@ jest.mock('react-i18next', () => ({
       options ? `${key}:${Object.values(options).join('/')}` : key,
   }),
 }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { text: '#111', textSecondary: '#555', primary: '#00f' } }),
 }));
-jest.mock('../../../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonContainerStyles: () => ({ container: {} }),
 }));
-jest.mock('../../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   __esModule: true,
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (type: string) => type }),
 }));
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({
@@ -55,32 +55,32 @@ jest.mock('../../../../src/state/storyStore', () => ({
       effectiveArc: { id: 'arc-1', medium: 'screenplay' },
     }),
 }));
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('../../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
   pickTextFile: (...args: unknown[]) => mockPick(...args),
 }));
-jest.mock('../../../../src/services/storymanagement/FountainImportService', () => ({
+jest.mock('@/src/services/storymanagement/FountainImportService', () => ({
   __esModule: true,
   importFountain: (...args: unknown[]) => mockImport(...args),
   titleCase: (name: string) => name.charAt(0) + name.slice(1).toLowerCase(),
 }));
-jest.mock('../../../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
     default: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
   };
 });
-jest.mock('../../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -99,7 +99,7 @@ jest.mock('../../../../src/components/common/controls/ThemedSwitch/ThemedSwitch'
     ),
   };
 });
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

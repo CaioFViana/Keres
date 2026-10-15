@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import {
   createCharacterRelationService,
   type CharacterRelationServiceInterface,
-} from '../../services/storymanagement/CharacterRelationService';
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
+} from '@/src/services/storymanagement/CharacterRelationService';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 
 /** Owns the character and character-relation services used by the form. */
 export function useCharacterFormResources() {

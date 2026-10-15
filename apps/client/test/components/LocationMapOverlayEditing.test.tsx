@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react-native';
-import LocationMapImageView from '../../src/components/features/location-maps/LocationMapImageView';
-import LocationMapNodeView from '../../src/components/features/location-maps/LocationMapNodeView';
+import LocationMapImageView from '@/src/components/features/location-maps/LocationMapImageView';
+import LocationMapNodeView from '@/src/components/features/location-maps/LocationMapNodeView';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { primary: '#85f', surface: '#111', text: '#fff' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));

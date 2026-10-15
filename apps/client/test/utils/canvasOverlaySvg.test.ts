@@ -2,10 +2,7 @@
  * @jest-environment node
  */
 import type { CanvasOverlayType } from '@keres/shared';
-import {
-  canvasOverlayExportBounds,
-  renderCanvasOverlaySvg,
-} from '../../src/utils/canvasOverlaySvg';
+import { canvasOverlayExportBounds, renderCanvasOverlaySvg } from '@/src/utils/canvasOverlaySvg';
 
 const COLORS = {
   background: '#ffffff',

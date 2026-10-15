@@ -8,10 +8,10 @@ import EntityRelationList from '@/src/components/common/display/EntityRelationLi
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import type { ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
-import { createULID } from '../../../../utils/entityUtils';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { createULID } from '@/src/utils/entityUtils';
 
 interface Props {
   noteRelations: NoteRelation[];

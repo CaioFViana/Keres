@@ -8,13 +8,13 @@ const mockFavoriteService = {
     async (_storyId: string, _type: string, _userId: string, entities: any[]) => entities,
   ),
 };
-jest.mock('../../src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
   __esModule: true,
   createFavoriteService: () => mockFavoriteService,
 }));
 
 let mockUserId: string | null = 'local-user';
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: { getState: () => ({ userId: mockUserId }) },
 }));
@@ -24,7 +24,7 @@ import {
   normalizeFavoriteCreate,
   normalizeFavoriteUpdate,
   persistInitialFavorite,
-} from '../../src/services/storymanagement/favoriteBehaviorUtils';
+} from '@/src/services/storymanagement/favoriteBehaviorUtils';
 
 const db = {} as never;
 const STORY_ID = 'story-1';

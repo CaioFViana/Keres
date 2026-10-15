@@ -7,7 +7,7 @@ import type { ThemeColors } from '@keres/shared';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface StoryCollaborationSectionProps {
   storyId: string;

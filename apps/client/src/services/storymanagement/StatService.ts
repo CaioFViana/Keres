@@ -1,18 +1,18 @@
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { StatInsert, StatSelect } from '../../db/schema';
-import { stats } from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StatInsert, StatSelect } from '@/src/db/schema';
+import { stats } from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import { planContainerOrderSync, planPlacementSync, writeRankChangesSync } from './arrangedWrites';
 
 export interface StatService {

@@ -5,9 +5,9 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import * as schema from '../../db/schema';
-import type { GalleryRelationSelect } from '../../db/schema';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { GalleryRelationSelect } from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class GalleryRelationClientSyncHandler implements ClientSyncEntityHandler {

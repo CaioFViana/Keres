@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../db';
-import { createNoteService, type NoteService } from '../../services/storymanagement/NoteService';
+import { useDrizzle } from '@/src/db';
+import { createNoteService, type NoteService } from '@/src/services/storymanagement/NoteService';
 
 /** Owns the note service used by the form. */
 export function useNoteFormResources() {

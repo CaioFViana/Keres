@@ -55,49 +55,49 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   useStoryRole: () => mockStoryRole,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
-jest.mock('../../../src/state/shippedPacksInstallerStore', () => ({
+jest.mock('@/src/state/shippedPacksInstallerStore', () => ({
   useShippedPacksInstallerStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockInstallerState) : mockInstallerState,
 }));
 
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: () => ({
     getStoryById: (...args: unknown[]) => mockGetStoryById(...args),
     createStory: (...args: unknown[]) => mockCreateStory(...args),
@@ -106,7 +106,7 @@ jest.mock('../../../src/services/storymanagement/StoryService', () => ({
   }),
 }));
 
-jest.mock('../../../src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/PackService', () => ({
   createPackService: () => ({
     listPacks: (...args: unknown[]) => mockListPacks(...args),
     findConflicts: (...args: unknown[]) => mockFindConflicts(...args),
@@ -120,11 +120,11 @@ jest.mock('../../../src/services/storymanagement/PackService', () => ({
 
 // The real one runs an Animated interpolation that never settles under RNTL's async render. What
 // this file asserts is which value the screen passes, not the animation.
-jest.mock('../../../src/components/features/arcs/ArcMediumSelect', () => ({
+jest.mock('@/src/components/features/arcs/ArcMediumSelect', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -141,7 +141,7 @@ type FieldsProps = {
   editable?: boolean;
 };
 
-jest.mock('../../../src/components/features/story/StoryFieldsForm/StoryFieldsForm', () => {
+jest.mock('@/src/components/features/story/StoryFieldsForm/StoryFieldsForm', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -170,7 +170,7 @@ type PillProps = {
   onSelectionChange: (values: string[]) => void;
 };
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -197,8 +197,8 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
 });
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import StoryFormScreen from '../../../src/screens/enterstack/StoryFormScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import StoryFormScreen from '@/src/screens/enterstack/StoryFormScreen';
 
 const storedStory = {
   title: 'Stored',

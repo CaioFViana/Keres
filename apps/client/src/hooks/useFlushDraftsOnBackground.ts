@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { flushPendingCanvasDrafts } from '../services/canvasDraftPersistence';
-import { flushPendingEditorDrafts } from '../services/EditorDraftService';
-import { useSketchDraftStore } from '../state/sketchDraftStore';
+import { flushPendingCanvasDrafts } from '@/src/services/canvasDraftPersistence';
+import { flushPendingEditorDrafts } from '@/src/services/EditorDraftService';
+import { useSketchDraftStore } from '@/src/state/sketchDraftStore';
 
 /**
  * Drafts are written a moment after the last keystroke, not on every one. A phone that sends the app to the

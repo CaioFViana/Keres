@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import type {
   CharacterSelect,
   ChapterSelect,
   ChoiceSelect,
   ItemJourneySelect,
   SceneSelect,
-} from '../db/schema';
-import { createCharacterService } from '../services/storymanagement/CharacterService';
-import { createChapterService } from '../services/storymanagement/ChapterService';
-import { createChoiceService } from '../services/storymanagement/ChoiceService';
-import { createItemJourneyService } from '../services/storymanagement/ItemJourneyService';
-import { createSceneService } from '../services/storymanagement/SceneService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/db/schema';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 export function useItemJourneyTimelineData(storyId: string, itemId: string) {
   const drizzleDb = useDrizzle();

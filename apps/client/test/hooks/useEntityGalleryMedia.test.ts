@@ -1,16 +1,16 @@
 /** @jest-environment node */
-jest.mock('../../src/db', () => ({ useDrizzle: jest.fn() }));
-jest.mock('../../src/state/storyStore', () => ({ useStoryStore: jest.fn() }));
-jest.mock('../../src/state/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
-jest.mock('../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
+jest.mock('@/src/state/storyStore', () => ({ useStoryStore: jest.fn() }));
+jest.mock('@/src/state/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   createGalleryService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/GalleryRelationService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryRelationService', () => ({
   createGalleryRelationService: jest.fn(),
 }));
-jest.mock('../../src/services/galleryMediaImport', () => ({ importPickedMediaAssets: jest.fn() }));
-jest.mock('../../src/services/galleryLink', () => ({ createGalleryLink: jest.fn() }));
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/galleryMediaImport', () => ({ importPickedMediaAssets: jest.fn() }));
+jest.mock('@/src/services/galleryLink', () => ({ createGalleryLink: jest.fn() }));
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: { pick: jest.fn(), pickDocuments: jest.fn() },
 }));
 jest.mock('@react-navigation/native', () => ({
@@ -21,16 +21,16 @@ jest.mock('@react-navigation/native', () => ({
 const mockDispatch = jest.fn();
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '../../src/db';
-import { useEntityGalleryMedia } from '../../src/hooks/useEntityGalleryMedia';
-import { createGalleryLink } from '../../src/services/galleryLink';
-import { importPickedMediaAssets } from '../../src/services/galleryMediaImport';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import { createGalleryRelationService } from '../../src/services/storymanagement/GalleryRelationService';
-import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
-import { useStoryStore } from '../../src/state/storyStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { useEntityGalleryMedia } from '@/src/hooks/useEntityGalleryMedia';
+import { createGalleryLink } from '@/src/services/galleryLink';
+import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const gallery = { getGalleriesForOwner: jest.fn(), getGalleriesByStoryId: jest.fn() };
 const relation = { linkGalleryToOwner: jest.fn(), unlinkGalleryFromOwner: jest.fn() };

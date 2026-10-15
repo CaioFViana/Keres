@@ -1,5 +1,5 @@
 import type { FountainImportPlan } from '@keres/shared';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '@/src/db';
 import { createChapterService } from './ChapterService';
 import { createCharacterSceneService } from './CharacterSceneService';
 import { createCharacterService } from './CharacterService';

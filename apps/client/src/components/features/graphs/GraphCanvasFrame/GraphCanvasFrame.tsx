@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { Animated, Platform, View } from 'react-native';
-import type { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
-import { useTheme } from '../../../../theme';
+import type { useCanvasViewport } from '@/src/hooks/useCanvasViewport';
+import { useTheme } from '@/src/theme';
 
 type CanvasViewportResult = ReturnType<typeof useCanvasViewport>;
 

@@ -8,14 +8,16 @@ import type {
 } from '@keres/shared';
 import { MAX_SYNC_BATCH_SIZE, safeParseStoryUpdate } from '@keres/shared';
 import { and, asc, eq, inArray, isNull, max } from 'drizzle-orm';
-import * as schema from '../../db/schema';
-import type { OperationLogSelect } from '../../db/schema';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { withOpLogLock } from '../../utils/opLogMutex';
-import { trimSyncedOperationLogs } from '../../utils/syncUtils';
-import { columnsOf, getEntityTable, toEntityColumns } from '../entityTableRegistry';
+import * as schema from '@/src/db/schema';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { withOpLogLock } from '@/src/utils/opLogMutex';
+import { trimSyncedOperationLogs } from '@/src/utils/syncUtils';
+import { columnsOf, getEntityTable, toEntityColumns } from '@/src/services/entityTableRegistry';
 import { raiseConflictsServerVersion, withoutDerivedPosition } from './syncConflictHelpers';
-import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflictService';
+import {
+  findContestedFields,
+  mergeLocalOperationPayloads,
+} from '@/src/services/SyncConflictService';
 import type { SyncContext } from './SyncContext';
 import { foldIntoTwin, isFoldableDuplicate } from './duplicateFold';
 import { foldRoutePaths } from './routePaths';
@@ -76,7 +78,7 @@ export class SyncPush {
     for (let chunk = 0; chunk < this.maxRounds; chunk += 1) {
       roundsRun = chunk + 1;
       const pending = await this.getPushableOperations();
-      const mapped: { op: OperationLogSelect; update: StoryUpdate }[] = [];
+      const mapped: { op: schema.OperationLogSelect; update: StoryUpdate }[] = [];
       for (const op of pending) {
         const built = this.tryBuildStoryUpdateFromLocalOp(op);
         if (built.update) {
@@ -178,7 +180,7 @@ export class SyncPush {
    * every retry - so an envelope it would refuse is quarantined here instead of sent.
    */
   private tryBuildStoryUpdateFromLocalOp(
-    op: OperationLogSelect,
+    op: schema.OperationLogSelect,
   ): { update: StoryUpdate; reason: null } | { update: null; reason: string } {
     const built = this.buildStoryUpdateFromLocalOp(op);
     if (!built.update) return built;
@@ -192,7 +194,7 @@ export class SyncPush {
   }
 
   private buildStoryUpdateFromLocalOp(
-    op: OperationLogSelect,
+    op: schema.OperationLogSelect,
   ): { update: StoryUpdate; reason: null } | { update: null; reason: string } {
     let payloadData: Record<string, unknown> | null = null;
     try {
@@ -285,7 +287,7 @@ export class SyncPush {
    * a silent loss, only a decision handed to the user.
    */
   private async quarantineUnpushableOperation(
-    op: OperationLogSelect,
+    op: schema.OperationLogSelect,
     reason: string,
   ): Promise<void> {
     let localValues: Record<string, unknown> = {};
@@ -334,7 +336,7 @@ export class SyncPush {
    * Excluding the conflicted ones is what stops the cycle from resending forever an operation the server
    * has already refused.
    */
-  private async getPushableOperations(): Promise<OperationLogSelect[]> {
+  private async getPushableOperations(): Promise<schema.OperationLogSelect[]> {
     return this.context.db()!.query.operationLogs.findMany({
       where: and(
         eq(schema.operationLogs.storyId, this.context.storyId()!),
@@ -359,7 +361,7 @@ export class SyncPush {
   public async getUnsyncedOperationsForEntity(
     entityType: string,
     entityId: string,
-  ): Promise<OperationLogSelect[]> {
+  ): Promise<schema.OperationLogSelect[]> {
     return this.context.db()!.query.operationLogs.findMany({
       where: and(
         eq(schema.operationLogs.storyId, this.context.storyId()!),
@@ -377,7 +379,7 @@ export class SyncPush {
    * them in sequence.
    */
   public async rebasePendingOperations(
-    pendingLocalOps: OperationLogSelect[],
+    pendingLocalOps: schema.OperationLogSelect[],
     newEntityVersion?: number,
   ): Promise<void> {
     if (typeof newEntityVersion !== 'number') {
@@ -440,7 +442,7 @@ export class SyncPush {
    */
   public async applyPushResult(
     result: SyncPushResult,
-    pushedOperations: OperationLogSelect[],
+    pushedOperations: schema.OperationLogSelect[],
     options: { silent?: boolean } = {},
   ): Promise<{ applied: number; conflicts: number }> {
     const notifier = this.context.notifier();

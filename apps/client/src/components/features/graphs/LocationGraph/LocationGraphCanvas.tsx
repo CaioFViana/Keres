@@ -1,13 +1,13 @@
 import { DashPathEffect, Path } from '@shopify/react-native-skia';
 import React, { forwardRef } from 'react';
-import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
-import GraphNodeBox from '../GraphNodeBox/GraphNodeBox';
-import SkiaEdgeCanvas from '../SkiaEdgeCanvas/SkiaEdgeCanvas';
-import SkiaOverlayErrorBoundary from '../SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
-import { polygonPointsToPath } from '../SkiaEdgeCanvas/polygonPointsToPath';
-import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
-import { useGraphCanvasViewport } from '../../../../hooks/useGraphCanvasViewport';
-import { useTheme } from '../../../../theme';
+import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+import GraphNodeBox from '@/src/components/features/graphs/GraphNodeBox/GraphNodeBox';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
+import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
+import { useGraphCanvasViewport } from '@/src/hooks/useGraphCanvasViewport';
+import { useTheme } from '@/src/theme';
 import type {
   LocationGraphLayout,
   LocationGraphNode,

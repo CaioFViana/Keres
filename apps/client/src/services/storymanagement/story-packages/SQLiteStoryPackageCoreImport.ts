@@ -13,7 +13,7 @@ import type {
   SuggestionInsert,
   TagInsert,
   WorldRuleInsert,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import {
   boards,
   chapterAnchors,
@@ -33,7 +33,7 @@ import {
   suggestions,
   tags,
   worldRules,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import type { SQLiteStoryPackageImportContext } from './SQLiteStoryPackageImportContext';
 
 /**

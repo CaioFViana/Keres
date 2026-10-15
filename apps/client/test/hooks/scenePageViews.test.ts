@@ -2,13 +2,18 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { scenePageViewOf } from '../../src/hooks/useScenePages';
-import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
-import { createScenePageService } from '../../src/services/storymanagement/ScenePageService';
-import { createSketchService } from '../../src/services/storymanagement/SketchService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { scenePageViewOf } from '@/src/hooks/useScenePages';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
+import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

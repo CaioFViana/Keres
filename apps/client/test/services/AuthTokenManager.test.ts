@@ -13,15 +13,15 @@ const mockUserSettings = {
   setActiveServer: jest.fn(),
   clearActiveServer: jest.fn(),
 };
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => mockUserSettings },
 }));
 
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { authTokenManager, setAuthDb } from '../../src/services/AuthTokenManager';
-import { getServerAccessToken } from '../../src/services/apiClient';
-import { tokenVault } from '../../src/services/TokenVault';
+import { authTokenManager, setAuthDb } from '@/src/services/AuthTokenManager';
+import { getServerAccessToken } from '@/src/services/apiClient';
+import { tokenVault } from '@/src/services/TokenVault';
 
 const SERVER = { id: 'server-1', name: 'Casa', url: 'http://servidor' };
 const TOKENS = { accessToken: 'access-1', refreshToken: 'refresh-1' };

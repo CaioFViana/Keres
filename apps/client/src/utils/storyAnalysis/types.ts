@@ -1,5 +1,5 @@
 import type { ChapterType } from '@keres/shared';
-import type { NavigableEntityType } from '../entityNavigation';
+import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 
 export type StoryAnalysisCategory =
   | 'characters'

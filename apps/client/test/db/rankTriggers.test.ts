@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { rankAtPosition } from '@keres/shared';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

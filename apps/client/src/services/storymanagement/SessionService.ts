@@ -1,5 +1,5 @@
-import type { AppDrizzleClient } from '../../db';
-import type { ChapterSelect, SceneSelect } from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { createAttributeValueService } from './AttributeValueService';
 import { createChapterService } from './ChapterService';
 import { createSceneService } from './SceneService';

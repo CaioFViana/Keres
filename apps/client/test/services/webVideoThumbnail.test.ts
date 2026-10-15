@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { captureVideoThumbnail } from '../../src/services/webVideoThumbnail';
+import { captureVideoThumbnail } from '@/src/services/webVideoThumbnail';
 
 interface FakeVideo {
   muted: boolean;

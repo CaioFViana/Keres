@@ -1,4 +1,4 @@
-import { splitByTerm } from '../../src/utils/highlightMatches';
+import { splitByTerm } from '@/src/utils/highlightMatches';
 
 describe('splitByTerm', () => {
   it('marks the match and keeps what is around it', () => {

@@ -1,11 +1,11 @@
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import { createCharacterSceneService } from '../services/storymanagement/CharacterSceneService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { AppAlert } from '../utils/AppAlert';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 export function useSceneCharacterPresence(
   sceneId: string | undefined,

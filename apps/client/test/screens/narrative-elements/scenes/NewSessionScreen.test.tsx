@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import NewSessionScreen from '../../../../src/screens/narrative-elements/scenes/NewSessionScreen';
+import NewSessionScreen from '@/src/screens/narrative-elements/scenes/NewSessionScreen';
 
 const mockReplace = jest.fn();
 const mockStartSession = jest.fn();
@@ -19,40 +19,40 @@ jest.mock('react-i18next', () => ({
       options ? `${key}:${Object.values(options).join('/')}` : key,
   }),
 }));
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { text: '#111', textSecondary: '#555', primary: '#00f' } }),
 }));
-jest.mock('../../../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonContainerStyles: () => ({ container: {} }),
 }));
-jest.mock('../../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   __esModule: true,
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string }) => {
     mockHeader = args;
   },
 }));
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (type: string) => (type === 'Chapter' ? 'Session' : 'Scene'),
   }),
 }));
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({
@@ -60,33 +60,33 @@ jest.mock('../../../../src/state/storyStore', () => ({
       effectiveArc: { id: 'arc-1', medium: 'campaign' },
     }),
 }));
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockNotify(...args) }),
 }));
-jest.mock('../../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({
     getAllByStoryId: (...args: unknown[]) => mockGetChapters(...args),
   }),
 }));
-jest.mock('../../../../src/services/storymanagement/SessionService', () => ({
+jest.mock('@/src/services/storymanagement/SessionService', () => ({
   __esModule: true,
   startSession: (...args: unknown[]) => mockStartSession(...args),
 }));
-jest.mock('../../../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
     default: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
   };
 });
-jest.mock('../../../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const { View, Text } = require('react-native');
   return {
     __esModule: true,
@@ -98,7 +98,7 @@ jest.mock('../../../../src/components/common/forms/FormField/FormField', () => {
     ),
   };
 });
-jest.mock('../../../../src/components/common/inputs/DatePickerInput/DatePickerInput', () => {
+jest.mock('@/src/components/common/inputs/DatePickerInput/DatePickerInput', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -109,7 +109,7 @@ jest.mock('../../../../src/components/common/inputs/DatePickerInput/DatePickerIn
     ),
   };
 });
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BackHandler, Platform } from 'react-native';
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 
 interface BackButtonHandlerOptions {
   /**

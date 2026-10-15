@@ -1,8 +1,8 @@
 import type { ChatMessage, SharedStory } from '@keres/shared';
 import { useEffect, useState } from 'react';
-import type { ServerSelect } from '../db/schemas/servers';
-import { friendshipApiService } from '../services/FriendshipApiService';
-import { messageApi } from '../services/MessageApiService';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import { messageApi } from '@/src/services/MessageApiService';
 
 export interface FriendActivity {
   /** The stories the two work on together; `null` until read, or when the server could not be asked. */

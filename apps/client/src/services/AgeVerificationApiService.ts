@@ -4,7 +4,7 @@ import {
   type AccountVerificationResponse,
   type AgeVerificationInfo,
 } from '@keres/shared';
-import type { ServerSelect } from '../db/schemas/servers';
+import type { ServerSelect } from '@/src/db/schemas/servers';
 import apiClient, { apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 

@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react-native';
-import ArcMediumChanges from '../../src/components/features/arcs/ArcMediumChanges';
+import ArcMediumChanges from '@/src/components/features/arcs/ArcMediumChanges';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -11,7 +11,7 @@ jest.mock('react-i18next', () => ({
     },
   }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { text: '#111', textSecondary: '#555' } }),
 }));

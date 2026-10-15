@@ -1,4 +1,4 @@
-import { sceneMusicWord, sceneMusicWordKey } from '../../src/utils/sceneMusicWords';
+import { sceneMusicWord, sceneMusicWordKey } from '@/src/utils/sceneMusicWords';
 
 describe('sceneMusicWord', () => {
   it('calls it music in a novel and in a work with no medium yet', () => {

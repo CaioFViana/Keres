@@ -1,10 +1,10 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import type { SongSelect } from '../../../src/db/schema';
-import { useMusicToolsStore } from '../../../src/state/musicToolsStore';
+import type { SongSelect } from '@/src/db/schema';
+import { useMusicToolsStore } from '@/src/state/musicToolsStore';
 import SongListScreen, {
   cueSheetFileName,
   songFactsLine,
-} from '../../../src/screens/songs/SongListScreen';
+} from '@/src/screens/songs/SongListScreen';
 
 const mockNavigate = jest.fn();
 const mockCreateSong = jest.fn();
@@ -32,7 +32,7 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ navigate: (...args: unknown[]) => mockNavigate(...args) }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -47,67 +47,67 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: () => undefined,
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: typeof mockHeader) => {
     mockHeader = args;
   },
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../src/hooks/useSongs', () => ({
+jest.mock('@/src/hooks/useSongs', () => ({
   __esModule: true,
   useSongs: () => ({ songs: mockSongs, loading: mockLoading, reload: jest.fn() }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1', title: 'The Old Road' } }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../src/services/storymanagement/SongService', () => ({
+jest.mock('@/src/services/storymanagement/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ createSong: mockCreateSong }),
 }));
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
   pickTextFile: () => mockPickTextFile(),
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));
-jest.mock('../../../src/services/storymanagement/CueSheetService', () => ({
+jest.mock('@/src/services/storymanagement/CueSheetService', () => ({
   __esModule: true,
   loadCueSheet: (...args: unknown[]) => mockLoadCueSheet(...args),
 }));
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return { __esModule: true, ScreenLoading: () => <Text>loading</Text> };
 });
-jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return { __esModule: true, default: TextInput };
 });
-jest.mock('../../../src/components/features/songs/SongCreateModal', () => {
+jest.mock('@/src/components/features/songs/SongCreateModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

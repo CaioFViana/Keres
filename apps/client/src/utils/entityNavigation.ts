@@ -3,7 +3,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 // screen (including ones that call this helper), so a value-level import back would be a
 // real require cycle (see db/index.ts's history for what that broke). A type-only import
 // erases at compile time and never touches the runtime require graph.
-import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
+import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
 import { navigateAcrossStacks } from './stackNavigation';
 import type { OccurrenceTarget } from './occurrenceTarget';
 

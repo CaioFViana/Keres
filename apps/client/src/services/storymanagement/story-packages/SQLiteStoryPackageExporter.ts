@@ -6,9 +6,9 @@ import {
   type FullStoryExportType,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../../db';
-import { stories } from '../../../db/schema';
-import { getEntityTable } from '../../entityTableRegistry';
+import type { AppDrizzleClient } from '@/src/db';
+import { stories } from '@/src/db/schema';
+import { getEntityTable } from '@/src/services/entityTableRegistry';
 
 /**
  * SQLite read adapter for portable story packages. Shared entity handlers declare every collection

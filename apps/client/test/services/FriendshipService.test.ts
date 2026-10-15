@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/FriendshipApiService', () => ({
   friendshipApiService: {
     acceptFriendRequest: jest.fn(),
     blacklistUser: jest.fn(),
@@ -13,11 +13,11 @@ jest.mock('../../src/services/FriendshipApiService', () => ({
 }));
 
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { friendships, servers, users } from '../../src/db/schema';
-import { createFriendshipService } from '../../src/services/FriendshipService';
-import { friendshipApiService } from '../../src/services/FriendshipApiService';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { friendships, servers, users } from '@/src/db/schema';
+import { createFriendshipService } from '@/src/services/FriendshipService';
+import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const SERVER_ID = 'server-1';
 const LOCAL_USER_ID = 'user-local';

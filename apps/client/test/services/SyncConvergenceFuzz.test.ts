@@ -1,20 +1,20 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
 }));
-jest.mock('../../src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/MediaSyncService', () => ({
   createMediaSyncService: () => ({
     syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
   }),
 }));
 
 import { and, eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createCollaborationEdits } from '../helpers/syncFuzzCollaboration';
-import { createNarrativeEdits } from '../helpers/syncFuzzNarrative';
-import { createWorldEdits } from '../helpers/syncFuzzWorld';
+import * as schema from '@/src/db/schema';
+import { createCollaborationEdits } from '@/test/helpers/syncFuzzCollaboration';
+import { createNarrativeEdits } from '@/test/helpers/syncFuzzNarrative';
+import { createWorldEdits } from '@/test/helpers/syncFuzzWorld';
 import {
   ApiSyncBackend,
   contentOf,
@@ -24,7 +24,7 @@ import {
   SyncHarness,
   type SyncDevice,
   USER_ID,
-} from '../helpers/syncDevices';
+} from '@/test/helpers/syncDevices';
 
 /**
  * Randomized convergence: several devices edit, delete and create characters; create, rename,

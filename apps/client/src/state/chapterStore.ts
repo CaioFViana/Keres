@@ -1,10 +1,10 @@
 import type { ChapterType } from '@keres/shared';
-import type { ChapterSelect } from '../db/schema';
-import type { ChapterService } from '../services/storymanagement/ChapterService';
-import { createChapterService } from '../services/storymanagement/ChapterService';
+import type { ChapterSelect } from '@/src/db/schema';
+import type { ChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { createEntityStore } from './createEntityStore';
 import { useUserSettingsStore } from './userSettingsStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 interface ChapterExtraActions {
   reorderChapters: (

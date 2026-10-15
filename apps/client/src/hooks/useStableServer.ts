@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ServerSelect } from '../db/schema';
+import type { ServerSelect } from '@/src/db/schema';
 
 type ServerIdentity = Pick<ServerSelect, 'id' | 'url' | 'idUser'>;
 

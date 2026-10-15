@@ -6,7 +6,7 @@ const mockAddConnection = jest.fn();
 const mockRemoveRelation = jest.fn();
 const mockAlert = jest.fn();
 
-jest.mock('../../../src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({
     setParent: (...args: unknown[]) => mockSetParent(...args),
@@ -14,7 +14,7 @@ jest.mock('../../../src/services/storymanagement/LocationRelationService', () =>
     removeRelation: (...args: unknown[]) => mockRemoveRelation(...args),
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -22,8 +22,8 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import type { LocationRelationSelect, LocationSelect } from '../../../src/db/schema';
-import { useLocationRelationEditor } from '../../../src/screens/locations/useLocationRelationEditor';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { useLocationRelationEditor } from '@/src/screens/locations/useLocationRelationEditor';
 
 const place = (id: string) => ({ id, name: `Place ${id}` }) as LocationSelect;
 const relation = (

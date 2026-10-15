@@ -5,7 +5,7 @@ import {
   compactDrawerWidthFor,
   DRAWER_SWIPE_EDGE_WIDTH,
   DRAWER_SWIPE_MIN_DISTANCE,
-} from '../../src/navigation/drawerInteraction';
+} from '@/src/navigation/drawerInteraction';
 
 describe('drawerInteraction', () => {
   it('keeps drawer drags deliberate and edge-only', () => {

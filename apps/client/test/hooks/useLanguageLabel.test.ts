@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import { renderHook } from '@testing-library/react-native';
-import { useLanguageLabel } from '../../src/hooks/useLanguageLabel';
+import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => `label:${key}` }),
@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
 
 // The real module boots i18next with initReactI18next at import time, which cannot run under the
 // mocked react-i18next above; mirror its option shape so the hook mapping stays meaningful.
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   getLanguageOptions: (t: (key: string) => string) => [
     { label: t('language_english'), value: 'en' },

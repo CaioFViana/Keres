@@ -5,16 +5,16 @@ const mockUseStoryStore = jest.fn();
 const mockRenderList = jest.fn();
 const mockUseScreenTour = jest.fn();
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { textSecondary: '#666' } }),
 }));
-jest.mock('../../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   commonScreenStyleDefs: () => ({ container: { flex: 1 } }),
 }));
 jest.mock('react-i18next', () => ({
@@ -23,23 +23,20 @@ jest.mock('react-i18next', () => ({
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (...args: unknown[]) => mockUseStoryStore(...args),
 }));
-jest.mock(
-  '../../../src/components/features/operation-log/OperationLogList/OperationLogList',
-  () => ({
-    __esModule: true,
-    default: (props: unknown) => {
-      mockRenderList(props);
-      return null;
-    },
-  }),
-);
+jest.mock('@/src/components/features/operation-log/OperationLogList/OperationLogList', () => ({
+  __esModule: true,
+  default: (props: unknown) => {
+    mockRenderList(props);
+    return null;
+  },
+}));
 
 import { act, render } from '@testing-library/react-native';
-import OperationLogScreen from '../../../src/screens/operationlog/OperationLogListScreen';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import OperationLogScreen from '@/src/screens/operationlog/OperationLogListScreen';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const lastListProps = () => mockRenderList.mock.calls[mockRenderList.mock.calls.length - 1][0];
 

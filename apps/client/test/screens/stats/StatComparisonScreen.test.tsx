@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import StatComparisonScreen from '../../../src/screens/stats/StatComparisonScreen';
+import StatComparisonScreen from '@/src/screens/stats/StatComparisonScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -25,7 +25,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -45,7 +45,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -72,7 +72,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/features/stats/StatRadarChart/StatRadarChart', () => {
+jest.mock('@/src/components/features/stats/StatRadarChart/StatRadarChart', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -82,7 +82,7 @@ jest.mock('../../../src/components/features/stats/StatRadarChart/StatRadarChart'
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -94,11 +94,11 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector: (s: any) => any) => selector({ showNotification: mockNotify }),
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/userSettingsStore', () => {
   const state = { userId: 'user-1', exportFormat: 'svg' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
@@ -106,35 +106,35 @@ jest.mock('../../../src/state/userSettingsStore', () => {
   return { useUserSettingsStore };
 });
 
-jest.mock('../../../src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/useStoryStats', () => ({
   useStoryStats: () => mockStatsData,
 }));
 
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: true }),
 }));
 
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({ term: (key: string) => key }),
 }));
 
-jest.mock('../../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entityNavigation', () => ({
   navigateToEntityDetail: (...a: any[]) => mockNavigateToEntity(...a),
   toNavigableEntityType: () => 'Character',
 }));
 
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   deliverMapExport: (...a: any[]) => mockDeliverExport(...a),
   buildBoardMapFileName: (a: string, b: string) => `${a}-${b}.svg`,
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: ({ onBack }: any = {}) => {
     (global as any).__lastBackHandler = onBack;
   },
 }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

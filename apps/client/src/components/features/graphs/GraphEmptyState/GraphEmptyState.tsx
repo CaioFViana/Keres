@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Button from '../../../common/controls/Button/Button';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../../../theme/commonStyles';
+import Button from '@/src/components/common/controls/Button/Button';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
 
 interface GraphEmptyStateProps {
   colors: ThemeColors;

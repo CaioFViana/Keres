@@ -1,19 +1,19 @@
 import { CommonActions, DrawerActions } from '@react-navigation/native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { PanResponder, StyleSheet, Text } from 'react-native';
-import DrawerMenuButton from '../../../src/components/common/navigation/DrawerMenuButton/DrawerMenuButton';
-import NavigationBackButton from '../../../src/components/common/navigation/NavigationBackButton/NavigationBackButton';
-import NavigationDrawerButton from '../../../src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton';
+import DrawerMenuButton from '@/src/components/common/navigation/DrawerMenuButton/DrawerMenuButton';
+import NavigationBackButton from '@/src/components/common/navigation/NavigationBackButton/NavigationBackButton';
+import NavigationDrawerButton from '@/src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton';
 import ResizableDrawerContent, {
   DRAWER_DEFAULT_WIDTH,
   DRAWER_MAX_WIDTH,
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
-} from '../../../src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
-import { navigationButtonStyles } from '../../../src/components/common/navigation/navigationButtonStyles';
+} from '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
+import { navigationButtonStyles } from '@/src/components/common/navigation/navigationButtonStyles';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({

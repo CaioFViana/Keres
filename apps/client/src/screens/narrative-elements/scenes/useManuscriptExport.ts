@@ -20,51 +20,51 @@ import {
 import { containsCjk } from '@keres/shared/manuscript/compile/export/manuscriptPdfFonts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppAlert } from '../../../utils/AppAlert';
+import { AppAlert } from '@/src/utils/AppAlert';
 import {
   CJK_PACK_SIZE_LABEL,
   cjkPackState,
   downloadCjkPack,
   loadCjkMatrix,
-} from '../../../services/cjkFontPack';
+} from '@/src/services/cjkFontPack';
 import {
   deliverScreenplay,
   exportManuscript,
-} from '../../../components/features/manuscript/export/manuscriptExport';
+} from '@/src/components/features/manuscript/export/manuscriptExport';
 import {
   isScreenplayFormat,
   styleForExport,
   type ManuscriptExportSettings,
-} from '../../../components/features/manuscript/export/manuscriptExportSettings';
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 import {
   compileScreenplayManuscript,
   screenplayEstimateOf,
   screenplayInputOf,
   screenplayOptionsOf,
-} from '../../../components/features/manuscript/export/screenplayExport';
-import { useDrizzle } from '../../../db';
-import type { LocationSelect } from '../../../db/schema';
-import { createLocationService } from '../../../services/storymanagement/LocationService';
+} from '@/src/components/features/manuscript/export/screenplayExport';
+import { useDrizzle } from '@/src/db';
+import type { LocationSelect } from '@/src/db/schema';
+import { createLocationService } from '@/src/services/storymanagement/LocationService';
 import {
   loadManuscriptMusic,
   storyMusicFacts,
   withManuscriptMusic,
-} from '../../../services/storymanagement/ManuscriptMusicService';
+} from '@/src/services/storymanagement/ManuscriptMusicService';
 import {
   estimateManuscriptPageBytes,
   loadManuscriptCover,
   loadManuscriptPages,
-} from '../../../services/storymanagement/ManuscriptPagesService';
-import { songPrintOf } from '../../../components/features/manuscript/export/songPrintOf';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
-import { useManuscriptData } from '../../../hooks/useManuscriptData';
-import { useStoryArcs } from '../../../hooks/useStoryArcs';
-import { useNotificationStore } from '../../../state/notificationStore';
-import { useStoryStore } from '../../../state/storyStore';
-import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
-import { exportFileLanguage } from '../../../utils/storyTransfer';
+} from '@/src/services/storymanagement/ManuscriptPagesService';
+import { songPrintOf } from '@/src/components/features/manuscript/export/songPrintOf';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
+import { useManuscriptData } from '@/src/hooks/useManuscriptData';
+import { useStoryArcs } from '@/src/hooks/useStoryArcs';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
+import { exportFileLanguage } from '@/src/utils/storyTransfer';
 
 // What there is while there is no story: the same empty values every time, so nothing draws again for them.
 const NO_LOCATIONS: LocationSelect[] = [];

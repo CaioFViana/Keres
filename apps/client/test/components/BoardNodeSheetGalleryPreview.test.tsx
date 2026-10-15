@@ -1,9 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import BoardNodeSheetGalleryPreview from '../../src/components/features/boards/BoardNodeSheetGalleryPreview';
-import ImageZoomViewer from '../../src/components/features/media/MediaPlayer/ImageZoomViewer';
-import { useResolvedMediaUri } from '../../src/hooks/useResolvedMediaUri';
+import BoardNodeSheetGalleryPreview from '@/src/components/features/boards/BoardNodeSheetGalleryPreview';
+import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
+import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#111',
@@ -12,10 +12,8 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 jest.mock('expo-image', () => ({ Image: () => null }));
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: jest.fn() }));
-jest.mock('../../src/components/features/media/MediaPlayer/ImageZoomViewer', () =>
-  jest.fn(() => null),
-);
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: jest.fn() }));
+jest.mock('@/src/components/features/media/MediaPlayer/ImageZoomViewer', () => jest.fn(() => null));
 
 const uriMock = useResolvedMediaUri as jest.Mock;
 const ViewerMock = ImageZoomViewer as unknown as jest.Mock;

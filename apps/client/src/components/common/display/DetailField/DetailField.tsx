@@ -2,15 +2,12 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
-import { useOccurrenceFlash } from '../../../../hooks/useOccurrenceLanding';
-import { useMentions } from '../../../../mentions/MentionContext';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import {
-  splitTextIntoMentionSegments,
-  type MentionSegment,
-} from '../../../../utils/entityMentions';
-import MarkedText from '../MarkedText/MarkedText';
+import { useOccurrenceFlash } from '@/src/hooks/useOccurrenceLanding';
+import { useMentions } from '@/src/mentions/MentionContext';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { splitTextIntoMentionSegments, type MentionSegment } from '@/src/utils/entityMentions';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 
 interface DetailFieldProps {
   label: string;

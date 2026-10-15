@@ -6,17 +6,17 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../src/services/MessageService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/MessageService', () => ({
   __esModule: true,
   MESSAGES_CHANGED: 'messages_changed',
   createMessageService: () => mockService,
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (event: string, listener: (...args: unknown[]) => void) => {
@@ -30,7 +30,7 @@ jest.mock('../../src/utils/EventEmitter', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useMessageInbox } from '../../src/hooks/useMessageInbox';
+import { useMessageInbox } from '@/src/hooks/useMessageInbox';
 
 const inbox = (ids: string[]) => ({
   entries: ids.map((id) => ({ serverId: id, kind: 'admin', userId: null, lastMessage: { id } })),

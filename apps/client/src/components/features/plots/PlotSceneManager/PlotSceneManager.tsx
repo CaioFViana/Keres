@@ -9,11 +9,11 @@ import { getEntityAppearance } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme, type ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
-import { AppAlert } from '../../../../utils/AppAlert';
-import { createULID } from '../../../../utils/entityUtils';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { createULID } from '@/src/utils/entityUtils';
 import ScenePlotModal from './ScenePlotModal';
 
 interface PlotSceneManagerProps {

@@ -1,11 +1,11 @@
 import { AttributeType } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import type { StorySchemaFieldSelect } from '../db/schema';
-import { EntityService } from '../services/EntityService';
-import { createAttributeValueService } from '../services/storymanagement/AttributeValueService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import type { StorySchemaFieldSelect } from '@/src/db/schema';
+import { EntityService } from '@/src/services/EntityService';
+import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 /** EAV values and resolved entity names for a detail screen's custom fields. */

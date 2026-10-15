@@ -1,13 +1,13 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useCharacterTrajectoryData } from '../../src/hooks/useCharacterTrajectoryData';
+import { useCharacterTrajectoryData } from '@/src/hooks/useCharacterTrajectoryData';
 
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
 const mockGetChapters = jest.fn(async () => [
   { id: 'ch-1', index: 1, isDeleted: false },
   { id: 'ch-2', index: 2, isDeleted: true },
 ]);
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   createChapterService: () => ({ getAllByStoryId: mockGetChapters }),
 }));
 const mockGetRoutes = jest.fn(async () => [
@@ -18,7 +18,7 @@ const mockGetSteps = jest.fn(async () => [
   { sceneId: 's-1', position: 1, isDeleted: false },
   { sceneId: 's-9', position: 2, isDeleted: true },
 ]);
-jest.mock('../../src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/RouteService', () => ({
   createRouteService: () => ({ getAllByStoryId: mockGetRoutes, getSteps: mockGetSteps }),
 }));
 

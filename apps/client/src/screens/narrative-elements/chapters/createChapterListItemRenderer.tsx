@@ -1,7 +1,7 @@
 import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 import ChapterListItem from '@/src/components/features/list-items/ChapterListItem';
-import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
-import { isUnchapteredGroup } from '../../../utils/narrativeSceneOrder';
+import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
+import { isUnchapteredGroup } from '@/src/utils/narrativeSceneOrder';
 
 export type AdvancedNarrativeMatches = {
   chapterIds: ReadonlySet<string>;

@@ -7,8 +7,8 @@ import {
   getCommonContainerStyles,
   getCommonInputStyles,
   isColorLight,
-} from '../../src/theme/commonStyles';
-import { saturateColor } from '../../src/utils/colorMath';
+} from '@/src/theme/commonStyles';
+import { saturateColor } from '@/src/utils/colorMath';
 
 const colors = {
   primary: '#112233',

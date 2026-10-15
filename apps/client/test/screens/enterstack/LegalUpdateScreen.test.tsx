@@ -1,6 +1,6 @@
 import { cleanup, configure, fireEvent, render } from '@testing-library/react-native';
-import { CLIENT_PRIVACY_VERSION } from '../../../src/legal/privacyPolicy';
-import { CLIENT_TERMS_VERSION } from '../../../src/legal/clientTerms';
+import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
+import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
 
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
@@ -27,21 +27,21 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/legal/clientTermsAcceptance', () => ({
+jest.mock('@/src/legal/clientTermsAcceptance', () => ({
   __esModule: true,
   getAcceptedClientLegal: (...args: unknown[]) => mockGetAccepted(...args),
   setAcceptedClientLegal: (...args: unknown[]) => mockSetAccepted(...args),
 }));
 
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/documentTitle', () => ({
   useDocumentTitle: (...args: unknown[]) => mockUseDocumentTitle(...args),
 }));
 
@@ -49,7 +49,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 
-jest.mock('../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -78,7 +78,7 @@ jest.mock('../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-import LegalUpdateScreen from '../../../src/screens/enterstack/LegalUpdateScreen';
+import LegalUpdateScreen from '@/src/screens/enterstack/LegalUpdateScreen';
 
 type Records = { terms: number | null; privacy: number | null };
 

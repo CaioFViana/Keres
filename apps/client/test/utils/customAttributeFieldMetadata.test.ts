@@ -6,7 +6,7 @@ import {
   buildCustomAttributeFieldMetadata,
   CUSTOM_FIELD_METADATA_PREFIX,
   extractCustomFieldId,
-} from '../../src/utils/customAttributeFieldMetadata';
+} from '@/src/utils/customAttributeFieldMetadata';
 
 const field = (overrides: Record<string, unknown> = {}) =>
   ({

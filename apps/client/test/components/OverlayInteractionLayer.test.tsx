@@ -3,7 +3,7 @@ import type { CanvasOverlayType } from '@keres/shared';
 import { PanResponder } from 'react-native';
 import OverlayInteractionLayer, {
   type OverlayCatcherMode,
-} from '../../src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
+} from '@/src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
 
 const FRAME: CanvasOverlayType = {
   id: 'ov-1',

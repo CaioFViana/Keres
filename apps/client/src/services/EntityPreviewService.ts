@@ -1,6 +1,6 @@
 import { type BoardEntitySummary, type BoardPinEntity, summarizeBoardEntity } from '@keres/shared';
 import { and, eq, type SQL } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '@/src/db';
 import { getEntityTable } from './entityTableRegistry';
 
 export interface EntityPreviewService {

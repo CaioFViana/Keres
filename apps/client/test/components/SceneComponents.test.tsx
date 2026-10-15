@@ -7,16 +7,16 @@ jest.mock('react-native-safe-area-context', () => ({
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { buildReorderItems } from '@keres/shared';
 import React from 'react';
-import RelatedScenesList from '../../src/components/features/scenes/RelatedScenesList/RelatedScenesList';
-import SceneNavigationControls from '../../src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
+import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
+import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
 import ScenePresenceList, {
   groupScenePresenceEntries,
-} from '../../src/components/features/scenes/ScenePresenceList/ScenePresenceList';
-import SceneReorderModal from '../../src/components/features/scenes/SceneReorderModal/SceneReorderModal';
-import SceneTimingFields from '../../src/components/features/scenes/SceneTimingFields';
-import type { SceneSelect } from '../../src/db/schema';
+} from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
+import SceneTimingFields from '@/src/components/features/scenes/SceneTimingFields';
+import type { SceneSelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -38,7 +38,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
   return {
@@ -54,7 +54,7 @@ jest.mock('../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -67,7 +67,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -81,23 +81,23 @@ jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
 });
 
 const mockChapterNameOf = jest.fn();
-jest.mock('../../src/hooks/useChapterNames', () => ({
+jest.mock('@/src/hooks/useChapterNames', () => ({
   __esModule: true,
   useChapterNames: () => mockChapterNameOf,
 }));
 
 const mockNavigate = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({ entity: 'Chapter' }),
 }));
 
-jest.mock('../../src/hooks/useBindChapterStore', () => ({
+jest.mock('@/src/hooks/useBindChapterStore', () => ({
   __esModule: true,
   useBindChapterStore: () => ({
     chapters: [
@@ -108,7 +108,7 @@ jest.mock('../../src/hooks/useBindChapterStore', () => ({
 }));
 
 const mockReorderProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/common/modals/ReorderModal/ReorderModal', () => {
+jest.mock('@/src/components/common/modals/ReorderModal/ReorderModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

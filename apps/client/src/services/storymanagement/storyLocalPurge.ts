@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
 import {
   attributeValues,
   boards,
@@ -52,7 +52,7 @@ import {
   tagRelations,
   tags,
   worldRules,
-} from '../../db/schema';
+} from '@/src/db/schema';
 
 /**
  * Tables whose rows are owned by a story and must disappear with its local copy. The schema test

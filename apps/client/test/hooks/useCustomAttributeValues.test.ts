@@ -1,19 +1,19 @@
 const mockDb = {};
 const mockT = (key: string) => key;
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   __esModule: true,
   createAttributeValueService: jest.fn(),
 }));
-jest.mock('../../src/services/EntityService', () => ({
+jest.mock('@/src/services/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: jest.fn() },
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     useEntityInitialLoad: (load: () => Promise<void>) =>
@@ -25,10 +25,10 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 
 import { AttributeType } from '@keres/shared';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useCustomAttributeValues } from '../../src/hooks/useCustomAttributeValues';
-import { EntityService } from '../../src/services/EntityService';
-import { createAttributeValueService } from '../../src/services/storymanagement/AttributeValueService';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useCustomAttributeValues } from '@/src/hooks/useCustomAttributeValues';
+import { EntityService } from '@/src/services/EntityService';
+import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const getValuesForEntity = jest.fn();
 const fields = [

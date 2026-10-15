@@ -7,7 +7,7 @@ import {
 } from '@keres/shared';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { FlatList, Text, View } from 'react-native';
-import { computeScrollAdjustment } from '../../../utils/scrollIntoView';
+import { computeScrollAdjustment } from '@/src/utils/scrollIntoView';
 
 // Comfort zone kept clear above and below the current search hit when it scrolls into view.
 const ACTIVE_MATCH_MARGIN = 96;

@@ -3,9 +3,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useIsConversationUnseen } from '../../../state/unseenMessagesStore';
-import { useTheme } from '../../../theme';
-import { directConversationKey } from '../../../utils/conversationKey';
+import { useIsConversationUnseen } from '@/src/state/unseenMessagesStore';
+import { useTheme } from '@/src/theme';
+import { directConversationKey } from '@/src/utils/conversationKey';
 import UnseenMark from './UnseenMark';
 
 export interface FriendChatButtonProps {

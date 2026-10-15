@@ -17,10 +17,10 @@ import { useCustomAttributeValues } from '@/src/hooks/useCustomAttributeValues';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEntityComments } from '../../../../hooks/useEntityComments';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
-import { useUserSettingsStore } from '../../../../state/userSettingsStore';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useStorySchemaFields } from '@/src/hooks/useStorySchemaFields';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 
 interface CustomAttributeDetailFieldsProps {

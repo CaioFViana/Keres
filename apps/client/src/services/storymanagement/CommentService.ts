@@ -1,17 +1,17 @@
 import type { CommentEntityType } from '@keres/shared';
 import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, CommentSelect } from '../../db';
-import { comments } from '../../db';
-import { createULID } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import i18n from '../../utils/i18n';
+import type { AppDrizzleClient, CommentSelect } from '@/src/db';
+import { comments } from '@/src/db';
+import { createULID } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import i18n from '@/src/utils/i18n';
 import {
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
   StoryReadOnlyError,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export type CommentTarget =
   | { fieldKey: string; fieldId?: never }

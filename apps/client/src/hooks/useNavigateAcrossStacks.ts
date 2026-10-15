@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useCallback } from 'react';
-import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
-import { navigateAcrossStacks } from '../utils/stackNavigation';
+import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import { navigateAcrossStacks } from '@/src/utils/stackNavigation';
 
 /**
  * Opens a screen of another drawer stack from a screen of this one, and brings the person back to this

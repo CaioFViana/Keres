@@ -4,9 +4,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import type { ServerSelect } from '../../../db/schemas/servers';
-import { useNotificationStore } from '../../../state/notificationStore';
-import { useTheme } from '../../../theme';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useTheme } from '@/src/theme';
 
 interface ServerFriendsHeaderProps {
   server: ServerSelect;

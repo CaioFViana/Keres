@@ -1,12 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import type { ServerSelect } from '../db/schema';
-import { users } from '../db/schema';
-import { friendshipApiService } from '../services/FriendshipApiService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
+import { users } from '@/src/db/schema';
+import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 export interface ResolvedUserProfile {
   id: string;

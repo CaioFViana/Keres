@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   ChoiceSelect,
   PlotSceneSelect,
   PlotSelect,
   SceneSelect,
-} from '../db/schema';
-import { createChapterService } from '../services/storymanagement/ChapterService';
-import { createChoiceService } from '../services/storymanagement/ChoiceService';
-import { createPlotSceneService } from '../services/storymanagement/PlotSceneService';
-import { createPlotService } from '../services/storymanagement/PlotService';
-import { createSceneService } from '../services/storymanagement/SceneService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
+import { createPlotService } from '@/src/services/storymanagement/PlotService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import { buildNarrativeProjection, type NarrativePresentationOrder } from '@keres/shared';
 

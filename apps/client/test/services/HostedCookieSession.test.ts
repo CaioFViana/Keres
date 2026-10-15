@@ -1,20 +1,20 @@
 /**
  * @jest-environment jsdom
  */
-jest.mock('../../src/services/browserCookieSession', () => ({
+jest.mock('@/src/services/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: jest.fn(),
   hostedApiOrigin: jest.fn(() => 'http://localhost:3000'),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => mockSettings },
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: { setBaseUrl: jest.fn(), setActiveServer: jest.fn() },
   apiUrl: (serverUrl: string, endpoint: string) =>
     `${serverUrl.replace(/\/+$/, '')}/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`,
 }));
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: jest.fn(() => ({
     createServer: mockCreateServer,
     getServerByUrl: mockGetServerByUrl,
@@ -23,9 +23,9 @@ jest.mock('../../src/services/ServerService', () => ({
 }));
 
 import axios from 'axios';
-import { restoreHostedCookieSession } from '../../src/services/HostedCookieSession';
-import { usesHttpOnlyCookieSession } from '../../src/services/browserCookieSession';
-import apiClient from '../../src/services/apiClient';
+import { restoreHostedCookieSession } from '@/src/services/HostedCookieSession';
+import { usesHttpOnlyCookieSession } from '@/src/services/browserCookieSession';
+import apiClient from '@/src/services/apiClient';
 
 const mockSettings = { setActiveServer: jest.fn() };
 const mockCreateServer = jest.fn();

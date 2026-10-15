@@ -2,11 +2,11 @@ import type { FavoriteEntityType } from '@keres/shared';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useFavoriters } from '../../../../hooks/useFavoriters';
-import { useTheme } from '../../../../theme';
-import Avatar from '../../../common/display/Avatar/Avatar';
-import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
-import EntityRelationList from '../../../common/display/EntityRelationList/EntityRelationList';
+import { useFavoriters } from '@/src/hooks/useFavoriters';
+import { useTheme } from '@/src/theme';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 
 interface FavoritedByListProps {
   storyId: string;

@@ -3,9 +3,9 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NavigationState, ParamListBase } from '@react-navigation/native';
 import { DrawerActions, StackActions, useNavigation } from '@react-navigation/native';
 import React from 'react';
-import MapIcon from '../components/common/display/MapIcon/MapIcon';
-import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
+import DrawerMenuButton from '@/src/components/common/navigation/DrawerMenuButton/DrawerMenuButton';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 import type { MainSystemDrawerParamList } from './MainSystemStack';
 
 /**

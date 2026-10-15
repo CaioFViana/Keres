@@ -2,7 +2,10 @@ import { SONG_LANGUAGES, SONG_PLACEMENTS, SONG_REPEATS } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { ManuscriptExportSettings, withChange } from '../export/manuscriptExportSettings';
+import type {
+  ManuscriptExportSettings,
+  withChange,
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 import { OptionPills, OptionSection, SwitchRow } from './ExportOptionRows';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

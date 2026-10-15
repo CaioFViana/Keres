@@ -1,4 +1,4 @@
-import { describeChoiceCheck, describeEffect } from '../../src/utils/choiceCheckEffectDescriptions';
+import { describeChoiceCheck, describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
 import type { TFunction } from 'i18next';
 
 const t = (key: string, values: Record<string, unknown> = {}) =>

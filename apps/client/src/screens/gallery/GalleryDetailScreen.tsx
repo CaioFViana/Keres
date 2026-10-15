@@ -2,8 +2,8 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import type { GalleryStackParamList } from '../../navigation/MainSystemStack';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import type { GalleryStackParamList } from '@/src/navigation/MainSystemStack';
 import GalleryDetailContent from './GalleryDetailContent';
 
 type GalleryDetailRouteProp = RouteProp<GalleryStackParamList, 'GalleryDetail'>;

@@ -1,7 +1,7 @@
 import React from 'react';
 import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
-import GalleryDetailContent from '../../../../screens/gallery/GalleryDetailContent';
-import { useGalleryMediaViewerStore } from '../../../../state/galleryMediaViewerStore';
+import GalleryDetailContent from '@/src/screens/gallery/GalleryDetailContent';
+import { useGalleryMediaViewerStore } from '@/src/state/galleryMediaViewerStore';
 
 /**
  * Mounts the medium "peeked at" from an entity screen, on top of everything, without going through

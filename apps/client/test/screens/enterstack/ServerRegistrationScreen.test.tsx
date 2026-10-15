@@ -61,35 +61,35 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/ServerService', () => {
+jest.mock('@/src/services/ServerService', () => {
   class ServerHasOwnedStoriesError extends Error {
     ownedStories: Array<{ title: string }>;
     constructor(ownedStories: Array<{ title: string }>) {
@@ -105,43 +105,43 @@ jest.mock('../../../src/services/ServerService', () => {
   };
 });
 
-jest.mock('../../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   authTokenManager: {
     getTokens: (...args: unknown[]) => mockGetTokens(...args),
     updateTokens: (...args: unknown[]) => mockUpdateTokens(...args),
   },
 }));
 
-jest.mock('../../../src/services/AuthApiService', () => ({
+jest.mock('@/src/services/AuthApiService', () => ({
   redeemRecoveryCode: (...args: unknown[]) => mockRedeem(...args),
 }));
 
 const mockFetchAgeInfo = jest.fn();
 const mockFetchVerificationStatus = jest.fn();
-jest.mock('../../../src/services/AgeVerificationApiService', () => ({
+jest.mock('@/src/services/AgeVerificationApiService', () => ({
   __esModule: true,
   fetchAgeVerificationInfo: (...args: unknown[]) => mockFetchAgeInfo(...args),
   fetchVerificationStatus: (...args: unknown[]) => mockFetchVerificationStatus(...args),
 }));
 
-jest.mock('../../../src/services/browserCookieSession', () => ({
+jest.mock('@/src/services/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: () => mockCookie.hosted,
   hostedApiOrigin: () => mockCookie.origin,
 }));
 
-jest.mock('../../../src/utils/keresServerAuth', () => ({
+jest.mock('@/src/utils/keresServerAuth', () => ({
   authenticateWithKeresServer: (...args: unknown[]) => mockAuthenticate(...args),
   keresAuthAlertMessage: () => 'auth-failed-message',
 }));
 
 const mockFetchServerTerms = jest.fn();
 const mockFetchServerPrivacy = jest.fn();
-jest.mock('../../../src/services/ServerTermsService', () => ({
+jest.mock('@/src/services/ServerTermsService', () => ({
   fetchServerTerms: (...args: unknown[]) => mockFetchServerTerms(...args),
   fetchServerPrivacy: (...args: unknown[]) => mockFetchServerPrivacy(...args),
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
@@ -160,7 +160,7 @@ type FieldsProps = {
   username: string;
 };
 
-jest.mock('../../../src/components/features/servers/ServerRegistrationFields', () => {
+jest.mock('@/src/components/features/servers/ServerRegistrationFields', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -209,7 +209,7 @@ jest.mock('../../../src/components/features/servers/ServerRegistrationFields', (
   };
 });
 
-jest.mock('../../../src/components/features/servers/ServerRecoveryCodesPanel', () => {
+jest.mock('@/src/components/features/servers/ServerRecoveryCodesPanel', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -225,7 +225,7 @@ jest.mock('../../../src/components/features/servers/ServerRecoveryCodesPanel', (
 });
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ServerRegistrationScreen from '../../../src/screens/enterstack/ServerRegistrationScreen';
+import ServerRegistrationScreen from '@/src/screens/enterstack/ServerRegistrationScreen';
 
 const existingServer = {
   id: 'srv-1',
@@ -587,7 +587,7 @@ describe('ServerRegistrationScreen', () => {
 
   it('surfaces save failures on the form', async () => {
     const { ServerUrlAlreadyRegisteredError } = jest.requireMock(
-      '../../../src/services/ServerService',
+      '@/src/services/ServerService',
     ) as { ServerUrlAlreadyRegisteredError: new () => Error };
     mockServerService.createServer.mockRejectedValue(new ServerUrlAlreadyRegisteredError());
     const view = await render(<ServerRegistrationScreen />);

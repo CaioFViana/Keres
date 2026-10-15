@@ -43,48 +43,48 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getServerById: (...args: unknown[]) => mockGetServerById(...args),
   }),
 }));
 
-jest.mock('../../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: {},
   apiUrl: (base: string, path: string) => `${base}${path}`,
   isOfflineError: (err: unknown) => !!(err as { isOffline?: boolean } | null)?.isOffline,
 }));
 
-jest.mock('../../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: {
     getOwnProfile: (...args: unknown[]) => mockGetOwnProfile(...args),
     updateProfile: (...args: unknown[]) => mockUpdateProfile(...args),
@@ -93,7 +93,7 @@ jest.mock('../../../src/services/UserApiService', () => ({
   },
 }));
 
-jest.mock('../../../src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => {
+jest.mock('@/src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -116,7 +116,7 @@ jest.mock('../../../src/components/common/inputs/ColorPickerInput/ColorPickerInp
   };
 });
 
-jest.mock('../../../src/components/common/inputs/IconPickerInput/IconPickerInput', () => {
+jest.mock('@/src/components/common/inputs/IconPickerInput/IconPickerInput', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -140,8 +140,8 @@ jest.mock('../../../src/components/common/inputs/IconPickerInput/IconPickerInput
 });
 
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import MyProfileScreen from '../../../src/screens/enterstack/MyProfileScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import MyProfileScreen from '@/src/screens/enterstack/MyProfileScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', idUser: 'user-on-server' };
 

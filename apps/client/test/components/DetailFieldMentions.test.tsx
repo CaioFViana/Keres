@@ -1,21 +1,18 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { TextRange } from '@keres/shared';
 import { StyleSheet } from 'react-native';
-import DetailField from '../../src/components/common/display/DetailField/DetailField';
-import {
-  OCCURRENCE_FLASH_MS,
-  OccurrenceLandingContext,
-} from '../../src/hooks/useOccurrenceLanding';
-import { MentionMatcherContext, MentionNavigationContext } from '../../src/mentions/MentionContext';
-import type { OccurrenceTarget } from '../../src/utils/occurrenceTarget';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import { OCCURRENCE_FLASH_MS, OccurrenceLandingContext } from '@/src/hooks/useOccurrenceLanding';
+import { MentionMatcherContext, MentionNavigationContext } from '@/src/mentions/MentionContext';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import {
   buildMentionMatcher,
   EMPTY_MENTION_MATCHER,
   type MentionMatcher,
   type MentionRef,
-} from '../../src/utils/entityMentions';
+} from '@/src/utils/entityMentions';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {

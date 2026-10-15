@@ -2,24 +2,24 @@ const mockServers = jest.fn();
 const mockLoad = jest.fn();
 const mockWarn = jest.fn();
 
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: () => ({ getAllServers: (...args: unknown[]) => mockServers(...args) }),
 }));
-jest.mock('../../src/services/PaymentService', () => ({
+jest.mock('@/src/services/PaymentService', () => ({
   __esModule: true,
   PAYMENTS_CHANGED: 'payments_changed',
   loadPaymentOverview: (...args: unknown[]) => mockLoad(...args),
 }));
-jest.mock('../../src/services/PaymentWarningService', () => ({
+jest.mock('@/src/services/PaymentWarningService', () => ({
   __esModule: true,
   warnAboutPayment: (...args: unknown[]) => mockWarn(...args),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { usePaymentDueWatcher } from '../../src/hooks/usePaymentDueWatcher';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { usePaymentDueWatcher } from '@/src/hooks/usePaymentDueWatcher';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const db = {} as never;
 const home = { id: 'server-1', name: 'Home' };

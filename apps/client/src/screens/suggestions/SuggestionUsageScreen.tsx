@@ -17,25 +17,25 @@ import {
   View,
 } from 'react-native';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
-import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
-import type { StorySettingsStackParamList } from '../../navigation/StorySettingsStack';
-import type { SuggestionUsage } from '../../services/storymanagement/SuggestionService';
+import { useDrizzle } from '@/src/db';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import type { MainSystemDrawerParamList } from '@/src/navigation/MainSystemStack';
+import type { StorySettingsStackParamList } from '@/src/navigation/StorySettingsStack';
+import type { SuggestionUsage } from '@/src/services/storymanagement/SuggestionService';
 import {
   createSuggestionService,
   isNamedListType,
-} from '../../services/storymanagement/SuggestionService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { ENTITY_TYPE_ICONS } from '../../utils/entityTypeIcons';
-import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/services/storymanagement/SuggestionService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { navigateToEntityDetail } from '@/src/utils/entityNavigation';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entityTypeIcons';
+import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 type UsageSection = { title: string; data: SuggestionUsage[] };

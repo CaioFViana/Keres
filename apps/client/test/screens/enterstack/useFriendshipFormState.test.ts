@@ -1,6 +1,6 @@
 const mockAlert = jest.fn();
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -8,8 +8,8 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import { useFriendshipFormState } from '../../../src/screens/enterstack/useFriendshipFormState';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useFriendshipFormState } from '@/src/screens/enterstack/useFriendshipFormState';
 
 const server = (id: string) => ({ id, name: id }) as never;
 

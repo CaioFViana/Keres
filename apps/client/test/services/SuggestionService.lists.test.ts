@@ -1,18 +1,23 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   LIST_CATALOG_TYPE,
   createSuggestionService,
   namedListDisplayKey,
-} from '../../src/services/storymanagement/SuggestionService';
+} from '@/src/services/storymanagement/SuggestionService';
 import {
   customAttributeSuggestionType,
   parseNamedListCatalogValue,
-} from '../../src/services/storymanagement/suggestionTypes';
-import { entityBase, TEST_STORY_ID, TEST_USER_ID, seedLocalStory } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/suggestionTypes';
+import {
+  entityBase,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+  seedLocalStory,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

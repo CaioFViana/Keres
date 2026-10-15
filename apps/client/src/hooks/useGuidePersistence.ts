@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { useDrizzle } from '../db';
-import { useGuideStore } from '../state/guideStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
+import { useDrizzle } from '@/src/db';
+import { useGuideStore } from '@/src/state/guideStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 /**
  * Records finished or skipped tours. The write belongs here - a hook - because components

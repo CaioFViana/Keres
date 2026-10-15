@@ -1,11 +1,11 @@
 import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { StyleSheet, Text, View } from 'react-native';
-import type { NoteWithTags } from '../../../services/storymanagement/NoteService';
-import type { ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { typography } from '../../../theme/tokens';
-import { truncate } from '../../../utils/stringUtils';
+import type { NoteWithTags } from '@/src/services/storymanagement/NoteService';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { truncate } from '@/src/utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '@/src/components/common/display/TagList/TagList';

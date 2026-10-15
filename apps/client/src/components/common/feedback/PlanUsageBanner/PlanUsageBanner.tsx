@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { usePlanUsageStore } from '../../../../state/planUsageStore';
-import { useStoryStore } from '../../../../state/storyStore';
-import { useTheme } from '../../../../theme';
+import { usePlanUsageStore } from '@/src/state/planUsageStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
 
 /**
  * The editor's note that the open story is getting close to its owner's plan: from 90% of a ceiling it

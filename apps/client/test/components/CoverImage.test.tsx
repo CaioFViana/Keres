@@ -1,6 +1,6 @@
 import { act, cleanup, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import CoverImage from '../../src/components/common/display/CoverImage/CoverImage';
+import CoverImage from '@/src/components/common/display/CoverImage/CoverImage';
 
 let mockRow: { localPath: string; title: string | null; fileName: string } | null = null;
 let mockUri: string | null = null;
@@ -10,18 +10,18 @@ jest.mock('expo-image', () => ({
   __esModule: true,
   Image: 'ExpoImage',
 }));
-jest.mock('../../src/hooks/useGalleryMedia', () => ({
+jest.mock('@/src/hooks/useGalleryMedia', () => ({
   __esModule: true,
   useGalleryRow: (...args: unknown[]) => {
     mockGalleryRow(...args);
     return mockRow;
   },
 }));
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
   __esModule: true,
   useResolvedMediaUri: () => mockUri,
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { border: '#ccc' } }),
 }));

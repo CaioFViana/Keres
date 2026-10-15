@@ -1,22 +1,22 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, StyleSheet, Text } from 'react-native';
-import DetailContainer from '../../../src/components/layout/DetailContainer/DetailContainer';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import KeyboardAwareScreen, {
   KeyboardAwareContext,
-} from '../../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import ResponsiveGrid from '../../../src/components/layout/ResponsiveGrid/ResponsiveGrid';
-import ResponsiveModal from '../../../src/components/layout/ResponsiveModal/ResponsiveModal';
-import ScreenContainer from '../../../src/components/layout/ScreenContainer/ScreenContainer';
-import ScreenSection from '../../../src/components/layout/ScreenSection/ScreenSection';
-import ScreenTitle from '../../../src/components/layout/ScreenTitle/ScreenTitle';
-import ThemedFullscreenModal from '../../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
-import { useFormScrollBottomPadding } from '../../../src/hooks/useFormScrollBottomPadding';
-import { useResponsiveLayout } from '../../../src/hooks/useResponsiveLayout';
-import { useNotificationStore } from '../../../src/state/notificationStore';
+} from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import ResponsiveGrid from '@/src/components/layout/ResponsiveGrid/ResponsiveGrid';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import ScreenTitle from '@/src/components/layout/ScreenTitle/ScreenTitle';
+import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useNotificationStore } from '@/src/state/notificationStore';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -51,7 +51,7 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Icon',
 }));
 
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
     height: 844,
@@ -62,7 +62,7 @@ jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
   })),
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: jest.fn(() => 58),
 }));
 

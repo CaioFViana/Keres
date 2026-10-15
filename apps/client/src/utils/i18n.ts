@@ -3,8 +3,8 @@ import i18n from 'i18next';
 import { Platform } from 'react-native';
 import { initReactI18next } from 'react-i18next';
 
-import en from '../locales/en.json';
-import pt from '../locales/pt.json';
+import en from '@/src/locales/en.json';
+import pt from '@/src/locales/pt.json';
 
 // `i18next` exports `use` as a named binding too, but importing it directly trips
 // react-hooks/rules-of-hooks (any `use*` identifier is treated as a hook call at module

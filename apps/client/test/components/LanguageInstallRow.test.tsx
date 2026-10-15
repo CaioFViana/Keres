@@ -2,9 +2,9 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import LanguageInstallRow, {
   LANGUAGE_INSTALL_CONTROL_SIZE,
-} from '../../src/components/common/controls/LanguageInstallRow/LanguageInstallRow';
+} from '@/src/components/common/controls/LanguageInstallRow/LanguageInstallRow';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       primary: '#00f',
@@ -17,7 +17,7 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {

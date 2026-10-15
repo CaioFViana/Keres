@@ -7,10 +7,10 @@ import type { Route } from '@keres/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { typography } from '../../../theme/tokens';
-import { getCommonInputStyles } from '../../../theme/commonStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 export type NavigatorRoutePersistenceMode = 'new' | 'replace';

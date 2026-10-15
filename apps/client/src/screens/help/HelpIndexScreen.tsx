@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -12,16 +12,16 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
-import { HighlightedText } from '../../components/features/help/HelpSearchBar/HighlightedText';
-import type { DocLibrary } from '../../help/library';
-import { helpLibrary } from '../../help/library';
-import { createHelpSearchIndex, searchHelp } from '../../help/search';
-import { type ThemeColors, useTheme } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { typography } from '../../theme/tokens';
-import { debounce } from '../../utils/debounce';
-import { setDocumentTitle } from '../../utils/documentTitle';
+import { HelpSearchBar } from '@/src/components/features/help/HelpSearchBar/HelpSearchBar';
+import { HighlightedText } from '@/src/components/features/help/HelpSearchBar/HighlightedText';
+import type { DocLibrary } from '@/src/help/library';
+import { helpLibrary } from '@/src/help/library';
+import { createHelpSearchIndex, searchHelp } from '@/src/help/search';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { debounce } from '@/src/utils/debounce';
+import { setDocumentTitle } from '@/src/utils/documentTitle';
 
 type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;
 

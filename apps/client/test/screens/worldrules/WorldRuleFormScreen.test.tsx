@@ -60,7 +60,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: mockRouteParams }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
@@ -249,34 +249,34 @@ jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () 
     return react.createElement(native.Text, { testID: 'seealso-manager' }, 'seealso');
   },
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityFormSecondaryDraft', () => ({
+jest.mock('@/src/hooks/useEntityFormSecondaryDraft', () => ({
   __esModule: true,
   useEntityFormSecondaryDraft: () => ({
     persistSecondaryDraft: jest.fn(),
     clearSecondaryDraft: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => [],
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { error: '#f00', primaryContainer: '#eef' } }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => mockCopy,
 }));
@@ -284,24 +284,24 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-jest.mock('../../../src/screens/worldrules/useWorldRuleFormResources', () => ({
+jest.mock('@/src/screens/worldrules/useWorldRuleFormResources', () => ({
   __esModule: true,
   useWorldRuleFormResources: () => ({ drizzleDb: mockDb, worldRuleServiceRef: { current: null } }),
 }));
-jest.mock('../../../src/screens/worldrules/useWorldRuleFormState', () => ({
+jest.mock('@/src/screens/worldrules/useWorldRuleFormState', () => ({
   __esModule: true,
   useWorldRuleFormState: (...args: unknown[]) => mockUseWorldRuleFormState(...args),
 }));
-jest.mock('../../../src/screens/worldrules/useWorldRuleFormAssociations', () => ({
+jest.mock('@/src/screens/worldrules/useWorldRuleFormAssociations', () => ({
   __esModule: true,
   useWorldRuleFormAssociations: (...args: unknown[]) => mockUseWorldRuleFormAssociations(...args),
 }));
-jest.mock('../../../src/screens/worldrules/useWorldRuleFormActions', () => ({
+jest.mock('@/src/screens/worldrules/useWorldRuleFormActions', () => ({
   __esModule: true,
   useWorldRuleFormActions: (...args: unknown[]) => mockUseWorldRuleFormActions(...args),
 }));
 
-import WorldRuleFormScreen from '../../../src/screens/worldrules/WorldRuleFormScreen';
+import WorldRuleFormScreen from '@/src/screens/worldrules/WorldRuleFormScreen';
 
 const freshFormState = () => ({
   currentWorldRuleId: null as string | null,

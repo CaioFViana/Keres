@@ -1,18 +1,18 @@
 import type { ScenePageFit } from '@keres/shared';
 import { compareRanked, rankBetween } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { ScenePageInsert, ScenePageSelect } from '../../db/schema';
-import { scenePages, scenes } from '../../db/schema';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ScenePageInsert, ScenePageSelect } from '@/src/db/schema';
+import { scenePages, scenes } from '@/src/db/schema';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import { softDeleteRowSync } from './softDelete';
 
 /** The one image of a page: a Sketch of the story, or a medium of its Gallery. */

@@ -44,12 +44,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: {
     title: string;
@@ -59,7 +59,7 @@ jest.mock('../../../../src/hooks/useScreenHeader', () => ({
   },
 }));
 
-jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -76,7 +76,7 @@ jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: {},
@@ -89,7 +89,7 @@ jest.mock('../../../../src/hooks/useEntityComments', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [{ id: 'tag-1', name: 'Tag' }],
@@ -100,17 +100,17 @@ jest.mock('../../../../src/hooks/useEntityRelations', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
 
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('../../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return {
     __esModule: true,
@@ -118,12 +118,12 @@ jest.mock('../../../../src/db', () => {
   };
 });
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -138,7 +138,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => {
   const copies: Record<string, object> = {};
   return {
     __esModule: true,
@@ -165,39 +165,39 @@ jest.mock('react-i18next', () => {
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getById: mockGetChoiceById }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: () => ({
     getChoiceCheckGroupsByChoiceId: mockGetCheckGroupsByChoiceId,
   }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: () => ({ getChoiceChecksByGroupId: mockGetChecksByGroupId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/EffectService', () => ({
   __esModule: true,
   createEffectService: () => ({ getEffectsByEntity: mockGetEffectsByEntity }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getAllByStoryId: mockGetAllScenesByStoryId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getItemsByStoryId: mockGetItemsByStoryId }),
 }));
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -215,7 +215,7 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
 jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
   require('@/test/helpers/detailTabsMock'),
 );
-jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', () => {
+jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -237,7 +237,7 @@ jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', (
   };
 });
 
-jest.mock('../../../../src/components/layout/ScreenSection/ScreenSection', () => {
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -245,7 +245,7 @@ jest.mock('../../../../src/components/layout/ScreenSection/ScreenSection', () =>
   };
 });
 
-jest.mock('../../../../src/components/common/display/DetailField/DetailField', () => {
+jest.mock('@/src/components/common/display/DetailField/DetailField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -255,7 +255,7 @@ jest.mock('../../../../src/components/common/display/DetailField/DetailField', (
   };
 });
 
-jest.mock('../../../../src/components/common/display/TagList/TagList', () => {
+jest.mock('@/src/components/common/display/TagList/TagList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -268,7 +268,7 @@ jest.mock('../../../../src/components/common/display/TagList/TagList', () => {
 });
 
 jest.mock(
-  '../../../../src/components/features/comments/CommentableDetailField/CommentableDetailField',
+  '@/src/components/features/comments/CommentableDetailField/CommentableDetailField',
   () => {
     const { Text } = require('react-native');
     return {
@@ -280,7 +280,7 @@ jest.mock(
   },
 );
 
-jest.mock('../../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -302,7 +302,7 @@ jest.mock('../../../../src/components/features/notes/NoteManager', () => {
   };
 });
 
-jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -322,7 +322,7 @@ jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoMan
   };
 });
 
-jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -332,7 +332,7 @@ jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBackli
   };
 });
 
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
@@ -344,8 +344,8 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-import ChoiceDetailScreen from '../../../../src/screens/narrative-elements/choices/ChoiceDetailScreen';
-import { withSilencedConsole } from '../../../helpers/silenceConsole';
+import ChoiceDetailScreen from '@/src/screens/narrative-elements/choices/ChoiceDetailScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

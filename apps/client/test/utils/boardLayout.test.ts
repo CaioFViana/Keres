@@ -17,7 +17,7 @@ import {
   BOARD_NODE_WIDTH,
   BOARD_NOTE_HEIGHT,
   BOARD_NOTE_WIDTH,
-} from '../../src/utils/boardLayout';
+} from '@/src/utils/boardLayout';
 
 it('grows the drawing past the minimum when a pin is near the edge', () => {
   const empty = boardCanvasSize([]);

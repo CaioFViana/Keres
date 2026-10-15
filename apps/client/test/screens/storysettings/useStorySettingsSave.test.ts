@@ -10,36 +10,36 @@ jest.mock('@react-navigation/native', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../../src/db', () => ({ useDrizzle: () => ({}) }));
-jest.mock('../../../src/hooks/useAsyncOperation', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: () => ({
     updateStory: (...args: unknown[]) => mockUpdateStory(...args),
   }),
 }));
-jest.mock('../../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   syncEngine: { syncStoryNow: (...args: unknown[]) => mockSyncStoryNow(...args) },
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: () => ({
     selectedStory: { id: 'story-1', allowReaderComments: false },
     setSelectedStory: (...args: unknown[]) => mockSetSelectedStory(...args),
   }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useStorySettingsSave } from '../../../src/screens/storysettings/useStorySettingsSave';
+import { useStorySettingsSave } from '@/src/screens/storysettings/useStorySettingsSave';
 
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});

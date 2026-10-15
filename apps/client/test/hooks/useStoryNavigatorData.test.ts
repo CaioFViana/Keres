@@ -1,30 +1,30 @@
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   __esModule: true,
   createItemService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/EffectService', () => ({
   __esModule: true,
   createEffectService: jest.fn(),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     useEntityInitialLoad: (load: () => Promise<void>) =>
@@ -35,14 +35,14 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryNavigatorData } from '../../src/hooks/useStoryNavigatorData';
-import { createChoiceCheckGroupService } from '../../src/services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../src/services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '../../src/services/storymanagement/ChoiceService';
-import { createEffectService } from '../../src/services/storymanagement/EffectService';
-import { createItemService } from '../../src/services/storymanagement/ItemService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useStoryNavigatorData } from '@/src/hooks/useStoryNavigatorData';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const sceneService = { getAllByStoryId: jest.fn().mockResolvedValue([{ id: 'scene' }]) };
 

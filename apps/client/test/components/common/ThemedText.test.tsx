@@ -1,4 +1,4 @@
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       text: '#111111',
@@ -12,8 +12,8 @@ jest.mock('../../../src/theme', () => ({
 
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import ThemedText from '../../../src/components/common/display/ThemedText/ThemedText';
-import { typography } from '../../../src/theme/tokens';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import { typography } from '@/src/theme/tokens';
 
 const styleOf = (view: Awaited<ReturnType<typeof render>>, text: string) =>
   StyleSheet.flatten(view.getByText(text).props.style);

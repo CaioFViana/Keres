@@ -1,5 +1,5 @@
-import type { ServerSelect } from '../db/schemas/servers';
-import { fetchVerificationStatus } from '../services/AgeVerificationApiService';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import { fetchVerificationStatus } from '@/src/services/AgeVerificationApiService';
 import type { KeresAuthSuccess } from './keresServerAuth';
 
 /**

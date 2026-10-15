@@ -8,11 +8,11 @@ const mockService = {
   resolveKeepServerAndCloneBoard: jest.fn(async () => undefined),
   dismissConflict: jest.fn(async () => undefined),
 };
-jest.mock('../../src/services/SyncConflictService', () => ({
+jest.mock('@/src/services/SyncConflictService', () => ({
   createSyncConflictService: () => mockService,
 }));
 
-import { useSyncConflictStore } from '../../src/state/syncConflictStore';
+import { useSyncConflictStore } from '@/src/state/syncConflictStore';
 
 const store = () => useSyncConflictStore.getState();
 const db = {} as never;

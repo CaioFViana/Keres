@@ -48,7 +48,7 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
   useRoute: () => ({ params: mockRouteParams }),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
@@ -223,34 +223,34 @@ jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () 
     return react.createElement(native.Text, { testID: 'seealso-manager' }, 'seealso');
   },
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityFormSecondaryDraft', () => ({
+jest.mock('@/src/hooks/useEntityFormSecondaryDraft', () => ({
   __esModule: true,
   useEntityFormSecondaryDraft: () => ({
     persistSecondaryDraft: jest.fn(),
     clearSecondaryDraft: jest.fn(),
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { error: '#f00', primaryContainer: '#eef' } }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) => (entity === 'Item' ? mockItemCopy : mockSceneCopy),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     agree: (_entity: string, forms: { masculine: string }) => forms.masculine,
@@ -261,24 +261,24 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-jest.mock('../../../src/screens/itemJourneys/useItemJourneyFormResources', () => ({
+jest.mock('@/src/screens/itemJourneys/useItemJourneyFormResources', () => ({
   __esModule: true,
   useItemJourneyFormResources: (...args: unknown[]) => mockUseFormResources(...args),
 }));
-jest.mock('../../../src/screens/itemJourneys/useItemJourneyFormState', () => ({
+jest.mock('@/src/screens/itemJourneys/useItemJourneyFormState', () => ({
   __esModule: true,
   useItemJourneyFormState: (...args: unknown[]) => mockUseFormState(...args),
 }));
-jest.mock('../../../src/screens/itemJourneys/useItemJourneyFormAssociations', () => ({
+jest.mock('@/src/screens/itemJourneys/useItemJourneyFormAssociations', () => ({
   __esModule: true,
   useItemJourneyFormAssociations: (...args: unknown[]) => mockUseFormAssociations(...args),
 }));
-jest.mock('../../../src/screens/itemJourneys/useItemJourneyFormActions', () => ({
+jest.mock('@/src/screens/itemJourneys/useItemJourneyFormActions', () => ({
   __esModule: true,
   useItemJourneyFormActions: (...args: unknown[]) => mockUseFormActions(...args),
 }));
 
-import ItemJourneyFormScreen from '../../../src/screens/itemJourneys/ItemJourneyFormScreen';
+import ItemJourneyFormScreen from '@/src/screens/itemJourneys/ItemJourneyFormScreen';
 
 const freshFormState = () => ({
   currentItemJourneyId: null as string | null,

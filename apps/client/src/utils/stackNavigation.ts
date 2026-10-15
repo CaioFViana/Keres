@@ -1,4 +1,4 @@
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 
 interface NavigationStateLike {
   index: number;

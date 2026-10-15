@@ -2,10 +2,10 @@
  * @jest-environment node
  */
 import { AttributeType } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import { createStoryContentMetricsService } from '../../src/services/storymanagement/StoryContentMetricsService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createStoryContentMetricsService } from '@/src/services/storymanagement/StoryContentMetricsService';
+import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

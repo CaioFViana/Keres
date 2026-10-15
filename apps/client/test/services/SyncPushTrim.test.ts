@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/utils/syncUtils', () => {
-  const actual = jest.requireActual('../../src/utils/syncUtils');
+jest.mock('@/src/utils/syncUtils', () => {
+  const actual = jest.requireActual('@/src/utils/syncUtils');
   return {
     ...actual,
     trimSyncedOperationLogs: jest.fn((...args: unknown[]) =>
@@ -11,12 +11,12 @@ jest.mock('../../src/utils/syncUtils', () => {
   };
 });
 
-import * as schema from '../../src/db/schema';
-import type { OperationLogSelect } from '../../src/db/schema';
-import { SyncPush } from '../../src/services/sync/SyncPush';
-import type { SyncNotifier } from '../../src/services/sync/SyncNotifier';
-import { trimSyncedOperationLogs } from '../../src/utils/syncUtils';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { SyncPush } from '@/src/services/sync/SyncPush';
+import type { SyncNotifier } from '@/src/services/sync/SyncNotifier';
+import { trimSyncedOperationLogs } from '@/src/utils/syncUtils';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

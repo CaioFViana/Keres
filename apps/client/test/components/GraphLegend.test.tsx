@@ -1,5 +1,5 @@
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { text: '#111', textSecondary: '#555', surface: '#fff', border: '#ddd' },
   }),
@@ -7,7 +7,7 @@ jest.mock('../../src/theme', () => ({
 
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import GraphLegend from '../../src/components/features/graphs/GraphLegend/GraphLegend';
+import GraphLegend from '@/src/components/features/graphs/GraphLegend/GraphLegend';
 
 const ITEMS = [
   { id: 'a', label: 'Friends', color: '#ff0000' },

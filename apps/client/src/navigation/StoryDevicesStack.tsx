@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { HelpIndexScreen } from '../screens/help/HelpIndexScreen';
-import { HelpPageScreen } from '../screens/help/HelpPageScreen';
-import { storyDeviceLibrary } from '../storyDevices/library';
+import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
+import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
+import { storyDeviceLibrary } from '@/src/storyDevices/library';
 
 export type StoryDevicesStackParamList = {
   DeviceIndex: undefined;

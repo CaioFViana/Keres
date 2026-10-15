@@ -1,9 +1,9 @@
 import { MAX_CANVAS_OVERLAY_LABEL_LENGTH } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import OverlaySheet from '../../src/components/features/graphs/CanvasOverlay/OverlaySheet';
+import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/OverlaySheet';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#111',
@@ -17,13 +17,13 @@ jest.mock('../../src/theme', () => ({
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock(
-  '../../src/components/layout/ResponsiveModal/ResponsiveModal',
+  '@/src/components/layout/ResponsiveModal/ResponsiveModal',
   () =>
     function MockResponsiveModal({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
     },
 );
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -32,7 +32,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => {
+jest.mock('@/src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -50,7 +50,7 @@ jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput'
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
-jest.mock('../../src/components/common/forms/FormSwitchField/FormSwitchField', () => {
+jest.mock('@/src/components/common/forms/FormSwitchField/FormSwitchField', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -69,7 +69,7 @@ jest.mock('../../src/components/common/forms/FormSwitchField/FormSwitchField', (
     ),
   };
 });
-jest.mock('../../src/components/common/inputs/IconPickerInput/IconPickerInput', () => {
+jest.mock('@/src/components/common/inputs/IconPickerInput/IconPickerInput', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     __esModule: true,

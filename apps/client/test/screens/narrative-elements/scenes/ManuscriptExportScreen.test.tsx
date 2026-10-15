@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
-import type { ChapterSelect, LocationSelect, SceneSelect } from '../../../../src/db/schema';
-import type { ManuscriptExportSettings } from '../../../../src/components/features/manuscript/export/manuscriptExportSettings';
-import ManuscriptExportScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptExportScreen';
+import type { ChapterSelect, LocationSelect, SceneSelect } from '@/src/db/schema';
+import type { ManuscriptExportSettings } from '@/src/components/features/manuscript/export/manuscriptExportSettings';
+import ManuscriptExportScreen from '@/src/screens/narrative-elements/scenes/ManuscriptExportScreen';
 
 const mockGoBack = jest.fn();
 const mockExportManuscript = jest.fn();
@@ -47,17 +47,17 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: jest.fn(), goBack: mockGoBack }),
 }));
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = {
@@ -75,8 +75,8 @@ jest.mock('../../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/storymanagement/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: async () => mockLocations }),
 }));
@@ -85,7 +85,7 @@ const mockLoadManuscriptPages = jest.fn();
 const mockLoadManuscriptCover = jest.fn(async (..._args: unknown[]) => null as unknown);
 let mockStoryCover: string | null = null;
 let mockPageBytes = new Map<string, number[]>();
-jest.mock('../../../../src/services/storymanagement/ManuscriptPagesService', () => ({
+jest.mock('@/src/services/storymanagement/ManuscriptPagesService', () => ({
   __esModule: true,
   loadManuscriptPages: (...args: unknown[]) => mockLoadManuscriptPages(...args),
   loadManuscriptCover: (...args: unknown[]) => mockLoadManuscriptCover(...args),
@@ -94,7 +94,7 @@ jest.mock('../../../../src/services/storymanagement/ManuscriptPagesService', () 
 let mockHasMusic = false;
 let mockHasSongs = false;
 const mockLoadManuscriptMusic = jest.fn();
-jest.mock('../../../../src/services/storymanagement/ManuscriptMusicService', () => ({
+jest.mock('@/src/services/storymanagement/ManuscriptMusicService', () => ({
   __esModule: true,
   loadManuscriptMusic: (...args: unknown[]) => mockLoadManuscriptMusic(...args),
   storyMusicFacts: async () => ({ hasMusic: mockHasMusic, hasSungSongs: mockHasSongs }),
@@ -106,23 +106,23 @@ jest.mock('../../../../src/services/storymanagement/ManuscriptMusicService', () 
         })
       : [...scenes],
 }));
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: mockArcs }),
 }));
 
-jest.mock('../../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
 
 const mockLoadChoiceAnnotations = jest.fn(async () => new Map());
-jest.mock('../../../../src/hooks/useManuscriptData', () => ({
+jest.mock('@/src/hooks/useManuscriptData', () => ({
   __esModule: true,
   useManuscriptData: () => ({
     ...mockManuscriptData,
@@ -131,7 +131,7 @@ jest.mock('../../../../src/hooks/useManuscriptData', () => ({
 }));
 
 jest.mock(
-  '../../../../src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions',
+  '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions',
   () => ({
     __esModule: true,
     default: (props: unknown) => {
@@ -141,7 +141,7 @@ jest.mock(
   }),
 );
 
-jest.mock('../../../../src/components/features/manuscript/export/manuscriptExport', () => ({
+jest.mock('@/src/components/features/manuscript/export/manuscriptExport', () => ({
   __esModule: true,
   MANUSCRIPT_EXPORT_FORMATS: ['docx', 'pdf', 'epub', 'html', 'md', 'txt'],
   SCREENPLAY_EXPORT_FORMATS: ['fountain', 'screenplay-pdf'],
@@ -151,7 +151,7 @@ jest.mock('../../../../src/components/features/manuscript/export/manuscriptExpor
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -198,7 +198,7 @@ jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer
   };
 });
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

@@ -1,5 +1,5 @@
 import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
-import type { AppDrizzleTransaction } from '../../../db';
+import type { AppDrizzleTransaction } from '@/src/db';
 
 /** Shared transaction state for the ordered SQLite story-package import phases. */
 export interface SQLiteStoryPackageImportContext {

@@ -7,19 +7,16 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 const mockGetValuesForEntity = jest.fn();
 
-jest.mock('../../../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ getValuesForEntity: mockGetValuesForEntity }),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { StorySchemaField } from '@keres/shared';
-import { useSceneFormState } from '../../../../src/screens/narrative-elements/scenes/useSceneFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '../../../../src/services/EditorDraftService';
-import type { SceneService } from '../../../../src/services/storymanagement/SceneService';
-import { createTestDatabase, type TestDatabase } from '../../../helpers/testDb';
+import { useSceneFormState } from '@/src/screens/narrative-elements/scenes/useSceneFormState';
+import { resetEditorDraftDbForTests, setEditorDraftDb } from '@/src/services/EditorDraftService';
+import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

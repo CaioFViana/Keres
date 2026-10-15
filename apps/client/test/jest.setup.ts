@@ -222,7 +222,7 @@ jest.mock('@shopify/react-native-skia', () => {
 // Every canvas export asks SVG or PNG through a modal host that does not exist under Jest. Screens
 // and hooks resolve the choice through this module, so the default answer is SVG; a test that cares
 // about the choice (or a cancel) overrides it per case.
-jest.mock('../src/utils/exportFormatPrompt', () => ({
+jest.mock('@/src/utils/exportFormatPrompt', () => ({
   __esModule: true,
   chooseExportFormat: jest.fn(async () => 'svg'),
 }));
@@ -261,14 +261,14 @@ jest.mock('react-native-enriched-html', () => {
 // A screen's tour hook reads the navigation container's focus. Screens are rendered here without
 // one, and the tours have their own suites, so by default the hook does nothing; a suite that tests
 // it (or a screen's wiring of it) says so with its own mock or `jest.unmock`.
-jest.mock('../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: () => undefined,
 }));
 
 // The minimum time a legal text must stay open before "I agree" works would make every suite that accepts one wait; the
 // suites of the gate itself (`TermsModal.test.tsx`) bring the real value back.
-jest.mock('../src/legal/readingGate', () => ({
+jest.mock('@/src/legal/readingGate', () => ({
   __esModule: true,
   MIN_READ_SECONDS: 0,
 }));

@@ -11,24 +11,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import SharePackModal from '../../components/features/packs/SharePackModal/SharePackModal';
-import { useDrizzle } from '../../db';
+import SharePackModal from '@/src/components/features/packs/SharePackModal/SharePackModal';
+import { useDrizzle } from '@/src/db';
 import type { PackVisibility } from '@keres/shared';
-import type { ServerSelect } from '../../db/schema';
-import { packApiService } from '../../services/PackApiService';
-import { createServerService } from '../../services/ServerService';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
-import { packExtrasChips } from '../../utils/packChips';
-import { useNotificationStore } from '../../state/notificationStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { layout } from '../../theme/layout';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { isServerless } from '../../utils/clientFlavor';
+import type { ServerSelect } from '@/src/db/schema';
+import { packApiService } from '@/src/services/PackApiService';
+import { createServerService } from '@/src/services/ServerService';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { createPackService, type PackSummary } from '@/src/services/storymanagement/PackService';
+import { packExtrasChips } from '@/src/utils/packChips';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { isServerless } from '@/src/utils/clientFlavor';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 /**

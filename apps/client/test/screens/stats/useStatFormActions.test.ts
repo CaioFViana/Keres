@@ -1,6 +1,6 @@
 const mockAlert = jest.fn();
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -8,9 +8,9 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useStatFormActions } from '../../../src/screens/stats/useStatFormActions';
-import type { StatFormState } from '../../../src/screens/stats/useStatFormState';
-import type { StatService } from '../../../src/services/storymanagement/StatService';
+import { useStatFormActions } from '@/src/screens/stats/useStatFormActions';
+import type { StatFormState } from '@/src/screens/stats/useStatFormState';
+import type { StatService } from '@/src/services/storymanagement/StatService';
 
 const createState = (overrides: Partial<StatFormState> = {}): StatFormState =>
   ({

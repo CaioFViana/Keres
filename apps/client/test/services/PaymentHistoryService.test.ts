@@ -1,11 +1,11 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import type { ServerSelect } from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
+import type { ServerSelect } from '@/src/db/schema';
 
 const mockGetHistory = jest.fn();
-jest.mock('../../src/services/PaymentApiService', () => ({
+jest.mock('@/src/services/PaymentApiService', () => ({
   __esModule: true,
   paymentApi: { getHistory: (...args: unknown[]) => mockGetHistory(...args) },
 }));
@@ -13,10 +13,10 @@ jest.mock('../../src/services/PaymentApiService', () => ({
 import {
   createPaymentHistoryService,
   PAYMENT_HISTORY_CHANGED,
-} from '../../src/services/PaymentHistoryService';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
-import { entityBase } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/PaymentHistoryService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { entityBase } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

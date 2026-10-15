@@ -2,12 +2,12 @@ import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import { createChoiceCheckGroupService } from '../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../services/storymanagement/ChoiceCheckService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { AppAlert } from '../utils/AppAlert';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 type CheckChanges = Partial<
   Omit<

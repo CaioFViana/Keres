@@ -3,7 +3,7 @@ import { entityListGuides } from './entityListGuides';
 import { songGuides } from './songGuides';
 import { writingGuides } from './writingGuides';
 import type { Guide, GuideDrawerId } from './types';
-import { isServerless } from '../utils/clientFlavor';
+import { isServerless } from '@/src/utils/clientFlavor';
 
 const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string[] =>
   routes.map((route) => drawerAnchorId(drawerId, route));

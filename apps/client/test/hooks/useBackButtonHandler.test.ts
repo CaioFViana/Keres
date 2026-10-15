@@ -12,11 +12,11 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: (effect: () => void) => effect(),
   DrawerActions: { closeDrawer: () => ({ type: 'CLOSE_DRAWER' }) },
 }));
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { text: '#111' } }),
 }));
@@ -24,25 +24,25 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: { showContextualHelp: boolean }) => unknown) =>
     selector({ showContextualHelp: true }),
 }));
 jest.mock(
-  '../../src/components/common/navigation/NavigationBackButton/NavigationBackButton',
+  '@/src/components/common/navigation/NavigationBackButton/NavigationBackButton',
   () => 'NavigationBackButton',
 );
 jest.mock(
-  '../../src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton',
+  '@/src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton',
   () => 'NavigationDrawerButton',
 );
 
 import { renderHook } from '@testing-library/react-native';
 import { BackHandler, Platform } from 'react-native';
-import { useBackButtonHandler } from '../../src/hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
-import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });

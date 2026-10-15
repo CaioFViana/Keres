@@ -4,7 +4,7 @@ import {
   groupScenesByChapter,
   type ChapterWithScenes,
   type Edge,
-} from '../../src/services/storymanagement/storyTypeConversion';
+} from '@/src/services/storymanagement/storyTypeConversion';
 
 const chapter = (id: string, index: number, name = `Capítulo ${index}`) =>
   ({ id, index, name }) as any;

@@ -13,13 +13,13 @@ import {
   isEditorDraftDbBound,
   readBoundEditorDraft,
   writeEditorDraftNow,
-} from '../services/EditorDraftService';
+} from '@/src/services/EditorDraftService';
 import {
   clearAllCanvasDrafts,
   clearCanvasDraft,
   readCanvasDraft,
   writeCanvasDraftNow,
-} from '../services/canvasDraftPersistence';
+} from '@/src/services/canvasDraftPersistence';
 
 /**
  * Unsaved drawing of the sketch being edited. In memory it holds the decoded documents (the

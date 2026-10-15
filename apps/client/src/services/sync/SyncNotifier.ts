@@ -1,5 +1,5 @@
-import { useNotificationStore } from '../../state/notificationStore';
-import i18n from '../../utils/i18n';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import i18n from '@/src/utils/i18n';
 
 /**
  * Presentation boundary for synchronization. The engine reports what happened; this adapter decides

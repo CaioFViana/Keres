@@ -6,10 +6,10 @@ import type { ChapterType } from '@keres/shared';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { ThemeColors } from '../../../../theme';
-import { typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
+import type { ThemeColors } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**

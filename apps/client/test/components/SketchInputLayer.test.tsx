@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { PanResponder } from 'react-native';
-import SketchInputLayer from '../../src/components/features/sketches/SketchInputLayer';
+import SketchInputLayer from '@/src/components/features/sketches/SketchInputLayer';
 
 type LayerProps = Parameters<typeof SketchInputLayer>[0];
 

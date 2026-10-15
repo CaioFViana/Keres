@@ -1,7 +1,7 @@
 import type { SwitchQuote } from '@keres/shared';
 import { useEffect, useState } from 'react';
-import type { ServerSelect } from '../db/schema';
-import { getSwitchQuote } from '../services/PaymentService';
+import type { ServerSelect } from '@/src/db/schema';
+import { getSwitchQuote } from '@/src/services/PaymentService';
 
 /**
  * What changing to the chosen plan would do to the time left on the current one, asked of the server (which is

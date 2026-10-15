@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import SyncInitializer from '../../src/components/features/app/SyncInitializer';
+import SyncInitializer from '@/src/components/features/app/SyncInitializer';
 
 // A stable `t` like the real i18next one: a fresh closure per render would change the
 // reconciler's identity and fire effects the production app never refires.
@@ -10,7 +10,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockDrizzle = {};
-jest.mock('../../src/db', () => ({ useDrizzle: () => mockDrizzle }));
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDrizzle }));
 
 const mockApiClient = {
   setTokenProvider: jest.fn(),
@@ -18,7 +18,7 @@ const mockApiClient = {
   setBaseUrl: jest.fn(),
   get: jest.fn(async (): Promise<any> => null),
 };
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   // Mock factories run before this module's consts initialize: every mock value must be read
   // lazily (a getter/closure), never captured into the factory's return value.
@@ -34,7 +34,7 @@ jest.mock('../../src/services/apiClient', () => ({
 
 const mockAuthTokenManager = { name: 'auth-token-manager' };
 const mockSetAuthDb = jest.fn();
-jest.mock('../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   get authTokenManager() {
     return mockAuthTokenManager;
   },
@@ -42,14 +42,14 @@ jest.mock('../../src/services/AuthTokenManager', () => ({
 }));
 
 const mockSyncFriendships = jest.fn(async () => {});
-jest.mock('../../src/services/FriendshipService', () => ({
+jest.mock('@/src/services/FriendshipService', () => ({
   createFriendshipService: () => ({ syncFriendshipsWithServer: mockSyncFriendships }),
 }));
 
 const mockGetAllServers = jest.fn(async () => [] as unknown[]);
 const mockRefreshToken = jest.fn(async (server: unknown) => server);
 const mockGetServerById = jest.fn(async (_id: string) => null as unknown);
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: mockGetAllServers,
     refreshServerToken: mockRefreshToken,
@@ -66,26 +66,26 @@ const mockRealtimeClass = jest.fn(() => ({
   subscribeToStory: mockRtSubscribe,
 }));
 const mockPlanUsageWatcher = jest.fn();
-jest.mock('../../src/hooks/usePlanUsageWatcher', () => ({
+jest.mock('@/src/hooks/usePlanUsageWatcher', () => ({
   usePlanUsageWatcher: (...args: unknown[]) => mockPlanUsageWatcher(...args),
 }));
 const mockPaymentDueWatcher = jest.fn();
-jest.mock('../../src/hooks/usePaymentDueWatcher', () => ({
+jest.mock('@/src/hooks/usePaymentDueWatcher', () => ({
   usePaymentDueWatcher: (...args: unknown[]) => mockPaymentDueWatcher(...args),
 }));
-jest.mock('../../src/services/ServerRealtimeService', () => ({
+jest.mock('@/src/services/ServerRealtimeService', () => ({
   get ServerRealtimeService() {
     return mockRealtimeClass;
   },
 }));
 
 const mockGetAllStories = jest.fn(async () => [] as unknown[]);
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: () => ({ getAllStories: mockGetAllStories }),
 }));
 
 const mockDropRevoked = jest.fn(async () => [] as string[]);
-jest.mock('../../src/services/sync/dropRevokedServerStories', () => ({
+jest.mock('@/src/services/sync/dropRevokedServerStories', () => ({
   dropRevokedServerStories: (...args: unknown[]) => (mockDropRevoked as jest.Mock)(...args),
 }));
 
@@ -103,14 +103,14 @@ const mockSyncEngine = {
   activateStory: jest.fn(async () => {}),
   startSync: jest.fn(),
 };
-jest.mock('../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   get syncEngine() {
     return mockSyncEngine;
   },
 }));
 
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) => {
     const state = { showNotification: mockShowNotification };
     return selector ? selector(state) : state;
@@ -119,12 +119,12 @@ jest.mock('../../src/state/notificationStore', () => ({
 
 const mockFetchStories = jest.fn();
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('../../src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
 
-jest.mock('../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) => {
     const state = { fetchStories: mockFetchStories };
     return selector ? selector(state) : state;
@@ -134,13 +134,13 @@ jest.mock('../../src/state/storyListStore', () => ({
 const mockStoryState: {
   current: { selectedStory: { id: string; serverId: string | null } | null };
 } = { current: { selectedStory: null } };
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (state: unknown) => unknown) =>
     selector ? selector(mockStoryState.current) : mockStoryState.current,
 }));
 
 const mockRefreshConflicts = jest.fn(async () => {});
-jest.mock('../../src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/syncConflictStore', () => ({
   useSyncConflictStore: { getState: () => ({ refresh: mockRefreshConflicts }) },
 }));
 
@@ -159,7 +159,7 @@ const mockUserSettings: {
     setActiveServer: jest.fn(),
   },
 };
-jest.mock('../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/userSettingsStore', () => {
   const hook = (selector?: (state: unknown) => unknown) =>
     selector ? selector(mockUserSettings.current) : mockUserSettings.current;
   return {
@@ -169,7 +169,7 @@ jest.mock('../../src/state/userSettingsStore', () => {
 
 const mockEEOn = jest.fn();
 const mockEEOff = jest.fn();
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   entityEventEmitter: {
     on: (...args: unknown[]) => mockEEOn(...args),
     off: (...args: unknown[]) => mockEEOff(...args),
@@ -177,7 +177,7 @@ jest.mock('../../src/utils/EventEmitter', () => ({
 }));
 
 const mockInitialLoad = jest.fn();
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => ({
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => ({
   useEntityInitialLoad: (...args: unknown[]) => mockInitialLoad(...args),
 }));
 

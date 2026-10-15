@@ -1,13 +1,18 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   createNoteRelationService,
   type SaveNoteRelation,
-} from '../../src/services/storymanagement/NoteRelationService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/NoteRelationService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The note-relation service's entity-side read, update path and delete edge.

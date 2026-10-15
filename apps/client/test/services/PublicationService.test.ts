@@ -1,14 +1,14 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/PublicationApiService', () => ({
+jest.mock('@/src/services/PublicationApiService', () => ({
   __esModule: true,
   publicationApiService: {
     listVisible: jest.fn(),
   },
 }));
 
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: {
     // A predictable format so the test can assert the notice's content without depending
@@ -19,11 +19,11 @@ jest.mock('../../src/utils/i18n', () => ({
 }));
 
 import { eq } from 'drizzle-orm';
-import { servers, stories, storyPublications } from '../../src/db/schema';
-import { publicationApiService } from '../../src/services/PublicationApiService';
-import { createPublicationService } from '../../src/services/PublicationService';
-import { useNotificationStore } from '../../src/state/notificationStore';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { servers, stories, storyPublications } from '@/src/db/schema';
+import { publicationApiService } from '@/src/services/PublicationApiService';
+import { createPublicationService } from '@/src/services/PublicationService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const SERVER_ID = 'server-1';
 const STORY_ID = 'story-1';

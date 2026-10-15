@@ -4,7 +4,7 @@ import {
   findAmbiguousNameOccurrences,
   type MentionableEntity,
   splitTextIntoMentionSegments,
-} from '../../src/utils/entityMentions';
+} from '@/src/utils/entityMentions';
 
 /**
  * The matching rule is the whole feature. Auto-linking has no syntax and no per-mention override,

@@ -1,34 +1,34 @@
 /** @jest-environment node */
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   createKeresAxiosInstance: jest.fn(),
   isOfflineError: jest.fn(() => false),
 }));
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
-jest.mock('../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: { deleteOwnAccount: jest.fn() },
 }));
-jest.mock('../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   authTokenManager: { clearAuthForServer: jest.fn() },
 }));
 
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createKeresAxiosInstance } from '../../src/services/apiClient';
-import { authTokenManager } from '../../src/services/AuthTokenManager';
+import * as schema from '@/src/db/schema';
+import { createKeresAxiosInstance } from '@/src/services/apiClient';
+import { authTokenManager } from '@/src/services/AuthTokenManager';
 import {
   AccountDeletionCleanupError,
   deleteServerAccount,
-} from '../../src/services/DeleteAccountService';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import { createServerService } from '../../src/services/ServerService';
-import { userApiService } from '../../src/services/UserApiService';
-import { useStoryListStore } from '../../src/state/storyListStore';
-import { useStoryStore } from '../../src/state/storyStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/DeleteAccountService';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createServerService } from '@/src/services/ServerService';
+import { userApiService } from '@/src/services/UserApiService';
+import { useStoryListStore } from '@/src/state/storyListStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const SERVER_ID = 'server';
 const SERVER_URL = 'https://server.example';

@@ -1,11 +1,11 @@
 import React from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
-import { KeyboardHandledContext, useKeyboardOverlap } from '../../../hooks/useKeyboardOverlap';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../theme';
-import { radius, space } from '../../../theme/tokens';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { KeyboardHandledContext, useKeyboardOverlap } from '@/src/hooks/useKeyboardOverlap';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useTheme } from '@/src/theme';
+import { radius, space } from '@/src/theme/tokens';
 
 /** The padding of the surface: one of a few steps, instead of a number chosen by each modal. */
 export type ModalInset = 'none' | 'compact' | 'regular' | 'roomy' | 'sheet';

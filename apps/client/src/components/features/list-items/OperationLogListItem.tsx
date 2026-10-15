@@ -8,14 +8,14 @@ import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { OperationLogSelect } from '../../../db/schema';
-import { useEntityName } from '../../../hooks/useEntityName';
-import { useUserDisplayName } from '../../../hooks/useUserDisplayName'; // Import the new hook
-import { useTheme, type ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { typography } from '../../../theme/tokens';
-import { isLinkEntityType } from '../../../utils/entityTypeBadge';
-import { truncate } from '../../../utils/stringUtils';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { useEntityName } from '@/src/hooks/useEntityName';
+import { useUserDisplayName } from '@/src/hooks/useUserDisplayName'; // Import the new hook
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { isLinkEntityType } from '@/src/utils/entityTypeBadge';
+import { truncate } from '@/src/utils/stringUtils';
 
 interface OperationLogListItemProps {
   log: OperationLogSelect;

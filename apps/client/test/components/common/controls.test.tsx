@@ -1,11 +1,11 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, View } from 'react-native';
-import Button from '../../../src/components/common/controls/Button/Button';
-import ThemedSwitch from '../../../src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import TriStateToggleButton from '../../../src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import TriStateToggleButton from '@/src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({

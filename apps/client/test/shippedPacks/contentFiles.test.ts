@@ -3,8 +3,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildPack } from '../../scripts/lib/buildShippedPack';
-import { SHIPPED_PACKS } from '../../scripts/lib/shippedPackDefinitions';
+import { buildPack } from '@/scripts/lib/buildShippedPack';
+import { SHIPPED_PACKS } from '@/scripts/lib/shippedPackDefinitions';
 
 /**
  * The committed content files must be what the definitions produce.

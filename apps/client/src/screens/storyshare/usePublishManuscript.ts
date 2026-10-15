@@ -13,17 +13,17 @@ import {
   isScreenplayFormat,
   styleForExport,
   type ManuscriptExportSettings,
-} from '../../components/features/manuscript/export/manuscriptExportSettings';
-import type { AppDrizzleClient } from '../../db';
-import type { StorySelect } from '../../db/schema';
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StorySelect } from '@/src/db/schema';
 import type {
   PublishManuscriptOptions,
   PublishReaderOptions,
-} from '../../services/PublicationApiService';
-import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { storyMusicFacts } from '../../services/storymanagement/ManuscriptMusicService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { createStoryArcService } from '../../services/storymanagement/StoryArcService';
+} from '@/src/services/PublicationApiService';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { storyMusicFacts } from '@/src/services/storymanagement/ManuscriptMusicService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
 
 /** A work of the story the person can release on its own. */
 export type PublishableArc = {

@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useExportFormatPromptStore } from '../../../state/exportFormatPromptStore';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { typography } from '../../../theme/tokens';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { useExportFormatPromptStore } from '@/src/state/exportFormatPromptStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 /**
  * The export chooser every canvas shares: an .svg (the vector drawing, to continue elsewhere) or a

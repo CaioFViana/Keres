@@ -1,14 +1,14 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { useEffect, useState } from 'react';
-import ManuscriptExportOptions from '../../../src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
+import ManuscriptExportOptions from '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import {
   defaultExportSettings,
   type ManuscriptExportSettings,
-} from '../../../src/components/features/manuscript/export/manuscriptExportSettings';
-import { songPrintOf } from '../../../src/components/features/manuscript/export/songPrintOf';
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
+import { songPrintOf } from '@/src/components/features/manuscript/export/songPrintOf';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {

@@ -5,11 +5,11 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
+jest.mock('@/src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useConfirmDelete } from '../../src/hooks/useConfirmDelete';
-import { AppAlert } from '../../src/utils/AppAlert';
+import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 const alert = (AppAlert as unknown as { alert: jest.Mock }).alert;
 

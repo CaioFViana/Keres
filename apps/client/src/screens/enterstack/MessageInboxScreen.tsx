@@ -6,16 +6,16 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import ConversationListItem from '../../components/features/messages/ConversationListItem';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useMessageInbox } from '../../hooks/useMessageInbox';
-import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
-import type { InboxEntry, MessageContact } from '../../services/MessageService';
-import { useUnseenMessagesStore } from '../../state/unseenMessagesStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { type ConversationPeer, conversationKey } from '../../utils/conversationKey';
+import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useMessageInbox } from '@/src/hooks/useMessageInbox';
+import type { FriendshipStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { InboxEntry, MessageContact } from '@/src/services/MessageService';
+import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { type ConversationPeer, conversationKey } from '@/src/utils/conversationKey';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 type MessageInboxNavigationProp = NativeStackNavigationProp<

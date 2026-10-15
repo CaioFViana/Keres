@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useLocationMapTrajectories } from '../../src/hooks/useLocationMapTrajectories';
+import { useLocationMapTrajectories } from '@/src/hooks/useLocationMapTrajectories';
 
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
 
 const scenes = [
   { id: 's-1', chapterId: 'ch-1', index: 1, locationId: 'loc-a', isDeleted: false },
@@ -13,13 +13,13 @@ const journeys = [
   { id: 'j-1', itemId: 'item-1', sceneId: 's-1', isDeleted: false },
   { id: 'j-2', itemId: 'item-1', sceneId: 's-3', isDeleted: false },
 ];
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   createSceneService: () => ({ getAllByStoryId: async () => scenes }),
 }));
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   createChapterService: () => ({ getAllByStoryId: async () => [{ id: 'ch-1', index: 1 }] }),
 }));
-jest.mock('../../src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
   createCharacterSceneService: () => ({
     getRelationsByStoryId: async () => [
       { characterId: 'char-1', sceneId: 's-1', isDeleted: false },
@@ -28,20 +28,20 @@ jest.mock('../../src/services/storymanagement/CharacterSceneService', () => ({
     ],
   }),
 }));
-jest.mock('../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   createItemService: () => ({
     getAllByStoryId: async () => [{ id: 'item-1', name: 'Sword', isDeleted: false }],
   }),
 }));
-jest.mock('../../src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   createItemJourneyService: () => ({ getAllByStoryId: async () => journeys }),
 }));
-jest.mock('../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   createCharacterService: () => ({
     getAllByStoryId: async () => [{ id: 'char-1', name: 'Aragorn', isDeleted: false }],
   }),
 }));
-jest.mock('../../src/services/storymanagement/RouteService', () => ({
+jest.mock('@/src/services/storymanagement/RouteService', () => ({
   createRouteService: () => ({ getAllByStoryId: async () => [], getSteps: async () => [] }),
 }));
 

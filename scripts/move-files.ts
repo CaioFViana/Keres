@@ -236,10 +236,11 @@ class Workspace {
 }
 
 /** The specifier path for a resolved file, without the platform variant or extension the bundler infers. */
-function specifierBase(file: string, kind: ProbeKind): string {
+function specifierBase(file: string, kind: ProbeKind, keepVariant: boolean): string {
   if (kind === 'exact') return file;
   if (kind === 'index') return dirOf(file);
-  return stripSourceExtension(file).replace(PLATFORM_VARIANT, '');
+  const base = stripSourceExtension(file);
+  return keepVariant ? base : base.replace(PLATFORM_VARIANT, '');
 }
 
 function aliasFor(importerPkg: string | null, target: string): string | null {
@@ -264,7 +265,12 @@ function emit(
   const importerPkg = packageOf(importerNew);
   const targetPkg = packageOf(targetNew);
   const isRelative = spec.startsWith('.');
-  const base = specifierBase(targetNew, resolved.kind);
+  // A specifier that names the variant itself (`useEdgeFont.web`) is a request for that file.
+  const base = specifierBase(
+    targetNew,
+    resolved.kind,
+    PLATFORM_VARIANT.test(stripSourceExtension(spec)),
+  );
 
   if (targetPkg === SHARED_ROOT && importerPkg !== SHARED_ROOT) {
     if (spec === '@keres/shared') return null;

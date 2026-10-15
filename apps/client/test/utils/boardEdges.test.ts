@@ -1,8 +1,8 @@
 /**
  * @jest-environment node
  */
-import { boardEdgeGeometry, nodeBorderPoint } from '../../src/utils/boardEdges';
-import { boardNodeSize } from '../../src/utils/boardLayout';
+import { boardEdgeGeometry, nodeBorderPoint } from '@/src/utils/boardEdges';
+import { boardNodeSize } from '@/src/utils/boardLayout';
 
 const pin = (id: string, x: number, y: number) => ({
   id,

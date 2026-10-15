@@ -1,4 +1,4 @@
-import { normalizeLocalUsername } from '../../src/utils/localUsername';
+import { normalizeLocalUsername } from '@/src/utils/localUsername';
 
 describe('normalizeLocalUsername', () => {
   it('keeps a name as typed, without the spaces around it', () => {

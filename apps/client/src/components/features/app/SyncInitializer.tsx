@@ -1,32 +1,32 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { APP_RELEASE, canTalkToServer } from '@keres/shared';
-import { useDrizzle } from '../../../db';
+import { useDrizzle } from '@/src/db';
 import apiClient, {
   apiUrl,
   isOfflineError,
   isVerificationPendingError,
-} from '../../../services/apiClient';
-import { authTokenManager, setAuthDb } from '../../../services/AuthTokenManager';
-import { setEditorDraftDb } from '../../../services/EditorDraftService';
-import { createFriendshipService } from '../../../services/FriendshipService';
-import { createStoryInvitationService } from '../../../services/StoryInvitationService';
-import { createServerService } from '../../../services/ServerService';
-import { useFlushDraftsOnBackground } from '../../../hooks/useFlushDraftsOnBackground';
-import { usePaymentDueWatcher } from '../../../hooks/usePaymentDueWatcher';
-import { usePlanUsageWatcher } from '../../../hooks/usePlanUsageWatcher';
-import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
-import { createStoryService } from '../../../services/storymanagement/StoryService';
-import type { ServerStoryPreview } from '../../../services/SyncEngineService';
-import { syncEngine } from '../../../services/sync/appSyncEngine';
-import { dropRevokedServerStories } from '../../../services/sync/dropRevokedServerStories';
-import { useNotificationStore } from '../../../state/notificationStore';
-import { useStoryListStore } from '../../../state/storyListStore';
-import { useStoryStore } from '../../../state/storyStore'; // Import useStoryStore
-import { useSyncConflictStore } from '../../../state/syncConflictStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
+} from '@/src/services/apiClient';
+import { authTokenManager, setAuthDb } from '@/src/services/AuthTokenManager';
+import { setEditorDraftDb } from '@/src/services/EditorDraftService';
+import { createFriendshipService } from '@/src/services/FriendshipService';
+import { createStoryInvitationService } from '@/src/services/StoryInvitationService';
+import { createServerService } from '@/src/services/ServerService';
+import { useFlushDraftsOnBackground } from '@/src/hooks/useFlushDraftsOnBackground';
+import { usePaymentDueWatcher } from '@/src/hooks/usePaymentDueWatcher';
+import { usePlanUsageWatcher } from '@/src/hooks/usePlanUsageWatcher';
+import { ServerRealtimeService } from '@/src/services/ServerRealtimeService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import type { ServerStoryPreview } from '@/src/services/SyncEngineService';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryListStore } from '@/src/state/storyListStore';
+import { useStoryStore } from '@/src/state/storyStore'; // Import useStoryStore
+import { useSyncConflictStore } from '@/src/state/syncConflictStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
 
 interface SyncInitializerProps {
   children: React.ReactNode;

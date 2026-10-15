@@ -1,8 +1,8 @@
 import type { StorySchemaEntityType } from '@keres/shared';
 import { useCallback, useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
-import type { EntityOption } from '../utils/entityOptions';
-import { loadEntityOptions } from '../utils/entityOptions';
+import { useDrizzle } from '@/src/db';
+import type { EntityOption } from '@/src/utils/entityOptions';
+import { loadEntityOptions } from '@/src/utils/entityOptions';
 
 /** Options for a picker whose target type is fixed by a Story Schema field. */
 export function useEntityPickerOptions(

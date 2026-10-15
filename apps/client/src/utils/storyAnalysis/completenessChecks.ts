@@ -1,5 +1,5 @@
 import { AttributeType, decodeAttributeValue, isValidAttributeDate } from '@keres/shared';
-import type { NavigableEntityType } from '../entityNavigation';
+import type { NavigableEntityType } from '@/src/utils/entityNavigation';
 import {
   buildFinding,
   type AnalysisEntityRef,

@@ -1,6 +1,6 @@
 import { and, count, eq, type SQL } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { stories } from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import { stories } from '@/src/db/schema';
 
 /** Counts live entity rows owned by a live story, optionally with entity-specific constraints. */
 export async function countActiveStoryEntities(

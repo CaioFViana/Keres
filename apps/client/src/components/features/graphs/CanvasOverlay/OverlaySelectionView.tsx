@@ -3,8 +3,8 @@ import { canvasOverlayBounds, type CanvasOverlayType, type SpatialPoint } from '
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PanResponder, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface OverlaySelectionViewProps {
   overlay: CanvasOverlayType;

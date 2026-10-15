@@ -6,7 +6,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryFormState } from '../../../src/screens/enterstack/useStoryFormState';
+import { useStoryFormState } from '@/src/screens/enterstack/useStoryFormState';
 
 const story = {
   title: 'Existing story',

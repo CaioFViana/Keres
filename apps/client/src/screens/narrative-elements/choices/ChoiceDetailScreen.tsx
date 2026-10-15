@@ -27,30 +27,30 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../../db';
-import type { ChoiceSelect } from '../../../db/schema';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { ChoiceSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityInitialLoad,
   useEntityEventSubscriptions,
-} from '../../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../../hooks/useEntityComments';
-import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useStoryRole } from '../../../hooks/useStoryRole';
-import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
-import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { createEffectService } from '../../../services/storymanagement/EffectService';
-import { createItemService } from '../../../services/storymanagement/ItemService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { useStoryStore } from '../../../state/storyStore';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { layout } from '../../../theme/layout';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { describeChoiceCheck, describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 export type ChoiceDetailScreenParamList = {

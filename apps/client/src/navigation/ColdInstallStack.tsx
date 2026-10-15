@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ColdInstallScreen from '../screens/enterstack/ColdInstallScreen';
+import ColdInstallScreen from '@/src/screens/enterstack/ColdInstallScreen';
 
 type ColdInstallStackParamList = {
   ColdInstallScreen: undefined;

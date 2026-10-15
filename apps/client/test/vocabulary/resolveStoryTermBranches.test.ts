@@ -9,7 +9,7 @@ import {
   isStoryVocabularyEntityType,
   localeFamily,
   resolveStoryGender,
-} from '../../src/vocabulary/resolveStoryTerm';
+} from '@/src/vocabulary/resolveStoryTerm';
 
 describe('localeFamily', () => {
   it.each([

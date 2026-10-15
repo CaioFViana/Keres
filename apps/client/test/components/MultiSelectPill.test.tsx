@@ -7,9 +7,9 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import MultiSelectPill, {
   SingleSelectPill,
-} from '../../src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',

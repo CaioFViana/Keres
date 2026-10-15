@@ -1,9 +1,9 @@
 /**
  * @jest-environment node
  */
-import { createGalleryRelationService } from '../../src/services/storymanagement/GalleryRelationService';
-import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
+import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The gallery-relation reconciliation: `setOwnersForGallery` and `setGalleriesForOwner`.

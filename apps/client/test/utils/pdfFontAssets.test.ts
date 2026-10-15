@@ -36,7 +36,7 @@ async function freshMatrices(behavior: {
   }
   if (behavior.legacyError) readBase64.mockRejectedValue(behavior.legacyError);
   else readBase64.mockResolvedValue(behavior.legacyBase64 ?? '');
-  const { pdfFontMatrices } = await import('../../src/utils/pdfFontAssets');
+  const { pdfFontMatrices } = await import('@/src/utils/pdfFontAssets');
   return pdfFontMatrices as () => Promise<Matrices>;
 }
 

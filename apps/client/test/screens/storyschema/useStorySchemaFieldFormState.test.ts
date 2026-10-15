@@ -7,7 +7,7 @@ const mockTranslate = jest.fn((key: string) => key);
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockTranslate }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -19,13 +19,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { AttributeType, deriveAttributeKey } from '@keres/shared';
-import { useStorySchemaFieldFormState } from '../../../src/screens/storyschema/useStorySchemaFieldFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '../../../src/services/EditorDraftService';
-import type { StorySchemaFieldService } from '../../../src/services/storymanagement/StorySchemaFieldService';
-import { createTestDatabase, type TestDatabase } from '../../helpers/testDb';
+import { useStorySchemaFieldFormState } from '@/src/screens/storyschema/useStorySchemaFieldFormState';
+import { resetEditorDraftDbForTests, setEditorDraftDb } from '@/src/services/EditorDraftService';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

@@ -1,6 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
@@ -14,11 +14,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import type {
   MainSystemDrawerParamList,
   OperationLogStackParamList,
-} from '../../navigation/MainSystemStack'; // Use MainSystemDrawerParamList
-import { useStoryStore } from '../../state/storyStore';
-import type { ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { entityEventEmitter } from '../../utils/EventEmitter'; // Import entityEventEmitter
+} from '@/src/navigation/MainSystemStack'; // Use MainSystemDrawerParamList
+import { useStoryStore } from '@/src/state/storyStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { entityEventEmitter } from '@/src/utils/EventEmitter'; // Import entityEventEmitter
 
 // Redefine OperationLogScreenNavigationProp as CompositeNavigationProp
 export type OperationLogScreenNavigationProp = CompositeNavigationProp<

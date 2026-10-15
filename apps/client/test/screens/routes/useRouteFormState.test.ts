@@ -6,13 +6,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useRouteFormState } from '../../../src/screens/routes/useRouteFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '../../../src/services/EditorDraftService';
-import type { createRouteService } from '../../../src/services/storymanagement/RouteService';
-import { createTestDatabase, type TestDatabase } from '../../helpers/testDb';
+import { useRouteFormState } from '@/src/screens/routes/useRouteFormState';
+import { resetEditorDraftDbForTests, setEditorDraftDb } from '@/src/services/EditorDraftService';
+import type { createRouteService } from '@/src/services/storymanagement/RouteService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 type RouteService = ReturnType<typeof createRouteService>;
 

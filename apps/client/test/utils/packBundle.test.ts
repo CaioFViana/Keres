@@ -2,7 +2,7 @@ import {
   buildStoryBundleFromPacks,
   findPackConflicts,
   type NewStoryData,
-} from '../../src/utils/packBundle';
+} from '@/src/utils/packBundle';
 
 const pack = (overrides: Record<string, unknown> = {}) =>
   ({

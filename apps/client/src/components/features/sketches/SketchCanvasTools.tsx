@@ -7,10 +7,10 @@ import {
   CanvasActionBar,
   CanvasActionBarButton,
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
-import { useSketchCompact } from '../../../hooks/useSketchCompact';
-import type { SketchTool } from '../../../state/sketchToolStore';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { useSketchCompact } from '@/src/hooks/useSketchCompact';
+import type { SketchTool } from '@/src/state/sketchToolStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import SketchMenuSheet, { type SketchMenuItem } from './SketchMenuSheet';
 import {
   activeEntry,

@@ -5,14 +5,14 @@ import {
   FORM_DRAFT_FIELD,
   NEW_ENTITY_DRAFT_ID,
   useDurableFormDraft,
-} from '../../src/hooks/useDurableFormDraft';
+} from '@/src/hooks/useDurableFormDraft';
 import {
   readEditorDraft,
   resetEditorDraftDbForTests,
   setEditorDraftDb,
   writeEditorDraft,
-} from '../../src/services/EditorDraftService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/EditorDraftService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 type Fields = { name: string; description: string | null };
 

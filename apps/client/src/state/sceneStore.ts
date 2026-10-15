@@ -1,9 +1,9 @@
-import type { SceneSelect } from '../db/schema';
-import type { SceneService } from '../services/storymanagement/SceneService';
-import { createSceneService } from '../services/storymanagement/SceneService';
+import type { SceneSelect } from '@/src/db/schema';
+import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { createEntityStore } from './createEntityStore';
 import { useUserSettingsStore } from './userSettingsStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 interface SceneExtraActions {
   reorderScenes: (chapterId: string, newOrder: { id: string; newIndex: number }[]) => Promise<void>;

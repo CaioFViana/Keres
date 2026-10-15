@@ -1,11 +1,11 @@
 import { and, eq, or } from 'drizzle-orm';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import { friendships, servers } from '../db/schema';
-import { createStoryService } from '../services/storymanagement/StoryService';
-import { friendshipApiService } from '../services/FriendshipApiService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
+import { useDrizzle } from '@/src/db';
+import { friendships, servers } from '@/src/db/schema';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 const remoteUserNameCache = new Map<string, Promise<string | undefined>>();
 

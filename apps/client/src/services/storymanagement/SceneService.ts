@@ -1,19 +1,19 @@
 import type { Scene } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { SceneInsert, SceneSelect } from '../../db/schema';
-import { chapters, scenes, stories } from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { SceneInsert, SceneSelect } from '@/src/db/schema';
+import { chapters, scenes, stories } from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import {
   arrangedRowsSync,
   planContainerOrderSync,
@@ -23,8 +23,8 @@ import {
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
 import { applyKeyedListSort, storyEntityConditions } from './storyEntityListQuery';
-import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
-import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '@/src/types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '@/src/utils/attributeSearchPredicate';
 import { softDeleteRowSync } from './softDelete';
 import {
   decorateFavorite,

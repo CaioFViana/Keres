@@ -7,7 +7,7 @@ import Animated, {
   useAnimatedStyle,
   type SharedValue,
 } from 'react-native-reanimated';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface WelcomeProgressProps {
   /** The page on screen, for whoever reads the dots out. */

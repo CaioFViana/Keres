@@ -2,12 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { entityFieldMetadata } from '@keres/shared';
 import ts from 'typescript';
-import { getHelpPage } from '../../src/help/repository';
+import { getHelpPage } from '@/src/help/repository';
 import {
   entityMetadataHelpPages,
   entityPropertyClassifications,
   fieldSources,
-} from '../../src/help/fieldSources';
+} from '@/src/help/fieldSources';
 
 const entitiesDirectory = join(__dirname, '../../../../packages/shared/entities');
 

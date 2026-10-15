@@ -7,10 +7,10 @@ jest.mock('@/src/hooks/useAsyncOperation', () => ({
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (
     selector: (state: { showNotification: typeof mockShowNotification }) => unknown,
   ) => selector({ showNotification: mockShowNotification }),
@@ -20,10 +20,10 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import { usePackFormActions } from '../../../src/screens/packs/usePackFormActions';
-import type { PackFormState } from '../../../src/screens/packs/usePackFormState';
-import type { PackService } from '../../../src/services/storymanagement/PackService';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { usePackFormActions } from '@/src/screens/packs/usePackFormActions';
+import type { PackFormState } from '@/src/screens/packs/usePackFormState';
+import type { PackService } from '@/src/services/storymanagement/PackService';
 
 const createState = (overrides: Partial<PackFormState> = {}): PackFormState =>
   ({

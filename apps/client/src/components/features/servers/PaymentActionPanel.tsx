@@ -3,9 +3,9 @@ import * as Clipboard from 'expo-clipboard';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import type { ThemeColors } from '../../../theme';
-import { useTheme } from '../../../theme';
-import Button from '../../common/controls/Button/Button';
+import type { ThemeColors } from '@/src/theme';
+import { useTheme } from '@/src/theme';
+import Button from '@/src/components/common/controls/Button/Button';
 
 export interface PaymentActionPanelProps {
   phase: 'starting' | 'pending' | 'paid' | 'failed' | 'expired';

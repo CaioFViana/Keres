@@ -3,11 +3,11 @@ import { StyleSheet, Text } from 'react-native';
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { text: '#111111', textSecondary: '#666666', border: '#dddddd' } }),
 }));
 
-import ModalHeader from '../../../src/components/layout/ModalHeader/ModalHeader';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 describe('ModalHeader', () => {
   it('shows the title as a header, and a subtitle only when given', async () => {

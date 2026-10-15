@@ -1,7 +1,7 @@
 import type { CanvasOverlayType, LocationMapContentType } from '@keres/shared';
 import { buildTrajectoryStops, projectTrajectoryStops } from '@keres/shared/graphs/trajectories';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   CharacterSceneSelect,
@@ -11,14 +11,14 @@ import type {
   RouteSelect,
   RouteStepSelect,
   SceneSelect,
-} from '../db/schema';
-import { createChapterService } from '../services/storymanagement/ChapterService';
-import { createCharacterSceneService } from '../services/storymanagement/CharacterSceneService';
-import { createCharacterService } from '../services/storymanagement/CharacterService';
-import { createItemJourneyService } from '../services/storymanagement/ItemJourneyService';
-import { createItemService } from '../services/storymanagement/ItemService';
-import { createRouteService } from '../services/storymanagement/RouteService';
-import { createSceneService } from '../services/storymanagement/SceneService';
+} from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { createRouteService } from '@/src/services/storymanagement/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
 
 interface UseLocationMapTrajectoriesOptions {
   storyId: string | undefined;

@@ -8,9 +8,9 @@ import {
   buildStoryMapFileName,
   buildStoryTimelineFileName,
   exportFileLanguage,
-} from '../../src/utils/storyTransfer';
+} from '@/src/utils/storyTransfer';
 
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
 }));
 

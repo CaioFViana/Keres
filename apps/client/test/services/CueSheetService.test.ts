@@ -2,13 +2,18 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
-import { loadCueSheet } from '../../src/services/storymanagement/CueSheetService';
-import { createSceneMusicService } from '../../src/services/storymanagement/SceneMusicService';
-import { createSongService } from '../../src/services/storymanagement/SongService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { loadCueSheet } from '@/src/services/storymanagement/CueSheetService';
+import { createSceneMusicService } from '@/src/services/storymanagement/SceneMusicService';
+import { createSongService } from '@/src/services/storymanagement/SongService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

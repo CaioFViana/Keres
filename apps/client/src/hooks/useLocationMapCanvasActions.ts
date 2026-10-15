@@ -4,12 +4,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { TFunction } from 'i18next';
-import type { useDrizzle } from '../db';
-import type { MultiSelectOption } from '../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import type { GallerySelect, LocationMapSelect, LocationSelect } from '../db/schema';
-import type { LocationStackParamList } from '../navigation/MainSystemStack';
-import { createLocationMapService } from '../services/storymanagement/LocationMapService';
-import type { NotificationType } from '../state/notificationStore';
+import type { useDrizzle } from '@/src/db';
+import type { MultiSelectOption } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { GallerySelect, LocationMapSelect, LocationSelect } from '@/src/db/schema';
+import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
+import { createLocationMapService } from '@/src/services/storymanagement/LocationMapService';
+import type { NotificationType } from '@/src/state/notificationStore';
 import {
   LOCATION_MAP_IMAGE_DEFAULT_HEIGHT,
   LOCATION_MAP_IMAGE_DEFAULT_WIDTH,
@@ -20,9 +20,9 @@ import {
   appendImagesToMap,
   appendLocationsToMap,
   appendMarkersToMap,
-} from '../utils/locationMapContent';
-import { imageSizeOf } from '../utils/locationMapMedia';
-import { clampCanvasWorldCoordinate } from '../utils/canvasDragBounds';
+} from '@/src/utils/locationMapContent';
+import { imageSizeOf } from '@/src/utils/locationMapMedia';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
 
 type GalleryMediaById = Record<
   string,

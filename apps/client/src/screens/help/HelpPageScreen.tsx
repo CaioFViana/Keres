@@ -3,12 +3,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
-import { HelpBlockRenderer } from '../../components/features/help/HelpBlockRenderer/HelpBlockRenderer';
-import type { DocLibrary } from '../../help/library';
-import { helpLibrary } from '../../help/library';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
+import { HelpBlockRenderer } from '@/src/components/features/help/HelpBlockRenderer/HelpBlockRenderer';
+import type { DocLibrary } from '@/src/help/library';
+import { helpLibrary } from '@/src/help/library';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useTheme } from '@/src/theme';
+import { setDocumentTitle } from '@/src/utils/documentTitle';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;

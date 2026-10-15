@@ -11,17 +11,17 @@ jest.mock('@react-navigation/native', () => ({
     react.useEffect(effect, [effect]);
   },
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getLastEdited: mockGetLastEdited }),
 }));
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getById: mockGetChapter }),
 }));
 
-import { useResumeScene } from '../../src/hooks/useResumeScene';
+import { useResumeScene } from '@/src/hooks/useResumeScene';
 
 const EDITED = new Date('2026-10-08T10:00:00.000Z');
 

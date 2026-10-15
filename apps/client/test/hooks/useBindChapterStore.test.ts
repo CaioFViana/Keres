@@ -6,14 +6,14 @@ const mockStore = {
   setDbAndStoryId: jest.fn(),
 };
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/state/chapterStore', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/state/chapterStore', () => ({
   __esModule: true,
   useChapterStore: jest.fn(() => mockStore),
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useBindChapterStore } from '../../src/hooks/useBindChapterStore';
+import { useBindChapterStore } from '@/src/hooks/useBindChapterStore';
 
 beforeEach(() => jest.clearAllMocks());
 

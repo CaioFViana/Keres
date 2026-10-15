@@ -7,7 +7,7 @@ import {
   hashText,
   type SongAudioStore,
   songAudioKey,
-} from '../../src/services/SongAudioService';
+} from '@/src/services/SongAudioService';
 
 jest.mock('expo-file-system', () => ({
   Directory: class {},

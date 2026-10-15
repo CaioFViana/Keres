@@ -1,6 +1,6 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { CommonActions } from '@react-navigation/native';
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
 import type { MenuLeaf, NestedFocus } from './drawerMenuModel';
 
 type DrawerNavigation = DrawerContentComponentProps['navigation'];

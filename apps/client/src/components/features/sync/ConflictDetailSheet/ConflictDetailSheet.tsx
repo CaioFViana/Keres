@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
-import type { PendingConflict } from '../../../../services/SyncConflictService';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { typography } from '../../../../theme/tokens';
-import ConflictSheetFrame from '../ConflictSheetFrame/ConflictSheetFrame';
+import type { ConflictSummary } from '@/src/services/ConflictSummaryService';
+import type { PendingConflict } from '@/src/services/SyncConflictService';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import ConflictSheetFrame from '@/src/components/features/sync/ConflictSheetFrame/ConflictSheetFrame';
 
 interface ConflictDetailSheetProps {
   conflict: PendingConflict;

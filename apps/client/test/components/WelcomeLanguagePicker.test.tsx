@@ -1,9 +1,9 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import WelcomeLanguagePicker from '../../src/components/features/welcome/WelcomeLanguagePicker';
+import WelcomeLanguagePicker from '@/src/components/features/welcome/WelcomeLanguagePicker';
 
 const mockOpen = jest.fn();
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { surface: '#eee', text: '#111', textSecondary: '#666' } }),
 }));
 // The list is the app's own; here it only has to hand over the trigger and open when asked.

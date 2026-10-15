@@ -2,13 +2,18 @@
  * @jest-environment node
  */
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   createCharacterSceneService,
   type SaveCharacterScene,
-} from '../../src/services/storymanagement/CharacterSceneService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/CharacterSceneService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The character-scene presence service: who is in which scene.

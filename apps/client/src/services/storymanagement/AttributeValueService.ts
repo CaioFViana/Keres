@@ -1,18 +1,18 @@
 import type { AttributeType, StorySchemaEntityType } from '@keres/shared';
 import { explodeAttributeUsageValue } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { AttributeValueInsert, AttributeValueSelect } from '../../db/schema';
-import { attributeValues, storySchemaFields } from '../../db/schema';
-import { prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { AttributeValueInsert, AttributeValueSelect } from '@/src/db/schema';
+import { attributeValues, storySchemaFields } from '@/src/db/schema';
+import { prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export interface AttributeValueService {
   getValuesForEntity(entityId: string): Promise<AttributeValueSelect[]>;

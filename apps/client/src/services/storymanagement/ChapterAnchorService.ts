@@ -1,18 +1,18 @@
 import type { ScenePosition } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { ChapterAnchorInsert, ChapterAnchorSelect } from '../../db/schema';
-import { chapterAnchors } from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ChapterAnchorInsert, ChapterAnchorSelect } from '@/src/db/schema';
+import { chapterAnchors } from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import { softDeleteRowSync } from './softDelete';
 
 /**

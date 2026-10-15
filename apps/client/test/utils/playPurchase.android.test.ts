@@ -28,7 +28,7 @@ jest.mock('expo-iap', () => ({
 }));
 
 // The platform file, directly: on iOS (and in this suite) the stub is resolved instead.
-import { playDriver } from '../../src/utils/playPurchase.android';
+import { playDriver } from '@/src/utils/playPurchase.android';
 
 const googlePurchase = (over: Record<string, unknown> = {}) =>
   ({

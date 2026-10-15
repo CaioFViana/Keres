@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { SceneSelect } from '../../../../db/schema';
-import { useBindChapterStore } from '../../../../hooks/useBindChapterStore';
-import type { ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import type { SceneSelect } from '@/src/db/schema';
+import { useBindChapterStore } from '@/src/hooks/useBindChapterStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { buildReorderItems } from '@keres/shared';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';

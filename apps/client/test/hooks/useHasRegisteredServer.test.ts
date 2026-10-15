@@ -1,17 +1,17 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(),
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '../../src/db';
-import { useHasRegisteredServer } from '../../src/hooks/useHasRegisteredServer';
-import { createServerService } from '../../src/services/ServerService';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { useHasRegisteredServer } from '@/src/hooks/useHasRegisteredServer';
+import { createServerService } from '@/src/services/ServerService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const getAllServers = jest.fn();
 

@@ -15,9 +15,9 @@ import {
   getEntityAppearance,
 } from '@keres/shared';
 import React, { useMemo } from 'react';
-import { CUSTOM_FIELD_METADATA_PREFIX } from '../../../../utils/customAttributeFieldMetadata';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { CUSTOM_FIELD_METADATA_PREFIX } from '@/src/utils/customAttributeFieldMetadata';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;

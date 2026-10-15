@@ -3,20 +3,20 @@ const mockStoryCalendar = jest.fn();
 const mockSelectedStory = jest.fn();
 const mockDateFormat = jest.fn();
 
-jest.mock('../../src/hooks/useStoryRoutes', () => ({
+jest.mock('@/src/hooks/useStoryRoutes', () => ({
   __esModule: true,
   useStoryRoutes: (...args: unknown[]) => mockStoryRoutes(...args),
 }));
-jest.mock('../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: (...args: unknown[]) => mockStoryCalendar(...args),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: mockSelectedStory() }),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ dateDisplayFormat: mockDateFormat() }),
@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useRouteChronology } from '../../src/hooks/useRouteChronology';
+import { useRouteChronology } from '@/src/hooks/useRouteChronology';
 
 const firstScene = {
   id: 'scene-a',

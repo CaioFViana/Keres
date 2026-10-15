@@ -1,10 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  buildMainDrawerMenu,
-  isLeafActive,
-  type MenuLeaf,
-} from '../../src/navigation/mainDrawerMenu';
+import { buildMainDrawerMenu, isLeafActive, type MenuLeaf } from '@/src/navigation/mainDrawerMenu';
 
 const build = (showLiteraryDevices = false) =>
   buildMainDrawerMenu({

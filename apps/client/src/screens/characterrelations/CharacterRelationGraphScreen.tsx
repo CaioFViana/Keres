@@ -1,5 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs, commonDetailStyleDefs } from '@/src/theme/commonStyles';
 import { useNavigation } from '@react-navigation/native';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useGraphDataLoader } from '@/src/hooks/useGraphDataLoader';
@@ -23,18 +23,18 @@ import CharacterRelationGraphCanvas from '@/src/components/features/graphs/Chara
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
 import type { Character } from '@keres/shared/entities/Character';
-import { useDrizzle } from '../../db';
-import type { CharacterSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import type { CharacterRelationWithNames } from '../../services/storymanagement/CharacterRelationService';
-import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import { useDrizzle } from '@/src/db';
+import type { CharacterSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import type { CharacterRelationWithNames } from '@/src/services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { RelationGraphEdge } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { limitFocusSelection, MAX_FOCUS_SELECTION } from '@keres/shared/graphs/graphNeighborhood';
 import {
@@ -44,9 +44,9 @@ import {
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
-import { buildCharacterRelationMapFileName } from '../../utils/storyTransfer';
+import { buildCharacterRelationMapFileName } from '@/src/utils/storyTransfer';
 import { useCharacterRelationEditor } from './useCharacterRelationEditor';
-import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
+import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
 import { useGraphMapExport } from '@/src/hooks/useGraphMapExport';
 
 /**

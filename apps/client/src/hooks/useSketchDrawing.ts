@@ -27,9 +27,12 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { rasterizeSketch, sampleRasterColor } from '../components/features/sketches/sketchRaster';
-import { useNotificationStore } from '../state/notificationStore';
-import { useSketchToolStore } from '../state/sketchToolStore';
+import {
+  rasterizeSketch,
+  sampleRasterColor,
+} from '@/src/components/features/sketches/sketchRaster';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useSketchToolStore } from '@/src/state/sketchToolStore';
 
 /** RDP tolerance for a finished stroke, in world units: below what the eye resolves on a page. */
 const STROKE_SIMPLIFY = 0.3;

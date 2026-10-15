@@ -2,9 +2,9 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import { createRef } from 'react';
 import SeeAlsoManager, {
   type SeeAlsoManagerHandle,
-} from '../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+} from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -38,7 +38,7 @@ jest.mock('@expo/vector-icons', () => {
 const mockSave = jest.fn();
 const mockPersist = jest.fn();
 let mockRelations: any[] = [];
-jest.mock('../../src/hooks/useSeeAlsoRelations', () => ({
+jest.mock('@/src/hooks/useSeeAlsoRelations', () => ({
   __esModule: true,
   useSeeAlsoRelations: (...args: unknown[]) => {
     (mockRelationCalls as unknown[]).push(args);
@@ -53,8 +53,8 @@ const mockGroupedOptions = [
   { key: 'WorldRule:lore', label: 'Lore', options: [] },
   { key: 'Scene', label: 'Scenes', options: [] },
 ];
-jest.mock('../../src/hooks/useSeeAlsoEntityOptions', () => {
-  const actual = jest.requireActual('../../src/hooks/useSeeAlsoEntityOptions');
+jest.mock('@/src/hooks/useSeeAlsoEntityOptions', () => {
+  const actual = jest.requireActual('@/src/hooks/useSeeAlsoEntityOptions');
   return {
     ...actual,
     __esModule: true,
@@ -70,12 +70,12 @@ jest.mock('../../src/hooks/useSeeAlsoEntityOptions', () => {
 const mockOptionsCalls: unknown[][] = [];
 
 const mockNavigate = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

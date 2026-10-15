@@ -1,4 +1,4 @@
-import { attachWebHistoryBack, hasScreenBehind } from '../../src/navigation/webHistoryBack';
+import { attachWebHistoryBack, hasScreenBehind } from '@/src/navigation/webHistoryBack';
 
 /** A browser window and a navigation container reduced to what the history follower touches. */
 function setup(initialCanGoBack = false) {

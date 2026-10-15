@@ -9,7 +9,7 @@ import {
   screenplayFountainOf,
   screenplayPreset,
 } from '@keres/shared';
-import type { ChapterSelect, LocationSelect, SceneSelect } from '../../../../db/schema';
+import type { ChapterSelect, LocationSelect, SceneSelect } from '@/src/db/schema';
 import type { ManuscriptExportSettings } from './manuscriptExportSettings';
 
 /** What the screenplay compiler reads, from the rows the app already holds. */

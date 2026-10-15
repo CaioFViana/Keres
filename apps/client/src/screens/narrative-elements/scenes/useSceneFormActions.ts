@@ -5,12 +5,12 @@ import { parseCalendarDateCoordinate, type Scene, type StorySchemaField } from '
 import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../../../db';
-import { useEntityFormActions } from '../../../hooks/useEntityFormActions';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import type { SceneService } from '../../../services/storymanagement/SceneService';
-import { parseTimingInput } from '../../../utils/sceneTimingInput';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import type { AppDrizzleClient } from '@/src/db';
+import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { SceneService } from '@/src/services/storymanagement/SceneService';
+import { parseTimingInput } from '@/src/utils/sceneTimingInput';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { SceneFormState } from './useSceneFormState';
 
 type SceneNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneForm'>;

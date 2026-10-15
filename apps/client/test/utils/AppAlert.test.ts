@@ -1,6 +1,6 @@
 /** @jest-environment node */
-import { useAppAlertStore } from '../../src/state/appAlertStore';
-import { AppAlert } from '../../src/utils/AppAlert';
+import { useAppAlertStore } from '@/src/state/appAlertStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 beforeEach(() => {
   useAppAlertStore.setState({ current: null });

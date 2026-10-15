@@ -1,12 +1,12 @@
 const mockGetOwnPlan = jest.fn();
-jest.mock('../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: { getOwnPlan: (...args: unknown[]) => mockGetOwnPlan(...args) },
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useAccountPlan } from '../../src/hooks/useAccountPlan';
-import { PAYMENTS_CHANGED } from '../../src/utils/paymentEvents';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useAccountPlan } from '@/src/hooks/useAccountPlan';
+import { PAYMENTS_CHANGED } from '@/src/utils/paymentEvents';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const planNamed = (tierName: string) => ({ tierName, isDefault: false, storiesUsed: 1 });

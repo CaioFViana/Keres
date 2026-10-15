@@ -1,18 +1,18 @@
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { StatStrengthInsert, StatStrengthSelect } from '../../db/schema';
-import { statStrengths } from '../../db/schema';
-import type { Create } from '../../utils/entityUtils';
-import { prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StatStrengthInsert, StatStrengthSelect } from '@/src/db/schema';
+import { statStrengths } from '@/src/db/schema';
+import type { Create } from '@/src/utils/entityUtils';
+import { prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   afterLocalWrite,
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export interface StatStrengthService {
   /** Every tier in the story, the default ladder and the overrides together, in ascending order. */

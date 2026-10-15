@@ -1,6 +1,6 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { Ionicons } from '@expo/vector-icons';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { galleryHasFile, type MediaType } from '@keres/shared';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 import { Image } from 'expo-image';
@@ -19,28 +19,28 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/AudioPreviewPlayer';
 import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
 import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
-import { useDrizzle } from '../../db';
-import type { GallerySelect } from '../../db/schemas/galleries';
+import { useDrizzle } from '@/src/db';
+import type { GallerySelect } from '@/src/db/schemas/galleries';
 import {
   decodeOwnerValue,
   encodeOwnerValue,
   useGalleryOwnerOptions,
-} from '../../hooks/useGalleryOwnerOptions';
-import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { mediaFileService } from '../../services/MediaFileService';
-import type { GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
-import { createGalleryRelationService } from '../../services/storymanagement/GalleryRelationService';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { typography } from '../../theme/tokens';
-import { AppAlert } from '../../utils/AppAlert';
-import { openGalleryExternally } from '../../utils/openGalleryExternally';
+} from '@/src/hooks/useGalleryOwnerOptions';
+import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import type { GalleryOwnerRef } from '@/src/services/storymanagement/GalleryRelationService';
+import { createGalleryRelationService } from '@/src/services/storymanagement/GalleryRelationService';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { openGalleryExternally } from '@/src/utils/openGalleryExternally';
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return '—';

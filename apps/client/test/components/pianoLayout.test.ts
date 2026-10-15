@@ -5,7 +5,7 @@ import {
   PIANO_HIGHEST,
   PIANO_LOWEST,
   pianoLayout,
-} from '../../src/components/features/songs/pianoLayout';
+} from '@/src/components/features/songs/pianoLayout';
 
 describe('pianoLayout', () => {
   it('keeps two octaves of ordinary keys to slide across while the room is unknown or narrow', () => {

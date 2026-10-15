@@ -1,6 +1,6 @@
-import { chooseExportFormat } from '../../../src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -56,24 +56,24 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: mockIsCompact }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetAllLocationsByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({
     getAllRelationsForStory: mockGetAllRelationsForStory,
@@ -82,71 +82,68 @@ jest.mock('../../../src/services/storymanagement/LocationRelationService', () =>
     removeRelation: (...args: unknown[]) => mockRemoveRelation(...args),
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/userSettingsStore', () => {
   const store = () => ({ exportFormat: 'png', userId: 'user-1' });
   store.getState = () => ({ exportFormat: 'png' });
   return { __esModule: true, useUserSettingsStore: store };
 });
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock(
-  '../../../src/components/features/relations/LocationRelationManager/LocationPickerModal',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        title: string;
-        candidates: { id: string; name: string }[];
-        onSelect: (id: string) => void;
-        onClose: () => void;
-      }) => (
-        <>
-          <Text testID="picker-title">{props.title}</Text>
-          <Text testID="picker-candidates">{props.candidates.map((c) => c.id).join(',')}</Text>
-          {props.candidates.map((c) => (
-            <Text key={c.id} testID={`pick-${c.id}`} onPress={() => props.onSelect(c.id)}>
-              {c.name}
-            </Text>
-          ))}
-          <Text testID="picker-close" onPress={props.onClose}>
-            close
+jest.mock('@/src/components/features/relations/LocationRelationManager/LocationPickerModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      title: string;
+      candidates: { id: string; name: string }[];
+      onSelect: (id: string) => void;
+      onClose: () => void;
+    }) => (
+      <>
+        <Text testID="picker-title">{props.title}</Text>
+        <Text testID="picker-candidates">{props.candidates.map((c) => c.id).join(',')}</Text>
+        {props.candidates.map((c) => (
+          <Text key={c.id} testID={`pick-${c.id}`} onPress={() => props.onSelect(c.id)}>
+            {c.name}
           </Text>
-        </>
-      ),
-    };
-  },
-);
-jest.mock('../../../src/theme', () => ({
+        ))}
+        <Text testID="picker-close" onPress={props.onClose}>
+          close
+        </Text>
+      </>
+    ),
+  };
+});
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: mockColors }),
 }));
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('../../../src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/storyTransfer'),
   buildLocationGraphMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
   }),
 }));
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -160,7 +157,7 @@ jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () 
     ),
   };
 });
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -190,7 +187,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
     ),
   };
 });
-jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCanvas', () => {
+jest.mock('@/src/components/features/graphs/LocationGraph/LocationGraphCanvas', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
@@ -244,7 +241,7 @@ jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCa
     }),
   };
 });
-jest.mock('../../../src/components/features/graphs/GraphNodeFinder/GraphNodeFinder', () => {
+jest.mock('@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -266,7 +263,7 @@ jest.mock('../../../src/components/features/graphs/GraphNodeFinder/GraphNodeFind
     ),
   };
 });
-jest.mock('../../../src/components/features/graphs/GraphLegend/GraphLegend', () => {
+jest.mock('@/src/components/features/graphs/GraphLegend/GraphLegend', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -277,7 +274,7 @@ jest.mock('../../../src/components/features/graphs/GraphLegend/GraphLegend', () 
     ),
   };
 });
-jest.mock('../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
+jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -357,7 +354,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-import LocationGraphScreen from '../../../src/screens/locations/LocationGraphScreen';
+import LocationGraphScreen from '@/src/screens/locations/LocationGraphScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

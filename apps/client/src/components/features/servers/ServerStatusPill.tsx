@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { ThemeColors } from '../../../theme';
-import { useTheme } from '../../../theme';
+import type { ThemeColors } from '@/src/theme';
+import { useTheme } from '@/src/theme';
 
 export type ServerStatusPillStatus = 'idle' | 'pending' | 'online' | 'offline';
 

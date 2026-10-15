@@ -1,9 +1,14 @@
 /** @jest-environment node */
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createRouteService } from '../../src/services/storymanagement/RouteService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createRouteService } from '@/src/services/storymanagement/RouteService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

@@ -3,10 +3,15 @@
  */
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { comments, favorites, operationLogs, servers, stories } from '../../src/db/schema';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { comments, favorites, operationLogs, servers, stories } from '@/src/db/schema';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

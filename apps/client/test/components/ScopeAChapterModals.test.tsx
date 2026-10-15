@@ -7,11 +7,11 @@ jest.mock('react-native-safe-area-context', () => ({
 import { act, render } from '@testing-library/react-native';
 import { buildReorderItems } from '@keres/shared';
 import React from 'react';
-import type { ChapterSelect } from '../../src/db/schema';
-import ChapterReorderModal from '../../src/components/features/chapters/ChapterReorderModal/ChapterReorderModal';
-import ConvertContainerModal from '../../src/components/features/chapters/ConvertContainerModal/ConvertContainerModal';
+import type { ChapterSelect } from '@/src/db/schema';
+import ChapterReorderModal from '@/src/components/features/chapters/ChapterReorderModal/ChapterReorderModal';
+import ConvertContainerModal from '@/src/components/features/chapters/ConvertContainerModal/ConvertContainerModal';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -29,7 +29,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -38,7 +38,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -64,7 +64,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -87,14 +87,14 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: (type: string) => ({
     convertTo: type === 'Chapter' ? 'Convert to chapter' : 'Convert to event',
   }),
 }));
 
 const mockReorderModal = jest.fn();
-jest.mock('../../src/components/common/modals/ReorderModal/ReorderModal', () => ({
+jest.mock('@/src/components/common/modals/ReorderModal/ReorderModal', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockReorderModal(props);

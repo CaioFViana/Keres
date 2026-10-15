@@ -1,26 +1,26 @@
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/PlotService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/PlotService', () => ({
   __esModule: true,
   createPlotService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/PlotSceneService', () => ({
+jest.mock('@/src/services/storymanagement/PlotSceneService', () => ({
   __esModule: true,
   createPlotSceneService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: jest.fn(),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     useEntityInitialLoad: (load: () => Promise<void>) =>
@@ -31,13 +31,13 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { createChoiceService } from '../../src/services/storymanagement/ChoiceService';
-import { useStoryPlots } from '../../src/hooks/useStoryPlots';
-import { createPlotSceneService } from '../../src/services/storymanagement/PlotSceneService';
-import { createPlotService } from '../../src/services/storymanagement/PlotService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { useStoryPlots } from '@/src/hooks/useStoryPlots';
+import { createPlotSceneService } from '@/src/services/storymanagement/PlotSceneService';
+import { createPlotService } from '@/src/services/storymanagement/PlotService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const chapters = [
   { id: 'chapter-1', name: 'Beginning', index: 1 },

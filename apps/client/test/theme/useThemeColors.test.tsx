@@ -2,13 +2,13 @@ import { render } from '@testing-library/react-native';
 import { themes } from '@keres/shared';
 import { Text } from 'react-native';
 
-jest.mock('../../src/state/themeStore', () => ({
+jest.mock('@/src/state/themeStore', () => ({
   __esModule: true,
   useThemeStore: jest.fn(),
 }));
 
-import { useThemeStore } from '../../src/state/themeStore';
-import { useThemeColors } from '../../src/theme/useThemeColors';
+import { useThemeStore } from '@/src/state/themeStore';
+import { useThemeColors } from '@/src/theme/useThemeColors';
 
 const storeState = { darkMode: false };
 

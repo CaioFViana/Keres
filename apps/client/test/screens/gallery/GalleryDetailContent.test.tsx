@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const mockGetById = jest.fn();
 const mockUpdateGallery = jest.fn();
@@ -82,38 +82,38 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     },
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useGalleryOwnerOptions', () => {
-  const actual = jest.requireActual('../../../src/hooks/useGalleryOwnerOptions');
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useGalleryOwnerOptions', () => {
+  const actual = jest.requireActual('@/src/hooks/useGalleryOwnerOptions');
   return {
     ...actual,
     useGalleryOwnerOptions: () => ({ groupedOptions: mockOwnerOptions.current }),
   };
 });
-jest.mock('../../../src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
   __esModule: true,
   useResolvedMediaUri: () => mockResolvedUri.current,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: true }),
 }));
-jest.mock('../../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { deleteLocal: (...args: unknown[]) => mockDeleteLocal(...args) },
 }));
-jest.mock('../../../src/services/storymanagement/GalleryRelationService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryRelationService', () => ({
   __esModule: true,
   createGalleryRelationService: () => ({
     getOwnersForGallery: mockGetOwnersForGallery,
     setOwnersForGallery: mockSetOwnersForGallery,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({
     getById: mockGetById,
@@ -122,19 +122,19 @@ jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
     deleteGallery: mockDeleteGallery,
   }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockStory.current }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -153,11 +153,11 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/utils/openGalleryExternally', () => ({
+jest.mock('@/src/utils/openGalleryExternally', () => ({
   __esModule: true,
   openGalleryExternally: (...args: unknown[]) => mockOpenGalleryExternally(...args),
 }));
@@ -167,7 +167,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockI18n,
 }));
 
-import GalleryDetailContent from '../../../src/screens/gallery/GalleryDetailContent';
+import GalleryDetailContent from '@/src/screens/gallery/GalleryDetailContent';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

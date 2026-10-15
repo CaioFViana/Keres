@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';
-import type { OccurrenceTarget } from '../utils/occurrenceTarget';
-import { detailTabForField, type DetailTabKey } from '../utils/detailTabs';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { detailTabForField, type DetailTabKey } from '@/src/utils/detailTabs';
 
 /**
  * The tab on show in a detail screen. It starts on the details, or on the tab that holds the field

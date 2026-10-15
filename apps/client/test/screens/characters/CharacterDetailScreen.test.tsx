@@ -40,16 +40,16 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { characterId: 'char-1' } }),
 }));
 const mockDrizzleDb = {};
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: {},
@@ -61,7 +61,7 @@ jest.mock('../../../src/hooks/useEntityComments', () => ({
     updateComment: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [{ id: 'tag-1', name: 'Hero' }],
@@ -71,74 +71,74 @@ jest.mock('../../../src/hooks/useEntityRelations', () => ({
     deleteNoteRelation: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useAppearsInArcs', () => ({
+jest.mock('@/src/hooks/useAppearsInArcs', () => ({
   __esModule: true,
   useAppearsInArcs: () => [{ id: 'arc-1' }],
 }));
-jest.mock('../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => jest.fn(),
 }));
-jest.mock('../../../src/hooks/useOpenPresenceMatrixViewer', () => ({
+jest.mock('@/src/hooks/useOpenPresenceMatrixViewer', () => ({
   __esModule: true,
   useOpenPresenceMatrixViewer: () => ({ openCharacter: mockOpenPresenceMatrix }),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/useStoryStats', () => ({
   __esModule: true,
   useStoryStats: () => ({ modes: mockStatModes, stats: [] }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({
     getById: mockGetCharacterById,
     getAllByStoryId: mockGetAllCharactersByStoryId,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     getRelationsForCharacter: mockGetRelationsForCharacter,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: () => ({
     getRelationsForCharacter: mockGetCharacterSceneRelations,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getAllByStoryId: mockGetAllItemsByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getAllByStoryId: mockGetAllItemJourneysByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetAllLocationsByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { textSecondary: '#555' } }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) => {
     if (entity === 'Character') return mockCharacterCopy;
@@ -146,7 +146,7 @@ jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
     return mockLocationCopy;
   },
 }));
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => ({
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => ({
   __esModule: true,
   ScreenLoading: ({ message }: { message?: string }) => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -159,7 +159,7 @@ jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () 
     return react.createElement(native.Text, { testID: 'screen-error', onPress: onGoBack }, message);
   },
 }));
-jest.mock('../../../src/screens/characters/CharacterDetailContent', () => ({
+jest.mock('@/src/screens/characters/CharacterDetailContent', () => ({
   __esModule: true,
   CharacterDetailContent: (props: {
     character: { name: string };
@@ -216,7 +216,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-import CharacterDetailScreen from '../../../src/screens/characters/CharacterDetailScreen';
+import CharacterDetailScreen from '@/src/screens/characters/CharacterDetailScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

@@ -1,12 +1,12 @@
 const mockQuote = jest.fn();
 
-jest.mock('../../src/services/PaymentService', () => ({
+jest.mock('@/src/services/PaymentService', () => ({
   __esModule: true,
   getSwitchQuote: (...args: unknown[]) => mockQuote(...args),
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useSwitchQuote } from '../../src/hooks/useSwitchQuote';
+import { useSwitchQuote } from '@/src/hooks/useSwitchQuote';
 
 const server = { id: 'server-1' } as never;
 const quote = { fromTierName: 'Plus', toTierName: 'Max', remainingDays: 20, convertedDays: 7 };

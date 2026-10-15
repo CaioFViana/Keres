@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../theme';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useTheme } from '@/src/theme';
 
 export type StoryStart = 'blank' | 'packs';
 

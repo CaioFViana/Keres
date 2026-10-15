@@ -1,5 +1,5 @@
 import type { CalendarDefinitionType } from '@keres/shared';
-import { buildCalendarAnchorPreview } from '../../src/utils/calendarAnchorPreview';
+import { buildCalendarAnchorPreview } from '@/src/utils/calendarAnchorPreview';
 
 const calendar = (firstMonthDays: number): CalendarDefinitionType => ({
   months: [

@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect } from 'react';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /**
  * Keeps a graph screen's data current: it reloads when the screen gains focus (its characters,

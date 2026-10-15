@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { useDrizzle } from '../db';
-import { useSyncConflictStore } from '../state/syncConflictStore';
+import { useDrizzle } from '@/src/db';
+import { useSyncConflictStore } from '@/src/state/syncConflictStore';
 
 /** Closes the store's db argument so conflict sheets do not import the database. */
 export function useSyncConflictActions() {

@@ -4,7 +4,7 @@ jest.mock('expo-clipboard', () => ({
   __esModule: true,
   setStringAsync: (...args: unknown[]) => mockSetString(...args),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       border: '#ddd',
@@ -22,7 +22,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { fireEvent, render } from '@testing-library/react-native';
-import PaymentActionPanel from '../../src/components/features/servers/PaymentActionPanel';
+import PaymentActionPanel from '@/src/components/features/servers/PaymentActionPanel';
 
 const checkout = (over: Record<string, unknown> = {}) =>
   ({

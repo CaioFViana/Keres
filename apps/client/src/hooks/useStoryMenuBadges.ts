@@ -1,10 +1,10 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import * as schema from '../db/schema';
-import type { MenuBadges } from '../navigation/drawerMenuModel';
-import { createPublicationService } from '../services/PublicationService';
+import { useDrizzle } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { MenuBadges } from '@/src/navigation/drawerMenuModel';
+import { createPublicationService } from '@/src/services/PublicationService';
 
 /**
  * What the story's menu says about its entries without opening them: the history shows the changes still to

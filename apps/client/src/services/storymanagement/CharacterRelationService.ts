@@ -3,18 +3,18 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, or, sql } from 'drizzle-orm'; // Import SQL
 import { alias } from 'drizzle-orm/sqlite-core'; // Import alias for table aliasing
-import type { AppDrizzleClient } from '../../db';
-import type { AdvancedSearchCriteria } from '../../types/entityFilters';
-import { characterRelations, characters } from '../../db';
-import { createULID, getChangedFields } from '../../utils/entityUtils'; // Import for changed fields in update
-import { entityEventEmitter } from '../../utils/EventEmitter'; // Import for event emission
+import type { AppDrizzleClient } from '@/src/db';
+import type { AdvancedSearchCriteria } from '@/src/types/entityFilters';
+import { characterRelations, characters } from '@/src/db';
+import { createULID, getChangedFields } from '@/src/utils/entityUtils'; // Import for changed fields in update
+import { entityEventEmitter } from '@/src/utils/EventEmitter'; // Import for event emission
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils'; // Imports for logging operations
-import { createServerService } from '../ServerService'; // Import ServerService to get userId
+} from '@/src/utils/syncUtils'; // Imports for logging operations
+import { createServerService } from '@/src/services/ServerService'; // Import ServerService to get userId
 
 export type CharacterRelationWithNames = CharacterRelation & {
   char1Name: string;

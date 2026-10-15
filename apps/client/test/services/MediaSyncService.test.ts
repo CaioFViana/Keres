@@ -10,12 +10,12 @@
  * read into a function escapes that. The references to the `jest.fn`s are picked up
  * after the imports, through the mocked module itself.
  */
-jest.mock('../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   __esModule: true,
   createGalleryService: jest.fn(),
 }));
 
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: {
     exists: jest.fn(),
@@ -38,9 +38,9 @@ jest.mock('expo-file-system', () => ({
 
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import { createMediaSyncService } from '../../src/services/MediaSyncService';
-import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createMediaSyncService } from '@/src/services/MediaSyncService';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 
 const mockGalleryService = {
   getPendingUploads: jest.fn(async () => [] as any[]),

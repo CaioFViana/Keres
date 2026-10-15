@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildStorySelectionMenu } from '../../src/navigation/storySelectionMenu';
+import { buildStorySelectionMenu } from '@/src/navigation/storySelectionMenu';
 
 const build = (serverless = false) => buildStorySelectionMenu({ t: (key) => key, serverless });
 

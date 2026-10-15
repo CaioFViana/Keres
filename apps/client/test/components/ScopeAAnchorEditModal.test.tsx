@@ -2,10 +2,10 @@ import { act, fireEvent, render, type RenderResult } from '@testing-library/reac
 import React from 'react';
 import AnchorEditModal, {
   type AnchorDraft,
-} from '../../src/components/features/chapters/AnchorManager/AnchorEditModal';
-import type { AnchorSceneChoice } from '../../src/hooks/useChapterAnchors';
+} from '@/src/components/features/chapters/AnchorManager/AnchorEditModal';
+import type { AnchorSceneChoice } from '@/src/hooks/useChapterAnchors';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -26,12 +26,12 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: true, isMedium: false, isWide: false }),
 }));
 
 // The real surfaces render a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -40,9 +40,9 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
   const actual = jest.requireActual(
-    '../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
+    '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
   );
   return {
     __esModule: true,
@@ -51,7 +51,7 @@ jest.mock('../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -77,7 +77,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,

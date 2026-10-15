@@ -4,19 +4,19 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import {
   createShippedPackService,
   type ShippedPackPreview,
-} from '../../services/storymanagement/ShippedPackService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useShippedPacksInstallerStore } from '../../state/shippedPacksInstallerStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { layout } from '../../theme/layout';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { packExtrasChips } from '../../utils/packChips';
+} from '@/src/services/storymanagement/ShippedPackService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { packExtrasChips } from '@/src/utils/packChips';
 
 interface ShippedPacksContentProps {
   /**

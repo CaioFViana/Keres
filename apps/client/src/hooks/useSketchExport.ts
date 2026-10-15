@@ -1,13 +1,13 @@
 import type { SketchDocument } from '@keres/shared';
 import { type MutableRefObject, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../db';
-import type { SketchSelect } from '../db/schema';
-import { saveSketchSnapshot } from '../services/storymanagement/SketchSnapshotService';
-import { useNotificationStore } from '../state/notificationStore';
-import { useTheme } from '../theme';
-import { renderSketchSvg } from '../utils/sketchSvg';
-import { buildSketchFileName, deliverMapExport, deliverSvgMap } from '../utils/storyTransfer';
+import type { AppDrizzleClient } from '@/src/db';
+import type { SketchSelect } from '@/src/db/schema';
+import { saveSketchSnapshot } from '@/src/services/storymanagement/SketchSnapshotService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useTheme } from '@/src/theme';
+import { renderSketchSvg } from '@/src/utils/sketchSvg';
+import { buildSketchFileName, deliverMapExport, deliverSvgMap } from '@/src/utils/storyTransfer';
 
 interface UseSketchExportOptions {
   docRef: MutableRefObject<SketchDocument>;

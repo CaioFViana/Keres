@@ -1,16 +1,16 @@
 import type { Plot } from '@keres/shared/entities/Plot';
 import { and, asc, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, PlotInsert } from '../../db';
-import { plots } from '../../db';
-import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient, PlotInsert } from '@/src/db';
+import { plots } from '@/src/db';
+import { createULID, getChangedFields } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export type SavePlot = Pick<Plot, 'storyId' | 'name' | 'details'> & { id?: string };
 

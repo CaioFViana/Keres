@@ -1,4 +1,4 @@
-import type { PackContentCounts } from '../services/storymanagement/PackService';
+import type { PackContentCounts } from '@/src/services/storymanagement/PackService';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 

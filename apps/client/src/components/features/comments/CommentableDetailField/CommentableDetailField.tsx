@@ -4,12 +4,12 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
 import { findFirstExcerptMatch } from '@keres/shared';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import { useWebSelectionClip } from '../../../../hooks/useWebSelectionClip';
-import type { CommentSelect } from '../../../../db/schema';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import CommentThreadModal from '../CommentThreadModal/CommentThreadModal';
+import { useWebSelectionClip } from '@/src/hooks/useWebSelectionClip';
+import type { CommentSelect } from '@/src/db/schema';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import CommentThreadModal from '@/src/components/features/comments/CommentThreadModal/CommentThreadModal';
 
 export interface CommentableDetailFieldProps {
   storyId: string;

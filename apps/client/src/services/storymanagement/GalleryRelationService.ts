@@ -1,17 +1,17 @@
 import type { GalleryOwnerEntity } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import type { GalleryRelationInsert, GalleryRelationSelect } from '../../db/schema';
-import { galleryRelations } from '../../db/schema';
-import { prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient } from '@/src/db';
+import type { GalleryRelationInsert, GalleryRelationSelect } from '@/src/db/schema';
+import { galleryRelations } from '@/src/db/schema';
+import { prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 /** An entity a media file is (or can be) linked to. */
 export interface GalleryOwnerRef {

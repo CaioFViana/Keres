@@ -1,19 +1,19 @@
 import { act, cleanup, renderHook } from '@testing-library/react-native';
-import type { SongSelect } from '../../src/db/schema';
-import { SONG_SAVE_DELAY_MS, useSongDraft } from '../../src/hooks/useSongDraft';
+import type { SongSelect } from '@/src/db/schema';
+import { SONG_SAVE_DELAY_MS, useSongDraft } from '@/src/hooks/useSongDraft';
 
 const mockUpdateSong = jest.fn();
 
-jest.mock('../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: { userId: string }) => unknown) =>
     selector({ userId: 'user-1' }),
 }));
-jest.mock('../../src/services/storymanagement/SongService', () => ({
+jest.mock('@/src/services/storymanagement/SongService', () => ({
   __esModule: true,
   createSongService: () => ({ updateSong: mockUpdateSong }),
 }));

@@ -1,4 +1,4 @@
-import { formatDateTime } from '../../src/utils/formatDateTime';
+import { formatDateTime } from '@/src/utils/formatDateTime';
 
 describe('formatDateTime', () => {
   it('names the month, so no reader takes the day for the month', () => {

@@ -1,13 +1,13 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import ConflictDetailSheet from '../../src/components/features/sync/ConflictDetailSheet/ConflictDetailSheet';
-import ConflictFieldDiffSheet from '../../src/components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet';
-import SyncConflictBanner from '../../src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
-import ConflictRow from '../../src/components/features/sync/SyncConflictReviewSheet/ConflictRow';
-import type { ConflictSummary } from '../../src/services/ConflictSummaryService';
-import type { PendingConflict } from '../../src/services/SyncConflictService';
+import ConflictDetailSheet from '@/src/components/features/sync/ConflictDetailSheet/ConflictDetailSheet';
+import ConflictFieldDiffSheet from '@/src/components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet';
+import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
+import ConflictRow from '@/src/components/features/sync/SyncConflictReviewSheet/ConflictRow';
+import type { ConflictSummary } from '@/src/services/ConflictSummaryService';
+import type { PendingConflict } from '@/src/services/SyncConflictService';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -39,7 +39,7 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -49,7 +49,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {
@@ -69,7 +69,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/FormActions/FormActions', () => {
+jest.mock('@/src/components/common/controls/FormActions/FormActions', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -80,7 +80,7 @@ jest.mock('../../src/components/common/controls/FormActions/FormActions', () => 
 });
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -89,7 +89,7 @@ const mockConflictActions = {
   keepLocal: jest.fn(),
   keepServer: jest.fn(),
 };
-jest.mock('../../src/hooks/useSyncConflictActions', () => ({
+jest.mock('@/src/hooks/useSyncConflictActions', () => ({
   __esModule: true,
   useSyncConflictActions: () => mockConflictActions,
 }));

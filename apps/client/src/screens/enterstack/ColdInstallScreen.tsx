@@ -18,41 +18,41 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import TermsModal from '../../components/features/servers/TermsModal/TermsModal';
+import TermsModal from '@/src/components/features/servers/TermsModal/TermsModal';
 import {
   CLIENT_TERMS_UPDATED_AT,
   CLIENT_TERMS_VERSION,
   clientTermsFor,
-} from '../../legal/clientTerms';
+} from '@/src/legal/clientTerms';
 import {
   CLIENT_PRIVACY_UPDATED_AT,
   CLIENT_PRIVACY_VERSION,
   clientPrivacyFor,
-} from '../../legal/privacyPolicy';
-import { getAcceptedClientLegal, setAcceptedClientLegal } from '../../legal/clientTermsAcceptance';
-import WelcomePageView from '../../components/features/welcome/WelcomePageView';
-import WelcomeLanguagePicker from '../../components/features/welcome/WelcomeLanguagePicker';
-import WelcomePager, { useWelcomePager } from '../../components/features/welcome/WelcomePager';
-import WelcomeProgress from '../../components/features/welcome/WelcomeProgress';
-import { offersOfficialApp, WELCOME_PAGES } from '../../components/features/welcome/welcomeContent';
-import { useDrizzle } from '../../db';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { migrate } from '../../db/migrate';
-import { setAuthDb } from '../../services/AuthTokenManager';
-import { setEditorDraftDb } from '../../services/EditorDraftService';
-import { createClientSettings } from '../../services/ClientSettingsService';
-import { syncEngine } from '../../services/sync/appSyncEngine';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useThemeStore } from '../../state/themeStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors, useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { getClientFlavor } from '../../utils/clientFlavor';
-import { useDocumentTitle } from '../../utils/documentTitle';
-import i18n, { getLanguageOptions } from '../../utils/i18n';
-import { normalizeLocalUsername } from '../../utils/localUsername';
+} from '@/src/legal/privacyPolicy';
+import { getAcceptedClientLegal, setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import WelcomePageView from '@/src/components/features/welcome/WelcomePageView';
+import WelcomeLanguagePicker from '@/src/components/features/welcome/WelcomeLanguagePicker';
+import WelcomePager, { useWelcomePager } from '@/src/components/features/welcome/WelcomePager';
+import WelcomeProgress from '@/src/components/features/welcome/WelcomeProgress';
+import { offersOfficialApp, WELCOME_PAGES } from '@/src/components/features/welcome/welcomeContent';
+import { useDrizzle } from '@/src/db';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { migrate } from '@/src/db/migrate';
+import { setAuthDb } from '@/src/services/AuthTokenManager';
+import { setEditorDraftDb } from '@/src/services/EditorDraftService';
+import { createClientSettings } from '@/src/services/ClientSettingsService';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useThemeStore } from '@/src/state/themeStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { getClientFlavor } from '@/src/utils/clientFlavor';
+import { useDocumentTitle } from '@/src/utils/documentTitle';
+import i18n, { getLanguageOptions } from '@/src/utils/i18n';
+import { normalizeLocalUsername } from '@/src/utils/localUsername';
 
 type RootStackParamList = {
   ColdInstall: undefined;

@@ -10,7 +10,7 @@ jest.mock('react-i18next', () => ({
     i18n: { language: 'en' },
   }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -24,7 +24,7 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 
-import StoryWritingSection from '../../src/components/features/story/StoryWritingSection/StoryWritingSection';
+import StoryWritingSection from '@/src/components/features/story/StoryWritingSection/StoryWritingSection';
 
 const NOW = new Date('2026-10-08T12:00:00.000Z');
 

@@ -22,10 +22,10 @@ import {
   locationMapCanvasBounds,
   LOCATION_MAP_NODE_SIZE,
 } from '@keres/shared/graphs/locationMapLayout';
-import { useTheme } from '../../../theme';
-import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
-import { visibleCanvasStamps } from '../../../utils/canvasOverlayStamps';
-import SkiaOverlayErrorBoundary from '../graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { useTheme } from '@/src/theme';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
+import { visibleCanvasStamps } from '@/src/utils/canvasOverlayStamps';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import LocationMapConnectionLayer, {
   type LocationMapConnection,
   type LocationMapContains,

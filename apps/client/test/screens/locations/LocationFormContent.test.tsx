@@ -1,13 +1,13 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
-import type { CustomAttributeValues } from '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import {
   LocationFormContent,
   type LocationFormContentProps,
-} from '../../../src/screens/locations/LocationFormContent';
+} from '@/src/screens/locations/LocationFormContent';
 
-jest.mock('../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -27,7 +27,7 @@ jest.mock('../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -52,7 +52,7 @@ jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormCo
   };
 });
 
-jest.mock('../../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -71,7 +71,7 @@ jest.mock('../../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../../src/components/common/forms/FormSwitchField/FormSwitchField', () => {
+jest.mock('@/src/components/common/forms/FormSwitchField/FormSwitchField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -91,7 +91,7 @@ jest.mock('../../../src/components/common/forms/FormSwitchField/FormSwitchField'
   };
 });
 
-jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -113,33 +113,30 @@ jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock(
-  '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({
-        storyId,
-        fields,
-        onChange,
-      }: {
-        storyId: string;
-        fields: unknown[];
-        onChange: (fieldId: string, value: string) => void;
-      }) => (
-        <>
-          <Text testID="custom-fields">{`${storyId}:${fields.length}`}</Text>
-          <Text testID="custom-fields-change" onPress={() => onChange('f-1', 'v-1')}>
-            change
-          </Text>
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      storyId,
+      fields,
+      onChange,
+    }: {
+      storyId: string;
+      fields: unknown[];
+      onChange: (fieldId: string, value: string) => void;
+    }) => (
+      <>
+        <Text testID="custom-fields">{`${storyId}:${fields.length}`}</Text>
+        <Text testID="custom-fields-change" onPress={() => onChange('f-1', 'v-1')}>
+          change
+        </Text>
+      </>
+    ),
+  };
+});
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -192,7 +189,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -216,7 +213,7 @@ jest.mock('../../../src/components/features/notes/NoteManager', () => {
 });
 
 jest.mock(
-  '../../../src/components/features/relations/LocationRelationManager/LocationRelationManager',
+  '@/src/components/features/relations/LocationRelationManager/LocationRelationManager',
   () => {
     const { Text } = require('react-native');
     return {
@@ -256,7 +253,7 @@ jest.mock(
   },
 );
 
-jest.mock('../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

@@ -10,13 +10,13 @@ import React from 'react';
  * `test/screens/packs/ShippedPacksScreen.test.tsx`.
  */
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#fff' } }),
 }));
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal', () => {
+jest.mock('@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -25,7 +25,7 @@ jest.mock('../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenMod
   };
 });
 
-jest.mock('../../src/screens/packs/ShippedPacksContent', () => {
+jest.mock('@/src/screens/packs/ShippedPacksContent', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -48,8 +48,8 @@ jest.mock('../../src/screens/packs/ShippedPacksContent', () => {
   };
 });
 
-import ShippedPacksInstallerOverlay from '../../src/components/features/packs/ShippedPacksInstallerOverlay';
-import { useShippedPacksInstallerStore } from '../../src/state/shippedPacksInstallerStore';
+import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
+import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
 
 beforeEach(() => {
   useShippedPacksInstallerStore.setState({ open: false, lastInstalledPackId: null });

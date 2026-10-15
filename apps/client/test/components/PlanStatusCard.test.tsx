@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react-native';
-import PlanStatusCard from '../../src/components/features/servers/PlanStatusCard';
-import { formatPlanDate } from '../../src/utils/paymentPlans';
+import PlanStatusCard from '@/src/components/features/servers/PlanStatusCard';
+import { formatPlanDate } from '@/src/utils/paymentPlans';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       border: '#ddd',

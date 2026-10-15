@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import { Platform } from 'react-native';
-import i18n from '../../src/utils/i18n';
-import { syncDocumentLanguage } from '../../src/utils/i18n';
+import i18n from '@/src/utils/i18n';
+import { syncDocumentLanguage } from '@/src/utils/i18n';
 
 const setPlatform = (os: string) => {
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });
@@ -47,7 +47,7 @@ describe('syncDocumentLanguage on web', () => {
       const fresh = require('react-native') as typeof import('react-native');
       Object.defineProperty(fresh.Platform, 'OS', { value: 'web', configurable: true });
       // eslint-disable-next-line @typescript-eslint/no-require-imports -- a fresh module graph needs require.
-      require('../../src/utils/i18n');
+      require('@/src/utils/i18n');
     });
 
     expect(document.documentElement.lang).toBe('en');

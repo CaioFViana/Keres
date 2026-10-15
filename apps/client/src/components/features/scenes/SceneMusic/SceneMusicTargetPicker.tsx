@@ -14,7 +14,7 @@ import { useGalleryMedia } from '@/src/hooks/useGalleryMedia';
 import { useSongs } from '@/src/hooks/useSongs';
 import type { SceneMusicTarget } from '@/src/services/storymanagement/SceneMusicService';
 import { useTheme } from '@/src/theme';
-import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
+import { scenePickerStyleDefs } from '@/src/components/features/scenes/scenePickerStyleDefs';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 

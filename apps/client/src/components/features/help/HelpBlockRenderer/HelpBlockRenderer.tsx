@@ -3,7 +3,7 @@ import type { HelpBlock } from '@/src/help/types';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { typography } from '@/src/theme/tokens';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { HelpFieldTable } from '../HelpFieldTable/HelpFieldTable';
+import { HelpFieldTable } from '@/src/components/features/help/HelpFieldTable/HelpFieldTable';
 
 export function HelpBlockRenderer({
   block,

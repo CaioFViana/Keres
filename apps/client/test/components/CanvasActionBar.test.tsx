@@ -2,9 +2,9 @@ import { fireEvent, render } from '@testing-library/react-native';
 import {
   CanvasActionBar,
   CanvasActionBarButton,
-} from '../../src/components/features/graphs/CanvasActionBar/CanvasActionBar';
+} from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { text: '#111', textSecondary: '#555', primary: '#00f' } }),
 }));
 jest.mock('@expo/vector-icons', () => {

@@ -1,6 +1,6 @@
 import { normalizeGalleryLink } from '@keres/shared';
 import SparkMD5 from 'spark-md5';
-import type { GallerySelect } from '../db/schemas/galleries';
+import type { GallerySelect } from '@/src/db/schemas/galleries';
 import type { GalleryService } from './storymanagement/GalleryService';
 
 export function hashGalleryLink(url: string): string {

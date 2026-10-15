@@ -9,7 +9,7 @@ import {
   exportBasePath,
   findCanvasKitWasm,
   injectCanvasKitPreload,
-} from '../../scripts/lib/webPreload';
+} from '@/scripts/lib/webPreload';
 
 const WASM = 'canvaskit.d614134b66b587cafc440b5d8d238717.wasm';
 

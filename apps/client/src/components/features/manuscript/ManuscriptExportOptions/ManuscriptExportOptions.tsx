@@ -20,7 +20,7 @@ import {
   isScreenplayFormat,
   type ManuscriptExportSettings,
   withChange,
-} from '../export/manuscriptExportSettings';
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 import { OptionPills, OptionRow, OptionSection, SwitchRow } from './ExportOptionRows';
 import ProsePageEstimateCard from './ProsePageEstimateCard';
 import SongsOptions from './SongsOptions';

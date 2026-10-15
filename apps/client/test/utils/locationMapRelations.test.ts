@@ -5,7 +5,7 @@ import {
   deriveConnections,
   deriveContains,
   deriveParent,
-} from '../../src/utils/locationMapRelations';
+} from '@/src/utils/locationMapRelations';
 
 const relation = (id: string, relationType: 'contains' | 'connected_to', a: string, b: string) =>
   ({ id, relationType, locationAId: a, locationBId: b }) as never;

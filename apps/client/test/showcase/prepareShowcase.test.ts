@@ -11,45 +11,45 @@ const mockStoryState = { setSelectedStory: jest.fn() };
 const mockStoryService = { getAllStories: jest.fn(), getStoryById: jest.fn() };
 const mockExampleService = { installExampleStory: jest.fn() };
 
-jest.mock('../../src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   createClientSettings: jest.fn(),
 }));
-jest.mock('../../src/exampleStories/generated/registry', () => ({
+jest.mock('@/src/exampleStories/generated/registry', () => ({
   __esModule: true,
   get exampleStoryRegistry() {
     return mockRegistry;
   },
 }));
-jest.mock('../../src/services/storymanagement/ExampleStoryService', () => ({
+jest.mock('@/src/services/storymanagement/ExampleStoryService', () => ({
   __esModule: true,
   createExampleStoryService: jest.fn(() => mockExampleService),
 }));
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => mockStoryService),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: { getState: () => mockStoryState },
 }));
-jest.mock('../../src/state/themeStore', () => ({
+jest.mock('@/src/state/themeStore', () => ({
   __esModule: true,
   useThemeStore: { getState: () => mockThemeState },
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: { getState: () => mockUserState },
 }));
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: { changeLanguage: jest.fn() },
 }));
 
-import { createClientSettings, getClientSettings } from '../../src/services/ClientSettingsService';
-import { prepareShowcase } from '../../src/showcase/prepareShowcase';
-import i18n from '../../src/utils/i18n';
+import { createClientSettings, getClientSettings } from '@/src/services/ClientSettingsService';
+import { prepareShowcase } from '@/src/showcase/prepareShowcase';
+import i18n from '@/src/utils/i18n';
 
 const db = { marker: 'db' } as any;
 const request = { story: 'alice', stack: 'PlotsStack', theme: 'light', language: 'en' } as any;

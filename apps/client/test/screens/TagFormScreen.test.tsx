@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import { act, fireEvent, render } from '@testing-library/react-native';
-import TagFormScreen from '../../src/screens/tags/TagFormScreen';
+import TagFormScreen from '@/src/screens/tags/TagFormScreen';
 
 const mockGoBack = jest.fn();
 let mockTagId: string | undefined;
@@ -8,21 +8,21 @@ const mockCreate = jest.fn();
 const mockGet = jest.fn();
 const mockAlert = jest.fn();
 // Only the shared form-actions hook imports these, and it loads them even for a form with no custom attributes.
-jest.mock('../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: () => null,
 }));
-jest.mock('../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
-jest.mock('../../src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
-jest.mock('../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: false }),
 }));
-jest.mock('../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 24,
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { text: '#111', background: '#fff', primary: '#00f', error: '#f00', onPrimary: '#fff' },
   }),
@@ -35,27 +35,24 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ goBack: mockGoBack }),
   useRoute: () => ({ params: { tagId: mockTagId } }),
 }));
-jest.mock('../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: () => ({ userId: 'user' }),
 }));
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: () => ({ selectedStory: { id: 'story' } }),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/TagService', () => ({
   createTagService: () => ({ getById: mockGet, createTag: mockCreate }),
 }));
-jest.mock(
-  '../../src/components/common/inputs/ColorPickerInput/ColorPickerInput',
-  () => 'ColorPicker',
-);
-jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => 'Switch');
+jest.mock('@/src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => 'ColorPicker');
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => 'Switch');
 
 beforeEach(() => {
   jest.clearAllMocks();

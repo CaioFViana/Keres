@@ -16,7 +16,7 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ navigate: (...args: unknown[]) => mockNavigate(...args) }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -32,38 +32,38 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   commonScreenStyleDefs: () => ({ container: {} }),
 }));
-jest.mock('../../../src/components/layout/ScreenSection/ScreenSection', () => {
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const { Text } = require('react-native');
   return { __esModule: true, default: ({ title }: { title: string }) => <Text>{title}</Text> };
 });
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canManageStoryPolicy: mockCanManage, loading: mockRoleLoading }),
 }));
-jest.mock('../../../src/hooks/useStoryBackupExport', () => ({
+jest.mock('@/src/hooks/useStoryBackupExport', () => ({
   useStoryBackupExport: (story: unknown) => {
     mockBackupArgs(story);
     return { exporting: mockExporting, exportJson: mockExportJson, exportZip: mockExportZip };
   },
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1', title: 'Epic' } }),
 }));
-jest.mock('../../../src/utils/clientFlavor', () => ({
+jest.mock('@/src/utils/clientFlavor', () => ({
   __esModule: true,
   isServerless: () => mockServerless,
 }));
 
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { useHeaderBackActionStore } from '../../../src/state/headerBackActionStore';
-import StoryShareIndexScreen from '../../../src/screens/storyshare/StoryShareIndexScreen';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import StoryShareIndexScreen from '@/src/screens/storyshare/StoryShareIndexScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

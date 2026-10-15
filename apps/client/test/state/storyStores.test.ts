@@ -1,9 +1,9 @@
 /** @jest-environment node */
-import { useStoryListStore } from '../../src/state/storyListStore';
-import { useStoryStore } from '../../src/state/storyStore';
-import { useSummaryStore } from '../../src/state/summaryStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useStoryListStore } from '@/src/state/storyListStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useSummaryStore } from '@/src/state/summaryStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const story = (id: string, isFavorite = false) => ({ id, title: id, isFavorite }) as never;
 

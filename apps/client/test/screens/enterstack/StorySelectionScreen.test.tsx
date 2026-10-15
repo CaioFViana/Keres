@@ -77,82 +77,82 @@ jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('../../../src/services/storymanagement/StoryContentMetricsService', () => ({
+jest.mock('@/src/services/storymanagement/StoryContentMetricsService', () => ({
   createStoryContentMetricsService: () => ({
     getCatalogCounts: (...args: unknown[]) => mockGetCatalogCounts(...args),
     getContentCounts: (...args: unknown[]) => mockGetContentCounts(...args),
   }),
 }));
 
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: () => ({
     updateStoryFavoriteStatus: (...args: unknown[]) => mockUpdateFavorite(...args),
   }),
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
-jest.mock('../../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockStoryListState) : mockStoryListState,
 }));
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockStoryState) : mockStoryState,
 }));
 
-jest.mock('../../../src/state/summaryStore', () => ({
+jest.mock('@/src/state/summaryStore', () => ({
   useSummaryStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockSummaryState) : mockSummaryState,
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
-jest.mock('../../../src/components/common/display/SummaryCard/SummaryCard', () => {
+jest.mock('@/src/components/common/display/SummaryCard/SummaryCard', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -176,7 +176,7 @@ type ListItemProps = {
   onEditStory: (storyId: string) => void;
 };
 
-jest.mock('../../../src/components/features/list-items/StorySelectionListItem', () => {
+jest.mock('@/src/components/features/list-items/StorySelectionListItem', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -208,8 +208,8 @@ jest.mock('../../../src/components/features/list-items/StorySelectionListItem', 
 import type { Story } from '@keres/shared/entities/Story';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
-import StorySelectionScreen from '../../../src/screens/enterstack/StorySelectionScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import StorySelectionScreen from '@/src/screens/enterstack/StorySelectionScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const story = {
   id: 'story-1',

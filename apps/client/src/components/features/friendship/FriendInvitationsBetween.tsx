@@ -3,8 +3,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import type { ServerStoryInvitation } from '../../../services/StoryInvitationService';
-import { useTheme } from '../../../theme';
+import type { ServerStoryInvitation } from '@/src/services/StoryInvitationService';
+import { useTheme } from '@/src/theme';
 
 interface FriendInvitationsBetweenProps {
   /** Invitations this friend sent the person: to accept or decline. */

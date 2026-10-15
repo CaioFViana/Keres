@@ -1,17 +1,17 @@
 import { render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
-import ResponsiveModal from '../../../src/components/layout/ResponsiveModal/ResponsiveModal';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { background: '#ffffff', surface: '#f0f0f0' } }),
 }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: true, isWide: false }),
 }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
-jest.mock('../../../src/hooks/useKeyboardOverlap', () => {
+jest.mock('@/src/hooks/useKeyboardOverlap', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   return {

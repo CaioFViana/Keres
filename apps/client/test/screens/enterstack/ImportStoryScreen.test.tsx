@@ -52,43 +52,43 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: () => ({
     importFullStory: (...args: unknown[]) => mockImportFullStory(...args),
   }),
 }));
 
-jest.mock('../../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: {
     writeDownloaded: (...args: unknown[]) => mockWriteDownloaded(...args),
   },
 }));
 
-jest.mock('../../../src/utils/storyTransfer', () => {
+jest.mock('@/src/utils/storyTransfer', () => {
   class StoryImportError extends Error {
     reason: string;
     constructor(reason: string) {
@@ -102,24 +102,24 @@ jest.mock('../../../src/utils/storyTransfer', () => {
   };
 });
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
-jest.mock('../../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockStoryListState) : mockStoryListState,
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
 
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ImportStoryScreen from '../../../src/screens/enterstack/ImportStoryScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import ImportStoryScreen from '@/src/screens/enterstack/ImportStoryScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 describe('ImportStoryScreen', () => {
   beforeEach(() => {
@@ -182,7 +182,7 @@ describe('ImportStoryScreen', () => {
 
   it('maps import rejections to specific messages', async () => {
     await withSilencedConsole(['log'], async () => {
-      const { StoryImportError } = jest.requireMock('../../../src/utils/storyTransfer') as {
+      const { StoryImportError } = jest.requireMock('@/src/utils/storyTransfer') as {
         StoryImportError: new (reason: string) => Error;
       };
       const view = await render(<ImportStoryScreen />);

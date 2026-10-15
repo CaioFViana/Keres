@@ -4,11 +4,11 @@ import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import LocationGraphCanvas, {
   type LocationGraphCanvasHandle,
-} from '../../src/components/features/graphs/LocationGraph/LocationGraphCanvas';
-import SkiaEdgeCanvas from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
-import SkiaOverlayErrorBoundary from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+} from '@/src/components/features/graphs/LocationGraph/LocationGraphCanvas';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       primary: '#85f',

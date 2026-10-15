@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
@@ -235,56 +235,56 @@ jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () =
     default: () => <Text testID="entity-metadata">metadata</Text>,
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => mockEntityComments,
 }));
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => mockEntityRelations,
 }));
-jest.mock('../../../src/hooks/useAppearsInArcs', () => ({
+jest.mock('@/src/hooks/useAppearsInArcs', () => ({
   __esModule: true,
   useAppearsInArcs: () => mockArcs,
 }));
-jest.mock('../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenGalleryMediaViewer,
 }));
-jest.mock('../../../src/hooks/useOpenPresenceMatrixViewer', () => ({
+jest.mock('@/src/hooks/useOpenPresenceMatrixViewer', () => ({
   __esModule: true,
   useOpenPresenceMatrixViewer: () => ({ openItem: mockOpenJourneyMap }),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getAllByStoryId: mockGetCharacters }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getById: mockGetItemById }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { primary: '#00f' } }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => mockVocabularyCopy,
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => mockVocabulary,
 }));
@@ -293,7 +293,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockI18n,
 }));
 
-import ItemDetailScreen from '../../../src/screens/items/ItemDetailScreen';
+import ItemDetailScreen from '@/src/screens/items/ItemDetailScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

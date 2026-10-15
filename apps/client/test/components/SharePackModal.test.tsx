@@ -13,7 +13,7 @@ import React from 'react';
  * dropdown opens.
  */
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -36,7 +36,7 @@ jest.mock('react-i18next', () => {
 });
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -46,7 +46,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 });
 
 /** A dropdown reduced to what the modal reads from it: its value, and a way to change it. */
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -71,7 +71,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -93,7 +93,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-import SharePackModal from '../../src/components/features/packs/SharePackModal/SharePackModal';
+import SharePackModal from '@/src/components/features/packs/SharePackModal/SharePackModal';
 
 const SERVER_SELECT = 'select-packs_browse_choose_server';
 const VISIBILITY_SELECT = 'select-visibility';

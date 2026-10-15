@@ -1,6 +1,6 @@
 import { ARRANGED } from '@keres/shared';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
 import { and, eq, isNull, lt, or } from 'drizzle-orm';
 
 /**

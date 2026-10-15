@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
-import SceneMusicEntry from '../../../../src/components/features/scenes/SceneMusic/SceneMusicEntry';
+import SceneMusicEntry from '@/src/components/features/scenes/SceneMusic/SceneMusicEntry';
 
 const mockOnOpen = jest.fn();
 let mockMedium: string | null = null;
@@ -12,15 +12,15 @@ jest.mock('react-i18next', () => ({
       options?.count !== undefined ? `${key}:${options.count}` : key,
   }),
 }));
-jest.mock('../../../../src/hooks/useSceneArcMedium', () => ({
+jest.mock('@/src/hooks/useSceneArcMedium', () => ({
   __esModule: true,
   useSceneArcMedium: () => mockMedium,
 }));
-jest.mock('../../../../src/hooks/useSceneMusic', () => ({
+jest.mock('@/src/hooks/useSceneMusic', () => ({
   __esModule: true,
   useSceneMusicCount: () => mockCount,
 }));
-jest.mock('../../../../src/components/common/display/DetailField/DetailField', () => {
+jest.mock('@/src/components/common/display/DetailField/DetailField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

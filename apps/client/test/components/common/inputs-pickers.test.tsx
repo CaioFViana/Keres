@@ -8,18 +8,18 @@ import {
 } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import ColorPickerInput from '../../../src/components/common/inputs/ColorPickerInput/ColorPickerInput';
-import ColorPickerModal from '../../../src/components/common/inputs/ColorPickerInput/ColorPickerModal';
-import IconPickerInput from '../../../src/components/common/inputs/IconPickerInput/IconPickerInput';
-import IconPickerModal from '../../../src/components/common/inputs/IconPickerInput/IconPickerModal';
-import DatePickerInput from '../../../src/components/common/inputs/DatePickerInput/DatePickerInput';
-import StoryDateInput from '../../../src/components/common/inputs/StoryDateInput/StoryDateInput';
-import ThemePickerModal from '../../../src/components/common/inputs/ThemePickerModal/ThemePickerModal';
-import { useStoryCalendar } from '../../../src/hooks/useStoryCalendar';
+import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
+import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
+import IconPickerModal from '@/src/components/common/inputs/IconPickerInput/IconPickerModal';
+import DatePickerInput from '@/src/components/common/inputs/DatePickerInput/DatePickerInput';
+import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryDateInput';
+import ThemePickerModal from '@/src/components/common/inputs/ThemePickerModal/ThemePickerModal';
+import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -61,7 +61,7 @@ jest.mock('@expo/vector-icons', () => ({
 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,
@@ -72,16 +72,16 @@ jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
   }),
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector: (state: { use24HourTime: boolean }) => boolean) =>
     selector({ use24HourTime: true }),
 }));
 
-jest.mock('../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   useStoryCalendar: jest.fn(() => ({ definition: null })),
 }));
 
-jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -90,7 +90,7 @@ jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () =
   };
 });
 
-jest.mock('../../../src/components/common/inputs/DatePickerInput/DatePickerModal', () => {
+jest.mock('@/src/components/common/inputs/DatePickerInput/DatePickerModal', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {

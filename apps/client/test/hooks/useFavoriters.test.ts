@@ -7,16 +7,16 @@ const mockDb = {
 const mockFavoriteService = { getBehavior: jest.fn(), getFavoriterIds: jest.fn() };
 const mockResolveProfile = jest.fn();
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/FavoriteService', () => ({
   __esModule: true,
   createFavoriteService: jest.fn(() => mockFavoriteService),
 }));
-jest.mock('../../src/hooks/useUserProfileResolver', () => ({
+jest.mock('@/src/hooks/useUserProfileResolver', () => ({
   __esModule: true,
   useUserProfileResolver: jest.fn(() => mockResolveProfile),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     useEntityInitialLoad: (load: () => Promise<void>) => React.useEffect(() => void load(), [load]),
@@ -24,7 +24,7 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useFavoriters } from '../../src/hooks/useFavoriters';
+import { useFavoriters } from '@/src/hooks/useFavoriters';
 
 beforeEach(() => {
   jest.clearAllMocks();

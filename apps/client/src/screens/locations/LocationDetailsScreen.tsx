@@ -33,34 +33,34 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../db';
-import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
-import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { LocationRelationSelect, LocationSelect, SceneSelect } from '@/src/db/schema'; // Explicitly import SceneSelect
+import type { CharacterSelect } from '@/src/db/schemas/characters'; // Import CharacterSelect
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
-import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import type { CharacterService } from '../../services/storymanagement/CharacterService';
-import { createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
-import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '../../services/storymanagement/ItemService';
-import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { createLocationService } from '../../services/storymanagement/LocationService';
-import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
-import { useStoryStore } from '../../state/storyStore';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import type { LocationStackParamList } from '@/src/navigation/MainSystemStack';
+import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
+import type { CharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService'; // Import CharacterService
+import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '@/src/services/storymanagement/ItemService';
+import { createItemService } from '@/src/services/storymanagement/ItemService'; // Import ItemService
+import type { LocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import createSceneService
+import { useStoryStore } from '@/src/state/storyStore';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {

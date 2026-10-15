@@ -8,19 +8,19 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useDrizzle } from '../../db';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { StoryPlan } from '@keres/shared';
-import type { StoryEntityCounts } from '../../services/storymanagement/StoryEntityCountService';
-import { createStoryEntityCountService } from '../../services/storymanagement/StoryEntityCountService';
-import { createStoryPlanService } from '../../services/StoryPlanService';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import type { StoryEntityCounts } from '@/src/services/storymanagement/StoryEntityCountService';
+import { createStoryEntityCountService } from '@/src/services/storymanagement/StoryEntityCountService';
+import { createStoryPlanService } from '@/src/services/StoryPlanService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 
 /**
  * What each synchronized entity type is called in the counts. The types the story's vocabulary renames

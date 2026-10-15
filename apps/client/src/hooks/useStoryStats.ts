@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import type {
   CharacterSelect,
   ModeSelect,
   StatRelationSelect,
   StatSelect,
   StatStrengthSelect,
-} from '../db/schema';
-import { createCharacterService } from '../services/storymanagement/CharacterService';
-import { createModeService } from '../services/storymanagement/ModeService';
-import { createStatRelationService } from '../services/storymanagement/StatRelationService';
-import { createStatService } from '../services/storymanagement/StatService';
-import { createStatStrengthService } from '../services/storymanagement/StatStrengthService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/db/schema';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createModeService } from '@/src/services/storymanagement/ModeService';
+import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
+import { createStatService } from '@/src/services/storymanagement/StatService';
+import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import { resolveLadder, type StatTier } from '@keres/shared/graphs/statLadder';
-import { indexStatValues, type StatValueIndex } from '../utils/statValues';
+import { indexStatValues, type StatValueIndex } from '@/src/utils/statValues';
 
 /**
  * Everything a stats screen needs, in a single query and refreshed by event.

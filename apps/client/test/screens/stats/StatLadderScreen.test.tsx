@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import StatLadderScreen from '../../../src/screens/stats/StatLadderScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import StatLadderScreen from '@/src/screens/stats/StatLadderScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -21,7 +21,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -41,7 +41,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -53,7 +53,7 @@ jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', (
   };
 });
 
-jest.mock('../../../src/components/features/stats/StatLadderBar/StatLadderBar', () => {
+jest.mock('@/src/components/features/stats/StatLadderBar/StatLadderBar', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -61,7 +61,7 @@ jest.mock('../../../src/components/features/stats/StatLadderBar/StatLadderBar', 
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -73,27 +73,27 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (s: any) => any) => {
     const state = { userId: 'user-1', exportFormat: 'svg' };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/useStoryStats', () => ({
   useStoryStats: () => mockStatsData,
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
-jest.mock('../../../src/db', () => ({ useDrizzle: () => ({}) }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
-jest.mock('../../../src/services/storymanagement/StatStrengthService', () => ({
+jest.mock('@/src/services/storymanagement/StatStrengthService', () => ({
   createStatStrengthService: () => ({ replaceLadder: mockReplaceLadder }),
 }));
 

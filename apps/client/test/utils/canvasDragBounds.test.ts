@@ -5,7 +5,7 @@ import {
   clampCanvasWorldCoordinate,
   limitCanvasDragPosition,
   MAX_CANVAS_WORLD_COORDINATE,
-} from '../../src/utils/canvasDragBounds';
+} from '@/src/utils/canvasDragBounds';
 
 const initialBounds = { width: 720, height: 720, originX: 0, originY: 0 };
 

@@ -1,4 +1,4 @@
-import { plotMatches } from '../../src/utils/plotSearch';
+import { plotMatches } from '@/src/utils/plotSearch';
 
 const plot = { name: 'The Heist', details: 'A vault under the old bank' };
 

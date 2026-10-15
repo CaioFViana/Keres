@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
-import CanvasStampView from '../../src/components/features/graphs/CanvasOverlay/CanvasStampView';
+import CanvasStampView from '@/src/components/features/graphs/CanvasOverlay/CanvasStampView';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { surface: '#111', text: '#fff', primary: '#85f', background: '#000' },
   }),

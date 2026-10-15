@@ -1,17 +1,17 @@
 const mockFlushEditor = jest.fn();
 const mockFlushCanvas = jest.fn();
-jest.mock('../../src/services/EditorDraftService', () => ({
+jest.mock('@/src/services/EditorDraftService', () => ({
   __esModule: true,
   flushPendingEditorDrafts: (...args: unknown[]) => mockFlushEditor(...args),
 }));
-jest.mock('../../src/services/canvasDraftPersistence', () => ({
+jest.mock('@/src/services/canvasDraftPersistence', () => ({
   __esModule: true,
   flushPendingCanvasDrafts: (...args: unknown[]) => mockFlushCanvas(...args),
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
 import { AppState } from 'react-native';
-import { useFlushDraftsOnBackground } from '../../src/hooks/useFlushDraftsOnBackground';
+import { useFlushDraftsOnBackground } from '@/src/hooks/useFlushDraftsOnBackground';
 
 type Listener = (state: string) => void;
 let listener: Listener | null;

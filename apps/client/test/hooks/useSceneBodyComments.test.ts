@@ -1,17 +1,17 @@
 /** @jest-environment node */
-jest.mock('../../src/db', () => ({ useDrizzle: jest.fn() }));
-jest.mock('../../src/state/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
-jest.mock('../../src/hooks/useStoryRole', () => ({ useStoryRole: jest.fn() }));
-jest.mock('../../src/services/storymanagement/CommentService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
+jest.mock('@/src/state/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
+jest.mock('@/src/hooks/useStoryRole', () => ({ useStoryRole: jest.fn() }));
+jest.mock('@/src/services/storymanagement/CommentService', () => ({
   createCommentService: jest.fn(),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '../../src/db';
-import { useStoryRole } from '../../src/hooks/useStoryRole';
-import { useSceneBodyComments } from '../../src/hooks/useSceneBodyComments';
-import { createCommentService } from '../../src/services/storymanagement/CommentService';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
+import { useDrizzle } from '@/src/db';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useSceneBodyComments } from '@/src/hooks/useSceneBodyComments';
+import { createCommentService } from '@/src/services/storymanagement/CommentService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 const service = {
   getCommentsForEntities: jest.fn(),

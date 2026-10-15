@@ -13,7 +13,7 @@ import {
 } from '@keres/shared';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { SCENE_BODY_DRAFT_FIELD, readBoundEditorDraft } from '../services/EditorDraftService';
+import { SCENE_BODY_DRAFT_FIELD, readBoundEditorDraft } from '@/src/services/EditorDraftService';
 import { useAsyncOperation } from './useAsyncOperation';
 import { useDurableFormDraft } from './useDurableFormDraft';
 

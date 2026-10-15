@@ -1,13 +1,13 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import LocationMapHeaderActions from '../../src/components/features/location-maps/LocationMapHeaderActions';
+import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { primary: '#9b5cff', text: '#fff', textSecondary: '#888' } }),
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const mockScreenAnchor = jest.fn();
-jest.mock('../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/guides/useGuideAnchor', () => ({
   __esModule: true,
   useGuideAnchor: (id: string) => mockScreenAnchor(id),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),

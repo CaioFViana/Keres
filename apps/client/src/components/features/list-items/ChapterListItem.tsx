@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import React from 'react';
 import { Text, View } from 'react-native';
-import type { ChapterSelect, TagSelect } from '../../../db/schema';
-import { useTheme } from '../../../theme';
-import { truncate } from '../../../utils/stringUtils';
+import type { ChapterSelect, TagSelect } from '@/src/db/schema';
+import { useTheme } from '@/src/theme';
+import { truncate } from '@/src/utils/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';

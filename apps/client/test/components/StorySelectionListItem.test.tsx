@@ -3,9 +3,9 @@
  */
 import { fireEvent, render } from '@testing-library/react-native';
 import type { Story } from '@keres/shared/entities/Story';
-import StorySelectionListItem from '../../src/components/features/list-items/StorySelectionListItem';
+import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 
-jest.mock('../../src/theme/useThemeColors', () => ({
+jest.mock('@/src/theme/useThemeColors', () => ({
   useThemeColors: () => ({
     primary: '#B58500',
     primaryContainer: '#FFE08A',
@@ -19,7 +19,7 @@ jest.mock('../../src/theme/useThemeColors', () => ({
 }));
 
 // The cover reads the Gallery: nothing this card test is about.
-jest.mock('../../src/components/common/display/CoverImage/CoverImage', () => ({
+jest.mock('@/src/components/common/display/CoverImage/CoverImage', () => ({
   __esModule: true,
   default: () => null,
 }));

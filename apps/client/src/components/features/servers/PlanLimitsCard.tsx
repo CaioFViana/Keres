@@ -2,9 +2,9 @@ import type { AccountPlan } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { planLimitLines } from '../../../utils/planLimitLines';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { planLimitLines } from '@/src/utils/planLimitLines';
 import { serverCardStyleDefs } from './serverCardStyleDefs';
 
 export interface PlanLimitsCardProps {

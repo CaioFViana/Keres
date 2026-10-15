@@ -3,7 +3,7 @@ import {
   countActiveCriteria,
   isActiveCriterion,
   withoutCriterion,
-} from '../../src/utils/advancedSearchCriteria';
+} from '@/src/utils/advancedSearchCriteria';
 
 describe('isActiveCriterion', () => {
   it('counts a value that narrows the list, including a "No" answer and zero', () => {

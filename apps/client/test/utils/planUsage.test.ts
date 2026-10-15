@@ -3,7 +3,7 @@ import {
   PLAN_ALERT_RATIO,
   PLAN_WARNING_RATIO,
   planUsageLevel,
-} from '../../src/utils/planUsage';
+} from '@/src/utils/planUsage';
 
 describe('planUsageLevel', () => {
   it('warns from 90% of the limit and alerts from 95%', () => {

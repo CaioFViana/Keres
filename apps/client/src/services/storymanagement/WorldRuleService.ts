@@ -1,25 +1,25 @@
 import type { SQL } from 'drizzle-orm';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import type { AppDrizzleClient, WorldRuleInsert, WorldRuleSelect } from '../../db';
-import { worldRules } from '../../db';
-import { tagRelations } from '../../db/schemas/tagRelations';
-import { tags } from '../../db/schemas/tags'; // Import tags schema
-import type { WorldRuleWithTags } from '../../db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
-import type { Create } from '../../utils/entityUtils';
-import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+import type { AppDrizzleClient, WorldRuleInsert, WorldRuleSelect } from '@/src/db';
+import { worldRules } from '@/src/db';
+import { tagRelations } from '@/src/db/schemas/tagRelations';
+import { tags } from '@/src/db/schemas/tags'; // Import tags schema
+import type { WorldRuleWithTags } from '@/src/db/schemas/worldRules'; // Import WorldRuleWithTags from schemas
+import type { Create } from '@/src/utils/entityUtils';
+import { getChangedFields, prepareNewEntityData } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
 import { applyKeyedListSort, storyEntityConditions } from './storyEntityListQuery';
-import type { AdvancedSearchCriteria, FavoriteFilterState } from '../../types/entityFilters';
-import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
+import type { AdvancedSearchCriteria, FavoriteFilterState } from '@/src/types/entityFilters';
+import { buildCustomAttributeSearchCondition } from '@/src/utils/attributeSearchPredicate';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,

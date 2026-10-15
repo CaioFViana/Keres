@@ -12,10 +12,10 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '../../../../utils/colorMath';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv } from '@/src/utils/colorMath';
 
 const SLIDER_HEIGHT = 20;
 

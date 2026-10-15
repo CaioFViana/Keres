@@ -22,8 +22,8 @@ import type {
   LocationSelect,
   StorySchemaFieldSelect,
   TagSelect,
-} from '../../db/schema';
-import type { SaveNoteRelation } from '../../services/storymanagement/NoteRelationService';
+} from '@/src/db/schema';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
 
 type LocationFormCopy = {
   saveLabel: string;

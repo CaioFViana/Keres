@@ -1,7 +1,7 @@
 /** @jest-environment node */
-import { CLIENT_TERMS_VERSION } from '../../src/legal/clientTerms';
-import { legalIsBehind } from '../../src/legal/clientLegalStatus';
-import { CLIENT_PRIVACY_VERSION } from '../../src/legal/privacyPolicy';
+import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
+import { legalIsBehind } from '@/src/legal/clientLegalStatus';
+import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
 
 describe('legalIsBehind', () => {
   it('is behind for a document never accepted', () => {

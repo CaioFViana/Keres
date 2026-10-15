@@ -1,7 +1,7 @@
 import {
   openServerVerification,
   type VerificationNavigation,
-} from '../../src/navigation/openServerVerification';
+} from '@/src/navigation/openServerVerification';
 
 type Route = { name: string; params?: object } | undefined;
 

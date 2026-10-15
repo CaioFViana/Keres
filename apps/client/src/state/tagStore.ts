@@ -1,9 +1,9 @@
-import type { TagSelect } from '../db/schemas/tags';
-import type { TagService } from '../services/storymanagement/TagService';
-import { createTagService } from '../services/storymanagement/TagService';
+import type { TagSelect } from '@/src/db/schemas/tags';
+import type { TagService } from '@/src/services/storymanagement/TagService';
+import { createTagService } from '@/src/services/storymanagement/TagService';
 import { createEntityStore } from './createEntityStore';
 
-export type { FavoriteFilterState } from '../types/entityFilters';
+export type { FavoriteFilterState } from '@/src/types/entityFilters';
 
 export const useTagStore = createEntityStore<'tags', TagSelect, TagService>({
   collectionKey: 'tags',

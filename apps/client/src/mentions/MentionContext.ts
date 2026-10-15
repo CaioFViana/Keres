@@ -3,7 +3,7 @@ import {
   EMPTY_MENTION_MATCHER,
   type MentionMatcher,
   type MentionRef,
-} from '../utils/entityMentions';
+} from '@/src/utils/entityMentions';
 import type {
   AmbiguousMention,
   AmbiguousMentionIndex,

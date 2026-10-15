@@ -3,7 +3,7 @@ import type { ChatMessage } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface FriendConversationCardProps {
   message: ChatMessage;

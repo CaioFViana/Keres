@@ -14,7 +14,7 @@ jest.mock('react-i18next', () => ({
       params ? `${key}:${JSON.stringify(params)}` : key,
   }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -29,27 +29,27 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('../../src/services/storyInvitationActions', () => ({
+jest.mock('@/src/services/storyInvitationActions', () => ({
   __esModule: true,
   acceptStoryInvitation: (...args: unknown[]) => mockAccept(...args),
   closeStoryInvitation: (...args: unknown[]) => mockClose(...args),
 }));
 let mockInvitations: unknown[] = [];
-jest.mock('../../src/hooks/useStoryInvitations', () => ({
+jest.mock('@/src/hooks/useStoryInvitations', () => ({
   __esModule: true,
   useStoryInvitations: () => mockInvitations,
 }));
 
-import StoryInvitationList from '../../src/components/features/story/StoryInvitationList/StoryInvitationList';
+import StoryInvitationList from '@/src/components/features/story/StoryInvitationList/StoryInvitationList';
 
 const server = { id: 'server-1', idUser: 'me' };
 const serverFor = (id: string) => (id === 'server-1' ? (server as never) : undefined);

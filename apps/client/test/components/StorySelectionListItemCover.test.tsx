@@ -1,9 +1,9 @@
 import type { Story } from '@keres/shared/entities/Story';
 import { act, cleanup, render } from '@testing-library/react-native';
-import StorySelectionListItem from '../../src/components/features/list-items/StorySelectionListItem';
+import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/theme/useThemeColors', () => ({
+jest.mock('@/src/theme/useThemeColors', () => ({
   useThemeColors: () => ({
     primary: '#B58500',
     text: '#171C22',
@@ -16,7 +16,7 @@ jest.mock('../../src/theme/useThemeColors', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/components/common/display/CoverImage/CoverImage', () => {
+jest.mock('@/src/components/common/display/CoverImage/CoverImage', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

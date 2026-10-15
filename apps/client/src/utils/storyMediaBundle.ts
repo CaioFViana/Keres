@@ -5,7 +5,7 @@ import type {
   ExtractedStoryZipMedia,
 } from '@keres/shared/utils/storyZip';
 import { File } from 'expo-file-system';
-import { mediaFileService } from '../services/MediaFileService';
+import { mediaFileService } from '@/src/services/MediaFileService';
 import { StoryImportError } from './StoryImportError';
 
 export type BuildZipResult = BuildStoryZipResult;

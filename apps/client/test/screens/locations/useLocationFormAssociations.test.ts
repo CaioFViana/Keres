@@ -4,14 +4,14 @@ const mockAlert = jest.fn();
 const mockReadDraft = jest.fn();
 const mockPatchDraft = jest.fn();
 
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-jest.mock('../../../src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadDraft(...args),
   patchEntityFormSecondaryDraft: (...args: unknown[]) => mockPatchDraft(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -19,8 +19,8 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { LocationRelationSelect } from '../../../src/db/schema';
-import { useLocationFormAssociations } from '../../../src/screens/locations/useLocationFormAssociations';
+import type { LocationRelationSelect } from '@/src/db/schema';
+import { useLocationFormAssociations } from '@/src/screens/locations/useLocationFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

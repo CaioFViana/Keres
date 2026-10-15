@@ -10,7 +10,7 @@ import {
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 
-export { PREVIEW_MAX_SECONDS } from '../utils/songPlayback';
+export { PREVIEW_MAX_SECONDS } from '@/src/utils/songPlayback';
 
 /** How much hummed audio is kept on the device; the oldest goes first. */
 export const SONG_AUDIO_CACHE_BYTES = 20 * 1024 * 1024;

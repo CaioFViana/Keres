@@ -10,21 +10,21 @@ jest.mock('react-i18next', () => ({
     i18n: { language: 'pt-BR' },
   }),
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),
 }));
-jest.mock('../../src/services/PaymentService', () => ({
+jest.mock('@/src/services/PaymentService', () => ({
   __esModule: true,
   cancelSubscription: (...args: unknown[]) => mockCancel(...args),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { usePlanCancellation } from '../../src/hooks/usePlanCancellation';
+import { usePlanCancellation } from '@/src/hooks/usePlanCancellation';
 
 const server = { id: 'server-1' } as never;
 type Button = { text: string; onPress?: () => Promise<void> | void };

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import type { AppDrizzleClient } from '../db';
-import type { PendingConflict } from '../services/SyncConflictService';
-import { createSyncConflictService } from '../services/SyncConflictService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { PendingConflict } from '@/src/services/SyncConflictService';
+import { createSyncConflictService } from '@/src/services/SyncConflictService';
 
 interface SyncConflictState {
   conflicts: PendingConflict[];

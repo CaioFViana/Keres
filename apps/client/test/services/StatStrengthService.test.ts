@@ -2,11 +2,11 @@ const mockServerService = {};
 const mockPrepare = jest.fn();
 const mockOperation = jest.fn();
 const mockEmit = jest.fn();
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(() => mockServerService),
 }));
-jest.mock('../../src/utils/syncUtils', () => ({
+jest.mock('@/src/utils/syncUtils', () => ({
   __esModule: true,
   assertStoryIsWritable: jest.fn().mockResolvedValue(undefined),
   getUserIdForOperation: jest.fn(),
@@ -14,16 +14,16 @@ jest.mock('../../src/utils/syncUtils', () => ({
   runLocalWrite: (_db: unknown, _storyId: string, unit: () => unknown) => Promise.resolve(unit()),
   afterLocalWrite: (emit: () => void) => emit(),
 }));
-jest.mock('../../src/utils/entityUtils', () => ({
+jest.mock('@/src/utils/entityUtils', () => ({
   __esModule: true,
   prepareNewEntityData: (...args: unknown[]) => mockPrepare(...args),
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
 
-import { createStatStrengthService } from '../../src/services/storymanagement/StatStrengthService';
+import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
 
 function queryChain(rows: unknown) {
   return {

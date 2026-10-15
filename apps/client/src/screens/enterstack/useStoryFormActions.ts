@@ -4,11 +4,11 @@ import type { NavigationProp } from '@react-navigation/native';
 import type { RefObject } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { syncEngine } from '../../services/sync/appSyncEngine';
-import { manualSyncRefusalText } from '../../services/sync/manualSyncMessage';
-import type { PackService } from '../../services/storymanagement/PackService';
-import type { StoryService } from '../../services/storymanagement/StoryService';
-import { AppAlert } from '../../utils/AppAlert';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+import { manualSyncRefusalText } from '@/src/services/sync/manualSyncMessage';
+import type { PackService } from '@/src/services/storymanagement/PackService';
+import type { StoryService } from '@/src/services/storymanagement/StoryService';
+import { AppAlert } from '@/src/utils/AppAlert';
 import type { StoryFormState } from './useStoryFormState';
 
 type StoryFormNavigation = NavigationProp<{

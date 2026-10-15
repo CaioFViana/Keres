@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../db';
-import { createStoryService } from '../../services/storymanagement/StoryService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { useDrizzle } from '@/src/db';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 type LoadedStory = NonNullable<
   Awaited<ReturnType<ReturnType<typeof createStoryService>['getStoryById']>>

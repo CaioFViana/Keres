@@ -10,12 +10,12 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { usePaymentHistory } from '../../hooks/usePaymentHistory';
-import { useServerStatuses } from '../../hooks/useServerStatuses';
-import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
-import type { ThemeColors } from '../../theme';
-import { useTheme } from '../../theme';
-import { formatMoney, formatPlanDate } from '../../utils/paymentPlans';
+import { usePaymentHistory } from '@/src/hooks/usePaymentHistory';
+import { useServerStatuses } from '@/src/hooks/useServerStatuses';
+import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import type { ThemeColors } from '@/src/theme';
+import { useTheme } from '@/src/theme';
+import { formatMoney, formatPlanDate } from '@/src/utils/paymentPlans';
 
 type RouteProps = RouteProp<ServerManagementStackParamList, 'ServerPaymentHistory'>;
 

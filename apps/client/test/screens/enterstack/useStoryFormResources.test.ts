@@ -6,17 +6,17 @@ const mockCreatePackService: jest.Mock = jest.fn(() => ({
   listPacks: mockListPacks,
 }));
 
-jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   createStoryService: (...args: unknown[]) => mockCreateStoryService(...args),
 }));
-jest.mock('../../../src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/PackService', () => ({
   createPackService: (...args: unknown[]) => mockCreatePackService(...args),
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryFormResources } from '../../../src/screens/enterstack/useStoryFormResources';
-import { useShippedPacksInstallerStore } from '../../../src/state/shippedPacksInstallerStore';
+import { useStoryFormResources } from '@/src/screens/enterstack/useStoryFormResources';
+import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
 
 beforeEach(() => {
   jest.clearAllMocks();

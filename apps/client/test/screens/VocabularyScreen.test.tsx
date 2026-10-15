@@ -5,7 +5,7 @@ const mockUpdateArc = jest.fn();
 const mockUpdateStory = jest.fn();
 let mockActiveArc: { id: string; title: string; vocabulary: null } | null = null;
 
-jest.mock('../../src/components/common', () => ({
+jest.mock('@/src/components/common', () => ({
   __esModule: true,
   Button: ({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -19,36 +19,36 @@ jest.mock('../../src/components/common', () => ({
     return react.createElement(native.TextInput, props);
   },
 }));
-jest.mock('../../src/components/common/controls/FormActions/FormActions', () => ({
+jest.mock('@/src/components/common/controls/FormActions/FormActions', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => ({
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true, canManageStoryPolicy: true }),
 }));
-jest.mock('../../src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ activeArc: mockActiveArc }),
 }));
-jest.mock('../../src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: () => ({ updateArc: mockUpdateArc }),
 }));
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -62,12 +62,12 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonContainerStyles: () => ({ container: {} }),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
-jest.mock('../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
+jest.mock('@/src/utils/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
@@ -91,13 +91,13 @@ const mockBaseStory = {
   userId: '01ARZ3NDEKTSV4RRFFQ69G5FUS',
   vocabulary: null,
 };
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: { ...mockBaseStory }, setSelectedStory: jest.fn() }),
 }));
 
-import VocabularyScreen from '../../src/screens/customization/VocabularyScreen';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
+import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 
 beforeEach(() => {
   jest.clearAllMocks();

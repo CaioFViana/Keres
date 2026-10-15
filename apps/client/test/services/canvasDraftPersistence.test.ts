@@ -9,7 +9,7 @@ import {
   readCanvasDraft,
   scheduleWriteCanvasDraft,
   writeCanvasDraftNow,
-} from '../../src/services/canvasDraftPersistence';
+} from '@/src/services/canvasDraftPersistence';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),

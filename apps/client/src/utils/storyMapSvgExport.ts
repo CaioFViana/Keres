@@ -3,7 +3,7 @@ import type {
   LocationMapConnection,
   LocationMapContains,
 } from '@/src/components/features/location-maps/LocationMapCanvas';
-import { mediaFileService } from '../services/MediaFileService';
+import { mediaFileService } from '@/src/services/MediaFileService';
 import type { BoardEntitySummary } from './boardEntitySummary';
 import type { SvgExportColors } from './svgExport';
 import type { BoardGalleryMediaById } from './boardLayout';

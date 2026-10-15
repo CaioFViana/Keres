@@ -9,7 +9,7 @@ import type {
   ItemJourneyInsert,
   NoteRelationInsert,
   StorySchemaFieldInsert,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import {
   attributeValues,
   choiceChecks,
@@ -20,7 +20,7 @@ import {
   items,
   noteRelations,
   storySchemaFields,
-} from '../../../db/schema';
+} from '@/src/db/schema';
 import type { SQLiteStoryPackageImportContext } from './SQLiteStoryPackageImportContext';
 
 /**

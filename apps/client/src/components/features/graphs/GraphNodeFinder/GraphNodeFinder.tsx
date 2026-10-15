@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useTheme, type ThemeColors } from '../../../../theme';
-import { fontSize, radius, space } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import ThemedText from '../../../common/display/ThemedText/ThemedText';
-import TextInput from '../../../common/inputs/TextInput/TextInput';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { fontSize, radius, space } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 
 export interface GraphNodeFinderOption {
   id: string;

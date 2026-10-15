@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { AttributeType } from '@keres/shared';
-import { validateRequiredCustomAttributes } from '../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import { validateRequiredCustomAttributes } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 
 const listField = {
   id: 'traits',

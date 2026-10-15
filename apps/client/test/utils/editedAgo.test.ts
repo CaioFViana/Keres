@@ -1,4 +1,4 @@
-import { formatEditedAgo } from '../../src/utils/editedAgo';
+import { formatEditedAgo } from '@/src/utils/editedAgo';
 
 const NOW = new Date('2026-10-08T12:00:00.000Z');
 const ago = (ms: number) => new Date(NOW.getTime() - ms);

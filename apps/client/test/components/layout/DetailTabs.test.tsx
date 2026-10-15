@@ -1,12 +1,12 @@
 import { act, fireEvent, render, renderHook } from '@testing-library/react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
-import DetailContainer from '../../../src/components/layout/DetailContainer/DetailContainer';
-import { DetailTabPanels, DetailTabs } from '../../../src/components/layout/DetailTabs/DetailTabs';
-import { useDetailTab, useDetailTabItems } from '../../../src/hooks/useDetailTab';
-import { detailTabForField } from '../../../src/utils/detailTabs';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/useDetailTab';
+import { detailTabForField } from '@/src/utils/detailTabs';
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -19,7 +19,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
 

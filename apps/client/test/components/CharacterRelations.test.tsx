@@ -1,10 +1,10 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import CharacterRelationManager from '../../src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
-import CharacterRelationRows from '../../src/components/features/relations/CharacterRelationRows';
+import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
+import CharacterRelationRows from '@/src/components/features/relations/CharacterRelationRows';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -36,19 +36,19 @@ jest.mock('@expo/vector-icons', () => {
 });
 
 const mockNavigate = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 const mockModalProps = { current: null as Record<string, any> | null };
 jest.mock(
-  '../../src/components/features/relations/CharacterRelationManager/CharacterRelationModal',
+  '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal',
   () => {
     const ReactActual = require('react');
     const { View } = jest.requireActual('react-native');

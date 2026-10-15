@@ -3,14 +3,14 @@ import { REPORT_TYPES, type ReportType } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ThemeColors } from '../../../../theme';
-import { getCommonInputStyles, useTheme } from '../../../../theme';
-import { fontSize, space } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import Button from '../../../common/controls/Button/Button';
-import TextInput from '../../../common/inputs/TextInput/TextInput';
-import ModalHeader from '../../../layout/ModalHeader/ModalHeader';
-import ResponsiveModal from '../../../layout/ResponsiveModal/ResponsiveModal';
+import type { ThemeColors } from '@/src/theme';
+import { getCommonInputStyles, useTheme } from '@/src/theme';
+import { fontSize, space } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import Button from '@/src/components/common/controls/Button/Button';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
 export interface ReportStoryModalProps {
   visible: boolean;

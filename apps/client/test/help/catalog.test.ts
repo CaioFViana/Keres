@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { helpPageIds, helpSections } from '../../src/help/catalog';
-import { helpRegistry } from '../../src/help/generated/registry';
-import { getHelpPage } from '../../src/help/repository';
+import { helpPageIds, helpSections } from '@/src/help/catalog';
+import { helpRegistry } from '@/src/help/generated/registry';
+import { getHelpPage } from '@/src/help/repository';
 
 describe('help catalog', () => {
   it('has a page in both supported languages for every catalog entry', () => {

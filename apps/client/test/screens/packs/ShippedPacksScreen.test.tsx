@@ -15,7 +15,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -47,8 +47,8 @@ jest.mock('@/src/components/common', () => ({
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
@@ -56,24 +56,24 @@ jest.mock('@/src/hooks/useLanguageLabel', () => ({
   __esModule: true,
   useLanguageLabel: () => (language: string) => `label-${language}`,
 }));
-jest.mock('../../../src/services/storymanagement/ShippedPackService', () => ({
+jest.mock('@/src/services/storymanagement/ShippedPackService', () => ({
   __esModule: true,
   createShippedPackService: () => ({
     previewShippedPacks: mockPreviewShippedPacks,
     installShippedPack: mockInstallShippedPack,
   }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/state/shippedPacksInstallerStore', () => ({
+jest.mock('@/src/state/shippedPacksInstallerStore', () => ({
   __esModule: true,
   useShippedPacksInstallerStore: (selector: (state: { markInstalled: unknown }) => unknown) =>
     selector({ markInstalled: mockMarkInstalled }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -91,8 +91,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: mockLanguage } }),
 }));
 
-import ShippedPacksContent from '../../../src/screens/packs/ShippedPacksContent';
-import ShippedPacksScreen from '../../../src/screens/packs/ShippedPacksScreen';
+import ShippedPacksContent from '@/src/screens/packs/ShippedPacksContent';
+import ShippedPacksScreen from '@/src/screens/packs/ShippedPacksScreen';
 
 const makePreview = (overrides = {}) => ({
   slug: 'fantasy',

@@ -1,11 +1,11 @@
 import type { Effect } from '@keres/shared/entities/Effect';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import { createEffectService } from '../services/storymanagement/EffectService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { AppAlert } from '../utils/AppAlert';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 type EffectEntityType = 'Scene' | 'Choice';
 type EffectChanges = Partial<

@@ -1,8 +1,8 @@
 import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
 import { assertStoryExportIntegrity } from '@keres/shared';
-import type { AppDrizzleClient } from '../../../db';
-import { cloneStoryForLocalImport } from '../cloneStoryForLocalImport';
-import { deleteStoryChildRows } from '../storyLocalPurge';
+import type { AppDrizzleClient } from '@/src/db';
+import { cloneStoryForLocalImport } from '@/src/services/storymanagement/cloneStoryForLocalImport';
+import { deleteStoryChildRows } from '@/src/services/storymanagement/storyLocalPurge';
 import { importStoryPackageAssets } from './SQLiteStoryPackageAssetsImport';
 import { importStoryPackageCore } from './SQLiteStoryPackageCoreImport';
 import { importStoryPackageFinalCollections } from './SQLiteStoryPackageFinalImport';

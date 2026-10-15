@@ -32,11 +32,11 @@ jest.mock('@/src/components/common/display/MapIcon/MapIcon', () => {
     ),
   };
 });
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -98,7 +98,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import StoryArcListScreen from '../../../src/screens/customization/StoryArcListScreen';
+import StoryArcListScreen from '@/src/screens/customization/StoryArcListScreen';
 
 const makeArc = (overrides = {}) => ({
   id: 'arc-1',

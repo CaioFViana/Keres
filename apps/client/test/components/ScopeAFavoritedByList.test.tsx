@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
-import FavoritedByList from '../../src/components/features/favorites/FavoritedByList/FavoritedByList';
+import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { primary: '#00f', surface: '#fff', text: '#111', textSecondary: '#555' },
   }),
@@ -12,7 +12,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
+jest.mock('@/src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -25,7 +25,7 @@ jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard',
 });
 
 const mockRelationList = jest.fn();
-jest.mock('../../src/components/common/display/EntityRelationList/EntityRelationList', () => {
+jest.mock('@/src/components/common/display/EntityRelationList/EntityRelationList', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -44,10 +44,10 @@ jest.mock('../../src/components/common/display/EntityRelationList/EntityRelation
   };
 });
 
-jest.mock('../../src/components/common/display/Avatar/Avatar', () => () => null);
+jest.mock('@/src/components/common/display/Avatar/Avatar', () => () => null);
 
 const mockUseFavoriters = jest.fn();
-jest.mock('../../src/hooks/useFavoriters', () => ({
+jest.mock('@/src/hooks/useFavoriters', () => ({
   useFavoriters: (...args: unknown[]) => mockUseFavoriters(...args),
 }));
 

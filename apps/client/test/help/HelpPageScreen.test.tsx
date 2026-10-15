@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react-native';
-import { HelpPageScreen } from '../../src/screens/help/HelpPageScreen';
+import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
 
 jest.mock('@react-navigation/native', () => ({
   useFocusEffect: (effect: () => void) => effect(),
@@ -7,13 +7,13 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { pageId: 'page-that-does-not-exist' } }),
 }));
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { background: '#fff', text: '#111', textSecondary: '#555' },
   }),
 }));
 
-jest.mock('../../src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
+jest.mock('@/src/utils/documentTitle', () => ({ setDocumentTitle: jest.fn() }));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: { language: 'pt' }, t: (key: string) => key }),

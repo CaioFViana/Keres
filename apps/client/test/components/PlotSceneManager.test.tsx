@@ -1,9 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import PlotSceneManager from '../../src/components/features/plots/PlotSceneManager/PlotSceneManager';
-import type { SceneSelect } from '../../src/db/schema';
+import PlotSceneManager from '@/src/components/features/plots/PlotSceneManager/PlotSceneManager';
+import type { SceneSelect } from '@/src/db/schema';
 import type { PlotScene } from '@keres/shared/entities/PlotScene';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -34,18 +34,18 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({ notFound: 'scene-not-found' }),
 }));
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 const mockModalProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/features/plots/PlotSceneManager/ScenePlotModal', () => {
+jest.mock('@/src/components/features/plots/PlotSceneManager/ScenePlotModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

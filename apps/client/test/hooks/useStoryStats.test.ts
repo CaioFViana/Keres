@@ -1,26 +1,26 @@
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/StatService', () => ({
+jest.mock('@/src/services/storymanagement/StatService', () => ({
   __esModule: true,
   createStatService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/StatStrengthService', () => ({
+jest.mock('@/src/services/storymanagement/StatStrengthService', () => ({
   __esModule: true,
   createStatStrengthService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/ModeService', () => ({
+jest.mock('@/src/services/storymanagement/ModeService', () => ({
   __esModule: true,
   createModeService: jest.fn(),
 }));
-jest.mock('../../src/services/storymanagement/StatRelationService', () => ({
+jest.mock('@/src/services/storymanagement/StatRelationService', () => ({
   __esModule: true,
   createStatRelationService: jest.fn(),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     useEntityInitialLoad: (load: () => Promise<void>) =>
@@ -31,13 +31,13 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createCharacterService } from '../../src/services/storymanagement/CharacterService';
-import { createModeService } from '../../src/services/storymanagement/ModeService';
-import { createStatRelationService } from '../../src/services/storymanagement/StatRelationService';
-import { createStatService } from '../../src/services/storymanagement/StatService';
-import { createStatStrengthService } from '../../src/services/storymanagement/StatStrengthService';
-import { useStoryStats } from '../../src/hooks/useStoryStats';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createModeService } from '@/src/services/storymanagement/ModeService';
+import { createStatRelationService } from '@/src/services/storymanagement/StatRelationService';
+import { createStatService } from '@/src/services/storymanagement/StatService';
+import { createStatStrengthService } from '@/src/services/storymanagement/StatStrengthService';
+import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

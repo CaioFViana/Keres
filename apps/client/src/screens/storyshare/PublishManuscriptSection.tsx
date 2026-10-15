@@ -2,14 +2,14 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { StorySelect } from '@/src/db/schema';
 import { useTranslation } from 'react-i18next';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import { StyleSheet, Text, View } from 'react-native';
-import ManuscriptExportOptions from '../../components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
-import { SCREENPLAY_EXPORT_FORMATS } from '../../components/features/manuscript/export/manuscriptExport';
-import { SERVER_MANUSCRIPT_FORMATS } from '../../services/PublicationApiService';
-import type { ThemeColors } from '../../theme';
-import { typography } from '../../theme/tokens';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+import ManuscriptExportOptions from '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
+import { SCREENPLAY_EXPORT_FORMATS } from '@/src/components/features/manuscript/export/manuscriptExport';
+import { SERVER_MANUSCRIPT_FORMATS } from '@/src/services/PublicationApiService';
+import type { ThemeColors } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { PublishManuscriptState } from './usePublishManuscript';
 
 /**

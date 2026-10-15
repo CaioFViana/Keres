@@ -7,7 +7,7 @@ jest.mock('react-native-safe-area-context', () => ({
 import { act, renderHook } from '@testing-library/react-native';
 import { Dimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFormScrollBottomPadding } from '../../src/hooks/useFormScrollBottomPadding';
+import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });

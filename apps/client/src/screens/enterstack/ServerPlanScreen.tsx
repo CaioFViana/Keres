@@ -13,17 +13,17 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import PaymentActionPanel from '../../components/features/servers/PaymentActionPanel';
-import PlanStatusCard from '../../components/features/servers/PlanStatusCard';
-import { usePaymentOverview } from '../../hooks/usePaymentOverview';
-import { usePlanCancellation } from '../../hooks/usePlanCancellation';
-import { useSwitchQuote } from '../../hooks/useSwitchQuote';
-import { usePlanCheckout } from '../../hooks/usePlanCheckout';
-import { useServerStatuses } from '../../hooks/useServerStatuses';
-import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
-import { verifyPlayPurchase } from '../../services/PaymentService';
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+import PaymentActionPanel from '@/src/components/features/servers/PaymentActionPanel';
+import PlanStatusCard from '@/src/components/features/servers/PlanStatusCard';
+import { usePaymentOverview } from '@/src/hooks/usePaymentOverview';
+import { usePlanCancellation } from '@/src/hooks/usePlanCancellation';
+import { useSwitchQuote } from '@/src/hooks/useSwitchQuote';
+import { usePlanCheckout } from '@/src/hooks/usePlanCheckout';
+import { useServerStatuses } from '@/src/hooks/useServerStatuses';
+import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import { verifyPlayPurchase } from '@/src/services/PaymentService';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import {
   formatMoney,
   formatPlanDate,
@@ -32,13 +32,13 @@ import {
   offersFrom,
   playProductForOffer,
   type PlanOffer,
-} from '../../utils/paymentPlans';
-import { planLimitLines } from '../../utils/planLimitLines';
-import { playDriver } from '../../utils/playPurchase';
+} from '@/src/utils/paymentPlans';
+import { planLimitLines } from '@/src/utils/planLimitLines';
+import { playDriver } from '@/src/utils/playPurchase';
 import {
   devicePaymentCapabilities,
   visiblePaymentMethods,
-} from '../../utils/paymentMethodVisibility';
+} from '@/src/utils/paymentMethodVisibility';
 
 type ServerPlanRouteProp = RouteProp<ServerManagementStackParamList, 'ServerPlan'>;
 type ServerPlanNavigationProp = NativeStackNavigationProp<

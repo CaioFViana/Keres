@@ -3,15 +3,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ModeSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { AppAlert } from '../../../../utils/AppAlert';
-import Button from '../../../common/controls/Button/Button';
-import FormActions from '../../../common/controls/FormActions/FormActions';
-import CollapsibleCard from '../../../common/display/CollapsibleCard/CollapsibleCard';
-import EntityRelationList from '../../../common/display/EntityRelationList/EntityRelationList';
-import TextInput from '../../../common/inputs/TextInput/TextInput';
+import type { ModeSelect } from '@/src/db/schema';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import Button from '@/src/components/common/controls/Button/Button';
+import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 
 /**
  * CRUD for a character's modes, in the form. The detail screen only displays them.

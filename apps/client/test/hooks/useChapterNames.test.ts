@@ -1,10 +1,10 @@
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: jest.fn(),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     useEntityInitialLoad: (load: () => Promise<void>) =>
@@ -15,9 +15,9 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { useChapterNames } from '../../src/hooks/useChapterNames';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { useChapterNames } from '@/src/hooks/useChapterNames';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const scenes = [{ storyId: 'story' }] as never;
 const getAllByStoryId = jest.fn();

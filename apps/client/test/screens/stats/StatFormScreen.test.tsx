@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import StatFormScreen from '../../../src/screens/stats/StatFormScreen';
+import StatFormScreen from '@/src/screens/stats/StatFormScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -20,7 +20,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -40,7 +40,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -52,7 +52,7 @@ jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', (
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -64,28 +64,28 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (s: any) => any) => {
     const state = { userId: 'user-1', exportFormat: 'svg' };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/screens/stats/useStatFormResources', () => ({
+jest.mock('@/src/screens/stats/useStatFormResources', () => ({
   useStatFormResources: () => ({ statServiceRef: { current: {} }, data: { stats: [] } }),
 }));
 
-jest.mock('../../../src/screens/stats/useStatFormState', () => ({
+jest.mock('@/src/screens/stats/useStatFormState', () => ({
   useStatFormState: () => mockFormState,
 }));
 
-jest.mock('../../../src/screens/stats/useStatFormActions', () => ({
+jest.mock('@/src/screens/stats/useStatFormActions', () => ({
   useStatFormActions: () => ({ handleSave: mockHandleSave, saving: mockSaving }),
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

@@ -17,8 +17,8 @@ import Animated, {
   ZoomIn,
   type SharedValue,
 } from 'react-native-reanimated';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { WelcomeHeroIcon } from './welcomeContent';
 
 /**
@@ -26,7 +26,7 @@ import type { WelcomeHeroIcon } from './welcomeContent';
  * Painted in the surface color over a gradient, it leaves the gradient showing as the figure - a
  * gradient inside a shape without a masking dependency. Made from the app icon (`icon_keres.png`).
  */
-const EMBLEM = require('../../../../assets/images/welcome-emblem.png');
+const EMBLEM = require('@/assets/images/welcome-emblem.png');
 
 export type WelcomeHeroSize = 'regular' | 'large';
 

@@ -3,9 +3,9 @@ import { AttributeType, deriveAttributeKey } from '@keres/shared';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
-import type { StorySchemaFieldService } from '../../services/storymanagement/StorySchemaFieldService';
-import { AppAlert } from '../../utils/AppAlert';
+import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/StorySchemaFieldService';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 type UseStorySchemaFieldFormStateOptions = {
   initialFieldId?: string;

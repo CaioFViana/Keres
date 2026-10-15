@@ -1,14 +1,14 @@
 import { and, eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { stories } from '../../db/schema';
-import type { ServerSelect } from '../../db/schema';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryListStore } from '../../state/storyListStore';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import i18n from '../../utils/i18n';
-import { createStoryService } from '../storymanagement/StoryService';
-import { takeAccessRevocation, type AccessRevocationReason } from '../accessRevocation';
-import type { ServerStoryPreview } from '../SyncEngineService';
+import type { AppDrizzleClient } from '@/src/db';
+import { stories } from '@/src/db/schema';
+import type { ServerSelect } from '@/src/db/schema';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useStoryListStore } from '@/src/state/storyListStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import i18n from '@/src/utils/i18n';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { takeAccessRevocation, type AccessRevocationReason } from '@/src/services/accessRevocation';
+import type { ServerStoryPreview } from '@/src/services/SyncEngineService';
 
 const REVOCATION_MESSAGE_KEYS: Record<AccessRevocationReason, string> = {
   'nsfw-story': 'story_access_revoked_nsfw',

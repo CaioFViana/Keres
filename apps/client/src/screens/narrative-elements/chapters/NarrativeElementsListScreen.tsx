@@ -1,5 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,36 +15,36 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
-import { useDrizzle } from '../../../db';
+import { useDrizzle } from '@/src/db';
 import type { ChapterType } from '@keres/shared';
-import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
-import { AppAlert } from '../../../utils/AppAlert';
-import { useScreenTour } from '../../../guides/useScreenTour';
-import OutsideArcNotice from '../../../components/features/arcs/OutsideArcNotice';
-import { useArcSearchScope } from '../../../hooks/useArcSearchScope';
-import { chapterBelongsToArc } from '../../../utils/storyArcFilter';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../../hooks/useStoryRole';
-import { useTagChangeReload } from '../../../hooks/useTagChangeReload';
+import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
+import { useArcSearchScope } from '@/src/hooks/useArcSearchScope';
+import { chapterBelongsToArc } from '@/src/utils/storyArcFilter';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useTagChangeReload } from '@/src/hooks/useTagChangeReload';
 import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,
-} from '../../../navigation/MainSystemStack';
-import { useChapterStore } from '../../../state/chapterStore';
-import { useSceneStore } from '../../../state/sceneStore';
-import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import type { ThemeColors } from '../../../theme';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { createChapterService } from '../../../services/storymanagement/ChapterService';
-import { createTagService } from '../../../services/storymanagement/TagService';
-import { createTagRelationService } from '../../../services/storymanagement/TagRelationService';
-import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
+} from '@/src/navigation/MainSystemStack';
+import { useChapterStore } from '@/src/state/chapterStore';
+import { useSceneStore } from '@/src/state/sceneStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '@/src/utils/narrativeSceneOrder';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createTagService } from '@/src/services/storymanagement/TagService';
+import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import {
   createChapterListItemRenderer,
   scenesShownForChapter,

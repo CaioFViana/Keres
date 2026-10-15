@@ -21,7 +21,7 @@ jest.mock('@expo/vector-icons', () => ({
     return react.createElement(native.Text, { testID: `icon-${name}` }, name);
   },
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -33,32 +33,32 @@ jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => ({
     return react.createElement(native.Text, { testID: `section-${title}` }, title);
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityName', () => ({
+jest.mock('@/src/hooks/useEntityName', () => ({
   __esModule: true,
   useEntityName: () => ({ entityName: mockEntityName, loading: mockEntityLoading }),
 }));
-jest.mock('../../../src/hooks/useUserDisplayName', () => ({
+jest.mock('@/src/hooks/useUserDisplayName', () => ({
   __esModule: true,
   useUserDisplayName: () => mockUserDisplayName,
 }));
-jest.mock('../../../src/services/EntityService', () => ({
+jest.mock('@/src/services/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: (...args: unknown[]) => mockGetEntityIdentifier(...args) },
 }));
-jest.mock('../../../src/services/OperationLogService', () => ({
+jest.mock('@/src/services/OperationLogService', () => ({
   __esModule: true,
   createOperationLogService: () => ({ getOperationLogById: mockGetOperationLogById }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -78,8 +78,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT }),
 }));
 
-import OperationLogDetailScreen from '../../../src/screens/operationlog/OperationLogDetailScreen';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import OperationLogDetailScreen from '@/src/screens/operationlog/OperationLogDetailScreen';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const makeLog = (overrides = {}) => ({
   id: 'log-1',

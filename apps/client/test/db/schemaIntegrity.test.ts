@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

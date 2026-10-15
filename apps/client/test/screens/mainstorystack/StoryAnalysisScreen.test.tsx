@@ -48,72 +48,72 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryAnalysisService', () => ({
+jest.mock('@/src/services/storymanagement/StoryAnalysisService', () => ({
   __esModule: true,
   createStoryAnalysisService: () => ({
     analyzeStoryCheap: mockAnalyzeStoryCheap,
     analyzeStoryFull: mockAnalyzeStoryFull,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryIndexService', () => ({
+jest.mock('@/src/services/storymanagement/StoryIndexService', () => ({
   __esModule: true,
   createStoryIndexService: () => ({ normalizeIndexes: mockNormalizeIndexes }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({
     selectedStory: mockSelectedStory,
     setSelectedStory: mockSetSelectedStory,
   }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: mockColors }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAppAlert(...args) },
 }));
-jest.mock('../../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entityNavigation', () => ({
   __esModule: true,
   navigateToEntityDetail: (...args: unknown[]) => mockNavigateToEntityDetail(...args),
 }));
-jest.mock('../../../src/utils/storyAnalysisChecks', () => ({
+jest.mock('@/src/utils/storyAnalysisChecks', () => ({
   __esModule: true,
   StoryAnalysisCancelledError: class StoryAnalysisCancelledError extends Error {},
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
   }),
 }));
-jest.mock('../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -134,7 +134,7 @@ jest.mock('../../../src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-jest.mock('../../../src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
+jest.mock('@/src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -146,14 +146,14 @@ jest.mock('../../../src/components/common/display/CollapsibleCard/CollapsibleCar
     ),
   };
 });
-jest.mock('../../../src/components/common/controls/FormActions/FormActions', () => {
+jest.mock('@/src/components/common/controls/FormActions/FormActions', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
     default: ({ children }: { children?: ReactNode }) => <View>{children}</View>,
   };
 });
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -177,7 +177,7 @@ jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', (
     ),
   };
 });
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -200,11 +200,11 @@ jest.mock('react-i18next', () => {
   };
 });
 
-import StoryAnalysisScreen from '../../../src/screens/mainstorystack/StoryAnalysisScreen';
+import StoryAnalysisScreen from '@/src/screens/mainstorystack/StoryAnalysisScreen';
 
-const { StoryAnalysisCancelledError } = jest.requireMock(
-  '../../../src/utils/storyAnalysisChecks',
-) as { StoryAnalysisCancelledError: new (message: string) => Error };
+const { StoryAnalysisCancelledError } = jest.requireMock('@/src/utils/storyAnalysisChecks') as {
+  StoryAnalysisCancelledError: new (message: string) => Error;
+};
 
 function makeFinding(overrides = {}) {
   return {

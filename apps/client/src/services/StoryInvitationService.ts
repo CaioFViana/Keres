@@ -1,11 +1,11 @@
 import type { StoryInvitation } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../db';
-import { servers, storyInvitations } from '../db/schema';
-import type { ServerSelect } from '../db/schema';
-import { useNotificationStore } from '../state/notificationStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import i18n from '../utils/i18n';
+import type { AppDrizzleClient } from '@/src/db';
+import { servers, storyInvitations } from '@/src/db/schema';
+import type { ServerSelect } from '@/src/db/schema';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import i18n from '@/src/utils/i18n';
 import { isOfflineError } from './apiClient';
 import { storyInvitationApi } from './StoryInvitationApiService';
 

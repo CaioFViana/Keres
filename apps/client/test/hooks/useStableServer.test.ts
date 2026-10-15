@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react-native';
-import { useStableServer } from '../../src/hooks/useStableServer';
+import { useStableServer } from '@/src/hooks/useStableServer';
 
 const base = { id: 'srv-1', url: 'https://a.example', idUser: 'me', name: 'Main' } as never;
 

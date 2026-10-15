@@ -16,38 +16,38 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { useDrizzle } from '../../db';
-import type { SceneSelect } from '../../db/schema'; // For available scenes
-import type { CharacterSelect } from '../../db/schemas/characters';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { SceneSelect } from '@/src/db/schema'; // For available scenes
+import type { CharacterSelect } from '@/src/db/schemas/characters';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
-import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
-import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
-import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '../../services/storymanagement/ItemService';
-import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import type { LocationService } from '../../services/storymanagement/LocationService';
-import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import { useStoryStore } from '../../state/storyStore';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/CharacterRelationService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
+import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/CharacterSceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService'; // Service for CharacterScene
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '@/src/services/storymanagement/ItemService';
+import { createItemService } from '@/src/services/storymanagement/ItemService'; // Import ItemService
+import type { LocationService } from '@/src/services/storymanagement/LocationService';
+import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore'; // Import useUserSettingsStore
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
+import { useStoryStats } from '@/src/hooks/useStoryStats';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import { CharacterDetailContent } from './CharacterDetailContent';
 import { createCharacterDetailMutations } from './createCharacterDetailMutations';
 

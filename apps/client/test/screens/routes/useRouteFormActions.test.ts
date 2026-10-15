@@ -5,7 +5,7 @@ const mockConfirmDelete = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: () => null,
 }));
-jest.mock('../../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
 }));
 jest.mock('@/src/hooks/useAsyncOperation', () => ({
@@ -14,10 +14,10 @@ jest.mock('@/src/hooks/useAsyncOperation', () => ({
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -25,8 +25,8 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useRouteFormActions } from '../../../src/screens/routes/useRouteFormActions';
-import type { RouteFormState } from '../../../src/screens/routes/useRouteFormState';
+import { useRouteFormActions } from '@/src/screens/routes/useRouteFormActions';
+import type { RouteFormState } from '@/src/screens/routes/useRouteFormState';
 
 const createState = (overrides: Partial<RouteFormState> = {}): RouteFormState =>
   ({

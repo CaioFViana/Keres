@@ -2,9 +2,9 @@ import { getContrastRatio } from '@keres/shared';
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import StoryTimelineCanvas from '../../src/components/features/story-timeline/StoryTimelineCanvas';
-import StoryTimelineSheets from '../../src/components/features/story-timeline/StoryTimelineSheets';
-import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '../../src/db/schema';
+import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
+import StoryTimelineSheets from '@/src/components/features/story-timeline/StoryTimelineSheets';
+import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/schema';
 import {
   TIMELINE_EVENT_LANE_HEIGHT,
   TIMELINE_PADDING,
@@ -12,7 +12,7 @@ import {
   type StoryTimelineLayout,
 } from '@keres/shared/graphs/storyTimelineLayout';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -35,7 +35,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockViewportOptions = { current: null as Record<string, any> | null };
-jest.mock('../../src/hooks/useCanvasViewport', () => ({
+jest.mock('@/src/hooks/useCanvasViewport', () => ({
   __esModule: true,
   useCanvasViewport: (_ref: unknown, _layout: unknown, options: Record<string, unknown>) => {
     mockViewportOptions.current = options as Record<string, any>;
@@ -49,7 +49,7 @@ jest.mock('../../src/hooks/useCanvasViewport', () => ({
   },
 }));
 
-jest.mock('../../src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame', () => {
+jest.mock('@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -59,7 +59,7 @@ jest.mock('../../src/components/features/graphs/GraphCanvasFrame/GraphCanvasFram
   };
 });
 
-jest.mock('../../src/components/features/graphs/CanvasLine/CanvasLine', () => {
+jest.mock('@/src/components/features/graphs/CanvasLine/CanvasLine', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -70,7 +70,7 @@ jest.mock('../../src/components/features/graphs/CanvasLine/CanvasLine', () => {
 });
 
 const mockSheetProps: Record<string, any>[] = [];
-jest.mock('../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
+jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
   return {
@@ -86,12 +86,12 @@ jest.mock('../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', 
   };
 });
 
-jest.mock('../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => ({ definition: null }),
 }));
 
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (type: string, plural = false) => (plural ? `${type}s` : type),

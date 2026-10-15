@@ -2,11 +2,11 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import type { OperationLogSelect } from '../../src/db/schema';
-import type { SyncNotifier } from '../../src/services/sync/SyncNotifier';
-import { SyncPush } from '../../src/services/sync/SyncPush';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import type { SyncNotifier } from '@/src/services/sync/SyncNotifier';
+import { SyncPush } from '@/src/services/sync/SyncPush';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const CHAPTER_ID = 'CHAPTER1ZZZZZZZZZZZZZZZZZZ';

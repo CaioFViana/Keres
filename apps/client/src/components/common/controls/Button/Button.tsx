@@ -3,7 +3,7 @@ import { getOnColorForFill } from '@keres/shared';
 import React, { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 /**
  * `primary` is the filled call to action; `secondary` and `danger` are outlined, for what is offered

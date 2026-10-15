@@ -2,8 +2,8 @@ import { act, cleanup, render, renderHook, waitFor } from '@testing-library/reac
 import {
   ScreenplaySceneHeader,
   useScreenplaySceneContext,
-} from '../../../src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
-import type { SceneSelect } from '../../../src/db/schema';
+} from '@/src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
+import type { SceneSelect } from '@/src/db/schema';
 
 let mockEffectiveMedium: string | null = null;
 let mockChapter: { arcId: string | null } | undefined;
@@ -13,7 +13,7 @@ let mockRelations: { characterId: string }[] = [];
 let mockCharacters: Record<string, { name: string; isDeleted: boolean }> = {};
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: { text: '#111', textSecondary: '#555', surface: '#fff', border: '#ddd', error: '#f00' },
@@ -26,29 +26,29 @@ jest.mock('react-i18next', () => {
 });
 // The same handle every render, like the real one: a new object each time would re-run every effect.
 const mockDb = {};
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ effectiveArc: mockEffectiveMedium ? { medium: mockEffectiveMedium } : null }),
 }));
-jest.mock('../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getById: async () => mockChapter }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: () => ({ getById: async () => mockArc }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getById: async () => mockLocation }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: () => ({ getRelationsForScene: async () => mockRelations }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getById: async (id: string) => mockCharacters[id] }),
 }));

@@ -1,9 +1,9 @@
 import { act, cleanup, render } from '@testing-library/react-native';
-import StoryIdentityCard from '../../src/components/features/story/StoryIdentityCard';
+import StoryIdentityCard from '@/src/components/features/story/StoryIdentityCard';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -17,7 +17,7 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/components/common/display/CoverImage/CoverImage', () => {
+jest.mock('@/src/components/common/display/CoverImage/CoverImage', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

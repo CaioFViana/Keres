@@ -7,10 +7,10 @@ import { StackActions } from '@react-navigation/native';
 import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../../../db';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import type { ChapterService } from '../../../services/storymanagement/ChapterService';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import type { AppDrizzleClient } from '@/src/db';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import type { ChapterService } from '@/src/services/storymanagement/ChapterService';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { ChapterFormState } from './useChapterFormState';
 
 type ChapterNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChapterForm'>;

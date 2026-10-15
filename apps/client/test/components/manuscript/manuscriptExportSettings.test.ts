@@ -6,7 +6,7 @@ import {
   SCREENPLAY_FORMATS,
   styleForExport,
   withChange,
-} from '../../../src/components/features/manuscript/export/manuscriptExportSettings';
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 
 const LINES = { byLine: 'by <$author>', copyright: '© <$year> <$author>' };
 const NOW = new Date('2026-09-27T12:00:00.000Z');

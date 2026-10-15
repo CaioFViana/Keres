@@ -14,8 +14,8 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockTranslation,
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../src/services/PublicationService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/services/PublicationService', () => ({
   __esModule: true,
   createPublicationService: () => ({
     getPublicationsForStory: (...args: unknown[]) => mockGetPublications(...args),
@@ -23,7 +23,7 @@ jest.mock('../../src/services/PublicationService', () => ({
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryMenuBadges } from '../../src/hooks/useStoryMenuBadges';
+import { useStoryMenuBadges } from '@/src/hooks/useStoryMenuBadges';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,6 +1,6 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import type { ServerSelect } from '../db/schemas/servers';
-import type { FriendshipWithServer } from '../services/FriendshipService';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+import type { FriendshipWithServer } from '@/src/services/FriendshipService';
 
 export type FriendshipBucket = 'received' | 'sent' | 'friends' | 'blocked';
 

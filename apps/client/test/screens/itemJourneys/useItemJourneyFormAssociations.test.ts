@@ -1,11 +1,11 @@
 const mockUseEntityRelations = jest.fn();
 
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
 
 import { renderHook } from '@testing-library/react-native';
-import { useItemJourneyFormAssociations } from '../../../src/screens/itemJourneys/useItemJourneyFormAssociations';
+import { useItemJourneyFormAssociations } from '@/src/screens/itemJourneys/useItemJourneyFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

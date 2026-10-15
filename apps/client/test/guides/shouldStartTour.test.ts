@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { shouldStartTour } from '../../src/guides/shouldStartTour';
+import { shouldStartTour } from '@/src/guides/shouldStartTour';
 
 const base = {
   showTutorials: true,

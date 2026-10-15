@@ -3,7 +3,7 @@ import type { CompiledManuscript } from '@keres/shared';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Platform } from 'react-native';
-import { exportManuscript } from '../../../src/components/features/manuscript/export/manuscriptExport';
+import { exportManuscript } from '@/src/components/features/manuscript/export/manuscriptExport';
 
 const mockDeliverFile = jest.fn();
 const mockBuildManuscriptFileName = jest.fn(
@@ -11,12 +11,12 @@ const mockBuildManuscriptFileName = jest.fn(
 );
 const mockPdfFontMatrices = jest.fn();
 
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
   buildManuscriptFileName: (...args: unknown[]) => mockBuildManuscriptFileName(...args),
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));
-jest.mock('../../../src/utils/pdfFontAssets', () => ({
+jest.mock('@/src/utils/pdfFontAssets', () => ({
   __esModule: true,
   pdfFontMatrices: (...args: unknown[]) => mockPdfFontMatrices(...args),
 }));
@@ -34,7 +34,7 @@ beforeEach(() => {
   // Every existing test keeps the real serif loader; the wiring tests below
   // override per case.
   mockPdfFontMatrices.mockImplementation(() =>
-    jest.requireActual('../../../src/utils/pdfFontAssets').pdfFontMatrices(),
+    jest.requireActual('@/src/utils/pdfFontAssets').pdfFontMatrices(),
   );
 });
 

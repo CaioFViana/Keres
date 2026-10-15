@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
-import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
+import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import type { ItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
 
 type UseItemJourneyFormStateOptions = {
   initialItemJourneyId?: string;

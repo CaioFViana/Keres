@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
+import { useEntityRelations } from '@/src/hooks/useEntityRelations';
 
 type UseNoteFormAssociationsOptions = {
   currentNoteId: string | undefined;

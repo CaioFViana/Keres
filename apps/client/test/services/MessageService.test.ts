@@ -18,22 +18,22 @@ const mockEmit = jest.fn();
 const mockObserve = jest.fn(async () => undefined);
 const mockRetainServers = jest.fn();
 
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   __esModule: true,
   createServerService: () => ({
     getAllServers: mockGetAllServers,
     getServerById: mockGetServerById,
   }),
 }));
-jest.mock('../../src/services/FriendshipService', () => ({
+jest.mock('@/src/services/FriendshipService', () => ({
   __esModule: true,
   createFriendshipService: () => ({ getAllFriendships: mockGetAllFriendships }),
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),
 }));
-jest.mock('../../src/services/MessageApiService', () => ({
+jest.mock('@/src/services/MessageApiService', () => ({
   __esModule: true,
   messageApi: new Proxy(
     {},
@@ -45,11 +45,11 @@ jest.mock('../../src/services/MessageApiService', () => ({
     },
   ),
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('../../src/state/unseenMessagesStore', () => ({
+jest.mock('@/src/state/unseenMessagesStore', () => ({
   __esModule: true,
   useUnseenMessagesStore: {
     getState: () => ({
@@ -58,11 +58,11 @@ jest.mock('../../src/state/unseenMessagesStore', () => ({
     }),
   },
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: { t: (key: string, options?: { name?: string }) => `${key}:${options?.name ?? ''}` },
 }));
@@ -73,7 +73,7 @@ import {
   MESSAGES_CHANGED,
   resetMessageNudgeState,
   setOpenConversation,
-} from '../../src/services/MessageService';
+} from '@/src/services/MessageService';
 
 const serverA = { id: 'server-a', name: 'Alpha', url: 'https://a.test' };
 const serverB = { id: 'server-b', name: 'Beta', url: 'https://b.test' };

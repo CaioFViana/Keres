@@ -26,27 +26,27 @@ import type {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { useDrizzle } from '../../db';
-import { redeemRecoveryCode } from '../../services/AuthApiService';
-import { authTokenManager } from '../../services/AuthTokenManager';
-import { fetchAgeVerificationInfo } from '../../services/AgeVerificationApiService';
-import { hostedApiOrigin, usesHttpOnlyCookieSession } from '../../services/browserCookieSession';
+import { useDrizzle } from '@/src/db';
+import { redeemRecoveryCode } from '@/src/services/AuthApiService';
+import { authTokenManager } from '@/src/services/AuthTokenManager';
+import { fetchAgeVerificationInfo } from '@/src/services/AgeVerificationApiService';
+import { hostedApiOrigin, usesHttpOnlyCookieSession } from '@/src/services/browserCookieSession';
 import {
   createServerService,
   ServerHasOwnedStoriesError,
   ServerUrlAlreadyRegisteredError,
   ServerUrlNotSecureError,
-} from '../../services/ServerService';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { authenticateWithKeresServer, keresAuthAlertMessage } from '../../utils/keresServerAuth';
-import { accountNeedsVerification } from '../../utils/ageVerificationRouting';
-import { blocksNewAccounts } from '../../utils/ageVerificationRules';
-import { fetchServerPrivacy, fetchServerTerms } from '../../services/ServerTermsService';
-import { isAllowedServerUrl, normalizeServerUrl } from '../../utils/serverUrl';
+} from '@/src/services/ServerService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { authenticateWithKeresServer, keresAuthAlertMessage } from '@/src/utils/keresServerAuth';
+import { accountNeedsVerification } from '@/src/utils/ageVerificationRouting';
+import { blocksNewAccounts } from '@/src/utils/ageVerificationRules';
+import { fetchServerPrivacy, fetchServerTerms } from '@/src/services/ServerTermsService';
+import { isAllowedServerUrl, normalizeServerUrl } from '@/src/utils/serverUrl';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };

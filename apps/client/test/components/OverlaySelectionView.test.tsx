@@ -1,9 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { CanvasOverlayType } from '@keres/shared';
 import { PanResponder } from 'react-native';
-import OverlaySelectionView from '../../src/components/features/graphs/CanvasOverlay/OverlaySelectionView';
+import OverlaySelectionView from '@/src/components/features/graphs/CanvasOverlay/OverlaySelectionView';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { primary: '#85f', surface: '#111' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));

@@ -107,17 +107,17 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: mockRouteParams }),
 }));
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useEntityFormSecondaryDraft', () => ({
+jest.mock('@/src/hooks/useEntityFormSecondaryDraft', () => ({
   __esModule: true,
   useEntityFormSecondaryDraft: () => ({
     persistSecondaryDraft: jest.fn(),
@@ -125,27 +125,27 @@ jest.mock('../../../../src/hooks/useEntityFormSecondaryDraft', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => ({ calendars: mockCalendars }),
 }));
 
-jest.mock('../../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => mockCustomFields,
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -160,7 +160,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (kind: string) => ({
     entity: `${kind}-entity`,
@@ -179,7 +179,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormResources', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneFormResources', () => ({
   __esModule: true,
   useSceneFormResources: () => ({
     drizzleDb: {},
@@ -191,7 +191,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormResourc
   }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormState', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneFormState', () => ({
   __esModule: true,
   useSceneFormState: () => ({
     ...mockFormState,
@@ -213,7 +213,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormState',
   }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormAssociations', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneFormAssociations', () => ({
   __esModule: true,
   useSceneFormAssociations: () => ({
     characterPresence: {
@@ -245,7 +245,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormAssocia
   }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormActions', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneFormActions', () => ({
   __esModule: true,
   useSceneFormActions: () => ({
     deleting: mockDeleting,
@@ -256,7 +256,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneFormActions
   }),
 }));
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -264,7 +264,7 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock('../../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -289,7 +289,7 @@ jest.mock('../../../../src/components/common/forms/EntityFormContainer/EntityFor
   };
 });
 
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
@@ -309,7 +309,7 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -330,7 +330,7 @@ jest.mock('../../../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../../../src/components/common/forms/FormSwitchField/FormSwitchField', () => {
+jest.mock('@/src/components/common/forms/FormSwitchField/FormSwitchField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -350,7 +350,7 @@ jest.mock('../../../../src/components/common/forms/FormSwitchField/FormSwitchFie
   };
 });
 
-jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return {
     __esModule: true,
@@ -376,7 +376,7 @@ jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => 
   };
 });
 
-jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -423,37 +423,34 @@ jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectP
   };
 });
 
-jest.mock(
-  '../../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({
-        storyId,
-        fields,
-        values,
-        onChange,
-      }: {
-        storyId: string;
-        fields: unknown[];
-        values: Record<string, unknown>;
-        onChange: (fieldId: string, value: unknown) => void;
-      }) => (
-        <>
-          <Text testID="custom-fields">
-            {JSON.stringify({ storyId, fields: fields.length, values })}
-          </Text>
-          <Text testID="custom-fields-change" onPress={() => onChange('f1', 'v1')}>
-            edit
-          </Text>
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      storyId,
+      fields,
+      values,
+      onChange,
+    }: {
+      storyId: string;
+      fields: unknown[];
+      values: Record<string, unknown>;
+      onChange: (fieldId: string, value: unknown) => void;
+    }) => (
+      <>
+        <Text testID="custom-fields">
+          {JSON.stringify({ storyId, fields: fields.length, values })}
+        </Text>
+        <Text testID="custom-fields-change" onPress={() => onChange('f1', 'v1')}>
+          edit
+        </Text>
+      </>
+    ),
+  };
+});
 
-jest.mock('../../../../src/components/features/scenes/SceneTimingFields', () => {
+jest.mock('@/src/components/features/scenes/SceneTimingFields', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -510,44 +507,41 @@ jest.mock('../../../../src/components/features/scenes/SceneTimingFields', () => 
   };
 });
 
-jest.mock(
-  '../../../../src/components/features/characters/CharacterManager/SceneCharacterManager',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        characterRelations: unknown[];
-        availableCharacters: { name: string }[];
-        onSave: (r: unknown) => void;
-        onDelete: (id: string) => void;
-        editable: boolean;
-        currentStoryId: string;
-        currentSceneId: string;
-      }) => (
-        <>
-          <Text testID="character-manager">
-            {JSON.stringify({
-              relations: props.characterRelations.length,
-              available: props.availableCharacters.map((c) => c.name),
-              editable: props.editable,
-              currentStoryId: props.currentStoryId,
-              currentSceneId: props.currentSceneId,
-            })}
-          </Text>
-          <Text testID="character-save" onPress={() => props.onSave({ id: 'rel-9' })}>
-            save
-          </Text>
-          <Text testID="character-delete" onPress={() => props.onDelete('rel-9')}>
-            delete
-          </Text>
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/characters/CharacterManager/SceneCharacterManager', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      characterRelations: unknown[];
+      availableCharacters: { name: string }[];
+      onSave: (r: unknown) => void;
+      onDelete: (id: string) => void;
+      editable: boolean;
+      currentStoryId: string;
+      currentSceneId: string;
+    }) => (
+      <>
+        <Text testID="character-manager">
+          {JSON.stringify({
+            relations: props.characterRelations.length,
+            available: props.availableCharacters.map((c) => c.name),
+            editable: props.editable,
+            currentStoryId: props.currentStoryId,
+            currentSceneId: props.currentSceneId,
+          })}
+        </Text>
+        <Text testID="character-save" onPress={() => props.onSave({ id: 'rel-9' })}>
+          save
+        </Text>
+        <Text testID="character-delete" onPress={() => props.onDelete('rel-9')}>
+          delete
+        </Text>
+      </>
+    ),
+  };
+});
 
-jest.mock('../../../../src/components/features/effects/EffectListEditor', () => {
+jest.mock('@/src/components/features/effects/EffectListEditor', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -585,7 +579,7 @@ jest.mock('../../../../src/components/features/effects/EffectListEditor', () => 
   };
 });
 
-jest.mock('../../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -607,7 +601,7 @@ jest.mock('../../../../src/components/features/notes/NoteManager', () => {
   };
 });
 
-jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -629,7 +623,7 @@ jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoMan
   };
 });
 
-import SceneFormScreen from '../../../../src/screens/narrative-elements/scenes/SceneFormScreen';
+import SceneFormScreen from '@/src/screens/narrative-elements/scenes/SceneFormScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

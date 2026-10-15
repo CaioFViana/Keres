@@ -1,17 +1,17 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
-import { useConflictReviewData } from '../../../../hooks/useConflictReviewData';
-import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
-import { useSyncConflictStore } from '../../../../state/syncConflictStore';
-import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import type { ThemeColors } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { useConflictReviewData } from '@/src/hooks/useConflictReviewData';
+import { useSyncConflictActions } from '@/src/hooks/useSyncConflictActions';
+import { useSyncConflictStore } from '@/src/state/syncConflictStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { AppAlert } from '@/src/utils/AppAlert';
-import ConflictDetailSheet from '../ConflictDetailSheet/ConflictDetailSheet';
-import ConflictFieldDiffSheet from '../ConflictFieldDiffSheet/ConflictFieldDiffSheet';
+import ConflictDetailSheet from '@/src/components/features/sync/ConflictDetailSheet/ConflictDetailSheet';
+import ConflictFieldDiffSheet from '@/src/components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet';
 import ConflictRow from './ConflictRow';
 
 interface SyncConflictReviewSheetProps {

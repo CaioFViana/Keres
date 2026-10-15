@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import { act, renderHook } from '@testing-library/react-native';
-import { useAsyncOperation } from '../../src/hooks/useAsyncOperation';
+import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 
 it('ignores duplicate submissions, reports pending and allows another operation after failure', async () => {
   const hook = await renderHook(() => useAsyncOperation());

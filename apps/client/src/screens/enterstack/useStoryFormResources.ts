@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import {
   createPackService,
   type PackService,
   type PackSummary,
-} from '../../services/storymanagement/PackService';
-import { createStoryService, type StoryService } from '../../services/storymanagement/StoryService';
-import { useShippedPacksInstallerStore } from '../../state/shippedPacksInstallerStore';
+} from '@/src/services/storymanagement/PackService';
+import { createStoryService, type StoryService } from '@/src/services/storymanagement/StoryService';
+import { useShippedPacksInstallerStore } from '@/src/state/shippedPacksInstallerStore';
 
 /** Owns the story and pack services plus create-mode pack lookups. */
 export function useStoryFormResources(initialStoryId?: string) {

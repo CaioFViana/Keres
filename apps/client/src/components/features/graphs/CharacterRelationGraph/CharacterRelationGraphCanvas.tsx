@@ -1,14 +1,14 @@
 import { Path } from '@shopify/react-native-skia';
 import { forwardRef } from 'react';
-import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
-import GraphNodeBox from '../GraphNodeBox/GraphNodeBox';
-import SkiaEdgeCanvas from '../SkiaEdgeCanvas/SkiaEdgeCanvas';
-import SkiaEdgeLabels from '../SkiaEdgeCanvas/SkiaEdgeLabels';
-import SkiaOverlayErrorBoundary from '../SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
-import { useEdgeFont } from '../SkiaEdgeCanvas/useEdgeFont';
-import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
-import { useGraphCanvasViewport } from '../../../../hooks/useGraphCanvasViewport';
-import { useTheme } from '../../../../theme';
+import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+import GraphNodeBox from '@/src/components/features/graphs/GraphNodeBox/GraphNodeBox';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaEdgeLabels from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeLabels';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
+import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
+import { useGraphCanvasViewport } from '@/src/hooks/useGraphCanvasViewport';
+import { useTheme } from '@/src/theme';
 import { EDGE_LABEL_MAX_CHARS } from '@keres/shared/graphs/edgeLabelPlacement';
 import { foldRelationType } from '@keres/shared/graphs/relationTypeColors';
 import type {

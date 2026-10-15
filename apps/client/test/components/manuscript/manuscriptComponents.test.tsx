@@ -2,16 +2,16 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Platform, StyleSheet, type ViewStyle } from 'react-native';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
-import { manuscriptTextMetrics } from '../../../src/components/features/manuscript/manuscriptTextMetrics';
-import { MarkdownPreview } from '../../../src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import {
   RICH_BODY_EDITOR_WEB_CSS,
   RichBodyEditor,
-} from '../../../src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
-import { SceneBodyFooter } from '../../../src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
-import { SceneBodyToolbar } from '../../../src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
+} from '@/src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
+import { SceneBodyFooter } from '@/src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
+import { SceneBodyToolbar } from '@/src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {

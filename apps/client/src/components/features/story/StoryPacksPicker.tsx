@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /** What the picker needs of a pack; `hasExtras` says it carries starter chapters, scenes or characters. */

@@ -5,14 +5,14 @@ const mockSave = jest.fn();
 const mockDelete = jest.fn();
 const mockAlert = jest.fn();
 
-jest.mock('../../../src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterRelationService', () => ({
   __esModule: true,
   createCharacterRelationService: () => ({
     saveCharacterRelation: (...args: unknown[]) => mockSave(...args),
     deleteCharacterRelation: (...args: unknown[]) => mockDelete(...args),
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -21,8 +21,8 @@ jest.mock('react-i18next', () => ({
 
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { act, renderHook } from '@testing-library/react-native';
-import { useCharacterRelationEditor } from '../../../src/screens/characterrelations/useCharacterRelationEditor';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import { useCharacterRelationEditor } from '@/src/screens/characterrelations/useCharacterRelationEditor';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 const relation = (id: string, a: string, b: string, type = 'friend'): CharacterRelation => ({

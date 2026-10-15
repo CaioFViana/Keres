@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { useDebouncedValue } from '../../src/hooks/useDebouncedValue';
+import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());

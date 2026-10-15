@@ -12,14 +12,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type {
   FriendshipStackParamList,
   StorySelectionDrawerParamList,
-} from '../../navigation/StorySelectionStack';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
+} from '@/src/navigation/StorySelectionStack';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useFriendshipFormActions } from './useFriendshipFormActions';
 import { useFriendshipFormResources } from './useFriendshipFormResources';
 import { useFriendshipFormState } from './useFriendshipFormState';

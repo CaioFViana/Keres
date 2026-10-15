@@ -3,15 +3,15 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { formatDateTime } from '../../utils/formatDateTime';
+import { formatDateTime } from '@/src/utils/formatDateTime';
 import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
-import ServerListItem from '../../components/features/servers/ServerListItem';
-import { useServerStatuses } from '../../hooks/useServerStatuses';
-import { useUnseenMessagesStore } from '../../state/unseenMessagesStore';
-import { adminConversationKey } from '../../utils/conversationKey';
-import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
+import ServerListItem from '@/src/components/features/servers/ServerListItem';
+import { useServerStatuses } from '@/src/hooks/useServerStatuses';
+import { useUnseenMessagesStore } from '@/src/state/unseenMessagesStore';
+import { adminConversationKey } from '@/src/utils/conversationKey';
+import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type ServerManagementScreenNavigationProp = NativeStackNavigationProp<

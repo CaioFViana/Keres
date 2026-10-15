@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { useTheme } from '../../../theme';
-import NotificationLanes from '../../common/feedback/NotificationLanes/NotificationLanes';
+import { useTheme } from '@/src/theme';
+import NotificationLanes from '@/src/components/common/feedback/NotificationLanes/NotificationLanes';
 
 interface ThemedFullscreenModalProps {
   visible: boolean;

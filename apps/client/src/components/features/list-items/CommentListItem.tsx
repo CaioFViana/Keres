@@ -3,15 +3,15 @@ import type { OperationLogEntityType } from '@keres/shared';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import type { CommentSelect } from '../../../db/schema';
-import { useAuthorProfiles } from '../../../hooks/useAuthorProfiles';
-import { useCommentFieldLabel } from '../../../hooks/useCommentFieldLabel';
-import { useEntityName } from '../../../hooks/useEntityName';
-import { type ThemeColors, useTheme } from '../../../theme';
-import { typography } from '../../../theme/tokens';
-import { useThemedStyles } from '../../../theme/useThemedStyles';
-import type { CommentCriticality } from '../../../utils/commentCriticality';
-import { CRITICALITY_ICONS } from '../../../utils/commentCriticality';
+import type { CommentSelect } from '@/src/db/schema';
+import { useAuthorProfiles } from '@/src/hooks/useAuthorProfiles';
+import { useCommentFieldLabel } from '@/src/hooks/useCommentFieldLabel';
+import { useEntityName } from '@/src/hooks/useEntityName';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { CommentCriticality } from '@/src/utils/commentCriticality';
+import { CRITICALITY_ICONS } from '@/src/utils/commentCriticality';
 
 interface CommentListItemProps {
   comment: CommentSelect;

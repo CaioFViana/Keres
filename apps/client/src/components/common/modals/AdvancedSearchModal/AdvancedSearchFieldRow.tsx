@@ -12,8 +12,8 @@ import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryD
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
-import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
-import { useTheme } from '../../../../theme';
+import type { SuggestionType } from '@/src/services/storymanagement/SuggestionService';
+import { useTheme } from '@/src/theme';
 
 /** Advanced-search fields have a dynamic target type, but selection remains MultiSelectPill. */
 const AdvancedEntityPicker: React.FC<{

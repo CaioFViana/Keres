@@ -1,7 +1,7 @@
 import type { BoardContentType } from '@keres/shared';
 import { useCallback } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { clampCanvasWorldCoordinate } from '../utils/canvasDragBounds';
+import { clampCanvasWorldCoordinate } from '@/src/utils/canvasDragBounds';
 
 /** Mutations for board card placement, sizing and stacking, kept outside the screen container. */
 export function useBoardCanvasLayout(setContent: Dispatch<SetStateAction<BoardContentType>>) {

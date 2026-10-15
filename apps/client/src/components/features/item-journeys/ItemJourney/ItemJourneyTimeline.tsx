@@ -5,16 +5,16 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ItemSelect } from '../../../../db/schema';
-import { useItemJourneyTimelineData } from '../../../../hooks/useItemJourneyTimelineData';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { useSceneCalendarDates } from '../../../../hooks/useSceneCalendarDates';
-import type { ItemStackParamList } from '../../../../navigation/MainSystemStack';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { typography } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
+import type { ItemSelect } from '@/src/db/schema';
+import { useItemJourneyTimelineData } from '@/src/hooks/useItemJourneyTimelineData';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
+import type { ItemStackParamList } from '@/src/navigation/MainSystemStack';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { orderItemJourneysByNarrative } from '@/src/utils/itemJourneyOrder';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface ItemJourneyTimelineProps {

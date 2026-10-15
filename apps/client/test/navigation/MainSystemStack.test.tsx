@@ -6,8 +6,8 @@ jest.mock('react-native-safe-area-context', () => ({
 
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const mockRootDispatch = jest.fn();
 const mockSetSelectedStory = jest.fn();
@@ -69,7 +69,7 @@ jest.mock('react-i18next', () => {
     initReactI18next: { type: '3rdParty', init: jest.fn() },
   };
 });
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { surface: '#fff', text: '#111', primary: '#00f' } }),
   // `ColorPickerModal` (pulled in by the location map node sheet) calls these at module load.
@@ -78,7 +78,7 @@ jest.mock('../../src/theme', () => ({
   hexToRgb: () => ({ r: 0, g: 0, b: 0 }),
   rgbToHsv: () => ({ h: 0, s: 0, v: 0 }),
 }));
-jest.mock('../../src/state/storyStore', () => {
+jest.mock('@/src/state/storyStore', () => {
   const useStoryStore: any = jest.fn((selector) => {
     const state = { selectedStory: { title: 'A jornada', type: 'linear' } };
     return selector ? selector(state) : state;
@@ -90,16 +90,16 @@ jest.mock('../../src/state/storyStore', () => {
   });
   return { __esModule: true, useStoryStore };
 });
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => mockResponsiveLayout),
 }));
-jest.mock('../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: jest.fn(),
 }));
 jest.mock(
-  '../../src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent',
+  '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent',
   () => ({
     __esModule: true,
     DRAWER_MIN_WIDTH: 280,
@@ -111,18 +111,15 @@ jest.mock(
     })),
   }),
 );
-jest.mock(
-  '../../src/components/common/navigation/NavigationBackButton/NavigationBackButton',
-  () => {
-    const { View } = jest.requireActual('react-native');
-    return {
-      __esModule: true,
-      default: ({ onPress }: { onPress: () => void }) => (
-        <View testID="navigation-back-button" onPress={onPress} />
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/common/navigation/NavigationBackButton/NavigationBackButton', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({ onPress }: { onPress: () => void }) => (
+      <View testID="navigation-back-button" onPress={onPress} />
+    ),
+  };
+});
 jest.mock(
   '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay',
   () => () => null,
@@ -131,8 +128,8 @@ jest.mock(
   '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay',
   () => () => null,
 );
-jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../src/help/contextualHelp', () => ({
+jest.mock('@/src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/src/help/contextualHelp', () => ({
   __esModule: true,
   screenHelpPage: { NarrativeElementsStack: 'narrative-elements' },
 }));
@@ -144,11 +141,11 @@ const mockStoryArcs = {
   showSelector: false,
   reload: jest.fn(),
 };
-jest.mock('../../src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => mockStoryArcs,
 }));
-jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
+jest.mock('@/src/components/common/display/MapIcon/MapIcon', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -158,264 +155,264 @@ jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
   };
 });
 
-jest.mock('../../src/screens/narrative-elements/chapters/ChapterDetailScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/chapters/ChapterDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/chapters/ChapterFormScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/chapters/ChapterFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/chapters/NarrativeElementsListScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/characterrelations/CharacterRelationGraphScreen', () => ({
+jest.mock('@/src/screens/characterrelations/CharacterRelationGraphScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/characters/CharacterDetailScreen', () => ({
+jest.mock('@/src/screens/characters/CharacterDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/characters/CharacterFormScreen', () => ({
+jest.mock('@/src/screens/characters/CharacterFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/characters/CharacterListScreen', () => ({
+jest.mock('@/src/screens/characters/CharacterListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/choices/ChoiceDetailScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/ChoiceDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/choices/ChoiceFormScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/ChoiceFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/choices/ChoiceViewScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/ChoiceViewScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/comments/CommentListScreen', () => ({
+jest.mock('@/src/screens/comments/CommentListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/gallery/GalleryDetailScreen', () => ({
+jest.mock('@/src/screens/gallery/GalleryDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/gallery/GalleryListScreen', () => ({
+jest.mock('@/src/screens/gallery/GalleryListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/boards/BoardListScreen', () => ({
+jest.mock('@/src/screens/boards/BoardListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/boards/BoardCanvasScreen', () => ({
+jest.mock('@/src/screens/boards/BoardCanvasScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/globalsearch/GlobalSearchScreen', () => ({
+jest.mock('@/src/screens/globalsearch/GlobalSearchScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/itemJourneys/ItemJourneyDetailScreen', () => ({
+jest.mock('@/src/screens/itemJourneys/ItemJourneyDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/itemJourneys/ItemJourneyFormScreen', () => ({
+jest.mock('@/src/screens/itemJourneys/ItemJourneyFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/items/ItemDetailScreen', () => ({
+jest.mock('@/src/screens/items/ItemDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/items/ItemFormScreen', () => ({
+jest.mock('@/src/screens/items/ItemFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/items/ItemListScreen', () => ({
+jest.mock('@/src/screens/items/ItemListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/locations/LocationDetailsScreen', () => ({
+jest.mock('@/src/screens/locations/LocationDetailsScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/locations/LocationFormScreen', () => ({
+jest.mock('@/src/screens/locations/LocationFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/locations/LocationGraphScreen', () => ({
+jest.mock('@/src/screens/locations/LocationGraphScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/locations/LocationListScreen', () => ({
+jest.mock('@/src/screens/locations/LocationListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/mainstorystack/MainDashboardScreen', () => ({
+jest.mock('@/src/screens/mainstorystack/MainDashboardScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/mainstorystack/StoryAnalysisScreen', () => ({
+jest.mock('@/src/screens/mainstorystack/StoryAnalysisScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/mainstorystack/StoryEntityCountScreen', () => ({
+jest.mock('@/src/screens/mainstorystack/StoryEntityCountScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/navigation/StorySettingsStack', () => ({
+jest.mock('@/src/navigation/StorySettingsStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/navigation/StoryShareStack', () => ({
+jest.mock('@/src/navigation/StoryShareStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/notes/NoteDetailScreen', () => ({
+jest.mock('@/src/screens/notes/NoteDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/notes/NoteFormScreen', () => ({
+jest.mock('@/src/screens/notes/NoteFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/notes/NoteListScreen', () => ({
+jest.mock('@/src/screens/notes/NoteListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/operationlog/OperationLogDetailScreen', () => ({
+jest.mock('@/src/screens/operationlog/OperationLogDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/operationlog/OperationLogListScreen', () => ({
+jest.mock('@/src/screens/operationlog/OperationLogListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/scenes/ManuscriptScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/ManuscriptScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/scenes/SceneDetailScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/SceneDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/scenes/SceneEditorScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/SceneEditorScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/scenes/SceneFormScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/SceneFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/stats/StatListScreen', () => ({
+jest.mock('@/src/screens/stats/StatListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/stats/StatFormScreen', () => ({
+jest.mock('@/src/screens/stats/StatFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/stats/StatLadderScreen', () => ({
+jest.mock('@/src/screens/stats/StatLadderScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/stats/StatComparisonScreen', () => ({
+jest.mock('@/src/screens/stats/StatComparisonScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/stats/StatRankingScreen', () => ({
+jest.mock('@/src/screens/stats/StatRankingScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/storycalendars/StoryAgendaScreen', () => ({
+jest.mock('@/src/screens/storycalendars/StoryAgendaScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/storycalendars/StoryCalendarListScreen', () => ({
+jest.mock('@/src/screens/storycalendars/StoryCalendarListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/storycalendars/StoryCalendarFormScreen', () => ({
+jest.mock('@/src/screens/storycalendars/StoryCalendarFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/narrative-elements/timeline/StoryTimelineScreen', () => ({
+jest.mock('@/src/screens/narrative-elements/timeline/StoryTimelineScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/storyschema/StorySchemaFieldFormScreen', () => ({
+jest.mock('@/src/screens/storyschema/StorySchemaFieldFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/storyschema/StorySchemaListScreen', () => ({
+jest.mock('@/src/screens/storyschema/StorySchemaListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/suggestions/SuggestionsScreen', () => ({
+jest.mock('@/src/screens/suggestions/SuggestionsScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/suggestions/SuggestionUsageScreen', () => ({
+jest.mock('@/src/screens/suggestions/SuggestionUsageScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/tags/TagDetailScreen', () => ({
+jest.mock('@/src/screens/tags/TagDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/tags/TagFormScreen', () => ({
+jest.mock('@/src/screens/tags/TagFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/tags/TagListScreen', () => ({
+jest.mock('@/src/screens/tags/TagListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/plots/PlotListScreen', () => ({
+jest.mock('@/src/screens/plots/PlotListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/plots/PlotDetailScreen', () => ({
+jest.mock('@/src/screens/plots/PlotDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/plots/PlotFormScreen', () => ({
+jest.mock('@/src/screens/plots/PlotFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/plots/PlotMatrixScreen', () => ({
+jest.mock('@/src/screens/plots/PlotMatrixScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/plots/PlotProgressScreen', () => ({
+jest.mock('@/src/screens/plots/PlotProgressScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/plots/PlotReaderScreen', () => ({
+jest.mock('@/src/screens/plots/PlotReaderScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/worldrules/WorldRuleDetailScreen', () => ({
+jest.mock('@/src/screens/worldrules/WorldRuleDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/worldrules/WorldRuleFormScreen', () => ({
+jest.mock('@/src/screens/worldrules/WorldRuleFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/worldrules/WorldRuleListScreen', () => ({
+jest.mock('@/src/screens/worldrules/WorldRuleListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
 
-import MainSystemStack from '../../src/navigation/MainSystemStack';
+import MainSystemStack from '@/src/navigation/MainSystemStack';
 
 const drawerScreen = (name: string) => mockDrawerScreens.find((screen) => screen.name === name);
 

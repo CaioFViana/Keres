@@ -1,8 +1,8 @@
 import { Canvas, ImageSVG, Skia, useCanvasRef } from '@shopify/react-native-skia';
 import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useCanvasKitReady } from '../graphs/SkiaEdgeCanvas/useCanvasKitReady';
-import { useSvgRasterStore } from '../../../state/svgRasterStore';
+import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import { useSvgRasterStore } from '@/src/state/svgRasterStore';
 
 /** First-frame grace: the remounted canvas has not drawn yet, so early reads go stale. */
 const WARMUP_ATTEMPTS = 2;

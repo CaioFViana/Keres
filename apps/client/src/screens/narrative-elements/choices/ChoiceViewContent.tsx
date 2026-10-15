@@ -4,7 +4,7 @@ import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import { useMemo, type RefObject } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../../theme/commonStyles';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import {
   ScreenError,
   ScreenLoading,
@@ -17,13 +17,13 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import StoryGraphCanvas, {
   type StoryGraphCanvasHandle,
 } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
-import { describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
+import { describeEffect } from '@/src/utils/choiceCheckEffectDescriptions';
 import {
   formatSceneGap,
   formatSceneUniverseDuration,
   hasSceneGap,
   hasSceneUniverseDuration,
-} from '../../../utils/sceneTiming';
+} from '@/src/utils/sceneTiming';
 
 /**
  * Presentation contract for the choice graph screen.

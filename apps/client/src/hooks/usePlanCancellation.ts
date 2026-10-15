@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ServerSelect } from '../db/schema';
-import { isOfflineError } from '../services/apiClient';
-import { cancelSubscription } from '../services/PaymentService';
-import { AppAlert } from '../utils/AppAlert';
-import { formatPlanDate } from '../utils/paymentPlans';
+import type { ServerSelect } from '@/src/db/schema';
+import { isOfflineError } from '@/src/services/apiClient';
+import { cancelSubscription } from '@/src/services/PaymentService';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { formatPlanDate } from '@/src/utils/paymentPlans';
 
 /**
  * Stopping a subscription renewing, after the user confirms: what is paid stays in force until its date, and

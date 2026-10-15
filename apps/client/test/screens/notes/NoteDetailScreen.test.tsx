@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
@@ -173,48 +173,48 @@ jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () =
     default: () => <Text testID="entity-metadata">metadata</Text>,
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => mockEntityComments,
 }));
-jest.mock('../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenGalleryMediaViewer,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/services/EntityService', () => ({
+jest.mock('@/src/services/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: (...args: unknown[]) => mockGetEntityIdentifier(...args) },
 }));
-jest.mock('../../../src/services/storymanagement/NoteService', () => ({
+jest.mock('@/src/services/storymanagement/NoteService', () => ({
   __esModule: true,
   createNoteService: () => ({ getById: mockGetNoteById }),
 }));
-jest.mock('../../../src/services/storymanagement/NoteRelationService', () => ({
+jest.mock('@/src/services/storymanagement/NoteRelationService', () => ({
   __esModule: true,
   createNoteRelationService: () => ({ getRelationsForNote: mockGetRelationsForNote }),
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/TagService', () => ({
   __esModule: true,
   createTagService: () => ({}),
 }));
-jest.mock('../../../src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { primary: '#00f' } }),
 }));
@@ -223,7 +223,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => mockI18n,
 }));
 
-import NoteDetailScreen from '../../../src/screens/notes/NoteDetailScreen';
+import NoteDetailScreen from '@/src/screens/notes/NoteDetailScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

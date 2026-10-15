@@ -4,9 +4,9 @@ import type { ParamListBase, RouteProp } from '@react-navigation/native';
 import { CommonActions, DrawerActions, useLinkBuilder } from '@react-navigation/native';
 import React from 'react';
 import { View } from 'react-native';
-import type { GuideDrawerId } from '../../../../guides/types';
-import { drawerAnchorId } from '../../../../guides/anchorRegistry';
-import { useGuideAnchor } from '../../../../guides/useGuideAnchor';
+import type { GuideDrawerId } from '@/src/guides/types';
+import { drawerAnchorId } from '@/src/guides/anchorRegistry';
+import { useGuideAnchor } from '@/src/guides/useGuideAnchor';
 
 interface AnchoredDrawerItemListProps {
   state: DrawerContentComponentProps['state'];

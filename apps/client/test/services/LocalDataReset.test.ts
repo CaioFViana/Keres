@@ -3,11 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const mockDeleteCjkPack = jest.fn();
 const mockPrune = jest.fn();
 
-jest.mock('../../src/services/cjkFontPack', () => ({
+jest.mock('@/src/services/cjkFontPack', () => ({
   __esModule: true,
   deleteCjkPack: (...args: unknown[]) => mockDeleteCjkPack(...args),
 }));
-jest.mock('../../src/services/SongAudioService', () => ({
+jest.mock('@/src/services/SongAudioService', () => ({
   __esModule: true,
   defaultSongAudioStore: () => ({ prune: (...args: unknown[]) => mockPrune(...args) }),
 }));
@@ -16,11 +16,8 @@ import {
   clearDownloadedFiles,
   clearEverythingOutsideDatabase,
   clearLocalPreferences,
-} from '../../src/services/LocalDataReset';
-import {
-  getAcceptedClientLegal,
-  setAcceptedClientLegal,
-} from '../../src/legal/clientTermsAcceptance';
+} from '@/src/services/LocalDataReset';
+import { getAcceptedClientLegal, setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
 
 beforeEach(async () => {
   jest.clearAllMocks();

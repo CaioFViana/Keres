@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import i18n from '../utils/i18n';
+import i18n from '@/src/utils/i18n';
 import { useNotificationStore } from './notificationStore';
 
 export type ServerReachability = 'unknown' | 'online' | 'offline';

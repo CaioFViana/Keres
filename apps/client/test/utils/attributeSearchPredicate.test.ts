@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 import { AttributeType } from '@keres/shared';
-import { characters, storySchemaFields, attributeValues } from '../../src/db/schema';
-import { buildCustomAttributeSearchCondition } from '../../src/utils/attributeSearchPredicate';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { characters, storySchemaFields, attributeValues } from '@/src/db/schema';
+import { buildCustomAttributeSearchCondition } from '@/src/utils/attributeSearchPredicate';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = 'story-1';
 const NOW = new Date('2026-08-14T12:00:00.000Z');

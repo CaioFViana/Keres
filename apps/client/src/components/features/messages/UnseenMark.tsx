@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 
 export interface UnseenMarkProps {
   /** Where the dot sits on whatever it marks; the corner by default. */

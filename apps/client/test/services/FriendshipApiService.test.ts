@@ -4,11 +4,11 @@
 const mockGet = jest.fn();
 const mockSetActiveServer = jest.fn();
 
-jest.mock('../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: {},
 }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   createKeresAxiosInstance: () => ({
     setTokenProvider: jest.fn(),
@@ -17,7 +17,7 @@ jest.mock('../../src/services/apiClient', () => ({
   }),
 }));
 
-import { FriendshipApiService } from '../../src/services/FriendshipApiService';
+import { FriendshipApiService } from '@/src/services/FriendshipApiService';
 
 const server = { id: 'server-1', url: 'https://keres.test' } as never;
 

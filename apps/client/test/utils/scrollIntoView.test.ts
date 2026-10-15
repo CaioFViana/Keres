@@ -1,4 +1,4 @@
-import { computeScrollAdjustment } from '../../src/utils/scrollIntoView';
+import { computeScrollAdjustment } from '@/src/utils/scrollIntoView';
 
 describe('computeScrollAdjustment', () => {
   const view = { viewTop: 100, viewBottom: 500, margin: 40 };

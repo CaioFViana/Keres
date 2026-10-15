@@ -6,7 +6,7 @@ jest.mock('spark-md5', () => ({
   default: { hash: (value: string) => `hash-${value}`.slice(0, 32).padEnd(32, '0') },
 }));
 
-import { createGalleryLink, hashGalleryLink } from '../../src/services/galleryLink';
+import { createGalleryLink, hashGalleryLink } from '@/src/services/galleryLink';
 
 const galleryService = {
   getByHash: jest.fn(),

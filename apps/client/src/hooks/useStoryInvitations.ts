@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import {
   createStoryInvitationService,
   STORY_INVITATIONS_CHANGED,
   type ServerStoryInvitation,
-} from '../services/StoryInvitationService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/services/StoryInvitationService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 /**
  * The open story invitations of every registered server, as last synced - read from the local copy,

@@ -4,9 +4,9 @@ import type { StorySchemaField } from '@keres/shared';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../../db';
-import type { NotesStackParamList } from '../../navigation/MainSystemStack';
-import type { NoteService } from '../../services/storymanagement/NoteService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { NotesStackParamList } from '@/src/navigation/MainSystemStack';
+import type { NoteService } from '@/src/services/storymanagement/NoteService';
 import type { NoteFormState } from './useNoteFormState';
 
 type NoteNavigation = NativeStackNavigationProp<NotesStackParamList, 'NoteForm'>;

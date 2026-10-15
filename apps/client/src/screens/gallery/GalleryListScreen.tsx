@@ -1,5 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -13,32 +13,32 @@ import { ScreenError } from '@/src/components/common/feedback/ScreenState/Screen
 import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
 import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGalleryAddKind';
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
-import { useDrizzle } from '../../db';
-import type { GallerySelect } from '../../db/schemas/galleries';
+import { useDrizzle } from '@/src/db';
+import type { GallerySelect } from '@/src/db/schemas/galleries';
 import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 import type {
   GalleryStackParamList,
   MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
+} from '@/src/navigation/MainSystemStack';
 import {
   GALLERY_ROW_PADDING,
   galleryGridLayout,
   galleryScrollbarWidth,
-} from '../../utils/galleryGridLayout';
-import { createGalleryLink } from '../../services/galleryLink';
-import { importPickedMediaAssets } from '../../services/galleryMediaImport';
-import { mediaFileService } from '../../services/MediaFileService';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { useGalleryStore } from '../../state/galleryStore';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+} from '@/src/utils/galleryGridLayout';
+import { createGalleryLink } from '@/src/services/galleryLink';
+import { importPickedMediaAssets } from '@/src/services/galleryMediaImport';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { useGalleryStore } from '@/src/state/galleryStore';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<

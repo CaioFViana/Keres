@@ -3,24 +3,24 @@
  */
 import { sketchContentHash } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createSketchService } from '../../src/services/storymanagement/SketchService';
+import * as schema from '@/src/db/schema';
+import { createSketchService } from '@/src/services/storymanagement/SketchService';
 import {
   ensureSketchSnapshot,
   saveSketchSnapshot,
-} from '../../src/services/storymanagement/SketchSnapshotService';
-import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/SketchSnapshotService';
+import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const mockSaveSnapshot = jest.fn();
 const mockRasterize = jest.fn();
 
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { saveSnapshot: (...args: unknown[]) => mockSaveSnapshot(...args) },
 }));
 
-jest.mock('../../src/utils/svgRaster', () => ({
+jest.mock('@/src/utils/svgRaster', () => ({
   __esModule: true,
   fitRasterSize: (width: number, height: number) => ({ width, height }),
   rasterizeMapSvg: (...args: unknown[]) => mockRasterize(...args),

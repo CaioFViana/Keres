@@ -2,8 +2,8 @@ import { renderHook } from '@testing-library/react-native';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../src/hooks/useEntityRefreshLifecycle';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+} from '@/src/hooks/useEntityRefreshLifecycle';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 describe('entity refresh lifecycle', () => {
   it('runs the initial loader on mount and again only when its callback changes', async () => {

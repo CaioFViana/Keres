@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react-native';
 import type { SketchItem, SketchLayerDoc } from '@keres/shared';
-import SketchLayersView from '../../src/components/features/sketches/SketchLayersView';
+import SketchLayersView from '@/src/components/features/sketches/SketchLayersView';
 import {
   SKETCH_PICTURE_CHUNK,
   SketchLayerPictures,
   recordSketchPicture,
   sketchItemPath,
-} from '../../src/components/features/sketches/sketchPictures';
+} from '@/src/components/features/sketches/sketchPictures';
 
 function line(x: number): SketchItem {
   return {

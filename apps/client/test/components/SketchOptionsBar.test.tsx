@@ -2,16 +2,16 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import SketchOptionsBar, {
   SKETCH_OPTIONS_BAR_HEIGHT,
   type SketchSelectionActions,
-} from '../../src/components/features/sketches/SketchOptionsBar';
-import { useSketchCompact } from '../../src/hooks/useSketchCompact';
-import { useSketchToolStore } from '../../src/state/sketchToolStore';
+} from '@/src/components/features/sketches/SketchOptionsBar';
+import { useSketchCompact } from '@/src/hooks/useSketchCompact';
+import { useSketchToolStore } from '@/src/state/sketchToolStore';
 
-jest.mock('../../src/hooks/useSketchCompact', () => ({
-  ...jest.requireActual('../../src/hooks/useSketchCompact'),
+jest.mock('@/src/hooks/useSketchCompact', () => ({
+  ...jest.requireActual('@/src/hooks/useSketchCompact'),
   useSketchCompact: jest.fn(() => false),
 }));
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#fff',

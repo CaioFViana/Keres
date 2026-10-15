@@ -1,4 +1,4 @@
-import type { HelpPage } from '../../types';
+import type { HelpPage } from '@/src/help/types';
 const page: HelpPage = {
   id: 'world-rules',
   title: 'World and world pieces',

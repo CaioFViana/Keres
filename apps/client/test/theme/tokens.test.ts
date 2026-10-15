@@ -1,5 +1,5 @@
-import { layout } from '../../src/theme/layout';
-import { fontSize, fontWeight, radius, space, typography } from '../../src/theme/tokens';
+import { layout } from '@/src/theme/layout';
+import { fontSize, fontWeight, radius, space, typography } from '@/src/theme/tokens';
 
 const ascending = (values: number[]) => values.every((v, i) => i === 0 || v > values[i - 1]);
 

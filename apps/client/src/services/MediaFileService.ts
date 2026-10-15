@@ -16,7 +16,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { createVideoPlayer, type VideoPlayer } from 'expo-video';
 import SparkMD5 from 'spark-md5';
 import { Platform } from 'react-native';
-import { decodeFileUriOnce } from '../utils/fileUri';
+import { decodeFileUriOnce } from '@/src/utils/fileUri';
 import * as webMediaStore from './webMediaStore';
 import { captureImageThumbnail, wantsImageThumbnail } from './webImageThumbnail';
 import { captureVideoThumbnail } from './webVideoThumbnail';

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../db';
-import { createTagService, type TagService } from '../../services/storymanagement/TagService';
+import { useDrizzle } from '@/src/db';
+import { createTagService, type TagService } from '@/src/services/storymanagement/TagService';
 
 /** Owns the tag service used by the form. */
 export function useTagFormResources() {

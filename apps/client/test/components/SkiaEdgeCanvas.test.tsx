@@ -2,10 +2,10 @@ import { render } from '@testing-library/react-native';
 import { Canvas, Path } from '@shopify/react-native-skia';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import SkiaEdgeCanvas from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
 
 const mockUseCanvasKitReady = jest.fn(() => true);
-jest.mock('../../src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
+jest.mock('@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
   useCanvasKitReady: (...args: unknown[]) =>
     (mockUseCanvasKitReady as (...inner: unknown[]) => boolean)(...args),
 }));

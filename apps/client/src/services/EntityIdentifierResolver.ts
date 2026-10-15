@@ -5,7 +5,7 @@ import {
   type OperationLogEntityType,
 } from '@keres/shared';
 import type { TFunction } from 'i18next';
-import type { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '@/src/db';
 import { createClientEntitySolverContext } from './entity-solvers/ClientEntitySolverContext';
 
 /**

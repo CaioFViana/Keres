@@ -2,9 +2,9 @@ import { renderHook } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
 const mockUseTheme = jest.fn();
-jest.mock('../../src/theme', () => ({ useTheme: () => mockUseTheme() }));
+jest.mock('@/src/theme', () => ({ useTheme: () => mockUseTheme() }));
 
-import { useThemedStyles } from '../../src/theme/useThemedStyles';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 const light = { text: '#111111' };
 const dark = { text: '#eeeeee' };

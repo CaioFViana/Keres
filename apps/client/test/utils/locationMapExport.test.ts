@@ -1,15 +1,15 @@
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { readBytes: jest.fn() },
 }));
-jest.mock('../../src/utils/locationMapSvg', () => ({
+jest.mock('@/src/utils/locationMapSvg', () => ({
   __esModule: true,
   renderLocationMapSvg: jest.fn(() => '<svg />'),
 }));
 
-import { mediaFileService } from '../../src/services/MediaFileService';
-import { buildLocationMapSvg } from '../../src/utils/locationMapExport';
-import { renderLocationMapSvg } from '../../src/utils/locationMapSvg';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import { buildLocationMapSvg } from '@/src/utils/locationMapExport';
+import { renderLocationMapSvg } from '@/src/utils/locationMapSvg';
 
 const content = {
   nodes: [],

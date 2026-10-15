@@ -1,10 +1,10 @@
 import type { FavoriteEntityType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { useCallback, useEffect, useState } from 'react';
-import { useDrizzle } from '../db';
-import { servers, stories } from '../db/schema';
-import { createFavoriteService } from '../services/storymanagement/FavoriteService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import { servers, stories } from '@/src/db/schema';
+import { createFavoriteService } from '@/src/services/storymanagement/FavoriteService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 import type { ResolvedUserProfile } from './useUserProfileResolver';
 import { useUserProfileResolver } from './useUserProfileResolver';

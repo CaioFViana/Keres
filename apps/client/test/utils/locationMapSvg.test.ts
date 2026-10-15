@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { renderLocationMapSvg } from '../../src/utils/locationMapSvg';
+import { renderLocationMapSvg } from '@/src/utils/locationMapSvg';
 
 const content = {
   images: [

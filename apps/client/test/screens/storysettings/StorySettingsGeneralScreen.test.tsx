@@ -32,23 +32,23 @@ jest.mock('@react-navigation/native', () => {
     useNavigation: () => mockNavigation,
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({
     canEdit: mockCanEdit,
     canManageStoryPolicy: mockCanManageStoryPolicy,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     getStoryById: mockGetStoryById,
@@ -57,28 +57,28 @@ jest.mock('../../../src/services/storymanagement/StoryService', () => ({
     checkLinearCompatibility: mockCheckLinearCompatibility,
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector?: (state: unknown) => unknown) => {
     const state = { selectedStory: mockSelectedStory, setSelectedStory: mockSetSelectedStory };
     return selector ? selector(state) : state;
   },
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: { error: '#f00', text: '#111', textSecondary: '#555', card: '#fff', border: '#ddd' },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAppAlert(...args) },
 }));
-jest.mock('../../../src/components/common', () => {
+jest.mock('@/src/components/common', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -121,7 +121,7 @@ jest.mock('../../../src/components/common', () => {
     ),
   };
 });
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -140,7 +140,7 @@ jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', (
     ),
   };
 });
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -152,7 +152,7 @@ jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () 
     ),
   };
 });
-jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -176,7 +176,7 @@ jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormCo
     ),
   };
 });
-jest.mock('../../../src/components/features/story/StoryFieldsForm/StoryFieldsForm', () => {
+jest.mock('@/src/components/features/story/StoryFieldsForm/StoryFieldsForm', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -219,7 +219,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-import StorySettingsGeneralScreen from '../../../src/screens/storysettings/StorySettingsGeneralScreen';
+import StorySettingsGeneralScreen from '@/src/screens/storysettings/StorySettingsGeneralScreen';
 
 function makeStory(overrides = {}) {
   return {

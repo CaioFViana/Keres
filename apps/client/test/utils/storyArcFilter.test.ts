@@ -6,7 +6,7 @@ import {
   entityBelongsToActiveArc,
   resolveEffectiveTheme,
   sceneBelongsToActiveArc,
-} from '../../src/utils/storyArcFilter';
+} from '@/src/utils/storyArcFilter';
 
 describe('chapterBelongsToArc', () => {
   it('shows everything when no arc is selected', () => {

@@ -22,12 +22,12 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   isOfflineError: (error: unknown) => mockIsOffline(error),
 }));
-jest.mock('../../src/services/MessageService', () => ({
+jest.mock('@/src/services/MessageService', () => ({
   __esModule: true,
   MESSAGES_CHANGED: 'messages_changed',
   conversationKey: (serverId: string, peer: { kind: string; userId?: string }) =>
@@ -35,21 +35,21 @@ jest.mock('../../src/services/MessageService', () => ({
   createMessageService: () => mockService,
   setOpenConversation: (key: string | null) => mockSetOpen(key),
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('../../src/state/unseenMessagesStore', () => ({
+jest.mock('@/src/state/unseenMessagesStore', () => ({
   __esModule: true,
   useUnseenMessagesStore: {
     getState: () => ({ markSeen: (...args: unknown[]) => mockMarkSeen(...args) }),
   },
 }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (event: string, listener: (...args: unknown[]) => void) => {
@@ -63,7 +63,7 @@ jest.mock('../../src/utils/EventEmitter', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useConversation } from '../../src/hooks/useConversation';
+import { useConversation } from '@/src/hooks/useConversation';
 
 const msg = (id: string, mine = false) => ({
   id,

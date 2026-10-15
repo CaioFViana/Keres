@@ -2,13 +2,13 @@ import {
   checkSceneMusic,
   checkSongs,
   checkUnusedSongs,
-} from '../../src/utils/storyAnalysis/musicChecks';
+} from '@/src/utils/storyAnalysis/musicChecks';
 import {
   buildStoryAnalysisReport,
   type AnalysisSceneMusic,
   type AnalysisSong,
   type StoryAnalysisInput,
-} from '../../src/utils/storyAnalysisChecks';
+} from '@/src/utils/storyAnalysisChecks';
 
 const input = (sceneMusic?: AnalysisSceneMusic[], songs?: AnalysisSong[]): StoryAnalysisInput => ({
   storyType: 'linear',

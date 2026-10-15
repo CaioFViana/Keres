@@ -1,11 +1,11 @@
 import type { SeeAlsoEntityType } from '@keres/shared';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import type { SeeAlsoEntityRef } from '../services/storymanagement/SeeAlsoRelationService';
-import { createSeeAlsoRelationService } from '../services/storymanagement/SeeAlsoRelationService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { AppAlert } from '../utils/AppAlert';
+import { useDrizzle } from '@/src/db';
+import type { SeeAlsoEntityRef } from '@/src/services/storymanagement/SeeAlsoRelationService';
+import { createSeeAlsoRelationService } from '@/src/services/storymanagement/SeeAlsoRelationService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 /**
  * One-touch resolution for ambiguous-name suggestions: links the source entity to the

@@ -2,8 +2,8 @@ import type { AgeVerificationInfo } from '@keres/shared';
 import { useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text } from 'react-native';
-import { blocksNewAccounts } from '../../../utils/ageVerificationRules';
-import { useTheme, type ThemeColors } from '../../../theme';
+import { blocksNewAccounts } from '@/src/utils/ageVerificationRules';
+import { useTheme, type ThemeColors } from '@/src/theme';
 
 export interface AgeVerificationNoticeProps {
   /** What the server says about age; null while unknown or unreadable, and then nothing is said. */

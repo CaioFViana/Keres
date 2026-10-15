@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
-import type { AppDrizzleClient } from '../../db';
-import { recordLocalOperationSync } from '../../utils/syncUtils';
+import type { AppDrizzleClient } from '@/src/db';
+import { recordLocalOperationSync } from '@/src/utils/syncUtils';
 
 /** A synced table: rows are never removed, only marked deleted, and carry a version. */
 export type SoftDeletableTable = SQLiteTable & {

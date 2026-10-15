@@ -53,16 +53,16 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { surface: '#fff', text: '#111', primary: '#00f' } }),
 }));
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => mockResponsiveLayout,
 }));
 jest.mock(
-  '../../src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent',
+  '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent',
   () => ({
     __esModule: true,
     DRAWER_MIN_WIDTH: 280,
@@ -74,116 +74,113 @@ jest.mock(
     }),
   }),
 );
-jest.mock(
-  '../../src/components/common/navigation/NavigationBackButton/NavigationBackButton',
-  () => {
-    const { View } = jest.requireActual('react-native');
-    // Identifiable rather than `null`: whether the header offers a way back is the thing under
-    // test, and two components rendering nothing are indistinguishable.
-    return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
-  },
-);
-jest.mock('../../src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
-jest.mock('../../src/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
+jest.mock('@/src/components/common/navigation/NavigationBackButton/NavigationBackButton', () => {
+  const { View } = jest.requireActual('react-native');
+  // Identifiable rather than `null`: whether the header offers a way back is the thing under
+  // test, and two components rendering nothing are indistinguishable.
+  return { __esModule: true, default: () => <View testID="navigation-back-button" /> };
+});
+jest.mock('@/src/navigation/HelpStack', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/src/help/contextualHelp', () => ({ __esModule: true, screenHelpPage: {} }));
 
-jest.mock('../../src/screens/packs/PackListScreen', () => ({
+jest.mock('@/src/screens/packs/PackListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/packs/PackFormScreen', () => ({
+jest.mock('@/src/screens/packs/PackFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/packs/ShippedPacksScreen', () => ({
+jest.mock('@/src/screens/packs/ShippedPacksScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/packs/PackBrowseScreen', () => ({
+jest.mock('@/src/screens/packs/PackBrowseScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/AppSettingsScreen', () => ({
+jest.mock('@/src/screens/enterstack/AppSettingsScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ChangePasswordScreen', () => ({
+jest.mock('@/src/screens/enterstack/ChangePasswordScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/CreditsScreen', () => ({
+jest.mock('@/src/screens/enterstack/CreditsScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/FriendDetailScreen', () => ({
+jest.mock('@/src/screens/enterstack/FriendDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/FriendshipFormScreen', () => ({
+jest.mock('@/src/screens/enterstack/FriendshipFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/FriendshipListScreen', () => ({
+jest.mock('@/src/screens/enterstack/FriendshipListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ConversationScreen', () => ({
+jest.mock('@/src/screens/enterstack/ConversationScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/MessageInboxScreen', () => ({
+jest.mock('@/src/screens/enterstack/MessageInboxScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ImportStoryScreen', () => ({
+jest.mock('@/src/screens/enterstack/ImportStoryScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/MyProfileScreen', () => ({
+jest.mock('@/src/screens/enterstack/MyProfileScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ServerDetailScreen', () => ({
+jest.mock('@/src/screens/enterstack/ServerDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ServerManagementScreen', () => ({
+jest.mock('@/src/screens/enterstack/ServerManagementScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ServerPaymentHistoryScreen', () => ({
+jest.mock('@/src/screens/enterstack/ServerPaymentHistoryScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ServerPlanScreen', () => ({
+jest.mock('@/src/screens/enterstack/ServerPlanScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ServerRegistrationScreen', () => ({
+jest.mock('@/src/screens/enterstack/ServerRegistrationScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/ServerVerificationScreen', () => ({
+jest.mock('@/src/screens/enterstack/ServerVerificationScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/StoryFormScreen', () => ({
+jest.mock('@/src/screens/enterstack/StoryFormScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/StorySelectionScreen', () => ({
+jest.mock('@/src/screens/enterstack/StorySelectionScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/examplestories/ExampleStoriesScreen', () => ({
+jest.mock('@/src/screens/examplestories/ExampleStoriesScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/components/features/packs/ShippedPacksInstallerOverlay', () => ({
+jest.mock('@/src/components/features/packs/ShippedPacksInstallerOverlay', () => ({
   __esModule: true,
   default: () => null,
 }));
 
-import StorySelectionStack from '../../src/navigation/StorySelectionStack';
+import StorySelectionStack from '@/src/navigation/StorySelectionStack';
 
 const drawerScreen = (name: string) => mockDrawerScreens.find((screen) => screen.name === name);
 

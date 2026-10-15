@@ -3,7 +3,7 @@ import {
   sortScenesNarratively,
   UNCHAPTERED_GROUP_ID,
   isUnchapteredGroup,
-} from '../../src/utils/narrativeSceneOrder';
+} from '@/src/utils/narrativeSceneOrder';
 
 const scene = (name: string, chapterId: string | null, index: number) =>
   ({ name, chapterId, index }) as any;

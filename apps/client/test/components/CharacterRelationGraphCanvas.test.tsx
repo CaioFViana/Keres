@@ -5,11 +5,11 @@ import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import CharacterRelationGraphCanvas, {
   type CharacterRelationGraphCanvasHandle,
-} from '../../src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
-import SkiaEdgeCanvas from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
-import SkiaOverlayErrorBoundary from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+} from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#000',

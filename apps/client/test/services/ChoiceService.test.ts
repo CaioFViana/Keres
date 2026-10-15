@@ -1,10 +1,10 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { createChoiceService } from '../../src/services/storymanagement/ChoiceService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The choice service's listing: the branching-aware filters no sibling list has.

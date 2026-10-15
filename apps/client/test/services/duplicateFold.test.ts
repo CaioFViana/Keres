@@ -3,11 +3,11 @@
  */
 import { and, eq } from 'drizzle-orm';
 import type { SyncConflict } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import type { OperationLogSelect } from '../../src/db/schema';
-import { foldIntoTwin, isFoldableDuplicate } from '../../src/services/sync/duplicateFold';
-import type { SyncContext } from '../../src/services/sync/SyncContext';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { foldIntoTwin, isFoldableDuplicate } from '@/src/services/sync/duplicateFold';
+import type { SyncContext } from '@/src/services/sync/SyncContext';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

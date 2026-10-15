@@ -1,8 +1,8 @@
-import { defaultExportSettings } from '../../../src/components/features/manuscript/export/manuscriptExportSettings';
+import { defaultExportSettings } from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 import {
   screenplayInputOf,
   screenplayOptionsOf,
-} from '../../../src/components/features/manuscript/export/screenplayExport';
+} from '@/src/components/features/manuscript/export/screenplayExport';
 
 const chapter = {
   id: 'ch-1',

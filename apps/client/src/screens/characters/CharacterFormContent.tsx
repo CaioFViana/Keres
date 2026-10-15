@@ -19,13 +19,13 @@ import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { TFunction } from 'i18next';
 import { type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { type StyleProp, type TextStyle, View, type ViewStyle } from 'react-native';
-import type { CharacterSelect } from '../../db/schemas/characters';
-import type { ModeSelect } from '../../db/schemas/modes';
-import type { StorySchemaFieldSelect, TagSelect } from '../../db/schema';
-import type { StoryStatsData } from '../../hooks/useStoryStats';
-import type { ModeService } from '../../services/storymanagement/ModeService';
-import type { SaveNoteRelation } from '../../services/storymanagement/NoteRelationService';
-import type { StatRelationService } from '../../services/storymanagement/StatRelationService';
+import type { CharacterSelect } from '@/src/db/schemas/characters';
+import type { ModeSelect } from '@/src/db/schemas/modes';
+import type { StorySchemaFieldSelect, TagSelect } from '@/src/db/schema';
+import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import type { ModeService } from '@/src/services/storymanagement/ModeService';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
+import type { StatRelationService } from '@/src/services/storymanagement/StatRelationService';
 
 type CharacterFormCopy = {
   saveLabel: string;

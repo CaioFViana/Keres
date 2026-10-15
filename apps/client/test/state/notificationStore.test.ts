@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { useNotificationStore } from '../../src/state/notificationStore';
+import { useNotificationStore } from '@/src/state/notificationStore';
 
 const store = () => useNotificationStore.getState();
 const lanes = () => store().currentNotifications;

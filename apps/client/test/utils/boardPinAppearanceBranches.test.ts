@@ -9,7 +9,7 @@ import {
   boardPinTypeKey,
   getBoardPinAppearance,
   worldPieceSectionFromBoardPinGroup,
-} from '../../src/utils/boardPinAppearance';
+} from '@/src/utils/boardPinAppearance';
 
 describe('boardPinAppearanceType', () => {
   it('treats free notes as notes regardless of entity data', () => {

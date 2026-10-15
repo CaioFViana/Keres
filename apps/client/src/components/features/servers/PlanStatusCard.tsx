@@ -2,9 +2,9 @@ import type { Subscription } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { ThemeColors } from '../../../theme';
-import { useTheme } from '../../../theme';
-import { formatMoney, formatPlanDate, isRenewalBeingConfirmed } from '../../../utils/paymentPlans';
+import type { ThemeColors } from '@/src/theme';
+import { useTheme } from '@/src/theme';
+import { formatMoney, formatPlanDate, isRenewalBeingConfirmed } from '@/src/utils/paymentPlans';
 import { serverCardStyleDefs } from './serverCardStyleDefs';
 
 export interface PlanStatusCardProps {

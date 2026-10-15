@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../db/schema';
-import { useDrizzle } from '../../../db';
-import { createChapterService } from '../../../services/storymanagement/ChapterService';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
+import type { ChapterSelect, ChoiceSelect, SceneSelect } from '@/src/db/schema';
+import { useDrizzle } from '@/src/db';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import type { AdvancedNarrativeMatches } from './createChapterListItemRenderer';
 
 const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: string) =>

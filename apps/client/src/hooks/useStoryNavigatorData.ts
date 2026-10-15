@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ChoiceCheck, ChoiceCheckGroup, Effect } from '@keres/shared';
-import { useDrizzle } from '../db';
-import type { ChoiceSelect, ItemSelect, SceneSelect } from '../db/schema';
-import { createChoiceCheckGroupService } from '../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '../services/storymanagement/ChoiceService';
-import { createEffectService } from '../services/storymanagement/EffectService';
-import { createItemService } from '../services/storymanagement/ItemService';
-import { createSceneService } from '../services/storymanagement/SceneService';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle } from '@/src/db';
+import type { ChoiceSelect, ItemSelect, SceneSelect } from '@/src/db/schema';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 export interface NavigatorData {

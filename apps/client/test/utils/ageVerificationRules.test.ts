@@ -2,7 +2,7 @@ import {
   blocksNewAccounts,
   isLoopbackHost,
   isOpenableVerificationUrl,
-} from '../../src/utils/ageVerificationRules';
+} from '@/src/utils/ageVerificationRules';
 
 describe('blocksNewAccounts', () => {
   it('blocks only a server that requires verification and cannot run it right now', () => {

@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import { act, renderHook } from '@testing-library/react-native';
-import { useFormResetHeaderAction } from '../../src/hooks/useFormResetHeaderAction';
+import { useFormResetHeaderAction } from '@/src/hooks/useFormResetHeaderAction';
 
 const mockAlert = jest.fn();
 
@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));

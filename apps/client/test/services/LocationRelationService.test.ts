@@ -1,10 +1,15 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { createLocationRelationService } from '../../src/services/storymanagement/LocationRelationService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createLocationRelationService } from '@/src/services/storymanagement/LocationRelationService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The location-hierarchy service: containment reads, the parent swap and the connection edges.

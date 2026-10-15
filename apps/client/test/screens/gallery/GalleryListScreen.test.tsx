@@ -152,59 +152,59 @@ jest.mock('@/src/components/features/list-items/GalleryGridItem', () => ({
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ breakpoint: mockBreakpoint.current }),
 }));
-jest.mock('../../../src/services/galleryLink', () => ({
+jest.mock('@/src/services/galleryLink', () => ({
   __esModule: true,
   createGalleryLink: (...args: unknown[]) => mockCreateGalleryLink(...args),
 }));
-jest.mock('../../../src/services/galleryMediaImport', () => ({
+jest.mock('@/src/services/galleryMediaImport', () => ({
   __esModule: true,
   importPickedMediaAssets: (...args: unknown[]) => mockImportPickedMediaAssets(...args),
 }));
-jest.mock('../../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: {
     pick: (...args: unknown[]) => mockPick(...args),
     pickDocuments: (...args: unknown[]) => mockPickDocuments(...args),
   },
 }));
-jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({}),
 }));
-jest.mock('../../../src/state/galleryStore', () => ({
+jest.mock('@/src/state/galleryStore', () => ({
   __esModule: true,
   useGalleryStore: jest.fn(),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -227,8 +227,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import GalleryListScreen from '../../../src/screens/gallery/GalleryListScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import GalleryListScreen from '@/src/screens/gallery/GalleryListScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const freshListState = () => ({
   listProps: {},

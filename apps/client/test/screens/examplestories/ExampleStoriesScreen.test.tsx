@@ -25,11 +25,11 @@ jest.mock('@expo/vector-icons', () => ({
     return react.createElement(native.Text, { testID: `icon-${name}` }, name);
   },
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -61,8 +61,8 @@ jest.mock('@/src/components/common', () => ({
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
@@ -70,30 +70,30 @@ jest.mock('@/src/hooks/useLanguageLabel', () => ({
   __esModule: true,
   useLanguageLabel: () => (language: string) => `label-${language}`,
 }));
-jest.mock('../../../src/services/storymanagement/ExampleStoryService', () => ({
+jest.mock('@/src/services/storymanagement/ExampleStoryService', () => ({
   __esModule: true,
   createExampleStoryService: () => ({
     listExampleStories: mockListExampleStories,
     installExampleStory: mockInstallExampleStory,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: (...args: unknown[]) => mockCreateStoryService(...args),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: () => ({ fetchStories: mockFetchStoryList }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -111,7 +111,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: mockLanguage } }),
 }));
 
-import ExampleStoriesScreen from '../../../src/screens/examplestories/ExampleStoriesScreen';
+import ExampleStoriesScreen from '@/src/screens/examplestories/ExampleStoriesScreen';
 
 const mockLoad = jest.fn().mockResolvedValue({});
 

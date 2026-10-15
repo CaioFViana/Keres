@@ -1,14 +1,14 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import ExportFormatHost from '../../src/components/features/export/ExportFormatHost';
-import { useExportFormatPromptStore } from '../../src/state/exportFormatPromptStore';
+import ExportFormatHost from '@/src/components/features/export/ExportFormatHost';
+import { useExportFormatPromptStore } from '@/src/state/exportFormatPromptStore';
 
-jest.mock('../../src/utils/exportFormatPrompt', () =>
-  jest.requireActual('../../src/utils/exportFormatPrompt'),
+jest.mock('@/src/utils/exportFormatPrompt', () =>
+  jest.requireActual('@/src/utils/exportFormatPrompt'),
 );
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 const mockT = (key: string) => key;
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: mockT }) }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#fff',
@@ -19,13 +19,13 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return { __esModule: true, default: ({ children }: any) => <View>{children}</View> };
 });
 
 // eslint-disable-next-line import/first
-import { chooseExportFormat } from '../../src/utils/exportFormatPrompt';
+import { chooseExportFormat } from '@/src/utils/exportFormatPrompt';
 
 describe('export format chooser', () => {
   afterEach(() => useExportFormatPromptStore.getState().answer(null));

@@ -47,12 +47,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: {
     title: string;
@@ -62,7 +62,7 @@ jest.mock('../../../../src/hooks/useScreenHeader', () => ({
   },
 }));
 
-jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -79,7 +79,7 @@ jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: {},
@@ -92,7 +92,7 @@ jest.mock('../../../../src/hooks/useEntityComments', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [{ id: 'tag-1', name: 'Tag' }],
@@ -103,27 +103,27 @@ jest.mock('../../../../src/hooks/useEntityRelations', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: mockArcs, showSelector: mockShowSelector }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => ({ definition: { id: 'cal-1' } }),
 }));
 
-jest.mock('../../../../src/hooks/useSceneCalendarDates', () => ({
+jest.mock('@/src/hooks/useSceneCalendarDates', () => ({
   __esModule: true,
   useSceneCalendarDates: () => ({ dateForScene: mockDateForScene }),
 }));
 
-jest.mock('../../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return {
     __esModule: true,
@@ -131,18 +131,18 @@ jest.mock('../../../../src/db', () => {
   };
 });
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('../../../../src/state/chapterStore', () => ({
+jest.mock('@/src/state/chapterStore', () => ({
   __esModule: true,
   useChapterStore: (selector: (state: { convertChapterType: unknown }) => unknown) =>
     selector({ convertChapterType: mockConvertChapterType }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -157,14 +157,14 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => {
   const copies: Record<string, object> = {};
   return {
     __esModule: true,
@@ -181,7 +181,7 @@ jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
   };
 });
 
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -194,7 +194,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-jest.mock('../../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({
     getById: mockGetChapterById,
@@ -202,17 +202,17 @@ jest.mock('../../../../src/services/storymanagement/ChapterService', () => ({
   }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetAllLocationsByStoryId }),
 }));
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -230,7 +230,7 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
 jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
   require('@/test/helpers/detailTabsMock'),
 );
-jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', () => {
+jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -243,7 +243,7 @@ jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', (
   };
 });
 
-jest.mock('../../../../src/components/common/display/DetailField/DetailField', () => {
+jest.mock('@/src/components/common/display/DetailField/DetailField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -253,7 +253,7 @@ jest.mock('../../../../src/components/common/display/DetailField/DetailField', (
   };
 });
 
-jest.mock('../../../../src/components/common/display/TagList/TagList', () => {
+jest.mock('@/src/components/common/display/TagList/TagList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -266,7 +266,7 @@ jest.mock('../../../../src/components/common/display/TagList/TagList', () => {
 });
 
 jest.mock(
-  '../../../../src/components/features/comments/CommentableDetailField/CommentableDetailField',
+  '@/src/components/features/comments/CommentableDetailField/CommentableDetailField',
   () => {
     const { Text } = require('react-native');
     return {
@@ -278,26 +278,23 @@ jest.mock(
   },
 );
 
-jest.mock(
-  '../../../../src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({
-        storyId,
-        entityType,
-        entityId,
-      }: {
-        storyId: string;
-        entityType: string;
-        entityId: string;
-      }) => <Text testID="custom-attrs">{JSON.stringify({ storyId, entityType, entityId })}</Text>,
-    };
-  },
-);
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      storyId,
+      entityType,
+      entityId,
+    }: {
+      storyId: string;
+      entityType: string;
+      entityId: string;
+    }) => <Text testID="custom-attrs">{JSON.stringify({ storyId, entityType, entityId })}</Text>,
+  };
+});
 
-jest.mock('../../../../src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
+jest.mock('@/src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -313,7 +310,7 @@ jest.mock('../../../../src/components/features/favorites/FavoritedByList/Favorit
   };
 });
 
-jest.mock('../../../../src/components/features/chapters/AnchorManager/AnchorManager', () => {
+jest.mock('@/src/components/features/chapters/AnchorManager/AnchorManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -335,44 +332,41 @@ jest.mock('../../../../src/components/features/chapters/AnchorManager/AnchorMana
   };
 });
 
-jest.mock(
-  '../../../../src/components/features/chapters/ConvertContainerModal/ConvertContainerModal',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({
-        visible,
-        name,
-        currentType,
-        chapterNames,
-        onCancel,
-        onConfirm,
-      }: {
-        visible: boolean;
-        name: string;
-        currentType: string;
-        chapterNames: { id: string; name: string }[];
-        onCancel: () => void;
-        onConfirm: (targetType: string, position?: number) => void;
-      }) => (
-        <>
-          <Text testID="convert-modal">
-            {JSON.stringify({ visible, name, currentType, chapterNames })}
-          </Text>
-          <Text testID="convert-cancel" onPress={onCancel}>
-            cancel
-          </Text>
-          <Text testID="convert-confirm" onPress={() => onConfirm('event', 2)}>
-            confirm
-          </Text>
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/chapters/ConvertContainerModal/ConvertContainerModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      visible,
+      name,
+      currentType,
+      chapterNames,
+      onCancel,
+      onConfirm,
+    }: {
+      visible: boolean;
+      name: string;
+      currentType: string;
+      chapterNames: { id: string; name: string }[];
+      onCancel: () => void;
+      onConfirm: (targetType: string, position?: number) => void;
+    }) => (
+      <>
+        <Text testID="convert-modal">
+          {JSON.stringify({ visible, name, currentType, chapterNames })}
+        </Text>
+        <Text testID="convert-cancel" onPress={onCancel}>
+          cancel
+        </Text>
+        <Text testID="convert-confirm" onPress={() => onConfirm('event', 2)}>
+          confirm
+        </Text>
+      </>
+    ),
+  };
+});
 
-jest.mock('../../../../src/components/features/scenes/RelatedScenesList/RelatedScenesList', () => {
+jest.mock('@/src/components/features/scenes/RelatedScenesList/RelatedScenesList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -400,7 +394,7 @@ jest.mock('../../../../src/components/features/scenes/RelatedScenesList/RelatedS
   };
 });
 
-jest.mock('../../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -445,7 +439,7 @@ jest.mock('../../../../src/components/features/notes/NoteManager', () => {
   };
 });
 
-jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -465,7 +459,7 @@ jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoMan
   };
 });
 
-jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -481,7 +475,7 @@ jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBackli
   };
 });
 
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
@@ -493,8 +487,8 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-import ChapterDetailScreen from '../../../../src/screens/narrative-elements/chapters/ChapterDetailScreen';
-import { withSilencedConsole } from '../../../helpers/silenceConsole';
+import ChapterDetailScreen from '@/src/screens/narrative-elements/chapters/ChapterDetailScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

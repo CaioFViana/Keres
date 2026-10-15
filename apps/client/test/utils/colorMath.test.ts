@@ -1,4 +1,4 @@
-import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, saturateColor } from '../../src/utils/colorMath';
+import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, saturateColor } from '@/src/utils/colorMath';
 
 describe('saturateColor', () => {
   it('returns non-#RRGGBB input untouched', () => {

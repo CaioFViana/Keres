@@ -1,12 +1,12 @@
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEntityFormActions } from '../../hooks/useEntityFormActions';
+import { useEntityFormActions } from '@/src/hooks/useEntityFormActions';
 import type {
   createPlotSceneService,
   SavePlotScene,
-} from '../../services/storymanagement/PlotSceneService';
-import type { createPlotService } from '../../services/storymanagement/PlotService';
-import { AppAlert } from '../../utils/AppAlert';
+} from '@/src/services/storymanagement/PlotSceneService';
+import type { createPlotService } from '@/src/services/storymanagement/PlotService';
+import { AppAlert } from '@/src/utils/AppAlert';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 import type { PlotFormState } from './usePlotFormState';
 

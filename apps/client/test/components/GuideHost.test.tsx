@@ -1,16 +1,16 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
-import GuideHost from '../../src/components/common/feedback/GuideHost/GuideHost';
-import { __resetGuideAnchorsForTests, registerGuideAnchor } from '../../src/guides/anchorRegistry';
-import type { Guide } from '../../src/guides/types';
+import GuideHost from '@/src/components/common/feedback/GuideHost/GuideHost';
+import { __resetGuideAnchorsForTests, registerGuideAnchor } from '@/src/guides/anchorRegistry';
+import type { Guide } from '@/src/guides/types';
 import {
   __resetGuideDrawersForTests,
   registerGuideDrawer,
-} from '../../src/navigation/drawerGuideRegistry';
-import { useGuideStore } from '../../src/state/guideStore';
+} from '@/src/navigation/drawerGuideRegistry';
+import { useGuideStore } from '@/src/state/guideStore';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -29,12 +29,12 @@ jest.mock('react-i18next', () => {
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
 const mockRecordSeen = jest.fn();
-jest.mock('../../src/hooks/useGuidePersistence', () => ({
+jest.mock('@/src/hooks/useGuidePersistence', () => ({
   __esModule: true,
   useGuidePersistence: () => mockRecordSeen,
 }));
 const mockResponsiveLayout = { isWide: false };
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => mockResponsiveLayout,
 }));

@@ -3,11 +3,11 @@ import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/C
 import { LOCATION_INT_EXT, type LocationIntExt, type StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AppDrizzleClient } from '../../db';
-import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
-import type { LocationService } from '../../services/storymanagement/LocationService';
+import type { AppDrizzleClient } from '@/src/db';
+import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
+import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+import type { LocationService } from '@/src/services/storymanagement/LocationService';
 
 type UseLocationFormStateOptions = {
   initialLocationId?: string;

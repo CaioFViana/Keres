@@ -1,7 +1,7 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, Route, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import * as schema from '../../db/schema';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class RouteClientSyncHandler implements ClientSyncEntityHandler {

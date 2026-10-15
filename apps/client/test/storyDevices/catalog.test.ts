@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { storyDevicePageIds, storyDeviceSections } from '../../src/storyDevices/catalog';
-import { storyDeviceRegistry } from '../../src/storyDevices/generated/registry';
-import { getStoryDevicePage } from '../../src/storyDevices/repository';
+import { storyDevicePageIds, storyDeviceSections } from '@/src/storyDevices/catalog';
+import { storyDeviceRegistry } from '@/src/storyDevices/generated/registry';
+import { getStoryDevicePage } from '@/src/storyDevices/repository';
 
 describe('story devices catalog', () => {
   it('has a page in both supported languages for every catalog entry', () => {

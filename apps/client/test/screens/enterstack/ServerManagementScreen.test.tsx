@@ -50,33 +50,33 @@ jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => mockIsFocused.value,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
 
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
   }),
 }));
 
-jest.mock('../../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,
@@ -84,8 +84,8 @@ jest.mock('../../../src/services/apiClient', () => ({
 }));
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ServerManagementScreen from '../../../src/screens/enterstack/ServerManagementScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import ServerManagementScreen from '@/src/screens/enterstack/ServerManagementScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const online = {
   id: 'srv-1',
@@ -226,7 +226,7 @@ describe('ServerManagementScreen', () => {
 });
 
 describe('ServerManagementScreen: which server has news', () => {
-  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+  const { useUnseenMessagesStore } = require('@/src/state/unseenMessagesStore');
 
   beforeEach(() => {
     jest.clearAllMocks();

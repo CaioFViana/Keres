@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface ListSearchFieldProps {
   value: string;

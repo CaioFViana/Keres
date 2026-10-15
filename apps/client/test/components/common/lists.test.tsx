@@ -1,13 +1,13 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
-import FavoriteButton from '../../../src/components/common/lists/GenericExpandedListItemWithActions/Buttons/FavoriteButton';
-import ViewDetailsButton from '../../../src/components/common/lists/GenericExpandedListItemWithActions/Buttons/ViewDetailsButton';
-import GenericExpandedListItemWithActions from '../../../src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import GenericFilterSortList from '../../../src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import GenericListItem from '../../../src/components/common/lists/GenericListItem/GenericListItem';
+import FavoriteButton from '@/src/components/common/lists/GenericExpandedListItemWithActions/Buttons/FavoriteButton';
+import ViewDetailsButton from '@/src/components/common/lists/GenericExpandedListItemWithActions/Buttons/ViewDetailsButton';
+import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
+import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
+import GenericListItem from '@/src/components/common/lists/GenericListItem/GenericListItem';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -49,16 +49,16 @@ jest.mock('@expo/vector-icons', () => ({
 
 // The filter/sort pills open through ResponsiveModal, which reads the system bottom inset.
 // The hook needs a SafeAreaProvider that these unit tests do not mount, so stub it.
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
 
 const mockSchemaFields = jest.fn((..._args: unknown[]) => [] as unknown[]);
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/useStorySchemaFields', () => ({
   useStorySchemaFields: (...args: unknown[]) => mockSchemaFields(...args),
 }));
 
-jest.mock('../../../src/hooks/useEntityPickerOptions', () => ({
+jest.mock('@/src/hooks/useEntityPickerOptions', () => ({
   useEntityPickerOptions: () => ({
     options: [{ id: 'e1', name: 'Ent One' }],
     loading: false,
@@ -66,7 +66,7 @@ jest.mock('../../../src/hooks/useEntityPickerOptions', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal', () => {
+jest.mock('@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {

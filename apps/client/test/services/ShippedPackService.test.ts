@@ -2,11 +2,11 @@
  * @jest-environment node
  */
 import { PackContentSchema, STORY_VOCABULARY_ENTITY_TYPES } from '@keres/shared';
-import { createPackService } from '../../src/services/storymanagement/PackService';
-import { createShippedPackService } from '../../src/services/storymanagement/ShippedPackService';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { shippedPackRegistry } from '../../src/shippedPacks/generated/registry';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { createPackService } from '@/src/services/storymanagement/PackService';
+import { createShippedPackService } from '@/src/services/storymanagement/ShippedPackService';
+import { createStoryService } from '@/src/services/storymanagement/StoryService';
+import { shippedPackRegistry } from '@/src/shippedPacks/generated/registry';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The packs Keres ships with.

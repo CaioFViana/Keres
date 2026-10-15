@@ -1,9 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import ServerRecoveryCodesPanel from '../../src/components/features/servers/ServerRecoveryCodesPanel';
-import ServerRegistrationFields from '../../src/components/features/servers/ServerRegistrationFields';
+import ServerRecoveryCodesPanel from '@/src/components/features/servers/ServerRecoveryCodesPanel';
+import ServerRegistrationFields from '@/src/components/features/servers/ServerRegistrationFields';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => ({
 
 const mockContainerProps = jest.fn();
 
-jest.mock('../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
   return {
@@ -43,7 +43,7 @@ jest.mock('../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -56,7 +56,7 @@ jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {
@@ -66,7 +66,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
   return {

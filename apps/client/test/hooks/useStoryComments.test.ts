@@ -1,10 +1,10 @@
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
-jest.mock('../../src/services/storymanagement/CommentService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/services/storymanagement/CommentService', () => ({
   __esModule: true,
   createCommentService: jest.fn(),
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return {
     useEntityInitialLoad: (load: () => void) =>
@@ -15,9 +15,9 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryComments } from '../../src/hooks/useStoryComments';
-import { createCommentService } from '../../src/services/storymanagement/CommentService';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { useStoryComments } from '@/src/hooks/useStoryComments';
+import { createCommentService } from '@/src/services/storymanagement/CommentService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
 const getAllCommentsForStory = jest.fn();
 

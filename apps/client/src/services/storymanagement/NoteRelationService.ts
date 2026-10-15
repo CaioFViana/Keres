@@ -3,16 +3,16 @@ import type {
   NoteRelation as NoteRelationInterface,
 } from '@keres/shared/entities/Note';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
-import { createULID, getChangedFields } from '../../utils/entityUtils';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import { createULID, getChangedFields } from '@/src/utils/entityUtils';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export type NewNoteRelation = Omit<
   NoteRelationInterface,

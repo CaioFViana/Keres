@@ -1,6 +1,6 @@
 import type { ThemeColors } from '@keres/shared';
 import { DefaultTheme } from '@react-navigation/native';
-import { buildNavigationTheme } from '../../src/navigation/navigationTheme';
+import { buildNavigationTheme } from '@/src/navigation/navigationTheme';
 
 const palette: ThemeColors = {
   primary: '#0000ff',

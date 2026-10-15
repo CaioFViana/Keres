@@ -4,8 +4,8 @@ import type { ThemeColors } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import CoverImage from '../../common/display/CoverImage/CoverImage';
-import { useThemeColors } from '../../../theme/useThemeColors';
+import CoverImage from '@/src/components/common/display/CoverImage/CoverImage';
+import { useThemeColors } from '@/src/theme/useThemeColors';
 
 export type StorySelectionListItemProps = {
   story: Story;

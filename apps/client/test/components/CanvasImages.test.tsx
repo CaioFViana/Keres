@@ -1,9 +1,9 @@
 import { act, render, type RenderResult } from '@testing-library/react-native';
 import type { BoardContentType, LocationMapImageType } from '@keres/shared';
-import BoardCanvas from '../../src/components/features/boards/BoardCanvas';
-import LocationMapImageView from '../../src/components/features/location-maps/LocationMapImageView';
+import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
+import LocationMapImageView from '@/src/components/features/location-maps/LocationMapImageView';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#000',
@@ -20,7 +20,7 @@ jest.mock('../../src/theme', () => ({
 }));
 jest.mock('expo-image', () => ({ Image: 'ExpoImageStub' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
 
 type Root = RenderResult['container'];
 

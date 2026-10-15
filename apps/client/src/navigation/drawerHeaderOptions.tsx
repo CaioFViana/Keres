@@ -4,16 +4,16 @@ import type { NavigationState, ParamListBase, Route } from '@react-navigation/na
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
-import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
+import NavigationBackButton from '@/src/components/common/navigation/NavigationBackButton/NavigationBackButton';
 import {
   DRAWER_MIN_WIDTH,
   useResizableDrawerWidth,
-} from '../components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
-import { screenHelpPage } from '../help/contextualHelp';
-import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import { useHeaderBackActionStore } from '../state/headerBackActionStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { useTheme } from '../theme';
+} from '@/src/components/common/navigation/ResizableDrawerContent/ResizableDrawerContent';
+import { screenHelpPage } from '@/src/help/contextualHelp';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useHeaderBackActionStore } from '@/src/state/headerBackActionStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
 import { DrawerToggleButton } from './MainSystemDrawerHelpers';
 import {
   compactDrawerWidthFor,

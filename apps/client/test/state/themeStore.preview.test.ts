@@ -1,10 +1,10 @@
-jest.mock('../../src/services/ClientSettingsService', () => ({
+jest.mock('@/src/services/ClientSettingsService', () => ({
   getClientSettings: jest.fn(),
   updateClientSettings: jest.fn(),
 }));
 
-import { updateClientSettings } from '../../src/services/ClientSettingsService';
-import { useThemeStore } from '../../src/state/themeStore';
+import { updateClientSettings } from '@/src/services/ClientSettingsService';
+import { useThemeStore } from '@/src/state/themeStore';
 
 describe('previewDarkMode', () => {
   beforeEach(() => {

@@ -1,5 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,41 +14,41 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ItemListItem from '@/src/components/features/list-items/ItemListItem';
 import ItemJourneyRows from '@/src/components/features/item-journeys/ItemJourneyRows';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   ChoiceSelect,
   ItemJourneySelect,
   SceneSelect,
   TagSelect,
-} from '../../db/schema';
-import type { ItemSelect } from '../../db/schemas/items';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
-import { useEntityArcScope } from '../../hooks/useEntityArcScope';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useTagChangeReload } from '../../hooks/useTagChangeReload';
+} from '@/src/db/schema';
+import type { ItemSelect } from '@/src/db/schemas/items';
+import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
+import { useEntityArcScope } from '@/src/hooks/useEntityArcScope';
+import { useEntityListScreen } from '@/src/hooks/useEntityListScreen';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { useTagChangeReload } from '@/src/hooks/useTagChangeReload';
 import type {
   ItemStackParamList,
   MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import { useItemStore } from '../../state/itemStore';
-import { useStoryStore } from '../../state/storyStore';
-import { type ThemeColors } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
-import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createChoiceService } from '../../services/storymanagement/ChoiceService';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { createTagService } from '../../services/storymanagement/TagService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/navigation/MainSystemStack';
+import { useItemStore } from '@/src/state/itemStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
+import { createChoiceService } from '@/src/services/storymanagement/ChoiceService';
+import { createItemJourneyService } from '@/src/services/storymanagement/ItemJourneyService';
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createTagService } from '@/src/services/storymanagement/TagService';
+import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { orderItemJourneysByNarrative } from '@/src/utils/itemJourneyOrder';
+import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/guides/GuideAnchor';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<

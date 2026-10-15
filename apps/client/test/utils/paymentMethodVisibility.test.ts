@@ -2,7 +2,7 @@ import type { PaymentMethodOption } from '@keres/shared';
 import {
   visiblePaymentMethods,
   type DevicePaymentCapabilities,
-} from '../../src/utils/paymentMethodVisibility';
+} from '@/src/utils/paymentMethodVisibility';
 
 const redirect = (id: string): PaymentMethodOption => ({ id, label: id, flow: 'redirect' });
 // A connector that predates `flow` says nothing about it.

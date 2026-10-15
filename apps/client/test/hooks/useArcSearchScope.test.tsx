@@ -1,5 +1,5 @@
 import { act, cleanup, renderHook } from '@testing-library/react-native';
-import { useArcSearchScope } from '../../src/hooks/useArcSearchScope';
+import { useArcSearchScope } from '@/src/hooks/useArcSearchScope';
 
 type Row = { id: string; arc: 'a' | 'b' };
 const rows: Row[] = [

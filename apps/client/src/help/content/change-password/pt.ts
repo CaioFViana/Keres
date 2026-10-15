@@ -1,4 +1,4 @@
-import type { HelpPage } from '../../types';
+import type { HelpPage } from '@/src/help/types';
 const page: HelpPage = {
   id: 'change-password',
   title: 'Trocando a senha',

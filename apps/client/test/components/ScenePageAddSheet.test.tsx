@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -20,7 +20,7 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,
@@ -28,12 +28,12 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
       visible ? <View>{children}</View> : null,
   };
 });
-jest.mock('../../src/hooks/useGalleryMedia', () => ({
+jest.mock('@/src/hooks/useGalleryMedia', () => ({
   __esModule: true,
   useScenePageChoices: () => mockChoices,
 }));
 
-import ScenePageAddSheet from '../../src/components/features/scenes/ScenePages/ScenePageAddSheet';
+import ScenePageAddSheet from '@/src/components/features/scenes/ScenePages/ScenePageAddSheet';
 
 const handlers = {
   onClose: jest.fn(),

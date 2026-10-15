@@ -37,15 +37,15 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return { Ionicons: ({ name }: { name: string }) => <Text testID={`icon-${name}`}>{name}</Text> };
 });
-jest.mock('../../src/theme', () => {
-  const actual = jest.requireActual('../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
 
 import { act, fireEvent, render } from '@testing-library/react-native';
-import ConversationListItem from '../../src/components/features/messages/ConversationListItem';
-import MessageBubble from '../../src/components/features/messages/MessageBubble';
-import MessageComposer from '../../src/components/features/messages/MessageComposer';
+import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
+import MessageBubble from '@/src/components/features/messages/MessageBubble';
+import MessageComposer from '@/src/components/features/messages/MessageComposer';
 
 describe('ConversationListItem', () => {
   const props = {

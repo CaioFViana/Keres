@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { fontSize, fontWeight, space } from '../../../../theme/tokens';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import type { ThemeColors } from '../../../../theme';
+import { fontSize, fontWeight, space } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { ThemeColors } from '@/src/theme';
 
 export interface GraphNodeBoxNode {
   id: string;

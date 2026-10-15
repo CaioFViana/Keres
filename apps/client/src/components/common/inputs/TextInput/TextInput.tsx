@@ -2,8 +2,8 @@ import { KeyboardAwareContext } from '@/src/components/layout/KeyboardAwareScree
 import React, { useContext, useState } from 'react';
 import type { TextInputProps } from 'react-native';
 import { Platform, TextInput as RNTextInput, StyleSheet } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 type CustomTextInputProps = TextInputProps & {
   /** The parent composite control already draws the focus boundary. */

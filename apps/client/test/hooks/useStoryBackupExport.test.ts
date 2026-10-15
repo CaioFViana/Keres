@@ -9,33 +9,33 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     exportFullStory: (...args: unknown[]) => mockExportFullStory(...args),
   }),
 }));
-jest.mock('../../src/utils/storyMediaBundle', () => ({
+jest.mock('@/src/utils/storyMediaBundle', () => ({
   __esModule: true,
   buildStoryZipBytes: (...args: unknown[]) => mockBuildZipBytes(...args),
 }));
-jest.mock('../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/storyTransfer', () => ({
   __esModule: true,
   buildExportFileName: (title: string) => `${title}.json`,
   buildExportZipFileName: (title: string) => `${title}.zip`,
   deliverStoryExport: (...args: unknown[]) => mockDeliverExport(...args),
   deliverStoryZipExport: (...args: unknown[]) => mockDeliverZipExport(...args),
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useStoryBackupExport } from '../../src/hooks/useStoryBackupExport';
-import { withSilencedConsole } from '../helpers/silenceConsole';
+import { useStoryBackupExport } from '@/src/hooks/useStoryBackupExport';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const STORY = { id: 'story-1', title: 'Epic' };
 

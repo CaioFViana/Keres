@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { stories } from '../../src/db/schema';
+import { stories } from '@/src/db/schema';
 import { createTestDatabase, listTables, type TestDatabase } from './testDb';
 
 let database: TestDatabase;

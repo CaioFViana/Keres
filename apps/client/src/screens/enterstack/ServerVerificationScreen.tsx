@@ -18,10 +18,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
-import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
-import { isOpenableVerificationUrl } from '../../utils/ageVerificationRules';
-import { type ThemeColors, useTheme } from '../../theme';
-import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { ServerManagementStackParamList } from '@/src/navigation/StorySelectionStack';
+import { isOpenableVerificationUrl } from '@/src/utils/ageVerificationRules';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 type ServerVerificationRouteProp = RouteProp<ServerManagementStackParamList, 'ServerVerification'>;
 type ServerVerificationNavigationProp = NativeStackNavigationProp<

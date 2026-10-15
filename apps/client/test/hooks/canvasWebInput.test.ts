@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { attachCanvasWebInput } from '../../src/hooks/canvasWebInput';
+import { attachCanvasWebInput } from '@/src/hooks/canvasWebInput';
 
 type Listener = (event: unknown) => void;
 

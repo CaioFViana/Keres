@@ -4,24 +4,24 @@ import {
   useGalleryMedia,
   useGalleryRow,
   useScenePageChoices,
-} from '../../src/hooks/useGalleryMedia';
+} from '@/src/hooks/useGalleryMedia';
 
 const mockGetById = jest.fn();
 const mockGetImages = jest.fn();
 const mockGetSketches = jest.fn();
 
-jest.mock('../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
-jest.mock('../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({
     getById: (...args: unknown[]) => mockGetById(...args),
     getGalleriesByStoryId: (...args: unknown[]) => mockGetImages(...args),
   }),
 }));
-jest.mock('../../src/services/storymanagement/SketchService', () => ({
+jest.mock('@/src/services/storymanagement/SketchService', () => ({
   __esModule: true,
   createSketchService: () => ({
     getSketchesForStory: (...args: unknown[]) => mockGetSketches(...args),

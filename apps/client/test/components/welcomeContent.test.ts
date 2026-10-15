@@ -4,9 +4,9 @@ import {
   WELCOME_TITLE_KEYS,
   welcomeHeroIcon,
   welcomeRows,
-} from '../../src/components/features/welcome/welcomeContent';
-import en from '../../src/locales/en.json';
-import pt from '../../src/locales/pt.json';
+} from '@/src/components/features/welcome/welcomeContent';
+import en from '@/src/locales/en.json';
+import pt from '@/src/locales/pt.json';
 
 const FLAVORS = ['native', 'desktop', 'web', 'serverless-web'] as const;
 

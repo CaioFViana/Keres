@@ -1,4 +1,4 @@
-import { saveEntityWithSecondaryData } from '../../src/services/storymanagement/EntityFormSaveCoordinator';
+import { saveEntityWithSecondaryData } from '@/src/services/storymanagement/EntityFormSaveCoordinator';
 
 describe('saveEntityWithSecondaryData', () => {
   it('retains the created id before dependent writes and completes in order', async () => {

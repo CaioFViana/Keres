@@ -5,13 +5,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { SceneSelect } from '../../../../db/schema';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import type { NarrativeElementsStackParamList } from '../../../../navigation/MainSystemStack';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
-import { layout } from '../../../../theme/layout';
-import { typography } from '../../../../theme/tokens';
+import type { SceneSelect } from '@/src/db/schema';
+import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
 
 interface SceneNavigationControlsProps {
   storyType: 'linear' | 'branching' | undefined;

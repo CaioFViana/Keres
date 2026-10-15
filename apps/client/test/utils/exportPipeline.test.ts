@@ -6,22 +6,22 @@ jest.mock('expo-file-system', () => ({
 }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { readBytes: jest.fn() },
 }));
-jest.mock('../../src/utils/storyMediaBundle', () => ({
+jest.mock('@/src/utils/storyMediaBundle', () => ({
   extractStoryZip: jest.fn(),
 }));
 
 import { Platform } from 'react-native';
-import { mediaFileService } from '../../src/services/MediaFileService';
+import { mediaFileService } from '@/src/services/MediaFileService';
 import {
   buildStandaloneBoardSvg,
   buildStandaloneLocationMapSvg,
-} from '../../src/utils/storyMapSvgExport';
-import { deliverMapExport } from '../../src/utils/storyTransfer';
-import { parseSvgRootSize } from '../../src/utils/svgRaster';
+} from '@/src/utils/storyMapSvgExport';
+import { deliverMapExport } from '@/src/utils/storyTransfer';
+import { parseSvgRootSize } from '@/src/utils/svgRaster';
 
 const readBytesMock = mediaFileService.readBytes as jest.Mock;
 

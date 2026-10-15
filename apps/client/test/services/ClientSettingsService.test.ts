@@ -5,8 +5,8 @@ import {
   createClientSettings,
   getClientSettings,
   updateClientSettings,
-} from '../../src/services/ClientSettingsService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/ClientSettingsService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

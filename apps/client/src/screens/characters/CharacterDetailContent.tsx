@@ -32,17 +32,17 @@ import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import type { TFunction } from 'i18next';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
-import type { CharacterSelect } from '../../db/schemas/characters';
-import type { ModeSelect } from '../../db/schemas/modes';
+import type { CharacterSelect } from '@/src/db/schemas/characters';
+import type { ModeSelect } from '@/src/db/schemas/modes';
 import type {
   ItemJourneySelect,
   ItemSelect,
   SceneSelect,
   StoryArcSelect,
   TagSelect,
-} from '../../db/schema';
-import type { StoryStatsData } from '../../hooks/useStoryStats';
-import type { SaveNoteRelation } from '../../services/storymanagement/NoteRelationService';
+} from '@/src/db/schema';
+import type { StoryStatsData } from '@/src/hooks/useStoryStats';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
 
 export type CharacterDetailContentProps = {
   character: CharacterSelect;

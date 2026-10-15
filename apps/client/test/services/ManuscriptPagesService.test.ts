@@ -2,26 +2,31 @@
  * @jest-environment node
  */
 import { deflateSync } from 'node:zlib';
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import {
   estimateManuscriptPageBytes,
   loadManuscriptCover,
   loadManuscriptPages,
-} from '../../src/services/storymanagement/ManuscriptPagesService';
-import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
-import { createScenePageService } from '../../src/services/storymanagement/ScenePageService';
-import { createSketchService } from '../../src/services/storymanagement/SketchService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/storymanagement/ManuscriptPagesService';
+import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
+import { createScenePageService } from '@/src/services/storymanagement/ScenePageService';
+import { createSketchService } from '@/src/services/storymanagement/SketchService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const mockReadBytes = jest.fn();
 const mockRasterize = jest.fn();
 
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { readBytes: (...args: unknown[]) => mockReadBytes(...args) },
 }));
-jest.mock('../../src/utils/svgRaster', () => ({
+jest.mock('@/src/utils/svgRaster', () => ({
   __esModule: true,
   fitRasterSize: (width: number, height: number) => ({ width, height }),
   rasterizeMapSvg: (...args: unknown[]) => mockRasterize(...args),

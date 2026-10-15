@@ -35,16 +35,16 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
   useRoute: () => ({ params: { locationId: 'loc-1' } }),
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: {},
@@ -56,7 +56,7 @@ jest.mock('../../../src/hooks/useEntityComments', () => ({
     updateComment: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: [{ id: 'tag-1', name: 'City' }],
@@ -66,26 +66,26 @@ jest.mock('../../../src/hooks/useEntityRelations', () => ({
     deleteNoteRelation: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useAppearsInArcs', () => ({
+jest.mock('@/src/hooks/useAppearsInArcs', () => ({
   __esModule: true,
   useAppearsInArcs: () => [{ id: 'arc-1' }],
 }));
-jest.mock('../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => jest.fn(),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({
     getById: mockGetLocationById,
     getAllByStoryId: mockGetAllLocationsByStoryId,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({
     getAllRelationsForStory: mockGetAllLocationRelations,
@@ -94,46 +94,46 @@ jest.mock('../../../src/services/storymanagement/LocationRelationService', () =>
     removeRelation: mockRemoveRelation,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getAllByStoryId: mockGetAllCharactersByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterSceneService', () => ({
+jest.mock('@/src/services/storymanagement/CharacterSceneService', () => ({
   __esModule: true,
   createCharacterSceneService: () => ({
     getRelationsByStoryId: mockGetCharacterSceneRelations,
   }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getAllByStoryId: mockGetAllItemsByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getAllByStoryId: mockGetAllItemJourneysByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: { id: 'story-1' } }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAppAlert(...args) },
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (entity: string) =>
     entity === 'Location' ? mockLocationCopy : mockSceneCopy,
 }));
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -150,7 +150,7 @@ jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () 
 jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
   require('@/test/helpers/detailTabsMock'),
 );
-jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () => {
+jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -162,14 +162,14 @@ jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () =
     ),
   };
 });
-jest.mock('../../../src/components/layout/ScreenSection/ScreenSection', () => {
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: ({ title }: { title: string }) => <Text testID={`section-${title}`}>{title}</Text>,
   };
 });
-jest.mock('../../../src/components/common/display/TagList/TagList', () => {
+jest.mock('@/src/components/common/display/TagList/TagList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -180,7 +180,7 @@ jest.mock('../../../src/components/common/display/TagList/TagList', () => {
     ),
   };
 });
-jest.mock('../../../src/components/common/display/DetailField/DetailField', () => {
+jest.mock('@/src/components/common/display/DetailField/DetailField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -190,7 +190,7 @@ jest.mock('../../../src/components/common/display/DetailField/DetailField', () =
   };
 });
 jest.mock(
-  '../../../src/components/features/comments/CommentableDetailField/CommentableDetailField',
+  '@/src/components/features/comments/CommentableDetailField/CommentableDetailField',
   () => {
     const { Text } = require('react-native');
     return {
@@ -201,19 +201,14 @@ jest.mock(
     };
   },
 );
-jest.mock(
-  '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({ entityId }: { entityId: string }) => (
-        <Text testID="custom-attrs">{entityId}</Text>
-      ),
-    };
-  },
-);
-jest.mock('../../../src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ entityId }: { entityId: string }) => <Text testID="custom-attrs">{entityId}</Text>,
+  };
+});
+jest.mock('@/src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -223,7 +218,7 @@ jest.mock('../../../src/components/features/gallery/GalleryManager/EntityGallery
   };
 });
 jest.mock(
-  '../../../src/components/features/relations/LocationRelationManager/LocationRelationManager',
+  '@/src/components/features/relations/LocationRelationManager/LocationRelationManager',
   () => {
     const { Text } = require('react-native');
     return {
@@ -262,7 +257,7 @@ jest.mock(
     };
   },
 );
-jest.mock('../../../src/components/features/scenes/ScenePresenceList/ScenePresenceList', () => {
+jest.mock('@/src/components/features/scenes/ScenePresenceList/ScenePresenceList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -280,7 +275,7 @@ jest.mock('../../../src/components/features/scenes/ScenePresenceList/ScenePresen
     ),
   };
 });
-jest.mock('../../../src/components/features/scenes/RelatedScenesList/RelatedScenesList', () => {
+jest.mock('@/src/components/features/scenes/RelatedScenesList/RelatedScenesList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -292,7 +287,7 @@ jest.mock('../../../src/components/features/scenes/RelatedScenesList/RelatedScen
     ),
   };
 });
-jest.mock('../../../src/components/features/locations/LocationManager/LocationItemManager', () => {
+jest.mock('@/src/components/features/locations/LocationManager/LocationItemManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -313,7 +308,7 @@ jest.mock('../../../src/components/features/locations/LocationManager/LocationIt
     ),
   };
 });
-jest.mock('../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -327,7 +322,7 @@ jest.mock('../../../src/components/features/notes/NoteManager', () => {
     ),
   };
 });
-jest.mock('../../../src/components/features/arcs/AppearsInArcsSection', () => {
+jest.mock('@/src/components/features/arcs/AppearsInArcsSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -336,21 +331,21 @@ jest.mock('../../../src/components/features/arcs/AppearsInArcsSection', () => {
     ),
   };
 });
-jest.mock('../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: () => <Text testID="seealso-marker">seealso</Text>,
   };
 });
-jest.mock('../../../src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
+jest.mock('@/src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: () => <Text testID="favorited-marker">favorited</Text>,
   };
 });
-jest.mock('../../../src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -366,7 +361,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-import LocationDetailsScreen from '../../../src/screens/locations/LocationDetailsScreen';
+import LocationDetailsScreen from '@/src/screens/locations/LocationDetailsScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

@@ -42,68 +42,68 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => mockRoute,
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({ isDarkMode: false, setTheme: mockSetTheme, colors: mockColors }),
   };
 });
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
 const mockBackOptions = jest.fn();
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: (options: unknown) => mockBackOptions(options),
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/ServerService', () => ({
   createServerService: () => ({
     getServerById: (...args: unknown[]) => mockGetServerById(...args),
   }),
 }));
 
-jest.mock('../../../src/services/apiClient', () => ({
+jest.mock('@/src/services/apiClient', () => ({
   __esModule: true,
   default: {},
   apiUrl: (base: string, path: string) => `${base}${path}`,
   isOfflineError: (err: unknown) => !!(err as { isOffline?: boolean } | null)?.isOffline,
 }));
 
-jest.mock('../../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: {
     changeOwnPassword: (...args: unknown[]) => mockChangeOwnPassword(...args),
     regenerateRecoveryCodes: (...args: unknown[]) => mockRegenerateRecoveryCodes(...args),
   },
 }));
 
-jest.mock('../../../src/services/AuthApiService', () => ({
+jest.mock('@/src/services/AuthApiService', () => ({
   redeemRecoveryCode: (...args: unknown[]) => mockRedeem(...args),
 }));
 
-jest.mock('../../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/AuthTokenManager', () => ({
   authTokenManager: {
     updateTokens: (...args: unknown[]) => mockUpdateTokens(...args),
   },
 }));
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ChangePasswordScreen from '../../../src/screens/enterstack/ChangePasswordScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import ChangePasswordScreen from '@/src/screens/enterstack/ChangePasswordScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', url: 'https://s.example', userName: 'alice' };
 

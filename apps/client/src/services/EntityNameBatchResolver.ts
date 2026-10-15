@@ -2,7 +2,7 @@ import type { OperationLogEntityType } from '@keres/shared';
 import { getEntityDomainHandler } from '@keres/shared';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
-import type { AppDrizzleClient } from '../db';
+import type { AppDrizzleClient } from '@/src/db';
 import { columnsOf, getEntityTable } from './entityTableRegistry';
 
 export interface EntityRef {

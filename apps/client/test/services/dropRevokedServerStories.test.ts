@@ -4,29 +4,29 @@ const mockFetchStories = jest.fn(async () => undefined);
 const mockNotify = jest.fn();
 const mockEmit = jest.fn();
 
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => ({ discardCollaboratedCopy: mockDiscard })),
 }));
-jest.mock('../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: { getState: () => ({ fetchStories: mockFetchStories }) },
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/utils/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/i18n', () => ({
   __esModule: true,
   default: { t: (key: string, params?: { title: string }) => `${key}:${params?.title}` },
 }));
 
-import { noteAccessRevocation } from '../../src/services/accessRevocation';
-import { dropRevokedServerStories } from '../../src/services/sync/dropRevokedServerStories';
+import { noteAccessRevocation } from '@/src/services/accessRevocation';
+import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
 
 const server = { id: 'server-1' } as never;
 const story = (id: string, myRole: string | null, title = id) => ({ id, title, myRole });

@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { isAllowedServerUrl, isLocalServerHost } from '../../src/utils/serverUrl';
+import { isAllowedServerUrl, isLocalServerHost } from '@/src/utils/serverUrl';
 
 describe('server URL policy', () => {
   it('accepts https anywhere', () => {

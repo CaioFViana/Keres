@@ -6,10 +6,10 @@ import { StackActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useRef } from 'react';
-import type { AppDrizzleClient } from '../../db';
-import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
-import type { WorldRuleService } from '../../services/storymanagement/WorldRuleService';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import type { AppDrizzleClient } from '@/src/db';
+import type { WorldRulesStackParamList } from '@/src/navigation/MainSystemStack';
+import type { WorldRuleService } from '@/src/services/storymanagement/WorldRuleService';
+import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
 import type { WorldRuleFormState } from './useWorldRuleFormState';
 
 type WorldRuleNavigation = NativeStackNavigationProp<WorldRulesStackParamList, 'WorldRuleForm'>;

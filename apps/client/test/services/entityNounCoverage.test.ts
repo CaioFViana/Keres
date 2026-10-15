@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 import { getEntityDomainHandler, OperationLogEntityType } from '@keres/shared';
-import { createClientEntitySolverContext } from '../../src/services/entity-solvers/ClientEntitySolverContext';
-import { seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { createClientEntitySolverContext } from '@/src/services/entity-solvers/ClientEntitySolverContext';
+import { seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

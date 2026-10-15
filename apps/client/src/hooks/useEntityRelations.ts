@@ -2,23 +2,23 @@ import type { Note, NoteRelation, NoteRelationEntities } from '@keres/shared/ent
 import type { TagRelationEntities } from '@keres/shared/entities/Tag';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
-import type { TagSelect } from '../db/schema';
-import type { SaveNoteRelation } from '../services/storymanagement/NoteRelationService';
-import { createNoteRelationService } from '../services/storymanagement/NoteRelationService';
-import { createNoteService } from '../services/storymanagement/NoteService';
-import { createTagRelationService } from '../services/storymanagement/TagRelationService';
-import { createTagService } from '../services/storymanagement/TagService';
+import { useDrizzle } from '@/src/db';
+import type { TagSelect } from '@/src/db/schema';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/NoteRelationService';
+import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
+import { createNoteService } from '@/src/services/storymanagement/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/TagService';
 import {
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
   type EntityFormSecondaryDraft,
-} from '../services/storymanagement/EntityFormSecondaryDraftStore';
-import { useStoryStore } from '../state/storyStore';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { createULID } from '../utils/entityUtils';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { AppAlert } from '../utils/AppAlert';
+} from '@/src/services/storymanagement/EntityFormSecondaryDraftStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { createULID } from '@/src/utils/entityUtils';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 export interface UseEntityRelationsOptions {
   /** The entity these relations hang off, e.g. `'WorldRule'`. */

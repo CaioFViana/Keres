@@ -1,15 +1,15 @@
 import type { ChoiceCheckGroup } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { choiceCheckGroups } from '../../db';
-import { createULID, getChangedFields } from '../../utils/entityUtils';
+import type { AppDrizzleClient } from '@/src/db';
+import { choiceCheckGroups } from '@/src/db';
+import { createULID, getChangedFields } from '@/src/utils/entityUtils';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
   recordLocalOperationSync,
   runLocalWrite,
-} from '../../utils/syncUtils';
-import { createServerService } from '../ServerService';
+} from '@/src/utils/syncUtils';
+import { createServerService } from '@/src/services/ServerService';
 
 export interface ChoiceCheckGroupService {
   getById(id: string): Promise<ChoiceCheckGroup | undefined>;

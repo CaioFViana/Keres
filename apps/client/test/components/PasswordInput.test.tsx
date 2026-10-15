@@ -35,13 +35,13 @@ jest.mock('@expo/vector-icons', () => {
   const { Text } = require('react-native');
   return { Ionicons: ({ name }: { name: string }) => <Text testID={`icon-${name}`}>{name}</Text> };
 });
-jest.mock('../../src/theme', () => {
-  const actual = jest.requireActual('../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
 
 import { fireEvent, render } from '@testing-library/react-native';
-import PasswordInput from '../../src/components/common/inputs/PasswordInput/PasswordInput';
+import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 
 describe('PasswordInput', () => {
   it('hides what is typed, and shows it only while the eye is on', async () => {

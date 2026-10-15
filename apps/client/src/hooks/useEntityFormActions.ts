@@ -6,14 +6,14 @@ import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import type { StorySchemaEntityType, StorySchemaField } from '@keres/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AppDrizzleClient } from '../db';
-import { createAttributeValueService } from '../services/storymanagement/AttributeValueService';
+import type { AppDrizzleClient } from '@/src/db';
+import { createAttributeValueService } from '@/src/services/storymanagement/AttributeValueService';
 import {
   type PersistedEntity,
   saveEntityWithSecondaryData,
-} from '../services/storymanagement/EntityFormSaveCoordinator';
-import { AppAlert } from '../utils/AppAlert';
-import { entityEventEmitter } from '../utils/EventEmitter';
+} from '@/src/services/storymanagement/EntityFormSaveCoordinator';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { type ConfirmDeleteOptions, useConfirmDelete } from './useConfirmDelete';
 
 export interface EntityFormActionsConfig<TData, TEntity extends PersistedEntity> {

@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import en from '../../src/locales/en.json';
-import pt from '../../src/locales/pt.json';
-import { getHelpPages } from '../../src/help/repository';
-import { buildMainDrawerMenu } from '../../src/navigation/mainDrawerMenu';
-import { buildStorySelectionMenu } from '../../src/navigation/storySelectionMenu';
+import en from '@/src/locales/en.json';
+import pt from '@/src/locales/pt.json';
+import { getHelpPages } from '@/src/help/repository';
+import { buildMainDrawerMenu } from '@/src/navigation/mainDrawerMenu';
+import { buildStorySelectionMenu } from '@/src/navigation/storySelectionMenu';
 
 /**
  * Help that still names menus the app no longer has.

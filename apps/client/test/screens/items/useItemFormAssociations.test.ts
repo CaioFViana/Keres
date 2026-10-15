@@ -5,10 +5,10 @@ const mockInitializeCharacterService = jest.fn();
 const mockFetchCharacters = jest.fn();
 let mockCharacters: { id: string; name: string; isDeleted: boolean }[] = [];
 
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-jest.mock('../../../src/state/characterStore', () => ({
+jest.mock('@/src/state/characterStore', () => ({
   useCharacterStore: () => ({
     characters: mockCharacters,
     fetchCharacters: mockFetchCharacters,
@@ -18,7 +18,7 @@ jest.mock('../../../src/state/characterStore', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { useItemFormAssociations } from '../../../src/screens/items/useItemFormAssociations';
+import { useItemFormAssociations } from '@/src/screens/items/useItemFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

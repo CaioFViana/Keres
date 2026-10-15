@@ -15,7 +15,7 @@ jest.mock('@expo/vector-icons', () => {
     ),
   };
 });
-jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
+jest.mock('@/src/components/common/display/MapIcon/MapIcon', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -24,7 +24,7 @@ jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
     ),
   };
 });
-jest.mock('../../src/components/common/navigation/DrawerMenuButton/DrawerMenuButton', () => {
+jest.mock('@/src/components/common/navigation/DrawerMenuButton/DrawerMenuButton', () => {
   const { Pressable } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -42,7 +42,7 @@ import {
   drawerStoredIcon,
   DrawerToggleButton,
   mainSystemStackRootScreens,
-} from '../../src/navigation/MainSystemDrawerHelpers';
+} from '@/src/navigation/MainSystemDrawerHelpers';
 
 describe('MainSystemDrawerHelpers', () => {
   beforeEach(() => {

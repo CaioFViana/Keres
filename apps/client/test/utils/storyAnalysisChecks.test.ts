@@ -2,7 +2,7 @@ import {
   buildStoryAnalysisReport,
   COMPLETENESS_FINDING_KEYS,
   type StoryAnalysisInput,
-} from '../../src/utils/storyAnalysisChecks';
+} from '@/src/utils/storyAnalysisChecks';
 
 const baseInput = (): StoryAnalysisInput => ({
   storyType: 'branching',

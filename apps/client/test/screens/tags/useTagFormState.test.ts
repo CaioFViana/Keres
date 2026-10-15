@@ -12,13 +12,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useTagFormState } from '../../../src/screens/tags/useTagFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '../../../src/services/EditorDraftService';
-import type { TagService } from '../../../src/services/storymanagement/TagService';
-import { createTestDatabase, type TestDatabase } from '../../helpers/testDb';
+import { useTagFormState } from '@/src/screens/tags/useTagFormState';
+import { resetEditorDraftDbForTests, setEditorDraftDb } from '@/src/services/EditorDraftService';
+import type { TagService } from '@/src/services/storymanagement/TagService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

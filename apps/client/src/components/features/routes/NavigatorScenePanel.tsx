@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { StorySimulation } from '../../../hooks/useStorySimulation';
-import { useTheme } from '../../../theme';
-import { MarkdownPreview } from '../manuscript/MarkdownPreview/MarkdownPreview';
+import type { StorySimulation } from '@/src/hooks/useStorySimulation';
+import { useTheme } from '@/src/theme';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
 
 interface NavigatorScenePanelProps {
   simulation: StorySimulation;

@@ -1,16 +1,21 @@
 /** @jest-environment node */
-import * as schema from '../../src/db/schema';
-import { useCharacterStore } from '../../src/state/characterStore';
-import { useGalleryStore } from '../../src/state/galleryStore';
-import { useItemStore } from '../../src/state/itemStore';
-import { useLocationStore } from '../../src/state/locationStore';
-import { useNoteStore } from '../../src/state/noteStore';
-import { resetAllClientStores } from '../../src/state/resetAllClientStores';
-import { useTagStore } from '../../src/state/tagStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { useWorldRuleStore } from '../../src/state/worldRuleStore';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { useCharacterStore } from '@/src/state/characterStore';
+import { useGalleryStore } from '@/src/state/galleryStore';
+import { useItemStore } from '@/src/state/itemStore';
+import { useLocationStore } from '@/src/state/locationStore';
+import { useNoteStore } from '@/src/state/noteStore';
+import { resetAllClientStores } from '@/src/state/resetAllClientStores';
+import { useTagStore } from '@/src/state/tagStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useWorldRuleStore } from '@/src/state/worldRuleStore';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The thin entity stores' wiring: each one is a `createEntityStore` configuration whose only own

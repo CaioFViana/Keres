@@ -5,9 +5,9 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import { act, fireEvent, render } from '@testing-library/react-native';
-import NoteRelationManager from '../../src/components/features/notes/NoteManager/NoteRelationManager';
+import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -30,7 +30,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 // The RN jest preset already renders `Modal` children while visible and null while hidden.
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

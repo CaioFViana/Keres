@@ -3,10 +3,10 @@ import type { BoardContentType, BoardNodeType } from '@keres/shared';
 import { MAX_BOARD_BODY_LENGTH, MAX_BOARD_TITLE_LENGTH } from '@keres/shared';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import BoardNode from '../../src/components/features/boards/BoardNode';
-import BoardNodeSheet from '../../src/components/features/boards/BoardNodeSheet';
+import BoardNode from '@/src/components/features/boards/BoardNode';
+import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -31,14 +31,14 @@ jest.mock('expo-image', () => ({
 }));
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 
 const mockImage = jest.fn();
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -46,7 +46,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -70,7 +70,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   const pill = (testID: string) => {
     const MockPill = (props: Record<string, unknown>) => <RN.View testID={testID} {...props} />;
@@ -83,7 +83,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -98,7 +98,7 @@ jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () =
 });
 
 const mockGalleryPreview = jest.fn();
-jest.mock('../../src/components/features/boards/BoardNodeSheetGalleryPreview', () => ({
+jest.mock('@/src/components/features/boards/BoardNodeSheetGalleryPreview', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockGalleryPreview(props);

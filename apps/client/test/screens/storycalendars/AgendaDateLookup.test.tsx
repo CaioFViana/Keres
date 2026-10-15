@@ -55,7 +55,7 @@ import {
 import {
   CustomCalendarDateLookup,
   GregorianCalendarDateLookup,
-} from '../../../src/screens/storycalendars/AgendaDateLookup';
+} from '@/src/screens/storycalendars/AgendaDateLookup';
 
 const styles = {
   lookup: {},

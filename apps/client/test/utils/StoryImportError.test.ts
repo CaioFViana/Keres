@@ -1,4 +1,4 @@
-import { StoryImportError } from '../../src/utils/StoryImportError';
+import { StoryImportError } from '@/src/utils/StoryImportError';
 
 describe('StoryImportError', () => {
   it.each(['unreadable', 'invalid_format', 'future_format_version'] as const)(

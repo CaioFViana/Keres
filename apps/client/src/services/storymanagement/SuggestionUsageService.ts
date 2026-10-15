@@ -9,7 +9,7 @@ import {
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient } from '@/src/db';
 import {
   attributeValues,
   characterRelations,
@@ -17,8 +17,8 @@ import {
   itemJourneys,
   items,
   storySchemaFields,
-} from '../../db';
-import { createEntityNameBatchResolver } from '../EntityNameBatchResolver';
+} from '@/src/db';
+import { createEntityNameBatchResolver } from '@/src/services/EntityNameBatchResolver';
 import { createAttributeValueService } from './AttributeValueService';
 import { createCharacterRelationService } from './CharacterRelationService';
 import { createCharacterService } from './CharacterService';

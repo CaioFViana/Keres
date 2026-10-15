@@ -1,4 +1,4 @@
-import { useSvgRasterStore } from '../state/svgRasterStore';
+import { useSvgRasterStore } from '@/src/state/svgRasterStore';
 
 /** Longest side of an exported PNG: safe for every GPU texture, detailed enough to read. */
 export const MAP_EXPORT_PNG_MAX_SIDE = 4096;

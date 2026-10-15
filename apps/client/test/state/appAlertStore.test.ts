@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { useAppAlertStore } from '../../src/state/appAlertStore';
+import { useAppAlertStore } from '@/src/state/appAlertStore';
 
 const store = () => useAppAlertStore.getState();
 

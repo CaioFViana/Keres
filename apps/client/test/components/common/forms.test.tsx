@@ -1,19 +1,19 @@
 import { AttributeType, encodeAttributeValue } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
-import AttributeValueInput from '../../../src/components/common/forms/CustomAttributeFields/AttributeValueInput';
+import AttributeValueInput from '@/src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 import CustomAttributeFields, {
   getDefaultCustomAttributeValues,
   validateRequiredCustomAttributes,
-} from '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import EntityFormContainer from '../../../src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import FormContainer from '../../../src/components/common/forms/FormContainer/FormContainer';
-import FormField from '../../../src/components/common/forms/FormField/FormField';
-import FormSwitchField from '../../../src/components/common/forms/FormSwitchField/FormSwitchField';
-import type { StorySchemaFieldSelect } from '../../../src/db/schema';
+} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import FormContainer from '@/src/components/common/forms/FormContainer/FormContainer';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import type { StorySchemaFieldSelect } from '@/src/db/schema';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -44,11 +44,11 @@ jest.mock('../../../src/theme', () => {
   };
 });
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 58,
 }));
 
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,
@@ -59,7 +59,7 @@ jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useEntityPickerOptions', () => ({
+jest.mock('@/src/hooks/useEntityPickerOptions', () => ({
   useEntityPickerOptions: () => ({
     options: [{ id: 'e1', name: 'Ent One' }],
     loading: false,
@@ -67,7 +67,7 @@ jest.mock('../../../src/hooks/useEntityPickerOptions', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -92,7 +92,7 @@ jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -106,7 +106,7 @@ jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', (
   };
 });
 
-jest.mock('../../../src/components/common/inputs/DatePickerInput/DatePickerInput', () => {
+jest.mock('@/src/components/common/inputs/DatePickerInput/DatePickerInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -129,7 +129,7 @@ jest.mock('../../../src/components/common/inputs/DatePickerInput/DatePickerInput
   };
 });
 
-jest.mock('../../../src/components/common/inputs/StoryDateInput/StoryDateInput', () => {
+jest.mock('@/src/components/common/inputs/StoryDateInput/StoryDateInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -148,7 +148,7 @@ jest.mock('../../../src/components/common/inputs/StoryDateInput/StoryDateInput',
   };
 });
 
-jest.mock('../../../src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
+jest.mock('@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -167,7 +167,7 @@ jest.mock('../../../src/components/common/inputs/SuggestionTextInput/SuggestionT
   };
 });
 
-jest.mock('../../../src/components/common/inputs/SuggestionListInput/SuggestionListInput', () => {
+jest.mock('@/src/components/common/inputs/SuggestionListInput/SuggestionListInput', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
@@ -186,7 +186,7 @@ jest.mock('../../../src/components/common/inputs/SuggestionListInput/SuggestionL
   };
 });
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {

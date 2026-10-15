@@ -15,11 +15,11 @@ import {
   CanvasNodeSheet,
   getCanvasNodeSheetStyles,
 } from '@/src/components/features/canvas/CanvasNodeSheet';
-import { getCommonCardStyles } from '../../../theme/commonStyles';
-import { useTheme } from '../../../theme';
-import { boardPinTypeKey } from '../../../utils/boardPinAppearance';
-import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
-import type { BoardGalleryMedia } from '../../../utils/boardLayout';
+import { getCommonCardStyles } from '@/src/theme/commonStyles';
+import { useTheme } from '@/src/theme';
+import { boardPinTypeKey } from '@/src/utils/boardPinAppearance';
+import type { BoardEntitySummary } from '@/src/utils/boardEntitySummary';
+import type { BoardGalleryMedia } from '@/src/utils/boardLayout';
 import BoardNodeSheetGalleryPreview from './BoardNodeSheetGalleryPreview';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 

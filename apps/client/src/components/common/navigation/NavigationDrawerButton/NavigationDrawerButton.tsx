@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 import React from 'react';
 import { Pressable } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { navigationButtonStyles } from '../navigationButtonStyles';
+import { useTheme } from '@/src/theme';
+import { navigationButtonStyles } from '@/src/components/common/navigation/navigationButtonStyles';
 
 interface NavigationDrawerButtonProps {
   navigation: {

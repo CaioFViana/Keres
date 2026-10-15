@@ -3,11 +3,11 @@ import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import { and, eq, inArray } from 'drizzle-orm';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle, worldRules } from '../db';
-import type { OperationLogSelect } from '../db/schema';
-import { createOperationLogService } from '../services/OperationLogService';
-import { useUserSettingsStore } from '../state/userSettingsStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
+import { useDrizzle, worldRules } from '@/src/db';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { createOperationLogService } from '@/src/services/OperationLogService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
 interface UseOperationLogsOptions {

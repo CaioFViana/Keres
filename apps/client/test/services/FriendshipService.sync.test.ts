@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/FriendshipApiService', () => ({
+jest.mock('@/src/services/FriendshipApiService', () => ({
   friendshipApiService: {
     acceptFriendRequest: jest.fn(),
     blacklistUser: jest.fn(),
@@ -12,18 +12,18 @@ jest.mock('../../src/services/FriendshipApiService', () => ({
     unfriendUser: jest.fn(),
   },
 }));
-jest.mock('../../src/services/UserApiService', () => ({
+jest.mock('@/src/services/UserApiService', () => ({
   userApiService: { getOwnProfile: jest.fn() },
 }));
 
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { friendships, servers, users } from '../../src/db/schema';
-import { friendshipApiService } from '../../src/services/FriendshipApiService';
-import { createFriendshipService } from '../../src/services/FriendshipService';
-import { userApiService } from '../../src/services/UserApiService';
-import { useNotificationStore } from '../../src/state/notificationStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { friendships, servers, users } from '@/src/db/schema';
+import { friendshipApiService } from '@/src/services/FriendshipApiService';
+import { createFriendshipService } from '@/src/services/FriendshipService';
+import { userApiService } from '@/src/services/UserApiService';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The friendship service's local writes, action guards and server reconciliation.

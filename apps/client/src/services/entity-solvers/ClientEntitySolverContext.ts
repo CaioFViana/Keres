@@ -4,15 +4,15 @@ import type { StoryVocabularyEntityType } from '@keres/shared/entities/Story';
 import { and, eq } from 'drizzle-orm';
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { TFunction } from 'i18next';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
-import { columnsOf, getEntityTable } from '../entityTableRegistry';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import { columnsOf, getEntityTable } from '@/src/services/entityTableRegistry';
 import {
   loadStoryVocabulary,
   fromStoryNoun,
   translateStoryNoun,
   unknownStoryNoun,
-} from '../../vocabulary/storyVocabularyLookup';
+} from '@/src/vocabulary/storyVocabularyLookup';
 
 const VOCABULARY_TYPES = new Set<OperationLogEntityType | 'Event'>([
   OperationLogEntityType.StoryArc,

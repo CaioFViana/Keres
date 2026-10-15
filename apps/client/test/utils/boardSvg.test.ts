@@ -1,12 +1,8 @@
 /**
  * @jest-environment node
  */
-import { renderBoardSvg } from '../../src/utils/boardSvg';
-import {
-  BOARD_CANVAS_PADDING,
-  BOARD_NODE_WIDTH,
-  BOARD_NOTE_WIDTH,
-} from '../../src/utils/boardLayout';
+import { renderBoardSvg } from '@/src/utils/boardSvg';
+import { BOARD_CANVAS_PADDING, BOARD_NODE_WIDTH, BOARD_NOTE_WIDTH } from '@/src/utils/boardLayout';
 
 const content = {
   nodes: [

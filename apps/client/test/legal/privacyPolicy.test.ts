@@ -3,7 +3,7 @@ import {
   CLIENT_PRIVACY_VERSION,
   CLIENT_PRIVACY,
   clientPrivacyFor,
-} from '../../src/legal/privacyPolicy';
+} from '@/src/legal/privacyPolicy';
 
 /**
  * The app's privacy policy ships in the bundle in both languages: a missing or lopsided

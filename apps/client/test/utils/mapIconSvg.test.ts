@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { renderMapIconSvg } from '../../src/utils/mapIconSvg';
+import { renderMapIconSvg } from '@/src/utils/mapIconSvg';
 
 it('draws a plain icon with a fill and transform on every shape', () => {
   const shapes = renderMapIconSvg('pin', 100, 100, '#8BC34A');

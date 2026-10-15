@@ -1,8 +1,8 @@
 import type {
   CharacterService,
   CharacterWithTags,
-} from '../services/storymanagement/CharacterService';
-import { createCharacterService } from '../services/storymanagement/CharacterService';
+} from '@/src/services/storymanagement/CharacterService';
+import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import { createEntityStore } from './createEntityStore';
 
 export const useCharacterStore = createEntityStore<

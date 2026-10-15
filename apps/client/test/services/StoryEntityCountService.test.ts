@@ -7,11 +7,11 @@ import {
   TIER_EXEMPT_ENTITY_TYPES,
 } from '@keres/shared';
 import { getTableColumns } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { ENTITY_TABLES, getEntityTable } from '../../src/services/entityTableRegistry';
-import { createStoryEntityCountService } from '../../src/services/storymanagement/StoryEntityCountService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { ENTITY_TABLES, getEntityTable } from '@/src/services/entityTableRegistry';
+import { createStoryEntityCountService } from '@/src/services/storymanagement/StoryEntityCountService';
+import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The count the plan's entity ceiling sees, reported by the client. It is a copy of the server's rule only

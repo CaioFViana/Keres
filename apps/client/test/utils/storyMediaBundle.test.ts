@@ -1,11 +1,11 @@
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { extractStoryZip as extractSharedStoryZip } from '@keres/shared/utils/storyZip';
 import { File } from 'expo-file-system';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import type { StoryImportError } from '../../src/utils/StoryImportError';
-import { buildStoryZipBytes, extractStoryZip } from '../../src/utils/storyMediaBundle';
+import { mediaFileService } from '@/src/services/MediaFileService';
+import type { StoryImportError } from '@/src/utils/StoryImportError';
+import { buildStoryZipBytes, extractStoryZip } from '@/src/utils/storyMediaBundle';
 
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/MediaFileService', () => ({
   mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
 }));
 jest.mock('expo-file-system', () => ({ File: jest.fn() }));

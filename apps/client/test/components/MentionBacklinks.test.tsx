@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { MentionBacklinksSection } from '../../src/components/features/mentions/MentionBacklinksSection';
+import { MentionBacklinksSection } from '@/src/components/features/mentions/MentionBacklinksSection';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -25,26 +25,26 @@ jest.mock('react-i18next', () => ({
 
 const mockBacklinks = jest.fn();
 const mockAmbiguous = jest.fn();
-jest.mock('../../src/mentions/MentionContext', () => ({
+jest.mock('@/src/mentions/MentionContext', () => ({
   __esModule: true,
   useMentionBacklinks: (...args: unknown[]) => mockBacklinks(...args),
   useAmbiguousMentions: (...args: unknown[]) => mockAmbiguous(...args),
 }));
 
 const mockNavigate = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: 'story-1' } }),
 }));
 
 const mockCanEdit = jest.fn(() => true);
-jest.mock('../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit(), loading: false }),
 }));
@@ -52,18 +52,18 @@ jest.mock('../../src/hooks/useStoryRole', () => ({
 const mockRelations = jest.fn(
   (): { relationId: string; otherType: string; otherId: string }[] => [],
 );
-jest.mock('../../src/hooks/useSeeAlsoRelations', () => ({
+jest.mock('@/src/hooks/useSeeAlsoRelations', () => ({
   __esModule: true,
   useSeeAlsoRelations: () => ({ relations: mockRelations(), loading: false }),
 }));
 
 const mockResolve = jest.fn();
-jest.mock('../../src/hooks/useResolveAmbiguousMention', () => ({
+jest.mock('@/src/hooks/useResolveAmbiguousMention', () => ({
   __esModule: true,
   useResolveAmbiguousMention: () => mockResolve,
 }));
 
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (type: string) => type }),
 }));

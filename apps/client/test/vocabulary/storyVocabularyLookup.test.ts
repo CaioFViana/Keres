@@ -8,7 +8,7 @@ import {
   loadStoryVocabulary,
   translateStoryNoun,
   unknownStoryNoun,
-} from '../../src/vocabulary/storyVocabularyLookup';
+} from '@/src/vocabulary/storyVocabularyLookup';
 
 const t = jest.fn((key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key,

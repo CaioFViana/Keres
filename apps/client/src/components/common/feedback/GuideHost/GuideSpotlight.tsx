@@ -1,8 +1,8 @@
 import { Canvas, Path } from '@shopify/react-native-skia';
 import React from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import type { GuideRect } from '../../../../guides/types';
-import { useCanvasKitReady } from '../../../features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import type { GuideRect } from '@/src/guides/types';
+import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
 
 /** Corner radius shared by the hole and its border, so no square corner peeks out. */
 export const SPOTLIGHT_RADIUS = 8;

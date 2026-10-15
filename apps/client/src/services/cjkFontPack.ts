@@ -6,7 +6,7 @@ import {
   readBytes as readStoredBytes,
   writeBytes as writeStoredBytes,
 } from './webMediaStore';
-import { getClientFlavor } from '../utils/clientFlavor';
+import { getClientFlavor } from '@/src/utils/clientFlavor';
 
 /**
  * The downloadable CJK serif pack (Noto Serif JP, variable, all weights).

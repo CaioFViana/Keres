@@ -4,11 +4,11 @@ import {
   type ChoiceAnnotationInput as SharedChoiceAnnotationInput,
   type ChoiceAnnotationLines,
 } from '@keres/shared';
-import type { AppDrizzleClient } from '../db';
-import { createChoiceCheckGroupService } from '../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '../services/storymanagement/EffectService';
-import { createItemService } from '../services/storymanagement/ItemService';
+import type { AppDrizzleClient } from '@/src/db';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/EffectService';
+import { createItemService } from '@/src/services/storymanagement/ItemService';
 import { choiceAnnotationFormatterFromT } from './choiceCheckEffectDescriptions';
 
 export type { ChoiceAnnotationLines };

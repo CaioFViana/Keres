@@ -17,20 +17,20 @@ jest.mock('@react-navigation/native-stack', () => ({
     },
   }),
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('../../src/services/ClientSettingsService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
+jest.mock('@/src/services/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
 }));
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: jest.fn(),
 }));
-jest.mock('../../src/state/themeStore', () => ({
+jest.mock('@/src/state/themeStore', () => ({
   __esModule: true,
   useThemeStore: jest.fn(),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#101010' } }),
 }));
@@ -38,35 +38,35 @@ jest.mock('@/src/components/features/app/SyncInitializer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('../../src/navigation/ColdInstallStack', () => ({
+jest.mock('@/src/navigation/ColdInstallStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/navigation/MainSystemStack', () => ({
+jest.mock('@/src/navigation/MainSystemStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/navigation/StorySelectionStack', () => ({
+jest.mock('@/src/navigation/StorySelectionStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/screens/enterstack/LegalUpdateScreen', () => ({
+jest.mock('@/src/screens/enterstack/LegalUpdateScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/legal/clientTermsAcceptance', () => ({
+jest.mock('@/src/legal/clientTermsAcceptance', () => ({
   __esModule: true,
   getAcceptedClientLegal: jest.fn(),
 }));
 
-import AppNavigator from '../../src/navigation/AppNavigator';
-import { useDrizzle } from '../../src/db';
-import { getClientSettings } from '../../src/services/ClientSettingsService';
-import { useThemeStore } from '../../src/state/themeStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { getAcceptedClientLegal } from '../../src/legal/clientTermsAcceptance';
-import { CLIENT_PRIVACY_VERSION } from '../../src/legal/privacyPolicy';
-import { CLIENT_TERMS_VERSION } from '../../src/legal/clientTerms';
+import AppNavigator from '@/src/navigation/AppNavigator';
+import { useDrizzle } from '@/src/db';
+import { getClientSettings } from '@/src/services/ClientSettingsService';
+import { useThemeStore } from '@/src/state/themeStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
+import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
 
 const db = { marker: 'db' };
 

@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react-native';
 import { View } from 'react-native';
-import { ensureCanvasKit } from '../../src/components/features/graphs/SkiaEdgeCanvas/canvasKitBoot';
-import { useCanvasKitReady } from '../../src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
-import { useEdgeFont } from '../../src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
+import { ensureCanvasKit } from '@/src/components/features/graphs/SkiaEdgeCanvas/canvasKitBoot';
+import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
 
 function FontProbe({ size, medium }: { size: number; medium?: boolean }) {
   const font = useEdgeFont(size, medium);

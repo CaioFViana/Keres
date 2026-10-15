@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import type { StyleProp, TextInputProps, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { type ThemeColors, useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { useThemedStyles } from '../../../../theme/useThemedStyles';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 type PasswordInputProps = Omit<TextInputProps, 'secureTextEntry' | 'style'> & {
   /** Layout of the whole control (margins and the like); the field's own look is fixed. */

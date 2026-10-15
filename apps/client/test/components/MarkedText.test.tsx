@@ -1,8 +1,8 @@
 import { act, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import MarkedText from '../../src/components/common/display/MarkedText/MarkedText';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { primary: '#00f', onPrimary: '#fff', primaryContainer: '#aaf' } }),
 }));
 

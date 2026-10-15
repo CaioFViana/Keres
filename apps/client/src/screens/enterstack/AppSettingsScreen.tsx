@@ -30,33 +30,33 @@ import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } 
 import { APP_RELEASE } from '@keres/shared';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
 import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
-import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
-import { servers } from '../../db/schema';
-import type { SettingsStackParamList } from '../../navigation/StorySelectionStack';
-import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
-import { setEditorDraftDb } from '../../services/EditorDraftService';
-import { mediaFileService } from '../../services/MediaFileService';
+import { resetDatabase, useDrizzle } from '@/src/db'; // Import resetDatabase
+import { servers } from '@/src/db/schema';
+import type { SettingsStackParamList } from '@/src/navigation/StorySelectionStack';
+import { authTokenManager, setAuthDb } from '@/src/services/AuthTokenManager';
+import { setEditorDraftDb } from '@/src/services/EditorDraftService';
+import { mediaFileService } from '@/src/services/MediaFileService';
 import {
   CJK_PACK_SIZE_LABEL,
   cjkPackState,
   deleteCjkPack,
   downloadCjkPack,
-} from '../../services/cjkFontPack';
-import { syncEngine } from '../../services/sync/appSyncEngine';
-import { useGuideStore } from '../../state/guideStore';
-import { useNotificationStore } from '../../state/notificationStore';
-import { resetAllClientStores } from '../../state/resetAllClientStores';
-import { useThemeStore } from '../../state/themeStore';
-import { useMusicTools } from '../../hooks/useMusicTools';
-import { useMusicToolsStore } from '../../state/musicToolsStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { isServerless } from '../../utils/clientFlavor';
-import i18n, { getLanguageOptions } from '../../utils/i18n';
-import { normalizeLocalUsername } from '../../utils/localUsername';
+} from '@/src/services/cjkFontPack';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+import { useGuideStore } from '@/src/state/guideStore';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { resetAllClientStores } from '@/src/state/resetAllClientStores';
+import { useThemeStore } from '@/src/state/themeStore';
+import { useMusicTools } from '@/src/hooks/useMusicTools';
+import { useMusicToolsStore } from '@/src/state/musicToolsStore';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/utils/AppAlert';
+import { entityEventEmitter } from '@/src/utils/EventEmitter';
+import { isServerless } from '@/src/utils/clientFlavor';
+import i18n, { getLanguageOptions } from '@/src/utils/i18n';
+import { normalizeLocalUsername } from '@/src/utils/localUsername';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   SettingsStackParamList,
@@ -504,7 +504,7 @@ const SettingsScreen = () => {
           accessibilityRole="button"
         >
           <Image
-            source={require('../../../assets/images/desktop_icon_512.png')}
+            source={require('@/assets/images/desktop_icon_512.png')}
             style={[styles.brandImage, { height: brandImageSize, width: brandImageSize }]}
             resizeMode="contain"
             accessibilityLabel="Keres"

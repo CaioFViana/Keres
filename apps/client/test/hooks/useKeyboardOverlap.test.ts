@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { Keyboard, Platform } from 'react-native';
-import { useKeyboardOverlap } from '../../src/hooks/useKeyboardOverlap';
+import { useKeyboardOverlap } from '@/src/hooks/useKeyboardOverlap';
 
 type Handler = (event: { endCoordinates?: { screenY: number } }) => void;
 

@@ -13,7 +13,7 @@ import {
   useHasUnseenMessages,
   useIsConversationUnseen,
   useUnseenMessagesStore,
-} from '../../src/state/unseenMessagesStore';
+} from '@/src/state/unseenMessagesStore';
 
 const setUnseen = (unseen: Record<string, string>) =>
   act(async () => {

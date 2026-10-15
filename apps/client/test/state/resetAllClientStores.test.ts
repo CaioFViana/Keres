@@ -5,15 +5,15 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
-import { useBoardDraftStore } from '../../src/state/boardDraftStore';
-import { useChapterStore } from '../../src/state/chapterStore';
-import { useCharacterStore } from '../../src/state/characterStore';
-import { useConnectivityStore } from '../../src/state/connectivityStore';
-import { useNotificationStore } from '../../src/state/notificationStore';
-import { useSyncConflictStore } from '../../src/state/syncConflictStore';
-import { useTagStore } from '../../src/state/tagStore';
-import { useWorldRuleStore } from '../../src/state/worldRuleStore';
-import { resetAllClientStores } from '../../src/state/resetAllClientStores';
+import { useBoardDraftStore } from '@/src/state/boardDraftStore';
+import { useChapterStore } from '@/src/state/chapterStore';
+import { useCharacterStore } from '@/src/state/characterStore';
+import { useConnectivityStore } from '@/src/state/connectivityStore';
+import { useNotificationStore } from '@/src/state/notificationStore';
+import { useSyncConflictStore } from '@/src/state/syncConflictStore';
+import { useTagStore } from '@/src/state/tagStore';
+import { useWorldRuleStore } from '@/src/state/worldRuleStore';
+import { resetAllClientStores } from '@/src/state/resetAllClientStores';
 
 /**
  * Called when the local database is recreated (an account change, an app reset). Any store left

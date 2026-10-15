@@ -14,7 +14,7 @@ import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreview
 import { useScenePageChoices } from '@/src/hooks/useGalleryMedia';
 import type { ScenePageMedia } from '@/src/services/storymanagement/ScenePageService';
 import { useTheme } from '@/src/theme';
-import { scenePickerStyleDefs } from '../scenePickerStyleDefs';
+import { scenePickerStyleDefs } from '@/src/components/features/scenes/scenePickerStyleDefs';
 import ScenePageThumb from './ScenePageThumb';
 import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';

@@ -1,9 +1,9 @@
 import { compareRanked, planRankChanges } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { chapters, scenes, stats, storySchemaFields } from '../../db/schema';
-import { recordLocalOperationSync } from '../../utils/syncUtils';
+import type { AppDrizzleClient } from '@/src/db';
+import { chapters, scenes, stats, storySchemaFields } from '@/src/db/schema';
+import { recordLocalOperationSync } from '@/src/utils/syncUtils';
 
 /**
  * Local writes of arranged rows' places (a chapter's scenes, a story's chapters, stats, schema

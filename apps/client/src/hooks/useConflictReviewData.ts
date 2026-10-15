@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../db';
+import { useDrizzle } from '@/src/db';
 import {
   buildConflictSummaries,
   collectConflictEntityRefs,
   collectEntityRefs,
-} from '../services/ConflictSummaryService';
+} from '@/src/services/ConflictSummaryService';
 import {
   createEntityNameBatchResolver,
   createEntitySnapshotResolver,
-} from '../services/EntityNameBatchResolver';
-import type { PendingConflict } from '../services/SyncConflictService';
+} from '@/src/services/EntityNameBatchResolver';
+import type { PendingConflict } from '@/src/services/SyncConflictService';
 
 export function useConflictReviewData(conflicts: PendingConflict[]) {
   const { t } = useTranslation();

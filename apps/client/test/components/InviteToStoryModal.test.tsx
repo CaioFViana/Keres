@@ -2,8 +2,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('../../src/theme', () => {
-  const actual = jest.requireActual('../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -39,7 +39,7 @@ jest.mock('@/src/components/common/controls/FormActions/FormActions', () => ({
 
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import InviteToStoryModal from '../../src/components/features/friendship/InviteToStoryModal';
+import InviteToStoryModal from '@/src/components/features/friendship/InviteToStoryModal';
 
 const STORIES = [
   { id: 's1', title: 'Abelha' },

@@ -8,8 +8,8 @@ import {
   addLocationMapMarkerConnection,
   removeLocationMapPoint,
   setLocationMapRelationText,
-} from '../../src/utils/locationMapContent';
-import { deriveConnections, deriveContains } from '../../src/utils/locationMapRelations';
+} from '@/src/utils/locationMapContent';
+import { deriveConnections, deriveContains } from '@/src/utils/locationMapRelations';
 
 const content = { images: [], nodes: [] };
 

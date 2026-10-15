@@ -3,7 +3,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../theme';
+import { useTheme } from '@/src/theme';
 
 /**
  * One list of suggestions. `label` is its full name ("Characters · Role"); `section` and `short` are the

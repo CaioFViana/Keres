@@ -1,9 +1,9 @@
-import type { ClippableContainer, ClippableRange } from '../../src/hooks/useWebSelectionClip';
+import type { ClippableContainer, ClippableRange } from '@/src/hooks/useWebSelectionClip';
 import {
   clipRangeToContainer,
   readClippedSelection,
   trackSelectionContainer,
-} from '../../src/hooks/useWebSelectionClip';
+} from '@/src/hooks/useWebSelectionClip';
 
 const BEFORE = { id: 'before' };
 const INSIDE = { id: 'inside' };

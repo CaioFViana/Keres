@@ -3,9 +3,9 @@ import { getOnColorForFill } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ThemeColors } from '../../../theme';
-import { getCommonInputStyles, useTheme } from '../../../theme';
-import TextInput from '../../common/inputs/TextInput/TextInput';
+import type { ThemeColors } from '@/src/theme';
+import { getCommonInputStyles, useTheme } from '@/src/theme';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 
 export interface MessageComposerProps {
   maxLength: number;

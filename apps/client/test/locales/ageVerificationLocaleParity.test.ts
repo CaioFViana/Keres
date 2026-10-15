@@ -1,5 +1,5 @@
-import en from '../../src/locales/en.json';
-import pt from '../../src/locales/pt.json';
+import en from '@/src/locales/en.json';
+import pt from '@/src/locales/pt.json';
 
 /** The English and Portuguese catalogues must speak the same keys: a key missing in one shows the raw key to users. */
 describe('locale parity', () => {

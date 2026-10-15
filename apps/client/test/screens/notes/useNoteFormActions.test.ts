@@ -13,16 +13,16 @@ jest.mock('@/src/hooks/useAsyncOperation', () => ({
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
-jest.mock('../../../src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
@@ -30,10 +30,10 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import { useNoteFormActions } from '../../../src/screens/notes/useNoteFormActions';
-import type { NoteFormState } from '../../../src/screens/notes/useNoteFormState';
-import type { NoteService } from '../../../src/services/storymanagement/NoteService';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useNoteFormActions } from '@/src/screens/notes/useNoteFormActions';
+import type { NoteFormState } from '@/src/screens/notes/useNoteFormState';
+import type { NoteService } from '@/src/services/storymanagement/NoteService';
 
 const createState = (overrides: Partial<NoteFormState> = {}): NoteFormState =>
   ({

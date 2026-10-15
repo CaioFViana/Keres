@@ -3,7 +3,7 @@ import {
   formatSceneGap,
   formatSceneUniverseDuration,
   hasSceneUniverseDuration,
-} from '../../src/utils/sceneTiming';
+} from '@/src/utils/sceneTiming';
 import type { TFunction } from 'i18next';
 
 const t = ((key: string, options?: { count?: number }) =>

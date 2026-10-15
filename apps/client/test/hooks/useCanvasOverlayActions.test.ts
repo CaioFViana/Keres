@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { useState } from 'react';
 import type { BoardContentType } from '@keres/shared';
-import { useCanvasOverlayActions } from '../../src/hooks/useCanvasOverlayActions';
+import { useCanvasOverlayActions } from '@/src/hooks/useCanvasOverlayActions';
 
 const EMPTY = { nodes: [], edges: [] } as unknown as BoardContentType;
 

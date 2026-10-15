@@ -8,17 +8,17 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: 'Icon' }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { error: '#ff0000', accent: '#ffaa00', surface: '#f5f5f5', text: '#111111' },
   }),
 }));
 
 import { act, render } from '@testing-library/react-native';
-import PlanUsageBanner from '../../src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';
-import { usePlanUsageStore } from '../../src/state/planUsageStore';
-import { useStoryStore } from '../../src/state/storyStore';
-import { evaluatePlanUsage } from '../../src/utils/planUsage';
+import PlanUsageBanner from '@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';
+import { usePlanUsageStore } from '@/src/state/planUsageStore';
+import { useStoryStore } from '@/src/state/storyStore';
+import { evaluatePlanUsage } from '@/src/utils/planUsage';
 
 const plan = { maxEntitiesPerStory: 100, maxEntitiesTotal: 1000 };
 const show = (storyUsed: number, totalUsed = 0, storyId = 'story-1') =>

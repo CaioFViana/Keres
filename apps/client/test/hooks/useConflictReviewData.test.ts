@@ -6,18 +6,18 @@ const mockBuildConflictSummaries = jest.fn();
 const mockResolveSnapshots = jest.fn();
 const mockResolveNames = jest.fn();
 
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(() => ({ t: mockT })),
 }));
-jest.mock('../../src/services/ConflictSummaryService', () => ({
+jest.mock('@/src/services/ConflictSummaryService', () => ({
   __esModule: true,
   collectConflictEntityRefs: (...args: unknown[]) => mockCollectConflictEntityRefs(...args),
   collectEntityRefs: (...args: unknown[]) => mockCollectEntityRefs(...args),
   buildConflictSummaries: (...args: unknown[]) => mockBuildConflictSummaries(...args),
 }));
-jest.mock('../../src/services/EntityNameBatchResolver', () => ({
+jest.mock('@/src/services/EntityNameBatchResolver', () => ({
   __esModule: true,
   createEntitySnapshotResolver: jest.fn(() => ({
     resolveMany: (...args: unknown[]) => mockResolveSnapshots(...args),
@@ -28,7 +28,7 @@ jest.mock('../../src/services/EntityNameBatchResolver', () => ({
 }));
 
 import { renderHook, waitFor } from '@testing-library/react-native';
-import { useConflictReviewData } from '../../src/hooks/useConflictReviewData';
+import { useConflictReviewData } from '@/src/hooks/useConflictReviewData';
 
 const noConflicts: never[] = [];
 

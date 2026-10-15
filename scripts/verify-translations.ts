@@ -224,6 +224,13 @@ function walkSourceFiles(rootDir: string, excludedPaths: string[]): string[] {
   return files;
 }
 
+/** i18next plural forms: `t('key', { count })` reads `key_one`, `key_other`... and never `key` itself. */
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
+
+function pluralBase(key: string): string {
+  return key.replace(PLURAL_SUFFIX, '');
+}
+
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -327,9 +334,10 @@ function scanFile(filePath: string): ScanResult {
       // An empty literal is the absence of a label (a MultiSelectPill's single group has no header),
       // never a key: `t('')` does not exist, and treating it as one only produces a "Missing key ''"
       // that cannot be fixed in the locale.
+      // Nor is a label that cannot be one (the `½` or `2` on a note-length button): keys are identifiers.
       if (
         (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) &&
-        init.text.trim() !== ''
+        /^[A-Za-z_][w.]*$/.test(init.text)
       ) {
         exactUsages.push({
           key: init.text,
@@ -438,7 +446,9 @@ function auditTarget(target: LocaleAuditTarget, forceRemoveUnused: boolean): boo
   console.log('\n🔄 Checking for keys used in code but missing from locale files...');
   for (const [key, usage] of firstUsageByKey) {
     for (const localeFile of localeFiles) {
-      if (!allLocaleKeysFlattened[localeFile].has(key)) {
+      const present = allLocaleKeysFlattened[localeFile];
+      const hasPluralForm = [...present].some((candidate) => pluralBase(candidate) === key);
+      if (!present.has(key) && !hasPluralForm) {
         console.error(
           `❌ Missing key '${key}' in '${localeFile}' (used at ${toRelative(usage.file)}:${usage.line})`,
         );
@@ -488,7 +498,8 @@ function auditTarget(target: LocaleAuditTarget, forceRemoveUnused: boolean): boo
   console.log('\n🔄 Detecting unused translations...');
   const unusedKeys = new Set<string>();
   for (const key of allUniqueLocaleKeys) {
-    if (firstUsageByKey.has(key)) continue;
+    const base = pluralBase(key);
+    if (firstUsageByKey.has(key) || firstUsageByKey.has(base)) continue;
     if (allLiterals.has(key)) continue;
     if (dynamicPatterns.some((dynamic) => dynamic.pattern.test(key))) continue;
     if (allTemplatePatterns.some((pattern) => pattern.test(key))) continue;

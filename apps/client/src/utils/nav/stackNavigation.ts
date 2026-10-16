@@ -1,6 +1,8 @@
+import { CommonActions } from '@react-navigation/native';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 
 interface NavigationStateLike {
+  key?: string;
   index: number;
   routeNames?: string[];
   routes: { name: string; params?: object; state?: NavigationStateLike }[];
@@ -10,6 +12,7 @@ interface NavigationStateLike {
 interface AnyNavigation {
   getState?: () => unknown;
   getParent?: () => unknown;
+  dispatch?: unknown;
   navigate: unknown;
 }
 
@@ -47,11 +50,15 @@ export interface StackTarget {
  *
  * A screen in the same stack is just navigated to, with nothing to register. `onReturn` replaces the
  * way back when the origin is not where the person should land (a matrix, a filtered list).
+ *
+ * `fresh` starts the other stack over - its base screen, then the target - instead of pushing onto what
+ * it last showed. A form opened to *create* needs it: a stack that still holds the form of the entity
+ * just made would reopen it as an edit of that entity, state and all.
  */
 export function navigateAcrossStacks(
   navigation: AnyNavigation | undefined,
   target: StackTarget,
-  options?: { onReturn?: () => void },
+  options?: { onReturn?: () => void; fresh?: boolean },
 ): void {
   const drawer = navigatorWithRoute(navigation, target.stack);
   if (!drawer) return;
@@ -73,6 +80,20 @@ export function navigateAcrossStacks(
       : undefined);
   if (returnAction) {
     useHeaderBackActionStore.getState().setCrossStackReturnAction(returnAction, target.screen);
+  }
+
+  const nested = state?.routes.find((route) => route.name === target.stack)?.state;
+  const base = nested?.routeNames?.[0];
+  // A stack that has not drawn yet has no history to discard: it opens on its base screen anyway.
+  if (options?.fresh && nested?.key && base && drawer.dispatch) {
+    const routes =
+      base === target.screen
+        ? [{ name: target.screen, params: target.params }]
+        : [{ name: base }, { name: target.screen, params: target.params }];
+    (drawer.dispatch as (action: unknown) => void)({
+      ...CommonActions.reset({ index: routes.length - 1, routes }),
+      target: nested.key,
+    });
   }
 
   (drawer.navigate as (name: string, params: unknown) => void)(target.stack, {

@@ -1,4 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import { markActionGroup } from '@/src/components/common/controls/FormActions/FormActions';
 
 interface EntityFormActionsProps {
   /** An entity that exists can be deleted; a new one is only saved. */
@@ -15,7 +16,7 @@ interface EntityFormActionsProps {
  * The footer of an entity form: delete on the left (only once the entity exists), save on the right.
  * The order is the visual order, so it is fixed here rather than by each form.
  */
-function EntityFormActions({
+const EntityFormActions = markActionGroup(function EntityFormActions({
   isEditing,
   busy,
   deleteLabel,
@@ -35,6 +36,6 @@ function EntityFormActions({
       </Button>
     </>
   );
-}
+});
 
 export default EntityFormActions;

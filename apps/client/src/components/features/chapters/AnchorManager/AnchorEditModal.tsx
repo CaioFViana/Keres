@@ -407,7 +407,9 @@ const AnchorEditModal: React.FC<Props> = ({
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     // ResponsiveModal clips rounded surfaces; focus borders on inputs need to paint into padding.
-    sheet: { overflow: 'visible' },
+    // `flex: 1` because KeyboardAwareScreen is `flex: 1` too: under a surface that only has a max
+    // height it collapses to nothing on native, leaving the backdrop with an empty sheet.
+    sheet: { flex: 1, overflow: 'visible' },
     keyboardContent: {
       paddingBottom: 12,
       paddingHorizontal: 2,

@@ -917,7 +917,7 @@ describe('NarrativeElementsListScreen', () => {
     await view.findByTestId(`rowname-ch-1`);
     const actions = mockHeaderArgs?.actions ?? [];
     expect(mockHeaderArgs?.title).toBe('narrative_elements_title');
-    expect(actions.map((action) => action.visible)).toEqual([true, true, true, true, true]);
+    expect(actions.map((action) => action.visible)).toEqual([true, true, true, true]);
     expect(actions[0].label).toBe('story_flow_title');
     await act(async () => {
       actions[0].onPress();
@@ -927,13 +927,10 @@ describe('NarrativeElementsListScreen', () => {
       actions[1].onPress();
     });
     expect(mockNavigate).toHaveBeenCalledWith('StoryTimeline');
-    expect(actions[3].label).toBe('manuscript_title');
+    // The manuscript is a drawer entry; the header does not repeat it.
+    expect(actions.some((action) => action.label === 'manuscript_title')).toBe(false);
     await act(async () => {
       actions[3].onPress();
-    });
-    expect(mockNavigate).toHaveBeenCalledWith('Manuscript', {});
-    await act(async () => {
-      actions[4].onPress();
     });
     expect(mockNavigate).toHaveBeenCalledWith('ChapterForm', { chapterId: undefined });
   });
@@ -996,7 +993,6 @@ describe('NarrativeElementsListScreen', () => {
       true,
       true,
       false,
-      true,
       false,
     ]);
   });
@@ -1009,7 +1005,6 @@ describe('NarrativeElementsListScreen', () => {
       false,
       false,
       true,
-      false,
       true,
     ]);
   });

@@ -449,13 +449,6 @@ const NarrativeElementsListScreen = () => {
         onPress: handleReorderPress,
         visible: !!canEdit,
       },
-      {
-        id: 'open-manuscript',
-        icon: 'book-outline',
-        label: t('manuscript_title'),
-        onPress: () => navigation.navigate('Manuscript', {}),
-        visible: !!selectedStory,
-      },
       // A campaign opens its next session in one step: the real date, and the first scene waiting.
       // Other works do not even carry the action.
       ...(effectiveArc?.medium === 'campaign'

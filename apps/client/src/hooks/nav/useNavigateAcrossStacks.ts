@@ -16,7 +16,7 @@ export function useNavigateAcrossStacks() {
       stack: keyof MainSystemDrawerParamList,
       screen: string,
       params?: object,
-      options?: { onReturn?: () => void },
+      options?: { onReturn?: () => void; fresh?: boolean },
     ) => navigateAcrossStacks(navigation as never, { stack, screen, params }, options),
     [navigation],
   );

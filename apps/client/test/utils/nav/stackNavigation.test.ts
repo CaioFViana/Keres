@@ -112,6 +112,75 @@ describe('navigateAcrossStacks', () => {
       onReturn,
     );
   });
+
+  describe('fresh', () => {
+    /** A drawer whose `CharactersStack` already drew, and still holds a form for the entity just made. */
+    const drawerWithStack = (nested?: object) => {
+      const dispatch = jest.fn();
+      const navigate = jest.fn();
+      return {
+        dispatch,
+        navigate,
+        getParent: () => undefined,
+        getState: () => ({
+          index: 0,
+          routes: [
+            { name: 'MainDashboard' },
+            {
+              name: 'CharactersStack',
+              state: nested,
+            },
+          ],
+        }),
+      };
+    };
+    const drawn = {
+      key: 'stack-key',
+      index: 1,
+      routeNames: ['Characters', 'CharacterForm'],
+      routes: [{ name: 'Characters' }, { name: 'CharacterForm', params: { characterId: 'made' } }],
+    };
+
+    it('rebuilds the stack as its base screen and the target', () => {
+      const drawer = drawerWithStack(drawn);
+
+      navigateAcrossStacks(
+        drawer,
+        { stack: 'CharactersStack', screen: 'CharacterForm', params: {} },
+        { fresh: true },
+      );
+
+      expect(drawer.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'RESET',
+          target: 'stack-key',
+          payload: expect.objectContaining({
+            index: 1,
+            routes: [{ name: 'Characters' }, { name: 'CharacterForm', params: {} }],
+          }),
+        }),
+      );
+      expect(drawer.navigate).toHaveBeenCalledWith('CharactersStack', {
+        screen: 'CharacterForm',
+        params: {},
+      });
+    });
+
+    it('leaves the stack alone when not asked, or when it has not drawn', () => {
+      const plain = drawerWithStack(drawn);
+      navigateAcrossStacks(plain, { stack: 'CharactersStack', screen: 'CharacterForm' });
+      expect(plain.dispatch).not.toHaveBeenCalled();
+
+      const undrawn = drawerWithStack(undefined);
+      navigateAcrossStacks(
+        undrawn,
+        { stack: 'CharactersStack', screen: 'CharacterForm' },
+        { fresh: true },
+      );
+      expect(undrawn.dispatch).not.toHaveBeenCalled();
+      expect(undrawn.navigate).toHaveBeenCalled();
+    });
+  });
 });
 
 describe('the way back in the header store', () => {

@@ -11,8 +11,6 @@ interface EntityListSpec {
   list: readonly [string, string];
   /** The prefix of the keys of the first step, which says what the list holds: `tour_<prefix>_start_*`. */
   prefix: string;
-  /** Header actions worth a step of their own before the add button, by icon. */
-  extra?: { id: string; icons: readonly string[]; titleKey: string; bodyKey: string };
 }
 
 /**
@@ -35,14 +33,6 @@ function entityListGuide(spec: EntityListSpec): Guide {
       anchors: [screenAnchorId(spec.entity, 'search'), screenAnchorId(spec.entity, 'controls')],
       titleKey: 'tour_list_find_title',
       bodyKey: 'tour_list_find_body',
-    });
-  }
-  if (spec.extra) {
-    steps.push({
-      id: spec.extra.id,
-      anchors: spec.extra.icons.map(headerAnchorId),
-      titleKey: spec.extra.titleKey,
-      bodyKey: spec.extra.bodyKey,
     });
   }
   steps.push({
@@ -104,12 +94,6 @@ const specs: EntityListSpec[] = [
     entity: 'Gallery',
     list: ['Gallery', 'list'],
     prefix: 'gallery',
-    extra: {
-      id: 'more',
-      icons: ['brush-outline', 'musical-note-outline'],
-      titleKey: 'tour_gallery_more_title',
-      bodyKey: 'tour_gallery_more_body',
-    },
   },
   { id: 'BoardsStack', helpPageId: 'boards', list: ['Boards', 'list'], prefix: 'boards' },
   { id: 'SketchStack', helpPageId: 'sketch', list: ['Sketches', 'list'], prefix: 'sketch' },

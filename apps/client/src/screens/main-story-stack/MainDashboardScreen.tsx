@@ -263,20 +263,31 @@ const MainDashboardScreen = () => {
         onOpenArcs={() => {
           navigateAcross('ArcsStack', 'StoryArcList');
         }}
+        // The shortcuts that open a form start their stack over: otherwise a form left open there (the
+        // character just created, say) comes back as an edit of that entity instead of a new one.
         onOpenArc={(arcId) => {
-          navigateAcross('ArcsStack', 'StoryArcForm', { arcId });
+          navigateAcross('ArcsStack', 'StoryArcForm', { arcId }, { fresh: true });
         }}
-        onAddArc={canEdit ? () => navigateAcross('ArcsStack', 'StoryArcForm', {}) : undefined}
+        onAddArc={
+          canEdit
+            ? () => navigateAcross('ArcsStack', 'StoryArcForm', {}, { fresh: true })
+            : undefined
+        }
         writing={{
           resume: resumeScene,
           canEdit,
           onContinue: (sceneId) =>
-            navigateAcross('NarrativeElementsStack', canEdit ? 'SceneEditor' : 'SceneDetail', {
-              sceneId,
-            }),
-          onNewScene: () => navigateAcross('NarrativeElementsStack', 'SceneForm', {}),
-          onNewCharacter: () => navigateAcross('CharactersStack', 'CharacterForm', {}),
-          onNewNote: () => navigateAcross('NotesStack', 'NoteForm', {}),
+            navigateAcross(
+              'NarrativeElementsStack',
+              canEdit ? 'SceneEditor' : 'SceneDetail',
+              { sceneId },
+              { fresh: true },
+            ),
+          onNewScene: () =>
+            navigateAcross('NarrativeElementsStack', 'SceneForm', {}, { fresh: true }),
+          onNewCharacter: () =>
+            navigateAcross('CharactersStack', 'CharacterForm', {}, { fresh: true }),
+          onNewNote: () => navigateAcross('NotesStack', 'NoteForm', {}, { fresh: true }),
           onOpenManuscript: () => navigateAcross('NarrativeElementsStack', 'Manuscript', {}),
           onExportManuscript: () => navigateAcross('NarrativeElementsStack', 'ManuscriptExport'),
           onPublishManuscript:

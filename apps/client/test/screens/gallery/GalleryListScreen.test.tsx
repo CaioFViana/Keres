@@ -239,7 +239,7 @@ const freshListState = () => ({
   refetch: mockRefetch,
 });
 
-/** The header leads with the sketches shortcut, so the add action is found by id. */
+/** Sketches and songs live in the drawer, so the header carries only the add action. */
 const addAction = () =>
   mockHeaderConfig.current!.actions.find((action: any) => action.id === 'add')!;
 

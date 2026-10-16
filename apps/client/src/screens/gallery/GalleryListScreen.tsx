@@ -15,7 +15,6 @@ import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGa
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '@/src/db';
 import type { GallerySelect } from '@/src/db/schemas/galleries';
-import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
@@ -52,7 +51,6 @@ const GalleryListScreen = () => {
   const { t } = useTranslation();
   const { breakpoint } = useResponsiveLayout();
   const navigation = useNavigation<GalleryScreenNavigationProp>();
-  const navigateAcross = useNavigateAcrossStacks();
   const db = useDrizzle();
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
@@ -192,32 +190,10 @@ const GalleryListScreen = () => {
     });
   }, [importFromPicker, t]);
 
-  const handleOpenSketches = useCallback(() => {
-    navigateAcross('SketchStack', 'SketchList');
-  }, [navigateAcross]);
-
-  const handleOpenSongs = useCallback(() => {
-    navigateAcross('SongStack', 'SongList');
-  }, [navigateAcross]);
-
   useScreenHeader({
     target: 'parent',
     title: t('gallery_title'),
     actions: [
-      {
-        id: 'sketches',
-        icon: 'brush-outline',
-        label: t('sketches_title'),
-        onPress: handleOpenSketches,
-        visible: true,
-      },
-      {
-        id: 'songs',
-        icon: 'musical-note-outline',
-        label: t('songs_title'),
-        onPress: handleOpenSongs,
-        visible: true,
-      },
       {
         id: 'add',
         icon: 'add',

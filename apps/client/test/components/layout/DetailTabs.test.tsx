@@ -124,43 +124,74 @@ describe('DetailTabPanels', () => {
 });
 
 describe('DetailContainer with tabs', () => {
-  const stickyIndices = (view: Awaited<ReturnType<typeof render>>) =>
-    view.container.queryAll((node) => node.type === 'RCTScrollView')[0].props.stickyHeaderIndices;
+  const scrollView = (view: Awaited<ReturnType<typeof render>>) =>
+    view.container.queryAll((node) => node.type === 'RCTScrollView')[0];
+  const scrollTo = async (view: Awaited<ReturnType<typeof render>>, y: number) =>
+    fireEvent.scroll(scrollView(view), { nativeEvent: { contentOffset: { x: 0, y } } });
+  const place = async (view: Awaited<ReturnType<typeof render>>) =>
+    fireEvent(view.getByTestId('detail-tabs-slot'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 80, width: 390, height: 48 } },
+    });
 
-  it('keeps the tab bar at the top of the scroll view, after the title', async () => {
-    const view = await render(
-      <DetailContainer title="Aria" tabs={<Text>bar</Text>}>
-        <Text>body</Text>
-      </DetailContainer>,
-    );
+  const Screen = ({ onChange }: { onChange: (key: Key) => void }) => (
+    <DetailContainer
+      title="Aria"
+      tabs={<DetailTabs tabs={TABS} value="details" onChange={onChange} />}
+    >
+      <Text>body</Text>
+    </DetailContainer>
+  );
 
-    expect(stickyIndices(view)).toEqual([1]);
+  it('uses no sticky header: its stuck position would not move the touch area on native', async () => {
+    const view = await render(<Screen onChange={() => {}} />);
+
+    expect(scrollView(view).props.stickyHeaderIndices).toBeUndefined();
   });
 
-  it('counts the description too, and sticks to the first child without a title', async () => {
-    const withDescription = await render(
-      <DetailContainer title="Aria" description="About" tabs={<Text>bar</Text>}>
-        <Text>body</Text>
-      </DetailContainer>,
-    );
-    expect(stickyIndices(withDescription)).toEqual([2]);
+  it('draws the bar in the page until it is scrolled past, and over the top after', async () => {
+    const view = await render(<Screen onChange={() => {}} />);
+    await place(view);
 
-    const bare = await render(
-      <DetailContainer tabs={<Text>bar</Text>}>
-        <Text>body</Text>
-      </DetailContainer>,
-    );
-    expect(stickyIndices(bare)).toEqual([0]);
+    expect(view.getAllByTestId('detail-tab-other')).toHaveLength(1);
+    expect(view.queryByTestId('detail-tabs-stuck')).toBeNull();
+
+    await scrollTo(view, 79);
+    expect(view.queryByTestId('detail-tabs-stuck')).toBeNull();
+
+    await scrollTo(view, 400);
+    expect(view.getByTestId('detail-tabs-stuck')).toBeTruthy();
+    // One bar at a time, and the page keeps the room it took.
+    expect(view.getAllByTestId('detail-tab-other')).toHaveLength(1);
+    expect(StyleSheet.flatten(view.getByTestId('detail-tabs-slot').props.style)).toMatchObject({
+      height: 48,
+    });
+
+    await scrollTo(view, 0);
+    expect(view.queryByTestId('detail-tabs-stuck')).toBeNull();
+    expect(view.getAllByTestId('detail-tab-other')).toHaveLength(1);
   });
 
-  it('sticks nothing when there are no tabs', async () => {
+  it('changes tab from the bar while scrolled down', async () => {
+    const onChange = jest.fn();
+    const view = await render(<Screen onChange={onChange} />);
+    await place(view);
+    await scrollTo(view, 400);
+
+    await fireEvent.press(view.getByTestId('detail-tab-relations'));
+
+    expect(onChange).toHaveBeenCalledWith('relations');
+  });
+
+  it('has no bar when there are no tabs', async () => {
     const view = await render(
       <DetailContainer title="Aria">
         <Text>body</Text>
       </DetailContainer>,
     );
+    await scrollTo(view, 400);
 
-    expect(stickyIndices(view)).toBeUndefined();
+    expect(view.queryByTestId('detail-tabs-slot')).toBeNull();
+    expect(view.queryByTestId('detail-tabs-stuck')).toBeNull();
   });
 
   it('scrolls back to the top when the reset key changes, and not before', async () => {

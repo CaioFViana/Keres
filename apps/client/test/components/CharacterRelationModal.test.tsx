@@ -148,14 +148,17 @@ describe('CharacterRelationModal', () => {
     expect(screen.getByText('no_characters_found')).toBeTruthy();
   });
 
-  it('closes the picker without choosing', async () => {
+  it('uses the shared selector, with a search that narrows the characters', async () => {
     const screen = await render(<CharacterRelationModal {...baseProps()} />);
-    await fireEvent.press(screen.getByText('Select a character').parent!);
-    expect(screen.getByText('Bob')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
 
-    await fireEvent.press(screen.getByTestId('button-close'));
+    expect(screen.getByTestId('multiselect-option-char-2')).toBeTruthy();
+    expect(screen.getByTestId('multiselect-option-char-3')).toBeTruthy();
 
-    expect(screen.queryByText('Bob')).toBeNull();
+    await fireEvent.changeText(screen.getByPlaceholderText('search'), 'zo');
+
+    expect(screen.queryByTestId('multiselect-option-char-2')).toBeNull();
+    expect(screen.getByTestId('multiselect-option-char-3')).toBeTruthy();
   });
 
   it('requires a character and a type before saving', async () => {

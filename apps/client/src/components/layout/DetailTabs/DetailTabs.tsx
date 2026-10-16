@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
 
 export interface DetailTabItem<K extends string> {
@@ -15,7 +15,7 @@ interface DetailTabsProps<K extends string> {
 
 /**
  * The tab bar of a detail screen. It spans the screen's full width (the content around it is padded),
- * so it is meant to be the sticky header of `DetailContainer`'s scroll view.
+ * so it is meant to be the `tabs` of `DetailContainer`, which keeps it in view while the page scrolls.
  */
 export function DetailTabs<K extends string>({ tabs, value, onChange }: DetailTabsProps<K>) {
   const { colors } = useTheme();
@@ -91,10 +91,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 12,
     borderBottomWidth: 1,
-    // The scroll view's `stickyHeaderIndices` only works natively; on the web the bar sticks by CSS.
-    ...(Platform.OS === 'web'
-      ? ({ position: 'sticky', top: 0, zIndex: 2 } as unknown as ViewStyle)
-      : null),
   },
   tab: {
     flex: 1,

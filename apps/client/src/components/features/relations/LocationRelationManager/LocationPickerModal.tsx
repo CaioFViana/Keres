@@ -1,13 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import SelectModal from '@/src/components/common/modals/SelectModal/SelectModal';
 import type { LocationSelect } from '@/src/db/schema';
-import type { ThemeColors } from '@/src/theme';
-import { useThemedStyles } from '@/src/theme/useThemedStyles';
-import { typography } from '@/src/theme/tokens';
-import Button from '@/src/components/common/controls/Button/Button';
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface LocationPickerModalProps {
   isVisible: boolean;
@@ -19,8 +13,11 @@ interface LocationPickerModalProps {
 
 /**
  * A generic Location picker, reused by the 3 kinds of action in LocationRelationManager (set a parent,
- * add a child, add a connection) - only the candidate list differs, already filtered by the caller
- * (self-reference/cycle/already-connected excluded before reaching here).
+ * add a child, add a connection) and by the location map - only the candidate list differs, already
+ * filtered by the caller (self-reference/cycle/already-connected excluded before reaching here).
+ *
+ * It is the shared `SelectModal` with the locations' wording: opened from a button or a menu rather than
+ * from a field, and searchable like every other selector.
  */
 const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   isVisible,
@@ -31,58 +28,29 @@ const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const sortedCandidates = [...candidates].sort((a, b) => a.name.localeCompare(b.name));
-
-  const styles = useThemedStyles(createStyles);
+  const source = useMemo(
+    () => ({
+      options: [...candidates]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((location) => ({ label: location.name, value: location.id })),
+    }),
+    [candidates],
+  );
 
   return (
-    <ResponsiveModal visible={isVisible} onClose={onClose} inset="regular" maxHeight="78%">
-      <ModalHeader title={title} />
-      <FlatList
-        data={sortedCandidates}
-        keyExtractor={(item) => item.id}
-        keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.item} onPress={() => onSelect(item.id)}>
-            <Text style={styles.itemText}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyText}>{t('no_locations_available')}</Text>}
-      />
-      <Button onPress={onClose} style={styles.closeButton}>
-        {t('close')}
-      </Button>
-    </ResponsiveModal>
+    <SelectModal
+      visible={isVisible}
+      onClose={onClose}
+      source={source}
+      selectedValues={[]}
+      onSelectionChange={(values) => {
+        if (values[0]) onSelect(values[0]);
+      }}
+      title={title}
+      singleSelect
+      noOptionsText={t('no_locations_available')}
+    />
   );
 };
-
-const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    title: {
-      ...typography.title,
-      color: colors.text,
-      marginBottom: 10,
-      textAlign: 'center',
-    },
-    item: {
-      paddingVertical: 12,
-      paddingHorizontal: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    itemText: {
-      ...typography.bodyLarge,
-      color: colors.text,
-    },
-    emptyText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
-    },
-    closeButton: {
-      marginTop: 15,
-      alignSelf: 'flex-end',
-    },
-  });
 
 export default LocationPickerModal;

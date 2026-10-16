@@ -6,6 +6,7 @@ import {
   type ManuscriptRenderOptions,
 } from './manuscriptCompiler';
 import { bytesToBase64 } from '../../../utils/base64';
+import { escapeHtml } from './escapeHtml';
 import {
   COVER_CSS,
   coverMarkup,
@@ -22,14 +23,7 @@ export type ManuscriptHtmlLabels = {
   tocHeading: string;
 };
 
-/** Escapes text for HTML and XHTML alike (the EPUB renderer shares it). */
-export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+export { escapeHtml };
 
 /** Inline marks as HTML elements; well-formed XHTML too (`<br />`). */
 export function spansToHtml(spans: CompiledSpan[]): string {

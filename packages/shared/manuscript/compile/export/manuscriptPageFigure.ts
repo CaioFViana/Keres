@@ -1,7 +1,7 @@
 import type { ManuscriptImage } from '../../images/imageInfo';
 import { PAGE_FORMAT_ASPECT, type PageLayout } from '../pageFormat';
 import type { CompiledBlock, CompiledManuscript } from './manuscriptCompiler';
-import { escapeHtml } from './manuscriptHtml';
+import { escapeHtml } from './escapeHtml';
 
 export type PageBlock = Extract<CompiledBlock, { kind: 'page' }>;
 

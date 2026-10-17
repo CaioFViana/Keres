@@ -3,10 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   calendarMoonPhases,
   calendarSeasonFor,
-  attributeDateWeekdayLabels,
-  daysInMonth,
   dayNumberToParts,
-  formatAttributeDateMonthLabel,
   formatCalendarDate,
   formatGregorianDate,
   gregorianDayNumber,
@@ -27,6 +24,8 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import CalendarMonthGrid from '@/src/components/features/calendars/CalendarMonthGrid/CalendarMonthGrid';
+import { dayNumberOf, dayPartsOf, shiftMonth } from '@/src/utils/calendar/calendarMonthGrid';
 import { CustomCalendarDateLookup, GregorianCalendarDateLookup } from './AgendaDateLookup';
 
 /**
@@ -47,7 +46,7 @@ import { CustomCalendarDateLookup, GregorianCalendarDateLookup } from './AgendaD
  */
 const StoryAgendaScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const story = useStoryStore((state) => state.selectedStory);
   const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
@@ -122,22 +121,6 @@ const StoryAgendaScreen = () => {
         root: { flex: 1, backgroundColor: colors.background },
         content: { padding: 14, paddingBottom: 40 },
         message: { padding: 28, color: colors.textSecondary, textAlign: 'center', lineHeight: 21 },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-          marginBottom: 12,
-          paddingVertical: 8,
-          paddingHorizontal: 5,
-        },
-        monthLabel: {
-          flexGrow: 1,
-          flexShrink: 1,
-          fontSize: 16,
-          fontWeight: '700',
-          color: colors.text,
-          textAlign: 'center',
-        },
         nav: { flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' },
         navButton: {
           flexDirection: 'row',
@@ -176,40 +159,6 @@ const StoryAgendaScreen = () => {
           paddingVertical: 0,
           borderRadius: 10,
         },
-        week: { flexDirection: 'row', gap: 5, marginBottom: 5 },
-        weekdayCell: {
-          flexGrow: 1,
-          flexShrink: 1,
-          flexBasis: 0,
-          alignItems: 'center',
-          paddingBottom: 5,
-        },
-        weekdayText: { fontSize: 10, color: colors.textSecondary, fontWeight: '700' },
-        cell: {
-          flexGrow: 1,
-          flexShrink: 1,
-          flexBasis: 0,
-          minHeight: 74,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
-          borderRadius: 10,
-          padding: 8,
-          backgroundColor: colors.surface,
-        },
-        cellInteractive: { borderColor: colors.primary },
-        cellToday: {
-          backgroundColor: colors.primaryContainer,
-          borderColor: colors.primary,
-          borderWidth: 1.5,
-        },
-        cellOutsideMonth: {
-          backgroundColor: colors.background,
-          borderColor: colors.border,
-          opacity: 0.68,
-        },
-        cellDay: { fontSize: 11, fontWeight: '700', color: colors.textSecondary },
-        cellDayOutside: { color: colors.textSecondary, fontWeight: '500' },
-        cellEntry: { fontSize: 10, color: colors.text, marginTop: 1 },
         aside: { fontSize: 12, color: colors.textSecondary, marginTop: 12, lineHeight: 18 },
         dayDetails: {
           marginTop: 14,
@@ -243,42 +192,7 @@ const StoryAgendaScreen = () => {
       </View>
     );
 
-  const cursorParts = definition
-    ? dayNumberToParts(definition, cursor)
-    : gregorianPartsFromDayNumber(cursor);
-  const daysPerWeek = definition?.daysPerWeek ?? 7;
-  const weekdayNames = definition?.weekdayNames ?? attributeDateWeekdayLabels(i18n.language);
-  const daysInCurrentMonth = definition
-    ? definition.months[cursorParts.month - 1].days
-    : daysInMonth(cursorParts.year, cursorParts.month);
-  const firstOfMonth = definition
-    ? partsToDayNumber(definition, { year: cursorParts.year, month: cursorParts.month, day: 1 })
-    : gregorianDayNumber({ year: cursorParts.year, month: cursorParts.month, day: 1 });
-
-  /** The month laid out in rows of the calendar's own week length. */
-  const weeks: (number | null)[][] = [];
-  // Weekday labels are optional decoration. The week itself is not: without this offset, calendars
-  // that omit labels would incorrectly show every month as starting on its first column.
-  const offset = ((firstOfMonth % daysPerWeek) + daysPerWeek) % daysPerWeek;
-  let week: (number | null)[] = Array.from(
-    { length: offset },
-    (_, index) => firstOfMonth - offset + index,
-  );
-  for (let day = 0; day < daysInCurrentMonth; day += 1) {
-    week.push(firstOfMonth + day);
-    if (week.length === daysPerWeek) {
-      weeks.push(week);
-      week = [];
-    }
-  }
-  if (week.length > 0) {
-    let nextMonthDay = firstOfMonth + daysInCurrentMonth;
-    while (week.length < daysPerWeek) {
-      week.push(nextMonthDay);
-      nextMonthDay += 1;
-    }
-    weeks.push(week);
-  }
+  const cursorParts = dayPartsOf(definition, cursor);
 
   const jump = (direction: 1 | -1, kind?: 'event') => {
     const candidates = entries
@@ -289,28 +203,9 @@ const StoryAgendaScreen = () => {
     if (candidates.length > 0) setCursor(candidates[0]);
   };
 
-  const shiftMonth = (direction: 1 | -1) => {
-    if (!definition) {
-      const zeroBased = cursorParts.month - 1 + direction;
-      const year = cursorParts.year + Math.floor(zeroBased / 12);
-      const month = (((zeroBased % 12) + 12) % 12) + 1;
-      setCursor(gregorianDayNumber({ year, month, day: 1 }));
-      return;
-    }
-    const nextMonth = cursorParts.month + direction;
-    const wrappedYear =
-      nextMonth < 1
-        ? cursorParts.year - 1
-        : nextMonth > definition.months.length
-          ? cursorParts.year + 1
-          : cursorParts.year;
-    const wrappedMonth =
-      nextMonth < 1
-        ? definition.months.length
-        : nextMonth > definition.months.length
-          ? 1
-          : nextMonth;
-    setCursor(partsToDayNumber(definition, { year: wrappedYear, month: wrappedMonth, day: 1 }));
+  const shiftCursorMonth = (direction: 1 | -1) => {
+    const next = shiftMonth(definition, cursorParts.year, cursorParts.month, direction);
+    setCursor(dayNumberOf(definition, { ...next, day: 1 }));
   };
 
   const cursorDescription = describeDay(cursor);
@@ -353,83 +248,16 @@ const StoryAgendaScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => shiftMonth(-1)} accessibilityLabel={t('previous')}>
-            <Ionicons name="chevron-back" size={22} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.monthLabel}>
-            {definition
-              ? `${definition.months[cursorParts.month - 1].name || cursorParts.month} · ${cursorParts.year}`
-              : formatAttributeDateMonthLabel(cursorParts.year, cursorParts.month, i18n.language)}
-          </Text>
-          <TouchableOpacity onPress={() => shiftMonth(1)} accessibilityLabel={t('next')}>
-            <Ionicons name="chevron-forward" size={22} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        {weekdayNames.length > 0 && (
-          <View style={styles.week}>
-            {weekdayNames.map((label, index) => (
-              <View key={`${label}-${index}`} style={styles.weekdayCell}>
-                <Text style={styles.weekdayText}>{label}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {weeks.map((row, rowIndex) => (
-          // The row's position is its identity: a month grid has no other.
-          <View key={rowIndex} style={styles.week}>
-            {row.map((day, cellIndex) => {
-              const isOutsideMonth =
-                day !== null &&
-                (definition ? dayNumberToParts(definition, day) : gregorianPartsFromDayNumber(day))
-                  .month !== cursorParts.month;
-              return (
-                <TouchableOpacity
-                  key={day ?? `blank-${cellIndex}`}
-                  style={[
-                    styles.cell,
-                    isOutsideMonth && styles.cellOutsideMonth,
-                    day !== null && (byDay.get(day)?.length ?? 0) > 0 && styles.cellInteractive,
-                    day === cursor && styles.cellToday,
-                  ]}
-                  disabled={day === null}
-                  onPress={() => day !== null && setCursor(day)}
-                  accessibilityRole={day !== null ? 'button' : undefined}
-                  accessibilityLabel={
-                    day !== null && (byDay.get(day)?.length ?? 0) > 0
-                      ? `${describeDay(day)?.date}: ${(byDay.get(day) ?? [])
-                          .map((entry) => entry.name)
-                          .join(', ')}`
-                      : day !== null
-                        ? describeDay(day)?.date
-                        : undefined
-                  }
-                >
-                  {day !== null && (
-                    <>
-                      <Text style={[styles.cellDay, isOutsideMonth && styles.cellDayOutside]}>
-                        {
-                          (definition
-                            ? dayNumberToParts(definition, day)
-                            : gregorianPartsFromDayNumber(day)
-                          ).day
-                        }
-                      </Text>
-                      {(byDay.get(day) ?? []).slice(0, 3).map((entry) => (
-                        <Text key={entry.id} numberOfLines={1} style={styles.cellEntry}>
-                          {entry.kind === 'event' ? '◆ ' : ''}
-                          {entry.name}
-                        </Text>
-                      ))}
-                    </>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ))}
+        <CalendarMonthGrid
+          calendar={definition}
+          year={cursorParts.year}
+          month={cursorParts.month}
+          selectedDay={cursor}
+          onSelectDay={setCursor}
+          onShiftMonth={shiftCursorMonth}
+          entriesByDay={byDay}
+          describeDay={(day) => describeDay(day)?.date}
+        />
 
         {cursorDescription && (
           <Text style={styles.aside}>

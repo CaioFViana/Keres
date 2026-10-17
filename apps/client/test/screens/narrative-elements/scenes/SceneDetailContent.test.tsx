@@ -479,6 +479,48 @@ describe('SceneDetailContent', () => {
     expect(view.getByText(/· DE/)).toBeTruthy();
   });
 
+  it('shows the fixed date, even with no derived date to show beside it', async () => {
+    const view = await render(
+      <SceneDetailContent
+        {...baseProps({
+          fixedDate: { text: '14 Harvest, 3019 T.A. · 07:08 · Lunar', valid: true },
+        })}
+      />,
+    );
+
+    expect(view.getByText('scene_fixed_date')).toBeTruthy();
+    expect(view.getByText('14 Harvest, 3019 T.A. · 07:08 · Lunar')).toBeTruthy();
+    expect(view.queryByText('calendar_scene_date')).toBeNull();
+  });
+
+  it('puts a valid fixed date in place of the date derived from the gap', async () => {
+    const view = await render(
+      <SceneDetailContent
+        {...baseProps({
+          fixedDate: { text: '2023-01-01 · 00:00 · Gregorian', valid: true },
+          dateForScene: () => ({ date: 'Day 3' }),
+        })}
+      />,
+    );
+
+    expect(view.getByText('2023-01-01 · 00:00 · Gregorian')).toBeTruthy();
+    expect(view.queryByText('Day 3')).toBeNull();
+  });
+
+  it('keeps the derived date beside a fixed date that is not valid, and shows the invalid one', async () => {
+    const view = await render(
+      <SceneDetailContent
+        {...baseProps({
+          fixedDate: { text: '0001-13-01T00:00 (not valid)', valid: false },
+          dateForScene: () => ({ date: 'Day 3' }),
+        })}
+      />,
+    );
+
+    expect(view.getByText('0001-13-01T00:00 (not valid)')).toBeTruthy();
+    expect(view.getByText('Day 3')).toBeTruthy();
+  });
+
   it('skips the calendar field without a date', async () => {
     const view = await render(<SceneDetailContent {...baseProps()} />);
     expect(view.queryByText('calendar_scene_date')).toBeNull();

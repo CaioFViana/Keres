@@ -13,6 +13,7 @@ import ScenePresenceList, {
   groupScenePresenceEntries,
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
+import type { SceneCalendarOption } from '@/src/components/features/scenes/SceneFixedDateField';
 import SceneTimingFields from '@/src/components/features/scenes/SceneTimingFields';
 import type { SceneSelect } from '@/src/db/schema';
 
@@ -35,7 +36,7 @@ jest.mock('@/src/theme', () => ({
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
 jest.mock('@/src/components/common/forms/FormField/FormField', () => {
@@ -161,7 +162,8 @@ describe('SceneTimingFields', () => {
     onCalendarDateOverrideChange: jest.fn(),
     calendarDateOverrideCalendarId: null as string | null,
     onCalendarDateOverrideCalendarIdChange: jest.fn(),
-    calendars: [{ id: 'cal-1', name: 'Custom' }],
+    calendars: [] as SceneCalendarOption[],
+    storyHasEpoch: true,
     inputStyle: {},
   });
 
@@ -211,34 +213,20 @@ describe('SceneTimingFields', () => {
     expect(props.onDurationTypeChange).toHaveBeenCalledWith('hours');
   });
 
-  it('shows the fixed-date calendar only once a date is typed', async () => {
+  it('starts the fixed date as an explanation and a button, and notes the gap once one is set', async () => {
     const props = timingProps();
     const screen = await render(<SceneTimingFields {...props} />);
 
-    expect(screen.queryByTestId('single-select-scene_fixed_date_calendar')).toBeNull();
+    expect(screen.getByText('scene_fixed_date_empty_hint')).toBeTruthy();
+    expect(screen.queryByText('scene_fixed_date_gap_note')).toBeNull();
 
-    await act(async () => {
-      screen.getByTestId('input-scene_fixed_date_placeholder').props.onChangeText('Day 12');
-    });
-    expect(props.onCalendarDateOverrideChange).toHaveBeenCalledWith('Day 12');
-
-    await screen.rerender(<SceneTimingFields {...props} calendarDateOverride="Day 12" />);
-    const calendar = screen.getByTestId('single-select-scene_fixed_date_calendar');
-    expect(calendar.props.options).toEqual([
-      { label: 'calendar_standard_title', value: '__gregorian__' },
-      { label: 'Custom', value: 'cal-1' },
-    ]);
-    expect(calendar.props.value).toBe('__gregorian__');
-
-    await act(async () => {
-      calendar.props.onValueChange('__gregorian__');
-    });
+    await fireEvent.press(screen.getByTestId('scene-fixed-date-set'));
+    expect(props.onCalendarDateOverrideChange).toHaveBeenCalledWith('0001-01-01T00:00');
     expect(props.onCalendarDateOverrideCalendarIdChange).toHaveBeenCalledWith(null);
 
-    await act(async () => {
-      screen.getByTestId('single-select-scene_fixed_date_calendar').props.onValueChange('cal-1');
-    });
-    expect(props.onCalendarDateOverrideCalendarIdChange).toHaveBeenCalledWith('cal-1');
+    await screen.rerender(<SceneTimingFields {...props} calendarDateOverride="0001-01-01T00:00" />);
+    expect(screen.getByText('scene_fixed_date_gap_note')).toBeTruthy();
+    expect(screen.queryByTestId('scene-fixed-date-set')).toBeNull();
   });
 });
 

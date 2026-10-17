@@ -156,6 +156,25 @@ describe('AnchorManager', () => {
     expect(mockEditModal.mock.calls[0][0]).toMatchObject({ visible: false });
   });
 
+  it('explains instead of offering a stretch when the story has no scenes', async () => {
+    mockUseChapterAnchors.mockReturnValue(hookState({ scenes: [] }));
+    const view = await render(
+      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
+    );
+
+    expect(view.queryByText('anchor_add')).toBeNull();
+    expect(view.getByText('anchor_needs_scenes')).toBeTruthy();
+  });
+
+  it('does not repeat the scene explanation to a reader who cannot add anyway', async () => {
+    mockUseChapterAnchors.mockReturnValue(hookState({ scenes: [] }));
+    const view = await render(
+      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable={false} />,
+    );
+
+    expect(view.queryByText('anchor_needs_scenes')).toBeNull();
+  });
+
   it('hides the add action when read-only', async () => {
     mockUseChapterAnchors.mockReturnValue(hookState());
     const view = await render(

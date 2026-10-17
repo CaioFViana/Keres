@@ -42,6 +42,7 @@ import type {
   TagSelect,
 } from '@/src/db/schema';
 import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
+import type { SceneFixedDate } from '@/src/utils/scene/sceneFixedDate';
 import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
 import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
@@ -76,6 +77,8 @@ export interface SceneDetailContentProps {
     scene: SceneSelect,
   ): { date: string; gapRange?: unknown; durationEnd?: unknown } | null | undefined;
   calendar: unknown;
+  /** The scene's fixed date as written, when it has one. */
+  fixedDate?: SceneFixedDate | null;
   locationCopy: { entity: string };
   location: (LocationSelect & { description?: string | null }) | null | undefined;
   handleLocationPress(): void;
@@ -115,6 +118,7 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     commentField,
     dateForScene,
     calendar,
+    fixedDate,
     locationCopy,
     location,
     handleLocationPress,
@@ -184,7 +188,9 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
           onOpen={() => navigation.navigate('SceneMusic', { sceneId })}
         />
       </GuideAnchor>
-      {dateForScene(scene) && (
+      {fixedDate && <DetailField label={t('scene_fixed_date')} value={fixedDate.text} />}
+      {/* A valid fixed date places the scene, and the date derived from the gap would disagree with it. */}
+      {dateForScene(scene) && !fixedDate?.valid && (
         <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
       )}
       <DetailField

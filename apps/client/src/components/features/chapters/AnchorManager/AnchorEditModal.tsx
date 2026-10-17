@@ -242,6 +242,8 @@ const AnchorEditModal: React.FC<Props> = ({
                     )
                   }
                   placeholder={t('anchor_offset_unit_placeholder')}
+                  // The pill carries a bottom margin of its own; beside an input in a centred row it lifts the pill off the input's line.
+                  style={styles.unitSelect}
                   multiple={false}
                 />
               </View>
@@ -342,63 +344,77 @@ const AnchorEditModal: React.FC<Props> = ({
       >
         {isCompact && <View style={styles.handle} />}
         <ModalHeader title={t('anchor_modal_title')} />
-        <Text style={styles.preview}>{preview}</Text>
-        <View style={styles.modes}>
-          {(['open', 'closed'] as const).map((option) => {
-            const selected = mode === option;
-            const disabled = option === 'open' && !allowOpenStretch;
-            return (
-              <TouchableOpacity
-                key={option}
-                disabled={disabled}
-                onPress={() => setModeTo(option)}
-                style={[
-                  styles.mode,
-                  selected && { backgroundColor: colors.primaryContainer },
-                  disabled && { opacity: 0.45 },
-                ]}
+        <Text style={styles.explainer}>{t('anchor_how_it_works')}</Text>
+        {scenes.length === 0 ? (
+          <>
+            <Text style={styles.needsScenes}>{t('anchor_needs_scenes')}</Text>
+            <FormActions>
+              <Button onPress={onCancel} testID="anchor-understood">
+                {t('anchor_understood')}
+              </Button>
+            </FormActions>
+          </>
+        ) : (
+          <>
+            <Text style={styles.preview}>{preview}</Text>
+            <View style={styles.modes}>
+              {(['open', 'closed'] as const).map((option) => {
+                const selected = mode === option;
+                const disabled = option === 'open' && !allowOpenStretch;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    disabled={disabled}
+                    onPress={() => setModeTo(option)}
+                    style={[
+                      styles.mode,
+                      selected && { backgroundColor: colors.primaryContainer },
+                      disabled && { opacity: 0.45 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modeText,
+                        { color: selected ? colors.onPrimaryContainer : colors.textSecondary },
+                      ]}
+                    >
+                      {t(option === 'open' ? 'anchor_mode_open' : 'anchor_mode_closed')}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {mode === 'open' && (
+              <Text style={[styles.hint, { marginBottom: 12 }]}>
+                {hasContents ? t('anchor_mode_open_hint') : t('anchor_mode_open_empty_hint')}
+              </Text>
+            )}
+            {renderPoint('start')}
+            {mode === 'closed' && renderPoint('end')}
+            <FormActions>
+              <Button onPress={onCancel}>{t('cancel')}</Button>
+              <Button
+                onPress={() =>
+                  onConfirm(
+                    mode === 'open'
+                      ? {
+                          ...draft,
+                          endSceneId: null,
+                          endPosition: null,
+                          endOffset: null,
+                          endOffsetUnit: null,
+                        }
+                      : draft,
+                  )
+                }
+                disabled={!complete}
+                testID="confirm-anchor"
               >
-                <Text
-                  style={[
-                    styles.modeText,
-                    { color: selected ? colors.onPrimaryContainer : colors.textSecondary },
-                  ]}
-                >
-                  {t(option === 'open' ? 'anchor_mode_open' : 'anchor_mode_closed')}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        {mode === 'open' && (
-          <Text style={[styles.hint, { marginBottom: 12 }]}>
-            {hasContents ? t('anchor_mode_open_hint') : t('anchor_mode_open_empty_hint')}
-          </Text>
+                {t('save')}
+              </Button>
+            </FormActions>
+          </>
         )}
-        {renderPoint('start')}
-        {mode === 'closed' && renderPoint('end')}
-        <FormActions>
-          <Button onPress={onCancel}>{t('cancel')}</Button>
-          <Button
-            onPress={() =>
-              onConfirm(
-                mode === 'open'
-                  ? {
-                      ...draft,
-                      endSceneId: null,
-                      endPosition: null,
-                      endOffset: null,
-                      endOffsetUnit: null,
-                    }
-                  : draft,
-              )
-            }
-            disabled={!complete}
-            testID="confirm-anchor"
-          >
-            {t('save')}
-          </Button>
-        </FormActions>
       </KeyboardAwareScreen>
     </ResponsiveModal>
   );
@@ -422,6 +438,18 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 2,
       backgroundColor: colors.border,
       marginBottom: 14,
+    },
+    explainer: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 16,
+      lineHeight: 20,
+    },
+    needsScenes: {
+      ...typography.body,
+      color: colors.text,
+      marginBottom: 8,
+      lineHeight: 21,
     },
     preview: {
       ...typography.body,
@@ -458,6 +486,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     numberWidthInput: { width: '30%' },
     unitField: { flex: 1 },
+    unitSelect: { marginBottom: 0 },
     label: { ...typography.bodyLarge, color: colors.text, marginBottom: 6 },
     positions: {
       flexDirection: 'row',

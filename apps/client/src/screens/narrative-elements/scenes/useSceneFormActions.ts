@@ -1,7 +1,12 @@
 import type { SeeAlsoManagerHandle } from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { StackActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { parseCalendarDateCoordinate, type Scene, type StorySchemaField } from '@keres/shared';
+import {
+  type CalendarDefinitionType,
+  parseCalendarDateCoordinate,
+  type Scene,
+  type StorySchemaField,
+} from '@keres/shared';
 import type { RefObject } from 'react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +14,7 @@ import type { AppDrizzleClient } from '@/src/db';
 import { useEntityFormActions } from '@/src/hooks/forms/useEntityFormActions';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
 import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { coordinateExists } from '@/src/utils/calendar/calendarDateFields';
 import { parseTimingInput } from '@/src/utils/scene/sceneTimingInput';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { SceneFormState } from './useSceneFormState';
@@ -37,6 +43,8 @@ type UseSceneFormActionsOptions = {
   drizzleDb: AppDrizzleClient;
   sceneServiceRef: RefObject<SceneService | null>;
   navigation: SceneNavigation;
+  /** The story's calendars: a fixed date is checked against the one it is written in. */
+  calendars?: { id: string; definition: CalendarDefinitionType }[];
   storyId?: string;
   userId?: string | null;
   persistTagRelations(sceneId: string): Promise<void>;
@@ -53,6 +61,7 @@ export function useSceneFormActions({
   drizzleDb,
   sceneServiceRef,
   navigation,
+  calendars = [],
   storyId,
   userId,
   persistTagRelations,
@@ -65,6 +74,23 @@ export function useSceneFormActions({
   const copy = useVocabularyEntityCopy('Scene');
   const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
 
+  /**
+   * Syntax first, then that the date exists in its calendar: the form's fields only offer real dates,
+   * but a calendar edited since (a month shortened, one removed) can leave a saved date that no longer is.
+   * A calendar that is not loaded cannot be checked against, and is not guessed at.
+   */
+  const fixedDateError = (calendarDateOverride: string) => {
+    if (!calendarDateOverride) return null;
+    const coordinate = parseCalendarDateCoordinate(calendarDateOverride);
+    if (!coordinate) return t('scene_fixed_date_invalid');
+    const calendarId = state.calendarDateOverrideCalendarId;
+    const calendar = calendarId ? calendars.find((candidate) => candidate.id === calendarId) : null;
+    if (calendarId && !calendar) return null;
+    return coordinateExists(calendar?.definition ?? null, coordinate)
+      ? null
+      : t('scene_fixed_date_out_of_range');
+  };
+
   /** The timing the author typed, or the message that says what is wrong with it. */
   const readTiming = () => {
     const gap = parseTimingInput(state.gapInput);
@@ -73,9 +99,7 @@ export function useSceneFormActions({
     const error =
       (state.gapInput !== '' && gap === null) || (state.durationInput !== '' && duration === null)
         ? t('scene_timing_invalid')
-        : calendarDateOverride && !parseCalendarDateCoordinate(calendarDateOverride)
-          ? t('scene_fixed_date_invalid')
-          : null;
+        : fixedDateError(calendarDateOverride);
     return { gap, duration, calendarDateOverride, error };
   };
 

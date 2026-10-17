@@ -92,6 +92,7 @@ export default function ChoiceCheckGroupEditor({
               <View style={styles.fieldFlex}>
                 <Text style={styles.cardRowLabel}>{t('check_group_combinator')}</Text>
                 <SingleSelectPill
+                  style={styles.select}
                   options={combinatorOptions}
                   value={group.combinator}
                   onValueChange={(value) =>
@@ -115,6 +116,7 @@ export default function ChoiceCheckGroupEditor({
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_type')}</Text>
                     <SingleSelectPill
+                      style={styles.select}
                       options={checkTypeOptions}
                       value={check.type}
                       onValueChange={(value) =>
@@ -126,6 +128,7 @@ export default function ChoiceCheckGroupEditor({
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_mode')}</Text>
                     <SingleSelectPill
+                      style={styles.select}
                       options={checkModeOptions}
                       value={check.mode}
                       onValueChange={(value) =>
@@ -141,6 +144,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_scene')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={sceneOptions}
                         value={check.sceneId}
                         onValueChange={(value) => onUpdateCheck(check.id, { sceneId: value })}
@@ -169,6 +173,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_item')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={itemOptions}
                         value={check.itemId}
                         onValueChange={(value) => onUpdateCheck(check.id, { itemId: value })}
@@ -180,6 +185,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_item_presence')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={itemPresenceOptions}
                         value={check.itemPresence}
                         onValueChange={(value) =>
@@ -208,6 +214,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_trigger_state')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={triggerStateOptions}
                         value={check.triggerState}
                         onValueChange={(value) =>
@@ -262,6 +269,8 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.background,
     },
     cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+    // The pill's own bottom margin would lift it off the line of the input beside it in a centred row.
+    select: { marginBottom: 0 },
     cardRowLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
     fieldFlex: { flex: 1 },
     removeLink: { color: colors.error, fontWeight: '600' },

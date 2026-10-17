@@ -69,6 +69,16 @@ const page: HelpPage = {
         },
       ],
     },
+    { type: 'heading', level: 2, text: 'Quando acontece (trecho)' },
+    {
+      type: 'paragraph',
+      text: 'Na linha do tempo um capítulo é posicionado automaticamente, do início da primeira cena ao fim da última. Um trecho (Quando isto acontece? no formulário do capítulo) substitui isso para o que não segue a linha principal. Como a posição é dada em relação a uma cena, a história precisa ter ao menos uma cena antes de você poder adicionar um.',
+    },
+    {
+      type: 'example',
+      title: 'Tempo paralelo e não linear',
+      text: 'Uma festa que acontece enquanto os heróis viajam: um evento posicionado do início da cena em que eles partem ao fim da cena em que chegam. Ou um capítulo que volta algumas horas para contar a mesma noite do lado de outro personagem: um trecho que começa algumas horas antes da cena que ele reconta.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

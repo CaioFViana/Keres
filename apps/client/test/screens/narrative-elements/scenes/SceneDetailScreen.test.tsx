@@ -124,7 +124,7 @@ jest.mock('@/src/hooks/story/useStoryRole', () => ({
 
 jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
-  useStoryCalendar: () => ({ definition: { id: 'cal-1' } }),
+  useStoryCalendar: () => ({ definition: { id: 'cal-1' }, calendars: [] }),
 }));
 
 jest.mock('@/src/hooks/scene/useSceneCalendarDates', () => ({
@@ -171,7 +171,7 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return {
     __esModule: true,
-    useTranslation: () => ({ t }),
+    useTranslation: () => ({ t, i18n: { language: 'en' } }),
   };
 });
 
@@ -248,6 +248,7 @@ jest.mock('@/src/screens/narrative-elements/scenes/SceneDetailContent', () => {
       t: (key: string) => string;
       manuscriptExcerpt: string | null;
       hasBodyDraft: boolean;
+      fixedDate?: { text: string; valid: boolean } | null;
       onOpenEditor: () => void;
     }) => (
       <>
@@ -272,6 +273,7 @@ jest.mock('@/src/screens/narrative-elements/scenes/SceneDetailContent', () => {
             allNotes: props.allNotes.length,
             excerpt: props.manuscriptExcerpt,
             bodyDraft: props.hasBodyDraft,
+            fixedDate: props.fixedDate ?? null,
           })}
         </Text>
         <Text testID="content-open-editor" onPress={props.onOpenEditor}>
@@ -412,6 +414,26 @@ describe('SceneDetailScreen', () => {
     expect(view.getByTestId('content-effect').props.children).toBe('effect_description_item_grant');
     await waitFor(() => expect(mockHeaderArgs?.title).toBe('Opening'));
     expect(mockGetPreviousNextScenes).toHaveBeenCalledWith('story-1', 'scene-1', 'chapter-1');
+  });
+
+  it('hands the content no fixed date for a scene without one', async () => {
+    const view = await render(<SceneDetailScreen />);
+    await view.findByTestId('scene-content');
+
+    expect(jsonOf(view, 'scene-content').fixedDate).toBeNull();
+  });
+
+  it('hands the content the fixed date as written', async () => {
+    mockGetSceneById.mockResolvedValue(makeScene({ calendarDateOverride: '2023-01-31T10:00' }));
+    const view = await render(<SceneDetailScreen />);
+    await view.findByTestId('scene-content');
+
+    await waitFor(() =>
+      expect(jsonOf(view, 'scene-content').fixedDate).toEqual({
+        text: '2023-01-31 · 10:00 · calendar_standard_title',
+        valid: true,
+      }),
+    );
   });
 
   it('loads choices and names for branching stories', async () => {

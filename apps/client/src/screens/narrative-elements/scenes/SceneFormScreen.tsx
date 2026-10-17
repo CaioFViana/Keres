@@ -170,6 +170,7 @@ const SceneFormScreen = () => {
     drizzleDb,
     sceneServiceRef,
     navigation,
+    calendars,
     storyId: selectedStory?.id,
     userId,
     persistTagRelations,
@@ -284,6 +285,7 @@ const SceneFormScreen = () => {
         calendarDateOverrideCalendarId={calendarDateOverrideCalendarId}
         onCalendarDateOverrideCalendarIdChange={setCalendarDateOverrideCalendarId}
         calendars={calendars}
+        storyHasEpoch={selectedStory?.timelineEpochDay != null}
         inputStyle={commonInputStyles.input}
       />
 

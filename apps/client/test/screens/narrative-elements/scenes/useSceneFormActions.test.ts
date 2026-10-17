@@ -41,7 +41,9 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 jest.mock('@keres/shared', () => ({
-  parseCalendarDateCoordinate: jest.fn(() => ({ year: 1, month: 1, day: 1 })),
+  parseCalendarDateCoordinate: jest.fn(() => ({ year: 1, month: 1, day: 1, hour: 0, minute: 0 })),
+  // A February of 28 days, whatever the year.
+  daysInMonth: jest.fn(() => 28),
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -111,6 +113,7 @@ type RenderOptions = {
   storyId?: string;
   userId?: string | null;
   service?: SceneService | null;
+  calendars?: { id: string; definition: any }[];
 };
 
 const renderActions = (state = createState(), overrides: RenderOptions = {}) => {
@@ -126,6 +129,7 @@ const renderActions = (state = createState(), overrides: RenderOptions = {}) => 
             : overrides.service,
       },
       navigation: navigation as never,
+      calendars: overrides.calendars,
       storyId: 'storyId' in overrides ? overrides.storyId : 'story-1',
       userId: 'userId' in overrides ? overrides.userId : 'user-1',
       persistTagRelations,
@@ -404,6 +408,72 @@ it('rejects an unparseable fixed date', async () => {
 
   expect(mockAlert).toHaveBeenCalledWith('error', 'scene_fixed_date_invalid');
   expect(sceneService.createScene).not.toHaveBeenCalled();
+});
+
+describe('a fixed date that must exist in its calendar', () => {
+  const shared = () =>
+    jest.requireMock('@keres/shared') as { parseCalendarDateCoordinate: jest.Mock };
+  const at = (month: number, day: number, hour = 0, minute = 0) => ({
+    year: 5,
+    month,
+    day,
+    hour,
+    minute,
+  });
+  const lunar = {
+    id: 'lunar',
+    definition: { months: [{ days: 28 }, { days: 28 }], hoursPerDay: 20, minutesPerHour: 50 },
+  };
+
+  it('rejects a Gregorian day the month does not have', async () => {
+    shared().parseCalendarDateCoordinate.mockReturnValueOnce(at(2, 30));
+    const view = await renderActions(createState({ calendarDateOverride: '0005-02-30T00:00' }));
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'scene_fixed_date_out_of_range');
+    expect(sceneService.createScene).not.toHaveBeenCalled();
+  });
+
+  it('rejects a month, hour or minute the calendar lacks', async () => {
+    for (const parts of [at(3, 1), at(1, 1, 20), at(1, 1, 0, 50), at(1, 29)]) {
+      mockAlert.mockClear();
+      shared().parseCalendarDateCoordinate.mockReturnValueOnce(parts);
+      const view = await renderActions(
+        createState({ calendarDateOverride: 'x', calendarDateOverrideCalendarId: 'lunar' }),
+        { calendars: [lunar] },
+      );
+
+      await act(async () => view.result.current.handleSave());
+
+      expect(mockAlert).toHaveBeenCalledWith('error', 'scene_fixed_date_out_of_range');
+    }
+    expect(sceneService.createScene).not.toHaveBeenCalled();
+  });
+
+  it('saves a date that exists, at the last moment of the day', async () => {
+    shared().parseCalendarDateCoordinate.mockReturnValueOnce(at(2, 28, 19, 49));
+    const view = await renderActions(
+      createState({ calendarDateOverride: 'x', calendarDateOverrideCalendarId: 'lunar' }),
+      { calendars: [lunar] },
+    );
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(sceneService.createScene).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not guess about a calendar that is not loaded', async () => {
+    shared().parseCalendarDateCoordinate.mockReturnValueOnce(at(9, 99));
+    const view = await renderActions(
+      createState({ calendarDateOverride: 'x', calendarDateOverrideCalendarId: 'missing' }),
+      { calendars: [] },
+    );
+
+    await act(async () => view.result.current.handleSave());
+
+    expect(sceneService.createScene).toHaveBeenCalledTimes(1);
+  });
 });
 
 it('persists timing and fixed-date data on save', async () => {

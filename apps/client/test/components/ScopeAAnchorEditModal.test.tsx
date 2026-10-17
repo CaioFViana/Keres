@@ -1,4 +1,5 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import React from 'react';
 import AnchorEditModal, {
   type AnchorDraft,
@@ -86,11 +87,13 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
       value,
       onValueChange,
       placeholder,
+      style,
     }: {
       options: { label: string; value: string }[];
       value: string | null;
       onValueChange: (next: string | null) => void;
       placeholder?: string;
+      style?: unknown;
     }) => (
       <RN.View
         testID="single-select-pill"
@@ -98,6 +101,7 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
         value={value}
         onValueChange={onValueChange}
         placeholder={placeholder}
+        style={style}
       />
     ),
   };
@@ -152,6 +156,46 @@ describe('AnchorEditModal', () => {
     );
 
     expect(view.toJSON()).toBeNull();
+  });
+
+  it('explains how a stretch works before asking anything', async () => {
+    const view = await render(
+      <AnchorEditModal
+        visible
+        scenes={scenes}
+        hasContents
+        allowOpenStretch
+        onCancel={jest.fn()}
+        onConfirm={jest.fn()}
+      />,
+    );
+
+    expect(view.getByText('anchor_how_it_works')).toBeTruthy();
+    expect(view.queryByText('anchor_needs_scenes')).toBeNull();
+  });
+
+  it('with no scenes in the story, says why and offers only a way out', async () => {
+    const onCancel = jest.fn();
+    const onConfirm = jest.fn();
+    const view = await render(
+      <AnchorEditModal
+        visible
+        scenes={[]}
+        hasContents={false}
+        allowOpenStretch
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    expect(view.getByText('anchor_how_it_works')).toBeTruthy();
+    expect(view.getByText('anchor_needs_scenes')).toBeTruthy();
+    expect(view.queryByTestId('confirm-anchor')).toBeNull();
+    expect(view.queryAllByTestId('single-select-pill')).toHaveLength(0);
+
+    await pressButton(view, 'anchor-understood');
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 
   it('confirms an open stretch once the start is picked', async () => {
@@ -288,6 +332,27 @@ describe('AnchorEditModal', () => {
     // The stored distance reopens its editor with the amount prefilled.
     expect(view.getByPlaceholderText('anchor_offset_placeholder').props.value).toBe('3');
     expect(view.getAllByText('anchor_hide_distance')).toHaveLength(1);
+  });
+
+  it('lines the unit select up with the amount field: the pill brings no margin of its own', async () => {
+    const view = await render(
+      <AnchorEditModal
+        visible
+        scenes={scenes}
+        hasContents
+        allowOpenStretch
+        onCancel={jest.fn()}
+        onConfirm={jest.fn()}
+      />,
+    );
+
+    await setPill(view, 0, 'scene-1');
+    await pressText(view, 'anchor_show_distance');
+    const unitPill = view
+      .getAllByTestId('single-select-pill')
+      .find((pill) => pill.props.placeholder === 'anchor_offset_unit_placeholder');
+
+    expect(StyleSheet.flatten(unitPill?.props.style).marginBottom).toBe(0);
   });
 
   it('records a typed distance with before/after direction', async () => {

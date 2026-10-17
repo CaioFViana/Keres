@@ -193,7 +193,11 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
           ) : undefined,
         }))}
       />
-      {editable && !anchors.some((anchor) => !anchor.endSceneId) && (
+      {editable && scenes.length === 0 && (
+        // Placing a chapter is relative to a scene: with none in the story there is nothing to add yet.
+        <Text style={styles.empty}>{t('anchor_needs_scenes')}</Text>
+      )}
+      {editable && scenes.length > 0 && !anchors.some((anchor) => !anchor.endSceneId) && (
         <TouchableOpacity style={styles.add} onPress={() => setEditing({ id: null })}>
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
           <Text style={styles.addText}>{t('anchor_add')}</Text>

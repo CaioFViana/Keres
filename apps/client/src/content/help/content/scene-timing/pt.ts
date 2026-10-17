@@ -26,6 +26,11 @@ const page: HelpPage = {
         'Em Configurações da história, use normalizar tempo quando quiser recalcular a sequência a partir desses valores. O tempo poderá ser mostrado como 26 horas ou como 1 dia e 2 horas.',
       ],
     },
+    { type: 'heading', level: 2, text: 'Data fixa' },
+    {
+      type: 'paragraph',
+      text: 'Por padrão uma cena vem depois da anterior, medida pelo Intervalo. Quando você sabe exatamente quando uma cena acontece, defina uma data fixa nela: escolha o calendário (o primário da história por padrão, ou o gregoriano), depois o dia, mês, ano e hora, ou toque no botão de calendário para escolher numa grade de mês. A data fixa substitui o Intervalo para posicionar a cena na linha do tempo; a Duração continua contando. Ela só posiciona a cena quando a história tem calendário primário e data de início (veja Calendários). O detalhe da cena mostra a data fixa.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

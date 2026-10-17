@@ -26,6 +26,11 @@ const page: HelpPage = {
         'In Story settings, use normalize time when you want to recalculate the sequence from these values. The time can be shown as 26 hours or as 1 day and 2 hours.',
       ],
     },
+    { type: 'heading', level: 2, text: 'Fixed date' },
+    {
+      type: 'paragraph',
+      text: 'By default a scene comes after the previous one, measured by its Interval. When you know exactly when a scene happens, set a fixed date on it: pick the calendar (the story’s primary one by default, or Gregorian), then the day, month, year and time, or tap the calendar button to choose on a month grid. A fixed date replaces the Interval for placing the scene on the timeline; the Duration still counts. It only places the scene when the story has a primary calendar and a start date (see Calendars). The scene’s detail shows the fixed date.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

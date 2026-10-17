@@ -1,4 +1,5 @@
 import { useDrizzle } from '@/src/db';
+import { coordinateExists } from '@/src/utils/calendar/calendarDateFields';
 import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { createChapterAnchorService } from '@/src/services/storymanagement/scenes-chapters/ChapterAnchorService';
 import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
@@ -27,7 +28,6 @@ import {
   gregorianDayNumber,
   gregorianDayNumberForElapsed,
   gregorianPartsFromDayNumber,
-  isCalendarDateCoordinateInBounds,
   parseCalendarDateCoordinate,
   partsToDayNumber,
 } from '@keres/shared';
@@ -225,8 +225,8 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
           ? calendars.find((candidate) => candidate.id === scene.calendarDateOverrideCalendarId)
               ?.definition
           : null;
-        if (!coordinate || (source && !isCalendarDateCoordinateInBounds(source, coordinate)))
-          return [];
+        // Gregorian dates are checked too: `gregorianDayNumber` throws on a day the month lacks.
+        if (!coordinate || !coordinateExists(source ?? null, coordinate)) return [];
         const day = source ? partsToDayNumber(source, coordinate) : gregorianDayNumber(coordinate);
         const sourceSecondsPerDay = source ? calendarSecondsPerDay(source) : 86400;
         const timeFraction =

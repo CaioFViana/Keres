@@ -69,6 +69,16 @@ const page: HelpPage = {
         },
       ],
     },
+    { type: 'heading', level: 2, text: 'When it happens (stretch)' },
+    {
+      type: 'paragraph',
+      text: 'On the timeline a chapter is placed automatically, from the start of its first scene to the end of its last. A stretch (When does this happen? in the chapter form) overrides that for what does not follow the main line. Because the position is given relative to a scene, the story needs at least one scene before you can add one.',
+    },
+    {
+      type: 'example',
+      title: 'Parallel and non-linear time',
+      text: 'A festival that takes place while the heroes travel: an event placed from the start of the scene where they leave to the end of the scene where they arrive. Or a chapter that goes back a few hours to tell the same night from another character’s side: a stretch starting some hours before the scene it retells.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

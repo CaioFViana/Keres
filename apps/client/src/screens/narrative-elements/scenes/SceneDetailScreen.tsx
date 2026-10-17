@@ -27,6 +27,8 @@ import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { sceneFixedDate } from '@/src/utils/scene/sceneFixedDate';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
 import {
   useEntityEventSubscriptions,
@@ -58,12 +60,13 @@ function excerptBody(body: string | null | undefined): string | null {
 const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const { definition: calendar } = useStoryCalendar();
+  const { definition: calendar, calendars } = useStoryCalendar();
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId, occurrence } = route.params;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
   const copy = useVocabularyEntityCopy('Scene');
   const locationCopy = useVocabularyEntityCopy('Location');
   const { selectedStory } = useStoryStore();
@@ -586,6 +589,15 @@ const SceneDetailScreen = () => {
       onOpenEditor={openEditor}
       dateForScene={dateForScene}
       calendar={calendar}
+      fixedDate={sceneFixedDate(scene, {
+        calendars,
+        language: i18n.language,
+        format: dateDisplayFormat,
+        labels: {
+          gregorian: t('calendar_standard_title'),
+          notValid: t('scene_fixed_date_not_valid'),
+        },
+      })}
       locationCopy={locationCopy}
       location={location}
       handleLocationPress={handleLocationPress}

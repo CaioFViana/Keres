@@ -170,7 +170,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
   );
 
   return (
-    <View style={styles.container}>
+    <View testID="icon-picker-container" style={styles.container}>
       <View style={styles.header}>
         {title ? <Text style={styles.title}>{title}</Text> : <View style={{ flex: 1 }} />}
         <TouchableOpacity
@@ -246,6 +246,11 @@ const createStyles = (colors: ThemeColors, [m]: [Metrics]) =>
       // The wrapped chips grow vertically on narrow windows; the cap keeps the whole
       // modal on screen while the grid below yields the room.
       maxHeight: m.screenHeight - 120,
+      // The modal surface around it has its own cap (and padding) that this number knows nothing
+      // about. A native flex item does not shrink by default, so without this the surface clipped the
+      // bottom of the grid - the last row cut off, out of the scroll's reach - whenever the recents row
+      // made the content tall enough to hit that cap. The grid is the one child that yields.
+      flexShrink: 1,
       alignItems: 'center',
       padding: 20,
       backgroundColor: colors.background,

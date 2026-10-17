@@ -372,6 +372,23 @@ describe('IconPickerModal', () => {
     expect(recentsStyle.flexShrink).toBe(0);
     expect(gridStyle.flexShrink).toBe(1);
   });
+
+  it('yields to the modal around it, so the grid is never clipped by the surface', async () => {
+    const screen = await render(
+      <IconPickerModal
+        currentIcon={null}
+        onSelectIcon={() => {}}
+        onClose={() => {}}
+        options={options}
+      />,
+    );
+
+    // On native a flex item does not shrink unless asked: the surface's own cap then cuts the bottom
+    // off the grid, past what the list can scroll to.
+    expect(
+      StyleSheet.flatten(screen.getByTestId('icon-picker-container').props.style).flexShrink,
+    ).toBe(1);
+  });
 });
 
 describe('DatePickerInput', () => {

@@ -11,6 +11,7 @@ import {
   formatCalendarDate,
   formatGregorianDate,
   partsToDayNumber,
+  toClockHour,
 } from '@keres/shared';
 
 /**
@@ -39,6 +40,27 @@ export const minutesPerHourOf = (calendar: CalendarOrGregorian): number =>
 export function daysInMonthOf(calendar: CalendarOrGregorian, year: number, month: number): number {
   if (calendar) return calendar.months[clamp(month, 1, monthCountOf(calendar)) - 1]?.days ?? 1;
   return daysInMonth(year, clamp(month, 1, GREGORIAN_MONTHS));
+}
+
+/**
+ * Whether the clock is written in 12 hours with AM/PM: the person's setting (the same one the date
+ * picker follows), and only for a day of 24 hours. A world whose day has 20 hours has no noon to split
+ * it at, so its hours are always counted from zero.
+ */
+export const usesTwelveHourClock = (calendar: CalendarOrGregorian, use24HourTime: boolean) =>
+  !use24HourTime && hoursPerDayOf(calendar) === 24;
+
+const pad2 = (value: number) => String(value).padStart(2, '0');
+
+/** The time of day as it is read: `23:00`, or `11:00 PM` on a 12-hour clock. */
+export function formatTimeOfDay(
+  time: { hour: number; minute: number },
+  twelveHour: boolean,
+  labels: { am: string; pm: string },
+): string {
+  if (!twelveHour) return `${pad2(time.hour)}:${pad2(time.minute)}`;
+  const { hour, isPm } = toClockHour(time.hour, false);
+  return `${pad2(hour)}:${pad2(time.minute)} ${isPm ? labels.pm : labels.am}`;
 }
 
 /** The first moment of year one: where a date starts when a writer chooses to set one. */

@@ -106,7 +106,7 @@ describe('SceneFixedDateField, with a date', () => {
       <SceneFixedDateField {...baseProps()} value="0003-02-06T07:08" calendarId="lunar" />,
     );
 
-    expect(view.getByText('6 L2, 3')).toBeTruthy();
+    expect(view.getByText('6 L2, 3 · 07:08')).toBeTruthy();
     // Day, year, hour and minute.
     expect(inputs(view)).toHaveLength(4);
     expect(inputs(view).map((field) => field.props.value)).toEqual(['6', '3', '7', '8']);
@@ -117,7 +117,7 @@ describe('SceneFixedDateField, with a date', () => {
       <SceneFixedDateField {...baseProps()} value="2023-01-31T10:00" calendarId={null} />,
     );
 
-    expect(view.getByText('2023-01-31')).toBeTruthy();
+    expect(view.getByText('2023-01-31 · 10:00')).toBeTruthy();
     expect(view.getByText('January')).toBeTruthy();
   });
 

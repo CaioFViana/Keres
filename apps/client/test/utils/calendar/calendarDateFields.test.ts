@@ -5,10 +5,12 @@ import {
   defaultCoordinate,
   describeCoordinate,
   eraStartYearFor,
+  formatTimeOfDay,
   hoursPerDayOf,
   minutesPerHourOf,
   monthCountOf,
   monthOptions,
+  usesTwelveHourClock,
 } from '@/src/utils/calendar/calendarDateFields';
 
 /** Thirteen months of 28 days, a 20-hour day of 50-minute hours, a named week, eras, a season and a moon. */
@@ -172,5 +174,34 @@ describe('describeCoordinate', () => {
     const unnamed = CalendarDefinitionSchema.parse({ months: [{ name: 'One', days: 30 }] });
 
     expect(describeCoordinate(unnamed, { year: 1, month: 1, day: 1 }, 'en').weekday).toBeNull();
+  });
+});
+
+describe('the clock', () => {
+  const labels = { am: 'AM', pm: 'PM' };
+
+  it('is twelve hours only on a day of 24 hours and when the person did not choose 24', () => {
+    expect(usesTwelveHourClock(null, false)).toBe(true);
+    expect(usesTwelveHourClock(null, true)).toBe(false);
+    // A 20-hour day has no noon to split it at.
+    expect(usesTwelveHourClock(invented, false)).toBe(false);
+    expect(
+      usesTwelveHourClock(
+        CalendarDefinitionSchema.parse({ months: [{ name: 'One', days: 30 }] }),
+        false,
+      ),
+    ).toBe(true);
+  });
+
+  it('writes the time of day on a 24-hour clock', () => {
+    expect(formatTimeOfDay({ hour: 23, minute: 5 }, false, labels)).toBe('23:05');
+    expect(formatTimeOfDay({ hour: 0, minute: 0 }, false, labels)).toBe('00:00');
+  });
+
+  it('writes the time of day on a 12-hour clock, with midnight and noon as 12', () => {
+    expect(formatTimeOfDay({ hour: 23, minute: 5 }, true, labels)).toBe('11:05 PM');
+    expect(formatTimeOfDay({ hour: 0, minute: 0 }, true, labels)).toBe('12:00 AM');
+    expect(formatTimeOfDay({ hour: 12, minute: 30 }, true, labels)).toBe('12:30 PM');
+    expect(formatTimeOfDay({ hour: 9, minute: 7 }, true, labels)).toBe('09:07 AM');
   });
 });

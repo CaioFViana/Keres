@@ -15,7 +15,8 @@ const options = {
   calendars: [lunar],
   language: 'en',
   format: 'iso' as const,
-  labels: { gregorian: 'Gregorian', notValid: 'not valid' },
+  use24HourTime: true,
+  labels: { gregorian: 'Gregorian', notValid: 'not valid', am: 'AM', pm: 'PM' },
 };
 
 describe('sceneFixedDate', () => {
@@ -43,6 +44,37 @@ describe('sceneFixedDate', () => {
     expect(
       sceneFixedDate({ calendarDateOverride: '2023-01-31T10:00' }, { ...options, format: 'dmy' }),
     ).toEqual({ text: '31/01/2023 · 10:00 · Gregorian', valid: true });
+  });
+
+  it('reads the time on a 12-hour clock when that is the setting, for a day of 24 hours', () => {
+    const twelve = { ...options, use24HourTime: false };
+
+    expect(sceneFixedDate({ calendarDateOverride: '2023-01-31T23:05' }, twelve)).toEqual({
+      text: '2023-01-31 · 11:05 PM · Gregorian',
+      valid: true,
+    });
+    expect(sceneFixedDate({ calendarDateOverride: '2023-01-31T00:30' }, twelve)).toEqual({
+      text: '2023-01-31 · 12:30 AM · Gregorian',
+      valid: true,
+    });
+  });
+
+  it('keeps counting the hours from zero in a world whose day is not 24 hours long', () => {
+    const short = {
+      id: 'short',
+      name: 'Short',
+      definition: CalendarDefinitionSchema.parse({
+        hoursPerDay: 20,
+        months: [{ name: 'One', days: 30 }],
+      }),
+    };
+
+    expect(
+      sceneFixedDate(
+        { calendarDateOverride: '0001-01-01T17:05', calendarDateOverrideCalendarId: 'short' },
+        { ...options, calendars: [short], use24HourTime: false },
+      ),
+    ).toEqual({ text: '1 One, 1 · 17:05 · Short', valid: true });
   });
 
   it('shows text that is not a date as saved, marked', () => {

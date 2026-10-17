@@ -67,6 +67,7 @@ const SceneDetailScreen = () => {
   const { sceneId, occurrence } = route.params;
   const { t, i18n } = useTranslation();
   const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
+  const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
   const copy = useVocabularyEntityCopy('Scene');
   const locationCopy = useVocabularyEntityCopy('Location');
   const { selectedStory } = useStoryStore();
@@ -593,9 +594,12 @@ const SceneDetailScreen = () => {
         calendars,
         language: i18n.language,
         format: dateDisplayFormat,
+        use24HourTime,
         labels: {
           gregorian: t('calendar_standard_title'),
           notValid: t('scene_fixed_date_not_valid'),
+          am: t('attribute_date_am'),
+          pm: t('attribute_date_pm'),
         },
       })}
       locationCopy={locationCopy}

@@ -6,6 +6,7 @@ jest.mock('react-native-safe-area-context', () => ({
 import { CalendarDefinitionSchema, type CalendarDateCoordinate } from '@keres/shared';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import CalendarDateFields from '@/src/components/common/inputs/CalendarDateFields/CalendarDateFields';
 
 jest.mock('@/src/theme', () => ({
@@ -345,5 +346,242 @@ describe('CalendarDateFields, read only', () => {
 
     for (const field of inputs(view)) expect(field.props.editable).toBe(false);
     expect(view.queryByTestId('calendar-date-pick')).toBeNull();
+  });
+});
+
+describe('CalendarDateFields, what the preview says of the time', () => {
+  afterEach(() => useUserSettingsStore.setState({ use24HourTime: true }));
+
+  it('includes the hour and the minute in the date read back', async () => {
+    const view = await render(
+      <CalendarDateFields
+        calendar={null}
+        value={at(2012, 8, 24, 23, 0)}
+        onChange={() => {}}
+        withTime
+      />,
+    );
+
+    expect(view.getByText('2012-08-24 · 23:00')).toBeTruthy();
+  });
+
+  it('has no time to read when the field has none', async () => {
+    const view = await render(
+      <CalendarDateFields calendar={null} value={at(2012, 8, 24, 23, 0)} onChange={() => {}} />,
+    );
+
+    expect(view.getByText('2012-08-24')).toBeTruthy();
+  });
+
+  it('follows the date as it changes', async () => {
+    const view = await render(
+      <CalendarDateFields
+        calendar={invented}
+        value={at(3, 2, 6, 7, 8)}
+        onChange={() => {}}
+        withTime
+      />,
+    );
+    expect(view.getByText('6 Moon 2, 3 N.A. · 07:08')).toBeTruthy();
+
+    await view.rerender(
+      <CalendarDateFields
+        calendar={invented}
+        value={at(3, 2, 6, 19, 49)}
+        onChange={() => {}}
+        withTime
+      />,
+    );
+    expect(view.getByText('6 Moon 2, 3 N.A. · 19:49')).toBeTruthy();
+  });
+
+  describe('on a 12-hour clock', () => {
+    beforeEach(() => useUserSettingsStore.setState({ use24HourTime: false }));
+
+    it('reads the time with AM or PM, and shows the clock hour in the field', async () => {
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 23, 5)}
+          onChange={() => {}}
+          withTime
+        />,
+      );
+
+      expect(view.getByText('2012-08-24 · 11:05 attribute_date_pm')).toBeTruthy();
+      expect(inputs(view).map((field) => field.props.value)).toEqual(['24', '2012', '11', '5']);
+      expect(view.getByTestId('calendar-date-period')).toBeTruthy();
+      expect(view.getByText('attribute_date_pm')).toBeTruthy();
+    });
+
+    it('shows midnight as 12 AM', async () => {
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 0, 0)}
+          onChange={() => {}}
+          withTime
+        />,
+      );
+
+      expect(inputs(view)[2].props.value).toBe('12');
+      expect(view.getByText('attribute_date_am')).toBeTruthy();
+      expect(view.getByText('2012-08-24 · 12:00 attribute_date_am')).toBeTruthy();
+    });
+
+    it('stores the hour typed in the period it is in: 3 in the evening is 15', async () => {
+      const onChange = jest.fn();
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 23, 0)}
+          onChange={onChange}
+          withTime
+        />,
+      );
+
+      await fireEvent.changeText(inputs(view)[2], '3');
+
+      expect(onChange).toHaveBeenLastCalledWith(at(2012, 8, 24, 15, 0));
+    });
+
+    it('turns 12 AM into hour 0', async () => {
+      const onChange = jest.fn();
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 5, 0)}
+          onChange={onChange}
+          withTime
+        />,
+      );
+
+      await fireEvent.changeText(inputs(view)[2], '12');
+
+      expect(onChange).toHaveBeenLastCalledWith(at(2012, 8, 24, 0, 0));
+    });
+
+    it('turns 12 PM into hour 12', async () => {
+      const onChange = jest.fn();
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 17, 0)}
+          onChange={onChange}
+          withTime
+        />,
+      );
+
+      await fireEvent.changeText(inputs(view)[2], '12');
+
+      expect(onChange).toHaveBeenLastCalledWith(at(2012, 8, 24, 12, 0));
+    });
+
+    it('has no hour 0, and holds 13 to 12', async () => {
+      const onChange = jest.fn();
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 5, 0)}
+          onChange={onChange}
+          withTime
+        />,
+      );
+
+      await fireEvent.changeText(inputs(view)[2], '0');
+      expect(onChange).not.toHaveBeenCalled();
+
+      await fireEvent.changeText(inputs(view)[2], '15');
+      expect(onChange).toHaveBeenLastCalledWith(at(2012, 8, 24, 0, 0));
+    });
+
+    it('moves the hour half a day when the period is toggled, and back', async () => {
+      const onChange = jest.fn();
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 23, 5)}
+          onChange={onChange}
+          withTime
+        />,
+      );
+
+      await fireEvent.press(view.getByTestId('calendar-date-period'));
+      expect(onChange).toHaveBeenLastCalledWith(at(2012, 8, 24, 11, 5));
+
+      await view.rerender(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 11, 5)}
+          onChange={onChange}
+          withTime
+        />,
+      );
+      expect(view.getByText('attribute_date_am')).toBeTruthy();
+      await fireEvent.press(view.getByTestId('calendar-date-period'));
+      expect(onChange).toHaveBeenLastCalledWith(at(2012, 8, 24, 23, 5));
+    });
+
+    it('keeps the clock hour on screen when the value changes from outside', async () => {
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 23, 5)}
+          onChange={() => {}}
+          withTime
+        />,
+      );
+
+      await view.rerender(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 15, 5)}
+          onChange={() => {}}
+          withTime
+        />,
+      );
+
+      expect(inputs(view)[2].props.value).toBe('3');
+    });
+
+    it('has no period on a calendar whose day is not 24 hours long', async () => {
+      const view = await render(
+        <CalendarDateFields
+          calendar={invented}
+          value={at(3, 2, 6, 17, 8)}
+          onChange={() => {}}
+          withTime
+        />,
+      );
+
+      expect(view.queryByTestId('calendar-date-period')).toBeNull();
+      expect(inputs(view)[2].props.value).toBe('17');
+      expect(view.getByText('6 Moon 2, 3 N.A. · 17:08')).toBeTruthy();
+    });
+
+    it('has no period without a time of day', async () => {
+      const view = await render(
+        <CalendarDateFields calendar={null} value={at(2012, 8, 24, 23, 5)} onChange={() => {}} />,
+      );
+
+      expect(view.queryByTestId('calendar-date-period')).toBeNull();
+    });
+
+    it('locks the period when read only', async () => {
+      const onChange = jest.fn();
+      const view = await render(
+        <CalendarDateFields
+          calendar={null}
+          value={at(2012, 8, 24, 23, 5)}
+          onChange={onChange}
+          withTime
+          editable={false}
+        />,
+      );
+
+      await fireEvent.press(view.getByTestId('calendar-date-period'));
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
   });
 });

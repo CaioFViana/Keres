@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { CalendarDateCoordinate } from '@keres/shared';
+import { type CalendarDateCoordinate, fromClockHour, toClockHour } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -16,7 +16,9 @@ import {
   clampCoordinate,
   describeCoordinate,
   eraStartYearFor,
+  formatTimeOfDay,
   monthOptions,
+  usesTwelveHourClock,
 } from '@/src/utils/calendar/calendarDateFields';
 import { dayNumberOf, dayPartsOf, shiftMonth } from '@/src/utils/calendar/calendarMonthGrid';
 
@@ -35,20 +37,27 @@ type TextPart = 'year' | 'day' | 'hour' | 'minute';
 const INTEGER = /^-?\d*$/;
 const DIGITS = /^\d*$/;
 
-const textsOf = (value: CalendarDateCoordinate): Record<TextPart, string> => ({
+/** The hour as the field shows it: 1 to 12 on a 12-hour clock, the stored one (0-23, or the calendar's own) otherwise. */
+const shownHour = (hour: number, twelveHour: boolean) =>
+  twelveHour ? toClockHour(hour, false).hour : hour;
+
+const textsOf = (value: CalendarDateCoordinate, twelveHour: boolean): Record<TextPart, string> => ({
   year: String(value.year),
   day: String(value.day),
-  hour: String(value.hour),
+  hour: String(shownHour(value.hour, twelveHour)),
   minute: String(value.minute),
 });
 
 /** What a text means as a number, or `null` while it is still being typed ("", "-"). */
-const numberOf = (part: TextPart, text: string): number | null => {
+const numberOf = (part: TextPart, text: string, twelveHour = false): number | null => {
   if (text === '' || text === '-') return null;
   const parsed = Number(text);
   if (!Number.isSafeInteger(parsed)) return null;
-  // There is no day 0, but there is an hour 0: a lone "0" in the day is the start of "05".
-  return part === 'day' && parsed < 1 ? null : parsed;
+  // There is no day 0, but there is an hour 0: a lone "0" in the day is the start of "05". On a 12-hour
+  // clock the hour has no 0 either - it starts at 1.
+  if (part === 'day' && parsed < 1) return null;
+  if (part === 'hour' && twelveHour && parsed < 1) return null;
+  return parsed;
 };
 
 /**
@@ -70,6 +79,9 @@ const CalendarDateFields: React.FC<Props> = ({
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
+  const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
+  const twelveHour = usesTwelveHourClock(calendar, use24HourTime);
+  const isPm = value.hour >= 12;
   const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -78,22 +90,22 @@ const CalendarDateFields: React.FC<Props> = ({
    * differ while a text is unfinished ("-" on the way to "-400") or when something else changed the
    * value (the grid, an era, another calendar) - and then the texts follow the value.
    */
-  const [texts, setTexts] = useState(() => textsOf(value));
+  const [texts, setTexts] = useState(() => textsOf(value, twelveHour));
   const [prevValue, setPrevValue] = useState(value);
   if (value !== prevValue) {
     setPrevValue(value);
     const typed = {
       year: numberOf('year', texts.year),
       day: numberOf('day', texts.day),
-      hour: numberOf('hour', texts.hour),
+      hour: numberOf('hour', texts.hour, twelveHour),
       minute: numberOf('minute', texts.minute),
     };
     const same =
       typed.year === value.year &&
       typed.day === value.day &&
-      typed.hour === value.hour &&
+      typed.hour === shownHour(value.hour, twelveHour) &&
       typed.minute === value.minute;
-    if (!same) setTexts(textsOf(value));
+    if (!same) setTexts(textsOf(value, twelveHour));
   }
 
   const styles = useMemo(
@@ -118,6 +130,17 @@ const CalendarDateFields: React.FC<Props> = ({
           borderColor: colors.border,
         },
         pickText: { fontSize: 12, fontWeight: '700', color: colors.primary },
+        period: {
+          minWidth: 64,
+          height: 50,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 5,
+          borderWidth: 1,
+          borderColor: colors.primary,
+          backgroundColor: colors.surface,
+        },
+        periodText: { fontSize: 16, fontWeight: '700', color: colors.primary },
       }),
     [colors],
   );
@@ -126,13 +149,19 @@ const CalendarDateFields: React.FC<Props> = ({
    * A change builds on what the fields show, not only on the value: a parent that has not echoed the
    * last keystroke back yet would otherwise lose it to the next one.
    */
+  const typedHour = () => {
+    const typed = numberOf('hour', texts.hour, twelveHour);
+    if (typed === null) return value.hour;
+    return twelveHour ? fromClockHour(Math.min(typed, 12), isPm, false) : typed;
+  };
+
   const commit = (changes: Partial<CalendarDateCoordinate>) =>
     onChange(
       clampCoordinate(calendar, {
         ...value,
         year: numberOf('year', texts.year) ?? value.year,
         day: numberOf('day', texts.day) ?? value.day,
-        hour: numberOf('hour', texts.hour) ?? value.hour,
+        hour: typedHour(),
         minute: numberOf('minute', texts.minute) ?? value.minute,
         ...changes,
       }),
@@ -141,8 +170,13 @@ const CalendarDateFields: React.FC<Props> = ({
   const typeInto = (part: TextPart, text: string) => {
     if (text && !(part === 'year' ? INTEGER : DIGITS).test(text)) return;
     setTexts((current) => ({ ...current, [part]: text }));
-    const parsed = numberOf(part, text);
-    if (parsed !== null) commit({ [part]: parsed });
+    const parsed = numberOf(part, text, twelveHour);
+    if (parsed === null) return;
+    // On a 12-hour clock the typed hour is the clock's (1-12): the value's period gives it its 0-23.
+    commit({
+      [part]:
+        part === 'hour' && twelveHour ? fromClockHour(Math.min(parsed, 12), isPm, false) : parsed,
+    });
   };
 
   const numberField = (part: TextPart, label: string) => (
@@ -161,6 +195,9 @@ const CalendarDateFields: React.FC<Props> = ({
 
   const eraStart = eraStartYearFor(calendar, value.year);
   const description = describeCoordinate(calendar, value, i18n.language, dateDisplayFormat);
+  const time = withTime
+    ? formatTimeOfDay(value, twelveHour, { am: t('attribute_date_am'), pm: t('attribute_date_pm') })
+    : null;
   const aside = [
     description.weekday,
     description.season,
@@ -213,12 +250,29 @@ const CalendarDateFields: React.FC<Props> = ({
         <View style={styles.row}>
           {numberField('hour', t('calendar_epoch_hour'))}
           {numberField('minute', t('calendar_epoch_minute'))}
+          {twelveHour && (
+            <TouchableOpacity
+              style={styles.period}
+              disabled={!editable}
+              // The period is the value's: the clock hour stays, the stored hour moves half a day.
+              onPress={() => commit({ hour: (typedHour() + 12) % 24 })}
+              accessibilityRole="button"
+              accessibilityLabel={t('attribute_date_period')}
+              testID="calendar-date-period"
+            >
+              <Text style={styles.periodText}>
+                {isPm ? t('attribute_date_pm') : t('attribute_date_am')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
       <View style={styles.echoRow}>
         <View style={styles.echoText}>
-          <Text style={styles.echo}>{description.date}</Text>
+          <Text style={styles.echo}>
+            {time ? `${description.date} · ${time}` : description.date}
+          </Text>
           {aside ? <Text style={styles.aside}>{aside}</Text> : null}
         </View>
         {editable && (

@@ -314,6 +314,18 @@ describe('BoardNode', () => {
     expect(handlers.onDragEnd).toHaveBeenCalledWith('node-1');
   });
 
+  it('keeps the resize gesture once the handle has it: nobody can ask for it back', async () => {
+    const view = await render(
+      <BoardNode node={noteNode()} {...baseProps} selected layoutEditing {...nodeHandlers()} />,
+    );
+
+    const resize = responderOf(view, 'Resize board card');
+
+    // On native the default answers yes to whoever asks - the canvas, once its drag flag was
+    // cleared mid-gesture - and the resize ended after a frame.
+    expect(resize.onResponderTerminationRequest()).toBe(false);
+  });
+
   it('selects on tap and drags with zoom compensation', async () => {
     const handlers = nodeHandlers();
     const node = noteNode();

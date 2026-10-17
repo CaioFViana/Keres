@@ -301,6 +301,34 @@ describe('gesture decisions', () => {
     ).toBe(true);
   });
 
+  it('hands out the same drag flag setter on every render', async () => {
+    const view = await renderCanvas();
+    const first = view.result.current.setChildDragging;
+
+    await view.rerender(undefined as never);
+    await view.rerender(undefined as never);
+
+    // Canvases list it in the dependencies of the effect that mirrors their armed tools into it: a new
+    // function each render re-ran that effect mid-drag and cleared the flag the pin had just raised.
+    expect(view.result.current.setChildDragging).toBe(first);
+  });
+
+  it('keeps a pin that is dragging protected across re-renders', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const view = await renderCanvas();
+    view.result.current.setChildDragging(true);
+
+    await view.rerender(undefined as never);
+    const config = create.mock.calls.at(-1)![0] as any;
+
+    expect(
+      config.onMoveShouldSetPanResponderCapture(
+        { nativeEvent: { touches: [{}] } },
+        { dx: 20, dy: 0 },
+      ),
+    ).toBe(false);
+  });
+
   it('does not steal a pin that is already dragging', async () => {
     const create = jest.spyOn(PanResponder, 'create');
     const { result } = await renderCanvas();

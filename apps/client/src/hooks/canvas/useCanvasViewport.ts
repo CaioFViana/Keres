@@ -496,6 +496,19 @@ export function useCanvasViewport(
     });
   }, [fitToScreen, refitOnLayoutChange, rotationEnabled, syncOverlays]);
 
+  /**
+   * Stable on purpose. Canvases mirror their armed tools into it from an effect that lists it as a
+   * dependency; a new function on every render re-ran that effect after each frame of a drag, which
+   * cleared the flag in the middle of it, and the canvas then took the gesture from the pin being resized.
+   */
+  const setChildDragging = useCallback(
+    (dragging: boolean) => {
+      childDragging.current = dragging;
+      if (!dragging) stopAutoPan();
+    },
+    [stopAutoPan],
+  );
+
   const panResponder = useMemo(
     () =>
       // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
@@ -650,10 +663,7 @@ export function useCanvasViewport(
       : [{ translateX: animatedX }, { translateY: animatedY }, { scale: animatedScale }],
     /** Live camera for the Skia edge overlay; written in `publish`, never via React state. */
     cameraTransform,
-    setChildDragging: (dragging: boolean) => {
-      childDragging.current = dragging;
-      if (!dragging) stopAutoPan();
-    },
+    setChildDragging,
     getTransform: () => ({ ...transform.current, rotation: rotationRef.current }),
     /**
      * Viewport-sized overlay surface in screen pixels: the native bitmap budget (capped for the

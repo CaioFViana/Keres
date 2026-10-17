@@ -231,6 +231,9 @@ const BoardNodeView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => layoutEditing,
         onMoveShouldSetPanResponder: () => layoutEditing,
+        // Once the handle has the finger nothing takes it back - not the canvas, not the card around it:
+        // on native the default hands the gesture over to whoever asks, and the resize ended after a frame.
+        onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
           resizeOrigin.current = sizeRef.current;
           handlers.current.onDragStart(nodeId.current);

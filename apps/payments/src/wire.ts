@@ -1,11 +1,11 @@
 import type { z } from 'zod';
-import {
-  type CheckoutRequestWireSchema,
-  type CheckoutResultWireSchema,
-  type ConnectorInfo,
-  type DueSubscriptionWireSchema,
-  type PaymentEventWire,
-  type PaymentMethodOptionSchema,
+import type {
+  CheckoutRequestWireSchema,
+  CheckoutResultWireSchema,
+  ConnectorInfo,
+  DueSubscriptionWireSchema,
+  PaymentEventWire,
+  PaymentMethodOptionSchema,
 } from '@keres/shared';
 
 /**

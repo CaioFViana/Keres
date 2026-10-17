@@ -9,7 +9,7 @@
     "prebuild": "bun run fonts:fetch && bun run --cwd ../admin build && bun run --cwd ../client build:hosted && bun run --cwd ../site build:landing",
     "build": "bun scripts/package-server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint src test vitest.config.ts vitest.integration.config.ts vitest.alias.ts --ext .ts",
+    "lint": "biome lint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
@@ -45,10 +45,7 @@
   "devDependencies": {
     "@types/bun": "^1.1.6",
     "@types/pg": "^8.11.6",
-    "@typescript-eslint/eslint-plugin": "^8.66.0",
-    "@typescript-eslint/parser": "^8.66.0",
     "drizzle-kit": "^0.31.6",
-    "eslint": "^9.25.0",
     "typescript": "^5.5.3",
     "vitest": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10"

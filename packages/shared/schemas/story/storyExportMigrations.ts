@@ -13,7 +13,7 @@ export class StoryExportVersionError extends Error {
 
 type StoryExportMigration = {
   fromVersion: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
+  // biome-ignore lint/suspicious/noExplicitAny: pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
   migrate: (data: any) => any;
 };
 
@@ -35,7 +35,7 @@ const migrateV1ToV2: StoryExportMigration = {
         }
       : data?.story;
     const suggestions = Array.isArray(data?.suggestions)
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+      ? // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
         data.suggestions.map((rawSuggestion: any) => {
           const suggestion = { ...rawSuggestion };
           delete suggestion.isDefault;
@@ -175,7 +175,7 @@ const migrateV9ToV10: StoryExportMigration = {
       return candidate;
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+    // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
     let storyArcs = suppliedArcs.map((arc: any) => ({ ...arc }));
     if (!storyArcs.length) {
       storyArcs = [
@@ -196,16 +196,16 @@ const migrateV9ToV10: StoryExportMigration = {
           deletedAt: null,
         },
       ];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+      // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
     } else if (!storyArcs.some((arc: any) => arc?.isDefault === true)) {
       storyArcs[0] = { ...storyArcs[0], isDefault: true };
     }
 
     const fallbackArcId =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+      // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
       storyArcs.find((arc: any) => arc?.isDefault === true)?.id ?? storyArcs[0].id;
     const chapters = Array.isArray(data?.chapters)
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+      ? // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
         data.chapters.map((chapter: any) =>
           chapter?.arcId === null || chapter?.arcId === undefined
             ? { ...chapter, arcId: fallbackArcId }
@@ -235,7 +235,7 @@ const migrateV10ToV11: StoryExportMigration = {
     Array.isArray(data?.scenes)
       ? {
           ...data,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+          // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
           scenes: data.scenes.map((scene: any) =>
             scene?.body === undefined ? { ...scene, body: null } : scene,
           ),
@@ -263,7 +263,7 @@ const migrations: StoryExportMigration[] = [
  * Exports predating this field have no `formatVersion` - they are treated as version 0. It must run
  * before `FullStoryExportSchema.parse()`, both in the client and in the API.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
+// biome-ignore lint/suspicious/noExplicitAny: pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
 export function migrateStoryExport(raw: any): any {
   const version = typeof raw?.formatVersion === 'number' ? raw.formatVersion : 0;
 

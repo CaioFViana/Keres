@@ -13,7 +13,7 @@ export class PackContentVersionError extends Error {
 
 type PackContentMigration = {
   fromVersion: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
+  // biome-ignore lint/suspicious/noExplicitAny: pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
   migrate: (data: any) => any;
 };
 
@@ -61,7 +61,7 @@ const migrations: PackContentMigration[] = [migrateV1ToV2];
  * `PackContentSchema.parse()`: zod would otherwise silently strip the unknown keys and install a
  * pack missing pieces its author meant to be there.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
+// biome-ignore lint/suspicious/noExplicitAny: pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
 export function migratePackContent(raw: any): any {
   const version = typeof raw?.formatVersion === 'number' ? raw.formatVersion : 0;
   if (version > CURRENT_PACK_FORMAT_VERSION) {

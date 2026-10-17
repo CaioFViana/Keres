@@ -18,18 +18,15 @@
     "package:linux": "bun run build && electron-builder --linux",
     "capture:screens": "bun scripts/capture-screens.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc -p tsconfig.test.json && tsc -p tsconfig.scripts.json",
-    "lint": "eslint src test vitest.config.ts --ext .ts",
+    "lint": "biome lint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:sqlite-web": "bun test/run-sqlite-web-smoke.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "@typescript-eslint/eslint-plugin": "^8.66.0",
-    "@typescript-eslint/parser": "^8.66.0",
     "electron": "^43.2.0",
     "electron-builder": "^26.15.6",
-    "eslint": "^9.25.0",
     "typescript": "^5.5.3",
     "vitest": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10"

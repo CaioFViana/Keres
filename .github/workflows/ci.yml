@@ -44,6 +44,22 @@ jobs:
       # `--only` runs the script in one package (see scripts/run-all.ts), skipping cleanly
       # when the package does not declare it.
       - run: bun scripts/run-all.ts typecheck --only ${{ matrix.name }}
+      # Lint is Biome in shared, api, payments, desktop and site (about a second each, nothing to
+      # cache) and ESLint in the client and the admin. The client's ESLint is the slow one - minutes
+      # from cold - so its cache, and the admin's, are restored first. Both scripts ask ESLint to
+      # key the cache by file content (`--cache-strategy content`): a checkout gives every file a
+      # fresh mtime, which would make the default strategy miss on every run. A stale cache only
+      # costs time, never a wrong result.
+      - if: matrix.name == 'client' || matrix.name == 'admin'
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/client/.expo/cache/eslint
+            apps/admin/node_modules/.cache/eslint
+          key: eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
+          restore-keys: |
+            eslint-${{ matrix.name }}-${{ hashFiles('bun.lock') }}-
+            eslint-${{ matrix.name }}-
       - run: bun scripts/run-all.ts lint --only ${{ matrix.name }}
       # With coverage, not `bun run test`: that is what enforces the thresholds set in each
       # workspace. Without it the floors would sit in the file and never be checked. `CI` is set

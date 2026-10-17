@@ -10,6 +10,7 @@
   },
   "formatter": {
     "enabled": true,
+    "includes": ["**", "!**/generated", "!apps/client/src/db/migrations/index.ts"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100
@@ -22,6 +23,9 @@
   },
   "assist": {
     "enabled": false
+  },
+  "json": {
+    "formatter": { "enabled": false }
   },
   "javascript": {
     "formatter": {

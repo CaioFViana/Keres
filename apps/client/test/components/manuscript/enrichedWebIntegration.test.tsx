@@ -247,4 +247,43 @@ describe('enriched-html web integration (real build)', () => {
       root.unmount();
     });
   });
+  it('survives the host replacing its editor under a mounted input (a placeholder that changes)', async () => {
+    // The host destroys the editor and builds another when what the editor is made of changes - the
+    // placeholder is part of it. The effects of that same commit still held the destroyed one, and called a
+    // command on it: "Cannot read properties of null (reading 'commands')". The same happens when a commit
+    // comes later than the host's one-tick timer for an editor nobody has mounted yet.
+    const g = dom();
+    const errors: unknown[] = [];
+    const container = g.document.createElement('div');
+    g.document.body.appendChild(container);
+    const root = createRoot(container as unknown as Element, {
+      onUncaughtError: (error) => errors.push(error),
+    });
+    const input = (placeholder: string) =>
+      createElement(RealInput, {
+        defaultValue: '<p>saved</p>',
+        onChangeHtml: jest.fn(),
+        editable: true,
+        placeholder,
+      });
+
+    await act(async () => {
+      root.render(input('Write here'));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    await act(async () => {
+      root.render(input('Escreva aqui'));
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(errors).toEqual([]);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });

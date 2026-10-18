@@ -30,9 +30,12 @@ jest.mock('@/src/theme', () => ({
   }),
 }));
 
+let mockLanguage = 'en';
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string) => (mockLanguage === 'en' ? key : `${key}:${mockLanguage}`),
+  }),
 }));
 
 function footerProps(
@@ -94,6 +97,26 @@ describe('RichBodyEditor', () => {
     expect(input.props.defaultValue).toBe(HTML);
     await fireEvent(input, 'changeHtml', { nativeEvent: { value: '<html><p>hi</p></html>' } });
     expect(onHtmlChange).toHaveBeenCalledWith('<html><p>hi</p></html>');
+  });
+
+  it('keeps the placeholder it opened with when the language changes', async () => {
+    // The web host builds its editor from the placeholder: a new one is a new editor, reseeded and empty.
+    mockLanguage = 'en';
+    const view = await renderEditor();
+    expect(view.getByTestId('editor.input').props.placeholder).toBe('manuscript_empty');
+
+    mockLanguage = 'pt';
+    await view.rerender(
+      <RichBodyEditor
+        defaultHtml={HTML}
+        onHtmlChange={jest.fn()}
+        onMarksChange={jest.fn()}
+        testID="editor"
+      />,
+    );
+
+    expect(view.getByTestId('editor.input').props.placeholder).toBe('manuscript_empty');
+    mockLanguage = 'en';
   });
 
   it('maps native style state to manuscript marks', async () => {

@@ -122,6 +122,10 @@ function RichBodyEditorInner({
   // keystroke — nuking focus and racing `getHTML` against a destroyed editor
   // (schema-null crash). Later content arrives via imperative `setValue`.
   const [seedHtml] = useState(defaultHtml);
+  // Mount-only as well: the web host builds its editor from the placeholder too, and a new one means a new
+  // editor (reseeded from `defaultHtml`, so what was typed is gone). A language switched while writing
+  // shows in the placeholder the next time the editor opens.
+  const [placeholder] = useState(() => t('manuscript_empty'));
   // Stable handlers: the web host resubscribes its editor listeners whenever
   // these identities change, and the parent re-renders on every keystroke.
   const handleChangeHtml = useCallback(
@@ -186,7 +190,7 @@ function RichBodyEditorInner({
         onChangeState={handleChangeState}
         editable={editable}
         autoFocus={autoFocus}
-        placeholder={t('manuscript_empty')}
+        placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
         scrollEnabled={false}
         selectionColor={colors.primary}

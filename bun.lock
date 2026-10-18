@@ -217,6 +217,7 @@
   "patchedDependencies": {
     "expo-sqlite@57.0.3": "patches/expo-sqlite@57.0.3.patch",
     "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch",
+    "react-native-enriched-html@1.1.1": "patches/react-native-enriched-html@1.1.1.patch",
   },
   "packages": {
     "7zip-bin": ["7zip-bin@5.2.0", "", {}, "sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A=="],

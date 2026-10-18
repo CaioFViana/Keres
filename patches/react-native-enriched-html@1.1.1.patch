@@ -1,0 +1,67 @@
+diff --git a/node_modules/react-native-enriched-html/.bun-tag-9714db6f2df6c21 b/.bun-tag-9714db6f2df6c21
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/lib/module/web/EnrichedTextInput.js b/lib/module/web/EnrichedTextInput.js
+index 07130f396693972bdf0e411195c01e798ba1e727..e4e3f86c731d383afc2a8f0f8d531b9c873da50e 100644
+--- a/lib/module/web/EnrichedTextInput.js
++++ b/lib/module/web/EnrichedTextInput.js
+@@ -228,7 +228,12 @@ export const EnrichedTextInput = ({
+     dom.setAttribute('enterkeyhint', returnKeyTypeToEnterKeyHint(returnKeyType));
+   }, [editor, returnKeyType]);
+   useEffect(() => {
+-    editor?.commands.normalizeBoldInStyledHeadings();
++    // A destroyed editor has no command manager: the editor this render holds can be destroyed before this
++    // effect runs (the hook destroys an editor it thinks nobody mounted after a tick, and a commit that
++    // comes later than that finds it gone), and calling a command on it throws. The effect runs again for
++    // the editor that replaces it.
++    if (!editor || editor.isDestroyed) return;
++    editor.commands.normalizeBoldInStyledHeadings();
+   }, [editor, resolvedHtmlStyle]);
+   const getMentionCallbacks = useCallback(() => mentionCallbacksRef.current, [mentionCallbacksRef]);
+   useMentionEvents(editor, getMentionCallbacks);
+diff --git a/lib/module/web/useOnEditorChange.js b/lib/module/web/useOnEditorChange.js
+index 6363a1aaa8ad7925dbfc917ba6beb0ee5f23dae3..a8e1bab76df45fd5560de7e8e32278d981d49d57 100644
+--- a/lib/module/web/useOnEditorChange.js
++++ b/lib/module/web/useOnEditorChange.js
+@@ -5,7 +5,8 @@ import { adaptWebToNativeEvent } from "./adaptWebToNativeEvent.js";
+ export const useOnEditorChange = (editor, handler, getValue) => {
+   const lastValueRef = useRef('');
+   useEffect(() => {
+-    if (!handler) return;
++    // See `EnrichedTextInput`: the editor of this render may already be destroyed, and reading it then throws.
++    if (!handler || editor.isDestroyed) return;
+     const handleUpdate = () => {
+       const value = getValue(editor);
+       if (value !== lastValueRef.current) {
+diff --git a/src/web/EnrichedTextInput.tsx b/src/web/EnrichedTextInput.tsx
+index 692dec9e7776ef0a71cc32c3b54bf89b6a9ce288..1cc569c944297dd421772ec34338f2a372e19f8c 100644
+--- a/src/web/EnrichedTextInput.tsx
++++ b/src/web/EnrichedTextInput.tsx
+@@ -319,7 +319,12 @@ export const EnrichedTextInput = ({
+   }, [editor, returnKeyType]);
+ 
+   useEffect(() => {
+-    editor?.commands.normalizeBoldInStyledHeadings();
++    // A destroyed editor has no command manager: the editor this render holds can be destroyed before this
++    // effect runs (the hook destroys an editor it thinks nobody mounted after a tick, and a commit that
++    // comes later than that finds it gone), and calling a command on it throws. The effect runs again for
++    // the editor that replaces it.
++    if (!editor || editor.isDestroyed) return;
++    editor.commands.normalizeBoldInStyledHeadings();
+   }, [editor, resolvedHtmlStyle]);
+ 
+   const getMentionCallbacks = useCallback(
+diff --git a/src/web/useOnEditorChange.ts b/src/web/useOnEditorChange.ts
+index db06ea3bcbff5850a5a8f728bf5bfddd022a6d00..26699c7f49c5f149267af1fe9a82fb62063389a5 100644
+--- a/src/web/useOnEditorChange.ts
++++ b/src/web/useOnEditorChange.ts
+@@ -11,7 +11,8 @@ export const useOnEditorChange = <T extends { value: string }>(
+   const lastValueRef = useRef('');
+ 
+   useEffect(() => {
+-    if (!handler) return;
++    // See `EnrichedTextInput`: the editor of this render may already be destroyed, and reading it then throws.
++    if (!handler || editor.isDestroyed) return;
+ 
+     const handleUpdate = () => {
+       const value = getValue(editor);

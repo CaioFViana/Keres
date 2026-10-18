@@ -3,6 +3,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
 import { KeyboardHandledContext, useKeyboardOverlap } from '@/src/hooks/ui/useKeyboardOverlap';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useTheme } from '@/src/theme';
 import { radius, space } from '@/src/theme/tokens';
@@ -54,6 +55,7 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   keyboardAvoiding = true,
 }) => {
   const { colors } = useTheme();
+  useModalNavigationBar(visible);
   const { isCompact, isWide } = useResponsiveLayout();
   // Android can draw a transparent modal behind its navigation buttons. Keep the
   // surface above that measured system area for every modal placement, not only

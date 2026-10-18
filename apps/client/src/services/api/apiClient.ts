@@ -6,6 +6,7 @@ import type { ServerSelect } from '@/src/db/schema'; // Import ServerSelect
 import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { canRefreshSessionWithCookie } from '@/src/services/auth/browserCookieSession';
+import { isAllowedServerUrl } from '@/src/utils/auth/serverUrl';
 
 export const NO_RESPONSE_ERROR = 'NO_RESPONSE';
 export const TIMEOUT_ERROR = 'TIMEOUT';
@@ -261,6 +262,25 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
   // Request interceptor to add any necessary headers (e.g., auth tokens)
   instance.interceptors.request.use(
     (config) => {
+      /**
+       * Plain `http` goes to this device or the local network and nowhere else.
+       *
+       * The Android manifest has to permit cleartext traffic for a server at `192.168.x.x` to be reachable
+       * at all, and the OS cannot restrict that to private addresses - so this is where it is held. The
+       * server screens already refuse such an address; this covers one that got in some other way (an old
+       * row, an absolute URL from a caller), before a token goes out in the clear.
+       */
+      const target = instance.getUri(config);
+      if (/^http:\/\//i.test(target) && !isAllowedServerUrl(target)) {
+        return Promise.reject(
+          new AxiosError(
+            'Plain http is only allowed on the local network',
+            AxiosError.ERR_BAD_REQUEST,
+            config,
+          ),
+        );
+      }
+
       /**
        * Every request announces which synchronization protocol this build speaks.
        *

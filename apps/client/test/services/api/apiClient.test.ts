@@ -246,7 +246,7 @@ describe('connectivity reporting', () => {
   it('does not report anything for an absolute URL aimed at another host', async () => {
     const { instance } = buildInstance([{ status: 200 }]);
 
-    await instance.get('http://outro-servidor:9999/kerescheck');
+    await instance.get('http://192.168.1.50:9999/kerescheck');
 
     expect(mockConnectivity.reportReachable).not.toHaveBeenCalled();
     expect(mockConnectivity.reportUnreachable).not.toHaveBeenCalled();
@@ -528,6 +528,53 @@ describe('request setup failures', () => {
       code: 'REQUEST_SETUP_ERROR',
     });
     expect(console.log).toHaveBeenCalledWith('API Request Setup Error:', 'boom');
+  });
+});
+
+describe('plain http', () => {
+  it.each(['http://192.168.0.12:3000', 'http://10.0.0.5:3000', 'http://localhost:3000'])(
+    'goes out to the local network (%s)',
+    async (baseURL) => {
+      const instance = createKeresAxiosInstance({ baseURL });
+      const adapter = jest.fn(async (config: any) => ({
+        status: 200,
+        statusText: 'OK',
+        data: {},
+        headers: {},
+        config,
+      }));
+      instance.defaults.adapter = adapter;
+
+      await instance.get('/api/kerescheck');
+
+      expect(adapter).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('never goes out to the internet: the manifest allows cleartext, so the app is what refuses', async () => {
+    const instance = createKeresAxiosInstance({ baseURL: 'http://keres.example.com' });
+    const adapter = jest.fn();
+    instance.defaults.adapter = adapter;
+
+    await expect(instance.get('/api/kerescheck')).rejects.toBeDefined();
+
+    expect(adapter).not.toHaveBeenCalled();
+  });
+
+  it('lets https through anywhere', async () => {
+    const instance = createKeresAxiosInstance({ baseURL: 'https://keres.example.com' });
+    const adapter = jest.fn(async (config: any) => ({
+      status: 200,
+      statusText: 'OK',
+      data: {},
+      headers: {},
+      config,
+    }));
+    instance.defaults.adapter = adapter;
+
+    await instance.get('/api/kerescheck');
+
+    expect(adapter).toHaveBeenCalledTimes(1);
   });
 });
 

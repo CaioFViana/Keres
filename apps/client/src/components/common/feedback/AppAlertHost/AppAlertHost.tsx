@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 import type { AppAlertButton } from '@/src/state/ui/appAlertStore';
 import { useAppAlertStore } from '@/src/state/ui/appAlertStore';
 import type { ThemeColors } from '@/src/theme';
@@ -27,6 +28,7 @@ const AppAlertHost: React.FC = () => {
   );
 
   const styles = useThemedStyles(createStyles);
+  useModalNavigationBar(current !== null);
 
   if (!current) {
     return null;

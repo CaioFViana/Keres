@@ -8,6 +8,7 @@ import {
   unregisterGuideAnchor,
 } from '@/src/guides/anchorRegistry';
 import { measureGuideNode, useGuideAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useSystemInsets } from '@/src/hooks/ui/useSystemInsets';
 import { useTheme } from '@/src/theme';
@@ -122,6 +123,7 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
   const { t } = useTranslation();
   const insets = useSystemInsets();
   const [open, setOpen] = useState(false);
+  useModalNavigationBar(open);
   // Every action hides behind the one burger, so a tour pointing at one points at the burger.
   const burgerRef = useRef<View>(null);
   const icons = actions.map((action) => action.icon).join('|');

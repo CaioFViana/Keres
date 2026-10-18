@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 
 /**
  * A full-screen image viewer, with pinch zoom, drag and double tap.
@@ -42,6 +43,7 @@ interface Transform {
 
 const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose }) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  useModalNavigationBar(visible);
 
   const [content, setContent] = useState<{ width: number; height: number } | null>(null);
 

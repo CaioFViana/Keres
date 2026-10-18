@@ -9,6 +9,7 @@ import GuideSpotlight from './GuideSpotlight';
 import GuideStepCard from './GuideStepCard';
 import { measureGuideAnchors, unionGuideRects } from '@/src/guides/anchorRegistry';
 import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 import { useGuidePersistence } from '@/src/hooks/ui/useGuidePersistence';
 import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { useSystemInsets } from '@/src/hooks/ui/useSystemInsets';
@@ -86,6 +87,7 @@ const GuideHost: React.FC = () => {
 const ActiveGuideOverlay: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  useModalNavigationBar(true);
   const { isWide } = useResponsiveLayout();
   const insets = useSystemInsets();
   const windowSize = useWindowDimensions();

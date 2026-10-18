@@ -43,7 +43,8 @@
       "expo-font",
       "expo-video",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      "./plugins/withCleartextTraffic"
     ],
     "experiments": {
       "reactCompiler": true

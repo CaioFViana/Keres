@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 import { useTheme } from '@/src/theme';
 import NotificationLanes from '@/src/components/common/feedback/NotificationLanes/NotificationLanes';
 
@@ -16,6 +17,7 @@ const ThemedFullscreenModal: React.FC<ThemedFullscreenModalProps> = ({
   children,
 }) => {
   const { colors } = useTheme();
+  useModalNavigationBar(visible);
 
   return (
     <Modal

@@ -62,7 +62,8 @@ describe('UserService', () => {
     expect(await service.pruneDeletedAccounts(30)).toBe(0);
 
     // Past the grace the personal data is erased and the names are freed.
-    expect(await service.pruneDeletedAccounts(0)).toBe(1);
+    // SQLite keeps whole seconds: look from one ahead, or "now" can tie with an account erased in the same second.
+    expect(await service.pruneDeletedAccounts(0, new Date(Date.now() + 1000))).toBe(1);
     expect(await service.pruneDeletedAccounts(0)).toBe(0);
   });
 });

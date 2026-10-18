@@ -1001,7 +1001,9 @@ describe('what the administrators see', () => {
       await db.select().from(paymentEvents),
     ]);
 
-    for (const text of [...shown, kept]) {
+    // Ids are random: a ULID can spell "CVV" or "PAN" by chance, and an id holds no way to pay.
+    const withoutIds = (text: string) => text.replace(/\b[0-9A-HJKMNP-TV-Z]{26}\b/gi, '');
+    for (const text of [...shown, kept].map(withoutIds)) {
       expect(text).not.toMatch(/card_?number|cvv|cvc|pan\b|expiry|iban|account_?number/i);
     }
     for (const table of [paymentSubscriptions, paymentCheckouts, paymentEvents]) {

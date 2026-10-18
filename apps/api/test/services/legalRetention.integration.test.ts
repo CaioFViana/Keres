@@ -10,6 +10,9 @@ import { truncateAll } from '@test/helpers/database';
 
 beforeEach(truncateAll);
 
+/** SQLite keeps whole seconds, so "now" can tie with an account erased in the same second: look from one ahead. */
+const afterNow = () => new Date(Date.now() + 1000);
+
 describe('account prune legal carve-outs', () => {
   it('keeps the terms-acceptance proof after the account is erased', async () => {
     const ana = await registerUser('ana');
@@ -20,7 +23,7 @@ describe('account prune legal carve-outs', () => {
       body: { currentPassword: ana.password },
     });
     expect(deleted.status).toBe(200);
-    expect(await service.pruneDeletedAccounts(0)).toBe(1);
+    expect(await service.pruneDeletedAccounts(0, afterNow())).toBe(1);
 
     // The proof survives the erasure: who accepted which version when.
     const { status, data } = await request('GET', '/auth/terms-status', { token: ana.token });
@@ -44,7 +47,7 @@ describe('account prune legal carve-outs', () => {
       token: ana.token,
       body: { currentPassword: ana.password },
     });
-    expect(await service.pruneDeletedAccounts(0)).toBe(1);
+    expect(await service.pruneDeletedAccounts(0, afterNow())).toBe(1);
 
     const page = await auditService.list({
       category: 'all',
@@ -69,7 +72,7 @@ describe('account prune legal carve-outs', () => {
       token: ana.token,
       body: { currentPassword: ana.password },
     });
-    expect(await service.pruneDeletedAccounts(0)).toBe(1);
+    expect(await service.pruneDeletedAccounts(0, afterNow())).toBe(1);
 
     // Marco Civil art. 15: six months whatever the account did; only the retention drops them.
     const kept = await accessRecordService.search({ userId: ana.userId, limit: 50 });

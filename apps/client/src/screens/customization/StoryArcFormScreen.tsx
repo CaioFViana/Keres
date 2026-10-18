@@ -8,6 +8,7 @@ import { Button, TextInput, ThemePickerModal } from '@/src/components/common';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useLeaveScreen } from '@/src/hooks/nav/useLeaveScreen';
 import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
@@ -32,13 +33,10 @@ import PageFormatSelect from '@/src/components/features/arcs/PageFormatSelect';
 import GalleryCoverField from '@/src/components/features/gallery/GalleryCoverField';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-
-type Nav = NativeStackNavigationProp<ArcsStackParamList, 'StoryArcForm'>;
 
 type ArcFormDraftFields = {
   title: string;
@@ -83,7 +81,7 @@ const StoryArcFormScreen = () => {
   const { colors, setTheme: applyTheme } = useTheme();
   const commonInputStyles = getCommonInputStyles(colors);
   const db = useDrizzle();
-  const navigation = useNavigation<Nav>();
+  const leave = useLeaveScreen();
   const { arcId } = useRoute<RouteProp<ArcsStackParamList, 'StoryArcForm'>>().params;
   const story = useStoryStore((state) => state.selectedStory);
   const { activeArc } = useStoryArcs();
@@ -256,7 +254,7 @@ const StoryArcFormScreen = () => {
           isDefault: false,
         });
       await clearFormDraft();
-      navigation.goBack();
+      leave();
     } catch (error) {
       notify(error instanceof Error ? error.message : t('calendar_save_failed'), 'error');
     } finally {
@@ -387,7 +385,7 @@ const StoryArcFormScreen = () => {
       </View>
       {canEdit ? (
         <FormActions stackOnCompact>
-          <Button onPress={() => navigation.goBack()}>{t('cancel')}</Button>
+          <Button onPress={leave}>{t('cancel')}</Button>
           <Button onPress={handleSave} disabled={saving}>
             {t('save')}
           </Button>

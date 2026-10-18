@@ -114,71 +114,40 @@ describe('navigateAcrossStacks', () => {
   });
 
   describe('fresh', () => {
-    /** A drawer whose `CharactersStack` already drew, and still holds a form for the entity just made. */
-    const drawerWithStack = (nested?: object) => {
-      const dispatch = jest.fn();
-      const navigate = jest.fn();
-      return {
-        dispatch,
-        navigate,
-        getParent: () => undefined,
-        getState: () => ({
-          index: 0,
-          routes: [
-            { name: 'MainDashboard' },
-            {
-              name: 'CharactersStack',
-              state: nested,
-            },
-          ],
-        }),
-      };
-    };
-    const drawn = {
-      key: 'stack-key',
-      index: 1,
-      routeNames: ['Characters', 'CharacterForm'],
-      routes: [{ name: 'Characters' }, { name: 'CharacterForm', params: { characterId: 'made' } }],
-    };
+    const drawer = () => ({
+      navigate: jest.fn(),
+      getParent: () => undefined,
+      getState: () => ({
+        index: 0,
+        routes: [{ name: 'MainDashboard' }, { name: 'CharactersStack' }],
+      }),
+    });
 
-    it('rebuilds the stack as its base screen and the target', () => {
-      const drawer = drawerWithStack(drawn);
+    it('asks the stack to start over with the target as its only screen', () => {
+      const navigation = drawer();
 
       navigateAcrossStacks(
-        drawer,
-        { stack: 'CharactersStack', screen: 'CharacterForm', params: {} },
+        navigation,
+        { stack: 'CharactersStack', screen: 'CharacterForm', params: { characterId: 'c1' } },
         { fresh: true },
       );
 
-      expect(drawer.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'RESET',
-          target: 'stack-key',
-          payload: expect.objectContaining({
-            index: 1,
-            routes: [{ name: 'Characters' }, { name: 'CharacterForm', params: {} }],
-          }),
-        }),
-      );
-      expect(drawer.navigate).toHaveBeenCalledWith('CharactersStack', {
-        screen: 'CharacterForm',
-        params: {},
+      // The `state` param resets a stack that has drawn and seeds one that has not. Nothing of the
+      // stack's own state is read: the drawer reports it only for the route in focus.
+      expect(navigation.navigate).toHaveBeenCalledWith('CharactersStack', {
+        state: { index: 0, routes: [{ name: 'CharacterForm', params: { characterId: 'c1' } }] },
       });
     });
 
-    it('leaves the stack alone when not asked, or when it has not drawn', () => {
-      const plain = drawerWithStack(drawn);
-      navigateAcrossStacks(plain, { stack: 'CharactersStack', screen: 'CharacterForm' });
-      expect(plain.dispatch).not.toHaveBeenCalled();
+    it('pushes onto what the stack last showed when not asked', () => {
+      const navigation = drawer();
 
-      const undrawn = drawerWithStack(undefined);
-      navigateAcrossStacks(
-        undrawn,
-        { stack: 'CharactersStack', screen: 'CharacterForm' },
-        { fresh: true },
-      );
-      expect(undrawn.dispatch).not.toHaveBeenCalled();
-      expect(undrawn.navigate).toHaveBeenCalled();
+      navigateAcrossStacks(navigation, { stack: 'CharactersStack', screen: 'CharacterForm' });
+
+      expect(navigation.navigate).toHaveBeenCalledWith('CharactersStack', {
+        screen: 'CharacterForm',
+        params: undefined,
+      });
     });
   });
 });

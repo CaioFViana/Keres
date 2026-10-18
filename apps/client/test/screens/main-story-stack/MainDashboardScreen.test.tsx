@@ -347,29 +347,25 @@ describe('MainDashboardScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('StorySettings', { screen: 'StorySettingsIndex' });
   });
 
-  it('hands the writing block the last scene and opens where each shortcut leads', async () => {
+  it('hands the writing block the last scene and opens where each shortcut leads - the forms on a stack started over', async () => {
     const view = await render(<MainDashboardScreen />);
     expect(view.getByTestId('writing-resume').props.children).toBe('scene-9');
 
     await fireEvent.press(view.getByTestId('writing-continue'));
     expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
-      screen: 'SceneEditor',
-      params: { sceneId: 'scene-9' },
+      state: { index: 0, routes: [{ name: 'SceneEditor', params: { sceneId: 'scene-9' } }] },
     });
     await fireEvent.press(view.getByTestId('writing-new-scene'));
     expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
-      screen: 'SceneForm',
-      params: {},
+      state: { index: 0, routes: [{ name: 'SceneForm', params: {} }] },
     });
     await fireEvent.press(view.getByTestId('writing-new-character'));
     expect(mockNavigate).toHaveBeenLastCalledWith('CharactersStack', {
-      screen: 'CharacterForm',
-      params: {},
+      state: { index: 0, routes: [{ name: 'CharacterForm', params: {} }] },
     });
     await fireEvent.press(view.getByTestId('writing-new-note'));
     expect(mockNavigate).toHaveBeenLastCalledWith('NotesStack', {
-      screen: 'NoteForm',
-      params: {},
+      state: { index: 0, routes: [{ name: 'NoteForm', params: {} }] },
     });
     await fireEvent.press(view.getByTestId('writing-manuscript'));
     expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {

@@ -243,6 +243,60 @@ const migrateV10ToV11: StoryExportMigration = {
       : data,
 };
 
+/**
+ * V11 -> V12: songs, sketches, the pages and music of a scene, and the fields 1.10 gave the Arc, the Story
+ * and the Location.
+ *
+ * A package written before them describes a story that had none: no songs, no drawings, no pages or music
+ * behind its scenes, arcs that were all prose (`generic`), and places that did not say whether they are
+ * indoors. Each collection and each field is made explicit, so what is in the package is what is imported
+ * and a V11 story is told apart from a V12 one only by the version number. Whatever a package already
+ * carries is left alone.
+ */
+const migrateV11ToV12: StoryExportMigration = {
+  fromVersion: 11,
+  migrate: (data) => {
+    // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
+    const withDefaults = (rows: any, defaults: Record<string, unknown>) =>
+      Array.isArray(rows)
+        ? // biome-ignore lint/suspicious/noExplicitAny: pre-validation row: unshaped until the schema parses it.
+          rows.map((row: any) => {
+            const filled = { ...row };
+            for (const [field, value] of Object.entries(defaults)) {
+              if (filled[field] === undefined) filled[field] = value;
+            }
+            return filled;
+          })
+        : rows;
+    const listOr = (value: unknown) => (Array.isArray(value) ? value : []);
+
+    return {
+      ...data,
+      story: data?.story
+        ? withDefaults([data.story], { isNsfw: false, coverGalleryId: null })[0]
+        : data?.story,
+      ...(Array.isArray(data?.storyArcs)
+        ? {
+            storyArcs: withDefaults(data.storyArcs, {
+              medium: 'generic',
+              vocabulary: null,
+              author: null,
+              coverGalleryId: null,
+              pageFormat: null,
+            }),
+          }
+        : {}),
+      ...(Array.isArray(data?.locations)
+        ? { locations: withDefaults(data.locations, { intExt: null }) }
+        : {}),
+      songs: listOr(data?.songs),
+      storySketches: listOr(data?.storySketches),
+      scenePages: listOr(data?.scenePages),
+      sceneMusic: listOr(data?.sceneMusic),
+    };
+  },
+};
+
 const migrations: StoryExportMigration[] = [
   migrateV1ToV2,
   migrateV2ToV3,
@@ -254,6 +308,7 @@ const migrations: StoryExportMigration[] = [
   migrateV8ToV9,
   migrateV9ToV10,
   migrateV10ToV11,
+  migrateV11ToV12,
 ];
 
 /**

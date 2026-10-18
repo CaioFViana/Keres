@@ -28,8 +28,15 @@
  * carry no such key; migration gives every scene an explicit `null`, which is exactly what they
  * were - a scene described by its summary, with no prose behind it. A Keres on 10 would parse a
  * package from 11 and quietly drop every written scene, hence the bump rather than a silent default.
+ *
+ * **12** - What 1.10 added to a story: `songs`, `storySketches`, `scenePages` and `sceneMusic` (the
+ * pictures of a scene and the music it keeps), the Arc's medium, author, cover, page format and
+ * vocabulary, a Story's `isNsfw` and cover, and a Location's `intExt`. Older packages carry none of
+ * them; migration gives every collection an explicit empty list and every field the value a story
+ * had without it. A Keres on 11 would parse a package from 12 and quietly drop every song, sketch,
+ * page and piece of music - the story would come back without them and nothing would say so.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 11;
+export const CURRENT_STORY_FORMAT_VERSION = 12;
 
 /**
  * Version of the pack content payload (`PackContentType`).
@@ -71,6 +78,10 @@ export const CURRENT_PACK_FORMAT_VERSION = 2;
  *
  * **6** - Arc rework: Arc system now controls everything the story is. So better to bump it.
  * As change was BIG to how 1.10 works, better bump to 6.
+ *
+ * It also carries what else 1.10 put on the wire: `Song`, `Sketch`, `ScenePage` and `SceneMusic` are
+ * new entities (a peer on 5 would have no table for them), and `Location.intExt` and the Arc's
+ * medium, author, cover, page format and vocabulary are new columns.
  */
 export const SYNC_PROTOCOL_VERSION = 6;
 

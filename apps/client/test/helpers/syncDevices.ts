@@ -88,6 +88,10 @@ const MODELLED_COLUMNS = {
   ChoiceCheckGroup: ['choiceId', 'combinator'],
   ChoiceCheck: ['groupId', 'type', 'triggerName', 'triggerState'],
   Effect: ['entityType', 'entityId', 'effectType', 'triggerName'],
+  Song: ['title', 'lyrics'],
+  Sketch: ['name', 'content'],
+  ScenePage: ['sceneId', 'rank', 'sketchId', 'galleryId', 'fit', 'spread', 'text'],
+  SceneMusic: ['sceneId', 'rank', 'songId', 'galleryId', 'role', 'cue', 'sections'],
   Story: ['title'],
 } as const;
 
@@ -622,5 +626,21 @@ export function contentOf(
     'isDeleted',
     'version',
   ];
-  return Object.fromEntries(fields.map((field) => [field, row[field] ?? null]));
+  return Object.fromEntries(fields.map((field) => [field, canonical(row[field] ?? null)]));
+}
+
+/**
+ * A document column with its keys in a fixed order: the real database keeps a JSON column in its
+ * own key order, a device keeps it as written, and only the content is the question.
+ */
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, inner]) => [key, canonical(inner)]),
+    );
+  }
+  return value;
 }

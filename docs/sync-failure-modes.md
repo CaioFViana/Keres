@@ -542,8 +542,10 @@ their check groups, checks and effects; and every other kind of row a story
 syncs - locations and their links, items and their journeys, notes and their
 links, world rules, maps, boards, plots and plot scenes, arcs, calendars, gallery
 media and its owners, see-also links, suggestions, modes, stat values and
-strength ladders, who appears in each scene, the story's own title
-(`syncFuzzWorld.ts`, `syncFuzzNarrative.ts`, `syncFuzzCollaboration.ts`) - syncing with failing pulls, push answers lost after
+strength ladders, who appears in each scene, the story's own title, songs and
+sketches, and the pages and music a scene keeps, each ordered by its own rank
+(`syncFuzzWorld.ts`, `syncFuzzNarrative.ts`, `syncFuzzCollaboration.ts`, `syncFuzzMedia.ts`;
+`SyncConvergenceCoverage.test.ts` fails when a synced type is missing from them) - syncing with failing pulls, push answers lost after
 the server applied them, typing during pushes, dropping offline, the server
 compacting its history, and conflicts resolved at random; then everything
 settles and must converge with no conflict or queued operation left. Every

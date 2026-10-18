@@ -8,7 +8,8 @@
  *   empty story of that id and type (linear by default) - answers `{ token, userId }`;
  * - `GET /__fuzz/rows?storyId=` the story row and its modelled entities (characters, chapters, scenes,
  *   stats, schema fields, attribute values, tags, relations, favorites, comments, anchors, routes,
- *   the world's things and links, choices with their checks and effects...), keyed `Type:id`,
+ *   the world's things and links, choices with their checks and effects, songs, sketches, pages
+ *   and music...), keyed `Type:id`,
  *   and the story's last operation version;
  * - `POST /__fuzz/compact {storyId, keep}` runs the history compaction with no age gate;
  * - `GET /__fuzz/log?storyId=` the story's operation log, for a failing seed's trace.
@@ -42,6 +43,10 @@ import {
   notes,
   plotScenes,
   plots,
+  sceneMusic,
+  scenePages,
+  sketches,
+  songs,
   seeAlsoRelations,
   statRelations,
   statStrengths,
@@ -171,6 +176,10 @@ async function rows(storyId: string) {
     ChoiceCheckGroup: choiceCheckGroups,
     ChoiceCheck: choiceChecks,
     Effect: effects,
+    Song: songs,
+    Sketch: sketches,
+    ScenePage: scenePages,
+    SceneMusic: sceneMusic,
   } as const;
   for (const [entityType, table] of Object.entries(byStory)) {
     add(entityType, await db.select().from(table).where(eq(table.storyId, storyId)));

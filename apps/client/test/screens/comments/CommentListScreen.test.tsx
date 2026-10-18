@@ -1,5 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
+import CommentListScreen from '@/src/screens/comments/CommentListScreen';
+
 const mockNavigateToDetail = jest.fn();
 const mockUseScreenTour = jest.fn();
 let mockSelectedStory: { id: string } | null = { id: 'story-1' };
@@ -67,8 +69,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import CommentListScreen from '@/src/screens/comments/CommentListScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

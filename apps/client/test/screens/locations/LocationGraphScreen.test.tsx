@@ -2,6 +2,8 @@ import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
+import LocationGraphScreen from '@/src/screens/locations/LocationGraphScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockUseScreenHeader = jest.fn();
@@ -353,8 +355,6 @@ jest.mock('react-i18next', () => {
     useTranslation: () => ({ t: mockT, i18n: { language: mockLanguage } }),
   };
 });
-
-import LocationGraphScreen from '@/src/screens/locations/LocationGraphScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

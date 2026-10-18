@@ -1,6 +1,18 @@
 /**
  * @jest-environment node
  */
+import axios from 'axios';
+import { eq } from 'drizzle-orm';
+import * as schema from '@/src/db/schema';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
+import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
+import { isPlanLimitMessage } from '@/src/services/sync/StoryTransfer';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 const mockShowNotification = jest.fn();
 jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
@@ -39,24 +51,12 @@ jest.mock('@/src/services/media/MediaSyncService', () => ({
   }),
 }));
 
-import axios from 'axios';
-import { eq } from 'drizzle-orm';
-import * as schema from '@/src/db/schema';
-import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
-import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
-import { createServerService } from '@/src/services/servers/ServerService';
-import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
-import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
-import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
-import { isPlanLimitMessage } from '@/src/services/sync/StoryTransfer';
-import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
-
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 /** Forma completa de `ServerSelect`, para os testes chamarem a API real sem cast. */
 const SERVER = {
   id: 'server-1',
   name: 'Casa',
-  url: 'http://servidor',
+  url: 'http://192.168.0.10',
   idUser: 'server-user',
   userName: 'ana',
   tag: 'ana',

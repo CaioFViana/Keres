@@ -1,6 +1,17 @@
 /**
  * @jest-environment node
  */
+import axios from 'axios';
+import { eq } from 'drizzle-orm';
+import * as schema from '@/src/db/schema';
+import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from '@/src/services/sync/SyncEngineService';
+import type { SyncCycleOutcome } from '@/src/services/sync/SyncScheduler';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
+import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 const mockShowNotification = jest.fn();
 jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
@@ -18,19 +29,8 @@ jest.mock('@/src/services/media/MediaSyncService', () => ({
   createMediaSyncService: () => ({ syncStoryMedia: mockSyncStoryMedia }),
 }));
 
-import axios from 'axios';
-import { eq } from 'drizzle-orm';
-import * as schema from '@/src/db/schema';
-import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
-import { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from '@/src/services/sync/SyncEngineService';
-import type { SyncCycleOutcome } from '@/src/services/sync/SyncScheduler';
-import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
-import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
-
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
-const SERVER = { id: 'server-1', url: 'http://servidor' };
+const SERVER = { id: 'server-1', url: 'http://192.168.0.10' };
 const NOW = new Date('2026-08-10T12:00:00.000Z');
 const base = { createdAt: NOW, updatedAt: NOW, version: 1, isDeleted: false };
 
@@ -1197,7 +1197,7 @@ describe('engine control surface', () => {
         ...SERVER,
         id: 'server-2',
         idUser: 'server-user',
-        url: 'http://servidor-2',
+        url: 'http://192.168.0.11',
       } as never)
       .then(() => {
         transitionFinished = true;
@@ -1212,7 +1212,7 @@ describe('engine control surface', () => {
 
     expect(contextsSeen).toEqual([STORY_ID, STORY_ID]);
     expect((engine as any).storyId).toBe('story-2');
-    expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
+    expect((engine as any).client.defaults.baseURL).toBe('http://192.168.0.11/api');
   });
 
   it('rejects a context transition when stopAndWait times out and keeps the live story', async () => {
@@ -1241,14 +1241,14 @@ describe('engine control surface', () => {
     (engine as any).activeServer = {
       ...SERVER,
       id: 'server-2',
-      url: 'http://servidor-2',
+      url: 'http://192.168.0.11',
     };
-    (engine as any).client.defaults.baseURL = 'http://servidor-2/api';
+    (engine as any).client.defaults.baseURL = 'http://192.168.0.11/api';
 
     (engine as any).deactivateStoryFromActiveCycle(STORY_ID);
 
     expect((engine as any).storyId).toBe('story-2');
-    expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
+    expect((engine as any).client.defaults.baseURL).toBe('http://192.168.0.11/api');
   });
 
   it('reset clears every connection-bound dependency so a later story cannot inherit it', async () => {

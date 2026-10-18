@@ -1,5 +1,7 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import StorySchemaListScreen from '@/src/screens/story-schema/StorySchemaListScreen';
+
 const mockNavigate = jest.fn();
 const mockAlert = jest.fn();
 const mockDeleteField = jest.fn();
@@ -121,8 +123,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import StorySchemaListScreen from '@/src/screens/story-schema/StorySchemaListScreen';
 
 function headerActions() {
   const header = mockUseScreenHeader.mock.calls[mockUseScreenHeader.mock.calls.length - 1][0] as {

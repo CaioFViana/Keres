@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { usePlanCancellation } from '@/src/screens/enter-stack/servers/usePlanCancellation';
+
 const mockCancel = jest.fn();
 const mockAlert = jest.fn();
 const mockIsOffline = jest.fn();
@@ -22,9 +25,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { usePlanCancellation } from '@/src/screens/enter-stack/servers/usePlanCancellation';
 
 const server = { id: 'server-1' } as never;
 type Button = { text: string; onPress?: () => Promise<void> | void };

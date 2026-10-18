@@ -1,14 +1,14 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

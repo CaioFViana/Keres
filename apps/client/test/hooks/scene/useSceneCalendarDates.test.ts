@@ -1,3 +1,6 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
+
 const mockDb = {};
 const mockStoryState = { selectedStory: { timelineEpochDay: 0, timelineEpochSeconds: 0 } };
 const mockSettings = { dateDisplayFormat: 'DD/MM/YYYY' };
@@ -31,9 +34,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
     useEntityInitialLoad: (load: () => Promise<void>) => React.useEffect(() => void load(), [load]),
   };
 });
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
 
 beforeEach(() => {
   jest.clearAllMocks();

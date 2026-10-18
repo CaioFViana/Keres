@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { usePackFormActions } from '@/src/screens/packs/usePackFormActions';
+import type { PackFormState } from '@/src/screens/packs/usePackFormState';
+import type { PackService } from '@/src/services/storymanagement/packs/PackService';
+
 const mockAlert = jest.fn();
 const mockShowNotification = jest.fn();
 
@@ -18,12 +24,6 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { usePackFormActions } from '@/src/screens/packs/usePackFormActions';
-import type { PackFormState } from '@/src/screens/packs/usePackFormState';
-import type { PackService } from '@/src/services/storymanagement/packs/PackService';
 
 const createState = (overrides: Partial<PackFormState> = {}): PackFormState =>
   ({

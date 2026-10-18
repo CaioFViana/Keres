@@ -1,5 +1,7 @@
 import { cleanup, render } from '@testing-library/react-native';
 
+import SelectionDrawerMenu from '@/src/components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
+
 let mockUnseenAdmin = false;
 let mockUnseenMessages = false;
 let mockServerless = false;
@@ -27,8 +29,6 @@ jest.mock('@/src/components/common/navigation/GroupedDrawerMenu/GroupedDrawerMen
     return null;
   },
 }));
-
-import SelectionDrawerMenu from '@/src/components/common/navigation/SelectionDrawerMenu/SelectionDrawerMenu';
 
 const renderMenu = () =>
   render(

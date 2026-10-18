@@ -1,4 +1,8 @@
 /** @jest-environment node */
+import { act, render } from '@testing-library/react-native';
+import OperationLogScreen from '@/src/screens/operation-log/OperationLogListScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockUseStoryStore = jest.fn();
@@ -33,10 +37,6 @@ jest.mock('@/src/components/features/operation-log/OperationLogList/OperationLog
     return null;
   },
 }));
-
-import { act, render } from '@testing-library/react-native';
-import OperationLogScreen from '@/src/screens/operation-log/OperationLogListScreen';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const lastListProps = () => mockRenderList.mock.calls[mockRenderList.mock.calls.length - 1][0];
 

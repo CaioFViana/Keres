@@ -1,3 +1,7 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import ServerManagementScreen from '@/src/screens/enter-stack/servers/ServerManagementScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
@@ -83,10 +87,6 @@ jest.mock('@/src/services/api/apiClient', () => ({
   isOfflineError: () => false,
 }));
 
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ServerManagementScreen from '@/src/screens/enter-stack/servers/ServerManagementScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-
 const online = {
   id: 'srv-1',
   name: 'Main',
@@ -160,7 +160,7 @@ describe('ServerManagementScreen', () => {
     await view.findByText('Main');
 
     const header = mockUseScreenHeader.mock.calls[0][0] as {
-      actions: Array<{ onPress: () => void }>;
+      actions: { onPress: () => void }[];
     };
     header.actions[0].onPress();
 

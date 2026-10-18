@@ -1,3 +1,11 @@
+import { act, renderHook } from '@testing-library/react-native';
+import {
+  useHasUnseenAdminMessages,
+  useHasUnseenMessages,
+  useIsConversationUnseen,
+  useUnseenMessagesStore,
+} from '@/src/state/ui/unseenMessagesStore';
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
   __esModule: true,
   default: {
@@ -6,14 +14,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     removeItem: jest.fn(async () => undefined),
   },
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import {
-  useHasUnseenAdminMessages,
-  useHasUnseenMessages,
-  useIsConversationUnseen,
-  useUnseenMessagesStore,
-} from '@/src/state/ui/unseenMessagesStore';
 
 const setUnseen = (unseen: Record<string, string>) =>
   act(async () => {

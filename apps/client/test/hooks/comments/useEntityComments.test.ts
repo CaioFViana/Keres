@@ -1,17 +1,17 @@
 /** @jest-environment node */
-jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
-jest.mock('@/src/state/app/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
-jest.mock('@/src/hooks/story/useStoryRole', () => ({ useStoryRole: jest.fn() }));
-jest.mock('@/src/services/storymanagement/notes-tags-comments/CommentService', () => ({
-  createCommentService: jest.fn(),
-}));
-
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+
+jest.mock('@/src/db', () => ({ useDrizzle: jest.fn() }));
+jest.mock('@/src/state/app/userSettingsStore', () => ({ useUserSettingsStore: jest.fn() }));
+jest.mock('@/src/hooks/story/useStoryRole', () => ({ useStoryRole: jest.fn() }));
+jest.mock('@/src/services/storymanagement/notes-tags-comments/CommentService', () => ({
+  createCommentService: jest.fn(),
+}));
 
 const service = {
   getCommentsForEntity: jest.fn(),

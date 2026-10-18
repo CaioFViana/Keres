@@ -1,18 +1,4 @@
 /** @jest-environment node */
-jest.mock('@/src/services/api/apiClient', () => ({
-  createKeresAxiosInstance: jest.fn(),
-  isOfflineError: jest.fn(() => false),
-}));
-jest.mock('@/src/services/media/MediaFileService', () => ({
-  mediaFileService: { deleteStoryMedia: jest.fn() },
-}));
-jest.mock('@/src/services/api/UserApiService', () => ({
-  userApiService: { deleteOwnAccount: jest.fn() },
-}));
-jest.mock('@/src/services/auth/AuthTokenManager', () => ({
-  authTokenManager: { clearAuthForServer: jest.fn() },
-}));
-
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import { createKeresAxiosInstance } from '@/src/services/api/apiClient';
@@ -29,6 +15,20 @@ import { useStoryStore } from '@/src/state/story/storyStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@/src/services/api/apiClient', () => ({
+  createKeresAxiosInstance: jest.fn(),
+  isOfflineError: jest.fn(() => false),
+}));
+jest.mock('@/src/services/media/MediaFileService', () => ({
+  mediaFileService: { deleteStoryMedia: jest.fn() },
+}));
+jest.mock('@/src/services/api/UserApiService', () => ({
+  userApiService: { deleteOwnAccount: jest.fn() },
+}));
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
+  authTokenManager: { clearAuthForServer: jest.fn() },
+}));
 
 const SERVER_ID = 'server';
 const SERVER_URL = 'https://server.example';

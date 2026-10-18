@@ -1,3 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import SettingsScreen from '@/src/screens/enter-stack/account/AppSettingsScreen';
+import { getAcceptedClientLegal, setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -189,7 +196,7 @@ jest.mock('@/src/utils/format/i18n', () => ({
 }));
 
 type PillProps = {
-  options: Array<{ label: string; value: string }>;
+  options: { label: string; value: string }[];
   value: string | null;
   onValueChange: (value: string | null) => void;
   placeholder: string;
@@ -224,13 +231,6 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     ),
   };
 });
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import SettingsScreen from '@/src/screens/enter-stack/account/AppSettingsScreen';
-import { getAcceptedClientLegal, setAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
-import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
 
 type AlertButton = { text: string; onPress?: () => void | Promise<void> };
 

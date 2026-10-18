@@ -1,6 +1,8 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
+import SharePackModal from '@/src/components/features/packs/SharePackModal/SharePackModal';
+
 /**
  * The share modal's own rules.
  *
@@ -56,7 +58,7 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
       onValueChange,
       placeholder,
     }: {
-      options: Array<{ label: string; value: string }>;
+      options: { label: string; value: string }[];
       value: string | null;
       onValueChange: (next: string | null) => void;
       placeholder?: string;
@@ -92,8 +94,6 @@ jest.mock('@/src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-
-import SharePackModal from '@/src/components/features/packs/SharePackModal/SharePackModal';
 
 const SERVER_SELECT = 'select-packs_browse_choose_server';
 const VISIBILITY_SELECT = 'select-visibility';

@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { useChapterNames } from '@/src/hooks/chapter/useChapterNames';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
@@ -13,11 +18,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { useChapterNames } from '@/src/hooks/chapter/useChapterNames';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const scenes = [{ storyId: 'story' }] as never;
 const getAllByStoryId = jest.fn();

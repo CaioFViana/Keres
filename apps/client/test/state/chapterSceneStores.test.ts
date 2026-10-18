@@ -52,10 +52,10 @@ const seedScene = async (id: string, index: number): Promise<void> => {
   });
 };
 
-const chapterIndexes = async (): Promise<Array<[string, number]>> =>
+const chapterIndexes = async (): Promise<[string, number][]> =>
   (await database.db.query.chapters.findMany()).map((row) => [row.id, row.index]);
 
-const sceneIndexes = async (): Promise<Array<[string, number]>> =>
+const sceneIndexes = async (): Promise<[string, number][]> =>
   (await database.db.query.scenes.findMany()).map((row) => [row.id, row.index]);
 
 beforeEach(async () => {

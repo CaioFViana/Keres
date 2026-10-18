@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useItemFormActions } from '@/src/screens/items/useItemFormActions';
+import type { ItemFormState } from '@/src/screens/items/useItemFormState';
+import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
@@ -44,12 +50,6 @@ jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useItemFormActions } from '@/src/screens/items/useItemFormActions';
-import type { ItemFormState } from '@/src/screens/items/useItemFormState';
-import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
 
 const createState = (overrides: Partial<ItemFormState> = {}): ItemFormState =>
   ({

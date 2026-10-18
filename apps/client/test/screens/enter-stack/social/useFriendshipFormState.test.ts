@@ -1,3 +1,7 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useFriendshipFormState } from '@/src/screens/enter-stack/social/useFriendshipFormState';
+
 const mockAlert = jest.fn();
 
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -6,10 +10,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useFriendshipFormState } from '@/src/screens/enter-stack/social/useFriendshipFormState';
 
 const server = (id: string) => ({ id, name: id }) as never;
 

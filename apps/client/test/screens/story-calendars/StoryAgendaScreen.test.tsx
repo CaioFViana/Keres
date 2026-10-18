@@ -2,6 +2,8 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-nati
 import type { CalendarDefinitionType } from '@keres/shared';
 import { partsToDayNumber } from '@keres/shared';
 
+import StoryAgendaScreen from '@/src/screens/story-calendars/StoryAgendaScreen';
+
 const mockNavigate = jest.fn();
 const mockNavigation = { navigate: mockNavigate };
 const mockRoute: { params: { calendarId?: string } } = { params: {} };
@@ -142,8 +144,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import StoryAgendaScreen from '@/src/screens/story-calendars/StoryAgendaScreen';
 
 const sceneEntries = () => [
   { id: 'scene-1', dayNumber: sceneDay, kind: 'scene', name: 'Opening', summary: 'It begins' },

@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useChapterAnchors } from '@/src/hooks/chapter/useChapterAnchors';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+
 const mockDb = {};
 const mockStoryState = { selectedStory: { type: 'linear' } };
 const mockAnchorService = {
@@ -25,11 +30,6 @@ jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => (
   __esModule: true,
   createSceneService: jest.fn(),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useChapterAnchors } from '@/src/hooks/chapter/useChapterAnchors';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 
 const input = {
   startSceneId: 'scene-1',

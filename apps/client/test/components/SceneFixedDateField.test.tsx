@@ -1,13 +1,13 @@
-jest.mock('react-native-safe-area-context', () => ({
-  __esModule: true,
-  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
-}));
-
 import { CalendarDefinitionSchema } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import SceneFixedDateField, {
   type SceneCalendarOption,
 } from '@/src/components/features/scenes/SceneFixedDateField';
+
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

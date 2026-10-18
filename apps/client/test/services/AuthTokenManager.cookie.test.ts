@@ -1,6 +1,14 @@
 /**
  * @jest-environment node
  */
+import axios from 'axios';
+import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
+import {
+  canRefreshSessionWithCookie,
+  usesHttpOnlyCookieSession,
+} from '@/src/services/auth/browserCookieSession';
+import { tokenVault } from '@/src/services/auth/TokenVault';
+
 jest.mock('expo-secure-store', () => ({
   __esModule: true,
   getItemAsync: jest.fn(),
@@ -14,14 +22,6 @@ jest.mock('@/src/services/auth/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: jest.fn(),
   canRefreshSessionWithCookie: jest.fn(),
 }));
-
-import axios from 'axios';
-import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
-import {
-  canRefreshSessionWithCookie,
-  usesHttpOnlyCookieSession,
-} from '@/src/services/auth/browserCookieSession';
-import { tokenVault } from '@/src/services/auth/TokenVault';
 
 const mockUserSettings = {
   activeServer: null as { id: string; url: string } | null,

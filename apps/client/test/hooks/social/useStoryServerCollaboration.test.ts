@@ -1,3 +1,9 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryServerCollaboration } from '@/src/hooks/social/useStoryServerCollaboration';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+// @ts-expect-error - only the mock exports it
+import { mockInvitationList } from '@/src/hooks/social/useStoryInvitations';
+
 const mockDb = {};
 const mockT = (key: string) => key;
 const mockStoryState: any = {
@@ -97,12 +103,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryServerCollaboration } from '@/src/hooks/social/useStoryServerCollaboration';
-import { syncEngine } from '@/src/services/sync/appSyncEngine';
-// @ts-expect-error - only the mock exports it
-import { mockInvitationList } from '@/src/hooks/social/useStoryInvitations';
 
 const mockUpload = syncEngine.uploadNewStoryToServer as jest.Mock;
 
@@ -348,7 +348,7 @@ describe('useStoryServerCollaboration', () => {
 
     await act(async () => view.result.current.handleRemoveCollaborator(collaborator));
     expect(mockApi.removeCollaborator).not.toHaveBeenCalled();
-    const buttons = mockAlert.mock.calls[0]?.[2] as Array<{ onPress?: () => Promise<void> }>;
+    const buttons = mockAlert.mock.calls[0]?.[2] as { onPress?: () => Promise<void> }[];
     await act(async () => buttons[1]?.onPress?.());
 
     expect(mockApi.removeCollaborator).toHaveBeenCalledWith(server, 'story-1', 'friend-1');
@@ -361,9 +361,9 @@ describe('useStoryServerCollaboration', () => {
     const retry = await renderHook(() => useStoryServerCollaboration('story-1'));
     await waitFor(() => expect(retry.result.current.collaborators).toEqual([collaborator]));
     await act(async () => retry.result.current.handleRemoveCollaborator(collaborator));
-    const retryButtons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+    const retryButtons = mockAlert.mock.calls.at(-1)?.[2] as {
       onPress?: () => Promise<void>;
-    }>;
+    }[];
     await act(async () => retryButtons[1]?.onPress?.());
     expect(mockAlert).toHaveBeenCalledWith('error', 'remove_collaborator_failed');
     expect(retry.result.current.collaborators).toEqual([collaborator]);
@@ -402,9 +402,9 @@ describe('useStoryServerCollaboration', () => {
       return view;
     };
     const confirm = async () => {
-      const buttons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+      const buttons = mockAlert.mock.calls.at(-1)?.[2] as {
         onPress?: () => Promise<void>;
-      }>;
+      }[];
       await act(async () => buttons[1]?.onPress?.());
     };
 
@@ -477,7 +477,7 @@ describe('useStoryServerCollaboration', () => {
 
     await act(async () => view.result.current.handleUnlinkFromServer());
     expect(mockStoryService.unlinkFromServer).not.toHaveBeenCalled();
-    const buttons = mockAlert.mock.calls[0]?.[2] as Array<{ onPress?: () => Promise<void> }>;
+    const buttons = mockAlert.mock.calls[0]?.[2] as { onPress?: () => Promise<void> }[];
     await act(async () => buttons[1]?.onPress?.());
 
     expect(mockStoryService.unlinkFromServer).toHaveBeenCalledWith('user-1', 'story-1');
@@ -488,9 +488,9 @@ describe('useStoryServerCollaboration', () => {
     mockStoryService.unlinkFromServer.mockRejectedValueOnce(new Error('boom'));
     const retry = await renderHook(() => useStoryServerCollaboration('story-1'));
     await act(async () => retry.result.current.handleUnlinkFromServer());
-    const retryButtons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+    const retryButtons = mockAlert.mock.calls.at(-1)?.[2] as {
       onPress?: () => Promise<void>;
-    }>;
+    }[];
     isOfflineError.mockReturnValueOnce(false);
     await act(async () => retryButtons[1]?.onPress?.());
     expect(mockAlert).toHaveBeenCalledWith('error', 'unlink_from_server_failed');
@@ -498,9 +498,9 @@ describe('useStoryServerCollaboration', () => {
     mockStoryService.unlinkFromServer.mockRejectedValueOnce(new Error('offline'));
     isOfflineError.mockReturnValueOnce(true);
     await act(async () => retry.result.current.handleUnlinkFromServer());
-    const offlineButtons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+    const offlineButtons = mockAlert.mock.calls.at(-1)?.[2] as {
       onPress?: () => Promise<void>;
-    }>;
+    }[];
     await act(async () => offlineButtons[1]?.onPress?.());
     expect(mockAlert).toHaveBeenCalledWith('error', 'unlink_from_server_offline');
     (console.error as jest.Mock).mockRestore();

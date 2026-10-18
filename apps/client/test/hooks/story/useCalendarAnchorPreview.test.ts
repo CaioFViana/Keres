@@ -1,3 +1,10 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useCalendarAnchorPreview } from '@/src/hooks/story/useCalendarAnchorPreview';
+import { createChapterAnchorService } from '@/src/services/storymanagement/scenes-chapters/ChapterAnchorService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { buildCalendarAnchorPreview } from '@/src/utils/entity/calendarAnchorPreview';
+
 const mockDb = {};
 const mockStoryState = { selectedStory: { id: 'story' } };
 const mockRows = [{ id: 'story-start', kind: 'story-start' }];
@@ -22,13 +29,6 @@ jest.mock('@/src/utils/entity/calendarAnchorPreview', () => ({
   __esModule: true,
   buildCalendarAnchorPreview: jest.fn(() => mockRows),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useCalendarAnchorPreview } from '@/src/hooks/story/useCalendarAnchorPreview';
-import { createChapterAnchorService } from '@/src/services/storymanagement/scenes-chapters/ChapterAnchorService';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { buildCalendarAnchorPreview } from '@/src/utils/entity/calendarAnchorPreview';
 
 const definition = { secondsPerMinute: 60, minutesPerHour: 60, hoursPerDay: 24 } as never;
 

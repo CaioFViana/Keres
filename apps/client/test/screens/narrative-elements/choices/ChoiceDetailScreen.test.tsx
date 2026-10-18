@@ -7,6 +7,9 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 
+import ChoiceDetailScreen from '@/src/screens/narrative-elements/choices/ChoiceDetailScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigateToDetail = jest.fn();
@@ -343,9 +346,6 @@ jest.mock('@/src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-
-import ChoiceDetailScreen from '@/src/screens/narrative-elements/choices/ChoiceDetailScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

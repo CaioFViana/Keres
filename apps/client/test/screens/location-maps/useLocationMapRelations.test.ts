@@ -1,3 +1,6 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useLocationMapRelations } from '@/src/screens/location-maps/useLocationMapRelations';
+
 const mockService = {
   getAllRelationsForStory: jest.fn(),
   addConnection: jest.fn(),
@@ -14,9 +17,6 @@ jest.mock('@/src/services/storymanagement/relations/LocationRelationService', ()
   __esModule: true,
   createLocationRelationService: jest.fn(() => mockService),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useLocationMapRelations } from '@/src/screens/location-maps/useLocationMapRelations';
 
 const relations = [
   {

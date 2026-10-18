@@ -1,12 +1,12 @@
 // The hook lists `t` in its effect deps, so the mock must return a stable function like
 // the real i18n does; a fresh closure per render re-triggers hydration forever.
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryFormState } from '@/src/screens/enter-stack/story-entry/useStoryFormState';
+
 const mockTranslate = jest.fn((key: string) => key);
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockTranslate }),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryFormState } from '@/src/screens/enter-stack/story-entry/useStoryFormState';
 
 const story = {
   title: 'Existing story',

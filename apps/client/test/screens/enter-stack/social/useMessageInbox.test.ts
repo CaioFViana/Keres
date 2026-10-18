@@ -1,3 +1,6 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useMessageInbox } from '@/src/screens/enter-stack/social/useMessageInbox';
+
 const mockService = { getInbox: jest.fn(), getContacts: jest.fn() };
 const mockNotify = jest.fn();
 const mockListeners = new Map<string, Set<(...args: unknown[]) => void>>();
@@ -28,9 +31,6 @@ jest.mock('@/src/state/events/EventEmitter', () => ({
     },
   },
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useMessageInbox } from '@/src/screens/enter-stack/social/useMessageInbox';
 
 const inbox = (ids: string[]) => ({
   entries: ids.map((id) => ({ serverId: id, kind: 'admin', userId: null, lastMessage: { id } })),

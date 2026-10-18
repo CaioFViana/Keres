@@ -1,5 +1,7 @@
 import { renderHook } from '@testing-library/react-native';
 
+import { useResetToStorySelection } from '@/src/screens/story-settings/useResetToStorySelection';
+
 const mockNavigation: { dispatch: jest.Mock; getParent: jest.Mock } = {
   dispatch: jest.fn(),
   getParent: jest.fn(),
@@ -10,8 +12,6 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => mockNavigation,
 }));
-
-import { useResetToStorySelection } from '@/src/screens/story-settings/useResetToStorySelection';
 
 it('resets the root navigator, however many navigators the screen sits inside', async () => {
   const root = { dispatch: jest.fn(), getParent: jest.fn(() => undefined) };

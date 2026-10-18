@@ -1,3 +1,5 @@
+import { PackApiService } from '@/src/services/api/PackApiService';
+
 const mockClient = {
   setTokenProvider: jest.fn(),
   setActiveServer: jest.fn(),
@@ -17,8 +19,6 @@ jest.mock('@keres/shared', () => ({
   __esModule: true,
   validatePackContent: jest.fn((content) => ({ ...content, valid: true })),
 }));
-
-import { PackApiService } from '@/src/services/api/PackApiService';
 
 const server = { url: 'https://server.test' } as never;
 

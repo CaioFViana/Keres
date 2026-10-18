@@ -1,6 +1,10 @@
 /**
  * @jest-environment node
  */
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useGraphDataLoader } from '@/src/hooks/graph/useGraphDataLoader';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
@@ -8,10 +12,6 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useGraphDataLoader } from '@/src/hooks/graph/useGraphDataLoader';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const ERROR = 'could not load';
 const LOG = 'test: failed to load';

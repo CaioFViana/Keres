@@ -1,13 +1,13 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { usePaymentOverview } from '@/src/screens/enter-stack/servers/usePaymentOverview';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockLoad = jest.fn();
 jest.mock('@/src/services/payments/PaymentService', () => ({
   __esModule: true,
   PAYMENTS_CHANGED: 'payments_changed',
   loadPaymentOverview: (...args: unknown[]) => mockLoad(...args),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { usePaymentOverview } from '@/src/screens/enter-stack/servers/usePaymentOverview';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const overview = (name = 'Pro') => ({

@@ -239,7 +239,7 @@ const ServerDetailScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, [stableServer, online, legalUpdate, acceptWorking, i18n.language]);
+  }, [stableServer, online, legalUpdate, acceptWorking, i18n.language, serverService]);
 
   // Accepting records server-side first: only then is the local copy worth updating.
   const handleAcceptLegalUpdate = async () => {

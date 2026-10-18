@@ -10,6 +10,8 @@ import {
 import { AttributeType } from '@keres/shared';
 import React from 'react';
 
+import SuggestionsScreen from '@/src/screens/suggestions/SuggestionsScreen';
+
 const mockNavigate = jest.fn();
 const mockNavigation = { navigate: mockNavigate };
 const mockListNamedLists = jest.fn();
@@ -152,8 +154,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import SuggestionsScreen from '@/src/screens/suggestions/SuggestionsScreen';
 
 const namedLists = [
   { type: HERBS, name: 'Herbs' },

@@ -1,9 +1,4 @@
 /** @jest-environment node */
-jest.mock('@/src/services/media/MediaFileService', () => ({
-  __esModule: true,
-  mediaFileService: { deleteStoryMedia: jest.fn() },
-}));
-
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
@@ -16,6 +11,11 @@ import {
   TEST_USER_ID,
 } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@/src/services/media/MediaFileService', () => ({
+  __esModule: true,
+  mediaFileService: { deleteStoryMedia: jest.fn() },
+}));
 
 /**
  * The story service's edges: the not-found guards, the favorite reroute, plot counting, and the

@@ -2,6 +2,8 @@ import { AttributeType } from '@keres/shared';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import StorySchemaFieldFormScreen from '@/src/screens/story-schema/StorySchemaFieldFormScreen';
+
 const mockGoBack = jest.fn();
 const mockNavigation = { goBack: mockGoBack, navigate: jest.fn() };
 const mockSetDescription = jest.fn();
@@ -222,8 +224,6 @@ jest.mock('@/src/screens/story-schema/useStorySchemaFieldFormActions', () => ({
   useStorySchemaFieldFormActions: (...args: unknown[]) => mockUseFieldFormActions(...args),
 }));
 
-import StorySchemaFieldFormScreen from '@/src/screens/story-schema/StorySchemaFieldFormScreen';
-
 const freshFormState = () => ({
   name: '',
   key: '',
@@ -365,7 +365,7 @@ it('goes back when the field is missing', async () => {
 it('registers a reset header action while dirty', async () => {
   await render(<StorySchemaFieldFormScreen />);
   const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-    actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+    actions: { id: string; icon: string; disabled: boolean; onPress: () => void }[];
   };
   expect(config.actions).toHaveLength(1);
   expect(config.actions[0]).toMatchObject({
@@ -379,7 +379,7 @@ it('disables the reset header action while pristine', async () => {
   mockFormState = { ...freshFormState(), isDirty: false };
   await render(<StorySchemaFieldFormScreen />);
   const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-    actions: Array<{ disabled: boolean }>;
+    actions: { disabled: boolean }[];
   };
   expect(config.actions[0].disabled).toBe(true);
 });

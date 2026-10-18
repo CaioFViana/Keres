@@ -1,9 +1,15 @@
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import FriendshipListScreen from '@/src/screens/enter-stack/social/FriendshipListScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockNavigate = jest.fn();
 const mockUnsubscribe = jest.fn();
-const mockFocusListeners: Array<() => void> = [];
+const mockFocusListeners: (() => void)[] = [];
 const mockParentNavigate = jest.fn();
 const mockNavigation = {
   navigate: (...args: unknown[]) => mockNavigate(...args),
@@ -136,12 +142,6 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
-
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import FriendshipListScreen from '@/src/screens/enter-stack/social/FriendshipListScreen';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', idUser: 'me-on-server', name: 'Main' };
 
@@ -293,7 +293,7 @@ describe('FriendshipListScreen', () => {
     await focusLast();
     await view.findByText('friends_title · 1');
     const header = mockUseScreenHeader.mock.calls[0][0] as {
-      actions: Array<{ onPress: () => void }>;
+      actions: { onPress: () => void }[];
     };
     header.actions[0].onPress();
     // From the header there is no server in particular: the form asks which.
@@ -305,7 +305,7 @@ describe('FriendshipListScreen', () => {
     await focusLast();
     await view.findByText('friends_title · 1');
     const header = mockUseScreenHeader.mock.calls[0][0] as {
-      actions: Array<{ id: string; icon: string; onPress: () => void }>;
+      actions: { id: string; icon: string; onPress: () => void }[];
     };
 
     expect(header.actions.map((action) => action.icon)).toEqual(['add', 'chatbubbles-outline']);
@@ -321,7 +321,7 @@ describe('FriendshipListScreen', () => {
     const lastActions = () =>
       (
         mockUseScreenHeader.mock.calls.at(-1)![0] as {
-          actions: Array<{ icon: string; label: string }>;
+          actions: { icon: string; label: string }[];
         }
       ).actions;
     expect(lastActions()[1]).toMatchObject({

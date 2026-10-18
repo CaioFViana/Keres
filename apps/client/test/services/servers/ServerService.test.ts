@@ -3,9 +3,6 @@
  */
 import { eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
-jest.mock('@/src/services/media/MediaFileService', () => ({
-  mediaFileService: { deleteStoryMedia: jest.fn() },
-}));
 import {
   createServerService,
   ServerHasOwnedStoriesError,
@@ -15,6 +12,9 @@ import { mediaFileService } from '@/src/services/media/MediaFileService';
 import { useStoryStore } from '@/src/state/story/storyStore';
 import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+jest.mock('@/src/services/media/MediaFileService', () => ({
+  mediaFileService: { deleteStoryMedia: jest.fn() },
+}));
 
 let database: TestDatabase;
 

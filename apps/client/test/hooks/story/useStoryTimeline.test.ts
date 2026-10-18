@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { useStoryTimeline } from '@/src/hooks/story/useStoryTimeline';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockDb = {};
 const mockT = (key: string) => key;
 const mockStoryState: any = {
@@ -88,11 +93,6 @@ jest.mock('@keres/shared/graphs/timeline/storyTimelineSvg', () => ({
   __esModule: true,
   renderStoryTimelineSvg: (...args: unknown[]) => mockRender(...args),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
-import { useStoryTimeline } from '@/src/hooks/story/useStoryTimeline';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 beforeEach(() => {
   jest.clearAllMocks();

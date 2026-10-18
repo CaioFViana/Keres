@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useItemJourneyFormActions } from '@/src/screens/item-journeys/useItemJourneyFormActions';
+import type { ItemJourneyFormState } from '@/src/screens/item-journeys/useItemJourneyFormState';
+import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
@@ -40,12 +46,6 @@ jest.mock('react-i18next', () => ({
       options?.entity ? `${key}:${options.entity}` : key,
   }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useItemJourneyFormActions } from '@/src/screens/item-journeys/useItemJourneyFormActions';
-import type { ItemJourneyFormState } from '@/src/screens/item-journeys/useItemJourneyFormState';
-import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
 
 const createState = (overrides: Partial<ItemJourneyFormState> = {}): ItemJourneyFormState =>
   ({

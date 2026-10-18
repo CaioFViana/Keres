@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useChoiceFormResources } from '@/src/screens/narrative-elements/choices/useChoiceFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateChoiceService = jest.fn();
 const mockFetchScenes = jest.fn();
@@ -29,9 +32,6 @@ jest.mock('@/src/state/story/itemStore', () => ({
     initializeService: mockInitItem,
   }),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useChoiceFormResources } from '@/src/screens/narrative-elements/choices/useChoiceFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'choice-service' };

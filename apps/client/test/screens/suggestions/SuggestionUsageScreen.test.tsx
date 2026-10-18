@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import SuggestionUsageScreen from '@/src/screens/suggestions/SuggestionUsageScreen';
+
 const mockGoBack = jest.fn();
 const mockDrawerNavigate = jest.fn();
 const mockDrawer = { navigate: mockDrawerNavigate };
@@ -107,8 +109,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import SuggestionUsageScreen from '@/src/screens/suggestions/SuggestionUsageScreen';
 
 const usages = [
   { entityType: 'Character', id: 'char-1', title: 'Aria', snippet: 'role: Healer' },

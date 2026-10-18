@@ -1,6 +1,8 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import LocationsScreen from '@/src/screens/locations/LocationListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
@@ -159,8 +161,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import LocationsScreen from '@/src/screens/locations/LocationListScreen';
 
 const freshListState = () => ({
   listProps: {},

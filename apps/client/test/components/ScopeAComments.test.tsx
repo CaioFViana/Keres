@@ -35,7 +35,7 @@ jest.mock('@expo/vector-icons', () => ({
 // (Prototype-chained, not spread: spreading `react-native` trips native-only getters.)
 jest.mock('react-native', () => {
   const actual = jest.requireActual('react-native');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const React = require('react');
   const mocked = Object.create(actual);
   // defineProperty: the prototype's exports are setter-less getters, so plain

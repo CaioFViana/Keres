@@ -134,7 +134,10 @@ export class SyncDevice {
   }
 
   get url(): string {
-    return `http://${this.name}`;
+    // A private address (plain http is refused anywhere else), one per device; the port keeps one
+    // address from being the prefix of another.
+    const seed = [...this.name].reduce((sum, char) => sum * 31 + char.charCodeAt(0), 7);
+    return `http://10.0.${(seed >> 8) % 250}.${(seed % 250) + 1}:3000`;
   }
 
   /** One full pull/push cycle, without timers. */

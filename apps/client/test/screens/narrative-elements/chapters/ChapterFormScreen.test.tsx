@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 
+import ChapterFormScreen from '@/src/screens/narrative-elements/chapters/ChapterFormScreen';
+
 const mockHandleSave = jest.fn();
 const mockHandleDelete = jest.fn();
 const mockNavigate = jest.fn();
@@ -480,8 +482,6 @@ jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', ()
     ),
   };
 });
-
-import ChapterFormScreen from '@/src/screens/narrative-elements/chapters/ChapterFormScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

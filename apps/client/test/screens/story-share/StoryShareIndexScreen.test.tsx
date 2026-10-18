@@ -1,3 +1,7 @@
+import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import StoryShareIndexScreen from '@/src/screens/story-share/StoryShareIndexScreen';
+
 const mockNavigate = jest.fn();
 let mockCanManage = true;
 let mockRoleLoading = false;
@@ -60,10 +64,6 @@ jest.mock('@/src/utils/platform/clientFlavor', () => ({
   __esModule: true,
   isServerless: () => mockServerless,
 }));
-
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
-import StoryShareIndexScreen from '@/src/screens/story-share/StoryShareIndexScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

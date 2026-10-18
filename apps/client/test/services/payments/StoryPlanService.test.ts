@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { createStoryPlanService } from '@/src/services/payments/StoryPlanService';
+
 const mockGetServerById = jest.fn();
 const mockGet = jest.fn();
 const mockIsOffline = jest.fn();
@@ -22,8 +24,6 @@ jest.mock('@/src/services/api/apiClient', () => ({
     get: (...args: unknown[]) => mockGet(...args),
   }),
 }));
-
-import { createStoryPlanService } from '@/src/services/payments/StoryPlanService';
 
 const service = createStoryPlanService({} as never);
 const plan = {

@@ -1,3 +1,7 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 const mockSetActiveArcId = jest.fn();
 const mockSetTheme = jest.fn();
@@ -22,10 +26,6 @@ jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () =
   __esModule: true,
   createStoryArcService: jest.fn(() => ({ getArcsForStory: mockGetArcsForStory })),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

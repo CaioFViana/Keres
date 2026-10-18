@@ -1,4 +1,9 @@
 /** @jest-environment node */
+import { renderHook } from '@testing-library/react-native';
+import { useFriendshipActionHandler } from '@/src/screens/enter-stack/social/useFriendshipActionHandler';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+
 jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return { __esModule: true, useTranslation: () => ({ t }) };
@@ -8,11 +13,6 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: jest.fn(),
 }));
 jest.mock('@/src/state/ui/AppAlert', () => ({ __esModule: true, AppAlert: { alert: jest.fn() } }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useFriendshipActionHandler } from '@/src/screens/enter-stack/social/useFriendshipActionHandler';
-import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import { AppAlert } from '@/src/state/ui/AppAlert';
 
 const showNotification = jest.fn();
 const alert = (AppAlert as unknown as { alert: jest.Mock }).alert;

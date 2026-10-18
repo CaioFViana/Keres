@@ -1,5 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import LocationMapListScreen from '@/src/screens/location-maps/LocationMapListScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNotify = jest.fn();
@@ -131,9 +134,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import LocationMapListScreen from '@/src/screens/location-maps/LocationMapListScreen';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeMap = (overrides = {}) => ({
   id: 'map-1',

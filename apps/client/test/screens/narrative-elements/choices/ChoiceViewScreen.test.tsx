@@ -9,6 +9,8 @@ import {
 } from '@testing-library/react-native';
 import type { GraphNode } from '@keres/shared/graphs/story/storyGraphLayout';
 
+import ChoiceViewScreen from '@/src/screens/narrative-elements/choices/ChoiceViewScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockShowNotification = jest.fn();
@@ -263,8 +265,6 @@ jest.mock('@/src/screens/narrative-elements/choices/ChoiceViewContent', () => {
     ),
   };
 });
-
-import ChoiceViewScreen from '@/src/screens/narrative-elements/choices/ChoiceViewScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

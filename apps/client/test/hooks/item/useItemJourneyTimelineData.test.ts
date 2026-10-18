@@ -1,3 +1,12 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useItemJourneyTimelineData } from '@/src/hooks/item/useItemJourneyTimelineData';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
@@ -20,15 +29,6 @@ jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: jest.fn(),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useItemJourneyTimelineData } from '@/src/hooks/item/useItemJourneyTimelineData';
-import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const journeyService = {
   getItemJourneysByItemId: jest.fn().mockResolvedValue([{ id: 'journey' }]),

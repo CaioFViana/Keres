@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import ItemFormScreen from '@/src/screens/items/ItemFormScreen';
+
 const mockGoBack = jest.fn();
 const mockNavigation = { goBack: mockGoBack };
 const mockRoute: { params: { itemId?: string } } = { params: {} };
@@ -316,8 +318,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import ItemFormScreen from '@/src/screens/items/ItemFormScreen';
 
 describe('ItemFormScreen', () => {
   afterEach(() => {

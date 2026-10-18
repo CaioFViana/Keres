@@ -1,11 +1,11 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useWorldRuleFormAssociations } from '@/src/screens/world-rules/useWorldRuleFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 
 jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useWorldRuleFormAssociations } from '@/src/screens/world-rules/useWorldRuleFormAssociations';
 
 const mockSetSelectedTagIds = jest.fn();
 const relations = {

@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type React from 'react';
 
+import ScenePageAddSheet from '@/src/components/features/scenes/ScenePages/ScenePageAddSheet';
+
 let mockChoices = { sketches: [] as unknown[], images: [] as unknown[] };
 
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
@@ -32,8 +34,6 @@ jest.mock('@/src/hooks/media/useGalleryMedia', () => ({
   __esModule: true,
   useScenePageChoices: () => mockChoices,
 }));
-
-import ScenePageAddSheet from '@/src/components/features/scenes/ScenePages/ScenePageAddSheet';
 
 const handlers = {
   onClose: jest.fn(),

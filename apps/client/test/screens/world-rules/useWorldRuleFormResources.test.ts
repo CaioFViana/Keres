@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useWorldRuleFormResources } from '@/src/screens/world-rules/useWorldRuleFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateWorldRuleService = jest.fn();
 
@@ -7,9 +10,6 @@ jest.mock('@/src/db', () => ({
 jest.mock('@/src/services/storymanagement/entities/WorldRuleService', () => ({
   createWorldRuleService: (...args: unknown[]) => mockCreateWorldRuleService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useWorldRuleFormResources } from '@/src/screens/world-rules/useWorldRuleFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'world-rule-service' };

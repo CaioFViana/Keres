@@ -1,3 +1,10 @@
+import { fireEvent, render } from '@testing-library/react-native';
+import GraphNodeFinder, {
+  findOptions,
+  foldForSearch,
+  MAX_FINDER_RESULTS,
+} from '@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder';
+
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
@@ -19,13 +26,6 @@ jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
     default: (props: Record<string, unknown>) => <RNTextInput {...(props as object)} />,
   };
 });
-
-import { fireEvent, render } from '@testing-library/react-native';
-import GraphNodeFinder, {
-  findOptions,
-  foldForSearch,
-  MAX_FINDER_RESULTS,
-} from '@/src/components/features/graphs/GraphNodeFinder/GraphNodeFinder';
 
 const OPTIONS = [
   { id: '1', label: 'João da Silva' },

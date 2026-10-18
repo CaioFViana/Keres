@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { StorySelect } from '@/src/db/schema';
+import { usePackFormState } from '@/src/screens/packs/usePackFormState';
+import type { PackService } from '@/src/services/storymanagement/packs/PackService';
+
 const mockShowNotification = jest.fn();
 
 jest.mock('react-i18next', () => ({
@@ -7,11 +12,6 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockShowNotification(...args) }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { StorySelect } from '@/src/db/schema';
-import { usePackFormState } from '@/src/screens/packs/usePackFormState';
-import type { PackService } from '@/src/services/storymanagement/packs/PackService';
 
 const createPackServiceRef = () => ({
   current: {

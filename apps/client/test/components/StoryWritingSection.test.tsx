@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import StoryWritingSection from '@/src/components/features/story/StoryWritingSection/StoryWritingSection';
+
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -23,8 +25,6 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-
-import StoryWritingSection from '@/src/components/features/story/StoryWritingSection/StoryWritingSection';
 
 const NOW = new Date('2026-10-08T12:00:00.000Z');
 

@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useAddScenePages } from '@/src/screens/narrative-elements/scenes/useAddScenePages';
+
 const mockCreateSketch = jest.fn();
 const mockPickImages = jest.fn();
 const mockImport = jest.fn();
@@ -26,9 +29,6 @@ jest.mock('@/src/services/media/galleryMediaImport', () => ({
   __esModule: true,
   importPickedMediaAssets: (...args: unknown[]) => mockImport(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useAddScenePages } from '@/src/screens/narrative-elements/scenes/useAddScenePages';
 
 const setup = (overrides: Partial<Parameters<typeof useAddScenePages>[0]> = {}) =>
   renderHook(() =>

@@ -1,14 +1,14 @@
 /**
  * @jest-environment node
  */
+import apiClient from '@/src/services/api/apiClient';
+import { redeemRecoveryCode } from '@/src/services/api/AuthApiService';
+
 jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: { post: jest.fn() },
   apiUrl: (server: string, endpoint: string) => `${server}/api${endpoint}`,
 }));
-
-import apiClient from '@/src/services/api/apiClient';
-import { redeemRecoveryCode } from '@/src/services/api/AuthApiService';
 
 const mockPost = apiClient.post as jest.Mock;
 

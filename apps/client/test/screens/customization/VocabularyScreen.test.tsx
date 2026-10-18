@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
+import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
+
 const mockUseScreenTour = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockUpdateArc = jest.fn();
@@ -92,8 +94,6 @@ jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () 
     return react.createElement(native.View, { testID: 'vocabulary-scroll' }, children);
   },
 }));
-
-import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,3 +1,9 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { createStoryCalendarService } from '@/src/services/storymanagement/scenes-chapters/StoryCalendarService';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/scenes-chapters/StoryCalendarService', () => ({
@@ -14,12 +20,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createStoryCalendarService } from '@/src/services/storymanagement/scenes-chapters/StoryCalendarService';
-import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
-import { useStoryStore } from '@/src/state/story/storyStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const definition = {
   secondsPerMinute: 60,

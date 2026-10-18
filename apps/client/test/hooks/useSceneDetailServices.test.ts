@@ -1,3 +1,16 @@
+import { renderHook } from '@testing-library/react-native';
+import { useDrizzle } from '@/src/db';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useCharacterStore } from '@/src/state/story/characterStore';
+import { useSceneDetailServices } from '@/src/screens/narrative-elements/scenes/useSceneDetailServices';
+
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
 jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
@@ -35,19 +48,6 @@ jest.mock('@/src/state/story/characterStore', () => ({
   __esModule: true,
   useCharacterStore: jest.fn(),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useDrizzle } from '@/src/db';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService';
-import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
-import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
-import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
-import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { useCharacterStore } from '@/src/state/story/characterStore';
-import { useSceneDetailServices } from '@/src/screens/narrative-elements/scenes/useSceneDetailServices';
 
 const serviceFactories = [
   createSceneService,

@@ -1,9 +1,4 @@
 // ResponsiveModal reads the system insets.
-jest.mock('react-native-safe-area-context', () => ({
-  __esModule: true,
-  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
-}));
-
 import { AttributeType } from '@keres/shared';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -11,6 +6,11 @@ import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchMo
 import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
 import type { StorySchemaFieldSelect } from '@/src/db/schema';
 import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
+
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');

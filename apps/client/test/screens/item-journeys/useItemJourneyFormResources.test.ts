@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useItemJourneyFormResources } from '@/src/screens/item-journeys/useItemJourneyFormResources';
+
 const mockDb = {};
 const mockCreateItemJourneyService: jest.Mock = jest.fn(() => ({
   id: 'item-journey-service',
@@ -30,9 +33,6 @@ jest.mock('@/src/state/story/sceneStore', () => ({ useSceneStore: () => mockScen
 jest.mock('@/src/state/story/characterStore', () => ({
   useCharacterStore: () => mockCharacterStore,
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useItemJourneyFormResources } from '@/src/screens/item-journeys/useItemJourneyFormResources';
 
 beforeEach(() => {
   jest.clearAllMocks();

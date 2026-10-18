@@ -1,6 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import CharacterRelationGraphScreen from '@/src/screens/character-relations/CharacterRelationGraphScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigation = { navigate: mockNavigate, goBack: mockGoBack };
@@ -372,9 +375,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT, i18n: { language: mockLanguage } }),
 }));
-
-import CharacterRelationGraphScreen from '@/src/screens/character-relations/CharacterRelationGraphScreen';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

@@ -49,7 +49,7 @@ describe('export format chooser', () => {
 
   it('resolves null when dismissed, and a second request dismisses the first', async () => {
     await render(<ExportFormatHost />);
-    const answers: Array<string | null> = [];
+    const answers: (string | null)[] = [];
     await act(async () => {
       void chooseExportFormat().then((format) => answers.push(format));
       void chooseExportFormat().then((format) => answers.push(format));

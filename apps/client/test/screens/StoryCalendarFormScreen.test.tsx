@@ -1,6 +1,8 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import StoryCalendarFormScreen from '@/src/screens/story-calendars/StoryCalendarFormScreen';
+
 /**
  * That the calendar form **mounts**, and the two rules it owns.
  *
@@ -123,8 +125,6 @@ jest.mock('@/src/components/features/calendars/CalendarAnchorsModal', () => ({
     ) : null;
   },
 }));
-
-import StoryCalendarFormScreen from '@/src/screens/story-calendars/StoryCalendarFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

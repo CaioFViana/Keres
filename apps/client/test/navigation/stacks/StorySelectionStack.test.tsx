@@ -1,8 +1,10 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-const mockDrawerScreens: Array<Record<string, any>> = [];
-const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
+import StorySelectionStack from '@/src/navigation/stacks/StorySelectionStack';
+
+const mockDrawerScreens: Record<string, any>[] = [];
+const mockDrawerNavigatorProps: Record<string, any>[] = [];
 const mockResponsiveLayout = { isCompact: false, isWide: true, width: 1200 };
 // An object, and not a loose boolean: `jest.mock` is hoisted above the assignments, so the
 // factory has to read the value at call time, not capture it at definition time.
@@ -179,8 +181,6 @@ jest.mock('@/src/components/features/packs/ShippedPacksInstallerOverlay', () => 
   __esModule: true,
   default: () => null,
 }));
-
-import StorySelectionStack from '@/src/navigation/stacks/StorySelectionStack';
 
 const drawerScreen = (name: string) => mockDrawerScreens.find((screen) => screen.name === name);
 

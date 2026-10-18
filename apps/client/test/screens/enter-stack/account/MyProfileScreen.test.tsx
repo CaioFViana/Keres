@@ -1,3 +1,7 @@
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import MyProfileScreen from '@/src/screens/enter-stack/account/MyProfileScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -138,10 +142,6 @@ jest.mock('@/src/components/common/inputs/IconPickerInput/IconPickerInput', () =
     ),
   };
 });
-
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import MyProfileScreen from '@/src/screens/enter-stack/account/MyProfileScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', idUser: 'user-on-server' };
 

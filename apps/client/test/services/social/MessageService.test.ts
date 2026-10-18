@@ -1,6 +1,14 @@
 /**
  * @jest-environment node
  */
+import {
+  conversationKey,
+  createMessageService,
+  MESSAGES_CHANGED,
+  resetMessageNudgeState,
+  setOpenConversation,
+} from '@/src/services/social/MessageService';
+
 const mockGetAllServers = jest.fn();
 const mockGetServerById = jest.fn();
 const mockGetAllFriendships = jest.fn();
@@ -66,14 +74,6 @@ jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { t: (key: string, options?: { name?: string }) => `${key}:${options?.name ?? ''}` },
 }));
-
-import {
-  conversationKey,
-  createMessageService,
-  MESSAGES_CHANGED,
-  resetMessageNudgeState,
-  setOpenConversation,
-} from '@/src/services/social/MessageService';
 
 const serverA = { id: 'server-a', name: 'Alpha', url: 'https://a.test' };
 const serverB = { id: 'server-b', name: 'Beta', url: 'https://b.test' };

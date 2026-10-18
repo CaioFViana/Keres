@@ -1,13 +1,13 @@
+import { render } from '@testing-library/react-native';
+import { Text } from 'react-native';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+
 const mockRef = jest.fn();
 const mockUseGuideAnchor = jest.fn((_id: string) => mockRef);
 
 jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({
   useGuideAnchor: (id: string) => mockUseGuideAnchor(id),
 }));
-
-import { render } from '@testing-library/react-native';
-import { Text } from 'react-native';
-import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 beforeEach(() => {
   jest.clearAllMocks();

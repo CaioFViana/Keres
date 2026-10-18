@@ -1,5 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
+import EntityCountCard from '@/src/components/features/analysis/EntityCountCard/EntityCountCard';
+
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: 'Icon' }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -26,8 +28,6 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-
-import EntityCountCard from '@/src/components/features/analysis/EntityCountCard/EntityCountCard';
 
 const labels: Record<string, string> = {
   Character: 'Characters',

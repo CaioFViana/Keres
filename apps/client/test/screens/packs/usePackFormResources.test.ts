@@ -1,3 +1,6 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { usePackFormResources } from '@/src/screens/packs/usePackFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreatePackService = jest.fn();
 const mockCreateStoryService = jest.fn();
@@ -20,9 +23,6 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockShowNotification(...args) }),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { usePackFormResources } from '@/src/screens/packs/usePackFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakePackService = { marker: 'pack-service' };

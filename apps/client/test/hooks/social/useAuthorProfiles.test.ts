@@ -1,3 +1,6 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useAuthorProfiles } from '@/src/hooks/social/useAuthorProfiles';
+
 const mockFindStory = jest.fn();
 const mockFindServer = jest.fn();
 const mockResolveProfile = jest.fn();
@@ -13,9 +16,6 @@ jest.mock('@/src/hooks/social/useUserProfileResolver', () => ({
   __esModule: true,
   useUserProfileResolver: jest.fn(() => mockResolveProfile),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useAuthorProfiles } from '@/src/hooks/social/useAuthorProfiles';
 
 beforeEach(() => {
   jest.clearAllMocks();

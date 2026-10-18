@@ -1,4 +1,7 @@
 /** @jest-environment node */
+import { noteAccessRevocation } from '@/src/services/social/accessRevocation';
+import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
+
 const mockDiscard = jest.fn(async (_id: string) => undefined);
 const mockFetchStories = jest.fn(async () => undefined);
 const mockNotify = jest.fn();
@@ -24,9 +27,6 @@ jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { t: (key: string, params?: { title: string }) => `${key}:${params?.title}` },
 }));
-
-import { noteAccessRevocation } from '@/src/services/social/accessRevocation';
-import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
 
 const server = { id: 'server-1' } as never;
 const story = (id: string, myRole: string | null, title = id) => ({ id, title, myRole });

@@ -1,16 +1,6 @@
 /** @jest-environment node */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
-
-const mockGetValuesForEntity = jest.fn();
-
-jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
-  createAttributeValueService: () => ({ getValuesForEntity: mockGetValuesForEntity }),
-}));
-
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { StorySchemaField } from '@keres/shared';
 import { useLocationFormState } from '@/src/screens/locations/useLocationFormState';
@@ -20,6 +10,16 @@ import {
 } from '@/src/services/drafts/EditorDraftService';
 import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
+const mockGetValuesForEntity = jest.fn();
+
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
+  createAttributeValueService: () => ({ getValuesForEntity: mockGetValuesForEntity }),
+}));
 
 let database: TestDatabase;
 

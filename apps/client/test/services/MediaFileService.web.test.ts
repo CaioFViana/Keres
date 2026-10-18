@@ -1,6 +1,13 @@
 /**
  * @jest-environment node
  */
+import { ImageManipulator } from 'expo-image-manipulator';
+import { createVideoPlayer } from 'expo-video';
+import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
+import * as webMediaStore from '@/src/services/platform-web/webMediaStore';
+import { captureImageThumbnail } from '@/src/services/platform-web/webImageThumbnail';
+import { captureVideoThumbnail } from '@/src/services/platform-web/webVideoThumbnail';
+
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-file-system', () => ({
@@ -36,13 +43,6 @@ jest.mock('@/src/services/platform-web/webImageThumbnail', () => ({
   ...jest.requireActual('@/src/services/platform-web/webImageThumbnail'),
   captureImageThumbnail: jest.fn(),
 }));
-
-import { ImageManipulator } from 'expo-image-manipulator';
-import { createVideoPlayer } from 'expo-video';
-import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
-import * as webMediaStore from '@/src/services/platform-web/webMediaStore';
-import { captureImageThumbnail } from '@/src/services/platform-web/webImageThumbnail';
-import { captureVideoThumbnail } from '@/src/services/platform-web/webVideoThumbnail';
 
 const store = webMediaStore as jest.Mocked<typeof webMediaStore>;
 

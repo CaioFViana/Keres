@@ -1,10 +1,4 @@
 /** @jest-environment node */
-jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
-jest.mock('react-i18next', () => {
-  const t = (key: string) => key;
-  return { __esModule: true, useTranslation: () => ({ t }) };
-});
-
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '@/src/db';
 import {
@@ -12,6 +6,12 @@ import {
   encodeOwnerValue,
   useGalleryOwnerOptions,
 } from '@/src/screens/gallery/useGalleryOwnerOptions';
+
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
+jest.mock('react-i18next', () => {
+  const t = (key: string) => key;
+  return { __esModule: true, useTranslation: () => ({ t }) };
+});
 
 const rows = [
   [{ id: 'character-1', name: 'Ariane' }],

@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useFriendshipFormResources } from '@/src/screens/enter-stack/social/useFriendshipFormResources';
+
 const mockDb = {};
 const mockCreateFriendshipService: jest.Mock = jest.fn(() => ({ id: 'friendship-service' }));
 const mockCreateServerService: jest.Mock = jest.fn(() => ({ id: 'server-service' }));
@@ -9,9 +12,6 @@ jest.mock('@/src/services/social/FriendshipService', () => ({
 jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: (...args: unknown[]) => mockCreateServerService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useFriendshipFormResources } from '@/src/screens/enter-stack/social/useFriendshipFormResources';
 
 beforeEach(() => {
   jest.clearAllMocks();

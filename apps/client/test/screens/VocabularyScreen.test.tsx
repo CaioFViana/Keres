@@ -1,6 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+
 const mockUpdateArc = jest.fn();
 const mockUpdateStory = jest.fn();
 let mockActiveArc: { id: string; title: string; vocabulary: null } | null = null;
@@ -95,9 +98,6 @@ jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: { ...mockBaseStory }, setSelectedStory: jest.fn() }),
 }));
-
-import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 beforeEach(() => {
   jest.clearAllMocks();

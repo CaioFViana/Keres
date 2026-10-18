@@ -1,7 +1,14 @@
 /**
  * @jest-environment jsdom
  */
-const mockRegistry: Array<any> = [];
+import {
+  createClientSettings,
+  getClientSettings,
+} from '@/src/services/account/ClientSettingsService';
+import { prepareShowcase } from '@/src/services/showcase/prepareShowcase';
+import i18n from '@/src/utils/format/i18n';
+
+const mockRegistry: any[] = [];
 const mockUserState: { initializeSettings: jest.Mock; userId: string | null } = {
   initializeSettings: jest.fn(),
   userId: 'user-1',
@@ -46,13 +53,6 @@ jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { changeLanguage: jest.fn() },
 }));
-
-import {
-  createClientSettings,
-  getClientSettings,
-} from '@/src/services/account/ClientSettingsService';
-import { prepareShowcase } from '@/src/services/showcase/prepareShowcase';
-import i18n from '@/src/utils/format/i18n';
 
 const db = { marker: 'db' } as any;
 const request = { story: 'alice', stack: 'PlotsStack', theme: 'light', language: 'en' } as any;

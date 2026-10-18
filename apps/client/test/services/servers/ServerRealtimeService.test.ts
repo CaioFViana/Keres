@@ -1,6 +1,13 @@
 /**
  * @jest-environment node
  */
+import { createKeresAxiosInstance } from '@/src/services/api/apiClient';
+import { createFriendshipService } from '@/src/services/social/FriendshipService';
+import { createPublicationService } from '@/src/services/publication/PublicationService';
+import { ServerRealtimeService } from '@/src/services/servers/ServerRealtimeService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+
 jest.mock('@/src/services/api/apiClient', () => ({
   createKeresAxiosInstance: jest.fn(),
   apiBaseUrl: (serverUrl: string) => `${serverUrl.replace(/\/+$/, '')}/api`,
@@ -25,13 +32,6 @@ jest.mock('@/src/services/social/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
-
-import { createKeresAxiosInstance } from '@/src/services/api/apiClient';
-import { createFriendshipService } from '@/src/services/social/FriendshipService';
-import { createPublicationService } from '@/src/services/publication/PublicationService';
-import { ServerRealtimeService } from '@/src/services/servers/ServerRealtimeService';
-import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
-import { useStoryListStore } from '@/src/state/story/storyListStore';
 
 const mockClient = {
   post: jest.fn(),

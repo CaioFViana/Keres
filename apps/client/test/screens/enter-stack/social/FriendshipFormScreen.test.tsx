@@ -1,3 +1,7 @@
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
+import FriendshipFormScreen from '@/src/screens/enter-stack/social/FriendshipFormScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -108,7 +112,7 @@ jest.mock('@/src/services/api/FriendshipApiService', () => ({
 }));
 
 type PillProps = {
-  options: Array<{ label: string; value: string }>;
+  options: { label: string; value: string }[];
   value: string | null;
   onValueChange: (value: string | null) => void;
   placeholder: string;
@@ -134,10 +138,6 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     ),
   };
 });
-
-import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
-import FriendshipFormScreen from '@/src/screens/enter-stack/social/FriendshipFormScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const mainServer = { id: 'srv-1', name: 'Main', tag: 'main', idUser: 'me-on-server' };
 const otherServer = { id: 'srv-2', name: 'Backup', tag: null, idUser: 'me-on-backup' };

@@ -1,4 +1,13 @@
 /** @jest-environment node */
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useDrizzle } from '@/src/db';
+import {
+  decodeSeeAlsoValue,
+  encodeSeeAlsoValue,
+  useSeeAlsoEntityOptions,
+} from '@/src/hooks/relations/useSeeAlsoEntityOptions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
+
 jest.mock('@/src/db', () => ({
   __esModule: true,
   useDrizzle: jest.fn(),
@@ -12,15 +21,6 @@ jest.mock('@/src/services/entity-solvers/entityOptions', () => ({
   __esModule: true,
   loadEntityOptions: jest.fn(),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '@/src/db';
-import {
-  decodeSeeAlsoValue,
-  encodeSeeAlsoValue,
-  useSeeAlsoEntityOptions,
-} from '@/src/hooks/relations/useSeeAlsoEntityOptions';
-import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 
 beforeEach(() => {
   jest.clearAllMocks();

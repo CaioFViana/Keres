@@ -738,7 +738,7 @@ describe('reframing and coordinate helpers', () => {
  */
 
 describe('auto-pan at the edges', () => {
-  let frames: Array<(timestamp: number) => void>;
+  let frames: ((timestamp: number) => void)[];
   let realRaf: unknown;
   let realCancel: unknown;
 
@@ -795,7 +795,7 @@ describe('auto-pan at the edges', () => {
   });
 
   it('pans from any edge and reports the drift to the drag handler', async () => {
-    const moved: Array<{ x: number; y: number }> = [];
+    const moved: { x: number; y: number }[] = [];
     const ref = createRef<CanvasViewportHandle>();
     const view = await renderHook(() =>
       useCanvasViewport(ref, LAYOUT, {

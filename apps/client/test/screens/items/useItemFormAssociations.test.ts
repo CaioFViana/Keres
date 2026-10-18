@@ -1,3 +1,6 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useItemFormAssociations } from '@/src/screens/items/useItemFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 const mockSetSelectedTagIds = jest.fn();
 const mockSetCharacterDbAndStoryId = jest.fn();
@@ -16,9 +19,6 @@ jest.mock('@/src/state/story/characterStore', () => ({
     initializeService: mockInitializeCharacterService,
   }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useItemFormAssociations } from '@/src/screens/items/useItemFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

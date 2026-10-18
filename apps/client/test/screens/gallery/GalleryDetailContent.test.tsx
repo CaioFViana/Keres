@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
+import GalleryDetailContent from '@/src/screens/gallery/GalleryDetailContent';
+
 const mockGetById = jest.fn();
 const mockUpdateGallery = jest.fn();
 const mockUpdateGalleryFavoriteStatus = jest.fn();
@@ -166,8 +168,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import GalleryDetailContent from '@/src/screens/gallery/GalleryDetailContent';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

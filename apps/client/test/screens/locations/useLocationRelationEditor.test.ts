@@ -1,6 +1,10 @@
 /**
  * @jest-environment node
  */
+import { act, renderHook } from '@testing-library/react-native';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { useLocationRelationEditor } from '@/src/screens/locations/useLocationRelationEditor';
+
 const mockSetParent = jest.fn();
 const mockAddConnection = jest.fn();
 const mockRemoveRelation = jest.fn();
@@ -20,10 +24,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
-import { useLocationRelationEditor } from '@/src/screens/locations/useLocationRelationEditor';
 
 const place = (id: string) => ({ id, name: `Place ${id}` }) as LocationSelect;
 const relation = (

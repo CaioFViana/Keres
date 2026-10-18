@@ -1,7 +1,12 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
-const mockScreens: Array<Record<string, any>> = [];
+import StoryDevicesStackNavigator from '@/src/navigation/stacks/StoryDevicesStack';
+import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
+import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
+import { storyDeviceLibrary } from '@/src/content/story-devices/library';
+
+const mockScreens: Record<string, any>[] = [];
 
 jest.mock('@react-navigation/native-stack', () => ({
   __esModule: true,
@@ -25,11 +30,6 @@ jest.mock('@/src/content/story-devices/library', () => ({
   __esModule: true,
   storyDeviceLibrary: { id: 'test-library' },
 }));
-
-import StoryDevicesStackNavigator from '@/src/navigation/stacks/StoryDevicesStack';
-import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
-import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
-import { storyDeviceLibrary } from '@/src/content/story-devices/library';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { warnAboutPayment } from '@/src/services/payments/PaymentWarningService';
+
 const mockNotify = jest.fn();
 const mockStorage = new Map<string, string>();
 const mockStorageFails = { value: false };
@@ -29,8 +31,6 @@ jest.mock('@/src/utils/format/i18n', () => ({
     t: (key: string, options?: Record<string, unknown>) => `${key}:${JSON.stringify(options)}`,
   },
 }));
-
-import { warnAboutPayment } from '@/src/services/payments/PaymentWarningService';
 
 const server = { id: 'server-1', name: 'Home' };
 const now = new Date('2026-04-01T12:00:00.000Z');

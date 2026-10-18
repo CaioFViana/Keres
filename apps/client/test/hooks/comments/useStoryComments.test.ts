@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryComments } from '@/src/hooks/comments/useStoryComments';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/notes-tags-comments/CommentService', () => ({
@@ -13,11 +18,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryComments } from '@/src/hooks/comments/useStoryComments';
-import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const getAllCommentsForStory = jest.fn();
 

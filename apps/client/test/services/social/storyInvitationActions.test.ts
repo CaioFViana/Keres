@@ -1,4 +1,9 @@
 /** @jest-environment node */
+import {
+  acceptStoryInvitation,
+  closeStoryInvitation,
+} from '@/src/services/social/storyInvitationActions';
+
 const mockApi = { accept: jest.fn(), remove: jest.fn() };
 const mockRefresh = jest.fn();
 const mockImport = jest.fn();
@@ -26,11 +31,6 @@ jest.mock('@/src/services/sync/importNewServerStories', () => ({
   __esModule: true,
   importNewServerStories: (...args: unknown[]) => mockImport(...args),
 }));
-
-import {
-  acceptStoryInvitation,
-  closeStoryInvitation,
-} from '@/src/services/social/storyInvitationActions';
 
 const server = { id: 'server-1' } as never;
 const db = {} as never;

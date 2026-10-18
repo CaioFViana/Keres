@@ -1,6 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
+
 /**
  * The installer overlay's own rules: it stays hidden until the story form asks, hosts the
  * shipped catalogue with its close control, and closing returns to the untouched form.
@@ -47,9 +50,6 @@ jest.mock('@/src/screens/packs/ShippedPacksContent', () => {
       ),
   };
 });
-
-import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
-import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 
 beforeEach(() => {
   useShippedPacksInstallerStore.setState({ open: false, lastInstalledPackId: null });

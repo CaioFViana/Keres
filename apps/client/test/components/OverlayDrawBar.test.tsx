@@ -3,6 +3,8 @@ import { StyleSheet } from 'react-native';
 import { CANVAS_ACTION_ROW_HEIGHT } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
 
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
@@ -26,8 +28,6 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
     isWide: false,
   })),
 }));
-
-import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
 const compactLayout = {

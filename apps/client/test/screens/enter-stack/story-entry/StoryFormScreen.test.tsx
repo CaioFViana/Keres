@@ -1,3 +1,7 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import StoryFormScreen from '@/src/screens/enter-stack/story-entry/StoryFormScreen';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -165,7 +169,7 @@ jest.mock('@/src/components/features/story/StoryFieldsForm/StoryFieldsForm', () 
 });
 
 type PillProps = {
-  options: Array<{ label: string; value: string }>;
+  options: { label: string; value: string }[];
   selectedValues: string[];
   onSelectionChange: (values: string[]) => void;
 };
@@ -195,10 +199,6 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     ),
   };
 });
-
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import StoryFormScreen from '@/src/screens/enter-stack/story-entry/StoryFormScreen';
 
 const storedStory = {
   title: 'Stored',

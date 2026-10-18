@@ -7,6 +7,9 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 
+import SceneDetailScreen from '@/src/screens/narrative-elements/scenes/SceneDetailScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigateToDetail = jest.fn();
@@ -301,9 +304,6 @@ jest.mock('@/src/screens/narrative-elements/scenes/SceneDetailContent', () => {
     ),
   };
 });
-
-import SceneDetailScreen from '@/src/screens/narrative-elements/scenes/SceneDetailScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   const el = view.getByTestId(testID);

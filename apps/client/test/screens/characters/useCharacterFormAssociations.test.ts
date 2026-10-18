@@ -1,3 +1,7 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import { useCharacterFormAssociations } from '@/src/screens/characters/useCharacterFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 const mockSetSelectedTagIds = jest.fn();
 const mockAlert = jest.fn();
@@ -31,10 +35,6 @@ jest.mock('@/src/state/events/EventEmitter', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
-import { useCharacterFormAssociations } from '@/src/screens/characters/useCharacterFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

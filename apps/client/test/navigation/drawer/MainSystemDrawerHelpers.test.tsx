@@ -1,3 +1,13 @@
+import { fireEvent, render } from '@testing-library/react-native';
+import { DrawerActions } from '@react-navigation/native';
+import {
+  ArcContextDrawerScreen,
+  drawerIcon,
+  drawerStoredIcon,
+  DrawerToggleButton,
+  mainSystemStackRootScreens,
+} from '@/src/navigation/drawer/MainSystemDrawerHelpers';
+
 const mockToggleDrawer = jest.fn(() => ({ type: 'TOGGLE_DRAWER' }));
 const mockNavigation = { dispatch: jest.fn(), navigate: jest.fn() };
 
@@ -33,16 +43,6 @@ jest.mock('@/src/components/common/navigation/DrawerMenuButton/DrawerMenuButton'
     ),
   };
 });
-
-import { fireEvent, render } from '@testing-library/react-native';
-import { DrawerActions } from '@react-navigation/native';
-import {
-  ArcContextDrawerScreen,
-  drawerIcon,
-  drawerStoredIcon,
-  DrawerToggleButton,
-  mainSystemStackRootScreens,
-} from '@/src/navigation/drawer/MainSystemDrawerHelpers';
 
 describe('MainSystemDrawerHelpers', () => {
   beforeEach(() => {

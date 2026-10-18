@@ -22,7 +22,6 @@ jest.mock('react-i18next', () => ({
 
 const mockSceneListItem = jest.fn();
 jest.mock('@/src/components/features/list-items/SceneListItem', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   const { Text, TouchableOpacity, View } = jest.requireActual('react-native');
   return {

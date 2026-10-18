@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
+import StoryAnalysisScreen from '@/src/screens/main-story-stack/StoryAnalysisScreen';
+
 const mockGoBack = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockSetSelectedStory = jest.fn();
@@ -199,8 +201,6 @@ jest.mock('react-i18next', () => {
     useTranslation: () => ({ t: mockT }),
   };
 });
-
-import StoryAnalysisScreen from '@/src/screens/main-story-stack/StoryAnalysisScreen';
 
 const { StoryAnalysisCancelledError } = jest.requireMock(
   '@/src/utils/analysis/storyAnalysisChecks',

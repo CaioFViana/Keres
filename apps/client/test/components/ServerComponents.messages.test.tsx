@@ -1,6 +1,11 @@
 /**
  * @jest-environment jsdom
  */
+import { fireEvent, render } from '@testing-library/react-native';
+import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
+import ServerListItem from '@/src/components/features/servers/ServerListItem';
+import ServerStatusPill from '@/src/components/features/servers/ServerStatusPill';
+
 const mockColors = {
   primary: '#0000ff',
   primaryVariant: '#0000aa',
@@ -42,11 +47,6 @@ jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-
-import { fireEvent, render } from '@testing-library/react-native';
-import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
-import ServerListItem from '@/src/components/features/servers/ServerListItem';
-import ServerStatusPill from '@/src/components/features/servers/ServerStatusPill';
 
 describe('ServerStatusPill', () => {
   it.each([

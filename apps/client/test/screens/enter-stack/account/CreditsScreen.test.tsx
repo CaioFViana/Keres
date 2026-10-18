@@ -1,3 +1,13 @@
+import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import {
+  APP_RELEASE,
+  KERES_LICENSE,
+  KERES_REPOSITORY_URL,
+  THIRD_PARTY_CREDITS,
+} from '@keres/shared';
+import { Linking } from 'react-native';
+import CreditsScreen from '@/src/screens/enter-stack/account/CreditsScreen';
+
 const mockT = (key: string) => key;
 
 jest.mock('react-i18next', () => ({
@@ -32,16 +42,6 @@ const mockBackHandler = jest.fn();
 jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   useBackButtonHandler: (options: unknown) => mockBackHandler(options),
 }));
-
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import {
-  APP_RELEASE,
-  KERES_LICENSE,
-  KERES_REPOSITORY_URL,
-  THIRD_PARTY_CREDITS,
-} from '@keres/shared';
-import { Linking } from 'react-native';
-import CreditsScreen from '@/src/screens/enter-stack/account/CreditsScreen';
 
 describe('CreditsScreen', () => {
   beforeEach(() => {

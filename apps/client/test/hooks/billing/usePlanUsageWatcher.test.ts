@@ -1,3 +1,6 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { usePlanUsageWatcher } from '@/src/hooks/billing/usePlanUsageWatcher';
+
 const mockRefresh = jest.fn();
 const mockClear = jest.fn();
 const mockListeners = new Map<string, Set<(...args: unknown[]) => void>>();
@@ -22,9 +25,6 @@ jest.mock('@/src/state/events/EventEmitter', () => ({
     },
   },
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { usePlanUsageWatcher } from '@/src/hooks/billing/usePlanUsageWatcher';
 
 const db = {} as never;
 const story = { id: 'story-1', serverId: 'server-1' };

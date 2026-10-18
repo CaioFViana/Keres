@@ -1,6 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import WorldRuleDetailScreen from '@/src/screens/world-rules/WorldRuleDetailScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigation = { navigate: mockNavigate, goBack: mockGoBack };
@@ -219,9 +222,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import WorldRuleDetailScreen from '@/src/screens/world-rules/WorldRuleDetailScreen';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeWorldRule = (overrides = {}) => ({
   id: 'wr-1',

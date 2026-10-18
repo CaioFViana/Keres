@@ -1,15 +1,15 @@
 /**
  * @jest-environment node
  */
+import * as DocumentPicker from 'expo-document-picker';
+import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
+
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-video', () => ({ createVideoPlayer: jest.fn() }));
 jest.mock('expo-image-manipulator', () => ({
   ImageManipulator: { manipulate: jest.fn() },
   SaveFormat: { JPEG: 'jpeg' },
 }));
-
-import * as DocumentPicker from 'expo-document-picker';
-import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
 
 const getDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
 

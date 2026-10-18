@@ -1,18 +1,20 @@
 // ResponsiveModal reads the system insets.
-jest.mock('react-native-safe-area-context', () => ({
-  __esModule: true,
-  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
-}));
-
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
+import MainSystemDrawer from '@/src/navigation/drawer/MainSystemDrawer';
+
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
+
 const mockRootDispatch = jest.fn();
 const mockSetSelectedStory = jest.fn();
-const mockDrawerScreens: Array<Record<string, any>> = [];
-const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
+const mockDrawerScreens: Record<string, any>[] = [];
+const mockDrawerNavigatorProps: Record<string, any>[] = [];
 function mockReset(payload: unknown) {
   return { type: 'RESET', payload };
 }
@@ -134,7 +136,7 @@ jest.mock('@/src/content/help/contextualHelp', () => ({
   screenHelpPage: { NarrativeElementsStack: 'narrative-elements' },
 }));
 const mockStoryArcs = {
-  arcs: [] as Array<{ id: string; title: string; icon: string | null }>,
+  arcs: [] as { id: string; title: string; icon: string | null }[],
   activeArc: null as null | { id: string; title: string; icon: string | null },
   activeArcId: null as string | null,
   setActiveArcId: jest.fn(),
@@ -411,8 +413,6 @@ jest.mock('@/src/screens/world-rules/WorldRuleListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
-
-import MainSystemDrawer from '@/src/navigation/drawer/MainSystemDrawer';
 
 const drawerScreen = (name: string) => mockDrawerScreens.find((screen) => screen.name === name);
 

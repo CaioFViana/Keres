@@ -1,5 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 
+import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
+import type { DocLibrary } from '@/src/content/help/library';
+
 const mockNavigate = jest.fn();
 const mockSetDocumentTitle = jest.fn();
 
@@ -70,9 +73,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
-
-import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
-import type { DocLibrary } from '@/src/content/help/library';
 
 const pages = [
   {

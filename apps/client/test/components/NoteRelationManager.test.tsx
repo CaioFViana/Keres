@@ -1,11 +1,11 @@
 // ResponsiveModal reads the system insets.
+import { act, fireEvent, render } from '@testing-library/react-native';
+import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
+
 jest.mock('react-native-safe-area-context', () => ({
   __esModule: true,
   useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
 }));
-
-import { act, fireEvent, render } from '@testing-library/react-native';
-import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

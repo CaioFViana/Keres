@@ -1,3 +1,9 @@
+import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import GraphNodeBox, {
+  type GraphNodeBoxNode,
+} from '@/src/components/features/graphs/GraphNodeBox/GraphNodeBox';
+
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
@@ -11,12 +17,6 @@ jest.mock('@/src/theme', () => ({
     },
   }),
 }));
-
-import { fireEvent, render } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
-import GraphNodeBox, {
-  type GraphNodeBoxNode,
-} from '@/src/components/features/graphs/GraphNodeBox/GraphNodeBox';
 
 const NODE: GraphNodeBoxNode = {
   id: 'n1',

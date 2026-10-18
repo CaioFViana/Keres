@@ -1,4 +1,10 @@
 /** @jest-environment node */
+import { renderHook } from '@testing-library/react-native';
+import { BackHandler, Platform } from 'react-native';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+
 const mockNavigation = {
   canGoBack: jest.fn(),
   goBack: jest.fn(),
@@ -37,12 +43,6 @@ jest.mock(
   '@/src/components/common/navigation/NavigationDrawerButton/NavigationDrawerButton',
   () => 'NavigationDrawerButton',
 );
-
-import { renderHook } from '@testing-library/react-native';
-import { BackHandler, Platform } from 'react-native';
-import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
-import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
 
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });

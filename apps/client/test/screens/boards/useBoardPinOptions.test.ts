@@ -1,4 +1,14 @@
 /** @jest-environment node */
+import { renderHook, waitFor } from '@testing-library/react-native';
+import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { useDrizzle } from '@/src/db';
+import {
+  decodeBoardPinValue,
+  encodeBoardPinValue,
+  useBoardPinOptions,
+} from '@/src/screens/boards/useBoardPinOptions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
+
 jest.mock('@/src/db', () => ({
   __esModule: true,
   useDrizzle: jest.fn(),
@@ -15,16 +25,6 @@ jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (entityType: string) => entityType }),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import type { MultiSelectGroup } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useDrizzle } from '@/src/db';
-import {
-  decodeBoardPinValue,
-  encodeBoardPinValue,
-  useBoardPinOptions,
-} from '@/src/screens/boards/useBoardPinOptions';
-import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 
 const selectReturning = (...results: unknown[][]) => {
   const all = jest.fn();

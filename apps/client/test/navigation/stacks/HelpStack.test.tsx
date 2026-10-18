@@ -1,8 +1,12 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
-const mockNavigatorProps: Array<Record<string, unknown>> = [];
-const mockScreens: Array<Record<string, any>> = [];
+import HelpStackNavigator from '@/src/navigation/stacks/HelpStack';
+import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
+import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
+
+const mockNavigatorProps: Record<string, unknown>[] = [];
+const mockScreens: Record<string, any>[] = [];
 
 jest.mock('@react-navigation/native-stack', () => ({
   __esModule: true,
@@ -25,10 +29,6 @@ jest.mock('@/src/screens/help/HelpPageScreen', () => ({
   __esModule: true,
   HelpPageScreen: jest.fn(() => null),
 }));
-
-import HelpStackNavigator from '@/src/navigation/stacks/HelpStack';
-import { HelpIndexScreen } from '@/src/screens/help/HelpIndexScreen';
-import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,15 +1,6 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/state/ui/notificationStore', () => ({
-  useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
-}));
-jest.mock('@/src/services/media/MediaSyncService', () => ({
-  createMediaSyncService: () => ({
-    syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
-  }),
-}));
-
 import { and, eq } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import { createCollaborationEdits } from '@/test/helpers/syncFuzzCollaboration';
@@ -25,6 +16,15 @@ import {
   type SyncDevice,
   USER_ID,
 } from '@/test/helpers/syncDevices';
+
+jest.mock('@/src/state/ui/notificationStore', () => ({
+  useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
+}));
+jest.mock('@/src/services/media/MediaSyncService', () => ({
+  createMediaSyncService: () => ({
+    syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
+  }),
+}));
 
 /**
  * Randomized convergence: several devices edit, delete and create characters; create, rename,

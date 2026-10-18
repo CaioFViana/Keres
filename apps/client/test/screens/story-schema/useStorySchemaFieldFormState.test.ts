@@ -1,4 +1,16 @@
 /** @jest-environment node */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { AttributeType, deriveAttributeKey } from '@keres/shared';
+import { useStorySchemaFieldFormState } from '@/src/screens/story-schema/useStorySchemaFieldFormState';
+import {
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '@/src/services/drafts/EditorDraftService';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 const mockAlert = jest.fn();
 
 // The hook lists `t` in its effect deps, so the mock must return a stable function like
@@ -11,21 +23,9 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { AttributeType, deriveAttributeKey } from '@keres/shared';
-import { useStorySchemaFieldFormState } from '@/src/screens/story-schema/useStorySchemaFieldFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '@/src/services/drafts/EditorDraftService';
-import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
-import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

@@ -53,7 +53,7 @@ export function buildPack(definition: ShippedPackDefinition, language: PackLangu
     ...rowDates,
   }));
 
-  const suggestions: Array<Record<string, unknown>> = [];
+  const suggestions: Record<string, unknown>[] = [];
   definition.fields.forEach((field, fieldIndex) => {
     field.options?.forEach((option, optionIndex) => {
       suggestions.push({

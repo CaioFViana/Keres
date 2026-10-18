@@ -1,13 +1,13 @@
 /** @jest-environment node */
-jest.mock('@react-navigation/native', () => ({
-  __esModule: true,
-  useNavigation: jest.fn(),
-}));
-
 import { renderHook } from '@testing-library/react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+
+jest.mock('@react-navigation/native', () => ({
+  __esModule: true,
+  useNavigation: jest.fn(),
+}));
 
 const navigate = jest.fn();
 

@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useDrizzle } from '@/src/db';
+import { useOperationLogs } from '@/src/hooks/sync/useOperationLogs';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = { select: jest.fn() };
 const mockT = (key: string) => key;
 const mockSettings = { userId: 'user-1' };
@@ -28,11 +33,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
   const React = jest.requireActual('react') as typeof import('react');
   return { useEntityInitialLoad: (load: () => void) => React.useEffect(load, [load]) };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '@/src/db';
-import { useOperationLogs } from '@/src/hooks/sync/useOperationLogs';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

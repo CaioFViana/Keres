@@ -12,7 +12,6 @@ jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
 jest.mock('@/src/hooks/ui/useKeyboardOverlap', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   return {
     __esModule: true,

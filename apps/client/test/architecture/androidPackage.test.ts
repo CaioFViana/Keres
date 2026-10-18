@@ -22,7 +22,6 @@ describe('the Android package', () => {
     const config = JSON.parse(readFileSync(APP_JSON, 'utf8')) as { expo?: { plugins?: unknown[] } };
     expect(config.expo?.plugins).toContain('./plugins/withCleartextTraffic');
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const withCleartextTraffic = require('@/plugins/withCleartextTraffic');
     const manifest: { manifest: { application: { $: Record<string, string> }[] } } = {
       manifest: { application: [{ $: { 'android:name': '.MainApplication' } }] },

@@ -2,14 +2,14 @@ import { act, render } from '@testing-library/react-native';
 import { themes } from '@keres/shared';
 import { Text } from 'react-native';
 
+import { useThemeStore } from '@/src/state/ui/themeStore';
+import { useTheme } from '@/src/theme/ThemeContext';
+import { ThemeProvider } from '@/src/theme/ThemeProvider';
+
 jest.mock('@/src/state/ui/themeStore', () => ({
   __esModule: true,
   useThemeStore: jest.fn(),
 }));
-
-import { useThemeStore } from '@/src/state/ui/themeStore';
-import { useTheme } from '@/src/theme/ThemeContext';
-import { ThemeProvider } from '@/src/theme/ThemeProvider';
 
 const storeState = { darkMode: false, toggleDarkMode: jest.fn() };
 const db = { marker: 'drizzle' };
@@ -95,7 +95,6 @@ it('warns instead of toggling without a database', async () => {
 });
 
 describe('the native color scheme', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- spied on the real module.
   const { Appearance, Platform } = require('react-native');
 
   afterEach(() => {

@@ -1,6 +1,13 @@
 /**
  * @jest-environment jsdom
  */
+import { drizzle } from 'drizzle-orm/expo-sqlite';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import {
+  runSqliteWebSmokeProbe,
+  shouldRunSqliteWebSmokeProbe,
+} from '@/src/testing/sqliteWebSmokeProbe';
+
 jest.mock('drizzle-orm/expo-sqlite', () => ({
   __esModule: true,
   drizzle: jest.fn(),
@@ -14,13 +21,6 @@ jest.mock('@/src/db/schema', () => ({
   stories: { id: 'stories' },
   storySchemaFields: { id: 'storySchemaFields' },
 }));
-
-import { drizzle } from 'drizzle-orm/expo-sqlite';
-import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
-import {
-  runSqliteWebSmokeProbe,
-  shouldRunSqliteWebSmokeProbe,
-} from '@/src/testing/sqliteWebSmokeProbe';
 
 const PAYLOAD = 'keres-sqlite-web-'.repeat(96);
 const IMPORTED_STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAW';

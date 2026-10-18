@@ -1,6 +1,13 @@
 /**
  * @jest-environment node
  */
+import { eq } from 'drizzle-orm';
+import { servers, stories, storyPublications } from '@/src/db/schema';
+import { publicationApiService } from '@/src/services/api/PublicationApiService';
+import { createPublicationService } from '@/src/services/publication/PublicationService';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 jest.mock('@/src/services/api/PublicationApiService', () => ({
   __esModule: true,
   publicationApiService: {
@@ -18,20 +25,13 @@ jest.mock('@/src/utils/format/i18n', () => ({
   },
 }));
 
-import { eq } from 'drizzle-orm';
-import { servers, stories, storyPublications } from '@/src/db/schema';
-import { publicationApiService } from '@/src/services/api/PublicationApiService';
-import { createPublicationService } from '@/src/services/publication/PublicationService';
-import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
-
 const SERVER_ID = 'server-1';
 const STORY_ID = 'story-1';
 const NOW = new Date('2026-08-19T12:00:00.000Z');
 
 let database: TestDatabase;
 let service: ReturnType<typeof createPublicationService>;
-let shown: Array<{ message: string; type: string }>;
+let shown: { message: string; type: string }[];
 
 const listVisible = publicationApiService.listVisible as jest.Mock;
 

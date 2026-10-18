@@ -1,3 +1,7 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useStoryBackupExport } from '@/src/screens/story-share/useStoryBackupExport';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockExportFullStory = jest.fn();
 const mockBuildZipBytes = jest.fn();
 const mockDeliverExport = jest.fn();
@@ -32,10 +36,6 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useStoryBackupExport } from '@/src/screens/story-share/useStoryBackupExport';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const STORY = { id: 'story-1', title: 'Epic' };
 

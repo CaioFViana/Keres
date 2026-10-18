@@ -1,5 +1,8 @@
 import type { Purchase } from 'expo-iap';
 
+// The platform file, directly: on iOS (and in this suite) the stub is resolved instead.
+import { playDriver } from '@/src/utils/billing/playPurchase.android';
+
 const mockInitConnection = jest.fn();
 const mockEndConnection = jest.fn();
 const mockFetchProducts = jest.fn();
@@ -26,9 +29,6 @@ jest.mock('expo-iap', () => ({
     return { remove: jest.fn() };
   },
 }));
-
-// The platform file, directly: on iOS (and in this suite) the stub is resolved instead.
-import { playDriver } from '@/src/utils/billing/playPurchase.android';
 
 const googlePurchase = (over: Record<string, unknown> = {}) =>
   ({

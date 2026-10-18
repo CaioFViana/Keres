@@ -1,4 +1,6 @@
 /** @jest-environment node */
+import { importNewServerStories } from '@/src/services/sync/importNewServerStories';
+
 const mockFetchStories = jest.fn(async () => undefined);
 
 jest.mock('@/src/state/story/storyListStore', () => ({
@@ -14,8 +16,6 @@ jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => (
   __esModule: true,
   createStoryService: jest.fn(() => ({})),
 }));
-
-import { importNewServerStories } from '@/src/services/sync/importNewServerStories';
 
 const server = { id: 'server-1', idUser: 'me' } as never;
 

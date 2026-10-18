@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useBindChapterStore } from '@/src/hooks/chapter/useBindChapterStore';
+
 const mockDb = {};
 const mockStore = {
   chapters: [{ id: 'chapter-1' }],
@@ -11,9 +14,6 @@ jest.mock('@/src/state/story/chapterStore', () => ({
   __esModule: true,
   useChapterStore: jest.fn(() => mockStore),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useBindChapterStore } from '@/src/hooks/chapter/useBindChapterStore';
 
 beforeEach(() => jest.clearAllMocks());
 

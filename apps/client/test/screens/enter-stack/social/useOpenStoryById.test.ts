@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useOpenStoryById } from '@/src/screens/enter-stack/social/useOpenStoryById';
+
 const mockDispatch = jest.fn();
 const mockSetTheme = jest.fn();
 const mockNotify = jest.fn();
@@ -25,9 +28,6 @@ jest.mock('@/src/state/story/storyStore', () => ({
     getState: () => ({ setSelectedStory: (...args: unknown[]) => mockSetSelectedStory(...args) }),
   },
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useOpenStoryById } from '@/src/screens/enter-stack/social/useOpenStoryById';
 
 beforeEach(() => jest.clearAllMocks());
 

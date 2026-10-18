@@ -460,7 +460,6 @@ describe('GuideHost', () => {
 });
 
 describe('the tour card and the navigation bar', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- the context under test.
   const { SafeAreaInsetsContext } = require('react-native-safe-area-context');
   const { StyleSheet } = require('react-native');
 

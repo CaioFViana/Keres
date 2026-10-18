@@ -1,5 +1,7 @@
 import { cleanup, render, waitFor } from '@testing-library/react-native';
 
+import StoryEntityCountScreen from '@/src/screens/main-story-stack/StoryEntityCountScreen';
+
 const mockGoBack = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockUseScreenTour = jest.fn();
@@ -96,8 +98,6 @@ jest.mock('react-i18next', () => {
     useTranslation: () => ({ t: mockT }),
   };
 });
-
-import StoryEntityCountScreen from '@/src/screens/main-story-stack/StoryEntityCountScreen';
 
 describe('StoryEntityCountScreen', () => {
   afterEach(() => {

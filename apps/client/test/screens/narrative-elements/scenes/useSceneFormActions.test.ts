@@ -1,3 +1,8 @@
+import { act, renderHook } from '@testing-library/react-native';
+import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useSceneFormActions } from '@/src/screens/narrative-elements/scenes/useSceneFormActions';
+import type { SceneFormState } from '@/src/screens/narrative-elements/scenes/useSceneFormState';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
@@ -45,11 +50,6 @@ jest.mock('@keres/shared', () => ({
   // A February of 28 days, whatever the year.
   daysInMonth: jest.fn(() => 28),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { useSceneFormActions } from '@/src/screens/narrative-elements/scenes/useSceneFormActions';
-import type { SceneFormState } from '@/src/screens/narrative-elements/scenes/useSceneFormState';
 
 const createState = (overrides: Partial<SceneFormState> = {}): SceneFormState =>
   ({

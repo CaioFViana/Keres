@@ -50,4 +50,15 @@ module.exports = defineConfig([
       'react-hooks/purity': 'error',
     },
   },
+  {
+    files: ['test/**/*.ts', 'test/**/*.tsx'],
+    rules: {
+      /**
+       * A test loads a module late on purpose: after `jest.mock`, after the environment or a fake clock is
+       * set up, after `jest.resetModules()`, or to read the real one through `jest.requireActual`. A static
+       * `import` cannot say when it runs, and the module being loaded is what the test is about.
+       */
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 ]);

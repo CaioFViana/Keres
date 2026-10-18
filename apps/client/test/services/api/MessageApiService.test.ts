@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { messageApi } from '@/src/services/api/MessageApiService';
+
 const mockGet = jest.fn();
 const mockPost = jest.fn();
 const mockDelete = jest.fn();
@@ -20,8 +22,6 @@ jest.mock('@/src/services/api/apiClient', () => ({
     delete: (...args: unknown[]) => mockDelete(...args),
   }),
 }));
-
-import { messageApi } from '@/src/services/api/MessageApiService';
 
 const server = { id: 'server-1', url: 'https://keres.test' } as never;
 

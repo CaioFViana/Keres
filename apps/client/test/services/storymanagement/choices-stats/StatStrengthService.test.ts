@@ -1,3 +1,5 @@
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
+
 const mockServerService = {};
 const mockPrepare = jest.fn();
 const mockOperation = jest.fn();
@@ -22,8 +24,6 @@ jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-
-import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
 
 function queryChain(rows: unknown) {
   return {

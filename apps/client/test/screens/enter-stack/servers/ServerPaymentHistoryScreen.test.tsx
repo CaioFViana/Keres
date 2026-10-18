@@ -1,3 +1,6 @@
+import { render } from '@testing-library/react-native';
+import ServerPaymentHistoryScreen from '@/src/screens/enter-stack/servers/ServerPaymentHistoryScreen';
+
 const mockT = (key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key;
 const mockGoBack = jest.fn();
@@ -40,9 +43,6 @@ jest.mock('@/src/screens/enter-stack/servers/useServerStatuses', () => ({
 jest.mock('@/src/screens/enter-stack/servers/usePaymentHistory', () => ({
   usePaymentHistory: (...args: unknown[]) => mockHistory(...args),
 }));
-
-import { render } from '@testing-library/react-native';
-import ServerPaymentHistoryScreen from '@/src/screens/enter-stack/servers/ServerPaymentHistoryScreen';
 
 const has = (text: string) => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 

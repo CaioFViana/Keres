@@ -1,6 +1,15 @@
 /**
  * @jest-environment node
  */
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import { friendships, servers, users } from '@/src/db/schema';
+import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
+import { createFriendshipService } from '@/src/services/social/FriendshipService';
+import { userApiService } from '@/src/services/api/UserApiService';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 jest.mock('@/src/services/api/FriendshipApiService', () => ({
   friendshipApiService: {
     acceptFriendRequest: jest.fn(),
@@ -15,15 +24,6 @@ jest.mock('@/src/services/api/FriendshipApiService', () => ({
 jest.mock('@/src/services/api/UserApiService', () => ({
   userApiService: { getOwnProfile: jest.fn() },
 }));
-
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { friendships, servers, users } from '@/src/db/schema';
-import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
-import { createFriendshipService } from '@/src/services/social/FriendshipService';
-import { userApiService } from '@/src/services/api/UserApiService';
-import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The friendship service's local writes, action guards and server reconciliation.

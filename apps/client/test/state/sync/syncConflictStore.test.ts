@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
+
 const mockService = {
   getPendingConflicts: jest.fn(async () => [] as { id: string }[]),
   resolveKeepLocal: jest.fn(async () => undefined),
@@ -11,8 +13,6 @@ const mockService = {
 jest.mock('@/src/services/sync/SyncConflictService', () => ({
   createSyncConflictService: () => mockService,
 }));
-
-import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
 
 const store = () => useSyncConflictStore.getState();
 const db = {} as never;

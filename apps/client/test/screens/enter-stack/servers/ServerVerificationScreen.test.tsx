@@ -1,3 +1,11 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { AppState, Linking } from 'react-native';
+import {
+  AgeVerificationConflictError,
+  AgeVerificationUnavailableError,
+} from '@/src/services/api/AgeVerificationApiService';
+import ServerVerificationScreen from '@/src/screens/enter-stack/servers/ServerVerificationScreen';
+
 const mockT = (key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key;
 const mockGoBack = jest.fn();
@@ -79,14 +87,6 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
     getState: () => ({ setActiveServer: (...args: unknown[]) => mockSetActiveServer(...args) }),
   },
 }));
-
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { AppState, Linking } from 'react-native';
-import {
-  AgeVerificationConflictError,
-  AgeVerificationUnavailableError,
-} from '@/src/services/api/AgeVerificationApiService';
-import ServerVerificationScreen from '@/src/screens/enter-stack/servers/ServerVerificationScreen';
 
 const server = { id: 'srv-1', url: 'https://s.example', name: 'Main' };
 const pending = {

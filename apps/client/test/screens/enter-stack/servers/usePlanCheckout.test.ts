@@ -1,3 +1,12 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { Linking } from 'react-native';
+import {
+  CHECKOUT_POLL_MS,
+  usePlanCheckout,
+} from '@/src/screens/enter-stack/servers/usePlanCheckout';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { PlayPurchaseError } from '@/src/utils/billing/playPurchaseTypes';
+
 const mockStart = jest.fn();
 const mockGet = jest.fn();
 const mockVerify = jest.fn();
@@ -31,15 +40,6 @@ jest.mock('@/src/utils/billing/playPurchase', () => ({
     reconcileUnfinished: (...args: unknown[]) => mockReconcile(...args),
   },
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { Linking } from 'react-native';
-import {
-  CHECKOUT_POLL_MS,
-  usePlanCheckout,
-} from '@/src/screens/enter-stack/servers/usePlanCheckout';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { PlayPurchaseError } from '@/src/utils/billing/playPurchaseTypes';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const request = { tierId: 'tier-1', interval: 'monthly' as const, methodId: 'pix' };

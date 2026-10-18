@@ -1,6 +1,22 @@
 /**
  * @jest-environment node
  */
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useDrizzle } from '@/src/db';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import {
+  patchEntityFormSecondaryDraft,
+  readEntityFormSecondaryDraft,
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
 jest.mock('@/src/state/story/storyStore', () => ({ __esModule: true, useStoryStore: jest.fn() }));
 jest.mock('@/src/state/app/userSettingsStore', () => ({
@@ -35,22 +51,6 @@ jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   writeEntityFormSecondaryDraft: jest.fn(async () => undefined),
   clearEntityFormSecondaryDraft: jest.fn(async () => undefined),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '@/src/db';
-import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
-import {
-  patchEntityFormSecondaryDraft,
-  readEntityFormSecondaryDraft,
-} from '@/src/state/drafts/entityFormSecondaryDraftStore';
-import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
-import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
-import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
-import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
-import { useStoryStore } from '@/src/state/story/storyStore';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { AppAlert } from '@/src/state/ui/AppAlert';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const STORY_ID = 'story-1';
 const ENTITY_ID = 'rule-1';

@@ -2,6 +2,8 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-nati
 import React from 'react';
 import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
+import NoteDetailScreen from '@/src/screens/notes/NoteDetailScreen';
+
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
 const mockNavigation = { goBack: mockGoBack, navigate: mockNavigate };
@@ -222,8 +224,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import NoteDetailScreen from '@/src/screens/notes/NoteDetailScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

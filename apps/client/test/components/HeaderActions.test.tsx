@@ -171,7 +171,6 @@ it('keeps a single action inline on compact screens, with no burger', async () =
 });
 
 describe('the compact burger menu and the status bar', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- the context under test.
   const { SafeAreaInsetsContext } = require('react-native-safe-area-context');
   const actions = [
     { id: 'a', icon: 'add' as const, label: 'A', onPress: jest.fn() },

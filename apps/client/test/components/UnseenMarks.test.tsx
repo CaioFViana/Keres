@@ -1,6 +1,15 @@
 /**
  * @jest-environment jsdom
  */
+import { act, fireEvent, render } from '@testing-library/react-native';
+import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
+import FriendChatButton from '@/src/components/features/messages/FriendChatButton';
+import ServerDrawerIcon from '@/src/components/features/messages/ServerDrawerIcon';
+import UnseenMark from '@/src/components/features/messages/UnseenMark';
+import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
+import ServerListItem from '@/src/components/features/servers/ServerListItem';
+import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
+
 const mockColors = {
   background: '#ffffff',
   error: '#ff0000',
@@ -36,15 +45,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     removeItem: jest.fn(async () => undefined),
   },
 }));
-
-import { act, fireEvent, render } from '@testing-library/react-native';
-import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
-import FriendChatButton from '@/src/components/features/messages/FriendChatButton';
-import ServerDrawerIcon from '@/src/components/features/messages/ServerDrawerIcon';
-import UnseenMark from '@/src/components/features/messages/UnseenMark';
-import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
-import ServerListItem from '@/src/components/features/servers/ServerListItem';
-import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 
 const setUnseen = (unseen: Record<string, string>) =>
   act(async () => {

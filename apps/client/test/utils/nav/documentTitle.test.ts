@@ -1,12 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-jest.mock('@react-navigation/native', () => ({ useFocusEffect: jest.fn() }));
-
 import { useFocusEffect } from '@react-navigation/native';
 import { renderHook } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import { setDocumentTitle, useDocumentTitle } from '@/src/utils/nav/documentTitle';
+
+jest.mock('@react-navigation/native', () => ({ useFocusEffect: jest.fn() }));
 
 const useFocusEffectMock = useFocusEffect as jest.Mock;
 

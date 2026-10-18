@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useChoiceFormActions } from '@/src/screens/narrative-elements/choices/useChoiceFormActions';
+import type { ChoiceFormState } from '@/src/screens/narrative-elements/choices/useChoiceFormState';
+import type { ChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
@@ -45,12 +51,6 @@ jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useChoiceFormActions } from '@/src/screens/narrative-elements/choices/useChoiceFormActions';
-import type { ChoiceFormState } from '@/src/screens/narrative-elements/choices/useChoiceFormState';
-import type { ChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
 
 const createState = (overrides: Partial<ChoiceFormState> = {}): ChoiceFormState =>
   ({

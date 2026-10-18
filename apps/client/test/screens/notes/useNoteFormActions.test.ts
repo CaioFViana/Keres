@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useNoteFormActions } from '@/src/screens/notes/useNoteFormActions';
+import type { NoteFormState } from '@/src/screens/notes/useNoteFormState';
+import type { NoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockSaveEntityWithSecondaryData = jest.fn();
@@ -28,12 +34,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useNoteFormActions } from '@/src/screens/notes/useNoteFormActions';
-import type { NoteFormState } from '@/src/screens/notes/useNoteFormState';
-import type { NoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 
 const createState = (overrides: Partial<NoteFormState> = {}): NoteFormState =>
   ({

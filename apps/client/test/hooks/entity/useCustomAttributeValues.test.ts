@@ -1,3 +1,10 @@
+import { AttributeType } from '@keres/shared';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useCustomAttributeValues } from '@/src/hooks/entity/useCustomAttributeValues';
+import { EntityService } from '@/src/services/entity-solvers/EntityService';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 const mockT = (key: string) => key;
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
@@ -22,13 +29,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { AttributeType } from '@keres/shared';
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useCustomAttributeValues } from '@/src/hooks/entity/useCustomAttributeValues';
-import { EntityService } from '@/src/services/entity-solvers/EntityService';
-import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const getValuesForEntity = jest.fn();
 const fields = [

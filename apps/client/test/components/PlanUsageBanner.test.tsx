@@ -1,6 +1,12 @@
 /**
  * @jest-environment jsdom
  */
+import { act, render } from '@testing-library/react-native';
+import PlanUsageBanner from '@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';
+import { usePlanUsageStore } from '@/src/state/app/planUsageStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { evaluatePlanUsage } from '@/src/utils/billing/planUsage';
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>
@@ -13,12 +19,6 @@ jest.mock('@/src/theme', () => ({
     colors: { error: '#ff0000', accent: '#ffaa00', surface: '#f5f5f5', text: '#111111' },
   }),
 }));
-
-import { act, render } from '@testing-library/react-native';
-import PlanUsageBanner from '@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner';
-import { usePlanUsageStore } from '@/src/state/app/planUsageStore';
-import { useStoryStore } from '@/src/state/story/storyStore';
-import { evaluatePlanUsage } from '@/src/utils/billing/planUsage';
 
 const plan = { maxEntitiesPerStory: 100, maxEntitiesTotal: 1000 };
 const show = (storyUsed: number, totalUsed = 0, storyId = 'story-1') =>

@@ -1,3 +1,6 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useConversation } from '@/src/screens/enter-stack/social/useConversation';
+
 const mockT = (key: string) => key;
 const mockService = {
   getMessages: jest.fn(),
@@ -61,9 +64,6 @@ jest.mock('@/src/state/events/EventEmitter', () => ({
     },
   },
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useConversation } from '@/src/screens/enter-stack/social/useConversation';
 
 const msg = (id: string, mine = false) => ({
   id,

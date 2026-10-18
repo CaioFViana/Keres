@@ -1,3 +1,6 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useStorySettingsSave } from '@/src/screens/story-settings/useStorySettingsSave';
+
 const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
 const mockUpdateStory = jest.fn();
@@ -37,9 +40,6 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useStorySettingsSave } from '@/src/screens/story-settings/useStorySettingsSave';
 
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});

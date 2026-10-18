@@ -1,5 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 
+import { useResumeScene } from '@/src/hooks/scene/useResumeScene';
+
 const mockGetLastEdited = jest.fn();
 const mockGetChapter = jest.fn();
 const mockDb = {};
@@ -20,8 +22,6 @@ jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () =>
   __esModule: true,
   createChapterService: () => ({ getById: mockGetChapter }),
 }));
-
-import { useResumeScene } from '@/src/hooks/scene/useResumeScene';
 
 const EDITED = new Date('2026-10-08T10:00:00.000Z');
 

@@ -1,6 +1,10 @@
 /**
  * @jest-environment node
  */
+import { Linking } from 'react-native';
+import { openInOs, resolveBlobUri } from '@/src/services/platform-web/webMediaStore';
+import { openGalleryExternally } from '@/src/services/media/openGalleryExternally';
+
 jest.mock('react-native', () => ({
   Linking: { openURL: jest.fn() },
 }));
@@ -9,10 +13,6 @@ jest.mock('@/src/services/platform-web/webMediaStore', () => ({
   openInOs: jest.fn(),
   resolveBlobUri: jest.fn(),
 }));
-
-import { Linking } from 'react-native';
-import { openInOs, resolveBlobUri } from '@/src/services/platform-web/webMediaStore';
-import { openGalleryExternally } from '@/src/services/media/openGalleryExternally';
 
 const openURL = Linking.openURL as jest.Mock;
 const openInOsMock = openInOs as jest.Mock;

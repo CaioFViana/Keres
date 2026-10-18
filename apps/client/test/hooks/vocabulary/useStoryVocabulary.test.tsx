@@ -1,5 +1,9 @@
 import { render } from '@testing-library/react-native';
 
+import { useTranslation } from 'react-i18next';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(),
@@ -8,10 +12,6 @@ jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn(),
 }));
-
-import { useTranslation } from 'react-i18next';
-import { useStoryStore } from '@/src/state/story/storyStore';
-import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 const t = jest.fn((key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key,

@@ -1,3 +1,9 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useDrizzle } from '@/src/db';
+import { useChoiceChecks } from '@/src/screens/narrative-elements/choices/useChoiceChecks';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 const mockT = (key: string) => key;
 const mockGroupService = {
@@ -35,12 +41,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '@/src/db';
-import { useChoiceChecks } from '@/src/screens/narrative-elements/choices/useChoiceChecks';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

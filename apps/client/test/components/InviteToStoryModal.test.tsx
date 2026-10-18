@@ -1,3 +1,7 @@
+import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import React from 'react';
+import InviteToStoryModal from '@/src/components/features/friendship/InviteToStoryModal';
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -36,10 +40,6 @@ jest.mock('@/src/components/common/controls/FormActions/FormActions', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
-import InviteToStoryModal from '@/src/components/features/friendship/InviteToStoryModal';
 
 const STORIES = [
   { id: 's1', title: 'Abelha' },

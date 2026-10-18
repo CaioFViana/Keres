@@ -1,3 +1,6 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useFavoriters } from '@/src/hooks/social/useFavoriters';
+
 const mockDb = {
   query: {
     stories: { findFirst: jest.fn() },
@@ -22,9 +25,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
     useEntityInitialLoad: (load: () => Promise<void>) => React.useEffect(() => void load(), [load]),
   };
 });
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useFavoriters } from '@/src/hooks/social/useFavoriters';
 
 beforeEach(() => {
   jest.clearAllMocks();

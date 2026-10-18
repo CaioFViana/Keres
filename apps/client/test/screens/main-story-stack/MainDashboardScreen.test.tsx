@@ -2,6 +2,8 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import { BackHandler } from 'react-native';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
+import MainDashboardScreen from '@/src/screens/main-story-stack/MainDashboardScreen';
+
 const mockNavigate = jest.fn();
 const mockDispatch = jest.fn();
 const mockParentDispatch = jest.fn();
@@ -223,8 +225,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import MainDashboardScreen from '@/src/screens/main-story-stack/MainDashboardScreen';
 
 const fullCounts = {
   characterCount: 3,

@@ -11,7 +11,6 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // touches a URL fails with `ReferenceError: TextEncoder is not defined`. Node's own encoder is
 // spec-compliant, so it stands in. Guarded so the node env keeps its native binding.
 if (typeof globalThis.TextEncoder === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- setup files cannot use imports.
   const { TextEncoder } = require('util');
   Object.defineProperty(globalThis, 'TextEncoder', {
     configurable: true,
@@ -24,17 +23,13 @@ if (typeof globalThis.TextEncoder === 'undefined') {
 // Reanimated 4.2's Jest entry imports the real `react-native-worklets` index, which
 // instantiates its native module at load and throws in Jest. The worklets package ships its
 // own mock - register it so the reanimated mock below can load.
-jest.mock('react-native-worklets', () =>
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
-  require('react-native-worklets/src/mock'),
-);
+jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 
 // Reanimated schedules native-frame updates in the real runtime. Its Jest implementation keeps
 // collapsible controls deterministic and prevents animation updates from leaking outside `act`.
 jest.mock('react-native-reanimated', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const ReanimatedMock = require('react-native-reanimated/mock');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const React = require('react');
   return {
     ...ReanimatedMock,
@@ -52,7 +47,6 @@ jest.mock('react-native-reanimated', () => {
 
 // Entity secondary-draft persistence and several stores touch AsyncStorage; native module is null in Jest.
 jest.mock('@react-native-async-storage/async-storage', () =>
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
@@ -120,7 +114,6 @@ console.info = (...args: Parameters<typeof console.info>) => {
 // Skia draws on the GPU with no host tree; tests assert the declarative scene instead, so each
 // drawing maps to a host placeholder that keeps its props (paths, paints, camera) queryable.
 jest.mock('@shopify/react-native-skia', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   const host = (type: string) => {
     // React 19 hands `ref` to function components as a prop; forwarding it to the host
@@ -233,9 +226,8 @@ jest.mock('@/src/state/ui/exportFormatPrompt', () => ({
 // Skia mock, the ref stays out of the host tree (the renderer would overwrite
 // test-driven holders); tests read it off `__enrichedTest.refHolder` instead.
 jest.mock('react-native-enriched-html', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const { View } = require('react-native');
   const refHolder: { current: unknown } = { current: null };
   const EnrichedTextInput = (props: { children?: React.ReactNode }) => {

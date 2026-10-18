@@ -2,6 +2,8 @@ import { cleanup, configure, fireEvent, render } from '@testing-library/react-na
 import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
 import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
 
+import LegalUpdateScreen from '@/src/screens/enter-stack/account/LegalUpdateScreen';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockReset = jest.fn();
@@ -77,8 +79,6 @@ jest.mock('@/src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-
-import LegalUpdateScreen from '@/src/screens/enter-stack/account/LegalUpdateScreen';
 
 type Records = { terms: number | null; privacy: number | null };
 

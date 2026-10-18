@@ -1,3 +1,5 @@
+import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
+
 const mockServerService = {};
 const mockWritable = jest.fn();
 const mockPrepare = jest.fn();
@@ -22,8 +24,6 @@ jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-
-import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
 
 function queryChain(rows: unknown) {
   return {

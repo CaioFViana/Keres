@@ -1,3 +1,7 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { LocationRelationSelect } from '@/src/db/schema';
+import { useLocationFormAssociations } from '@/src/screens/locations/useLocationFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 const mockSetSelectedTagIds = jest.fn();
 const mockAlert = jest.fn();
@@ -17,10 +21,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { LocationRelationSelect } from '@/src/db/schema';
-import { useLocationFormAssociations } from '@/src/screens/locations/useLocationFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

@@ -15,22 +15,22 @@ const mockGetScene = jest.fn();
 const mockDrawNewPage = jest.fn();
 const mockUploadPictures = jest.fn();
 const mockNavigateAcross = jest.fn();
-let mockSheetProps: {
+type SheetProps = {
   visible: boolean;
   replacing?: boolean;
   onDraw: () => void;
   onUpload: () => void;
   onChooseExisting: () => void;
-} | null = null;
+};
 
 let mockCanEdit = true;
 let mockMedium: string | null = 'comic';
 let mockViews: ScenePageView[] = [];
 let mockHeader: { title: string; actions?: { id: string; onPress: () => void }[] } | null = null;
-let mockPickerProps: {
+type PickerProps = {
   visible: boolean;
   onPick: (media: { sketchId: string } | { galleryId: string }) => void;
-} | null = null;
+};
 
 jest.mock('@react-navigation/native', () => {
   const route = { params: { sceneId: 'scene-1' } };
@@ -164,8 +164,7 @@ jest.mock('@/src/components/features/scenes/ScenePages/ScenePageAddSheet', () =>
   const { Text } = require('react-native');
   return {
     __esModule: true,
-    default: (props: NonNullable<typeof mockSheetProps>) => {
-      mockSheetProps = props;
+    default: (props: SheetProps) => {
       return props.visible ? (
         <>
           <Text testID="sheet-open">{props.replacing ? 'replace' : 'add'}</Text>
@@ -187,8 +186,7 @@ jest.mock('@/src/components/features/scenes/ScenePages/ScenePageMediaPicker', ()
   const { Text } = require('react-native');
   return {
     __esModule: true,
-    default: (props: NonNullable<typeof mockPickerProps>) => {
-      mockPickerProps = props;
+    default: (props: PickerProps) => {
       return props.visible ? (
         <>
           <Text testID="picker-open">open</Text>
@@ -241,8 +239,6 @@ beforeEach(() => {
   mockMedium = 'comic';
   mockViews = [view('p1'), view('p2'), view('p3')];
   mockHeader = null;
-  mockPickerProps = null;
-  mockSheetProps = null;
   mockDrawNewPage.mockReset().mockResolvedValue('sk-new');
   mockUploadPictures
     .mockReset()

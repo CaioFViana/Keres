@@ -1,3 +1,7 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { usePlotFormActions } from '@/src/screens/plots/usePlotFormActions';
+import type { PlotFormState } from '@/src/screens/plots/usePlotFormState';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 
@@ -23,10 +27,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { usePlotFormActions } from '@/src/screens/plots/usePlotFormActions';
-import type { PlotFormState } from '@/src/screens/plots/usePlotFormState';
 
 const createState = (overrides: Partial<PlotFormState> = {}): PlotFormState =>
   ({

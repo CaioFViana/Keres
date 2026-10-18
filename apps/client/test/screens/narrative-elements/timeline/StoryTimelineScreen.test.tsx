@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 
+import StoryTimelineScreen from '@/src/screens/narrative-elements/timeline/StoryTimelineScreen';
+
 const mockNavigate = jest.fn();
 const mockSetChapterIds = jest.fn();
 const mockSetScaleMode = jest.fn();
@@ -233,8 +235,6 @@ jest.mock('@/src/components/features/story-timeline/StoryTimelineSheets', () => 
     ),
   };
 });
-
-import StoryTimelineScreen from '@/src/screens/narrative-elements/timeline/StoryTimelineScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

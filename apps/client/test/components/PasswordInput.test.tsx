@@ -1,6 +1,9 @@
 /**
  * @jest-environment jsdom
  */
+import { fireEvent, render } from '@testing-library/react-native';
+import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
+
 const mockColors = {
   primary: '#0000ff',
   primaryVariant: '#0000aa',
@@ -39,9 +42,6 @@ jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-
-import { fireEvent, render } from '@testing-library/react-native';
-import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 
 describe('PasswordInput', () => {
   it('hides what is typed, and shows it only while the eye is on', async () => {

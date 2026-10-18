@@ -1,6 +1,12 @@
 /**
  * @jest-environment node
  */
+import * as FileSystem from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
+import { ImageManipulator } from 'expo-image-manipulator';
+import { createVideoPlayer } from 'expo-video';
+import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
+
 jest.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-file-system', () => {
@@ -131,12 +137,6 @@ jest.mock('expo-image-manipulator', () => ({
   ImageManipulator: { manipulate: jest.fn() },
   SaveFormat: { JPEG: 'jpeg' },
 }));
-
-import * as FileSystem from 'expo-file-system';
-import * as LegacyFileSystem from 'expo-file-system/legacy';
-import { ImageManipulator } from 'expo-image-manipulator';
-import { createVideoPlayer } from 'expo-video';
-import { mediaFileService, UnsupportedMediaError } from '@/src/services/media/MediaFileService';
 
 /** Wires the `createVideoPlayer -> generateThumbnailsAsync -> manipulate -> saveAsync` chain. */
 function mockThumbnailChain(frameUri = 'file://cache/frame.jpg') {

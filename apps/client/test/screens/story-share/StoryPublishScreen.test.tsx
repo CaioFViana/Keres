@@ -1,3 +1,9 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Linking, StyleSheet } from 'react-native';
+import StoryPublishScreen from '@/src/screens/story-share/StoryPublishScreen';
+import { buildStoryPublicUrl } from '@/src/screens/story-share/useStoryPublishing';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigateAcross = jest.fn();
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
@@ -241,12 +247,6 @@ const mockSetClipboard = jest.fn(async (..._args: unknown[]) => undefined);
 jest.mock('expo-clipboard', () => ({
   setStringAsync: (...args: unknown[]) => mockSetClipboard(...args),
 }));
-
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { Linking, StyleSheet } from 'react-native';
-import StoryPublishScreen from '@/src/screens/story-share/StoryPublishScreen';
-import { buildStoryPublicUrl } from '@/src/screens/story-share/useStoryPublishing';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://s.example///' };
 const story = {

@@ -1,5 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 
+import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
+import type { DocLibrary } from '@/src/content/help/library';
+
 const mockNavigate = jest.fn();
 const mockPush = jest.fn();
 const mockGoBack = jest.fn();
@@ -69,9 +72,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
-
-import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
-import type { DocLibrary } from '@/src/content/help/library';
 
 const pages = [
   {

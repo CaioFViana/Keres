@@ -1,3 +1,6 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useSyncConflictActions } from '@/src/hooks/sync/useSyncConflictActions';
+
 const mockDb = {};
 const mockStore = {
   isResolving: true,
@@ -11,9 +14,6 @@ jest.mock('@/src/state/sync/syncConflictStore', () => ({
   __esModule: true,
   useSyncConflictStore: jest.fn((selector) => selector(mockStore)),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useSyncConflictActions } from '@/src/hooks/sync/useSyncConflictActions';
 
 describe('useSyncConflictActions', () => {
   it('binds conflict-store actions to the current database', async () => {

@@ -7,6 +7,9 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 
+import ChapterDetailScreen from '@/src/screens/narrative-elements/chapters/ChapterDetailScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockAlert = jest.fn();
@@ -486,9 +489,6 @@ jest.mock('@/src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-
-import ChapterDetailScreen from '@/src/screens/narrative-elements/chapters/ChapterDetailScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

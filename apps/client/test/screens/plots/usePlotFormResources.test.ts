@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { usePlotFormResources } from '@/src/screens/plots/usePlotFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreatePlotService = jest.fn();
 const mockCreatePlotSceneService = jest.fn();
@@ -15,9 +18,6 @@ jest.mock('@/src/services/storymanagement/entities/PlotSceneService', () => ({
 jest.mock('@/src/screens/plots/useStoryPlots', () => ({
   useStoryPlots: (...args: unknown[]) => mockUseStoryPlots(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { usePlotFormResources } from '@/src/screens/plots/usePlotFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakePlotService = { marker: 'plot-service' };

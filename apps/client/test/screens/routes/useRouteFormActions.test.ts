@@ -1,3 +1,7 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useRouteFormActions } from '@/src/screens/routes/useRouteFormActions';
+import type { RouteFormState } from '@/src/screens/routes/useRouteFormState';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 
@@ -23,10 +27,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useRouteFormActions } from '@/src/screens/routes/useRouteFormActions';
-import type { RouteFormState } from '@/src/screens/routes/useRouteFormState';
 
 const createState = (overrides: Partial<RouteFormState> = {}): RouteFormState =>
   ({

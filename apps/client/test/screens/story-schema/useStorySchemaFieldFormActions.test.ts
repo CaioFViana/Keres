@@ -1,3 +1,10 @@
+import { AttributeType } from '@keres/shared';
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useStorySchemaFieldFormActions } from '@/src/screens/story-schema/useStorySchemaFieldFormActions';
+import type { StorySchemaFieldFormState } from '@/src/screens/story-schema/useStorySchemaFieldFormState';
+import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
+
 const mockAlert = jest.fn();
 
 jest.mock('@/src/state/ui/AppAlert', () => ({
@@ -6,13 +13,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { AttributeType } from '@keres/shared';
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useStorySchemaFieldFormActions } from '@/src/screens/story-schema/useStorySchemaFieldFormActions';
-import type { StorySchemaFieldFormState } from '@/src/screens/story-schema/useStorySchemaFieldFormState';
-import type { StorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
 
 const createState = (
   overrides: Partial<StorySchemaFieldFormState> = {},

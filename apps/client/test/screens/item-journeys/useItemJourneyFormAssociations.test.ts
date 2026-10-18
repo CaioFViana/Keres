@@ -1,11 +1,11 @@
+import { renderHook } from '@testing-library/react-native';
+import { useItemJourneyFormAssociations } from '@/src/screens/item-journeys/useItemJourneyFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 
 jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useItemJourneyFormAssociations } from '@/src/screens/item-journeys/useItemJourneyFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

@@ -2,13 +2,28 @@ import { act, render } from '@testing-library/react-native';
 import { useContext, useEffect } from 'react';
 import { Text } from 'react-native';
 
+import { DrizzleContext } from '@/src/db';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import {
+  MentionAmbiguityContext,
+  MentionBacklinksContext,
+  MentionMatcherContext,
+} from '@/src/mentions/MentionContext';
+import {
+  MENTIONABLE_ENTITY_TYPES,
+  MentionMatcherProvider,
+} from '@/src/mentions/MentionMatcherProvider';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
+
 jest.mock('drizzle-orm', () => ({
   __esModule: true,
   and: jest.fn(() => ({})),
   eq: jest.fn(() => ({})),
 }));
 jest.mock('@/src/db', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   return { __esModule: true, DrizzleContext: React.createContext(null) };
 });
@@ -54,22 +69,6 @@ jest.mock('@/src/utils/sync/debounce', () => ({
   __esModule: true,
   debounce: (...args: unknown[]) => (mockDebounce as (...callArgs: unknown[]) => unknown)(...args),
 }));
-
-import { DrizzleContext } from '@/src/db';
-import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
-import {
-  MentionAmbiguityContext,
-  MentionBacklinksContext,
-  MentionMatcherContext,
-} from '@/src/mentions/MentionContext';
-import {
-  MENTIONABLE_ENTITY_TYPES,
-  MentionMatcherProvider,
-} from '@/src/mentions/MentionMatcherProvider';
-import { useStoryStore } from '@/src/state/story/storyStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
-import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
 
 const rowsByTable: Record<string, Record<string, unknown>[]> = {};
 

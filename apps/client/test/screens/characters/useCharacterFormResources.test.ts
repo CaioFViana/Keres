@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useCharacterFormResources } from '@/src/screens/characters/useCharacterFormResources';
+
 const mockDb = {};
 const mockCreateCharacterService: jest.Mock = jest.fn(() => ({ id: 'character-service' }));
 const mockCreateCharacterRelationService: jest.Mock = jest.fn(() => ({
@@ -12,9 +15,6 @@ jest.mock('@/src/services/storymanagement/relations/CharacterRelationService', (
   createCharacterRelationService: (...args: unknown[]) =>
     mockCreateCharacterRelationService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useCharacterFormResources } from '@/src/screens/characters/useCharacterFormResources';
 
 beforeEach(() => {
   jest.clearAllMocks();

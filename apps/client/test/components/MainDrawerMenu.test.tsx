@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import MainDrawerMenu from '@/src/components/common/navigation/MainDrawerMenu/MainDrawerMenu';
+
 const mockOpenLeaf = jest.fn();
 let mockBadges: Record<string, unknown> = {};
 let mockFocused: { route: string; focus: { screen?: string; params?: Record<string, unknown> } } = {
@@ -83,8 +85,6 @@ jest.mock('@/src/navigation/drawer/openMenuLeaf', () => ({
   nestedFocusOf: () => mockFocused,
   openMenuLeaf: (...args: unknown[]) => mockOpenLeaf(...args),
 }));
-
-import MainDrawerMenu from '@/src/components/common/navigation/MainDrawerMenu/MainDrawerMenu';
 
 const renderMenu = (props: Partial<React.ComponentProps<typeof MainDrawerMenu>> = {}) =>
   render(

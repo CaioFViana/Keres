@@ -387,7 +387,7 @@ describe('extracted simple form responsibilities', () => {
  * and a name that stays listed after having been broken up.
  */
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT: Array<string> = [];
+const FILES_OVER_THE_LIMIT: string[] = [];
 
 /** Counts only meaningful source lines, leaving comments and visual spacing out of the ceiling. */
 function codeLineCount(content: string): number {

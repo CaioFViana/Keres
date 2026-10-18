@@ -1,12 +1,12 @@
 /**
  * @jest-environment node
  */
+import { createGalleryLink, hashGalleryLink } from '@/src/services/media/galleryLink';
+
 jest.mock('spark-md5', () => ({
   __esModule: true,
   default: { hash: (value: string) => `hash-${value}`.slice(0, 32).padEnd(32, '0') },
 }));
-
-import { createGalleryLink, hashGalleryLink } from '@/src/services/media/galleryLink';
 
 const galleryService = {
   getByHash: jest.fn(),

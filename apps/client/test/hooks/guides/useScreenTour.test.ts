@@ -1,9 +1,9 @@
-jest.unmock('@/src/hooks/guides/useScreenTour');
 import { renderHook } from '@testing-library/react-native';
 import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
 import { useGuideStore } from '@/src/state/ui/guideStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { defaultTutorialProgress } from '@/src/utils/ui/tutorialProgress';
+jest.unmock('@/src/hooks/guides/useScreenTour');
 
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');

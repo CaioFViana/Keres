@@ -1,3 +1,6 @@
+import { fireEvent, render } from '@testing-library/react-native';
+import PaymentActionPanel from '@/src/components/features/servers/PaymentActionPanel';
+
 const mockSetString = jest.fn();
 
 jest.mock('expo-clipboard', () => ({
@@ -20,9 +23,6 @@ jest.mock('@/src/theme', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { fireEvent, render } from '@testing-library/react-native';
-import PaymentActionPanel from '@/src/components/features/servers/PaymentActionPanel';
 
 const checkout = (over: Record<string, unknown> = {}) =>
   ({

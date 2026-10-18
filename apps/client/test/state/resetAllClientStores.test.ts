@@ -1,10 +1,6 @@
 /**
  * @jest-environment node
  */
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
-
 import { useBoardDraftStore } from '@/src/state/drafts/boardDraftStore';
 import { useChapterStore } from '@/src/state/story/chapterStore';
 import { useCharacterStore } from '@/src/state/story/characterStore';
@@ -14,6 +10,10 @@ import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
 import { useTagStore } from '@/src/state/story/tagStore';
 import { useWorldRuleStore } from '@/src/state/story/worldRuleStore';
 import { resetAllClientStores } from '@/src/state/resetAllClientStores';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
 
 /**
  * Called when the local database is recreated (an account change, an app reset). Any store left

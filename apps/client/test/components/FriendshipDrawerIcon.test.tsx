@@ -1,6 +1,10 @@
 /**
  * @jest-environment jsdom
  */
+import { act, render } from '@testing-library/react-native';
+import FriendshipDrawerIcon from '@/src/components/features/messages/FriendshipDrawerIcon';
+import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
+
 const mockColors = { background: '#ffffff', error: '#ff0000' };
 
 jest.mock('react-i18next', () => ({
@@ -21,10 +25,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     removeItem: jest.fn(async () => undefined),
   },
 }));
-
-import { act, render } from '@testing-library/react-native';
-import FriendshipDrawerIcon from '@/src/components/features/messages/FriendshipDrawerIcon';
-import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 
 beforeEach(() => {
   useUnseenMessagesStore.getState().reset();

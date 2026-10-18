@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useLocationFormActions } from '@/src/screens/locations/useLocationFormActions';
+import type { LocationFormState } from '@/src/screens/locations/useLocationFormState';
+import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
@@ -43,12 +49,6 @@ jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useLocationFormActions } from '@/src/screens/locations/useLocationFormActions';
-import type { LocationFormState } from '@/src/screens/locations/useLocationFormState';
-import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
 
 const createState = (overrides: Partial<LocationFormState> = {}): LocationFormState =>
   ({

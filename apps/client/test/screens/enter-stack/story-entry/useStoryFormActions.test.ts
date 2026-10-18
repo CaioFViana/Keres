@@ -1,3 +1,11 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useStoryFormActions } from '@/src/screens/enter-stack/story-entry/useStoryFormActions';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import type { StoryFormState } from '@/src/screens/enter-stack/story-entry/useStoryFormState';
+import type { PackService } from '@/src/services/storymanagement/packs/PackService';
+import type { PushOutcomeReport } from '@/src/services/sync/SyncPush';
+import type { StoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+
 const mockAlert = jest.fn();
 
 jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
@@ -15,14 +23,6 @@ jest.mock('react-i18next', () => ({
       options?.detail ? `${key}:${options.detail}` : key,
   }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useStoryFormActions } from '@/src/screens/enter-stack/story-entry/useStoryFormActions';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import type { StoryFormState } from '@/src/screens/enter-stack/story-entry/useStoryFormState';
-import type { PackService } from '@/src/services/storymanagement/packs/PackService';
-import type { PushOutcomeReport } from '@/src/services/sync/SyncPush';
-import type { StoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 
 const createIdentity = (overrides: Record<string, unknown> = {}) =>
   ({
@@ -274,10 +274,10 @@ it('deletes an existing story after confirmation', async () => {
   const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
-  const buttons = mockAlert.mock.calls[0][2] as Array<{
+  const buttons = mockAlert.mock.calls[0][2] as {
     text: string;
     onPress?: () => Promise<void>;
-  }>;
+  }[];
   const deleteButton = buttons.find((button) => button.text === 'delete');
   await act(async () => {
     await deleteButton?.onPress?.();
@@ -400,10 +400,10 @@ it('ignores deletes without policy permission and reports delete failures', asyn
     const view = await renderActions(state);
 
     await act(async () => view.result.current.handleDelete());
-    const buttons = mockAlert.mock.calls[mockAlert.mock.calls.length - 1][2] as Array<{
+    const buttons = mockAlert.mock.calls[mockAlert.mock.calls.length - 1][2] as {
       text: string;
       onPress?: () => Promise<void>;
-    }>;
+    }[];
     const deleteButton = buttons.find((button) => button.text === 'delete');
     await act(async () => {
       await deleteButton?.onPress?.();

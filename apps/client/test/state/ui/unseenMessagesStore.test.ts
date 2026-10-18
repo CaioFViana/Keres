@@ -1,3 +1,5 @@
+import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
+
 const mockStorage = new Map<string, string>();
 const mockGetItem = jest.fn(async (key: string) => mockStorage.get(key) ?? null);
 const mockSetItem = jest.fn(async (key: string, value: string) => {
@@ -15,8 +17,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     removeItem: (...args: [string]) => mockRemoveItem(...args),
   },
 }));
-
-import { useUnseenMessagesStore } from '@/src/state/ui/unseenMessagesStore';
 
 const KEY = '@keres/messages-seen';
 const store = () => useUnseenMessagesStore.getState();

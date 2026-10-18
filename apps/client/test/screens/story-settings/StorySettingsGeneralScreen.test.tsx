@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
+import StorySettingsGeneralScreen from '@/src/screens/story-settings/StorySettingsGeneralScreen';
+
 const mockGoBack = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockUseScreenHeader = jest.fn();
@@ -218,8 +220,6 @@ jest.mock('react-i18next', () => {
     useTranslation: () => ({ t: mockT }),
   };
 });
-
-import StorySettingsGeneralScreen from '@/src/screens/story-settings/StorySettingsGeneralScreen';
 
 function makeStory(overrides = {}) {
   return {

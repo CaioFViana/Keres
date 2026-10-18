@@ -1,6 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import TagDetailScreen from '@/src/screens/tags/TagDetailScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigation = { navigate: mockNavigate, goBack: mockGoBack };
@@ -145,9 +148,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import TagDetailScreen from '@/src/screens/tags/TagDetailScreen';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeTag = (overrides = {}) => ({
   id: 'tag-1',

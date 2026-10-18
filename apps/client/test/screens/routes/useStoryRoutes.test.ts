@@ -1,3 +1,14 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
@@ -38,17 +49,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
-import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
-import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const route = { id: 'route', storyId: 'story', isDeleted: false } as never;
 const sceneA = { id: 'scene-a', storyId: 'story', isDeleted: false } as never;

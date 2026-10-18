@@ -139,14 +139,12 @@ describe.each(stores)('%s store', (collectionKey, store, fetchKey) => {
 
     await (store.getState() as unknown as Record<string, () => Promise<void>>)[fetchKey]();
 
-    const rows = (store.getState() as unknown as Record<string, Array<{ id: string }>>)[
-      collectionKey
-    ];
+    const rows = (store.getState() as unknown as Record<string, { id: string }[]>)[collectionKey];
     expect(rows.map((row) => row.id)).toEqual(['row-1']);
 
     await store.getState().toggleFavorite('row-1', true);
 
-    const updated = (store.getState() as unknown as Record<string, Array<{ isFavorite: boolean }>>)[
+    const updated = (store.getState() as unknown as Record<string, { isFavorite: boolean }[]>)[
       collectionKey
     ];
     expect(updated[0]?.isFavorite).toBe(true);

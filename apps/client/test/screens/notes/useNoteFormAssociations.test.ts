@@ -1,11 +1,11 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useNoteFormAssociations } from '@/src/screens/notes/useNoteFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 
 jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useNoteFormAssociations } from '@/src/screens/notes/useNoteFormAssociations';
 
 const mockSetSelectedTagIds = jest.fn();
 const mockPersistTagRelations = jest.fn();

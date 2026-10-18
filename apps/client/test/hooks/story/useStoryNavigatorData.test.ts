@@ -1,3 +1,13 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryNavigatorData } from '@/src/hooks/story/useStoryNavigatorData';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
@@ -33,16 +43,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryNavigatorData } from '@/src/hooks/story/useStoryNavigatorData';
-import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
-import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
-import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const sceneService = { getAllByStoryId: jest.fn().mockResolvedValue([{ id: 'scene' }]) };
 

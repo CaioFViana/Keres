@@ -3,16 +3,16 @@
  */
 // `__esModule` matters: the vault uses `import * as SecureStore`, and without this mark Babel's
 // interop hands the whole mock over as `default`, leaving the namespace without a single function.
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import { tokenVault } from '@/src/services/auth/TokenVault';
+
 jest.mock('expo-secure-store', () => ({
   __esModule: true,
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),
   deleteItemAsync: jest.fn(),
 }));
-
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
-import { tokenVault } from '@/src/services/auth/TokenVault';
 
 const mockSecureStore = SecureStore as unknown as {
   getItemAsync: jest.Mock;

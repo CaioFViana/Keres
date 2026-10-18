@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useStoryAgenda } from '@/src/screens/story-calendars/useStoryAgenda';
+
 const mockStoryState: {
   selectedStory: { timelineEpochDay: number | null; timelineEpochSeconds: number };
 } = { selectedStory: { timelineEpochDay: 100, timelineEpochSeconds: 0 } };
@@ -27,9 +30,6 @@ jest.mock('@/src/hooks/story/useStoryTimeline', () => ({
   __esModule: true,
   useStoryTimeline: jest.fn(() => mockTimeline),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useStoryAgenda } from '@/src/screens/story-calendars/useStoryAgenda';
 
 describe('useStoryAgenda', () => {
   it('derives sorted scene and unique event entries from the shared timeline', async () => {

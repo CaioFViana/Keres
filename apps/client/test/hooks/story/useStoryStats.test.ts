@@ -1,3 +1,12 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
+import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
@@ -29,15 +38,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
-import { createModeService } from '@/src/services/storymanagement/entities/ModeService';
-import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
-import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
-import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
-import { useStoryStats } from '@/src/hooks/story/useStoryStats';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 beforeEach(() => {
   jest.clearAllMocks();

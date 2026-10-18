@@ -1,4 +1,13 @@
 /** @jest-environment jsdom */
+import { Platform } from 'react-native';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import {
+  buildStandaloneBoardSvg,
+  buildStandaloneLocationMapSvg,
+} from '@/src/utils/io/storyMapSvgExport';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
+import { parseSvgRootSize } from '@/src/state/ui/svgRaster';
+
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-file-system', () => ({
   File: jest.fn(),
@@ -13,15 +22,6 @@ jest.mock('@/src/services/media/MediaFileService', () => ({
 jest.mock('@/src/services/media/storyMediaBundle', () => ({
   extractStoryZip: jest.fn(),
 }));
-
-import { Platform } from 'react-native';
-import { mediaFileService } from '@/src/services/media/MediaFileService';
-import {
-  buildStandaloneBoardSvg,
-  buildStandaloneLocationMapSvg,
-} from '@/src/utils/io/storyMapSvgExport';
-import { deliverMapExport } from '@/src/utils/io/storyTransfer';
-import { parseSvgRootSize } from '@/src/state/ui/svgRaster';
 
 const readBytesMock = mediaFileService.readBytes as jest.Mock;
 
@@ -169,7 +169,7 @@ describe('export file names', () => {
   it('writes exactly one extension whatever suffix the caller passed', async () => {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>';
     const rasterize = jest.fn(async (): Promise<Uint8Array> => PNG_BYTES);
-    const cases: Array<[string, 'svg' | 'png', string]> = [
+    const cases: [string, 'svg' | 'png', string][] = [
       ['sketch-2026-01-01.png', 'png', 'sketch-2026-01-01.png'],
       ['mapa.svg', 'png', 'mapa.png'],
       ['mapa', 'png', 'mapa.png'],

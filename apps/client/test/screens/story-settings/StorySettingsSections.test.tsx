@@ -1,6 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
+import StorySettingsCollaborationScreen from '@/src/screens/story-settings/StorySettingsCollaborationScreen';
+import StorySettingsIndexScreen from '@/src/screens/story-settings/StorySettingsIndexScreen';
+
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
 const mockResetToStorySelection = jest.fn();
@@ -170,9 +173,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import StorySettingsCollaborationScreen from '@/src/screens/story-settings/StorySettingsCollaborationScreen';
-import StorySettingsIndexScreen from '@/src/screens/story-settings/StorySettingsIndexScreen';
 
 function alertButtons(callIndex: number): { text: string; onPress?: () => void }[] {
   return mockAppAlert.mock.calls[callIndex][2] as { text: string; onPress?: () => void }[];

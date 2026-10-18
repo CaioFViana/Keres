@@ -4,6 +4,8 @@ import FormActions, {
   markActionGroup,
 } from '@/src/components/common/controls/FormActions/FormActions';
 
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+
 jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => ({
@@ -15,8 +17,6 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
     isWide: false,
   })),
 }));
-
-import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
 

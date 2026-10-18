@@ -7,7 +7,7 @@ import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 
 // The global setup mocks the lib (native views don't exist in tests); this
 // file mounts the REAL web build to verify the production path end to end.
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- requireActual bypasses the mock.
+
 const { EnrichedTextInput: RealInput } = jest.requireActual(
   'react-native-enriched-html',
 ) as unknown as { EnrichedTextInput: React.ComponentType<Record<string, unknown>> };

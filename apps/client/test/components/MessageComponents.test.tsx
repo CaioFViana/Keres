@@ -1,6 +1,11 @@
 /**
  * @jest-environment jsdom
  */
+import { act, fireEvent, render } from '@testing-library/react-native';
+import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
+import MessageBubble from '@/src/components/features/messages/MessageBubble';
+import MessageComposer from '@/src/components/features/messages/MessageComposer';
+
 const mockColors = {
   primary: '#0000ff',
   primaryVariant: '#0000aa',
@@ -41,11 +46,6 @@ jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
   return { ...actual, useTheme: () => ({ isDarkMode: false, colors: mockColors }) };
 });
-
-import { act, fireEvent, render } from '@testing-library/react-native';
-import ConversationListItem from '@/src/components/features/messages/ConversationListItem';
-import MessageBubble from '@/src/components/features/messages/MessageBubble';
-import MessageComposer from '@/src/components/features/messages/MessageComposer';
 
 describe('ConversationListItem', () => {
   const props = {

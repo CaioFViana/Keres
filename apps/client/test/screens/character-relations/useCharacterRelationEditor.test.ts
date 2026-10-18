@@ -1,6 +1,11 @@
 /**
  * @jest-environment node
  */
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import { act, renderHook } from '@testing-library/react-native';
+import { useCharacterRelationEditor } from '@/src/screens/character-relations/useCharacterRelationEditor';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockSave = jest.fn();
 const mockDelete = jest.fn();
 const mockAlert = jest.fn();
@@ -18,11 +23,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
-import { act, renderHook } from '@testing-library/react-native';
-import { useCharacterRelationEditor } from '@/src/screens/character-relations/useCharacterRelationEditor';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 const relation = (id: string, a: string, b: string, type = 'friend'): CharacterRelation => ({

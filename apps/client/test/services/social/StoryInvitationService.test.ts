@@ -1,10 +1,6 @@
 /**
  * @jest-environment node
  */
-jest.mock('@/src/services/api/StoryInvitationApiService', () => ({
-  storyInvitationApi: { list: jest.fn() },
-}));
-
 import { servers } from '@/src/db/schema';
 import { storyInvitationApi } from '@/src/services/api/StoryInvitationApiService';
 import {
@@ -14,6 +10,10 @@ import {
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@/src/services/api/StoryInvitationApiService', () => ({
+  storyInvitationApi: { list: jest.fn() },
+}));
 
 const NOW = new Date('2026-09-28T12:00:00.000Z');
 const list = storyInvitationApi.list as jest.Mock;

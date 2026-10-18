@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+
 const mockUseTheme = jest.fn();
 jest.mock('@/src/theme', () => ({ useTheme: () => mockUseTheme() }));
-
-import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 const light = { text: '#111111' };
 const dark = { text: '#eeeeee' };
@@ -63,7 +63,7 @@ describe('useThemedStyles', () => {
     await rerender({});
     expect(factory).toHaveBeenCalledTimes(1);
 
-    const tooMany = () => useThemedStyles(createStyles as never, [1, 2, 3, 4, 5, 6] as never);
-    await expect(renderHook(tooMany)).rejects.toThrow('at most 5');
+    const useTooMany = () => useThemedStyles(createStyles as never, [1, 2, 3, 4, 5, 6] as never);
+    await expect(renderHook(useTooMany)).rejects.toThrow('at most 5');
   });
 });

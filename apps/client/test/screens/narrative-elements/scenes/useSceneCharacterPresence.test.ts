@@ -1,3 +1,6 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useSceneCharacterPresence } from '@/src/screens/narrative-elements/scenes/useSceneCharacterPresence';
+
 const mockDb = {};
 const mockT = (key: string) => key;
 const mockService = {
@@ -25,9 +28,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useSceneCharacterPresence } from '@/src/screens/narrative-elements/scenes/useSceneCharacterPresence';
 
 const relation = { id: 'relation-1', characterId: 'character-1', sceneId: 'scene-1' } as any;
 

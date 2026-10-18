@@ -1,3 +1,6 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useInviteFriendToStory } from '@/src/screens/enter-stack/social/useInviteFriendToStory';
+
 const mockFindMany = jest.fn();
 const mockInvite = jest.fn();
 const mockSync = jest.fn(async (..._args: unknown[]) => undefined);
@@ -22,9 +25,6 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
 jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useInviteFriendToStory } from '@/src/screens/enter-stack/social/useInviteFriendToStory';
 
 const server = { id: 'srv-1', name: 'Main' } as never;
 const NONE: string[] = [];

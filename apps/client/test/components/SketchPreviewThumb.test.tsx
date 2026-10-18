@@ -7,12 +7,10 @@ import SketchPreviewThumb from '@/src/components/features/sketches/SketchPreview
 const mockMakeSvg = jest.fn();
 
 jest.mock('@expo/vector-icons', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const RN = require('react-native');
   return { Ionicons: () => <RN.View testID="sketch-icon" /> };
 });
 jest.mock('@shopify/react-native-skia', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const RN = require('react-native');
   return {
     __esModule: true,

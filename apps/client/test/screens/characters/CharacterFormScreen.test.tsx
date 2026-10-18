@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import CharacterFormScreen from '@/src/screens/characters/CharacterFormScreen';
+
 const mockShowNotification = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockReadSecondaryDraft = jest.fn();
@@ -169,8 +171,6 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import CharacterFormScreen from '@/src/screens/characters/CharacterFormScreen';
-
 function freshFormState(overrides: Record<string, unknown> = {}) {
   const noop = jest.fn();
   return {
@@ -294,7 +294,7 @@ describe('CharacterFormScreen', () => {
   it('registers a reset header action while dirty', async () => {
     await render(<CharacterFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+      actions: { id: string; icon: string; disabled: boolean; onPress: () => void }[];
     };
     expect(config.actions).toHaveLength(1);
     expect(config.actions[0]).toMatchObject({
@@ -308,7 +308,7 @@ describe('CharacterFormScreen', () => {
     mockFormState = freshFormState({ isDirty: false });
     await render(<CharacterFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ disabled: boolean }>;
+      actions: { disabled: boolean }[];
     };
     expect(config.actions[0].disabled).toBe(true);
   });

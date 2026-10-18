@@ -4,8 +4,30 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-const mockNavigatorProps: Array<Record<string, any>> = [];
-const mockScreens: Array<Record<string, any>> = [];
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import {
+  BoardsStackNavigator,
+  CharacterStackNavigator,
+  CommentsStackNavigator,
+  GalleryStackNavigator,
+  ItemStackNavigator,
+  LocationStackNavigator,
+  NarrativeElementsStackNavigator,
+  NoteStackNavigator,
+  OperationLogStackNavigator,
+  PlotsStackNavigator,
+  StoryAnalysisStackNavigator,
+  TagStackNavigator,
+  WorldRuleStackNavigator,
+} from '@/src/navigation/stacks/MainSystemStacks';
+import ArcsStackNavigator from '@/src/navigation/stacks/ArcsStack';
+import CalendarsStackNavigator from '@/src/navigation/stacks/CalendarsStack';
+import StatsStackNavigator from '@/src/navigation/stacks/StatsStack';
+import StorySettingsStackNavigator from '@/src/navigation/stacks/StorySettingsStack';
+import { resetShowcaseRequestCacheForTests } from '@/src/services/showcase/showcaseRequest';
+
+const mockNavigatorProps: Record<string, any>[] = [];
+const mockScreens: Record<string, any>[] = [];
 
 jest.mock('@react-navigation/native-stack', () => ({
   __esModule: true,
@@ -349,34 +371,12 @@ jest.mock('@/src/screens/world-rules/WorldRuleListScreen', () => ({
   default: () => null,
 }));
 
-import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
-import {
-  BoardsStackNavigator,
-  CharacterStackNavigator,
-  CommentsStackNavigator,
-  GalleryStackNavigator,
-  ItemStackNavigator,
-  LocationStackNavigator,
-  NarrativeElementsStackNavigator,
-  NoteStackNavigator,
-  OperationLogStackNavigator,
-  PlotsStackNavigator,
-  StoryAnalysisStackNavigator,
-  TagStackNavigator,
-  WorldRuleStackNavigator,
-} from '@/src/navigation/stacks/MainSystemStacks';
-import ArcsStackNavigator from '@/src/navigation/stacks/ArcsStack';
-import CalendarsStackNavigator from '@/src/navigation/stacks/CalendarsStack';
-import StatsStackNavigator from '@/src/navigation/stacks/StatsStack';
-import StorySettingsStackNavigator from '@/src/navigation/stacks/StorySettingsStack';
-import { resetShowcaseRequestCacheForTests } from '@/src/services/showcase/showcaseRequest';
-
-const stacks: Array<{
+const stacks: {
   label: string;
   Navigator: () => React.JSX.Element;
   screens: string[];
   initialRouteName?: string;
-}> = [
+}[] = [
   {
     label: 'PlotsStack',
     Navigator: PlotsStackNavigator,

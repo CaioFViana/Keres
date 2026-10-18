@@ -4,12 +4,6 @@
 import * as schema from '@/src/db/schema';
 import type { ServerSelect } from '@/src/db/schema';
 
-const mockGetHistory = jest.fn();
-jest.mock('@/src/services/api/PaymentApiService', () => ({
-  __esModule: true,
-  paymentApi: { getHistory: (...args: unknown[]) => mockGetHistory(...args) },
-}));
-
 import {
   createPaymentHistoryService,
   PAYMENT_HISTORY_CHANGED,
@@ -17,6 +11,12 @@ import {
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { entityBase } from '@/test/helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+const mockGetHistory = jest.fn();
+jest.mock('@/src/services/api/PaymentApiService', () => ({
+  __esModule: true,
+  paymentApi: { getHistory: (...args: unknown[]) => mockGetHistory(...args) },
+}));
 
 let database: TestDatabase;
 

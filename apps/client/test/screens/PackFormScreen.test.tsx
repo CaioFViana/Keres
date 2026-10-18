@@ -1,6 +1,8 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import PackFormScreen from '@/src/screens/packs/PackFormScreen';
+
 /**
  * The pack form's own rules, which live nowhere else: the sub-toggle that cannot outlive its parent,
  * and the three refusals that stop an empty or nameless pack being written.
@@ -121,8 +123,6 @@ jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
     listPacks: mockListPacks,
   }),
 }));
-
-import PackFormScreen from '@/src/screens/packs/PackFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import WorldRuleFormScreen from '@/src/screens/world-rules/WorldRuleFormScreen';
+
 const mockGoBack = jest.fn();
 const mockNavigation = { goBack: mockGoBack, navigate: jest.fn() };
 const mockSetTitle = jest.fn();
@@ -301,8 +303,6 @@ jest.mock('@/src/screens/world-rules/useWorldRuleFormActions', () => ({
   useWorldRuleFormActions: (...args: unknown[]) => mockUseWorldRuleFormActions(...args),
 }));
 
-import WorldRuleFormScreen from '@/src/screens/world-rules/WorldRuleFormScreen';
-
 const freshFormState = () => ({
   currentWorldRuleId: null as string | null,
   title: '',
@@ -498,7 +498,7 @@ it('tolerates missing route params', async () => {
 it('registers a reset header action while dirty', async () => {
   await render(<WorldRuleFormScreen />);
   const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-    actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+    actions: { id: string; icon: string; disabled: boolean; onPress: () => void }[];
   };
   expect(config.actions).toHaveLength(1);
   expect(config.actions[0]).toMatchObject({
@@ -512,7 +512,7 @@ it('disables the reset header action while pristine', async () => {
   mockFormState = { ...freshFormState(), isDirty: false };
   await render(<WorldRuleFormScreen />);
   const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-    actions: Array<{ disabled: boolean }>;
+    actions: { disabled: boolean }[];
   };
   expect(config.actions[0].disabled).toBe(true);
 });

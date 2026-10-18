@@ -1,5 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
+import GalleryDetailScreen from '@/src/screens/gallery/GalleryDetailScreen';
+
 const mockGoBack = jest.fn();
 let mockContentProps: {
   galleryId: string;
@@ -44,8 +46,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import GalleryDetailScreen from '@/src/screens/gallery/GalleryDetailScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

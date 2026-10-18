@@ -1,4 +1,11 @@
 /** @jest-environment node */
+import { renderHook } from '@testing-library/react-native';
+import { useDrizzle } from '@/src/db';
+import { useUserProfileResolver } from '@/src/hooks/social/useUserProfileResolver';
+import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
 jest.mock('react-i18next', () => {
   const t = (key: string) => key;
@@ -12,13 +19,6 @@ jest.mock('@/src/services/api/FriendshipApiService', () => ({
   __esModule: true,
   friendshipApiService: { getUserDetails: jest.fn() },
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useDrizzle } from '@/src/db';
-import { useUserProfileResolver } from '@/src/hooks/social/useUserProfileResolver';
-import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const db = { query: { users: { findFirst: jest.fn() } } };
 

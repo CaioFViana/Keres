@@ -1,10 +1,6 @@
 /** @jest-environment node */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
-
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { usePlotFormState } from '@/src/screens/plots/usePlotFormState';
 import {
@@ -13,6 +9,10 @@ import {
 } from '@/src/services/drafts/EditorDraftService';
 import type { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
 import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
 
 type PlotService = ReturnType<typeof createPlotService>;
 

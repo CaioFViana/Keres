@@ -12,7 +12,7 @@ type ConsoleSpies = {
  * `run` so a test can assert `toHaveBeenCalled` before restore.
  */
 export async function withSilencedConsole<T>(
-  channels: ReadonlyArray<ConsoleChannel>,
+  channels: readonly ConsoleChannel[],
   run: (spies: ConsoleSpies) => T | Promise<T>,
 ): Promise<T> {
   const spies: ConsoleSpies = {};

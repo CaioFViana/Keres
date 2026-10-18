@@ -25,7 +25,6 @@ jest.mock('react-i18next', () => ({
 // The card itself animates; what matters here is the title it gets, and that it starts closed.
 const mockCard = jest.fn();
 jest.mock('@/src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const ReactActual = require('react');
   const { View, Text } = jest.requireActual('react-native');
   return {

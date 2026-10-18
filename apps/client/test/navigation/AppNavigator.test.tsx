@@ -1,8 +1,17 @@
 import { render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-const mockScreens: Array<Record<string, unknown>> = [];
-const mockRootNavigatorProps: Array<Record<string, unknown>> = [];
+import AppNavigator from '@/src/navigation/AppNavigator';
+import { useDrizzle } from '@/src/db';
+import { getClientSettings } from '@/src/services/account/ClientSettingsService';
+import { useThemeStore } from '@/src/state/ui/themeStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
+import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
+import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
+
+const mockScreens: Record<string, unknown>[] = [];
+const mockRootNavigatorProps: Record<string, unknown>[] = [];
 
 jest.mock('@react-navigation/native-stack', () => ({
   __esModule: true,
@@ -58,15 +67,6 @@ jest.mock('@/src/legal/clientTermsAcceptance', () => ({
   __esModule: true,
   getAcceptedClientLegal: jest.fn(),
 }));
-
-import AppNavigator from '@/src/navigation/AppNavigator';
-import { useDrizzle } from '@/src/db';
-import { getClientSettings } from '@/src/services/account/ClientSettingsService';
-import { useThemeStore } from '@/src/state/ui/themeStore';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { getAcceptedClientLegal } from '@/src/legal/clientTermsAcceptance';
-import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
-import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
 
 const db = { marker: 'db' };
 

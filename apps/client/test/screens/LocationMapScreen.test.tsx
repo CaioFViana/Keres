@@ -1,5 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import LocationMapScreen from '@/src/screens/location-maps/LocationMapScreen';
+
 const mockColors = {
   background: '#111',
   border: '#444',
@@ -220,8 +222,6 @@ jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-
-import LocationMapScreen from '@/src/screens/location-maps/LocationMapScreen';
 
 const map = {
   id: 'map-1',

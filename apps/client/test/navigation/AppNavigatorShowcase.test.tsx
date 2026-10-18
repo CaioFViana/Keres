@@ -1,6 +1,13 @@
 import { render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import AppNavigator from '@/src/navigation/AppNavigator';
+import { useDrizzle } from '@/src/db';
+import { getClientSettings } from '@/src/services/account/ClientSettingsService';
+import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
+import { useThemeStore } from '@/src/state/ui/themeStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+
 /**
  * Showcase-mode coverage for AppNavigator.
  *
@@ -12,8 +19,8 @@ import React from 'react';
  */
 const mockPrepareShowcase = jest.fn();
 
-const mockScreens: Array<Record<string, unknown>> = [];
-const mockRootNavigatorProps: Array<Record<string, unknown>> = [];
+const mockScreens: Record<string, unknown>[] = [];
+const mockRootNavigatorProps: Record<string, unknown>[] = [];
 
 jest.mock('@react-navigation/native-stack', () => ({
   __esModule: true,
@@ -69,13 +76,6 @@ jest.mock('@/src/navigation/stacks/StorySelectionStack', () => ({
   __esModule: true,
   default: () => null,
 }));
-
-import AppNavigator from '@/src/navigation/AppNavigator';
-import { useDrizzle } from '@/src/db';
-import { getClientSettings } from '@/src/services/account/ClientSettingsService';
-import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
-import { useThemeStore } from '@/src/state/ui/themeStore';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 const db = { marker: 'db' };
 const initializeSettings = jest.fn();

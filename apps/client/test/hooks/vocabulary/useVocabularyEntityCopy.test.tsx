@@ -1,5 +1,9 @@
 import { render } from '@testing-library/react-native';
 
+import { useTranslation } from 'react-i18next';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: jest.fn(),
@@ -8,10 +12,6 @@ jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: jest.fn(),
 }));
-
-import { useTranslation } from 'react-i18next';
-import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
-import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 
 const t = jest.fn((key: string, options?: Record<string, unknown>) => ({ key, options }));
 

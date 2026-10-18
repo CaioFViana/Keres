@@ -1,3 +1,6 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import ServerRegistrationScreen from '@/src/screens/enter-stack/servers/ServerRegistrationScreen';
+
 const mockT = (key: string) => key;
 // Stable identity: screens list `t` in effect deps, a fresh object per render loops forever.
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
@@ -91,8 +94,8 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 
 jest.mock('@/src/services/servers/ServerService', () => {
   class ServerHasOwnedStoriesError extends Error {
-    ownedStories: Array<{ title: string }>;
-    constructor(ownedStories: Array<{ title: string }>) {
+    ownedStories: { title: string }[];
+    constructor(ownedStories: { title: string }[]) {
       super('has owned stories');
       this.ownedStories = ownedStories;
     }
@@ -223,9 +226,6 @@ jest.mock('@/src/components/features/servers/ServerRecoveryCodesPanel', () => {
     ),
   };
 });
-
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ServerRegistrationScreen from '@/src/screens/enter-stack/servers/ServerRegistrationScreen';
 
 const existingServer = {
   id: 'srv-1',
@@ -534,10 +534,10 @@ describe('ServerRegistrationScreen', () => {
       'delete_server_message',
       expect.any(Array),
     );
-    const buttons = mockAlert.mock.calls[0][2] as Array<{
+    const buttons = mockAlert.mock.calls[0][2] as {
       text: string;
       onPress?: () => Promise<void>;
-    }>;
+    }[];
     const del = buttons.find((b) => b.text === 'delete');
     expect(del?.onPress).toBeDefined();
     await act(async () => {

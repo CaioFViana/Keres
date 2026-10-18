@@ -1,3 +1,6 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { usePresenceMatrixCatalog } from '@/src/hooks/character/usePresenceMatrixCatalog';
+
 const mockDb = {};
 const itemIds = ['item-1'];
 const mockCharacterService = { getAllByStoryId: jest.fn() };
@@ -32,9 +35,6 @@ jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: jest.fn(() => mockJourneyService),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { usePresenceMatrixCatalog } from '@/src/hooks/character/usePresenceMatrixCatalog';
 
 beforeEach(() => {
   jest.clearAllMocks();

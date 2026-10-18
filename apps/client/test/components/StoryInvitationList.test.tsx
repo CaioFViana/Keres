@@ -1,5 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 
+import StoryInvitationList from '@/src/components/features/story/StoryInvitationList/StoryInvitationList';
+
 const mockAccept = jest.fn();
 const mockClose = jest.fn();
 const mockAlert = jest.fn();
@@ -48,8 +50,6 @@ jest.mock('@/src/hooks/social/useStoryInvitations', () => ({
   __esModule: true,
   useStoryInvitations: () => mockInvitations,
 }));
-
-import StoryInvitationList from '@/src/components/features/story/StoryInvitationList/StoryInvitationList';
 
 const server = { id: 'server-1', idUser: 'me' };
 const serverFor = (id: string) => (id === 'server-1' ? (server as never) : undefined);

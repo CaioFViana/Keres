@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { FriendshipApiService } from '@/src/services/api/FriendshipApiService';
+
 const mockGet = jest.fn();
 const mockSetActiveServer = jest.fn();
 
@@ -16,8 +18,6 @@ jest.mock('@/src/services/api/apiClient', () => ({
     get: (...args: unknown[]) => mockGet(...args),
   }),
 }));
-
-import { FriendshipApiService } from '@/src/services/api/FriendshipApiService';
 
 const server = { id: 'server-1', url: 'https://keres.test' } as never;
 

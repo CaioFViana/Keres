@@ -23,9 +23,8 @@ jest.mock('@/src/theme', () => ({
 }));
 jest.mock('expo-image', () => ({ Image: () => null }));
 jest.mock('@expo/vector-icons', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const { View: HostView } = jest.requireActual('react-native');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const ReactActual = jest.requireActual('react');
   return {
     Ionicons: ({ name, color, size }: { name: string; color: string; size: number }) =>

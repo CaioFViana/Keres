@@ -8,6 +8,8 @@ import {
 } from '@testing-library/react-native';
 import { UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
 
+import NarrativeElementsListScreen from '@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
@@ -469,8 +471,6 @@ jest.mock('@/src/components/features/chapters/QuickAddSceneModal', () => {
     ),
   };
 });
-
-import NarrativeElementsListScreen from '@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

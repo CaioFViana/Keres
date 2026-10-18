@@ -10,6 +10,7 @@
  * shipped pack twice updates the same row instead of piling up copies. See `packId`.
  */
 
+import type { GrammaticalGender, StoryVocabularyEntityType } from '@keres/shared';
 export type PackLanguage = 'en' | 'pt';
 
 /** A string that exists in both languages. Every visible word in a shipped pack is one of these. */
@@ -601,4 +602,3 @@ export function derivedId(
 export function packId(code: string, language: PackLanguage): string {
   return derivedId(code, language, 'P');
 }
-import type { GrammaticalGender, StoryVocabularyEntityType } from '@keres/shared';

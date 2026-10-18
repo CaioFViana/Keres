@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import CharacterDetailScreen from '@/src/screens/characters/CharacterDetailScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockUseScreenHeader = jest.fn();
@@ -215,8 +217,6 @@ jest.mock('react-i18next', () => {
     useTranslation: () => ({ t: mockT }),
   };
 });
-
-import CharacterDetailScreen from '@/src/screens/characters/CharacterDetailScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

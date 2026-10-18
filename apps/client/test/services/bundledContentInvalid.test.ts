@@ -1,6 +1,10 @@
 /**
  * @jest-environment node
  */
+import { createExampleStoryService } from '@/src/services/storymanagement/packs/ExampleStoryService';
+import { createShippedPackService } from '@/src/services/storymanagement/packs/ShippedPackService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 jest.mock('@/src/content/example-stories/generated/registry', () => ({
   __esModule: true,
   exampleStoryRegistry: [
@@ -16,10 +20,6 @@ jest.mock('@/src/content/shipped-packs/generated/registry', () => ({
   __esModule: true,
   shippedPackRegistry: [{ slug: 'broken', languages: [{ language: 'en', pack: { nope: true } }] }],
 }));
-
-import { createExampleStoryService } from '@/src/services/storymanagement/packs/ExampleStoryService';
-import { createShippedPackService } from '@/src/services/storymanagement/packs/ShippedPackService';
-import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The bundled-content guards against a corrupt registry entry.

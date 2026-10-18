@@ -1,3 +1,5 @@
+import { resolveAdvancedEntityName } from '@/src/services/entity-solvers/EntityAdvancedNameResolver';
+
 const mockResolve = jest.fn();
 const mockContext = jest.fn();
 jest.mock('@keres/shared', () => ({
@@ -8,8 +10,6 @@ jest.mock('@/src/services/entity-solvers/ClientEntitySolverContext', () => ({
   __esModule: true,
   createClientEntitySolverContext: (...args: unknown[]) => mockContext(...args),
 }));
-
-import { resolveAdvancedEntityName } from '@/src/services/entity-solvers/EntityAdvancedNameResolver';
 
 it('delegates composite names to the shared resolver with a client solver context', async () => {
   const db = {} as never;

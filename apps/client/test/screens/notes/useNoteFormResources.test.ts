@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useNoteFormResources } from '@/src/screens/notes/useNoteFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateNoteService = jest.fn();
 
@@ -7,9 +10,6 @@ jest.mock('@/src/db', () => ({
 jest.mock('@/src/services/storymanagement/notes-tags-comments/NoteService', () => ({
   createNoteService: (...args: unknown[]) => mockCreateNoteService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useNoteFormResources } from '@/src/screens/notes/useNoteFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'note-service' };

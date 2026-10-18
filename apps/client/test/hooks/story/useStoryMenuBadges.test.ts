@@ -1,3 +1,6 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryMenuBadges } from '@/src/hooks/story/useStoryMenuBadges';
+
 const mockFindStory = jest.fn();
 const mockFindLogs = jest.fn();
 const mockGetPublications = jest.fn();
@@ -21,9 +24,6 @@ jest.mock('@/src/services/publication/PublicationService', () => ({
     getPublicationsForStory: (...args: unknown[]) => mockGetPublications(...args),
   }),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useStoryMenuBadges } from '@/src/hooks/story/useStoryMenuBadges';
 
 beforeEach(() => {
   jest.clearAllMocks();

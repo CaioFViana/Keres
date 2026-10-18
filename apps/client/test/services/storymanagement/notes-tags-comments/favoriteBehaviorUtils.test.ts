@@ -1,6 +1,13 @@
 /**
  * @jest-environment node
  */
+import {
+  decorateFavorite,
+  normalizeFavoriteCreate,
+  normalizeFavoriteUpdate,
+  persistInitialFavorite,
+} from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
+
 const mockFavoriteService = {
   getBehavior: jest.fn(async () => 'global' as string),
   setFavorite: jest.fn(async () => undefined),
@@ -18,13 +25,6 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: { getState: () => ({ userId: mockUserId }) },
 }));
-
-import {
-  decorateFavorite,
-  normalizeFavoriteCreate,
-  normalizeFavoriteUpdate,
-  persistInitialFavorite,
-} from '@/src/services/storymanagement/notes-tags-comments/favoriteBehaviorUtils';
 
 const db = {} as never;
 const STORY_ID = 'story-1';

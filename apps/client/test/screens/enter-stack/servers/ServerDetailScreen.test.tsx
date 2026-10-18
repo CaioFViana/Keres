@@ -1,3 +1,9 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import ServerDetailScreen from '@/src/screens/enter-stack/servers/ServerDetailScreen';
+import { AccountDeletionCleanupError } from '@/src/services/account/DeleteAccountService';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
@@ -100,8 +106,8 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 
 jest.mock('@/src/services/servers/ServerService', () => {
   class ServerHasOwnedStoriesError extends Error {
-    ownedStories: Array<{ title: string }>;
-    constructor(ownedStories: Array<{ title: string }>) {
+    ownedStories: { title: string }[];
+    constructor(ownedStories: { title: string }[]) {
       super('has owned stories');
       this.ownedStories = ownedStories;
     }
@@ -157,12 +163,6 @@ jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
     default: (props: Record<string, unknown>) => <TextInput testID="tag-input" {...props} />,
   };
 });
-
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ServerDetailScreen from '@/src/screens/enter-stack/servers/ServerDetailScreen';
-import { AccountDeletionCleanupError } from '@/src/services/account/DeleteAccountService';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = {
   id: 'srv-1',
@@ -905,7 +905,7 @@ describe('ServerDetailScreen', () => {
       const { ServerHasOwnedStoriesError } = jest.requireMock(
         '@/src/services/servers/ServerService',
       ) as {
-        ServerHasOwnedStoriesError: new (s: Array<{ title: string }>) => Error;
+        ServerHasOwnedStoriesError: new (s: { title: string }[]) => Error;
       };
       mockDeleteServer.mockRejectedValueOnce(new ServerHasOwnedStoriesError([{ title: 'Epic' }]));
       await fireEvent.press(view.getByTestId('server-action-delete'));

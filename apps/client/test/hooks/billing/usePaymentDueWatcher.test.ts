@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { usePaymentDueWatcher } from '@/src/hooks/billing/usePaymentDueWatcher';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockServers = jest.fn();
 const mockLoad = jest.fn();
 const mockWarn = jest.fn();
@@ -15,11 +20,6 @@ jest.mock('@/src/services/payments/PaymentWarningService', () => ({
   __esModule: true,
   warnAboutPayment: (...args: unknown[]) => mockWarn(...args),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { usePaymentDueWatcher } from '@/src/hooks/billing/usePaymentDueWatcher';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const db = {} as never;
 const home = { id: 'server-1', name: 'Home' };

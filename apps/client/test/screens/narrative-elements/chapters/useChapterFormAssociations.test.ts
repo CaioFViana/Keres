@@ -1,3 +1,6 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useChapterFormAssociations } from '@/src/screens/narrative-elements/chapters/useChapterFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 const mockGetArcsForStory = jest.fn();
 
@@ -7,9 +10,6 @@ jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
 jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   createStoryArcService: () => ({ getArcsForStory: mockGetArcsForStory }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useChapterFormAssociations } from '@/src/screens/narrative-elements/chapters/useChapterFormAssociations';
 
 const mockSetSelectedTagIds = jest.fn();
 const relations = {

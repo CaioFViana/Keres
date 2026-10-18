@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { contentOf, SyncHarness, type SyncDevice } from '@/test/helpers/syncDevices';
+
 jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
 }));
@@ -9,8 +11,6 @@ jest.mock('@/src/services/media/MediaSyncService', () => ({
     syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
   }),
 }));
-
-import { contentOf, SyncHarness, type SyncDevice } from '@/test/helpers/syncDevices';
 
 /**
  * End-to-end convergence: two real devices and one reference server. Every scenario ends with

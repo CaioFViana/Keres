@@ -1,6 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import GalleryListScreen from '@/src/screens/gallery/GalleryListScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockDispatch = jest.fn();
@@ -226,9 +229,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import GalleryListScreen from '@/src/screens/gallery/GalleryListScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const freshListState = () => ({
   listProps: {},

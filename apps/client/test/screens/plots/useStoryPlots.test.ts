@@ -1,3 +1,12 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
+import { createPlotSceneService } from '@/src/services/storymanagement/entities/PlotSceneService';
+import { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockDb = {};
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('@/src/services/storymanagement/entities/PlotService', () => ({
@@ -29,15 +38,6 @@ jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
       }, [load]),
   };
 });
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
-import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
-import { createPlotSceneService } from '@/src/services/storymanagement/entities/PlotSceneService';
-import { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
-import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const chapters = [
   { id: 'chapter-1', name: 'Beginning', index: 1 },

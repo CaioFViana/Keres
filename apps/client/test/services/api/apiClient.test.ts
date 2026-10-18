@@ -1,12 +1,3 @@
-const mockConnectivity = {
-  reportReachable: jest.fn(),
-  reportUnreachable: jest.fn(),
-};
-
-jest.mock('@/src/state/sync/connectivityStore', () => ({
-  useConnectivityStore: { getState: () => mockConnectivity },
-}));
-
 import { AxiosError, type AxiosRequestConfig } from 'axios';
 import apiClientDefault, {
   apiBaseUrl,
@@ -23,6 +14,15 @@ import apiClientDefault, {
   type TokenProvider,
 } from '@/src/services/api/apiClient';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
+const mockConnectivity = {
+  reportReachable: jest.fn(),
+  reportUnreachable: jest.fn(),
+};
+
+jest.mock('@/src/state/sync/connectivityStore', () => ({
+  useConnectivityStore: { getState: () => mockConnectivity },
+}));
 
 const SERVER = { id: 'server-1', name: 'Casa', url: 'http://localhost:3000' } as any;
 

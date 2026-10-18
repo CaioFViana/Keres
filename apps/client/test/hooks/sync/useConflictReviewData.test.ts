@@ -1,3 +1,6 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useConflictReviewData } from '@/src/hooks/sync/useConflictReviewData';
+
 const mockDb = {};
 const mockT = (key: string) => key;
 const mockCollectConflictEntityRefs = jest.fn();
@@ -26,9 +29,6 @@ jest.mock('@/src/services/entity-solvers/EntityNameBatchResolver', () => ({
     resolveMany: (...args: unknown[]) => mockResolveNames(...args),
   })),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useConflictReviewData } from '@/src/hooks/sync/useConflictReviewData';
 
 const noConflicts: never[] = [];
 

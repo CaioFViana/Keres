@@ -1,12 +1,3 @@
-jest.mock('@/src/components/features/chapters/ChapterScenesList', () => ({
-  __esModule: true,
-  default: 'ChapterScenesList',
-}));
-jest.mock('@/src/components/features/list-items/ChapterListItem', () => ({
-  __esModule: true,
-  default: 'ChapterListItem',
-}));
-
 import {
   createChapterListItemRenderer,
   matchesChoiceQuery,
@@ -15,6 +6,15 @@ import {
   scenesShownForChapter,
 } from '@/src/screens/narrative-elements/chapters/createChapterListItemRenderer';
 import { UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
+
+jest.mock('@/src/components/features/chapters/ChapterScenesList', () => ({
+  __esModule: true,
+  default: 'ChapterScenesList',
+}));
+jest.mock('@/src/components/features/list-items/ChapterListItem', () => ({
+  __esModule: true,
+  default: 'ChapterListItem',
+}));
 
 const scene = (overrides: Record<string, unknown> = {}) =>
   ({

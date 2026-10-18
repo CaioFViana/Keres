@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import LocationFormScreen from '@/src/screens/locations/LocationFormScreen';
+
 const mockShowNotification = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockReadSecondaryDraft = jest.fn();
@@ -174,8 +176,6 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import LocationFormScreen from '@/src/screens/locations/LocationFormScreen';
-
 function freshFormState(overrides: Record<string, unknown> = {}) {
   const noop = jest.fn();
   return {
@@ -277,7 +277,7 @@ describe('LocationFormScreen', () => {
   it('registers a reset header action while dirty', async () => {
     await render(<LocationFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+      actions: { id: string; icon: string; disabled: boolean; onPress: () => void }[];
     };
     expect(config.actions).toHaveLength(1);
     expect(config.actions[0]).toMatchObject({
@@ -291,7 +291,7 @@ describe('LocationFormScreen', () => {
     mockFormState = freshFormState({ isDirty: false });
     await render(<LocationFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ disabled: boolean }>;
+      actions: { disabled: boolean }[];
     };
     expect(config.actions[0]?.disabled).toBe(true);
   });
@@ -301,7 +301,7 @@ describe('LocationFormScreen', () => {
     mockFormState = freshFormState({ currentLocationId: undefined, isEditing: false, resetForm });
     await render(<LocationFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ onPress: () => void }>;
+      actions: { onPress: () => void }[];
     };
 
     config.actions[0]?.onPress();
@@ -309,7 +309,7 @@ describe('LocationFormScreen', () => {
     const [, message, buttons] = mockAlert.mock.calls[0] as [
       string,
       string,
-      Array<{ text: string; onPress?: () => void }>,
+      { text: string; onPress?: () => void }[],
     ];
     expect(message).toBe('form_reset_create_message');
 
@@ -327,7 +327,7 @@ describe('LocationFormScreen', () => {
     mockFormState = freshFormState();
     await render(<LocationFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ onPress: () => void }>;
+      actions: { onPress: () => void }[];
     };
 
     config.actions[0]?.onPress();

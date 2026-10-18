@@ -2,6 +2,8 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import BoardCanvasTools from '@/src/components/features/boards/BoardCanvasTools';
 
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
     cb();
@@ -53,8 +55,6 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
     isWide: false,
   })),
 }));
-
-import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockScreenAnchor = jest.fn();
 jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({

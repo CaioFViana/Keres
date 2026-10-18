@@ -1,3 +1,6 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useLocationMapCanvasActions } from '@/src/screens/location-maps/useLocationMapCanvasActions';
+
 const mockAppendImages = jest.fn();
 const mockAppendLocations = jest.fn();
 const mockAppendMarkers = jest.fn();
@@ -18,9 +21,6 @@ jest.mock('@/src/services/storymanagement/entities/LocationMapService', () => ({
   __esModule: true,
   createLocationMapService: jest.fn(() => ({ createMap: mockCreateMap })),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useLocationMapCanvasActions } from '@/src/screens/location-maps/useLocationMapCanvasActions';
 
 let currentContent: any;
 const setContent = jest.fn((update) => {

@@ -1,5 +1,8 @@
 import { act, cleanup, render, waitFor } from '@testing-library/react-native';
 
+import OperationLogDetailScreen from '@/src/screens/operation-log/OperationLogDetailScreen';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockGetOperationLogById = jest.fn();
 const mockGetEntityIdentifier = jest.fn();
 const mockDb = {};
@@ -77,9 +80,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import OperationLogDetailScreen from '@/src/screens/operation-log/OperationLogDetailScreen';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 const makeLog = (overrides = {}) => ({
   id: 'log-1',

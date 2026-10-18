@@ -1,9 +1,4 @@
 // ResponsiveModal reads the system insets.
-jest.mock('react-native-safe-area-context', () => ({
-  __esModule: true,
-  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
-}));
-
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { buildReorderItems } from '@keres/shared';
 import React from 'react';
@@ -16,6 +11,11 @@ import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModa
 import type { SceneCalendarOption } from '@/src/components/features/scenes/SceneFixedDateField';
 import SceneTimingFields from '@/src/components/features/scenes/SceneTimingFields';
 import type { SceneSelect } from '@/src/db/schema';
+
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
 
 jest.mock('@/src/theme', () => ({
   __esModule: true,

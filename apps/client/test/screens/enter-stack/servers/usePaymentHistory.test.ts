@@ -1,3 +1,8 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { usePaymentHistory } from '@/src/screens/enter-stack/servers/usePaymentHistory';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { PAYMENTS_CHANGED } from '@/src/utils/billing/paymentEvents';
+
 const mockGetForServer = jest.fn();
 const mockSync = jest.fn();
 const mockDb = {};
@@ -10,11 +15,6 @@ jest.mock('@/src/services/payments/PaymentHistoryService', () => ({
     syncWithServer: (...args: unknown[]) => mockSync(...args),
   }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { usePaymentHistory } from '@/src/screens/enter-stack/servers/usePaymentHistory';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
-import { PAYMENTS_CHANGED } from '@/src/utils/billing/paymentEvents';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://a.example' } as never;
 const saved = [{ id: 'p1', serverId: 'srv-1', kind: 'payment_succeeded' }];

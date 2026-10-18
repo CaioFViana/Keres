@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useRouteFormResources } from '@/src/screens/routes/useRouteFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateRouteService = jest.fn();
 
@@ -7,9 +10,6 @@ jest.mock('@/src/db', () => ({
 jest.mock('@/src/services/storymanagement/entities/RouteService', () => ({
   createRouteService: (...args: unknown[]) => mockCreateRouteService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useRouteFormResources } from '@/src/screens/routes/useRouteFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'route-service' };

@@ -1,3 +1,7 @@
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import ImportStoryScreen from '@/src/screens/enter-stack/story-entry/ImportStoryScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockDrizzle = {};
@@ -116,10 +120,6 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
 }));
-
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ImportStoryScreen from '@/src/screens/enter-stack/story-entry/ImportStoryScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 describe('ImportStoryScreen', () => {
   beforeEach(() => {

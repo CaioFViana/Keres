@@ -1,3 +1,9 @@
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import FriendDetailScreen from '@/src/screens/enter-stack/social/FriendDetailScreen';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -6,7 +12,7 @@ const mockNavigate = jest.fn();
 const mockHeader = jest.fn();
 const mockCanGoBack = jest.fn();
 const mockUnsubscribe = jest.fn();
-const mockFocusListeners: Array<() => void> = [];
+const mockFocusListeners: (() => void)[] = [];
 const mockNavigation = {
   navigate: (...args: unknown[]) => mockNavigate(...args),
   goBack: (...args: unknown[]) => mockGoBack(...args),
@@ -176,12 +182,6 @@ jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
-
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import FriendDetailScreen from '@/src/screens/enter-stack/social/FriendDetailScreen';
 
 const server = { id: 'srv-1', idUser: 'me-on-server', name: 'Main' };
 

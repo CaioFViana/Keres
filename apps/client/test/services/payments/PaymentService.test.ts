@@ -1,6 +1,15 @@
 /**
  * @jest-environment node
  */
+import {
+  cancelSubscription,
+  getCheckout,
+  getSwitchQuote,
+  loadPaymentOverview,
+  PAYMENTS_CHANGED,
+  startCheckout,
+} from '@/src/services/payments/PaymentService';
+
 const mockApi = {
   getInfo: jest.fn(),
   getPlans: jest.fn(),
@@ -20,15 +29,6 @@ jest.mock('@/src/services/api/PaymentApiService', () => ({
     getSwitchQuote: (...args: unknown[]) => mockApi.getSwitchQuote(...args),
   },
 }));
-
-import {
-  cancelSubscription,
-  getCheckout,
-  getSwitchQuote,
-  loadPaymentOverview,
-  PAYMENTS_CHANGED,
-  startCheckout,
-} from '@/src/services/payments/PaymentService';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const info = (over: Record<string, unknown> = {}) => ({

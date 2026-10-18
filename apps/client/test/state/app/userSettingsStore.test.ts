@@ -3,14 +3,14 @@
  */
 // `__esModule` matters here for the same reason as the mock in `TokenVault.test.ts`: without the mark,
 // Babel's interop hands the whole mock over as `default` and the named imports come back undefined.
+import * as ClientSettingsService from '@/src/services/account/ClientSettingsService';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+
 jest.mock('@/src/services/account/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   updateClientSettings: jest.fn(),
 }));
-
-import * as ClientSettingsService from '@/src/services/account/ClientSettingsService';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 const mockClientSettings = ClientSettingsService as unknown as {
   getClientSettings: jest.Mock;

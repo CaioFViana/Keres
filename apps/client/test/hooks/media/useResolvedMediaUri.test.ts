@@ -1,14 +1,14 @@
 /** @jest-environment node */
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
+import { resolveBlobUri } from '@/src/services/platform-web/webMediaStore';
+
 jest.mock('@/src/services/platform-web/webMediaStore', () => ({
   __esModule: true,
   DESKTOP_MEDIA_URI_PREFIX: 'desktop-media:',
   resolveBlobUri: jest.fn(),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { Platform } from 'react-native';
-import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
-import { resolveBlobUri } from '@/src/services/platform-web/webMediaStore';
 
 const setPlatform = (os: string) =>
   Object.defineProperty(Platform, 'OS', { value: os, configurable: true });

@@ -10,6 +10,12 @@
  * read into a function escapes that. The references to the `jest.fn`s are picked up
  * after the imports, through the mocked module itself.
  */
+import { File } from 'expo-file-system';
+import { Platform } from 'react-native';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { createMediaSyncService } from '@/src/services/media/MediaSyncService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+
 jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: jest.fn(),
@@ -36,12 +42,6 @@ jest.mock('expo-file-system', () => ({
   Paths: { cache: '/cache' },
 }));
 
-import { File } from 'expo-file-system';
-import { Platform } from 'react-native';
-import { mediaFileService } from '@/src/services/media/MediaFileService';
-import { createMediaSyncService } from '@/src/services/media/MediaSyncService';
-import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
-
 const mockGalleryService = {
   getPendingUploads: jest.fn(async () => [] as any[]),
   getPendingDownloads: jest.fn(async () => [] as any[]),
@@ -55,7 +55,7 @@ const mockMediaFileService = mediaFileService as unknown as Record<string, jest.
 const mockDownloadFileAsync = File.downloadFileAsync as unknown as jest.Mock;
 
 const STORY_ID = 'story-1';
-const SERVER = { id: 'server-1', url: 'http://servidor' } as never;
+const SERVER = { id: 'server-1', url: 'http://192.168.0.10' } as never;
 const db = {} as never;
 
 const media = (id: string, overrides: Record<string, unknown> = {}) => ({
@@ -72,7 +72,7 @@ const media = (id: string, overrides: Record<string, unknown> = {}) => ({
 /** A fake axios client: it only needs `post`, `get` and the baseURL. */
 function fakeClient(overrides: Record<string, any> = {}) {
   return {
-    defaults: { baseURL: 'http://servidor/api' },
+    defaults: { baseURL: 'http://192.168.0.10/api' },
     post: jest.fn(async () => ({ data: { present: [], missing: [] } })),
     get: jest.fn(async () => ({ data: new ArrayBuffer(3) })),
     ...overrides,
@@ -389,7 +389,7 @@ describe('downloading', () => {
     const summary = await service().syncStoryMedia(fakeClient(), SERVER, STORY_ID);
 
     expect(mockDownloadFileAsync).toHaveBeenCalledWith(
-      `http://servidor/api/media/${STORY_ID}/blobs/hash-a`,
+      `http://192.168.0.10/api/media/${STORY_ID}/blobs/hash-a`,
       expect.any(String),
       expect.objectContaining({ idempotent: true }),
     );

@@ -6,6 +6,8 @@ import LocationMapConnectionModal from '@/src/components/features/location-maps/
 import LocationMapMarkerConnectionModal from '@/src/components/features/location-maps/LocationMapMarkerConnectionModal';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
     cb();
@@ -94,8 +96,6 @@ jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
     isWide: false,
   })),
 }));
-
-import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 const mockScreenAnchor = jest.fn();
 jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({

@@ -1,19 +1,4 @@
 /** @jest-environment jsdom */
-jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
-jest.mock('expo-file-system', () => ({
-  File: jest.fn(),
-  Paths: { cache: 'cache' },
-}));
-jest.mock('expo-file-system/legacy', () => ({ readAsStringAsync: jest.fn() }));
-jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
-jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
-jest.mock('@/src/services/media/MediaFileService', () => ({
-  mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
-}));
-jest.mock('@/src/services/media/storyMediaBundle', () => ({
-  extractStoryZip: jest.fn(),
-}));
-
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
@@ -29,6 +14,21 @@ import {
   pickStoryExportFile,
   type StoryImportError,
 } from '@/src/utils/io/storyTransfer';
+
+jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
+jest.mock('expo-file-system', () => ({
+  File: jest.fn(),
+  Paths: { cache: 'cache' },
+}));
+jest.mock('expo-file-system/legacy', () => ({ readAsStringAsync: jest.fn() }));
+jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
+jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
+jest.mock('@/src/services/media/MediaFileService', () => ({
+  mediaFileService: { localPathFor: jest.fn(), exists: jest.fn(() => false) },
+}));
+jest.mock('@/src/services/media/storyMediaBundle', () => ({
+  extractStoryZip: jest.fn(),
+}));
 
 const getDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
 const FileMock = File as unknown as jest.Mock;

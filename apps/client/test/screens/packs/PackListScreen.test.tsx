@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import PackListScreen from '@/src/screens/packs/PackListScreen';
+
 const mockNavigate = jest.fn();
 const mockNotify = jest.fn();
 const mockListPacks = jest.fn();
@@ -112,8 +114,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import PackListScreen from '@/src/screens/packs/PackListScreen';
 
 const makePack = (overrides = {}) => ({
   id: 'pack-1',

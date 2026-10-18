@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { paymentApi } from '@/src/services/api/PaymentApiService';
+
 const mockGet = jest.fn();
 const mockPost = jest.fn();
 const mockSetActiveServer = jest.fn();
@@ -18,8 +20,6 @@ jest.mock('@/src/services/api/apiClient', () => ({
     post: (...args: unknown[]) => mockPost(...args),
   }),
 }));
-
-import { paymentApi } from '@/src/services/api/PaymentApiService';
 
 const server = { id: 'server-1', url: 'https://keres.test' } as never;
 

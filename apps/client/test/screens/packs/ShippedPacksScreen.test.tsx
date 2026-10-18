@@ -1,5 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import ShippedPacksContent from '@/src/screens/packs/ShippedPacksContent';
+import ShippedPacksScreen from '@/src/screens/packs/ShippedPacksScreen';
+
 const mockNotify = jest.fn();
 const mockMarkInstalled = jest.fn();
 const mockPreviewShippedPacks = jest.fn();
@@ -90,9 +93,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: mockLanguage } }),
 }));
-
-import ShippedPacksContent from '@/src/screens/packs/ShippedPacksContent';
-import ShippedPacksScreen from '@/src/screens/packs/ShippedPacksScreen';
 
 const makePreview = (overrides = {}) => ({
   slug: 'fantasy',

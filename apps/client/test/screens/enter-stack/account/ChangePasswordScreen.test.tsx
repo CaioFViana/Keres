@@ -1,3 +1,7 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import ChangePasswordScreen from '@/src/screens/enter-stack/account/ChangePasswordScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -100,10 +104,6 @@ jest.mock('@/src/services/auth/AuthTokenManager', () => ({
     updateTokens: (...args: unknown[]) => mockUpdateTokens(...args),
   },
 }));
-
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import ChangePasswordScreen from '@/src/screens/enter-stack/account/ChangePasswordScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const server = { id: 'srv-1', url: 'https://s.example', userName: 'alice' };
 

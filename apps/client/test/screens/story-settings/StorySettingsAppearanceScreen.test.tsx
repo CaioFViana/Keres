@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import StorySettingsAppearanceScreen from '@/src/screens/story-settings/StorySettingsAppearanceScreen';
+
 const mockUpdateStory = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockApplyTheme = jest.fn();
@@ -199,8 +201,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import StorySettingsAppearanceScreen from '@/src/screens/story-settings/StorySettingsAppearanceScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

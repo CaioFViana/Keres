@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import PackBrowseScreen from '@/src/screens/packs/PackBrowseScreen';
+
 const mockNotify = jest.fn();
 const mockGetAllServers = jest.fn();
 const mockListPacks = jest.fn();
@@ -88,8 +90,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import PackBrowseScreen from '@/src/screens/packs/PackBrowseScreen';
 
 const makeServer = (overrides = {}) => ({
   id: 'server-1',

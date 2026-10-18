@@ -1,6 +1,14 @@
 /**
  * @jest-environment node
  */
+import { renderHook } from '@testing-library/react-native';
+import { useWindowDimensions } from 'react-native';
+import {
+  getResponsiveBreakpoint,
+  RESPONSIVE_BREAKPOINTS,
+  useResponsiveLayout,
+} from '@/src/hooks/ui/useResponsiveLayout';
+
 jest.mock('react-native', () => ({
   __esModule: true,
   useWindowDimensions: jest.fn(),
@@ -9,14 +17,6 @@ jest.mock('react-native', () => ({
   // Platform.OS/.select off react-native at import time.
   Platform: { OS: 'ios', select: jest.fn() },
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useWindowDimensions } from 'react-native';
-import {
-  getResponsiveBreakpoint,
-  RESPONSIVE_BREAKPOINTS,
-  useResponsiveLayout,
-} from '@/src/hooks/ui/useResponsiveLayout';
 
 const dimensions = useWindowDimensions as unknown as jest.Mock;
 

@@ -1,6 +1,11 @@
 /**
  * @jest-environment jsdom
  */
+import axios from 'axios';
+import { restoreHostedCookieSession } from '@/src/services/auth/HostedCookieSession';
+import { usesHttpOnlyCookieSession } from '@/src/services/auth/browserCookieSession';
+import apiClient from '@/src/services/api/apiClient';
+
 jest.mock('@/src/services/auth/browserCookieSession', () => ({
   usesHttpOnlyCookieSession: jest.fn(),
   hostedApiOrigin: jest.fn(() => 'http://localhost:3000'),
@@ -21,11 +26,6 @@ jest.mock('@/src/services/servers/ServerService', () => ({
     updateServer: mockUpdateServer,
   })),
 }));
-
-import axios from 'axios';
-import { restoreHostedCookieSession } from '@/src/services/auth/HostedCookieSession';
-import { usesHttpOnlyCookieSession } from '@/src/services/auth/browserCookieSession';
-import apiClient from '@/src/services/api/apiClient';
 
 const mockSettings = { setActiveServer: jest.fn() };
 const mockCreateServer = jest.fn();

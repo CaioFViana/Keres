@@ -1,3 +1,6 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useLocationMapExport } from '@/src/screens/location-maps/useLocationMapExport';
+
 const mockBuildSvg = jest.fn();
 const mockDeliver = jest.fn();
 const mockBuildFileName = jest.fn((...args: unknown[]) => `${args[0] as string}.svg`);
@@ -11,9 +14,6 @@ jest.mock('@/src/utils/io/storyTransfer', () => ({
   buildLocationMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useLocationMapExport } from '@/src/screens/location-maps/useLocationMapExport';
 
 const content = { nodes: [{ locationId: 'a' }], images: [] } as never;
 const colors = {

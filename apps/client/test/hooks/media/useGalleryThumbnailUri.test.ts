@@ -1,4 +1,12 @@
 /** @jest-environment node */
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
+import {
+  type GalleryThumbnailSource,
+  useGalleryThumbnailUri,
+} from '@/src/hooks/media/useGalleryThumbnailUri';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+
 jest.mock('@/src/services/platform-web/webMediaStore', () => ({
   __esModule: true,
   DESKTOP_MEDIA_URI_PREFIX: 'desktop-media:',
@@ -14,14 +22,6 @@ jest.mock('@/src/services/media/MediaFileService', () => ({
     ensureImageThumbnail: jest.fn(),
   },
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { Platform } from 'react-native';
-import {
-  type GalleryThumbnailSource,
-  useGalleryThumbnailUri,
-} from '@/src/hooks/media/useGalleryThumbnailUri';
-import { mediaFileService } from '@/src/services/media/MediaFileService';
 
 const service = mediaFileService as jest.Mocked<typeof mediaFileService>;
 

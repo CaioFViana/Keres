@@ -1,3 +1,7 @@
+import { fireEvent, render, within } from '@testing-library/react-native';
+import ServerPlanScreen from '@/src/screens/enter-stack/servers/ServerPlanScreen';
+import { devicePaymentCapabilities } from '@/src/utils/billing/paymentMethodVisibility';
+
 const mockT = (key: string, options?: Record<string, unknown>) =>
   options ? `${key}:${JSON.stringify(options)}` : key;
 const mockGoBack = jest.fn();
@@ -73,10 +77,6 @@ jest.mock('@/src/utils/billing/paymentMethodVisibility', () => {
   const actual = jest.requireActual('@/src/utils/billing/paymentMethodVisibility');
   return { ...actual, devicePaymentCapabilities: jest.fn() };
 });
-
-import { fireEvent, render, within } from '@testing-library/react-native';
-import ServerPlanScreen from '@/src/screens/enter-stack/servers/ServerPlanScreen';
-import { devicePaymentCapabilities } from '@/src/utils/billing/paymentMethodVisibility';
 
 const mockDeviceCaps = devicePaymentCapabilities as jest.Mock;
 

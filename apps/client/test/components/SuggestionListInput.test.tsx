@@ -1,3 +1,8 @@
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import React from 'react';
+import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
+import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
+
 jest.mock('react-native-safe-area-context', () => ({
   __esModule: true,
   useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
@@ -14,11 +19,6 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
       visible ? <>{children}</> : null,
   };
 });
-
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
-import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
-import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
 
 jest.mock('@/src/theme', () => ({
   useTheme: () => ({

@@ -1,3 +1,10 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act, cleanup, configure, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { BackHandler, Linking } from 'react-native';
+import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
+import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
+import ColdInstallScreen from '@/src/screens/enter-stack/account/ColdInstallScreen';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockReplace = jest.fn();
@@ -158,7 +165,7 @@ jest.mock('@/src/components/common', () => {
       onValueChange,
       placeholder,
     }: {
-      options: Array<{ label: string; value: string }>;
+      options: { label: string; value: string }[];
       value: string | null;
       onValueChange: (value: string | null) => void;
       placeholder: string;
@@ -179,13 +186,6 @@ jest.mock('@/src/components/common', () => {
     TextInput: (props: Record<string, unknown>) => <TextInput testID="username-input" {...props} />,
   };
 });
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { act, cleanup, configure, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { BackHandler, Linking } from 'react-native';
-import { CLIENT_TERMS_VERSION } from '@/src/legal/clientTerms';
-import { CLIENT_PRIVACY_VERSION } from '@/src/legal/privacyPolicy';
-import ColdInstallScreen from '@/src/screens/enter-stack/account/ColdInstallScreen';
 
 /** The step on screen, as the dots report it (1-based). */
 const stepOf = (view: Awaited<ReturnType<typeof render>>) =>

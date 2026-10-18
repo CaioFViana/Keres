@@ -1,3 +1,8 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useTagFormActions } from '@/src/screens/tags/useTagFormActions';
+import type { TagFormState } from '@/src/screens/tags/useTagFormState';
+import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 
@@ -23,11 +28,6 @@ jest.mock('@/src/state/ui/AppAlert', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useTagFormActions } from '@/src/screens/tags/useTagFormActions';
-import type { TagFormState } from '@/src/screens/tags/useTagFormState';
-import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
 
 const createState = (overrides: Partial<TagFormState> = {}): TagFormState =>
   ({

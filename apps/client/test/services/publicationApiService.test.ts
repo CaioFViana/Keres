@@ -1,4 +1,9 @@
 /** @jest-environment node */
+import {
+  PUBLISH_UPLOAD_TIMEOUT_MS,
+  publicationApiService,
+} from '@/src/services/api/PublicationApiService';
+
 const mockGet = jest.fn();
 const mockPost = jest.fn();
 const mockSetTokenProvider = jest.fn();
@@ -18,11 +23,6 @@ jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: {},
 }));
-
-import {
-  PUBLISH_UPLOAD_TIMEOUT_MS,
-  publicationApiService,
-} from '@/src/services/api/PublicationApiService';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://s.example' } as never;
 

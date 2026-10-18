@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useTheme } from '@/src/theme';
 import { isColorLight } from '@/src/theme/commonStyles';
 import { applyNavigationBarStyle } from '@/src/utils/platform/navigationBarStyle';
@@ -20,13 +21,14 @@ const SETTLE_DELAYS_MS = [0, 150, 450];
  */
 export function useModalNavigationBar(visible: boolean): void {
   const { colors } = useTheme();
-  const style = isColorLight(colors.background) ? 'dark' : 'light';
+  const isLight = Platform.OS === 'android' ? isColorLight(colors.background) : null;
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || isLight === null) return;
+    const style = isLight ? 'dark' : 'light';
     const timers = SETTLE_DELAYS_MS.map((delay) =>
       setTimeout(() => applyNavigationBarStyle(style), delay),
     );
     return () => timers.forEach(clearTimeout);
-  }, [visible, style]);
+  }, [visible, isLight]);
 }

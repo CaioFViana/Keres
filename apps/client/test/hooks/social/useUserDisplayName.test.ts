@@ -1,4 +1,11 @@
 /** @jest-environment node */
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useDrizzle } from '@/src/db';
+import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
+import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: jest.fn() }));
 jest.mock('react-i18next', () => {
   const t = (key: string) => key;
@@ -16,13 +23,6 @@ jest.mock('@/src/services/api/FriendshipApiService', () => ({
   __esModule: true,
   friendshipApiService: { getUserDetails: jest.fn() },
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useDrizzle } from '@/src/db';
-import { useUserDisplayName } from '@/src/hooks/social/useUserDisplayName';
-import { friendshipApiService } from '@/src/services/api/FriendshipApiService';
-import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 
 const storyService = { getStoryById: jest.fn() };
 const db = {

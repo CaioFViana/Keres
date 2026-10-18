@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useRouteChronology } from '@/src/screens/routes/useRouteChronology';
+
 const mockStoryRoutes = jest.fn();
 const mockStoryCalendar = jest.fn();
 const mockSelectedStory = jest.fn();
@@ -25,9 +28,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useRouteChronology } from '@/src/screens/routes/useRouteChronology';
 
 const firstScene = {
   id: 'scene-a',
@@ -66,7 +66,7 @@ beforeEach(() => {
     stepsOf: jest.fn(() => steps),
     validationOf: jest.fn(() => []),
     sceneById: jest.fn((id: string) =>
-      ([firstScene, secondScene] as Array<{ id: string }>).find((scene) => scene.id === id),
+      ([firstScene, secondScene] as { id: string }[]).find((scene) => scene.id === id),
     ),
     chapterNameOf: jest.fn(() => 'Chapter one'),
   });

@@ -1,4 +1,18 @@
 /** @jest-environment node */
+import { act, render } from '@testing-library/react-native';
+import type { CalendarDefinitionType } from '@keres/shared';
+import {
+  formatAttributeDate,
+  formatGregorianDate,
+  gregorianDayNumber,
+  gregorianPartsFromDayNumber,
+  partsToDayNumber,
+} from '@keres/shared';
+import {
+  CustomCalendarDateLookup,
+  GregorianCalendarDateLookup,
+} from '@/src/screens/story-calendars/AgendaDateLookup';
+
 const mockButtonProps = jest.fn();
 const mockTextInputProps = jest.fn();
 const mockPillProps = jest.fn();
@@ -42,20 +56,6 @@ jest.mock('@/src/components/common/inputs/DatePickerInput/DatePickerInput', () =
     return null;
   },
 }));
-
-import { act, render } from '@testing-library/react-native';
-import type { CalendarDefinitionType } from '@keres/shared';
-import {
-  formatAttributeDate,
-  formatGregorianDate,
-  gregorianDayNumber,
-  gregorianPartsFromDayNumber,
-  partsToDayNumber,
-} from '@keres/shared';
-import {
-  CustomCalendarDateLookup,
-  GregorianCalendarDateLookup,
-} from '@/src/screens/story-calendars/AgendaDateLookup';
 
 const styles = {
   lookup: {},

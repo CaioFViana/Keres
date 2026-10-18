@@ -4,7 +4,6 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 
 const mockKeyboard = { overlap: 0, calls: [] as boolean[] };
 jest.mock('@/src/hooks/ui/useKeyboardOverlap', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   return {
     __esModule: true,

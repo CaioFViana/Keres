@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import StoryArcListScreen from '@/src/screens/customization/StoryArcListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNotify = jest.fn();
@@ -97,8 +99,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import StoryArcListScreen from '@/src/screens/customization/StoryArcListScreen';
 
 const makeArc = (overrides = {}) => ({
   id: 'arc-1',

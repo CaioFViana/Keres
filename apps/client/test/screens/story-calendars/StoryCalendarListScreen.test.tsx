@@ -2,6 +2,9 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import type { CalendarDefinitionType } from '@keres/shared';
 import { gregorianDayNumber, partsToDayNumber } from '@keres/shared';
 
+import StoryCalendarListScreen from '@/src/screens/story-calendars/StoryCalendarListScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigate = jest.fn();
 const mockNavigation = { navigate: mockNavigate };
 const mockSetPrimary = jest.fn();
@@ -192,9 +195,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import StoryCalendarListScreen from '@/src/screens/story-calendars/StoryCalendarListScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 const epochDay = partsToDayNumber(definition, { year: 2, month: 1, day: 1 });
 

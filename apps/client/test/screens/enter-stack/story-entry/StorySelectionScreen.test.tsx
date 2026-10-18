@@ -1,3 +1,9 @@
+import type { Story } from '@keres/shared/entities/story/Story';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { BackHandler } from 'react-native';
+import StorySelectionScreen from '@/src/screens/enter-stack/story-entry/StorySelectionScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
@@ -205,12 +211,6 @@ jest.mock('@/src/components/features/list-items/StorySelectionListItem', () => {
   };
 });
 
-import type { Story } from '@keres/shared/entities/story/Story';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { BackHandler } from 'react-native';
-import StorySelectionScreen from '@/src/screens/enter-stack/story-entry/StorySelectionScreen';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-
 const story = {
   id: 'story-1',
   title: 'Epic',
@@ -414,7 +414,7 @@ describe('StorySelectionScreen', () => {
     expect(mockReplace).toHaveBeenCalledWith('MainSystem', { storyId: 'story-1' });
 
     const header = mockUseScreenHeader.mock.calls[0][0] as {
-      actions: Array<{ onPress: () => void }>;
+      actions: { onPress: () => void }[];
     };
     header.actions[0].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('StoryForm', {});
@@ -426,7 +426,7 @@ describe('StorySelectionScreen', () => {
   it('brings a story in from the list, as the menu does', async () => {
     await render(<StorySelectionScreen />);
     const header = mockUseScreenHeader.mock.calls[0][0] as {
-      actions: Array<{ label: string; onPress: () => void }>;
+      actions: { label: string; onPress: () => void }[];
     };
 
     expect(header.actions[1].label).toBe('import_story_title');

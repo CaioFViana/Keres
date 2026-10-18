@@ -2,6 +2,8 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import React from 'react';
 import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
 
+import StoryArcFormScreen from '@/src/screens/customization/StoryArcFormScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigation = { navigate: mockNavigate, goBack: mockGoBack };
@@ -255,8 +257,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import StoryArcFormScreen from '@/src/screens/customization/StoryArcFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

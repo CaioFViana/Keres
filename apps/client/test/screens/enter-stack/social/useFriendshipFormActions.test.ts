@@ -1,3 +1,13 @@
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import { act, renderHook } from '@testing-library/react-native';
+import {
+  FRIEND_TAG_LOOKUP_DELAY_MS,
+  useFriendshipFormActions,
+} from '@/src/screens/enter-stack/social/useFriendshipFormActions';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import type { FriendshipFormState } from '@/src/screens/enter-stack/social/useFriendshipFormState';
+import type { FriendshipService } from '@/src/services/social/FriendshipService';
+
 const mockAlert = jest.fn();
 const mockNotify = jest.fn();
 const mockGetUserByTag = jest.fn();
@@ -23,16 +33,6 @@ jest.mock('react-i18next', () => ({
       params ? `${key}:${JSON.stringify(params)}` : key,
   }),
 }));
-
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { act, renderHook } from '@testing-library/react-native';
-import {
-  FRIEND_TAG_LOOKUP_DELAY_MS,
-  useFriendshipFormActions,
-} from '@/src/screens/enter-stack/social/useFriendshipFormActions';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import type { FriendshipFormState } from '@/src/screens/enter-stack/social/useFriendshipFormState';
-import type { FriendshipService } from '@/src/services/social/FriendshipService';
 
 const selectedServer = {
   id: 'server-1',

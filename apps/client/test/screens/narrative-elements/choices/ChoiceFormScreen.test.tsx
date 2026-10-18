@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 
+import ChoiceFormScreen from '@/src/screens/narrative-elements/choices/ChoiceFormScreen';
+
 const mockHandleSave = jest.fn();
 const mockHandleDelete = jest.fn();
 const mockNavigate = jest.fn();
@@ -496,8 +498,6 @@ jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', ()
     ),
   };
 });
-
-import ChoiceFormScreen from '@/src/screens/narrative-elements/choices/ChoiceFormScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

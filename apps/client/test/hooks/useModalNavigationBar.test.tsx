@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 import { applyNavigationBarStyle } from '@/src/utils/platform/navigationBarStyle';
 
@@ -10,12 +11,25 @@ jest.mock('@/src/utils/platform/navigationBarStyle', () => ({
 }));
 
 describe('useModalNavigationBar', () => {
+  const original = Platform.OS;
   beforeEach(() => {
+    Object.defineProperty(Platform, 'OS', { value: 'android' });
     jest.useFakeTimers();
     jest.clearAllMocks();
     mockColors.background = '#000000';
   });
-  afterEach(() => jest.useRealTimers());
+  afterEach(() => {
+    Object.defineProperty(Platform, 'OS', { value: original });
+    jest.useRealTimers();
+  });
+
+  it('leaves other platforms alone, whatever the palette', async () => {
+    Object.defineProperty(Platform, 'OS', { value: 'ios' });
+    await renderHook(() => useModalNavigationBar(true));
+    jest.advanceTimersByTime(1000);
+
+    expect(applyNavigationBarStyle).not.toHaveBeenCalled();
+  });
 
   it('does nothing while the modal is closed', async () => {
     await renderHook(() => useModalNavigationBar(false));

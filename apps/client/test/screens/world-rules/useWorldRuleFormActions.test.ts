@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useWorldRuleFormActions } from '@/src/screens/world-rules/useWorldRuleFormActions';
+import type { WorldRuleFormState } from '@/src/screens/world-rules/useWorldRuleFormState';
+import type { WorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
@@ -44,12 +50,6 @@ jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '@/test/helpers/silenceConsole';
-import { useWorldRuleFormActions } from '@/src/screens/world-rules/useWorldRuleFormActions';
-import type { WorldRuleFormState } from '@/src/screens/world-rules/useWorldRuleFormState';
-import type { WorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
 
 const createState = (overrides: Partial<WorldRuleFormState> = {}): WorldRuleFormState =>
   ({

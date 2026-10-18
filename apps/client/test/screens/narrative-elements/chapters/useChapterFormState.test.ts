@@ -1,6 +1,16 @@
 /** @jest-environment node */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { StorySchemaField } from '@keres/shared';
+import { useChapterFormState } from '@/src/screens/narrative-elements/chapters/useChapterFormState';
+import {
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '@/src/services/drafts/EditorDraftService';
+import type { ChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
@@ -14,16 +24,6 @@ jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () =>
 jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadSecondaryDraft(...args),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { StorySchemaField } from '@keres/shared';
-import { useChapterFormState } from '@/src/screens/narrative-elements/chapters/useChapterFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '@/src/services/drafts/EditorDraftService';
-import type { ChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
-import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

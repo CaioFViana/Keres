@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import CharactersScreen from '@/src/screens/characters/CharacterListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockReplace = jest.fn();
@@ -219,8 +221,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import CharactersScreen from '@/src/screens/characters/CharacterListScreen';
 
 const freshListState = () => ({
   listProps: {},

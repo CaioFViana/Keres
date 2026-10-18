@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import GlobalSearchScreen from '@/src/screens/global-search/GlobalSearchScreen';
+
 const mockSearchAllEntities = jest.fn();
 const mockNavigateToEntityDetail = jest.fn();
 let mockStory: { id: string } | null = { id: 'story-1' };
@@ -107,8 +109,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import GlobalSearchScreen from '@/src/screens/global-search/GlobalSearchScreen';
 
 const makeResult = (overrides = {}) => ({
   id: 'char-1',

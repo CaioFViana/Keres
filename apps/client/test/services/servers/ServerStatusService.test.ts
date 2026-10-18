@@ -1,6 +1,8 @@
 /**
  * @jest-environment node
  */
+import { pingServer } from '@/src/services/servers/ServerStatusService';
+
 const mockGet = jest.fn();
 
 jest.mock('@/src/services/api/apiClient', () => ({
@@ -8,8 +10,6 @@ jest.mock('@/src/services/api/apiClient', () => ({
   default: { get: (...args: unknown[]) => mockGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,
 }));
-
-import { pingServer } from '@/src/services/servers/ServerStatusService';
 
 const server = { id: 'srv-1', url: 'https://a.example' } as never;
 

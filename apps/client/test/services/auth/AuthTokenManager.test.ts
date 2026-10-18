@@ -1,6 +1,12 @@
 /**
  * @jest-environment node
  */
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
+import { getServerAccessToken } from '@/src/services/api/apiClient';
+import { tokenVault } from '@/src/services/auth/TokenVault';
+
 jest.mock('expo-secure-store', () => ({
   __esModule: true,
   getItemAsync: jest.fn(),
@@ -17,13 +23,7 @@ jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => mockUserSettings },
 }));
 
-import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
-import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
-import { getServerAccessToken } from '@/src/services/api/apiClient';
-import { tokenVault } from '@/src/services/auth/TokenVault';
-
-const SERVER = { id: 'server-1', name: 'Casa', url: 'http://servidor' };
+const SERVER = { id: 'server-1', name: 'Casa', url: 'http://192.168.0.10' };
 const TOKENS = { accessToken: 'access-1', refreshToken: 'refresh-1' };
 
 const secureStore = SecureStore as unknown as Record<string, jest.Mock>;
@@ -93,7 +93,7 @@ describe('updateTokens', () => {
    * one open on screen. Writing those tokens to the wrong server would be a bug.
    */
   it('does not touch the UI active server when the refresh was for another one', async () => {
-    mockUserSettings.activeServer = { id: 'outro-servidor', url: 'http://outro' };
+    mockUserSettings.activeServer = { id: 'outro-servidor', url: 'http://192.168.0.12' };
 
     await authTokenManager.updateTokens(SERVER.id, 'access-novo', 'refresh-novo');
 
@@ -116,7 +116,7 @@ describe('refreshAccessToken', () => {
     const result = await authTokenManager.refreshAccessToken(SERVER.id, 'refresh-1');
 
     expect(result).toEqual({ accessToken: 'novo-access', refreshToken: 'novo-refresh' });
-    expect(seen).toEqual(['POST http://servidor/api/auth/refresh']);
+    expect(seen).toEqual(['POST http://192.168.0.10/api/auth/refresh']);
   });
 
   it('stores the refreshed pair', async () => {
@@ -251,7 +251,7 @@ describe('clearAuthForServer', () => {
   });
 
   it('leaves the UI alone when another server was active', async () => {
-    mockUserSettings.activeServer = { id: 'outro-servidor', url: 'http://outro' };
+    mockUserSettings.activeServer = { id: 'outro-servidor', url: 'http://192.168.0.12' };
 
     await authTokenManager.clearAuthForServer(SERVER.id);
 
@@ -291,7 +291,7 @@ describe('legacy TokenProvider getters', () => {
 
     expect(authTokenManager.getAccessToken()).toBe('access-1');
     expect(authTokenManager.getRefreshToken()).toBe('refresh-1');
-    expect(authTokenManager.getServerUrl()).toBe('http://servidor');
+    expect(authTokenManager.getServerUrl()).toBe('http://192.168.0.10');
     expect(await authTokenManager.getTokens(SERVER.id)).toEqual(TOKENS);
   });
 });

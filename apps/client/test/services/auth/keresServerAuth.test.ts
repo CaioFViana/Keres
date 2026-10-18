@@ -1,6 +1,14 @@
 /**
  * @jest-environment node
  */
+import { canTalkToServer } from '@keres/shared';
+import apiClient from '@/src/services/api/apiClient';
+import {
+  authenticateWithKeresServer,
+  keresAuthAlertMessage,
+  type KeresAuthFailure,
+} from '@/src/services/auth/keresServerAuth';
+
 jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: { get: jest.fn(), post: jest.fn() },
@@ -13,14 +21,6 @@ jest.mock('@keres/shared', () => ({
   APP_RELEASE: { version: '9.9.9-test' },
   canTalkToServer: jest.fn(),
 }));
-
-import { canTalkToServer } from '@keres/shared';
-import apiClient from '@/src/services/api/apiClient';
-import {
-  authenticateWithKeresServer,
-  keresAuthAlertMessage,
-  type KeresAuthFailure,
-} from '@/src/services/auth/keresServerAuth';
 
 const mockGet = apiClient.get as jest.Mock;
 const mockPost = apiClient.post as jest.Mock;

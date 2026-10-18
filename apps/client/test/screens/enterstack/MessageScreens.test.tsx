@@ -1,3 +1,10 @@
+import { act, fireEvent, render } from '@testing-library/react-native';
+import ConversationScreen, {
+  keyboardRoom,
+  liftAboveKeyboard,
+} from '@/src/screens/enter-stack/social/ConversationScreen';
+import MessageInboxScreen from '@/src/screens/enter-stack/social/MessageInboxScreen';
+
 const mockHeader = jest.fn();
 const mockNavigate = jest.fn();
 const mockRoute: { params: { serverId: string; peer: string; peerName?: string } } = {
@@ -95,13 +102,6 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     ),
   };
 });
-
-import { act, fireEvent, render } from '@testing-library/react-native';
-import ConversationScreen, {
-  keyboardRoom,
-  liftAboveKeyboard,
-} from '@/src/screens/enter-stack/social/ConversationScreen';
-import MessageInboxScreen from '@/src/screens/enter-stack/social/MessageInboxScreen';
 
 const conversation = (over: Record<string, unknown> = {}) => ({
   messages: [

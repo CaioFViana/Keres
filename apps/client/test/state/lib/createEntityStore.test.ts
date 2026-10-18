@@ -1,3 +1,6 @@
+import { createEntityStore, type EntityQueryParams } from '@/src/state/lib/createEntityStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
@@ -18,9 +21,6 @@ let mockUserId: string | null = 'user-1';
 jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: { getState: () => ({ userId: mockUserId }) },
 }));
-
-import { createEntityStore, type EntityQueryParams } from '@/src/state/lib/createEntityStore';
-import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 
 interface Tag {
   id: string;

@@ -1,6 +1,16 @@
 /**
  * @jest-environment node
  */
+import apiClient from '@/src/services/api/apiClient';
+import {
+  AgeVerificationConflictError,
+  AgeVerificationUnavailableError,
+  fetchAgeVerificationInfo,
+  fetchVerificationStatus,
+  retryVerification,
+} from '@/src/services/api/AgeVerificationApiService';
+import type { ServerSelect } from '@/src/db/schemas/servers';
+
 jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   default: { get: jest.fn() },
@@ -18,16 +28,6 @@ jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   __esModule: true,
   authTokenManager: {},
 }));
-
-import apiClient from '@/src/services/api/apiClient';
-import {
-  AgeVerificationConflictError,
-  AgeVerificationUnavailableError,
-  fetchAgeVerificationInfo,
-  fetchVerificationStatus,
-  retryVerification,
-} from '@/src/services/api/AgeVerificationApiService';
-import type { ServerSelect } from '@/src/db/schemas/servers';
 
 const mockGet = apiClient.get as jest.Mock;
 const server = { id: 'srv-1', url: 'https://s.example' } as unknown as ServerSelect;

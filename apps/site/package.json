@@ -10,7 +10,7 @@
     "build": "vite build",
     "build:landing": "vite build --config vite.landing.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "biome lint .",
+    "lint": "biome lint --error-on-warnings .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

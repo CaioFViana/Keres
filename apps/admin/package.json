@@ -9,7 +9,7 @@
     "start:showcase": "vite --config vite.showcase.config.ts",
     "build": "tsc -b && vite build && vite build --config vite.showcase.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint src test vitest.config.ts vite.alias.ts --ext .ts,.tsx --cache --cache-strategy content --cache-location node_modules/.cache/eslint/.eslintcache",
+    "lint": "eslint src test vitest.config.ts vite.alias.ts --ext .ts,.tsx --max-warnings 0 --cache --cache-strategy content --cache-location node_modules/.cache/eslint/.eslintcache",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

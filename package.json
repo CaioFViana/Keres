@@ -48,6 +48,7 @@
     "locales:audit": "bun scripts/verify-translations.ts",
     "format": "biome format --write .",
     "format:check": "biome format .",
+    "check": "biome ci --error-on-warnings .",
     "release:check": "bun scripts/release-check.ts",
     "version:set": "bun scripts/version-set.ts",
     "code:lines": "bun scripts/count-code-lines.ts",

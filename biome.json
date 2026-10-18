@@ -6,11 +6,11 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": true
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/generated", "!apps/client/src/db/migrations/index.ts"]
   },
   "formatter": {
     "enabled": true,
-    "includes": ["**", "!**/generated", "!apps/client/src/db/migrations/index.ts"],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 100

@@ -18,7 +18,7 @@
     "package:linux": "bun run build && electron-builder --linux",
     "capture:screens": "bun scripts/capture-screens.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc -p tsconfig.test.json && tsc -p tsconfig.scripts.json",
-    "lint": "biome lint .",
+    "lint": "biome lint --error-on-warnings .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:sqlite-web": "bun test/run-sqlite-web-smoke.ts"

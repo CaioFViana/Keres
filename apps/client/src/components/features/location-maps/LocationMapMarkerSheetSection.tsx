@@ -1,7 +1,7 @@
 import type { LocationMapContentType, LocationMapMarkerType } from '@keres/shared';
 import React from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { removeLocationMapPoint } from '../../../utils/locationMapContent';
+import { removeLocationMapPoint } from '@/src/utils/location-map/locationMapContent';
 import LocationMapMarkerSheet from './LocationMapMarkerSheet';
 
 interface LocationMapMarkerSheetSectionProps {

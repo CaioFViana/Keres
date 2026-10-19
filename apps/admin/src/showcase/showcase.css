@@ -291,6 +291,18 @@ a {
   );
 }
 
+/* The cover beside the card: its own shape, never stretched. */
+.story-card-cover {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 84px;
+  height: 120px;
+  margin: 14px 0 14px 16px;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: var(--shadow-card);
+}
+
 .story-card-body {
   flex: 1;
   padding: 18px 20px;
@@ -335,6 +347,64 @@ a {
 .badge-branching {
   color: var(--story-primary, var(--color-primary));
   border-color: currentColor;
+}
+
+.badge-adult {
+  color: var(--color-error);
+  border-color: currentColor;
+}
+
+/* Sign-in lives on the page itself: a quiet header slot and a gate-styled dialog. */
+.auth-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-name {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.button-secondary {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.button-secondary:hover {
+  border-color: var(--color-primary);
+}
+
+.login-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.login-backdrop .gate-card {
+  text-align: left;
+}
+
+.gate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gate-actions .button-secondary {
+  padding: 11px 18px;
+  font-weight: 600;
 }
 
 .chips {
@@ -428,6 +498,17 @@ a {
 
 .back-link:hover {
   color: var(--page-tint, var(--color-primary));
+}
+
+.story-cover {
+  display: block;
+  width: min(220px, 60%);
+  height: auto;
+  max-height: 340px;
+  margin: 0 0 18px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
 }
 
 .story-head h1 {

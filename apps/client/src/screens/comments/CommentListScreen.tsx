@@ -1,17 +1,18 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import CommentList from '@/src/components/features/comments/CommentList/CommentList';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import type { CommentSelect } from '../../db/schema';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import type { NavigableEntityType } from '../../utils/entityNavigation';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import type { CommentSelect } from '@/src/db/schema';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { NavigableEntityType } from '@/src/utils/entity/entityNavigation';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 /**
  * A comprehensive list of every comment in the current story, cross-entity - modelled on
@@ -21,8 +22,6 @@ import type { NavigableEntityType } from '../../utils/entityNavigation';
 const CommentListScreen: React.FC = () => {
   useBackButtonHandler();
   useScreenTour('CommentsStack');
-  const listAnchorRef = useScreenAnchor('Comments', 'list');
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const navigateToDetail = useNavigateToEntityDetail();
   const { selectedStory } = useStoryStore();
@@ -39,11 +38,7 @@ const CommentListScreen: React.FC = () => {
     [navigateToDetail],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    noStoryContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    noStoryText: { fontSize: 18, color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (!selectedStory?.id) {
     return (
@@ -54,10 +49,17 @@ const CommentListScreen: React.FC = () => {
   }
 
   return (
-    <View ref={listAnchorRef} collapsable={false} style={styles.container}>
+    <GuideAnchor screen="Comments" part="list" style={styles.container}>
       <CommentList storyId={selectedStory.id} pageSize={20} onPressItem={handlePressComment} />
-    </View>
+    </GuideAnchor>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    noStoryContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    noStoryText: { fontSize: 18, color: colors.textSecondary },
+  });
 
 export default CommentListScreen;

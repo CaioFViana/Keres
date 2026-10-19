@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import DatePickerModal from '@/src/components/common/inputs/DatePickerInput/DatePickerModal';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { useTheme } from '../../../../theme';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 
 interface DatePickerInputProps {
   /** Canonical `YYYY-MM-DD` / `YYYY-MM-DDTHH:mm`, or `null`. */
@@ -50,7 +52,43 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
     setModalVisible(false);
   };
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles);
+
+  return (
+    <View style={[styles.container, style]}>
+      <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
+        <View style={styles.calendarButton}>
+          <Ionicons name={value ? 'calendar' : 'calendar-outline'} size={20} color={colors.text} />
+        </View>
+        <TextInput
+          style={styles.textInput}
+          value={displayValue}
+          placeholder={resolvedPlaceholder}
+          placeholderTextColor={colors.textSecondary}
+          editable={false}
+          testID="date-picker-value"
+        />
+      </Pressable>
+
+      <ResponsiveModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        inset="compact"
+        maxHeight="92%"
+      >
+        <DatePickerModal
+          value={value}
+          onSelect={handleSelect}
+          onClose={() => setModalVisible(false)}
+          title={resolvedPlaceholder}
+        />
+      </ResponsiveModal>
+    </View>
+  );
+};
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     // A single border, here. `commonInputStyles.input` is NOT applied to the container nor to the inner
     // TextInput: it already brings a border + height, and added to this wrapper's border it drew two nested
     // frames (and a box that was too tall, with `height: 50` on top of `customComponentInput`, which still
@@ -76,54 +114,16 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
       alignItems: 'center',
     },
     textInput: {
+      ...typography.bodyLarge,
       flex: 1,
       height: '100%',
       color: colors.text,
-      fontSize: 16,
       paddingHorizontal: 0,
       paddingRight: 10,
       borderWidth: 0,
       backgroundColor: 'transparent',
       textTransform: 'capitalize',
     },
-    modalView: {
-      backgroundColor: colors.background,
-      borderRadius: 20,
-      padding: 10,
-    },
   });
-
-  return (
-    <View style={[styles.container, style]}>
-      <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
-        <View style={styles.calendarButton}>
-          <Ionicons name={value ? 'calendar' : 'calendar-outline'} size={20} color={colors.text} />
-        </View>
-        <TextInput
-          style={styles.textInput}
-          value={displayValue}
-          placeholder={resolvedPlaceholder}
-          placeholderTextColor={colors.textSecondary}
-          editable={false}
-          testID="date-picker-value"
-        />
-      </Pressable>
-
-      <ResponsiveModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        contentStyle={styles.modalView}
-        maxHeight="92%"
-      >
-        <DatePickerModal
-          value={value}
-          onSelect={handleSelect}
-          onClose={() => setModalVisible(false)}
-          title={resolvedPlaceholder}
-        />
-      </ResponsiveModal>
-    </View>
-  );
-};
 
 export default DatePickerInput;

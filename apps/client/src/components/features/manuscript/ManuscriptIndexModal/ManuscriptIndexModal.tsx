@@ -10,6 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
 import type { ManuscriptSection } from '@keres/shared';
@@ -148,10 +149,6 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        content: { padding: 20 },
-        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-        title: { color: colors.text, fontSize: 20, fontWeight: '700', flexShrink: 1 },
-        closeButton: { padding: 5 },
         searchInput: {
           marginTop: 12,
           paddingHorizontal: 12,
@@ -177,7 +174,7 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
           flexDirection: 'row',
           alignItems: 'center',
           gap: 8,
-          paddingVertical: 9,
+          paddingVertical: 10,
           paddingHorizontal: 12,
           marginLeft: 24,
           borderRadius: 8,
@@ -247,20 +244,19 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
     leading.length + groups.reduce((total, group) => total + group.scenes.length, 0);
 
   return (
-    <ResponsiveModal visible={visible} onClose={onClose} maxHeight="90%" placement="adaptive">
-      <View testID="manuscript-index-modal" style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('manuscript_index_title')}</Text>
-          <TouchableOpacity
-            testID="manuscript-index-close"
-            onPress={onClose}
-            style={styles.closeButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('close')}
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+    <ResponsiveModal
+      visible={visible}
+      onClose={onClose}
+      maxHeight="90%"
+      placement="adaptive"
+      inset="roomy"
+    >
+      <View testID="manuscript-index-modal">
+        <ModalHeader
+          title={t('manuscript_index_title')}
+          onClose={onClose}
+          closeTestID="manuscript-index-close"
+        />
         <TextInput
           testID="manuscript-index-search"
           style={styles.searchInput}

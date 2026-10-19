@@ -2,17 +2,32 @@ import { act, render } from '@testing-library/react-native';
 import { useContext, useEffect } from 'react';
 import { Text } from 'react-native';
 
+import { DrizzleContext } from '@/src/db';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import {
+  MentionAmbiguityContext,
+  MentionBacklinksContext,
+  MentionMatcherContext,
+} from '@/src/mentions/MentionContext';
+import {
+  MENTIONABLE_ENTITY_TYPES,
+  MentionMatcherProvider,
+} from '@/src/mentions/MentionMatcherProvider';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
+
 jest.mock('drizzle-orm', () => ({
   __esModule: true,
   and: jest.fn(() => ({})),
   eq: jest.fn(() => ({})),
 }));
-jest.mock('../../src/db', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+jest.mock('@/src/db', () => {
   const React = require('react');
   return { __esModule: true, DrizzleContext: React.createContext(null) };
 });
-jest.mock('../../src/db/schema', () => {
+jest.mock('@/src/db/schema', () => {
   const table = (name: string) => ({ storyId: {}, isDeleted: {}, __name: name });
   return {
     __esModule: true,
@@ -28,19 +43,19 @@ jest.mock('../../src/db/schema', () => {
     attributeValues: table('attributeValues'),
   };
 });
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: jest.fn(),
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { on: jest.fn(), off: jest.fn() },
 }));
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => ({
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => ({
   __esModule: true,
   useEntityInitialLoad: jest.fn(),
 }));
-jest.mock('../../src/utils/entityOptions', () => ({
+jest.mock('@/src/services/entity-solvers/entityOptions', () => ({
   __esModule: true,
   loadEntityOptions: jest.fn(),
 }));
@@ -50,26 +65,10 @@ const mockDebounce = jest.fn((fn: (...args: unknown[]) => void) => {
   (wrapped as unknown as { cancel: jest.Mock }).cancel = jest.fn();
   return wrapped;
 });
-jest.mock('../../src/utils/debounce', () => ({
+jest.mock('@/src/utils/sync/debounce', () => ({
   __esModule: true,
   debounce: (...args: unknown[]) => (mockDebounce as (...callArgs: unknown[]) => unknown)(...args),
 }));
-
-import { DrizzleContext } from '../../src/db';
-import { useEntityInitialLoad } from '../../src/hooks/useEntityRefreshLifecycle';
-import {
-  MentionAmbiguityContext,
-  MentionBacklinksContext,
-  MentionMatcherContext,
-} from '../../src/mentions/MentionContext';
-import {
-  MENTIONABLE_ENTITY_TYPES,
-  MentionMatcherProvider,
-} from '../../src/mentions/MentionMatcherProvider';
-import { useStoryStore } from '../../src/state/storyStore';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
-import { EMPTY_MENTION_MATCHER } from '../../src/utils/entityMentions';
-import { loadEntityOptions } from '../../src/utils/entityOptions';
 
 const rowsByTable: Record<string, Record<string, unknown>[]> = {};
 

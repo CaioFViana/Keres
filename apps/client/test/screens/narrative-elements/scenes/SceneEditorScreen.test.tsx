@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { ScrollView, StyleSheet } from 'react-native';
-import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
-import SceneEditorScreen from '../../../../src/screens/narrative-elements/scenes/SceneEditorScreen';
-import type { SceneSelect } from '../../../../src/db/schema';
+import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
+import SceneEditorScreen from '@/src/screens/narrative-elements/scenes/SceneEditorScreen';
+import type { SceneSelect } from '@/src/db/schema';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -43,19 +43,39 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+let mockScreenplay = {
+  isScreenplay: false,
+  place: null as { name: string; intExt: string | null } | null,
+  cast: [] as string[],
+  plan: { source: 'none', heading: null as string | null },
+};
+jest.mock(
+  '@/src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader',
+  () => {
+    const { Text } = require('react-native');
+    return {
+      __esModule: true,
+      useScreenplaySceneContext: () => mockScreenplay,
+      ScreenplaySceneHeader: ({ plan }: { plan: { source: string } }) => (
+        <Text testID="screenplay-header">{plan.source}</Text>
+      ),
+    };
+  },
+);
+
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string; actions?: readonly HeaderAction[] }) => {
     mockHeaderArgs = args;
   },
 }));
 
-jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -72,12 +92,12 @@ jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('../../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: mockCommentsByField,
@@ -90,19 +110,19 @@ jest.mock('../../../../src/hooks/useEntityComments', () => ({
   }),
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: { id: 'story-1' } }),
 }));
 
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 
 // The draft lifecycle itself is covered node-side in `useSceneBodyDraft.test.ts` (the real
 // SQLite driver cannot load in this environment); here the hook is a wired seam.
-jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneBodyDraft', () => ({
   __esModule: true,
   useSceneBodyDraft: (options: {
     savedBody: string | null;
@@ -138,17 +158,17 @@ jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
   },
 }));
 
-jest.mock('../../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   __esModule: true,
   useDrizzle: () => ({}),
 }));
 
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getById: mockGetById, updateScene: mockUpdateScene }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -168,12 +188,12 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => {
   const copies: Record<string, object> = {};
   return {
     __esModule: true,
@@ -193,7 +213,7 @@ jest.mock('react-i18next', () => {
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -208,38 +228,35 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock(
-  '../../../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        visible: boolean;
-        comments: { id: string }[];
-        fieldValueSnapshot: string;
-        onSubmit: (input: {
-          commentText: string;
-          excerptText: string | null;
-          criticality: number;
-        }) => Promise<void>;
-      }) =>
-        props.visible ? (
-          <>
-            <Text testID="comments-modal">{`comments:${props.comments.length}`}</Text>
-            <Text
-              testID="comments-submit"
-              onPress={() =>
-                props.onSubmit({ commentText: 'Needs a beat', excerptText: null, criticality: 1 })
-              }
-            >
-              submit
-            </Text>
-          </>
-        ) : null,
-    };
-  },
-);
+jest.mock('@/src/components/features/comments/CommentThreadModal/CommentThreadModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      visible: boolean;
+      comments: { id: string }[];
+      fieldValueSnapshot: string;
+      onSubmit: (input: {
+        commentText: string;
+        excerptText: string | null;
+        criticality: number;
+      }) => Promise<void>;
+    }) =>
+      props.visible ? (
+        <>
+          <Text testID="comments-modal">{`comments:${props.comments.length}`}</Text>
+          <Text
+            testID="comments-submit"
+            onPress={() =>
+              props.onSubmit({ commentText: 'Needs a beat', excerptText: null, criticality: 1 })
+            }
+          >
+            submit
+          </Text>
+        </>
+      ) : null,
+  };
+});
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 
@@ -284,6 +301,12 @@ beforeEach(() => {
   mockActiveMarks = [];
   mockRestoreSettled = true;
   mockUseSceneBodyDraftOptions = null;
+  mockScreenplay = {
+    isScreenplay: false,
+    place: null,
+    cast: [],
+    plan: { source: 'none', heading: null },
+  };
   mockGetById.mockResolvedValue(makeScene());
   mockUpdateScene.mockImplementation(async (_userId: string, _sceneId: string, data: object) =>
     makeScene({ ...data, updatedAt: new Date('2026-02-01T00:00:00.000Z') }),
@@ -308,6 +331,28 @@ async function pressHeaderAction(id: string) {
     headerAction(id).onPress();
   });
 }
+
+describe('SceneEditorScreen in a screenplay', () => {
+  it('shows the place, the cast and the heading source above the text of a screenplay scene', async () => {
+    mockScreenplay = {
+      isScreenplay: true,
+      place: { name: 'Kitchen', intExt: 'interior' },
+      cast: ['Mom'],
+      plan: { source: 'location', heading: 'INT. KITCHEN' },
+    };
+    const view = await render(<SceneEditorScreen />);
+
+    expect((await view.findByTestId('screenplay-header')).props.children).toBe('location');
+    expect(view.getByTestId('scene-body-editor.input')).toBeTruthy();
+  });
+
+  it('shows nothing of the kind for a scene that is not part of a screenplay', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    expect(view.queryByTestId('screenplay-header')).toBeNull();
+  });
+});
 
 describe('SceneEditorScreen', () => {
   it('loads the scene and starts in write mode with the saved body', async () => {

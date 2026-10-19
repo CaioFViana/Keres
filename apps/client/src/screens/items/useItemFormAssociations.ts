@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import type { AppDrizzleClient } from '../../db';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useCharacterStore } from '../../state/characterStore';
+import type { AppDrizzleClient } from '@/src/db';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useCharacterStore } from '@/src/state/story/characterStore';
 
 type UseItemFormAssociationsOptions = {
   currentItemId: string | undefined;

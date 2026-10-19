@@ -1,13 +1,13 @@
 import { Button, SingleSelectPill } from '@/src/components/common';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useStoryServerCollaboration } from '@/src/hooks/useStoryServerCollaboration';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryServerCollaboration } from '@/src/hooks/social/useStoryServerCollaboration';
 import { Ionicons } from '@expo/vector-icons';
 import type { ThemeColors } from '@keres/shared';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface StoryCollaborationSectionProps {
   storyId: string;
@@ -105,7 +105,7 @@ export default function StoryCollaborationSection({
           <Button
             onPress={() => collaboration.handleLeaveStory(onLeftStory)}
             disabled={collaboration.serverActionLoading}
-            style={{ backgroundColor: colors.error }}
+            variant="destructive"
             testID="leave-story-button"
           >
             {t('leave_story_title')}
@@ -248,7 +248,7 @@ export default function StoryCollaborationSection({
             <Button
               onPress={collaboration.handleUnlinkFromServer}
               disabled={unlinkBlocked}
-              style={{ backgroundColor: colors.error }}
+              variant="destructive"
             >
               {t('unlink_from_server_title')}
             </Button>

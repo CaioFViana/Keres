@@ -3,6 +3,7 @@ import {
   DOWNLOADS,
   FAQ_ITEMS,
   FEATURE_GROUPS,
+  LANDING_NAV_SECTIONS,
   NAV_SECTIONS,
   PILLARS,
   PLATFORMS,
@@ -65,6 +66,9 @@ describe('site dictionary', () => {
 
   it('covers every catalog id', () => {
     for (const section of NAV_SECTIONS) {
+      expect(englishKeys).toContain(`nav.${section}`);
+    }
+    for (const section of LANDING_NAV_SECTIONS) {
       expect(englishKeys).toContain(`nav.${section}`);
     }
     for (const pillar of PILLARS) {

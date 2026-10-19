@@ -1,0 +1,311 @@
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/see-also/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
+import {
+  WORLD_PIECE_SECTIONS,
+  type WorldPieceSection,
+} from '@keres/shared/entities/narrative/WorldRule';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from 'react-native';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
+import type { WorldRulesStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useWorldRuleFormActions } from './useWorldRuleFormActions';
+import { useWorldRuleFormAssociations } from './useWorldRuleFormAssociations';
+import { useWorldRuleFormResources } from './useWorldRuleFormResources';
+import { useWorldRuleFormState } from './useWorldRuleFormState';
+
+type WorldRuleFormScreenRouteProp = RouteProp<WorldRulesStackParamList, 'WorldRuleForm'>;
+type WorldRuleFormScreenNavigationProp = NativeStackNavigationProp<
+  WorldRulesStackParamList,
+  'WorldRuleForm'
+>;
+
+const styles = StyleSheet.create({
+  tagSection: {
+    marginTop: 20,
+    marginBottom: 0,
+  },
+  noteSection: {
+    marginTop: 20,
+    marginBottom: -10,
+  },
+});
+
+const WorldRuleFormScreen = () => {
+  useBackButtonHandler({ showWebBackButton: true });
+  const { colors } = useTheme();
+  const navigation = useNavigation<WorldRuleFormScreenNavigationProp>();
+  const route = useRoute<WorldRuleFormScreenRouteProp>();
+  const { t } = useTranslation();
+  const copy = useVocabularyEntityCopy('WorldRule');
+  const { userId } = useUserSettingsStore();
+  const { worldRuleId: initialWorldRuleId } = route.params || {};
+  const { selectedStory } = useStoryStore();
+  const commonInputStyles = getCommonInputStyles(colors);
+  const customFields = useStorySchemaFields(selectedStory?.id, 'WorldRule');
+
+  const { drizzleDb, worldRuleServiceRef } = useWorldRuleFormResources();
+
+  const worldRuleFormState = useWorldRuleFormState({
+    initialWorldRuleId,
+    storyId: selectedStory?.id,
+    drizzleDb,
+    worldRuleServiceRef,
+    customFields,
+  });
+  const {
+    currentWorldRuleId,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    section,
+    setSection,
+    type,
+    setType,
+    category,
+    setCategory,
+    behavior,
+    setBehavior,
+    usability,
+    setUsability,
+    danger,
+    setDanger,
+    isFavorite,
+    setIsFavorite,
+    extraNotes,
+    setExtraNotes,
+    customValues,
+    setCustomValues,
+    loading,
+    isEditing,
+    isDirty,
+    resetForm,
+  } = worldRuleFormState;
+
+  const {
+    availableTags,
+    selectedTagIds,
+    allNotes,
+    worldRuleNoteRelations,
+    pendingNoteRelations,
+    persistTagRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+    persistNoteRelations,
+    handleTagSelectionChange,
+  } = useWorldRuleFormAssociations({
+    currentWorldRuleId,
+  });
+
+  const getCustomValues = useCallback(
+    () => worldRuleFormState.customValues,
+    [worldRuleFormState.customValues],
+  );
+  const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
+    storyId: selectedStory?.id,
+    entityType: 'WorldRule',
+    selectedTagIds,
+    pendingNoteRelations,
+    getCustomValues,
+  });
+
+  const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useWorldRuleFormActions(
+    {
+      state: worldRuleFormState,
+      customFields,
+      drizzleDb,
+      worldRuleServiceRef,
+      navigation,
+      storyId: selectedStory?.id,
+      userId,
+      persistTagRelations,
+      persistNoteRelations,
+      persistSecondaryDraft,
+      clearSecondaryDraft,
+    },
+  );
+
+  const formTitle = isEditing ? copy.editTitle : copy.createTitle;
+
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
+
+  if (loading) {
+    return <ScreenLoading />;
+  }
+
+  return (
+    <EntityFormContainer
+      title={formTitle}
+      description={copy.formDescription}
+      actions={
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          deleteLabel={copy.deleteLabel}
+          saveLabel={copy.saveLabel}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
+      }
+    >
+      <FormTextField
+        label={t('title')}
+        placeholder={t('world_rule_title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
+
+      <FormField label={t('world_piece_section')}>
+        <SingleSelectPill
+          options={WORLD_PIECE_SECTIONS.map((value) => ({
+            value,
+            label: t(`world_piece_section_${value}`),
+          }))}
+          value={section}
+          onValueChange={(next) => {
+            const nextSection = (next ?? 'rule') as WorldPieceSection;
+            if (nextSection !== section && type) setType(null);
+            setSection(nextSection);
+          }}
+          placeholder={t('world_piece_section')}
+          multiple={false}
+        />
+      </FormField>
+
+      <FormField label={t('world_piece_type')}>
+        <SuggestionTextInput
+          placeholder={t('world_piece_type_placeholder')}
+          value={type || ''}
+          onChangeText={setType}
+          type={`world_piece_type:${section}`}
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
+
+      <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
+
+      <FormTextAreaField
+        label={t('description')}
+        placeholder={t('world_rule_description_placeholder')}
+        value={description}
+        onChangeText={setDescription}
+        style={commonInputStyles.multiline}
+      />
+
+      <FormField label={t('category')}>
+        <SuggestionTextInput
+          placeholder={t('category_placeholder')}
+          value={category || ''}
+          onChangeText={setCategory}
+          type="world_piece_category"
+          storyId={selectedStory?.id || ''}
+        />
+      </FormField>
+
+      <FormTextAreaField
+        label={t('world_piece_behavior')}
+        placeholder={t('world_piece_behavior_placeholder')}
+        value={behavior}
+        onChangeText={setBehavior}
+        style={commonInputStyles.multiline}
+      />
+
+      <FormTextAreaField
+        label={t('world_piece_usability')}
+        placeholder={t('world_piece_usability_placeholder')}
+        value={usability}
+        onChangeText={setUsability}
+        style={commonInputStyles.multiline}
+      />
+
+      <FormTextAreaField
+        label={t('world_piece_danger')}
+        placeholder={t('world_piece_danger_placeholder')}
+        value={danger}
+        onChangeText={setDanger}
+        style={commonInputStyles.multiline}
+      />
+
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('world_rule_extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
+
+      <EntityCustomAttributeFields
+        storyId={selectedStory?.id || ''}
+        fields={customFields}
+        values={customValues}
+        setValues={setCustomValues}
+      />
+
+      <View style={styles.tagSection}>
+        <EntityTagPicker
+          tags={availableTags}
+          selectedTagIds={selectedTagIds}
+          onSelectionChange={handleTagSelectionChange}
+          placeholder={t('select_tags_for_world_rule')}
+          label={t('world_rule_tags')}
+          defaultColor={colors.primaryContainer}
+        />
+      </View>
+
+      {selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <EntityNotesManager
+            noteRelations={worldRuleNoteRelations}
+            availableNotes={allNotes}
+            onSave={saveNoteRelation}
+            onDelete={deleteNoteRelation}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'WorldRule',
+              entityId: currentWorldRuleId ?? '',
+            }}
+          />
+        </View>
+      )}
+
+      {selectedStory?.id && (
+        <View style={styles.noteSection}>
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'WorldRule',
+              entityId: currentWorldRuleId ?? '',
+            }}
+          />
+        </View>
+      )}
+    </EntityFormContainer>
+  );
+};
+
+export default WorldRuleFormScreen;

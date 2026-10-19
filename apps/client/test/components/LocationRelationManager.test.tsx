@@ -1,8 +1,8 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import LocationRelationManager from '../../src/components/features/relations/LocationRelationManager/LocationRelationManager';
-import type { LocationRelationSelect, LocationSelect } from '../../src/db/schema';
+import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -34,31 +34,28 @@ jest.mock('@expo/vector-icons', () => {
 });
 
 const mockNavigate = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 const mockPickerProps = { current: null as Record<string, any> | null };
-jest.mock(
-  '../../src/components/features/relations/LocationRelationManager/LocationPickerModal',
-  () => {
-    const ReactActual = require('react');
-    const { View } = jest.requireActual('react-native');
-    return {
-      __esModule: true,
-      default: (props: Record<string, unknown>) => {
-        mockPickerProps.current = props as Record<string, any>;
-        return ReactActual.createElement(View, { testID: 'location-picker' });
-      },
-    };
-  },
-);
+jest.mock('@/src/components/features/relations/LocationRelationManager/LocationPickerModal', () => {
+  const ReactActual = require('react');
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: (props: Record<string, unknown>) => {
+      mockPickerProps.current = props as Record<string, any>;
+      return ReactActual.createElement(View, { testID: 'location-picker' });
+    },
+  };
+});
 
 const location = (overrides: Partial<LocationSelect> = {}): LocationSelect =>
   ({

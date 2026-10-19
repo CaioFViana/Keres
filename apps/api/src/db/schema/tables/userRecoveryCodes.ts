@@ -1,4 +1,4 @@
-import { boolean, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { ulid } from 'ulid';
 import { users } from './users';
 

@@ -1,26 +1,26 @@
 {
   "name": "@keres/shared",
-  "version": "1.9.0",
+  "version": "1.10.1",
   "main": "index.ts",
   "types": "index.ts",
   "license": "MPL-2.0",
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint . --ext .ts",
+    "lint": "biome lint --error-on-warnings .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.66.0",
-    "@typescript-eslint/parser": "^8.66.0",
-    "eslint": "^9.25.0",
-    "vitest": "^4.1.10",
-    "@vitest/coverage-v8": "^4.1.10"
+    "@types/pako": "1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "docx": "^9.7.1",
     "jszip": "^3.10.1",
+    "pako": "~1.0.2",
     "zod": "^4.1.12"
   }
 }

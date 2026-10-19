@@ -6,8 +6,8 @@ import type {
 } from '@keres/shared';
 import { CreateStatRelationDataSchema, PartialStatRelationSchema } from '@keres/shared';
 import { and, eq, isNull, ne } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { characters, modes, statRelations, stats } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { characters, modes, statRelations, stats } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class StatRelationSyncHandler extends BaseSyncEntityHandler<

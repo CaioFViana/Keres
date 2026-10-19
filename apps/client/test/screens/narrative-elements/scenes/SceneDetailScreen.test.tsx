@@ -7,6 +7,9 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 
+import SceneDetailScreen from '@/src/screens/narrative-elements/scenes/SceneDetailScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigateToDetail = jest.fn();
@@ -51,12 +54,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: {
     title: string;
@@ -66,7 +69,7 @@ jest.mock('../../../../src/hooks/useScreenHeader', () => ({
   },
 }));
 
-jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,
@@ -83,7 +86,7 @@ jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => ({
     commentsByField: {},
@@ -96,7 +99,7 @@ jest.mock('../../../../src/hooks/useEntityComments', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => ({
     selectedTags: mockSceneTags,
@@ -107,37 +110,37 @@ jest.mock('../../../../src/hooks/useEntityRelations', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
 
-jest.mock('../../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenGalleryMediaViewer,
 }));
 
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
-  useStoryCalendar: () => ({ definition: { id: 'cal-1' } }),
+  useStoryCalendar: () => ({ definition: { id: 'cal-1' }, calendars: [] }),
 }));
 
-jest.mock('../../../../src/hooks/useSceneCalendarDates', () => ({
+jest.mock('@/src/hooks/scene/useSceneCalendarDates', () => ({
   __esModule: true,
   useSceneCalendarDates: () => ({ dateForScene: () => null }),
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -151,7 +154,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => {
   const copies: Record<string, object> = {};
   return {
     __esModule: true,
@@ -171,11 +174,11 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return {
     __esModule: true,
-    useTranslation: () => ({ t }),
+    useTranslation: () => ({ t, i18n: { language: 'en' } }),
   };
 });
 
-jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneDetailServices', () => {
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneDetailServices', () => {
   let services: object | null = null;
   return {
     __esModule: true,
@@ -202,7 +205,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/useSceneDetailServi
   };
 });
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -217,7 +220,7 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock('../../../../src/screens/narrative-elements/scenes/SceneDetailContent', () => {
+jest.mock('@/src/screens/narrative-elements/scenes/SceneDetailContent', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -248,6 +251,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/SceneDetailContent'
       t: (key: string) => string;
       manuscriptExcerpt: string | null;
       hasBodyDraft: boolean;
+      fixedDate?: { text: string; valid: boolean } | null;
       onOpenEditor: () => void;
     }) => (
       <>
@@ -272,6 +276,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/SceneDetailContent'
             allNotes: props.allNotes.length,
             excerpt: props.manuscriptExcerpt,
             bodyDraft: props.hasBodyDraft,
+            fixedDate: props.fixedDate ?? null,
           })}
         </Text>
         <Text testID="content-open-editor" onPress={props.onOpenEditor}>
@@ -299,9 +304,6 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/SceneDetailContent'
     ),
   };
 });
-
-import SceneDetailScreen from '../../../../src/screens/narrative-elements/scenes/SceneDetailScreen';
-import { withSilencedConsole } from '../../../helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   const el = view.getByTestId(testID);
@@ -412,6 +414,26 @@ describe('SceneDetailScreen', () => {
     expect(view.getByTestId('content-effect').props.children).toBe('effect_description_item_grant');
     await waitFor(() => expect(mockHeaderArgs?.title).toBe('Opening'));
     expect(mockGetPreviousNextScenes).toHaveBeenCalledWith('story-1', 'scene-1', 'chapter-1');
+  });
+
+  it('hands the content no fixed date for a scene without one', async () => {
+    const view = await render(<SceneDetailScreen />);
+    await view.findByTestId('scene-content');
+
+    expect(jsonOf(view, 'scene-content').fixedDate).toBeNull();
+  });
+
+  it('hands the content the fixed date as written', async () => {
+    mockGetSceneById.mockResolvedValue(makeScene({ calendarDateOverride: '2023-01-31T10:00' }));
+    const view = await render(<SceneDetailScreen />);
+    await view.findByTestId('scene-content');
+
+    await waitFor(() =>
+      expect(jsonOf(view, 'scene-content').fixedDate).toEqual({
+        text: '2023-01-31 · 10:00 · calendar_standard_title',
+        valid: true,
+      }),
+    );
   });
 
   it('loads choices and names for branching stories', async () => {

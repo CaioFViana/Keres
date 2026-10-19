@@ -2,17 +2,18 @@ import Button from '@/src/components/common/controls/Button/Button';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/narrative/PlotScene';
 import type { SceneSelect } from '@/src/db/schema';
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
-import { AppAlert } from '../../../../utils/AppAlert';
-import { createULID } from '../../../../utils/entityUtils';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import ScenePlotModal from './ScenePlotModal';
 
 interface PlotSceneManagerProps {
@@ -64,14 +65,7 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
     [activeRelations, sceneOptions],
   );
 
-  const styles = StyleSheet.create({
-    ...relationSectionStyleDefs(colors),
-    formSection: { marginTop: 20 },
-    noteText: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
-    buttonContainer: { marginBottom: 10 },
-    emptyText: { color: colors.textSecondary },
-    actionsRow: { flexDirection: 'row', gap: 12 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const handleAdd = () => {
     if (availableScenes.length === 0) {
@@ -168,5 +162,15 @@ const PlotSceneManager: React.FC<PlotSceneManagerProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...relationSectionStyleDefs(colors),
+    formSection: { marginTop: 20 },
+    noteText: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
+    buttonContainer: { marginBottom: 10 },
+    emptyText: { color: colors.textSecondary },
+    actionsRow: { flexDirection: 'row', gap: 12 },
+  });
 
 export default PlotSceneManager;

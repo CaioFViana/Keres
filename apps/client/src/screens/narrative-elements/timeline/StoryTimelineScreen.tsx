@@ -2,19 +2,19 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineSheets from '@/src/components/features/story-timeline/StoryTimelineSheets';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useStoryTimeline } from '@/src/hooks/useStoryTimeline';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryTimeline } from '@/src/hooks/story/useStoryTimeline';
 import { useTheme } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -100,7 +100,7 @@ const StoryTimelineScreen = () => {
           borderRadius: 8,
           overflow: 'hidden',
         },
-        scaleModeButton: { paddingHorizontal: 10, paddingVertical: 7 },
+        scaleModeButton: { paddingHorizontal: 10, paddingVertical: 8 },
         scaleModeText: { fontSize: 12, fontWeight: '700' },
         warning: {
           marginHorizontal: 14,

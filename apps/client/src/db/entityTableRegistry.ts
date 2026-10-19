@@ -1,0 +1,149 @@
+import { getTableColumns } from 'drizzle-orm';
+import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
+import * as schema from '@/src/db/schema';
+
+/**
+ * A map from entity name (the same one used in the operation log and in the
+ * synchronization protocol) to the corresponding local table.
+ *
+ * It exists because conflict resolution needs to write to an entity chosen at
+ * runtime: the screen knows the conflict is a `'Chapter'` one, but it cannot
+ * import the chapters table statically without repeating that switch in every path.
+ */
+export const ENTITY_TABLES = {
+  AttributeValue: schema.attributeValues,
+  Board: schema.boards,
+  Sketch: schema.sketches,
+  ScenePage: schema.scenePages,
+  SceneMusic: schema.sceneMusic,
+  Song: schema.songs,
+  Chapter: schema.chapters,
+  Character: schema.characters,
+  ChapterAnchor: schema.chapterAnchors,
+  CharacterRelation: schema.characterRelations,
+  CharacterScene: schema.characterScenes,
+  Choice: schema.choices,
+  ChoiceCheck: schema.choiceChecks,
+  ChoiceCheckGroup: schema.choiceCheckGroups,
+  Comment: schema.comments,
+  Effect: schema.effects,
+  Favorite: schema.favorites,
+  Gallery: schema.galleries,
+  GalleryRelation: schema.galleryRelations,
+  Item: schema.items,
+  ItemJourney: schema.itemJourneys,
+  Location: schema.locations,
+  LocationMap: schema.locationMaps,
+  Mode: schema.modes,
+  LocationRelation: schema.locationRelations,
+  Note: schema.notes,
+  NoteRelation: schema.noteRelations,
+  Plot: schema.plots,
+  PlotScene: schema.plotScenes,
+  Route: schema.routes,
+  RouteStep: schema.routeSteps,
+  Scene: schema.scenes,
+  Stat: schema.stats,
+  StatRelation: schema.statRelations,
+  StatStrength: schema.statStrengths,
+  SeeAlsoRelation: schema.seeAlsoRelations,
+  Story: schema.stories,
+  StorySchemaField: schema.storySchemaFields,
+  Suggestion: schema.suggestions,
+  Tag: schema.tags,
+  TagRelation: schema.tagRelations,
+  StoryCalendar: schema.storyCalendars,
+  StoryArc: schema.storyArcs,
+  WorldRule: schema.worldRules,
+} as const;
+
+export type SyncableEntityName = keyof typeof ENTITY_TABLES;
+
+export function getEntityTable(entityType: string) {
+  return (ENTITY_TABLES as Record<string, (typeof ENTITY_TABLES)[SyncableEntityName] | undefined>)[
+    entityType
+  ];
+}
+
+/**
+ * A table's columns by name, for code that names the column at runtime (a sort key, a search field,
+ * the id of a registry entity). A name the table does not have reads as undefined at runtime, so a
+ * caller that takes the name from outside must check the column it gets back.
+ */
+export function columnsOf(table: SQLiteTable): Record<string, SQLiteColumn> {
+  return table as unknown as Record<string, SQLiteColumn>;
+}
+
+/** Date fields: they arrive as strings in JSON while the local tables expect `Date`. */
+const DATE_FIELDS = new Set(['createdAt', 'updatedAt', 'deletedAt']);
+
+/**
+ * Fields that must never be overwritten from an external payload, because they are the row's
+ * identity or are administered by the synchronization engine itself.
+ */
+const PROTECTED_FIELDS = new Set([
+  'id',
+  'storyId',
+  'serverId',
+  'lastOperationLog',
+  'lastServerSyncedLog',
+  'lastPublicFavoriteLog',
+  'myRole',
+]);
+
+const PROTECTED_BY_ENTITY: Record<string, ReadonlySet<string>> = {
+  Story: new Set(['userId']),
+  // Device-local transfer state: no remote payload may ever set it (a junk key from a
+  // compromised/newer server would otherwise reach Gallery's raw `.set()` spread and, e.g.,
+  // point `localPath` at an arbitrary path or flip a pending download to `downloaded`).
+  Gallery: new Set(['localPath', 'uploadState', 'downloadState', 'thumbnailPath']),
+};
+
+/**
+ * Normalizes an object coming from JSON into something drizzle accepts in a `.set()`:
+ * it converts dates, discards protected fields and ignores keys that do not exist in the table.
+ */
+export function toEntityColumns(
+  entityType: string,
+  values: Record<string, any>,
+): Record<string, any> {
+  const table = getEntityTable(entityType);
+  if (!table) {
+    return {};
+  }
+
+  const columns = new Set(Object.keys(getTableColumns(table)));
+  const normalized: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(values)) {
+    if (
+      PROTECTED_FIELDS.has(key) ||
+      PROTECTED_BY_ENTITY[entityType]?.has(key) ||
+      !columns.has(key)
+    ) {
+      continue;
+    }
+    if (DATE_FIELDS.has(key)) {
+      normalized[key] = value ? new Date(value) : null;
+      continue;
+    }
+    normalized[key] = value;
+  }
+
+  return normalized;
+}
+
+/** It discards local bookkeeping columns even when the entity is not in the registry. */
+export function omitClientProtectedFields(
+  entityType: string,
+  payload: Record<string, any> | undefined,
+): Record<string, any> {
+  const out: Record<string, any> = { ...(payload ?? {}) };
+  for (const key of PROTECTED_FIELDS) {
+    delete out[key];
+  }
+  for (const key of PROTECTED_BY_ENTITY[entityType] ?? []) {
+    delete out[key];
+  }
+  return out;
+}

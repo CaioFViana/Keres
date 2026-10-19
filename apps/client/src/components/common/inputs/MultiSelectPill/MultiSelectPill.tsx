@@ -1,44 +1,34 @@
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import SelectModal, {
+  groupsOf,
+  type MultiSelectGroup,
+  type MultiSelectOption,
+  type SelectSource,
+} from '@/src/components/common/modals/SelectModal/SelectModal';
 import { Ionicons } from '@expo/vector-icons';
-import { ENTITY_APPEARANCE, getContrastTextColor, getEntityAppearance } from '@keres/shared';
-import React, { useCallback, useMemo, useState } from 'react';
+import { getContrastTextColor } from '@keres/shared';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import { useTheme } from '../../../../theme';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
-export interface MultiSelectOption {
-  label: string;
-  value: string;
-  color?: string;
-  /** Optional entity or section icon displayed beside the option in the modal. */
-  icon?: keyof typeof Ionicons.glyphMap;
-}
+export type { MultiSelectGroup, MultiSelectOption };
 
-export interface MultiSelectGroup {
-  key: string;
-  label: string;
-  /** Entity appearance used when the caller does not need an intentional custom colour. */
-  entityType?: keyof typeof ENTITY_APPEARANCE;
-  icon?: keyof typeof Ionicons.glyphMap;
-  color?: string;
-  options: MultiSelectOption[];
-}
-
-/** Compatibility shape for places that previously needed a one-value dropdown. */
+/**
+ * A searchable, text-input-shaped single selector: the one-value layer over `MultiSelectPill`. It takes
+ * the same wording props (`label`, `noOptionsText`, `searchPlaceholder`) so that no screen has to drop
+ * to the pill to word its empty list.
+ */
 export interface SingleSelectPillProps {
   options: (Omit<MultiSelectOption, 'color'> & { color?: string | null })[];
   value: string | null;
   onValueChange: (value: string | null) => void;
   placeholder?: string;
+  label?: string;
+  noOptionsText?: string;
+  searchPlaceholder?: string;
   /** Kept for call-site readability; this component always chooses one value. */
   multiple?: false;
   disabled?: boolean;
@@ -46,17 +36,11 @@ export interface SingleSelectPillProps {
   /** Layout adjustment for compact contexts such as a filter toolbar. */
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
+  /** Replaces the pill frame with a custom trigger; the list it opens is the same. */
+  trigger?: (open: () => void) => React.ReactNode;
 }
 
-interface MultiSelectPillProps {
-  /** A flat list in a single modal - good for a handful of options (tags, say). */
-  options?: MultiSelectOption[];
-  /**
-   * Selection in two steps: the type first, then the entity - good when there are hundreds of options of
-   * different types (an entity selector, say). Exactly one of the two (`options` or `groups`) has to
-   * be passed.
-   */
-  groups?: MultiSelectGroup[];
+interface MultiSelectPillBaseProps {
   selectedValues: string[];
   onSelectionChange: (selected: string[]) => void;
   placeholder?: string;
@@ -85,14 +69,16 @@ interface MultiSelectPillProps {
   trigger?: (open: () => void) => React.ReactNode;
 }
 
-const FLAT_GROUP_KEY = '__flat__';
+/**
+ * What the pill lists is `options` (a flat list in one modal - a handful of tags, say) or `groups` (the
+ * type first, then the entity - hundreds of options of different types): see `SelectSource`.
+ */
+export type MultiSelectPillProps = MultiSelectPillBaseProps & SelectSource;
 
 /**
- * A single component for two modes that used to be two nearly identical components
- * (`MultiSelectPill`/`GroupedMultiSelectPill`, ~150 duplicated lines of style/animation): `options`
- * flattens the list straight into one modal; `groups` asks for the type first. When there is only one
- * group (a flat `options`, or `groups` with a single item), the type-picking step is skipped - the same
- * path used by a one-type entity selector in `singleSelect` mode.
+ * The trigger of a selector: a field that shows the selection and opens a `SelectModal`. It owns only
+ * what the field needs - whether the modal is open and how the selection reads. The list, the search and
+ * the groups are the modal's; a picker that opens from somewhere else uses `SelectModal` itself.
  */
 const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   options,
@@ -113,41 +99,24 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   selectionSummary,
   trigger,
 }) => {
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
-  const { height: screenHeight } = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
-  const [activeGroupKey, setActiveGroupKey] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
 
-  const effectiveGroups = useMemo<MultiSelectGroup[]>(
-    () => groups ?? [{ key: FLAT_GROUP_KEY, label: '', options: options ?? [] }],
+  const source = useMemo<SelectSource>(
+    () => (groups ? { groups } : { options: options ?? [] }),
     [groups, options],
-  );
-
-  const groupAppearance = useCallback(
-    (group: MultiSelectGroup) => {
-      const appearanceKey = group.entityType ?? group.key;
-      const defaultAppearance = Object.hasOwn(ENTITY_APPEARANCE, appearanceKey)
-        ? getEntityAppearance(appearanceKey, isDarkMode)
-        : undefined;
-      return {
-        icon: group.icon ?? (defaultAppearance?.icon as keyof typeof Ionicons.glyphMap | undefined),
-        color: group.color ?? defaultAppearance?.color,
-      };
-    },
-    [isDarkMode],
   );
 
   const optionsByValue = useMemo(() => {
     const map = new Map<string, MultiSelectOption>();
-    for (const group of effectiveGroups) {
+    for (const group of groupsOf(source)) {
       for (const option of group.options) {
         map.set(option.value, option);
       }
     }
     return map;
-  }, [effectiveGroups]);
+  }, [source]);
 
   const selectedOptionDetails = useMemo(
     () =>
@@ -157,268 +126,11 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     [selectedValues, optionsByValue, singleSelect],
   );
 
-  const activeGroup = useMemo(
-    () => effectiveGroups.find((group) => group.key === activeGroupKey) || null,
-    [effectiveGroups, activeGroupKey],
-  );
-
-  const visibleOptions = useMemo(() => {
-    if (!activeGroup) return [];
-    const query = search.trim().toLowerCase();
-    if (!query) return activeGroup.options;
-    return activeGroup.options.filter((option) => option.label.toLowerCase().includes(query));
-  }, [activeGroup, search]);
-
-  const openModal = useCallback(() => {
-    setSearch('');
-    setActiveGroupKey(effectiveGroups.length === 1 ? (effectiveGroups[0]?.key ?? null) : null);
-    setModalVisible(true);
-  }, [effectiveGroups]);
-
-  const closeModal = useCallback(() => {
-    setModalVisible(false);
-    // It resets to the type list on the next opening, instead of reopening inside the last visited group.
-    setActiveGroupKey(null);
-    setSearch('');
-  }, []);
-
-  const toggleOption = useCallback(
-    (value: string) => {
-      if (
-        !singleSelect &&
-        maxSelections !== undefined &&
-        !selectedValues.includes(value) &&
-        selectedValues.length >= maxSelections
-      ) {
-        return;
-      }
-      const newSelection = singleSelect
-        ? selectedValues.includes(value) && allowDeselect
-          ? []
-          : [value]
-        : selectedValues.includes(value)
-          ? selectedValues.filter((v) => v !== value)
-          : [...selectedValues, value];
-      onSelectionChange(newSelection);
-      if (singleSelect) {
-        closeModal();
-      }
-    },
-    [selectedValues, onSelectionChange, singleSelect, allowDeselect, maxSelections, closeModal],
-  );
-
-  const openGroup = useCallback((groupKey: string) => {
-    setSearch('');
-    setActiveGroupKey(groupKey);
-  }, []);
-
-  const backToGroups = useCallback(() => {
-    setSearch('');
-    setActiveGroupKey(null);
-  }, []);
-
-  const showGroupPicker = !activeGroup && effectiveGroups.length > 1;
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
   const singleValueAppearance = singleSelect || maxSelections === 1;
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: 10,
-    },
-    label: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 5,
-    },
-    pillContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 8,
-      padding: 10,
-      minHeight: 50,
-      borderColor: colors.primary,
-      borderWidth: 1,
-    },
-    /*
-     * Pills wrap here; the trailing icon stays outside this box. Putting `flexWrap` and
-     * `marginLeft: 'auto'` on the same row made the icon drop to a second line when a pill
-     * appeared, which grew the field a few pixels (relation map / boards toolbars).
-     */
-    triggerContent: {
-      flex: 1,
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      minWidth: 0,
-      // Spacing between pills belongs to this wrap box, not to each pill (a per-pill margin still
-      // charged the last item and made the field grow when the first option was chosen).
-      gap: 8,
-    },
-    singleValueContent: {
-      flexWrap: 'nowrap',
-    },
-    singleValueContainer: {
-      borderRadius: 5,
-    },
-    triggerIcon: {
-      width: 24,
-      height: 24,
-      marginLeft: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: 0,
-    },
-    singleValueText: {
-      color: colors.text,
-      fontSize: 16,
-      flexShrink: 1,
-    },
-    disabled: {
-      opacity: 0.4,
-    },
-    pill: {
-      flexDirection: 'row',
-      borderRadius: 15,
-      paddingVertical: 5,
-      paddingHorizontal: 10,
-      alignItems: 'center',
-    },
-    pillText: {
-      fontSize: 14,
-    },
-    placeholderText: {
-      color: colors.textSecondary,
-      fontSize: 16,
-    },
-    selectionSummary: {
-      color: colors.text,
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    modalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      overflow: 'hidden',
-    },
-    modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    modalHeaderTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    backButton: {
-      padding: 5,
-      marginRight: 5,
-    },
-    modalTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      flexShrink: 1,
-    },
-    closeButton: {
-      padding: 5,
-    },
-    searchInput: {
-      marginHorizontal: 15,
-      marginTop: 12,
-      marginBottom: 4,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      color: colors.text,
-      fontSize: 15,
-    },
-    groupContainer: {
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    groupContainerDisabled: {
-      opacity: 0.4,
-    },
-    groupIcon: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    groupTextWrap: {
-      flex: 1,
-    },
-    groupLabel: {
-      fontSize: 16,
-      color: colors.text,
-    },
-    groupCount: {
-      fontSize: 13,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-    optionContainer: {
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    optionDisabled: {
-      opacity: 0.45,
-    },
-    optionLeading: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-      gap: 10,
-    },
-    optionColor: {
-      width: 16,
-      height: 16,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    optionIcon: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    optionText: {
-      fontSize: 16,
-      color: colors.text,
-    },
-    // The check's space is always reserved: appearing only when ticked, it pushed the row a few pixels
-    // down, and the whole list danced with every choice.
-    optionCheck: {
-      width: 24,
-      height: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    noOptionsText: {
-      padding: 15,
-      color: colors.textSecondary,
-      textAlign: 'center',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={trigger ? style : [styles.container, style]}>
@@ -475,164 +187,129 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         </TouchableOpacity>
       )}
 
-      <ResponsiveModal
+      <SelectModal
         visible={modalVisible}
         onClose={closeModal}
-        contentStyle={styles.modalContent}
-        maxHeight={Math.min(screenHeight * 0.75, 720)}
-      >
-        <View style={{ flexShrink: 1 }}>
-          <View style={styles.modalHeader}>
-            <View style={styles.modalHeaderTitleRow}>
-              {activeGroup && effectiveGroups.length > 1 && (
-                <TouchableOpacity onPress={backToGroups} style={styles.backButton}>
-                  <Ionicons name="chevron-back" size={22} color={colors.text} />
-                </TouchableOpacity>
-              )}
-              <Text style={styles.modalTitle} numberOfLines={1}>
-                {activeGroup && effectiveGroups.length > 1
-                  ? activeGroup.label
-                  : label || placeholder || t('select_tags')}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          {activeGroup && (
-            <TextInput
-              style={styles.searchInput}
-              value={search}
-              onChangeText={setSearch}
-              placeholder={searchPlaceholder || t('search')}
-              placeholderTextColor={colors.textSecondary}
-              autoFocus
-            />
-          )}
-
-          <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
-            {showGroupPicker ? (
-              effectiveGroups.map((group) => {
-                const appearance = groupAppearance(group);
-                const selectedCount = group.options.filter((option) =>
-                  selectedValues.includes(option.value),
-                ).length;
-                const disabled = group.options.length === 0;
-                return (
-                  <TouchableOpacity
-                    key={group.key}
-                    style={[styles.groupContainer, disabled && styles.groupContainerDisabled]}
-                    onPress={() => !disabled && openGroup(group.key)}
-                    disabled={disabled}
-                  >
-                    {appearance.icon && (
-                      <View
-                        style={[
-                          styles.groupIcon,
-                          { backgroundColor: appearance.color || colors.primaryContainer },
-                        ]}
-                      >
-                        <Ionicons
-                          name={appearance.icon}
-                          size={18}
-                          color={getContrastTextColor(appearance.color || colors.primaryContainer)}
-                        />
-                      </View>
-                    )}
-                    <View style={styles.groupTextWrap}>
-                      <Text style={styles.groupLabel}>{group.label}</Text>
-                      <Text style={styles.groupCount}>
-                        {selectedCount > 0
-                          ? t('grouped_select_count_selected', {
-                              selected: selectedCount,
-                              total: group.options.length,
-                            })
-                          : t('grouped_select_count_total', { total: group.options.length })}
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                  </TouchableOpacity>
-                );
-              })
-            ) : visibleOptions.length > 0 ? (
-              visibleOptions.map((option) => {
-                const groupOptionAppearance = groupAppearance(activeGroup!);
-                const optionIcon = option.icon ?? groupOptionAppearance.icon;
-                const optionColor = option.color ?? groupOptionAppearance.color;
-                const atSelectionLimit =
-                  !singleSelect &&
-                  maxSelections !== undefined &&
-                  selectedValues.length >= maxSelections &&
-                  !selectedValues.includes(option.value);
-                return (
-                  <TouchableOpacity
-                    key={option.value}
-                    testID={`multiselect-option-${option.value}`}
-                    style={[styles.optionContainer, atSelectionLimit && styles.optionDisabled]}
-                    onPress={() => toggleOption(option.value)}
-                    disabled={atSelectionLimit}
-                  >
-                    <View style={styles.optionLeading}>
-                      {optionIcon ? (
-                        <View
-                          testID={`multiselect-option-icon-${option.value}`}
-                          style={[
-                            styles.optionIcon,
-                            { backgroundColor: optionColor || colors.primaryContainer },
-                          ]}
-                        >
-                          <Ionicons
-                            name={optionIcon}
-                            size={16}
-                            color={getContrastTextColor(optionColor || colors.primaryContainer)}
-                          />
-                        </View>
-                      ) : option.color ? (
-                        <View style={[styles.optionColor, { backgroundColor: option.color }]} />
-                      ) : null}
-                      <Text style={styles.optionText}>{option.label}</Text>
-                    </View>
-                    <View testID={`multiselect-check-${option.value}`} style={styles.optionCheck}>
-                      {selectedValues.includes(option.value) && (
-                        <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
-            ) : (
-              <Text style={styles.noOptionsText}>{noOptionsText || t('no_tags_available')}</Text>
-            )}
-          </ScrollView>
-        </View>
-      </ResponsiveModal>
+        source={source}
+        selectedValues={selectedValues}
+        onSelectionChange={onSelectionChange}
+        title={label || placeholder || t('select_tags')}
+        singleSelect={singleSelect}
+        allowDeselect={allowDeselect}
+        maxSelections={maxSelections}
+        noOptionsText={noOptionsText}
+        searchPlaceholder={searchPlaceholder}
+      />
     </View>
   );
 };
 
-/** A searchable, text-input-shaped single selector backed by `MultiSelectPill`. */
 export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
   options,
   value,
   onValueChange,
   placeholder,
+  label,
+  noOptionsText,
+  searchPlaceholder,
   disabled,
   allowDeselect = false,
   style,
   triggerStyle,
+  trigger,
 }) => (
   <MultiSelectPill
     options={options.map((option) => ({ ...option, color: option.color ?? undefined }))}
     selectedValues={value ? [value] : []}
     onSelectionChange={(values) => onValueChange(values[0] ?? null)}
     placeholder={placeholder}
+    label={label}
+    noOptionsText={noOptionsText}
+    searchPlaceholder={searchPlaceholder}
     singleSelect
     allowDeselect={allowDeselect}
     disabled={disabled}
     style={style}
     triggerStyle={triggerStyle}
+    trigger={trigger}
   />
 );
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: 10,
+    },
+    label: {
+      ...typography.sectionTitle,
+      color: colors.text,
+      marginBottom: 5,
+    },
+    pillContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      padding: 10,
+      minHeight: 50,
+      borderColor: colors.primary,
+      borderWidth: 1,
+    },
+    /*
+     * Pills wrap here; the trailing icon stays outside this box. Putting `flexWrap` and
+     * `marginLeft: 'auto'` on the same row made the icon drop to a second line when a pill
+     * appeared, which grew the field a few pixels (relation map / boards toolbars).
+     */
+    triggerContent: {
+      flex: 1,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      minWidth: 0,
+      // Spacing between pills belongs to this wrap box, not to each pill (a per-pill margin still
+      // charged the last item and made the field grow when the first option was chosen).
+      gap: 8,
+    },
+    singleValueContent: {
+      flexWrap: 'nowrap',
+    },
+    singleValueContainer: {
+      borderRadius: 5,
+    },
+    triggerIcon: {
+      width: 24,
+      height: 24,
+      marginLeft: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    singleValueText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    disabled: {
+      opacity: 0.4,
+    },
+    pill: {
+      flexDirection: 'row',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      alignItems: 'center',
+    },
+    pillText: {
+      fontSize: 14,
+    },
+    placeholderText: {
+      ...typography.bodyLarge,
+      color: colors.textSecondary,
+    },
+    selectionSummary: {
+      ...typography.label,
+      color: colors.text,
+    },
+  });
 
 export default MultiSelectPill;

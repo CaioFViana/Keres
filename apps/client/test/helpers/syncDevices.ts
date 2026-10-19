@@ -1,24 +1,24 @@
 import axios from 'axios';
 import * as http from 'node:http';
 import { and, eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { getEntityTable } from '../../src/services/entityTableRegistry';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { createCharacterService } from '../../src/services/storymanagement/CharacterService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { createStatService } from '../../src/services/storymanagement/StatService';
-import { createAttributeValueService } from '../../src/services/storymanagement/AttributeValueService';
-import { createChapterAnchorService } from '../../src/services/storymanagement/ChapterAnchorService';
-import { createCharacterRelationService } from '../../src/services/storymanagement/CharacterRelationService';
-import { createCommentService } from '../../src/services/storymanagement/CommentService';
-import { createFavoriteService } from '../../src/services/storymanagement/FavoriteService';
-import { createRouteService } from '../../src/services/storymanagement/RouteService';
-import { createStorySchemaFieldService } from '../../src/services/storymanagement/StorySchemaFieldService';
-import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
-import { createTagService } from '../../src/services/storymanagement/TagService';
-import { createSyncConflictService } from '../../src/services/SyncConflictService';
-import type { SyncEngineService } from '../../src/services/SyncEngineService';
-import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
+import * as schema from '@/src/db/schema';
+import { getEntityTable } from '@/src/db/entityTableRegistry';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { createChapterAnchorService } from '@/src/services/storymanagement/scenes-chapters/ChapterAnchorService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createSyncConflictService } from '@/src/services/sync/SyncConflictService';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
+import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
 import { ReferenceSyncServer } from './referenceSyncServer';
 import { createTestDatabase, type TestDatabase } from './testDb';
 
@@ -88,6 +88,10 @@ const MODELLED_COLUMNS = {
   ChoiceCheckGroup: ['choiceId', 'combinator'],
   ChoiceCheck: ['groupId', 'type', 'triggerName', 'triggerState'],
   Effect: ['entityType', 'entityId', 'effectType', 'triggerName'],
+  Song: ['title', 'lyrics'],
+  Sketch: ['name', 'content'],
+  ScenePage: ['sceneId', 'rank', 'sketchId', 'galleryId', 'fit', 'spread', 'text'],
+  SceneMusic: ['sceneId', 'rank', 'songId', 'galleryId', 'role', 'cue', 'sections'],
   Story: ['title'],
 } as const;
 
@@ -134,7 +138,10 @@ export class SyncDevice {
   }
 
   get url(): string {
-    return `http://${this.name}`;
+    // A private address (plain http is refused anywhere else), one per device; the port keeps one
+    // address from being the prefix of another.
+    const seed = [...this.name].reduce((sum, char) => sum * 31 + char.charCodeAt(0), 7);
+    return `http://10.0.${(seed >> 8) % 250}.${(seed % 250) + 1}:3000`;
   }
 
   /** One full pull/push cycle, without timers. */
@@ -619,5 +626,21 @@ export function contentOf(
     'isDeleted',
     'version',
   ];
-  return Object.fromEntries(fields.map((field) => [field, row[field] ?? null]));
+  return Object.fromEntries(fields.map((field) => [field, canonical(row[field] ?? null)]));
+}
+
+/**
+ * A document column with its keys in a fixed order: the real database keeps a JSON column in its
+ * own key order, a device keeps it as written, and only the content is the question.
+ */
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, inner]) => [key, canonical(inner)]),
+    );
+  }
+  return value;
 }

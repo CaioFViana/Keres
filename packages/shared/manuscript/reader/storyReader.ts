@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import type { CompiledBlock, CompiledManuscript } from '../compile/export/manuscriptCompiler';
+import type { CompiledManuscript } from '../compile/export/manuscriptCompiler';
+import { hasPages, pageCssFor, pageFigureMarkup } from '../compile/export/manuscriptPageFigure';
+import { bytesToBase64 } from '../../utils/base64';
 import {
   buildManuscriptHtml,
   escapeHtml,
@@ -9,7 +11,7 @@ import {
 import {
   presentedManuscriptOf,
   type CompileStoryManuscriptInput,
-} from '../compile/compileStoryManuscript';
+} from '../compile/presentedManuscript';
 import {
   DEFAULT_MANUSCRIPT_LABELS,
   MAX_MANUSCRIPT_BYTES,
@@ -17,6 +19,7 @@ import {
 } from '../compile/manuscriptContracts';
 import { renderOptionsOf } from '../compile/manuscriptStyle';
 import { READER_BRANCHING_SOURCE, READER_COMMON_SOURCE, READER_LINEAR_SOURCE } from './readerApp';
+import { READER_COMIC_SOURCE } from './readerComic';
 import { READER_ENGINE_SOURCE } from './readerEngine';
 
 const labelSchema = z.string().max(120);
@@ -40,6 +43,9 @@ export const ReaderLabelsSchema = z.object({
   restart: labelSchema,
   theEnd: labelSchema,
   contents: labelSchema,
+  previousPage: labelSchema,
+  nextPage: labelSchema,
+  script: labelSchema,
   appearance: labelSchema,
   theme: labelSchema,
   themeAuto: labelSchema,
@@ -73,6 +79,9 @@ export const DEFAULT_READER_LABELS: ReaderLabels = {
   restart: 'Start over',
   theEnd: 'The End',
   contents: 'Contents',
+  previousPage: 'Previous',
+  nextPage: 'Next',
+  script: 'Script',
   appearance: 'Appearance',
   theme: 'Theme',
   themeAuto: 'Auto',
@@ -161,21 +170,53 @@ export type ReaderStoryData = {
  * scene heading. What comes before the first heading is the opening page of a story with several
  * starts (its prompt and one "begin" choice per start).
  */
-function scenesOfBlocks(blocks: CompiledBlock[], beginLabel: string) {
+function scenesOfBlocks(manuscript: CompiledManuscript, beginLabel: string) {
+  const { blocks } = manuscript;
   const scenes: ReaderStoryData['scenes'] = {};
   const order: string[] = [];
   const prompt: string[] = [];
   const opening: { to: string }[] = [];
   let current: ReaderStoryData['scenes'][string] | null = null;
+  // Consecutive items share one list element inside the scene's html.
+  let openList: 'ul' | 'ol' | null = null;
+  const closeList = () => {
+    if (current && openList) current.html += `</${openList}>`;
+    openList = null;
+  };
+  const pushListItem = (tag: 'ul' | 'ol', inner: string) => {
+    if (!current) return;
+    if (openList !== tag) {
+      if (openList) current.html += `</${openList}>`;
+      current.html += `<${tag}>`;
+      openList = tag;
+    }
+    current.html += `<li>${inner}</li>`;
+  };
   for (const block of blocks) {
     if (block.kind === 'scene-heading') {
+      closeList();
       current = { name: block.name, number: block.number, html: '', choices: [], effects: [] };
       scenes[block.id] = current;
       order.push(block.id);
     } else if (block.kind === 'paragraph') {
+      closeList();
       if (current) current.html += `<p>${spansToHtml(block.spans)}</p>`;
       else prompt.push(block.spans.map((span) => span.text).join(''));
+    } else if (block.kind === 'page') {
+      closeList();
+      // The reader is one file with no requests: a page's picture rides inside it.
+      if (current) {
+        current.html += pageFigureMarkup(
+          block,
+          manuscript,
+          (_mediaId, image) => `data:${image.mimeType};base64,${bytesToBase64(image.bytes)}`,
+        );
+      }
+    } else if (block.kind === 'bullet' || block.kind === 'ordered') {
+      if (current) pushListItem(block.kind === 'bullet' ? 'ul' : 'ol', spansToHtml(block.spans));
+      else prompt.push(`- ${block.spans.map((span) => span.text).join('')}`);
     } else if (block.kind === 'choice') {
+      closeList();
       if (current) {
         current.choices.push({
           i: block.id,
@@ -187,6 +228,7 @@ function scenesOfBlocks(blocks: CompiledBlock[], beginLabel: string) {
       }
     }
   }
+  closeList();
   const promptText = prompt.join(' ').trim();
   const options =
     opening.length > 0
@@ -307,6 +349,19 @@ article.scene { padding-top: 3rem; }
 p.subtitle, p.byline, p.prompt, p.note, p.end-mark, p.scene-break, p.choice, p.choice-detail, .chapter + p, h3.scene + p, .scene-name + .text > p:first-child { text-indent: 0; }
 p.scene-break { text-align: center; color: var(--muted); letter-spacing: 0.4em; margin: 1.8rem 0; }
 nav.toc { display: none; }
+/* A comic is read a page at a time: the page fills the screen, an opening sits across it. */
+#view[hidden], #view [hidden] { display: none !important; }
+#view.paged { max-width: 72rem; padding-bottom: 3rem; }
+#view.paged figure.page { margin: 1rem 0 0; }
+#view.paged figure.page img { width: auto; max-width: 100%; max-height: calc(100vh - 7rem); margin: 0 auto; object-fit: contain; }
+#view.paged figure.page.sheet .art img { margin: 0; max-height: calc(100vh - 8rem); }
+#view.paged .spread { margin: 1rem 0 0; }
+#view.paged .spread figure.page.left img { margin-left: auto; }
+#view.paged .spread figure.page.right img { margin-right: auto; }
+#view.paged .spread figure.page.wide img { max-height: calc(100vh - 7rem); }
+#view.paged.hide-script .script p { display: none; }
+#bar .counter { align-self: center; color: var(--muted); min-width: 4rem; text-align: center; }
+#bar .spacer { flex: 1; }
 .end-mark { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin: 1rem 0 0; }
 .choices, .start, .the-end { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 2.5rem; font-family: system-ui, sans-serif; }
 .choice { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 0.7rem; padding: 0.85rem 1.1rem; cursor: pointer; line-height: 1.45; transition: border-color 0.15s, transform 0.15s; }
@@ -367,6 +422,21 @@ ${args.main}
 
 const button = (id: string, label: string) => `<button id="${id}">${escapeHtml(label)}</button>`;
 
+/**
+ * The exact script bundles a published reader page runs, in the order the page serves them.
+ * One shared builder feeds the compiler below and the server's Content-Security-Policy hashes,
+ * so the hashed bytes and the served bytes cannot drift apart: a branching story runs the engine
+ * with the common and branching code, a linear story the common code with the linear one, and a
+ * comic or storyboard reader the common code with the comic one.
+ */
+export function readerScriptBundles(): { branching: string; linear: string; comic: string } {
+  return {
+    branching: [READER_ENGINE_SOURCE, READER_COMMON_SOURCE, READER_BRANCHING_SOURCE].join('\n'),
+    linear: [READER_COMMON_SOURCE, READER_LINEAR_SOURCE].join('\n'),
+    comic: [READER_COMMON_SOURCE, READER_COMIC_SOURCE].join('\n'),
+  };
+}
+
 /** The branching reader page for a presented gamebook. */
 export function buildBranchingReaderHtml(
   manuscript: CompiledManuscript,
@@ -382,7 +452,7 @@ export function buildBranchingReaderHtml(
     data,
     bar: `<header id="bar">${button('act-back', labels.back)}${button('act-path', labels.path)}${button('act-bag', labels.inventory)}${button('act-saves', labels.saves)}<span id="here" class="here"></span>${button('act-home', labels.restart)}${button('act-look', labels.appearance)}</header>`,
     main: '<main id="view"></main>',
-    scripts: [READER_ENGINE_SOURCE, READER_COMMON_SOURCE, READER_BRANCHING_SOURCE].join('\n'),
+    scripts: readerScriptBundles().branching,
   });
 }
 
@@ -403,6 +473,9 @@ export function buildLinearReaderHtml(
     { goToScene: options.goToScene, tocHeading: options.tocHeading },
     { ...options.render, includeToc: true },
   );
+  // A comic or a storyboard set as sheets or spreads is read a page at a time.
+  const paged =
+    hasPages(manuscript.blocks) && !!manuscript.pageLayout && manuscript.pageLayout !== 'flow';
   const between = (open: string, close: string) => {
     const from = html.indexOf(open);
     const to = html.lastIndexOf(close);
@@ -414,9 +487,11 @@ export function buildLinearReaderHtml(
     css: `${between('<style>\n', '\n</style>')}\n${options.css}`,
     labels,
     data: { labels },
-    bar: `<header id="bar">${button('act-contents', labels.contents)}<span id="here" class="here"></span>${button('act-look', labels.appearance)}<span id="progress"></span></header>`,
+    bar: paged
+      ? `<header id="bar">${button('act-contents', labels.contents)}${button('act-prev', labels.previousPage)}<span id="counter" class="counter"></span>${button('act-next', labels.nextPage)}<span id="here" class="here"></span>${button('act-script', labels.script)}${button('act-look', labels.appearance)}</header>`
+      : `<header id="bar">${button('act-contents', labels.contents)}<span id="here" class="here"></span>${button('act-look', labels.appearance)}<span id="progress"></span></header>`,
     main: `<main id="view">${between('<body>\n', '\n</body>')}</main>`,
-    scripts: [READER_COMMON_SOURCE, READER_LINEAR_SOURCE].join('\n'),
+    scripts: paged ? readerScriptBundles().comic : readerScriptBundles().linear,
   });
 }
 
@@ -439,11 +514,12 @@ export function compileStoryReader(
   const language = manuscriptOptions.language ?? 'en';
   // The reader has its own size control, so the writer's point size does not apply.
   const renderOptions = { ...renderOptionsOf(manuscriptOptions.style), fontSize: undefined };
-  const css = `${READER_CSS}\n${typographyCss(renderOptions, false)}`;
+  const pagesCss = hasPages(presented.blocks) ? `\n${pageCssFor(presented.pageLayout)}` : '';
+  const css = `${READER_CSS}\n${typographyCss(renderOptions, false)}${pagesCss}`;
 
   let html: string;
   if (input.storyType === 'branching') {
-    const { scenes, start } = scenesOfBlocks(presented.blocks, labels.beginAt);
+    const { scenes, start } = scenesOfBlocks(presented, labels.beginAt);
     const data: ReaderStoryData = {
       title: presented.title,
       author: manuscriptOptions.author ?? null,

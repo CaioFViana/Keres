@@ -1,11 +1,11 @@
 import React from 'react';
 import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
-import GalleryDetailContent from '../../../../screens/gallery/GalleryDetailContent';
-import { useGalleryMediaViewerStore } from '../../../../state/galleryMediaViewerStore';
+import GalleryDetailContent from '@/src/screens/gallery/GalleryDetailContent';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
 
 /**
  * Mounts the medium "peeked at" from an entity screen, on top of everything, without going through
- * navigation. See `state/galleryMediaViewerStore.ts` and `GalleryDetailContent.tsx` for the
+ * navigation. See `state/ui/galleryMediaViewerStore.ts` and `GalleryDetailContent.tsx` for the
  * reason it exists (avoiding the stack reset triggered by losing the Drawer's focus).
  *
  * It stays mounted once, as a sibling of the Drawer in `MainSystemNavigator` - the `Modal` takes care of

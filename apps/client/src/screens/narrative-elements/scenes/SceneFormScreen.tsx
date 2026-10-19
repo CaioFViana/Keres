@@ -2,39 +2,39 @@ import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/Scre
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/see-also/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SceneCharacterManager from '@/src/components/features/characters/CharacterManager/SceneCharacterManager';
 import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
 import SceneTimingFields from '@/src/components/features/scenes/SceneTimingFields';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
-import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
-import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { useTheme } from '../../../theme';
-import { getCommonInputStyles } from '../../../theme/commonStyles';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import { StyleSheet, View } from 'react-native';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useSceneFormResources } from './useSceneFormResources';
 import { useSceneFormActions } from './useSceneFormActions';
 import { useSceneFormAssociations } from './useSceneFormAssociations';
 import { useSceneFormState } from './useSceneFormState';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type SceneFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneForm'>;
 type SceneFormScreenNavigationProp = NativeStackNavigationProp<
@@ -170,6 +170,7 @@ const SceneFormScreen = () => {
     drizzleDb,
     sceneServiceRef,
     navigation,
+    calendars,
     storyId: selectedStory?.id,
     userId,
     persistTagRelations,
@@ -180,13 +181,7 @@ const SceneFormScreen = () => {
   });
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   const chapterOptions = useMemo(
     () => chapters.map((chapter) => ({ label: chapter.name, value: chapter.id })),
@@ -210,20 +205,14 @@ const SceneFormScreen = () => {
       title={formTitle}
       description={copy.formDescription}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {copy.deleteLabel}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          deleteLabel={copy.deleteLabel}
+          saveLabel={copy.saveLabel}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
       <FormField label={chapterCopy.entity}>
@@ -236,9 +225,9 @@ const SceneFormScreen = () => {
           allowDeselect
         />
       </FormField>
-      <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }}>
+      <ThemedText tone="secondary" style={{ fontSize: 13, marginTop: 4 }}>
         {t('scene_chapter_optional_hint')}
-      </Text>
+      </ThemedText>
 
       {/*
         Optional since 1.6. An era, a war, a rumour heard in three cities is a scene with no single
@@ -256,45 +245,31 @@ const SceneFormScreen = () => {
         />
       </FormField>
 
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('name')}
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
-      <FormField label={t('summary')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('summary_placeholder')}
-            value={summary || ''}
-            onChangeText={setSummary}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('summary')}
+        placeholder={t('summary_placeholder')}
+        value={summary}
+        onChangeText={setSummary}
+        style={commonInputStyles.multiline}
+      />
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
       <SceneTimingFields
         gapInput={gapInput}
@@ -310,31 +285,29 @@ const SceneFormScreen = () => {
         calendarDateOverrideCalendarId={calendarDateOverrideCalendarId}
         onCalendarDateOverrideCalendarIdChange={setCalendarDateOverrideCalendarId}
         calendars={calendars}
+        storyHasEpoch={selectedStory?.timelineEpochDay != null}
         inputStyle={commonInputStyles.input}
       />
 
       <FormSwitchField label={t('is_start_scene')} value={isStart} onValueChange={setIsStart} />
 
       <FormSwitchField label={t('is_finish_scene')} value={isFinish} onValueChange={setIsFinish} />
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <MultiSelectPill
-            options={availableTags.map((tag) => ({
-              label: tag.name,
-              value: tag.id,
-              color: tag.color || colors.primaryContainer,
-            }))}
-            selectedValues={selectedTagIds}
+          <EntityTagPicker
+            tags={availableTags}
+            selectedTagIds={selectedTagIds}
             onSelectionChange={setSelectedTagIds}
             placeholder={t('select_tags_for_scene')}
             label={t('scene_tags')}
+            defaultColor={colors.primaryContainer}
           />
         </View>
       )}
@@ -357,27 +330,29 @@ const SceneFormScreen = () => {
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={sceneNoteRelations}
             availableNotes={allNotes}
             onSave={saveNoteRelation}
             onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentSceneId ?? ''}
-            currentEntityType="Scene"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Scene',
+              entityId: currentSceneId ?? '',
+            }}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Scene"
-            entityId={currentSceneId ?? ''}
-            editable={true}
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Scene',
+              entityId: currentSceneId ?? '',
+            }}
           />
         </View>
       )}

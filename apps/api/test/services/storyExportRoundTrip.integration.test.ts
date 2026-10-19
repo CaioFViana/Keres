@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   attributeValues,
   boards,
@@ -30,6 +30,10 @@ import {
   plots,
   plotScenes,
   scenes,
+  sketches,
+  scenePages,
+  sceneMusic,
+  songs,
   routes,
   routeSteps,
   seeAlsoRelations,
@@ -43,10 +47,10 @@ import {
   tags,
   users,
   worldRules,
-} from '../../src/db/schema';
-import { StoryExportImportService } from '../../src/services/StoryExportImportService';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { StoryExportImportService } from '@/services/stories/StoryExportImportService';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 import { FullStoryExportSchema } from '@keres/shared';
 
 /**
@@ -68,6 +72,11 @@ const id = {
   storyCalendar: '',
   storyArc: '',
   board: '',
+  sketch: '',
+  scenePage: '',
+  sceneMusic: '',
+  song: '',
+  songMusic: '',
   locationMap: '',
   location: '',
   otherLocation: '',
@@ -396,6 +405,66 @@ beforeEach(async () => {
       ],
     },
   } as never);
+  // A sketch carries its own layer ids inside `content`; the package keeps them and import rebuilds the row.
+  await db.insert(sketches).values({
+    id: id.sketch,
+    storyId,
+    name: 'The lantern plan',
+    description: 'Where the light stands',
+    content: {
+      page: { width: 794, height: 1123, background: 'paper' },
+      layers: [
+        { id: '01ABCDEF', name: 'Layer 1', visible: true, opacity: 1, locked: false, data: '' },
+      ],
+      overlays: [],
+    },
+  } as never);
+  // A page of a scene: it points at the scene, the sketch and (as the other image) nothing else.
+  await db.insert(scenePages).values({
+    id: id.scenePage,
+    storyId,
+    sceneId: id.sceneA,
+    rank: 'a0',
+    sketchId: id.sketch,
+    galleryId: null,
+    fit: 'cover',
+    text: 'Panel 1: the lantern.',
+  } as never);
+  // The music of a scene: it points at the scene and at a medium of the Gallery.
+  await db.insert(sceneMusic).values({
+    id: id.sceneMusic,
+    storyId,
+    sceneId: id.sceneA,
+    rank: 'a0',
+    songId: null,
+    galleryId: id.gallery,
+    role: 'in-world',
+    cue: 'as the lantern is lit',
+    sections: ['Chorus'],
+  } as never);
+  // A song, sung in a scene: the link points at it by id, which an import has to follow.
+  await db.insert(songs).values({
+    id: id.song,
+    storyId,
+    title: 'The lantern song',
+    notes: 'Sung at the gate',
+    lyrics: '{soc: Chorus}\n[G]Light the lantern\n{eoc}',
+    lyricsTranslation: 'Acende o lampião',
+    key: 'G',
+    tempo: 96,
+    meter: '6/8',
+  } as never);
+  await db.insert(sceneMusic).values({
+    id: id.songMusic,
+    storyId,
+    sceneId: id.sceneA,
+    rank: 'a1',
+    songId: id.song,
+    galleryId: null,
+    role: 'in-world',
+    cue: null,
+    sections: null,
+  } as never);
   // Map content uses foreign ids too, so the export/import path has to carry and rewrite it.
   await db.insert(locationMaps).values({
     id: id.locationMap,
@@ -605,6 +674,10 @@ async function childrenOf(storyId: string) {
     statRelations: await rows(statRelations),
     modes: await rows(modes),
     storyBoards: await rows(boards),
+    storySketches: await rows(sketches),
+    scenePages: await rows(scenePages),
+    sceneMusic: await rows(sceneMusic),
+    songs: await rows(songs),
     storyLocationMaps: await rows(locationMaps),
     plots: await rows(plots),
     plotScenes: await rows(plotScenes),
@@ -759,7 +832,40 @@ describe('import of a package with one row of every kind', () => {
     expect(after.seeAlsoRelations[0].entityBId).toBe(id.location);
     expect(after.itemJourneys[0].newCharacterOwnerId).toBe(id.characterB);
     expect(after.storyBoards[0].id).toBe(id.board);
+    expect(after.storySketches[0]).toMatchObject({
+      id: id.sketch,
+      name: 'The lantern plan',
+      content: { layers: [{ id: '01ABCDEF', name: 'Layer 1' }] },
+    });
     expect(after.storyLocationMaps[0].id).toBe(id.locationMap);
+    // A page keeps its words and fit, and follows its scene and its sketch to their (here unchanged) ids.
+    expect(after.scenePages[0]).toMatchObject({
+      id: id.scenePage,
+      sceneId: id.sceneA,
+      sketchId: id.sketch,
+      fit: 'cover',
+      text: 'Panel 1: the lantern.',
+    });
+    // Music keeps its role, cue and sections, and follows its scene and its medium to their ids.
+    expect(after.sceneMusic[0]).toMatchObject({
+      id: id.sceneMusic,
+      sceneId: id.sceneA,
+      galleryId: id.gallery,
+      role: 'in-world',
+      cue: 'as the lantern is lit',
+      sections: ['Chorus'],
+    });
+    // A song keeps all its fields, and the link that sings it still points at it.
+    expect(after.songs[0]).toMatchObject({
+      id: id.song,
+      title: 'The lantern song',
+      lyricsTranslation: 'Acende o lampião',
+      tempo: 96,
+      meter: '6/8',
+    });
+    expect(
+      after.sceneMusic.find((row: Record<string, unknown>) => row.id === id.songMusic),
+    ).toMatchObject({ songId: id.song });
     expect(
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
         .entityId,

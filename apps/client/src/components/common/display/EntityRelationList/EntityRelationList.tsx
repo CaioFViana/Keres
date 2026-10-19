@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export interface EntityRelationListItem {
   id: string;
@@ -24,20 +25,7 @@ interface Props {
 /** Shared compact relation rows; managers keep their selection and persistence rules. */
 const EntityRelationList: React.FC<Props> = ({ items, emptyText }) => {
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
-    last: { borderBottomWidth: 0 },
-    icon: { marginRight: 10 },
-    text: { flex: 1, fontSize: 15, color: colors.text },
-    textWrap: { flex: 1 },
-    empty: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
-  });
+  const styles = useThemedStyles(createStyles);
   if (!items.length) return <Text style={styles.empty}>{emptyText}</Text>;
   return (
     <View>
@@ -81,5 +69,21 @@ const EntityRelationList: React.FC<Props> = ({ items, emptyText }) => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    last: { borderBottomWidth: 0 },
+    icon: { marginRight: 10 },
+    text: { flex: 1, fontSize: 15, color: colors.text },
+    textWrap: { flex: 1 },
+    empty: { color: colors.textSecondary, fontStyle: 'italic', paddingVertical: 8 },
+  });
 
 export default EntityRelationList;

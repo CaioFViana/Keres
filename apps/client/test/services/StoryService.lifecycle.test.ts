@@ -3,10 +3,15 @@
  */
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
-import { comments, favorites, operationLogs, servers, stories } from '../../src/db/schema';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import { comments, favorites, operationLogs, servers, stories } from '@/src/db/schema';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 
@@ -46,6 +51,27 @@ describe('StoryService lifecycle', () => {
         where: (log, { eq }) => eq(log.entityId, created.id),
       }),
     ).toEqual(expect.objectContaining({ entityType: 'Story', operationType: 'create' }));
+  });
+
+  it('makes the first arc generic unless a form of the work is asked for', async () => {
+    const service = createStoryService(database.db);
+    const plain = await service.createStory('author', {
+      userId: 'ignored-by-service',
+      title: 'Plain',
+      type: 'linear',
+    });
+    const script = await service.createStory(
+      'author',
+      { userId: 'ignored-by-service', title: 'Script', type: 'linear' },
+      { arcMedium: 'screenplay' },
+    );
+
+    const arcOf = (storyId: string) =>
+      database.db.query.storyArcs.findFirst({
+        where: (arc, { eq }) => eq(arc.storyId, storyId),
+      });
+    expect(await arcOf(plain.id)).toMatchObject({ isDefault: true, medium: 'generic' });
+    expect(await arcOf(script.id)).toMatchObject({ isDefault: true, medium: 'screenplay' });
   });
 
   it('persists meaningful updates once and skips an unchanged save', async () => {

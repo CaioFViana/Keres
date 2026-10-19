@@ -2,13 +2,16 @@ import type { CompiledManuscript, ManuscriptRenderOptions } from './export/manus
 import { buildManuscriptDocxBytes } from './export/manuscriptDocx';
 import { buildManuscriptEpubBytes, type ManuscriptEpubMetadata } from './export/manuscriptEpub';
 import { buildManuscriptHtml } from './export/manuscriptHtml';
-import { buildManuscriptPdf } from './export/manuscriptPdf';
+import { buildManuscriptPdf, buildManuscriptPdfAsync } from './export/manuscriptPdf';
+import type { PdfFontMatrices } from './export/manuscriptPdfFonts';
 import { buildManuscriptMarkdown, buildManuscriptText } from './export/manuscriptText';
 import type { ManuscriptFormat } from './manuscriptContracts';
 
 export type ManuscriptRenderLabels = {
   goToPage: string;
   goToScene: string;
+  /** The word before a scene number in a paged choice: "Go to page 12, scene 7". Absent: "scene". */
+  sceneWord?: string;
   tocHeading: string;
 };
 
@@ -23,11 +26,17 @@ export async function renderManuscript(
   labels: ManuscriptRenderLabels,
   options: ManuscriptRenderOptions = {},
   metadata: ManuscriptEpubMetadata = {},
+  // Serif matrices for the PDF: when present the renderer embeds per-face
+  // subsets (Unicode) instead of the WinAnsi base-14 Times. Bytes travel as a
+  // parameter - never through the zod-validated options - injected by the
+  // platform edge that owns the font files.
+  pdfFonts?: PdfFontMatrices,
 ): Promise<Uint8Array | string> {
   switch (format) {
     case 'docx':
       return buildManuscriptDocxBytes(manuscript, labels, options);
     case 'pdf':
+      if (pdfFonts) return buildManuscriptPdfAsync(manuscript, labels, options, pdfFonts);
       return buildManuscriptPdf(manuscript, labels, options);
     case 'epub':
       return buildManuscriptEpubBytes(manuscript, labels, options, metadata);
@@ -37,5 +46,11 @@ export async function renderManuscript(
       return buildManuscriptMarkdown(manuscript, labels, options);
     case 'txt':
       return buildManuscriptText(manuscript, labels);
+    case 'fountain':
+    case 'screenplay-pdf':
+      // A screenplay is not blocks: `compileStoryManuscript` hands it to the screenplay compiler first.
+      throw new Error(
+        `The ${format} format is compiled from the script, not rendered from blocks.`,
+      );
   }
 }

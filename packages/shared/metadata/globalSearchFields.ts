@@ -5,7 +5,7 @@
  * silently change which entities show that modal's button (e.g. `Choice` has no entry there
  * today, so its button is correctly disabled).
  *
- * Mirrors `NavigableEntityType` in `apps/client/src/utils/entityNavigation.ts` (same 10 string
+ * Mirrors `NavigableEntityType` in `apps/client/src/utils/entity/entityNavigation.ts` (same 10 string
  * literals) - shared can't import from client, so the two lists are kept in sync by hand; new
  * entity types are rare and already touch both files.
  */
@@ -22,7 +22,8 @@ export type GlobalSearchEntityType =
   | 'WorldRule'
   | 'Mode'
   | 'Plot'
-  | 'Route';
+  | 'Route'
+  | 'Song';
 
 export interface GlobalSearchFieldConfig {
   /** Column used as the result's display title. */
@@ -108,5 +109,10 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
   Route: {
     titleField: 'name',
     searchFields: ['name', 'details'],
+  },
+  // The lyrics are searched too: a line half remembered finds the song it belongs to.
+  Song: {
+    titleField: 'title',
+    searchFields: ['title', 'notes', 'lyrics', 'lyricsTranslation'],
   },
 };

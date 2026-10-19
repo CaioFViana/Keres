@@ -1,9 +1,11 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import { CANVAS_ACTION_ROW_HEIGHT } from '../../src/components/features/graphs/CanvasActionBar/CanvasActionBar';
-import OverlayDrawBar from '../../src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
+import { CANVAS_ACTION_ROW_HEIGHT } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
+import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
 
-jest.mock('../../src/theme', () => ({
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#111',
@@ -15,7 +17,7 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => ({
     width: 390,
@@ -26,8 +28,6 @@ jest.mock('../../src/hooks/useResponsiveLayout', () => ({
     isWide: false,
   })),
 }));
-
-import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 
 const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
 const compactLayout = {

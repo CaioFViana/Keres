@@ -1,8 +1,8 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,
@@ -15,15 +15,15 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { PlotSceneSelect, SceneSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryPlots } from '../../hooks/useStoryPlots';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import type { PlotSceneSelect, SceneSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 type PlotDetailScreenRouteProp = RouteProp<PlotsStackParamList, 'PlotDetail'>;

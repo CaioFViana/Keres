@@ -1,5 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 
+import { HelpPageScreen } from '@/src/screens/help/HelpPageScreen';
+import type { DocLibrary } from '@/src/content/help/library';
+
 const mockNavigate = jest.fn();
 const mockPush = jest.fn();
 const mockGoBack = jest.fn();
@@ -27,7 +30,7 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('../../../src/components/features/help/HelpBlockRenderer/HelpBlockRenderer', () => ({
+jest.mock('@/src/components/features/help/HelpBlockRenderer/HelpBlockRenderer', () => ({
   __esModule: true,
   HelpBlockRenderer: (props: {
     block: { type: string; text?: string };
@@ -53,15 +56,15 @@ jest.mock('../../../src/components/features/help/HelpBlockRenderer/HelpBlockRend
     );
   },
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: (...args: unknown[]) => mockUseBackButtonHandler(...args),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#fff', text: '#111', textSecondary: '#666' } }),
 }));
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: (...args: unknown[]) => mockSetDocumentTitle(...args),
 }));
@@ -69,9 +72,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
-
-import { HelpPageScreen } from '../../../src/screens/help/HelpPageScreen';
-import type { DocLibrary } from '../../../src/help/library';
 
 const pages = [
   {

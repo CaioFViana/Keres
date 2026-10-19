@@ -1,15 +1,15 @@
+import { renderHook } from '@testing-library/react-native';
+import { useChapterFormResources } from '@/src/screens/narrative-elements/chapters/useChapterFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateChapterService = jest.fn();
 
-jest.mock('../../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('../../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   createChapterService: (...args: unknown[]) => mockCreateChapterService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useChapterFormResources } from '../../../../src/screens/narrative-elements/chapters/useChapterFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'chapter-service' };

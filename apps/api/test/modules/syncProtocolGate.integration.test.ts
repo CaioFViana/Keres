@@ -4,8 +4,8 @@ import {
   SYNC_PROTOCOL_VERSION,
 } from '@keres/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { getApp, newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 /**
  * The synchronization protocol gate.

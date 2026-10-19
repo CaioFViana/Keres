@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import type { JWTPayload } from '../../src/index';
+import type { JWTPayload } from '@/index';
 import {
   assertRealtimeTicket,
   closeRealtimeEvents,
@@ -7,11 +7,11 @@ import {
   handleRealtimeEventMessage,
   hasValidRealtimeTicket,
   openRealtimeEvents,
-} from '../../src/modules/webSocket/webSocket.route';
-import type { RealtimeSocket } from '../../src/services/RealtimeSessionService';
-import { eventManager } from '../../src/utils/EventManager';
-import { registerUser, uploadTestStory, type TestUser } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/modules/web-socket/webSocket.route';
+import type { RealtimeSocket } from '@/services/sync/RealtimeSessionService';
+import { eventManager } from '@/utils/EventManager';
+import { registerUser, uploadTestStory, type TestUser } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let storyId: string;

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { db } from '../../src/db';
-import { stories, users } from '../../src/db/schema';
-import { LocationRelationSyncHandler } from '../../src/services/entity-sync-handlers/LocationRelationSyncHandler';
-import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { stories, users } from '@/db/schema';
+import { LocationRelationSyncHandler } from '@/services/entity-sync-handlers/LocationRelationSyncHandler';
+import { LocationSyncHandler } from '@/services/entity-sync-handlers/LocationSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

@@ -3,10 +3,10 @@
  */
 import { AttributeType, OperationLogEntityType } from '@keres/shared';
 import type { TFunction } from 'i18next';
-import * as schema from '../../src/db/schema';
-import { EntityService } from '../../src/services/EntityService';
-import { resolveRelationEntityName } from '../../src/services/EntityIdentifierResolver';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { EntityService } from '@/src/services/entity-solvers/EntityService';
+import { resolveRelationEntityName } from '@/src/services/entity-solvers/EntityIdentifierResolver';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

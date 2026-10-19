@@ -1,0 +1,692 @@
+import type React from 'react';
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import type { View } from 'react-native';
+import { Animated, PanResponder, Platform } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
+import { attachCanvasWebInput } from '@/src/utils/canvas/canvasWebInput';
+import { useCanvasAutoPan } from './useCanvasAutoPan';
+import { useCanvasCameraMoves } from './useCanvasCameraMoves';
+import {
+  spatialNativeSurface,
+  spatialOverlayNeedsSync,
+  spatialOverlayScaleDrifted,
+  spatialRenderWindow,
+  type SpatialPoint,
+  type SpatialRect,
+} from '@keres/shared';
+import {
+  type CanvasCameraTransform,
+  type CanvasViewportBounds,
+  type CanvasViewportHandle,
+  type CanvasViewportOptions,
+  DEFAULT_MAX_SCALE,
+  DEFAULT_MIN_SCALE,
+  DRAG_THRESHOLD,
+  FIT_MARGIN,
+  FREE_PAN_KEEP,
+  initialOverlayState,
+  type OverlayState,
+  type Transform,
+  wrapAngle,
+} from '@/src/utils/canvas/canvasViewportTypes';
+
+/**
+ * Pan and zoom for every canvas in the app: boards and location maps as well as the story,
+ * location, relation, matrix and timeline drawings.
+ *
+ * One rule governs the whole design: children are world-addressed and the camera lives ONLY in
+ * the container transform. A gesture writes refs and `Animated` values; it never moves a child's
+ * layout position, so there is no second channel that could commit a frame late and make the
+ * drawing teleport - the failure the previous origin-rebasing viewport had on Android, where a
+ * React commit (Yoga + Fabric + SVG serialization) lands whole frames after the native transform.
+ *
+ * The only React state a gesture may touch is the overlay: the viewport-sized edges surface plus
+ * the culling window. Re-syncing it moves nothing on screen (the SVG recenters against its own
+ * internal transform in the same commit, and culling only mounts/unmounts off-screen items), and
+ * hysteresis keeps the re-render off the gesture's critical path.
+ */
+export type {
+  CanvasCameraTransform,
+  CanvasViewportBounds,
+  CanvasViewportHandle,
+  CanvasViewportOptions,
+} from '@/src/utils/canvas/canvasViewportTypes';
+
+export function useCanvasViewport(
+  ref: React.ForwardedRef<CanvasViewportHandle>,
+  bounds: CanvasViewportBounds | null,
+  options: CanvasViewportOptions = {},
+) {
+  const minScaleOption = options.minScale ?? DEFAULT_MIN_SCALE;
+  const maxScale = options.maxScale ?? DEFAULT_MAX_SCALE;
+  const clampMode = options.clampMode ?? 'contain';
+  const fitVerticalAlignment = options.fitVerticalAlignment ?? 'center';
+  const refitOnLayoutChange = options.refitOnLayoutChange ?? true;
+  const fitMode = options.fitMode ?? 'contain';
+  /** In refs so that changing a handler does not rebuild the `PanResponder` mid-gesture. */
+  const { onTap: onTapOption, onAutoPan: onAutoPanOption } = options;
+  const onTap = useRef(onTapOption);
+  const autoPanHandler = useRef(onAutoPanOption);
+  const boundsRef = useRef(bounds);
+  useEffect(() => {
+    // Latest-ref sync for the gesture responders: every reader runs on events, after effects
+    // have flushed, so syncing here (instead of during render) changes no observable timing.
+    onTap.current = onTapOption;
+    autoPanHandler.current = onAutoPanOption;
+    boundsRef.current = bounds;
+  }, [onTapOption, onAutoPanOption, bounds]);
+
+  const containerRef = useRef<View>(null);
+  const viewport = useRef({ width: 0, height: 0 });
+  /**
+   * Layout-size mirror for the rotation composition only: the animated plane needs the
+   * viewport center at render time, and refs do not re-render. Layouts are rare.
+   */
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  /** The canvas's corner within the window, to convert the pinch's focus into local coordinates. */
+  const viewportOrigin = useRef({ x: 0, y: 0 });
+
+  const transform = useRef<Transform>({ scale: 1, x: 0, y: 0 });
+  const rotationEnabled = options.rotationEnabled ?? false;
+  /** View rotation in radians, wrapped to [-PI, PI]; view-only, never persisted. */
+  const rotationRef = useRef(0);
+  /** Mirrored to state outside gestures so a reset control can appear. */
+  const [rotationState, setRotationState] = useState(0);
+  const [animatedScale] = useState(() => new Animated.Value(1));
+  const [animatedX] = useState(() => new Animated.Value(0));
+  const [animatedY] = useState(() => new Animated.Value(0));
+  const [animatedRotation] = useState(() => new Animated.Value(0));
+  /**
+   * The live camera mirrored to a shared value. The Skia edge overlay is a sibling of the
+   * animated plane (sizing it inside the scaled plane would need world-unit layout and rebuild
+   * the giant bitmap on the GPU), so it cannot inherit the camera - it reads this mirror on the
+   * UI thread instead, tracking gestures with no React commit and no desync from the nodes.
+   */
+  const cameraTransform: SharedValue<CanvasCameraTransform> = useSharedValue<CanvasCameraTransform>(
+    [{ translateX: 0 }, { translateY: 0 }, { scale: 1 }],
+  );
+  /** Live scale mirrored to state only outside gestures, for drag math and child props. */
+  const [scaleState, setScaleState] = useState(1);
+
+  const overlayRef = useRef<OverlayState>(initialOverlayState(bounds));
+  const [overlay, setOverlay] = useState<OverlayState>(() => initialOverlayState(bounds));
+
+  /**
+   * A child (a board pin) that is dragging must keep the responder. Capture would steal the
+   * gesture as soon as the finger moved past DRAG_THRESHOLD, and the pin would never move.
+   * Two-finger pinch still belongs to the canvas even then.
+   */
+  const childDragging = useRef(false);
+  /** Estado do gesto em andamento; zerado a cada toque novo. */
+  const gesture = useRef({
+    lastDx: 0,
+    lastDy: 0,
+    pinchDistance: 0,
+    pinchScale: 1,
+    pinchAngle: 0,
+    pinchAngleSet: false,
+  });
+  /** The gesture still qualifies as a tap: one finger, and no drag so far. */
+  const tapping = useRef(false);
+  /** The identity of the last bounds already framed, so as not to reframe on every render. */
+  const fittedBounds = useRef<CanvasViewportBounds | null>(null);
+
+  const publish = useCallback(() => {
+    animatedScale.setValue(transform.current.scale);
+    animatedX.setValue(transform.current.x);
+    animatedY.setValue(transform.current.y);
+    const rotation = rotationEnabled ? wrapAngle(rotationRef.current) : 0;
+    rotationRef.current = rotation;
+    animatedRotation.setValue(rotation);
+    // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
+    cameraTransform.value =
+      rotationEnabled && rotation !== 0
+        ? [
+            { translateX: viewport.current.width / 2 },
+            { translateY: viewport.current.height / 2 },
+            { rotate: rotation },
+            { translateX: transform.current.x - viewport.current.width / 2 },
+            { translateY: transform.current.y - viewport.current.height / 2 },
+            { scale: transform.current.scale },
+          ]
+        : [
+            { translateX: transform.current.x },
+            { translateY: transform.current.y },
+            { scale: transform.current.scale },
+          ];
+  }, [animatedRotation, animatedScale, animatedX, animatedY, cameraTransform, rotationEnabled]);
+
+  const cameraTopLeft = useCallback((): SpatialPoint => {
+    const scale = transform.current.scale === 0 ? 1 : transform.current.scale;
+    return {
+      x: (0 - transform.current.x) / scale,
+      y: (0 - transform.current.y) / scale,
+    };
+  }, []);
+
+  /**
+   * Screen/world mapping with the view rotation undone/applied around the viewport
+   * center. With rotation off (every canvas but sketches) the angle is 0 and both
+   * reduce to today's formulas exactly.
+   */
+  const screenToWorldPoint = useCallback(
+    (point: SpatialPoint): SpatialPoint => {
+      const scale = transform.current.scale === 0 ? 1 : transform.current.scale;
+      const rotation = rotationEnabled ? rotationRef.current : 0;
+      const untranslated = {
+        x: (point.x - transform.current.x) / scale,
+        y: (point.y - transform.current.y) / scale,
+      };
+      if (rotation === 0) return untranslated;
+      const { width, height } = viewport.current;
+      const safeScale = scale === 0 ? 1 : scale;
+      const center = {
+        x: (width / 2 - transform.current.x) / safeScale,
+        y: (height / 2 - transform.current.y) / safeScale,
+      };
+      const cos = Math.cos(-rotation);
+      const sin = Math.sin(-rotation);
+      const dx = untranslated.x - center.x;
+      const dy = untranslated.y - center.y;
+      return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
+    },
+    [rotationEnabled],
+  );
+
+  const worldToScreenPoint = useCallback(
+    (point: SpatialPoint): SpatialPoint => {
+      const scale = transform.current.scale;
+      const rotation = rotationEnabled ? rotationRef.current : 0;
+      const mapped = {
+        x: point.x * scale + transform.current.x,
+        y: point.y * scale + transform.current.y,
+      };
+      if (rotation === 0) return mapped;
+      const { width, height } = viewport.current;
+      const cx = width / 2;
+      const cy = height / 2;
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
+      const dx = mapped.x - cx;
+      const dy = mapped.y - cy;
+      return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
+    },
+    [rotationEnabled],
+  );
+
+  /**
+   * Axis-aligned bound of the (possibly rotated) visible region: culling stays
+   * conservative, painting a little past the viewport corners while twisted.
+   */
+  const visibleWorldRect = useCallback((): SpatialRect => {
+    const { width, height } = viewport.current;
+    const scale = transform.current.scale === 0 ? 1 : transform.current.scale;
+    const rotation = rotationEnabled ? rotationRef.current : 0;
+    if (rotation === 0) {
+      const topLeft = cameraTopLeft();
+      return { x: topLeft.x, y: topLeft.y, width: width / scale, height: height / scale };
+    }
+    const corners = [
+      screenToWorldPoint({ x: 0, y: 0 }),
+      screenToWorldPoint({ x: width, y: 0 }),
+      screenToWorldPoint({ x: 0, y: height }),
+      screenToWorldPoint({ x: width, y: height }),
+    ];
+    const xs = corners.map((corner) => corner.x);
+    const ys = corners.map((corner) => corner.y);
+    const left = Math.min(...xs);
+    const top = Math.min(...ys);
+    return {
+      x: left,
+      y: top,
+      width: Math.max(...xs) - left,
+      height: Math.max(...ys) - top,
+    };
+  }, [cameraTopLeft, rotationEnabled, screenToWorldPoint]);
+
+  /**
+   * Re-covers the camera with the viewport-sized overlay. Safe mid-gesture by construction: it
+   * only moves the edges surface (which compensates internally in the same commit) and the
+   * culling window (which only affects off-screen items). Hysteresis keeps it rare.
+   */
+  const syncOverlays = useCallback(
+    (force = false) => {
+      const { width, height } = viewport.current;
+      if (!width || !height) return;
+      const scale = transform.current.scale === 0 ? 1 : transform.current.scale;
+      const surface = spatialNativeSurface(width, height);
+      const current = overlayRef.current;
+      const currentWindow: SpatialRect =
+        current.width > 0 && current.height > 0
+          ? current.renderWindow
+          : { x: 0, y: 0, width: 0, height: 0 };
+      if (
+        !force &&
+        current.width === surface.width &&
+        current.height === surface.height &&
+        !spatialOverlayScaleDrifted(scale, current.scale) &&
+        !spatialOverlayNeedsSync(visibleWorldRect(), currentWindow)
+      ) {
+        return;
+      }
+      const camera = cameraTopLeft();
+      const origin = {
+        x: camera.x - surface.overscanX / scale,
+        y: camera.y - surface.overscanY / scale,
+      };
+      let windowWidth = surface.width;
+      let windowHeight = surface.height;
+      if (rotationEnabled && rotationRef.current !== 0) {
+        // While twisted the culling window follows the rotated AABB with the same
+        // overscan margins. The native surface stays viewport-sized; only the window grows.
+        const box = visibleWorldRect();
+        origin.x = box.x - surface.overscanX / scale;
+        origin.y = box.y - surface.overscanY / scale;
+        windowWidth = box.width * scale + 2 * surface.overscanX;
+        windowHeight = box.height * scale + 2 * surface.overscanY;
+      }
+      const next: OverlayState = {
+        origin,
+        width: surface.width,
+        height: surface.height,
+        scale,
+        renderWindow: spatialRenderWindow(origin, windowWidth, windowHeight, scale),
+      };
+      overlayRef.current = next;
+      setOverlay(next);
+    },
+    // visibleWorldRect already re-derives when its own inputs change; rotationEnabled is
+    // fixed for a mounted canvas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cameraTopLeft, visibleWorldRect],
+  );
+
+  /**
+   * Keeps the drawing reachable. `contain` centres a drawing that fits and never lets a bigger
+   * one out of sight; `free` only insists that a strip stays on screen; `none` leaves the
+   * camera alone (freeform canvases roam, and `fitToScreen` recovers a lost drawing).
+   */
+  const clamp = useCallback(() => {
+    if (clampMode === 'none') return;
+    const { width: viewportWidth, height: viewportHeight } = viewport.current;
+    if (viewportWidth === 0 || viewportHeight === 0) return;
+    const frame = boundsRef.current;
+    if (!frame || frame.width <= 0 || frame.height <= 0) return;
+
+    const scale = transform.current.scale;
+    const drawingLeft = (frame.x ?? 0) * scale;
+    const drawingTop = (frame.y ?? 0) * scale;
+    const scaledWidth = frame.width * scale;
+    const scaledHeight = frame.height * scale;
+
+    if (clampMode === 'free') {
+      transform.current.x = Math.min(
+        viewportWidth - FREE_PAN_KEEP - drawingLeft,
+        Math.max(FREE_PAN_KEEP - drawingLeft - scaledWidth, transform.current.x),
+      );
+      transform.current.y = Math.min(
+        viewportHeight - FREE_PAN_KEEP - drawingTop,
+        Math.max(FREE_PAN_KEEP - drawingTop - scaledHeight, transform.current.y),
+      );
+      return;
+    }
+
+    transform.current.x =
+      scaledWidth <= viewportWidth
+        ? (viewportWidth - scaledWidth) / 2 - drawingLeft
+        : Math.min(
+            0 - drawingLeft,
+            Math.max(viewportWidth - drawingLeft - scaledWidth, transform.current.x),
+          );
+    transform.current.y =
+      scaledHeight <= viewportHeight
+        ? (fitVerticalAlignment === 'top' ? 0 : (viewportHeight - scaledHeight) / 2) - drawingTop
+        : Math.min(
+            0 - drawingTop,
+            Math.max(viewportHeight - drawingTop - scaledHeight, transform.current.y),
+          );
+  }, [clampMode, fitVerticalAlignment]);
+
+  /** Applies a zoom keeping fixed the point of the drawing that lies under `focus`. */
+  const zoomAround = useCallback(
+    (nextScale: number, focus: { x: number; y: number }) => {
+      const previous = transform.current.scale;
+      const clamped = Math.max(minScaleOption, Math.min(maxScale, nextScale));
+      if (clamped === previous) return;
+      if (rotationEnabled && rotationRef.current !== 0) {
+        // Rotated: shift by the scaled world point under the focus. Unrotated this is
+        // exactly the formula below (p = (focus - t) / previous).
+        const under = screenToWorldPoint(focus);
+        transform.current.x += (previous - clamped) * under.x;
+        transform.current.y += (previous - clamped) * under.y;
+      } else {
+        transform.current.x = focus.x - ((focus.x - transform.current.x) * clamped) / previous;
+        transform.current.y = focus.y - ((focus.y - transform.current.y) * clamped) / previous;
+      }
+      transform.current.scale = clamped;
+      clamp();
+      publish();
+    },
+    [clamp, maxScale, minScaleOption, publish, rotationEnabled, screenToWorldPoint],
+  );
+
+  const resetRotation = useCallback(() => {
+    rotationRef.current = 0;
+    setRotationState(0);
+    publish();
+    syncOverlays(true);
+  }, [publish, syncOverlays]);
+
+  const fitToScreen = useCallback(() => {
+    const { width: viewportWidth, height: viewportHeight } = viewport.current;
+    if (viewportWidth === 0 || viewportHeight === 0) return;
+    // Framing math assumes an unrotated camera: fitting straightens the view too.
+    if (rotationEnabled && rotationRef.current !== 0) {
+      rotationRef.current = 0;
+      setRotationState(0);
+    }
+    const frame = boundsRef.current;
+    if (frame && (frame.width <= 0 || frame.height <= 0)) return;
+    const containedScale = frame
+      ? Math.min(viewportWidth / frame.width, viewportHeight / frame.height)
+      : 1;
+    const targetScale =
+      frame && fitMode === 'height' ? viewportHeight / frame.height : containedScale;
+    const scale = Math.max(minScaleOption, Math.min(maxScale, targetScale * FIT_MARGIN));
+    const scaledWidth = frame ? frame.width * scale : 0;
+    transform.current = {
+      scale,
+      // Centring only makes sense when the drawing fits. Wider than the window - a timeline,
+      // a matrix - centring cuts both sides off, and the left-hand side is where
+      // the scene and thread names live. In that case the framing starts at the beginning.
+      x: frame
+        ? (scaledWidth <= viewportWidth ? (viewportWidth - scaledWidth) / 2 : 0) -
+          (frame.x ?? 0) * scale
+        : viewportWidth / 2,
+      y: frame
+        ? (fitVerticalAlignment === 'top' ? 0 : (viewportHeight - frame.height * scale) / 2) -
+          (frame.y ?? 0) * scale
+        : viewportHeight / 2,
+    };
+    clamp();
+    publish();
+    setScaleState(transform.current.scale);
+    syncOverlays(true);
+  }, [
+    clamp,
+    fitMode,
+    fitVerticalAlignment,
+    maxScale,
+    minScaleOption,
+    publish,
+    rotationEnabled,
+    syncOverlays,
+  ]);
+
+  const viewportWorldCenter = useCallback((): SpatialPoint => {
+    const { width, height } = viewport.current;
+    const scale = transform.current.scale;
+    if (!width || !height || !scale) return { x: 0, y: 0 };
+    // Same point as the old corner math when unrotated; the true center when twisted.
+    return screenToWorldPoint({ x: width / 2, y: height / 2 });
+  }, [screenToWorldPoint]);
+
+  const { centerOn, fitToRect, zoomAt, panBy } = useCanvasCameraMoves({
+    transformRef: transform,
+    viewportRef: viewport,
+    minScale: minScaleOption,
+    maxScale,
+    clamp,
+    publish,
+    syncOverlays,
+    zoomAround,
+    setScaleState,
+  });
+
+  // Mouse wheel and keyboard on web; native and the test renderer attach nothing.
+  useEffect(
+    () => attachCanvasWebInput(containerRef, Platform.OS, { zoomAt, panBy, fit: fitToScreen }),
+    [fitToScreen, panBy, zoomAt],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      fitToScreen,
+      zoomBy: (factor: number) => {
+        zoomAt(factor, { x: viewport.current.width / 2, y: viewport.current.height / 2 });
+      },
+      viewportWorldCenter,
+      resetRotation,
+      centerOn,
+      fitToRect,
+    }),
+    [centerOn, fitToRect, fitToScreen, resetRotation, viewportWorldCenter, zoomAt],
+  );
+
+  const { stopAutoPan, updateAutoPan } = useCanvasAutoPan({
+    transformRef: transform,
+    viewportRef: viewport,
+    onAutoPanRef: autoPanHandler,
+    cameraTopLeft,
+    clamp,
+    publish,
+    syncOverlays,
+  });
+
+  const handleLayout = useCallback(() => {
+    containerRef.current?.measureInWindow((x, y, width, height) => {
+      viewportOrigin.current = { x, y };
+      const wasEmpty = viewport.current.width === 0 || viewport.current.height === 0;
+      viewport.current = { width, height };
+      if (rotationEnabled) setViewportSize({ width, height });
+      // The first framing is only possible once the window's size is known, which
+      // happens after the first render.
+      if (wasEmpty) {
+        fittedBounds.current = boundsRef.current;
+        fitToScreen();
+      } else if (refitOnLayoutChange && fittedBounds.current !== boundsRef.current) {
+        fittedBounds.current = boundsRef.current;
+        fitToScreen();
+      } else {
+        syncOverlays(true);
+      }
+    });
+  }, [fitToScreen, refitOnLayoutChange, rotationEnabled, syncOverlays]);
+
+  /**
+   * Stable on purpose. Canvases mirror their armed tools into it from an effect that lists it as a
+   * dependency; a new function on every render re-ran that effect after each frame of a drag, which
+   * cleared the flag in the middle of it, and the canvas then took the gesture from the pin being resized.
+   */
+  const setChildDragging = useCallback(
+    (dragging: boolean) => {
+      childDragging.current = dragging;
+      if (!dragging) stopAutoPan();
+    },
+    [stopAutoPan],
+  );
+
+  const panResponder = useMemo(
+    () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
+      PanResponder.create({
+        // It does not capture the touch's start: that way a simple tap reaches the node and opens the
+        // details. The drag is stolen from the node later, in the move's capture phase.
+        onStartShouldSetPanResponderCapture: () => false,
+        // Whatever no child claimed belongs to the canvas, from the finger's way down: pan, pinch and
+        // `onTap` all start here, instead of the gesture being dropped for want of an owner.
+        onStartShouldSetPanResponder: () => !childDragging.current,
+        onMoveShouldSetPanResponder: (event, gestureState) => {
+          const touches = event.nativeEvent.touches ?? [];
+          if (touches.length > 1) return true;
+          if (childDragging.current) return false;
+          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+        },
+        onMoveShouldSetPanResponderCapture: (event, gestureState) => {
+          const touches = event.nativeEvent.touches ?? [];
+          if (touches.length > 1) return true;
+          if (childDragging.current) return false;
+          return Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD;
+        },
+
+        onPanResponderGrant: (event) => {
+          stopAutoPan();
+          gesture.current = {
+            lastDx: 0,
+            lastDy: 0,
+            pinchDistance: 0,
+            pinchScale: transform.current.scale,
+            pinchAngle: 0,
+            pinchAngleSet: false,
+          };
+          tapping.current = (event?.nativeEvent?.touches?.length ?? 1) <= 1;
+          capturePointer(event);
+        },
+
+        onPanResponderMove: (event, gestureState) => {
+          const touches = event.nativeEvent.touches ?? [];
+
+          if (touches.length >= 2) {
+            tapping.current = false;
+            const [first, second] = touches;
+            const distance = Math.hypot(first.pageX - second.pageX, first.pageY - second.pageY);
+            const focus = {
+              x: (first.pageX + second.pageX) / 2 - viewportOrigin.current.x,
+              y: (first.pageY + second.pageY) / 2 - viewportOrigin.current.y,
+            };
+
+            if (gesture.current.pinchDistance === 0) {
+              gesture.current.pinchDistance = distance;
+              gesture.current.pinchScale = transform.current.scale;
+            } else if (distance > 0) {
+              zoomAround(
+                (gesture.current.pinchScale * distance) / gesture.current.pinchDistance,
+                focus,
+              );
+              syncOverlays();
+            }
+            if (rotationEnabled && first && second) {
+              // Two-finger twist rotates the view around the viewport center; zoom above
+              // keeps running, so pinch-twist zooms and spins in one gesture like a
+              // sketchbook. A small dead zone keeps pure pinches from wobbling the angle.
+              const angle = Math.atan2(second.pageY - first.pageY, second.pageX - first.pageX);
+              if (!gesture.current.pinchAngleSet) {
+                gesture.current.pinchAngle = angle;
+                gesture.current.pinchAngleSet = true;
+              } else {
+                let delta = angle - gesture.current.pinchAngle;
+                if (delta > Math.PI) delta -= Math.PI * 2;
+                if (delta < -Math.PI) delta += Math.PI * 2;
+                if (Math.abs(delta) > 0.02) {
+                  gesture.current.pinchAngle = angle;
+                  rotationRef.current = wrapAngle(rotationRef.current + delta);
+                  setRotationState(rotationRef.current);
+                  publish();
+                  syncOverlays();
+                }
+              }
+            }
+            // Zeroes the drag so the finger leaving the pinch does not make the map jump.
+            gesture.current.lastDx = gestureState.dx;
+            gesture.current.lastDy = gestureState.dy;
+            return;
+          }
+
+          gesture.current.pinchDistance = 0;
+          gesture.current.pinchAngleSet = false;
+          if (Math.hypot(gestureState.dx, gestureState.dy) > DRAG_THRESHOLD)
+            tapping.current = false;
+          transform.current.x += gestureState.dx - gesture.current.lastDx;
+          transform.current.y += gestureState.dy - gesture.current.lastDy;
+          gesture.current.lastDx = gestureState.dx;
+          gesture.current.lastDy = gestureState.dy;
+          clamp();
+          publish();
+          syncOverlays();
+        },
+
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderRelease: (event, gestureState) => {
+          releasePointer(event);
+          gesture.current.pinchDistance = 0;
+          gesture.current.pinchAngleSet = false;
+          setScaleState(transform.current.scale);
+          syncOverlays();
+          const wasTap =
+            tapping.current && Math.hypot(gestureState.dx, gestureState.dy) <= DRAG_THRESHOLD;
+          tapping.current = false;
+          if (!wasTap || !onTap.current) return;
+          const { pageX, pageY } = event.nativeEvent;
+          onTap.current(
+            screenToWorldPoint({
+              x: pageX - viewportOrigin.current.x,
+              y: pageY - viewportOrigin.current.y,
+            }),
+          );
+        },
+        onPanResponderTerminate: () => {
+          gesture.current.pinchDistance = 0;
+          gesture.current.pinchAngleSet = false;
+          tapping.current = false;
+        },
+      }),
+    [clamp, publish, rotationEnabled, screenToWorldPoint, stopAutoPan, syncOverlays, zoomAround],
+  );
+
+  // Rotating around the viewport center, in the same composition the Skia mirror
+  // publishes: T(center) * R * T(t - center) * S. Disabled canvases keep the triple.
+  const animatedRotationText = animatedRotation.interpolate({
+    inputRange: [-Math.PI, Math.PI],
+    outputRange: [`${-Math.PI}rad`, `${Math.PI}rad`],
+  });
+
+  return {
+    containerRef,
+    handleLayout,
+    panHandlers: panResponder.panHandlers,
+    animatedTransform: rotationEnabled
+      ? [
+          { translateX: viewportSize.width / 2 },
+          { translateY: viewportSize.height / 2 },
+          { rotate: animatedRotationText },
+          {
+            translateX: Animated.subtract(animatedX, viewportSize.width / 2),
+          },
+          {
+            translateY: Animated.subtract(animatedY, viewportSize.height / 2),
+          },
+          { scale: animatedScale },
+        ]
+      : [{ translateX: animatedX }, { translateY: animatedY }, { scale: animatedScale }],
+    /** Live camera for the Skia edge overlay; written in `publish`, never via React state. */
+    cameraTransform,
+    setChildDragging,
+    getTransform: () => ({ ...transform.current, rotation: rotationRef.current }),
+    /**
+     * Viewport-sized overlay surface in screen pixels: the native bitmap budget (capped for the
+     * GPU), never the document bounds. The edges Svg itself is world-sized from `renderWindow` -
+     * handing it these screen pixels would clip every edge outside a scale-1.0 bitmap.
+     */
+    width: overlay.width,
+    height: overlay.height,
+    /** World coordinates of the overlay's top-left corner. */
+    svgOrigin: overlay.origin,
+    /** World-space window the overlay covers; canvases cull and clip against it. */
+    renderWindow: overlay.renderWindow,
+    /** Live scale, mirrored to state outside gestures for drag math and child props. */
+    scale: scaleState,
+    worldToScreen: worldToScreenPoint,
+    screenToWorld: screenToWorldPoint,
+    /** View rotation in radians (0 everywhere rotation is off); the reset control reads it. */
+    rotation: rotationState,
+    resetRotation,
+    viewportWorldCenter,
+    centerOn,
+    fitToRect,
+    updateAutoPan,
+    stopAutoPan,
+  };
+}

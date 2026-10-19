@@ -8,6 +8,15 @@ import {
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
 import { escapeHtml, spansToHtml, typographyCss } from './manuscriptHtml';
+import {
+  COVER_CSS,
+  hasPages,
+  type PageRun,
+  pageBlockMarkup,
+  pageCssFor,
+  usedPageImages,
+  withPageRuns,
+} from './manuscriptPageFigure';
 
 /**
  * The compiled manuscript as an EPUB 3 package, assembled by hand over JSZip: the content is simple
@@ -93,6 +102,15 @@ ${body}
 `;
 }
 
+/** Where the cover sits in the package, when the book has one. */
+function coverOf(
+  manuscript: CompiledManuscript,
+): { path: string; image: NonNullable<CompiledManuscript['images']>[string] } | null {
+  const image = manuscript.cover ? manuscript.images?.[manuscript.cover] : undefined;
+  if (!image) return null;
+  return { path: `images/cover.${image.mimeType === 'image/jpeg' ? 'jpg' : 'png'}`, image };
+}
+
 type ContentFile = { name: string; title: string; blocks: CompiledBlock[] };
 
 /** Splits the blocks into files: the opening one, then one per chapter or appendix. */
@@ -133,12 +151,29 @@ function tocList(entries: ManuscriptTocEntry[], href: (bookmarkId: string) => st
   return `<ol>\n${items.join('\n')}\n</ol>`;
 }
 
+/** Where a picture lives in the package, by the media it is (one file per picture, however often it is used). */
+function imagePathOf(mediaId: string, mimeType: string, order: Map<string, number>): string {
+  if (!order.has(mediaId)) order.set(mediaId, order.size + 1);
+  return `images/page-${order.get(mediaId)}.${mimeType === 'image/jpeg' ? 'jpg' : 'png'}`;
+}
+
+type PageContext = {
+  manuscript: Pick<CompiledManuscript, 'images' | 'pageAspect' | 'pageLayout'>;
+  order: Map<string, number>;
+};
+
 function blockXhtml(
-  block: CompiledBlock,
+  block: CompiledBlock | PageRun,
   labels: ManuscriptEpubLabels,
   href: (bookmarkId: string) => string,
+  pages: PageContext,
 ): string {
   switch (block.kind) {
+    case 'page':
+    case 'pages':
+      return pageBlockMarkup(block, pages.manuscript, (mediaId, image) =>
+        imagePathOf(mediaId, image.mimeType, pages.order),
+      );
     case 'title':
       return `<h1 class="title">${escapeHtml(block.text)}</h1>`;
     case 'subtitle':
@@ -153,6 +188,10 @@ function blockXhtml(
     }
     case 'paragraph':
       return `<p>${spansToHtml(block.spans)}</p>`;
+    case 'bullet':
+    case 'ordered':
+      // Grouped by blocksXhtml below: a lone item renders as its own list.
+      return `<${block.kind === 'bullet' ? 'ul' : 'ol'}>\n<li>${spansToHtml(block.spans)}</li>\n</${block.kind === 'bullet' ? 'ul' : 'ol'}>`;
     case 'scene-break':
       return `<p class="scene-break">${escapeHtml(block.text)}</p>`;
     case 'choice': {
@@ -170,6 +209,39 @@ function blockXhtml(
       return lines.join('\n');
     }
   }
+}
+
+/** Consecutive items share one list element; any other block closes it. */
+function blocksXhtml(
+  blocks: CompiledBlock[],
+  labels: ManuscriptEpubLabels,
+  href: (bookmarkId: string) => string,
+  pages: PageContext,
+): string[] {
+  const parts: string[] = [];
+  let openList: 'ul' | 'ol' | null = null;
+  const closeList = () => {
+    if (openList) {
+      parts.push(`</${openList}>`);
+      openList = null;
+    }
+  };
+  for (const block of withPageRuns(blocks, pages.manuscript.pageLayout)) {
+    if (block.kind === 'bullet' || block.kind === 'ordered') {
+      const tag = block.kind === 'bullet' ? 'ul' : 'ol';
+      if (openList !== tag) {
+        closeList();
+        parts.push(`<${tag}>`);
+        openList = tag;
+      }
+      parts.push(`<li>${spansToHtml(block.spans)}</li>`);
+      continue;
+    }
+    closeList();
+    parts.push(blockXhtml(block, labels, href, pages));
+  }
+  closeList();
+  return parts;
 }
 
 /** The whole package, before zipping: path → text. Exposed for tests. */
@@ -198,12 +270,16 @@ export function buildManuscriptEpubEntries(
     options,
     manuscript.blocks.some((block) => block.kind === 'scene-break'),
   );
-  const stylesheet = extraCss ? `${STYLESHEET}${extraCss}\n` : STYLESHEET;
+  const cover = coverOf(manuscript);
+  const pageCss = hasPages(manuscript.blocks) ? `${pageCssFor(manuscript.pageLayout)}\n` : '';
+  const coverCss = cover ? `${COVER_CSS}\n` : '';
+  const stylesheet = `${STYLESHEET}${pageCss}${coverCss}${extraCss ? `${extraCss}\n` : ''}`;
+  const pageContext: PageContext = { manuscript, order: new Map() };
 
   const texts = files
     .filter((file) => file.blocks.length > 0 || file === files[0])
     .map((file, index) => {
-      const parts = file.blocks.map((block) => blockXhtml(block, labels, href));
+      const parts = blocksXhtml(file.blocks, labels, href, pageContext);
       // The in-book index, when asked for, follows the title block like in every other format.
       if (index === 0 && options.includeToc && entries.length > 0) {
         parts.push(
@@ -227,15 +303,41 @@ export function buildManuscriptEpubEntries(
     true,
   );
 
+  const coverText = cover
+    ? {
+        name: 'cover.xhtml',
+        content: xhtmlDocument(
+          manuscript.title,
+          language,
+          `<figure class="cover"><img src="${cover.path}" alt="${escapeHtml(manuscript.title)}" /></figure>`,
+        ),
+      }
+    : null;
+
   const manifest = [
     '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>',
     '<item id="style" href="style.css" media-type="text/css"/>',
+    ...(cover && coverText
+      ? [
+          `<item id="cover-image" href="${cover.path}" media-type="${cover.image.mimeType}" properties="cover-image"/>`,
+          `<item id="cover" href="${coverText.name}" media-type="application/xhtml+xml"/>`,
+        ]
+      : []),
     ...texts.map(
       (text, index) =>
         `<item id="text${index}" href="${text.name}" media-type="application/xhtml+xml"/>`,
     ),
   ];
-  const spine = texts.map((_, index) => `<itemref idref="text${index}"/>`);
+  for (const { mediaId, image } of usedPageImages(manuscript)) {
+    const path = imagePathOf(mediaId, image.mimeType, pageContext.order);
+    manifest.push(
+      `<item id="img${pageContext.order.get(mediaId)}" href="${path}" media-type="${image.mimeType}"/>`,
+    );
+  }
+  const spine = [
+    ...(coverText ? ['<itemref idref="cover"/>'] : []),
+    ...texts.map((_, index) => `<itemref idref="text${index}"/>`),
+  ];
   const creator = metadata.author?.trim()
     ? `\n    <dc:creator>${escapeHtml(metadata.author.trim())}</dc:creator>`
     : '';
@@ -245,7 +347,7 @@ export function buildManuscriptEpubEntries(
     <dc:identifier id="bookid">${escapeHtml(identifier)}</dc:identifier>
     <dc:title>${escapeHtml(manuscript.title)}</dc:title>
     <dc:language>${escapeHtml(language)}</dc:language>${creator}
-    <meta property="dcterms:modified">${modifiedStamp(metadata.modified ?? new Date(0))}</meta>
+    <meta property="dcterms:modified">${modifiedStamp(metadata.modified ?? new Date(0))}</meta>${cover ? '\n    <meta name="cover" content="cover-image"/>' : ''}
   </metadata>
   <manifest>
     ${manifest.join('\n    ')}
@@ -262,6 +364,7 @@ export function buildManuscriptEpubEntries(
     ['OEBPS/content.opf', opf],
     ['OEBPS/nav.xhtml', nav],
     ['OEBPS/style.css', stylesheet],
+    ...(coverText ? ([[`OEBPS/${coverText.name}`, coverText.content]] as [string, string][]) : []),
     ...texts.map((text): [string, string] => [`OEBPS/${text.name}`, text.content]),
   ];
 }
@@ -280,6 +383,18 @@ export async function buildManuscriptEpubBytes(
     zip.file(path, content, {
       date,
       compression: path === 'mimetype' ? 'STORE' : 'DEFLATE',
+    });
+  }
+  // The cover, once, where the package points at it.
+  const cover = coverOf(manuscript);
+  if (cover) zip.file(`OEBPS/${cover.path}`, cover.image.bytes, { date, compression: 'STORE' });
+  // The pictures of the pages: each once, at the path the pages point at (first use, in book order).
+  const order = new Map<string, number>();
+  for (const { mediaId, image } of usedPageImages(manuscript)) {
+    zip.file(`OEBPS/${imagePathOf(mediaId, image.mimeType, order)}`, image.bytes, {
+      date,
+      // PNG and JPEG are already compressed.
+      compression: 'STORE',
     });
   }
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });

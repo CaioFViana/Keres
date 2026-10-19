@@ -1,19 +1,19 @@
+import { renderHook } from '@testing-library/react-native';
+import { useChoiceFormAssociations } from '@/src/screens/narrative-elements/choices/useChoiceFormAssociations';
+
 const mockUseChoiceChecks = jest.fn();
 const mockUseEntityEffects = jest.fn();
 const mockUseEntityRelations = jest.fn();
 
-jest.mock('../../../../src/hooks/useChoiceChecks', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/useChoiceChecks', () => ({
   useChoiceChecks: (...args: unknown[]) => mockUseChoiceChecks(...args),
 }));
-jest.mock('../../../../src/hooks/useEntityEffects', () => ({
+jest.mock('@/src/hooks/choice/useEntityEffects', () => ({
   useEntityEffects: (...args: unknown[]) => mockUseEntityEffects(...args),
 }));
-jest.mock('../../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useChoiceFormAssociations } from '../../../../src/screens/narrative-elements/choices/useChoiceFormAssociations';
 
 const fakeChecks = { marker: 'checks' };
 const fakeEffects = { marker: 'effects' };

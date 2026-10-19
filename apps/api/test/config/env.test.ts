@@ -56,7 +56,7 @@ async function loadEnv(overrides: Record<string, string | undefined> = {}) {
     }
   }
 
-  return (await import('../../src/config/env')).env;
+  return (await import('@/config/env')).env;
 }
 
 beforeEach(() => {

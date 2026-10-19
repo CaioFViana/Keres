@@ -1,15 +1,15 @@
-jest.mock('../../../src/utils/AppAlert', () => ({
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { createCharacterDetailMutations } from '@/src/screens/characters/createCharacterDetailMutations';
+
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: jest.fn() },
 }));
-jest.mock('../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: jest.fn() },
 }));
-
-import { AppAlert } from '../../../src/utils/AppAlert';
-import { entityEventEmitter } from '../../../src/utils/EventEmitter';
-import { createCharacterDetailMutations } from '../../../src/screens/characters/createCharacterDetailMutations';
 
 const relation = { id: 'relation-1' } as any;
 const characterScene = { id: 'scene-relation-1' } as any;

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import RouteFormScreen from '../../../src/screens/routes/RouteFormScreen';
+import RouteFormScreen from '@/src/screens/routes/RouteFormScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -22,7 +22,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -42,7 +42,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -54,22 +54,22 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (s: any) => any) => {
     const state = { userId: 'user-1', exportFormat: 'svg' };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/screens/routes/useRouteFormResources', () => ({
+jest.mock('@/src/screens/routes/useRouteFormResources', () => ({
   useRouteFormResources: () => ({ routeServiceRef: { current: {} } }),
 }));
 
-jest.mock('../../../src/screens/routes/useRouteFormState', () => ({
+jest.mock('@/src/screens/routes/useRouteFormState', () => ({
   useRouteFormState: () => mockFormState,
 }));
 
-jest.mock('../../../src/screens/routes/useRouteFormActions', () => ({
+jest.mock('@/src/screens/routes/useRouteFormActions', () => ({
   useRouteFormActions: () => ({
     deleting: mockDeleting,
     handleDelete: mockHandleDelete,
@@ -78,9 +78,9 @@ jest.mock('../../../src/screens/routes/useRouteFormActions', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

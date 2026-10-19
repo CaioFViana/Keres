@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { showcaseSettings, storyPublications } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { showcaseService } from '../../src/services/ShowcaseService';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { showcaseSettings, storyPublications } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { showcaseService } from '@/services/showcase/ShowcaseService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { truncateAll } from '@test/helpers/database';
 
 // Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();
@@ -49,6 +49,11 @@ describe('GET /public/config', () => {
   it('reports an enabled showcase', async () => {
     const { data } = await request('GET', '/public/config');
     expect(data.showcaseEnabled).toBe(true);
+  });
+
+  it('advertises client-compiled uploads', async () => {
+    const { data } = await request('GET', '/public/config');
+    expect(data.compiledUpload).toBe(true);
   });
 });
 
@@ -143,7 +148,7 @@ describe('GET /public/stories/:storyId', () => {
 
   it('answers null for the detail of a story that was never listed', async () => {
     // The route checks the entry before calling, so only a direct call reaches this branch.
-    await expect(showcaseService.getStoryDetail(newId())).resolves.toBeNull();
+    await expect(showcaseService.getStoryDetail(newId(), false)).resolves.toBeNull();
   });
 
   it('reveals nothing at all about a password-protected story', async () => {

@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../../src/db';
-import { galleries, tiers, users } from '../../src/db/schema';
+import { db } from '@/db';
+import { galleries, tiers, users } from '@/db/schema';
 import {
   newId,
   registerUser,
@@ -10,9 +10,9 @@ import {
   shareStory,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { truncateAll } from '@test/helpers/database';
 
 installBunShim();
 
@@ -198,7 +198,7 @@ describe('POST /media/:storyId/blobs/:hash', () => {
   });
 
   it('answers 500 when storage fails, so the client retries instead of blaming its bytes', async () => {
-    const { mediaStorageService } = await import('../../src/services/MediaStorageService');
+    const { mediaStorageService } = await import('@/services/media-storage/MediaStorageService');
     const failing = vi
       .spyOn(mediaStorageService, 'store')
       .mockRejectedValueOnce(new Error('disk on fire'));

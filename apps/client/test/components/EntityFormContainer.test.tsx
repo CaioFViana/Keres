@@ -2,20 +2,24 @@
 import { useState } from 'react';
 import { Text, TextInput, StyleSheet } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
-import EntityFormContainer from '../../src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import DetailContainer from '../../src/components/layout/DetailContainer/DetailContainer';
-import Button from '../../src/components/common/controls/Button/Button';
-import { useAsyncOperation } from '../../src/hooks/useAsyncOperation';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import Button from '@/src/components/common/controls/Button/Button';
+import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { text: '#111', background: '#fff', primary: '#00f', onPrimary: '#fff' },
   }),
 }));
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/components/common/feedback/PlanUsageBanner/PlanUsageBanner', () => {
+  const { Text } = require('react-native');
+  return { __esModule: true, default: () => <Text>plan-usage-banner</Text> };
+});
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: false }),
 }));
-jest.mock('../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 58,
 }));
 
@@ -81,4 +85,26 @@ it('owns detail bottom clearance and keeps the title and footer inside the singl
   expect(StyleSheet.flatten(scroll.props.contentContainerStyle).paddingBottom).toBe(58);
   expect(screen.getByRole('header').props.children).toBe('Item');
   expect(screen.getByText('Back')).toBeTruthy();
+});
+
+describe('the plan usage banner', () => {
+  it('is shown above the fields by default, since these forms create what a plan counts', async () => {
+    const view = await render(
+      <EntityFormContainer title="Edit">
+        <Text>field</Text>
+      </EntityFormContainer>,
+    );
+
+    expect(view.getByText('plan-usage-banner')).toBeTruthy();
+  });
+
+  it('can be left out of the forms that are not about the open story', async () => {
+    const view = await render(
+      <EntityFormContainer title="Edit" planUsage={false}>
+        <Text>field</Text>
+      </EntityFormContainer>,
+    );
+
+    expect(view.queryByText('plan-usage-banner')).toBeNull();
+  });
 });

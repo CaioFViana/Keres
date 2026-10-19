@@ -1,9 +1,9 @@
 import type { StoryUpdate } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, type CompatibleDb } from '../../db';
-import { operationLog, operationTypeEnum, stories } from '../../db/schema';
-import type { SyncEntityHandler } from '../entity-sync-handlers/BaseSyncEntityHandler';
+import { db, type CompatibleDb } from '@/db';
+import { operationLog, operationTypeEnum, stories } from '@/db/schema';
+import type { SyncEntityHandler } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
 
 /**
  * API persistence for sync operation history. It atomically advances the story-local operation

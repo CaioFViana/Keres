@@ -2,17 +2,16 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Platform, StyleSheet, type ViewStyle } from 'react-native';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
-import { manuscriptTextMetrics } from '../../../src/components/features/manuscript/manuscriptTextMetrics';
-import { MarkdownPreview } from '../../../src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import {
   RICH_BODY_EDITOR_WEB_CSS,
   RichBodyEditor,
-} from '../../../src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
-import { SceneBodyEditor } from '../../../src/components/features/manuscript/SceneBodyEditor/SceneBodyEditor';
-import { SceneBodyFooter } from '../../../src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
-import { SceneBodyToolbar } from '../../../src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
+} from '@/src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
+import { SceneBodyFooter } from '@/src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
+import { SceneBodyToolbar } from '@/src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -31,9 +30,12 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
+let mockLanguage = 'en';
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string) => (mockLanguage === 'en' ? key : `${key}:${mockLanguage}`),
+  }),
 }));
 
 function footerProps(
@@ -72,45 +74,6 @@ function marksState(active: {
   };
 }
 
-describe('SceneBodyEditor', () => {
-  it('seeds and forwards HTML and marks through the alias', async () => {
-    const onHtmlChange = jest.fn();
-    const onMarksChange = jest.fn();
-    const view = await render(
-      <SceneBodyEditor
-        defaultHtml="<html><p>hello world</p></html>"
-        onHtmlChange={onHtmlChange}
-        onMarksChange={onMarksChange}
-        testID="editor"
-      />,
-    );
-
-    const input = view.getByTestId('editor.input');
-    expect(input.props.defaultValue).toBe('<html><p>hello world</p></html>');
-    await fireEvent(input, 'changeHtml', {
-      nativeEvent: { value: '<html><p>hello world!</p></html>' },
-    });
-    expect(onHtmlChange).toHaveBeenCalledWith('<html><p>hello world!</p></html>');
-    await fireEvent(input, 'changeState', { nativeEvent: marksState({ italic: true }) });
-    expect(onMarksChange).toHaveBeenCalledWith(['italic']);
-  });
-
-  it('uses the shared manuscript metrics for a seamless preview swap', async () => {
-    const view = await render(
-      <SceneBodyEditor
-        defaultHtml="<html><p>hello</p></html>"
-        onHtmlChange={jest.fn()}
-        onMarksChange={jest.fn()}
-        testID="editor"
-      />,
-    );
-
-    const style = StyleSheet.flatten(view.getByTestId('editor.input').props.style);
-    expect(style.fontSize).toBe(manuscriptTextMetrics.fontSize);
-    expect(style.lineHeight).toBe(manuscriptTextMetrics.lineHeight);
-  });
-});
-
 describe('RichBodyEditor', () => {
   const HTML = '<html><p>Prologue</p><p><b>bold</b> and <s>cut</s> line.</p></html>';
 
@@ -134,6 +97,26 @@ describe('RichBodyEditor', () => {
     expect(input.props.defaultValue).toBe(HTML);
     await fireEvent(input, 'changeHtml', { nativeEvent: { value: '<html><p>hi</p></html>' } });
     expect(onHtmlChange).toHaveBeenCalledWith('<html><p>hi</p></html>');
+  });
+
+  it('keeps the placeholder it opened with when the language changes', async () => {
+    // The web host builds its editor from the placeholder: a new one is a new editor, reseeded and empty.
+    mockLanguage = 'en';
+    const view = await renderEditor();
+    expect(view.getByTestId('editor.input').props.placeholder).toBe('manuscript_empty');
+
+    mockLanguage = 'pt';
+    await view.rerender(
+      <RichBodyEditor
+        defaultHtml={HTML}
+        onHtmlChange={jest.fn()}
+        onMarksChange={jest.fn()}
+        testID="editor"
+      />,
+    );
+
+    expect(view.getByTestId('editor.input').props.placeholder).toBe('manuscript_empty');
+    mockLanguage = 'en';
   });
 
   it('maps native style state to manuscript marks', async () => {
@@ -322,6 +305,23 @@ describe('RichBodyEditor', () => {
     expect(enrichedMock.__enrichedTest.refHolder.current).toBe(inputRef);
   });
 
+  it('paints list markers with the theme text color', async () => {
+    const view = await renderEditor();
+
+    // The host draws bullets black by default: invisible on a dark surface.
+    expect(view.getByTestId('editor.input').props.htmlStyle).toEqual({
+      ul: { bulletColor: '#111' },
+      ol: { markerColor: '#111' },
+    });
+  });
+
+  it('disables type-to-format shortcuts so hyphen dialogue stays text', async () => {
+    const view = await renderEditor();
+
+    // No `- `/`1. ` auto-lists: lists stay explicit through the toolbar.
+    expect(view.getByTestId('editor.input').props.textShortcuts).toEqual([]);
+  });
+
   it('keeps theme selection over the shared manuscript metrics', async () => {
     const view = await renderEditor();
 
@@ -391,10 +391,22 @@ describe('SceneBodyToolbar', () => {
     }
   });
 
+  it.each([
+    ['bullet', '•'],
+    ['ordered', '1.'],
+  ] as const)('dispatches %s from its list button', async (kind, glyph) => {
+    const onAction = jest.fn();
+    const view = await render(<SceneBodyToolbar onAction={onAction} testID="toolbar" />);
+
+    expect(view.getByText(glyph)).toBeTruthy();
+    await fireEvent.press(view.getByTestId(`toolbar.${kind}`));
+    expect(onAction).toHaveBeenCalledWith(kind);
+  });
+
   it('never steals the editor input focus', async () => {
     const view = await render(<SceneBodyToolbar onAction={jest.fn()} testID="toolbar" />);
 
-    for (const kind of ['bold', 'italic', 'underline', 'strikethrough']) {
+    for (const kind of ['bold', 'italic', 'underline', 'strikethrough', 'bullet', 'ordered']) {
       expect(view.getByTestId(`toolbar.${kind}`).props.focusable).toBe(false);
     }
   });
@@ -482,6 +494,20 @@ describe('MarkdownPreview', () => {
 
     expect(view.getByText('Old title')).toBeTruthy();
     expect(view.queryByText('# Old title')).toBeNull();
+  });
+
+  it('renders list items with markers and sequential numbers', async () => {
+    const view = await render(
+      <MarkdownPreview text={'- one\n- two\n\n7. seven\n9. nine'} testID="preview" />,
+    );
+
+    expect(view.getAllByText('•')).toHaveLength(2);
+    expect(view.getByText('one')).toBeTruthy();
+    expect(view.getByText('two')).toBeTruthy();
+    expect(view.getByText('1.')).toBeTruthy();
+    expect(view.getByText('2.')).toBeTruthy();
+    expect(view.getByText('seven')).toBeTruthy();
+    expect(view.queryByText('7.')).toBeNull();
   });
 
   it('renders body text with the shared manuscript metrics', async () => {

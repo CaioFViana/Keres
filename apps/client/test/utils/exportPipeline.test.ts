@@ -1,4 +1,13 @@
 /** @jest-environment jsdom */
+import { Platform } from 'react-native';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import {
+  buildStandaloneBoardSvg,
+  buildStandaloneLocationMapSvg,
+} from '@/src/utils/io/storyMapSvgExport';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
+import { parseSvgRootSize } from '@/src/state/ui/svgRaster';
+
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-file-system', () => ({
   File: jest.fn(),
@@ -6,22 +15,13 @@ jest.mock('expo-file-system', () => ({
 }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
-jest.mock('../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { readBytes: jest.fn() },
 }));
-jest.mock('../../src/utils/storyMediaBundle', () => ({
+jest.mock('@/src/services/media/storyMediaBundle', () => ({
   extractStoryZip: jest.fn(),
 }));
-
-import { Platform } from 'react-native';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import {
-  buildStandaloneBoardSvg,
-  buildStandaloneLocationMapSvg,
-} from '../../src/utils/storyMapSvgExport';
-import { deliverMapExport } from '../../src/utils/storyTransfer';
-import { parseSvgRootSize } from '../../src/utils/svgRaster';
 
 const readBytesMock = mediaFileService.readBytes as jest.Mock;
 
@@ -162,6 +162,29 @@ describe('location map export pipeline', () => {
     expect(stubs.anchor.download).toBe('mapa.png');
     expect(stubs.click).toHaveBeenCalledTimes(1);
     restoreDownloadStubs(stubs);
+  });
+});
+
+describe('export file names', () => {
+  it('writes exactly one extension whatever suffix the caller passed', async () => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>';
+    const rasterize = jest.fn(async (): Promise<Uint8Array> => PNG_BYTES);
+    const cases: [string, 'svg' | 'png', string][] = [
+      ['sketch-2026-01-01.png', 'png', 'sketch-2026-01-01.png'],
+      ['mapa.svg', 'png', 'mapa.png'],
+      ['mapa', 'png', 'mapa.png'],
+      ['sketch-2026-01-01.png', 'svg', 'sketch-2026-01-01.svg'],
+      ['mapa.svg', 'svg', 'mapa.svg'],
+      ['mapa', 'svg', 'mapa.svg'],
+    ];
+    for (const [input, format, expected] of cases) {
+      const stubs = stubBrowserDownload();
+      await expect(deliverMapExport(svg, input, format, rasterize)).resolves.toMatchObject({
+        fileName: expected,
+      });
+      expect(stubs.anchor.download).toBe(expected);
+      restoreDownloadStubs(stubs);
+    }
   });
 });
 

@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateTagRelationDataSchema, PartialTagRelationSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
+import { db, type CompatibleDb } from '@/db';
 import {
   chapters,
   characters,
@@ -20,7 +20,7 @@ import {
   tagRelations,
   tags,
   worldRules,
-} from '../../db/schema';
+} from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class TagRelationSyncHandler extends BaseSyncEntityHandler<

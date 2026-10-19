@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getStorySyncEntityTypes } from '@keres/shared';
-import { SyncService } from '../../src/services/SyncService';
+import { SyncService } from '@/services/sync/SyncService';
 
 /**
  * A new client entity is dangerous when it reaches the server before a handler is registered:

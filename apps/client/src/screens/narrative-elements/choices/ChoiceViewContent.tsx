@@ -1,33 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import { useMemo, type RefObject } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../../theme/commonStyles';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
+import { graphMapHeaderStyleDefs } from '@/src/components/features/graphs/graphMapHeaderStyles';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import StoryGraphCanvas, {
   type StoryGraphCanvasHandle,
 } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
-import { describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
+import { describeEffect } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import {
   formatSceneGap,
   formatSceneUniverseDuration,
   hasSceneGap,
   hasSceneUniverseDuration,
-} from '../../../utils/sceneTiming';
+} from '@/src/utils/scene/sceneTiming';
 
 /**
  * Presentation contract for the choice graph screen.
@@ -104,24 +100,13 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
       StyleSheet.create({
         ...commonScreenStyleDefs(colors),
         ...commonDetailStyleDefs(colors),
+        ...graphMapHeaderStyleDefs(colors),
         header: {
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
-          paddingTop: 9,
+          paddingTop: 10,
           paddingBottom: 3,
-        },
-        headerTitle: {
-          fontSize: 14,
-          fontWeight: 'bold',
-          color: colors.text,
-          paddingHorizontal: 12,
-        },
-        headerSubtitle: {
-          fontSize: 11,
-          color: colors.textSecondary,
-          paddingHorizontal: 12,
-          marginTop: 1,
         },
         legendBar: {
           // Without this the horizontal ScrollView stretches vertically and eats half the screen: inside a column
@@ -168,33 +153,16 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 12,
-          paddingVertical: 7,
+          paddingVertical: 8,
           backgroundColor: colors.surface,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
         },
         warningText: {
           flex: 1,
-          marginLeft: 7,
-          fontSize: 11.5,
+          marginLeft: 8,
+          fontSize: 12,
           color: colors.textSecondary,
-        },
-        controls: {
-          position: 'absolute',
-          right: 14,
-          bottom: 18,
-        },
-        controlButton: {
-          width: 42,
-          height: 42,
-          borderRadius: 21,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: 9,
-          backgroundColor: colors.surface,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
-          outlineWidth: 0,
         },
       }),
     [colors],
@@ -210,12 +178,7 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
 
   if (layout.nodes.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Ionicons name="git-network-outline" size={54} color={colors.textSecondary} />
-          <Text style={styles.emptyText}>{t('story_map_empty')}</Text>
-        </View>
-      </View>
+      <GraphEmptyState colors={colors} icon="git-network-outline" message={t('story_map_empty')} />
     );
   }
 
@@ -293,52 +256,25 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
         onSelectNode={handleSelectNode}
       />
 
-      <View style={styles.controls}>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => canvasRef.current?.zoomBy(1.25)}
-          accessibilityLabel={t('story_map_zoom_in')}
-        >
-          <Ionicons name="add" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => canvasRef.current?.zoomBy(0.8)}
-          accessibilityLabel={t('story_map_zoom_out')}
-        >
-          <Ionicons name="remove" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => canvasRef.current?.fitToScreen()}
-          accessibilityLabel={t('story_map_fit')}
-        >
-          <Ionicons name="scan-outline" size={20} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => setLabelsOverride(!showEdgeLabels)}
-          accessibilityLabel={t('story_map_toggle_labels')}
-        >
-          <Ionicons
-            name={showEdgeLabels ? 'chatbox' : 'chatbox-outline'}
-            size={19}
-            color={showEdgeLabels ? colors.primary : colors.text}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={handleExport}
-          disabled={exporting}
-          accessibilityLabel={t('story_map_export')}
-        >
-          {exporting ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Ionicons name="image-outline" size={20} color={colors.text} />
-          )}
-        </TouchableOpacity>
-      </View>
+      <GraphCanvasControls
+        variant="map"
+        labels={{
+          zoomIn: t('story_map_zoom_in'),
+          zoomOut: t('story_map_zoom_out'),
+          fit: t('story_map_fit'),
+        }}
+        exportLabel={t('story_map_export')}
+        onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
+        onZoomOut={() => canvasRef.current?.zoomBy(0.8)}
+        onFit={() => canvasRef.current?.fitToScreen()}
+        edgeLabels={{
+          visible: showEdgeLabels,
+          label: t('story_map_toggle_labels'),
+          onToggle: () => setLabelsOverride(!showEdgeLabels),
+        }}
+        exporting={exporting}
+        onExport={handleExport}
+      />
 
       {selectedNode && (
         <GraphNodeSheet

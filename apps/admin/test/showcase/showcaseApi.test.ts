@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearUnlockToken,
   fetchConfig,
+  fetchCoverUrl,
   fetchDownloadUrl,
   fetchManuscriptDownloadUrl,
   fetchPack,
@@ -12,7 +13,7 @@ import {
   readUnlockToken,
   storeUnlockToken,
   unlockStory,
-} from '../../src/showcase/api/showcaseApi';
+} from '@/showcase/api/showcaseApi';
 
 /**
  * The public site's HTTP client, exercised against a stubbed `fetch` with the real
@@ -152,6 +153,29 @@ describe('fetchStory', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/public/stories/story-1', {
       headers: { Authorization: 'Showcase unlock-1' },
+    });
+  });
+
+  it('sends the tab session as a Bearer when signed in', async () => {
+    sessionStorage.setItem('keres_showcase_session', 'session-1');
+    fetchMock.mockResolvedValue(respond({ body: { storyId: 'story-1' } }));
+
+    await fetchStory('story-1');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/public/stories/story-1', {
+      headers: { Authorization: 'Bearer session-1' },
+    });
+  });
+
+  it('combines session and unlock so one fetch proves both', async () => {
+    sessionStorage.setItem('keres_showcase_session', 'session-1');
+    storeUnlockToken('story-1', 'unlock-1');
+    fetchMock.mockResolvedValue(respond({ body: { storyId: 'story-1' } }));
+
+    await fetchStory('story-1');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/public/stories/story-1', {
+      headers: { Authorization: 'Bearer session-1, Showcase unlock-1' },
     });
   });
 
@@ -298,5 +322,33 @@ describe('packs', () => {
     fetchMock.mockResolvedValue(respond({ body: { message: 'Not found.' }, status: 404 }));
 
     await expect(fetchPack('missing')).rejects.toThrow('Not found.');
+  });
+});
+
+describe('fetchCoverUrl', () => {
+  it('fetches the cover with the unlock token of the story and gives back an address for the picture', async () => {
+    storeUnlockToken('story-1', 'tok');
+    const created = vi.fn().mockReturnValue('blob:made');
+    URL.createObjectURL = created;
+    fetchMock.mockResolvedValue({
+      ...respond({}),
+      blob: () => Promise.resolve(new Blob(['png'], { type: 'image/png' })),
+    });
+
+    const address = await fetchCoverUrl('story-1');
+
+    expect(address).toBe('blob:made');
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/public/stories/story-1/cover');
+    expect(init.headers).toEqual({ Authorization: 'Showcase tok' });
+    clearUnlockToken('story-1');
+  });
+
+  it('is nothing when the server has no cover to give, or cannot be reached', async () => {
+    fetchMock.mockResolvedValueOnce(respond({ status: 404 }));
+    expect(await fetchCoverUrl('story-1')).toBeNull();
+
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    expect(await fetchCoverUrl('story-1')).toBeNull();
   });
 });

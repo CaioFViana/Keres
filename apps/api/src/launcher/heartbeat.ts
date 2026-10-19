@@ -1,8 +1,8 @@
 import type { Translate } from './i18n';
 import { formatLanUrls, lanHttpUrls, listLanIPv4 } from './lanAddresses';
 
+/** How often the machine's addresses are looked at - quietly: nothing is printed unless they changed. */
 export const LAN_POLL_MS = 15_000;
-export const LAN_REPEAT_MS = 30_000;
 
 export function describeLanAddresses(
   port: string | number,
@@ -23,6 +23,11 @@ export function describeLanAddresses(
   return lines;
 }
 
+/**
+ * Watches the machine's LAN addresses and prints only when they change (a laptop moving between Wi-Fi and
+ * cable, a VPN coming up). The addresses are printed once at startup by `describeLanAddresses`; repeating
+ * them on a timer filled the terminal with lines nobody asked for.
+ */
 export function startLanAddressHeartbeat(options: {
   port: string | number;
   host: string;
@@ -30,22 +35,17 @@ export function startLanAddressHeartbeat(options: {
   print: (message: string) => void;
   t: Translate;
   listAddresses?: () => string[];
-  now?: () => number;
   setIntervalFn?: typeof setInterval;
 }): () => void {
   const list = options.listAddresses ?? listLanIPv4;
-  const now = options.now ?? Date.now;
   const schedule = options.setIntervalFn ?? setInterval;
   let lastKey = list().slice().sort().join(',');
-  let lastRepeatAt = now();
 
   const timer = schedule(() => {
     const current = list();
     const key = current.slice().sort().join(',');
-    const timestamp = now();
     if (key !== lastKey) {
       lastKey = key;
-      lastRepeatAt = timestamp;
       const urls = lanHttpUrls(options.port, current);
       options.print(
         options.t('lan_changed', {
@@ -54,13 +54,6 @@ export function startLanAddressHeartbeat(options: {
       );
       if (options.host === '127.0.0.1') {
         options.print(options.t('lan_localhost_note'));
-      }
-      return;
-    }
-    if (timestamp - lastRepeatAt >= LAN_REPEAT_MS) {
-      lastRepeatAt = timestamp;
-      for (const line of describeLanAddresses(options.port, options.host, options.t, current)) {
-        options.print(line);
       }
     }
   }, LAN_POLL_MS);

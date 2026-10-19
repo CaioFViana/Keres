@@ -1,8 +1,17 @@
 /**
  * @jest-environment node
  */
+import { rankBetween } from '@keres/shared';
+import axios from 'axios';
+import { eq } from 'drizzle-orm';
+import * as schema from '@/src/db/schema';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
+import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
@@ -13,21 +22,12 @@ const mockSyncStoryMedia = jest.fn(async () => ({
   failed: 0,
   offline: false,
 }));
-jest.mock('../../src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/media/MediaSyncService', () => ({
   createMediaSyncService: () => ({ syncStoryMedia: mockSyncStoryMedia }),
 }));
 
-import { rankBetween } from '@keres/shared';
-import axios from 'axios';
-import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import type { SyncEngineService } from '../../src/services/SyncEngineService';
-import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
-import { entityEventEmitter } from '../../src/utils/EventEmitter';
-
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
-const SERVER = { id: 'server-1', url: 'http://servidor' };
+const SERVER = { id: 'server-1', url: 'http://192.168.0.10' };
 const NOW = new Date('2026-08-10T12:00:00.000Z');
 const base = { createdAt: NOW, updatedAt: NOW, version: 1, isDeleted: false };
 

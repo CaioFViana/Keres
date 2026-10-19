@@ -1,16 +1,15 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { isTimingInput, parseTimingInput } from '@/src/utils/sceneTimingInput';
+import SceneFixedDateField, {
+  type SceneCalendarOption,
+} from '@/src/components/features/scenes/SceneFixedDateField';
+import { isTimingInput, parseTimingInput } from '@/src/utils/scene/sceneTimingInput';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
-import { useTheme } from '@/src/theme';
-
-interface CalendarOption {
-  id: string;
-  name: string;
-}
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface SceneTimingFieldsProps {
   gapInput: string;
@@ -25,7 +24,9 @@ interface SceneTimingFieldsProps {
   onCalendarDateOverrideChange: (value: string) => void;
   calendarDateOverrideCalendarId: string | null;
   onCalendarDateOverrideCalendarIdChange: (value: string | null) => void;
-  calendars: CalendarOption[];
+  calendars: SceneCalendarOption[];
+  /** Whether the story has a start date, which a fixed date is measured from. */
+  storyHasEpoch: boolean;
   inputStyle: StyleProp<TextStyle>;
 }
 
@@ -43,10 +44,10 @@ export default function SceneTimingFields({
   calendarDateOverrideCalendarId,
   onCalendarDateOverrideCalendarIdChange,
   calendars,
+  storyHasEpoch,
   inputStyle,
 }: SceneTimingFieldsProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const unitOptions = useMemo(
     () => [
       { label: t('seconds'), value: 'seconds' },
@@ -61,24 +62,7 @@ export default function SceneTimingFields({
     ],
     [t],
   );
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 10,
-      marginBottom: 10,
-    },
-    amountColumn: { width: '30%' },
-    typeColumn: { flex: 1, minWidth: 0 },
-    typeSelect: { marginBottom: 0 },
-    timingHint: {
-      color: colors.textSecondary,
-      fontSize: 12,
-      lineHeight: 17,
-      marginTop: -4,
-      marginBottom: 10,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <>
@@ -108,33 +92,18 @@ export default function SceneTimingFields({
       {parseTimingInput(gapInput) !== null && parseTimingInput(gapInput)! < 0 && (
         <Text style={styles.timingHint}>{t('negative_gap_timing_hint')}</Text>
       )}
+      {calendarDateOverride.trim() !== '' && (
+        <Text style={styles.timingHint}>{t('scene_fixed_date_gap_note')}</Text>
+      )}
 
-      <FormField label={t('scene_fixed_date')} help={t('scene_fixed_date_hint')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('scene_fixed_date_placeholder')}
-            value={calendarDateOverride}
-            onChangeText={onCalendarDateOverrideChange}
-            autoCapitalize="none"
-            style={inputStyle}
-          />
-        )}
-      </FormField>
-      {calendarDateOverride.trim() ? (
-        <SingleSelectPill
-          options={[
-            { label: t('calendar_standard_title'), value: '__gregorian__' },
-            ...calendars.map((calendar) => ({ label: calendar.name, value: calendar.id })),
-          ]}
-          value={calendarDateOverrideCalendarId ?? '__gregorian__'}
-          onValueChange={(value) =>
-            onCalendarDateOverrideCalendarIdChange(value === '__gregorian__' ? null : value)
-          }
-          placeholder={t('scene_fixed_date_calendar')}
-          multiple={false}
-        />
-      ) : null}
+      <SceneFixedDateField
+        value={calendarDateOverride}
+        onChange={onCalendarDateOverrideChange}
+        calendarId={calendarDateOverrideCalendarId}
+        onCalendarIdChange={onCalendarDateOverrideCalendarIdChange}
+        calendars={calendars}
+        storyHasEpoch={storyHasEpoch}
+      />
 
       <FormField label={t('duration')}>
         <View style={styles.row}>
@@ -165,3 +134,23 @@ export default function SceneTimingFields({
     </>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+      marginBottom: 10,
+    },
+    amountColumn: { width: '30%' },
+    typeColumn: { flex: 1, minWidth: 0 },
+    typeSelect: { marginBottom: 0 },
+    timingHint: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+      marginTop: -4,
+      marginBottom: 10,
+    },
+  });

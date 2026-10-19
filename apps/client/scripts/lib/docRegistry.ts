@@ -1,5 +1,6 @@
 import { mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
+import { srcAlias } from './srcAlias';
 
 export interface DocRegistryOptions {
   contentDir: string;
@@ -39,7 +40,7 @@ export function generateDocRegistry({
     const languageEntries = languages
       .map((language) => {
         const name = toName(id, language);
-        imports += `import ${name} from '../content/${id}/${language}';\n`;
+        imports += `import ${name} from '${srcAlias(join(contentDir, id, language))}';\n`;
         return `    ${propertyKey(language)}: ${name},`;
       })
       .join('\n');

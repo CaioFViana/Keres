@@ -1,0 +1,309 @@
+import {
+  type ArcMedium,
+  isLooseScene,
+  type PageFormat,
+  pageFormatFor,
+  pageLayoutFor,
+  type ReaderLabels,
+} from '@keres/shared';
+import { useCallback, useState } from 'react';
+import {
+  defaultExportSettings,
+  FORMAT_CAPABILITIES,
+  isScreenplayFormat,
+  styleForExport,
+  type ManuscriptExportSettings,
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StorySelect } from '@/src/db/schema';
+import type {
+  PublishManuscriptOptions,
+  PublishReaderOptions,
+} from '@/src/services/api/PublicationApiService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { storyMusicFacts } from '@/src/services/storymanagement/media-music/ManuscriptMusicService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
+
+/** A work of the story the person can release on its own. */
+export type PublishableArc = {
+  id: string;
+  title: string;
+  author: string | null;
+  medium: ArcMedium;
+  pageFormat?: PageFormat | null;
+  /** The Gallery medium that is the work's cover. */
+  coverGalleryId?: string | null;
+};
+
+/** The words of the reader's own interface, in the publisher's language. */
+function readerLabelsOf(t: (key: string) => string): ReaderLabels {
+  return {
+    back: t('reader_back'),
+    path: t('reader_path'),
+    inventory: t('reader_inventory'),
+    inventoryEmpty: t('reader_inventory_empty'),
+    saves: t('reader_saves'),
+    save: t('reader_save'),
+    saveName: t('reader_save_name'),
+    load: t('reader_load'),
+    remove: t('reader_remove'),
+    autosave: t('reader_autosave'),
+    noSaves: t('reader_no_saves'),
+    notSaving: t('reader_not_saving'),
+    continueLabel: t('reader_continue'),
+    newGame: t('reader_new_game'),
+    restart: t('reader_restart'),
+    theEnd: t('reader_the_end'),
+    contents: t('reader_contents'),
+    previousPage: t('reader_previous_page'),
+    nextPage: t('reader_next_page'),
+    script: t('reader_script'),
+    appearance: t('reader_appearance'),
+    theme: t('reader_theme'),
+    themeAuto: t('reader_theme_auto'),
+    themeLight: t('reader_theme_light'),
+    themeDark: t('reader_theme_dark'),
+    themeSepia: t('reader_theme_sepia'),
+    textSize: t('reader_text_size'),
+    stepsWord: t('reader_steps_word'),
+    scene: t('reader_scene'),
+    journey: t('reader_journey'),
+    empty: t('reader_empty'),
+    close: t('close'),
+  };
+}
+
+/**
+ * The manuscript choice of one expanded story on the publish screen: the same settings the device
+ * export asks (`ManuscriptExportOptions`), plus the attach switch.
+ */
+export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
+  const [attachManuscript, setAttachManuscript] = useState(false);
+  const [publishReader, setPublishReader] = useState(false);
+  // The story file (.zip) is what a version has always been; it may be left out when a manuscript
+  // and/or the online reader are published instead.
+  const [includePackage, setIncludePackage] = useState(true);
+  const [settings, setSettings] = useState<ManuscriptExportSettings>(() => defaultExportSettings());
+  const [manuscriptLooseCount, setManuscriptLooseCount] = useState(0);
+  // A song is sung somewhere in the story: only then does the publication offer to print songs.
+  const [hasSungSongs, setHasSungSongs] = useState(false);
+  const [manuscriptArcs, setManuscriptArcs] = useState<PublishableArc[]>([]);
+  // The cover of the story itself, which a work without its own falls back to.
+  const [storyCoverId, setStoryCoverId] = useState<string | null>(null);
+  // What goes out: `null` is the whole universe; an id is one work of it (manuscript and/or reader only).
+  const [releaseArcId, setReleaseArcIdState] = useState<string | null>(null);
+
+  // What the manuscript section needs: linear counts its loose scenes the same way the
+  // manuscript screen does; a branching story is exported whole, so it needs nothing.
+  const resetForStory = useCallback(
+    (story: StorySelect) => {
+      setAttachManuscript(false);
+      setPublishReader(false);
+      setIncludePackage(true);
+      setSettings(defaultExportSettings(story.author ?? ''));
+      setManuscriptLooseCount(0);
+      setHasSungSongs(false);
+      setManuscriptArcs([]);
+      setStoryCoverId(story.coverGalleryId ?? null);
+      setReleaseArcIdState(null);
+      void (async () => {
+        try {
+          const arcs = await createStoryArcService(drizzleDb).getArcsForStory(story.id);
+          setManuscriptArcs(
+            arcs.map((arc) => ({
+              id: arc.id,
+              title: arc.title,
+              author: arc.author,
+              medium: arc.medium,
+              pageFormat: arc.pageFormat,
+              coverGalleryId: arc.coverGalleryId,
+            })),
+          );
+          setHasSungSongs((await storyMusicFacts(drizzleDb, story.id)).hasSungSongs);
+          if (story.type !== 'branching') {
+            const [storyChapters, storyScenes] = await Promise.all([
+              createChapterService(drizzleDb).getAllByStoryId(story.id, null),
+              createSceneService(drizzleDb).getAllByStoryId(story.id),
+            ]);
+            const chaptersById = new Map(storyChapters.map((chapter) => [chapter.id, chapter]));
+            setManuscriptLooseCount(
+              storyScenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, chaptersById))
+                .length,
+            );
+          }
+        } catch (optionsError) {
+          console.log('PublishStoryScreen: could not load manuscript options.', optionsError);
+        }
+      })();
+    },
+    [drizzleDb],
+  );
+
+  /**
+   * Chooses the whole universe or one of its works. A work never carries the story file (that is
+   * the whole story), its manuscript is that work's alone, and it is credited to its own author.
+   */
+  const setReleaseArcId = useCallback(
+    (arcId: string | null, story: StorySelect) => {
+      setReleaseArcIdState(arcId);
+      const arc = arcId ? manuscriptArcs.find((row) => row.id === arcId) : undefined;
+      setIncludePackage(arcId === null);
+      setSettings((current) => ({
+        ...current,
+        arcId,
+        author: arc ? (arc.author ?? story.author ?? '') : (story.author ?? ''),
+      }));
+    },
+    [manuscriptArcs],
+  );
+
+  // What shapes the file, whichever of the two the server compiles: the manuscript and the online
+  // reader are made from the same choices.
+  const shapeOf = useCallback(
+    (
+      story: StorySelect,
+      t: (key: string) => string,
+      language: string,
+      format: PublishManuscriptOptions['format'],
+    ): PublishManuscriptOptions => {
+      const branching = story.type === 'branching';
+      // What the file can honor follows the format it is made in (the reader is a web page).
+      const forFormat = { ...settings, format };
+      // The work in effect frames its pages: the one released, or the only one there is.
+      const arcInEffect = settings.arcId
+        ? manuscriptArcs.find((row) => row.id === settings.arcId)
+        : manuscriptArcs.length === 1
+          ? manuscriptArcs[0]
+          : undefined;
+      const framesPages =
+        arcInEffect &&
+        (arcInEffect.medium === 'comic' ||
+          arcInEffect.medium === 'storyboard' ||
+          arcInEffect.pageFormat);
+      return {
+        format,
+        includeLooseScenes: !branching && settings.includeLooseScenes,
+        includeSceneNames: settings.includeSceneNames,
+        includeToc: FORMAT_CAPABILITIES[format].index && settings.includeIndex,
+        resetSceneNumbers: !branching && settings.includeSceneNames && settings.resetSceneNumbers,
+        style: styleForExport(
+          forFormat,
+          {
+            byLine: t('export_manuscript_title_page_by'),
+            copyright: t('export_manuscript_title_page_copyright'),
+          },
+          new Date(),
+        ),
+        ...(framesPages && arcInEffect
+          ? {
+              pageNoun:
+                arcInEffect.medium === 'storyboard' ? ('frame' as const) : ('page' as const),
+              pageFormat: pageFormatFor(arcInEffect.medium, arcInEffect.pageFormat),
+              pageLayout: pageLayoutFor(arcInEffect.medium, settings.pageLayout),
+            }
+          : {}),
+        ...(branching
+          ? { sceneOrder: settings.sceneOrder, scenePerPage: settings.scenePerPage }
+          : {}),
+        ...(settings.cover ? {} : { includeCover: false }),
+        ...(settings.arcId ? { arcId: settings.arcId } : {}),
+        ...(isScreenplayFormat(format) ? { screenplay: { ...settings.screenplay } } : {}),
+        // Only the words of the songs sung in the story go out, never a recording or a link.
+        ...(settings.includeSongs
+          ? {
+              includeSongs: true,
+              songsPlacement: settings.songsPlacement,
+              songLanguage: settings.songLanguage,
+              songRepeat: settings.songRepeat,
+              songChords: settings.songChords,
+            }
+          : {}),
+        labels: {
+          goToPage: t('export_manuscript_go_to_page'),
+          goToScene: t('export_manuscript_go_to_scene'),
+          sceneWord: t('export_manuscript_scene_word'),
+          looseHeading: t('export_manuscript_loose_heading'),
+          tocHeading: t('export_manuscript_index_heading'),
+          endOfExcerpt: t('export_manuscript_end_of_excerpt'),
+          chooseStart: t('export_manuscript_choose_start'),
+          beginAt: t('export_manuscript_begin_at'),
+          pageLabel: t('export_manuscript_page_label'),
+          frameLabel: t('export_manuscript_frame_label'),
+          mediaRemoved: t('export_manuscript_media_removed'),
+          musicLabel: t('export_manuscript_music_label'),
+          songsHeading: t('export_manuscript_songs_heading'),
+        },
+        // Left out when empty so the server credits the work's author, the story's, then the handle.
+        ...(settings.author.trim() ? { author: settings.author.trim() } : {}),
+        language,
+      };
+    },
+    [settings, manuscriptArcs],
+  );
+
+  // Render options, never bytes: the server compiles from its own copy in the
+  // publisher's language.
+  const buildOptions = useCallback(
+    (
+      story: StorySelect,
+      t: (key: string) => string,
+      language: string,
+    ): PublishManuscriptOptions | undefined =>
+      attachManuscript ? shapeOf(story, t, language, settings.format) : undefined,
+    [attachManuscript, settings.format, shapeOf],
+  );
+
+  // The reading page is html on the server's side; the file format the person picked is the
+  // manuscript's business, and its own interface words travel with it.
+  const buildReaderOptions = useCallback(
+    (
+      story: StorySelect,
+      t: (key: string) => string,
+      language: string,
+    ): PublishReaderOptions | undefined => {
+      if (!publishReader) return undefined;
+      const { format: _format, ...shape } = shapeOf(story, t, language, 'html');
+      return { ...shape, readerLabels: readerLabelsOf(t) };
+    },
+    [publishReader, shapeOf],
+  );
+
+  // The work whose pages are set (the one released, or the only one there is), when it is a comic or a storyboard.
+  const pagesArc = settings.arcId
+    ? manuscriptArcs.find((row) => row.id === settings.arcId)
+    : manuscriptArcs.length === 1
+      ? manuscriptArcs[0]
+      : undefined;
+  // Whether there is a cover to put first: the work's own, else the story's.
+  const hasCover = !!(pagesArc?.coverGalleryId ?? storyCoverId);
+  const pagesMedium =
+    pagesArc && (pagesArc.medium === 'comic' || pagesArc.medium === 'storyboard')
+      ? pagesArc.medium
+      : null;
+
+  return {
+    attachManuscript,
+    setAttachManuscript,
+    publishReader,
+    setPublishReader,
+    includePackage,
+    setIncludePackage,
+    /** A version with nothing in it: none of the three is on. */
+    nothingSelected: !includePackage && !attachManuscript && !publishReader,
+    settings,
+    setSettings,
+    manuscriptLooseCount,
+    hasSungSongs,
+    manuscriptArcs,
+    pagesMedium,
+    hasCover,
+    releaseArcId,
+    setReleaseArcId,
+    resetForStory,
+    buildOptions,
+    buildReaderOptions,
+  };
+}
+
+export type PublishManuscriptState = ReturnType<typeof usePublishManuscript>;

@@ -1,8 +1,8 @@
 import type {
   SyncEntityHandler,
   SyncEntityRow,
-} from '../entity-sync-handlers/BaseSyncEntityHandler';
-import { duplicateOf } from '../entity-sync-handlers/BaseSyncEntityHandler';
+} from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { duplicateOf } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
 
 /**
  * Refuses, as a `duplicate` of it, a row that would be what a live row of another id already is.

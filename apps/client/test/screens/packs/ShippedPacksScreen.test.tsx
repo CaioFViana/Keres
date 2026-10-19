@@ -1,5 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import ShippedPacksContent from '@/src/screens/packs/ShippedPacksContent';
+import ShippedPacksScreen from '@/src/screens/packs/ShippedPacksScreen';
+
 const mockNotify = jest.fn();
 const mockMarkInstalled = jest.fn();
 const mockPreviewShippedPacks = jest.fn();
@@ -15,7 +18,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -47,33 +50,33 @@ jest.mock('@/src/components/common', () => ({
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useLanguageLabel', () => ({
+jest.mock('@/src/hooks/ui/useLanguageLabel', () => ({
   __esModule: true,
   useLanguageLabel: () => (language: string) => `label-${language}`,
 }));
-jest.mock('../../../src/services/storymanagement/ShippedPackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/ShippedPackService', () => ({
   __esModule: true,
   createShippedPackService: () => ({
     previewShippedPacks: mockPreviewShippedPacks,
     installShippedPack: mockInstallShippedPack,
   }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/state/shippedPacksInstallerStore', () => ({
+jest.mock('@/src/state/app/shippedPacksInstallerStore', () => ({
   __esModule: true,
   useShippedPacksInstallerStore: (selector: (state: { markInstalled: unknown }) => unknown) =>
     selector({ markInstalled: mockMarkInstalled }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -90,9 +93,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: mockLanguage } }),
 }));
-
-import ShippedPacksContent from '../../../src/screens/packs/ShippedPacksContent';
-import ShippedPacksScreen from '../../../src/screens/packs/ShippedPacksScreen';
 
 const makePreview = (overrides = {}) => ({
   slug: 'fantasy',

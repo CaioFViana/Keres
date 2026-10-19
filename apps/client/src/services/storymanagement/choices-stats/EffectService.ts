@@ -1,0 +1,214 @@
+import type { Effect } from '@keres/shared';
+import { and, eq, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '@/src/db';
+import { effects } from '@/src/db';
+import { createULID, getChangedFields } from '@/src/utils/entity/entityUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '@/src/services/sync/syncUtils';
+import { createServerService } from '@/src/services/servers/ServerService';
+
+export interface EffectService {
+  getById(id: string): Promise<Effect | undefined>;
+  getAllByStoryId(storyId: string): Promise<Effect[]>;
+  getEffectsByEntity(
+    storyId: string,
+    entityType: Effect['entityType'],
+    entityId: string,
+  ): Promise<Effect[]>;
+  createEffect(
+    userId: string,
+    effectData: Omit<
+      Effect,
+      'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+    >,
+  ): Promise<Effect>;
+  updateEffect(
+    userId: string,
+    id: string,
+    effectData: Partial<
+      Omit<
+        Effect,
+        | 'id'
+        | 'storyId'
+        | 'entityType'
+        | 'entityId'
+        | 'createdAt'
+        | 'updatedAt'
+        | 'version'
+        | 'isDeleted'
+        | 'deletedAt'
+      >
+    >,
+  ): Promise<Effect>;
+  deleteEffect(userId: string, id: string): Promise<void>;
+}
+
+export const createEffectService = (db: AppDrizzleClient): EffectService => {
+  const serverService = createServerService(db);
+  return {
+    async getById(id: string): Promise<Effect | undefined> {
+      return db.query.effects.findFirst({
+        where: and(eq(effects.id, id), eq(effects.isDeleted, false)),
+      });
+    },
+
+    async getAllByStoryId(storyId: string): Promise<Effect[]> {
+      return db.query.effects.findMany({
+        where: and(eq(effects.storyId, storyId), eq(effects.isDeleted, false)),
+        orderBy: [effects.createdAt],
+      });
+    },
+
+    async getEffectsByEntity(
+      storyId: string,
+      entityType: Effect['entityType'],
+      entityId: string,
+    ): Promise<Effect[]> {
+      return db.query.effects.findMany({
+        where: and(
+          eq(effects.storyId, storyId),
+          eq(effects.entityType, entityType),
+          eq(effects.entityId, entityId),
+          eq(effects.isDeleted, false),
+        ),
+        orderBy: [effects.createdAt],
+      });
+    },
+
+    async createEffect(
+      userId: string,
+      effectData: Omit<
+        Effect,
+        'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
+      >,
+    ): Promise<Effect> {
+      await assertStoryIsWritable(db, effectData.storyId);
+      const newEffect: Effect = {
+        ...effectData,
+        id: createULID(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      };
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, newEffect.storyId, userId);
+      await runLocalWrite(db, newEffect.storyId, () => {
+        db.insert(effects).values(newEffect).run();
+        recordLocalOperationSync(
+          db,
+          newEffect.storyId,
+          userIdToLog,
+          'create',
+          'Effect',
+          newEffect.id,
+          newEffect,
+        );
+      });
+
+      return newEffect;
+    },
+
+    async updateEffect(
+      userId: string,
+      id: string,
+      effectData: Partial<
+        Omit<
+          Effect,
+          | 'id'
+          | 'storyId'
+          | 'entityType'
+          | 'entityId'
+          | 'createdAt'
+          | 'updatedAt'
+          | 'version'
+          | 'isDeleted'
+          | 'deletedAt'
+        >
+      >,
+    ): Promise<Effect> {
+      const originalEffect = await db.query.effects.findFirst({ where: eq(effects.id, id) });
+      if (!originalEffect) {
+        throw new Error(`Effect with ID ${id} not found for update.`);
+      }
+      await assertStoryIsWritable(db, originalEffect.storyId);
+
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        originalEffect.storyId,
+        userId,
+      );
+      const updatedEffect = await runLocalWrite(db, originalEffect.storyId, () => {
+        const updated = db
+          .update(effects)
+          .set({
+            ...effectData,
+            updatedAt: new Date(),
+            version: sql`${effects.version} + 1`,
+          })
+          .where(and(eq(effects.id, id), eq(effects.isDeleted, false)))
+          .returning()
+          .get();
+
+        if (!updated) {
+          throw new Error(`Effect with ID ${id} not found or already deleted.`);
+        }
+
+        const changes = getChangedFields(originalEffect, updated);
+        if (Object.keys(changes).length > 0) {
+          recordLocalOperationSync(
+            db,
+            updated.storyId,
+            userIdToLog,
+            'update',
+            'Effect',
+            updated.id,
+            changes,
+          );
+        }
+        return updated;
+      });
+
+      return updatedEffect;
+    },
+
+    async deleteEffect(userId: string, id: string): Promise<void> {
+      const effectToDelete = await db.query.effects.findFirst({ where: eq(effects.id, id) });
+      if (!effectToDelete) {
+        console.warn(`Attempted to delete non-existent Effect ${id}.`);
+        return;
+      }
+      await assertStoryIsWritable(db, effectToDelete.storyId);
+
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        effectToDelete.storyId,
+        userId,
+      );
+      await runLocalWrite(db, effectToDelete.storyId, () => {
+        const removed = db
+          .update(effects)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${effects.version} + 1`,
+          })
+          .where(eq(effects.id, id))
+          .returning({ id: effects.id, version: effects.version })
+          .get();
+        recordLocalOperationSync(db, effectToDelete.storyId, userIdToLog, 'delete', 'Effect', id, {
+          id,
+          version: removed?.version,
+        });
+      });
+    },
+  };
+};

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CreateSeeAlsoRelationDataSchema,
   PartialSeeAlsoRelationSchema,
-} from '../../schemas/SeeAlsoRelationSchemas';
+} from '../../schemas/narrative/SeeAlsoRelationSchemas';
 
 describe('See-Also relation schemas', () => {
   it('accepts distinct endpoints and rejects self-links in create and complete partial forms', () => {

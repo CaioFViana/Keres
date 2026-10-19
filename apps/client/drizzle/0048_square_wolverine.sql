@@ -1,0 +1,1 @@
+ALTER TABLE `stories` ADD `is_nsfw` integer DEFAULT false NOT NULL;

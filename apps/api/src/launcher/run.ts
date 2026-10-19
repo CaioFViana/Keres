@@ -64,7 +64,7 @@ export async function runLauncher(
     }
     const t = createTranslator(existing.language);
     try {
-      const result = createDataBackup({
+      const result = await createDataBackup({
         config: existing,
         destinationParent: args.destinationParent,
       });
@@ -125,7 +125,7 @@ export async function runLauncher(
   const boot =
     options.boot ??
     (async () => {
-      const { bootAndListen } = await import('../boot');
+      const { bootAndListen } = await import('@/boot');
       await bootAndListen({
         onListening: ({ port }) => {
           const localUrl = `http://127.0.0.1:${port}`;

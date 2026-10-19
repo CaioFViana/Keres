@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreateAttributeValueDataSchema, PartialAttributeValueSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { attributeValues, storySchemaFields } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { attributeValues, storySchemaFields } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 /**

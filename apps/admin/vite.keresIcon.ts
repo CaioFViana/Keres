@@ -130,7 +130,21 @@ function downscaleSquarePng(source: Buffer, size: number): Buffer {
 }
 
 /**
- * Builds a multi-size `favicon.ico` (16/24/32/48/64) from the desktop PNG, the same idea as
+ * The sizes a favicon is drawn at: 16 (tab), 32 (tab on a dense screen, taskbar) and 48 (desktop
+ * shortcut). Not 256: that image alone was 270 KB of a 285 KB file that every page of the panel and
+ * the site downloads, for a size no browser asks of a favicon.
+ */
+export const FAVICON_SIZES = [16, 32, 48];
+
+/** The `favicon.ico`: the desktop PNG averaged down to each size (see `downscaleSquarePng`). */
+export async function buildFaviconIco(): Promise<Buffer> {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(KERES_ICON_SOURCE);
+  return pngToIco(FAVICON_SIZES.map((size) => downscaleSquarePng(source, size)));
+}
+
+/**
+ * Builds a multi-size `favicon.ico` (`FAVICON_SIZES`) from the desktop PNG, the same idea as
  * electron-builder converting that file to .ico.
  *
  * `devUrls` are the paths the development server has to answer - the panel runs under `/admin/`,
@@ -139,7 +153,7 @@ function downscaleSquarePng(source: Buffer, size: number): Buffer {
 export function keresFavicon(devUrls: string[] = ['/favicon.ico']): Plugin {
   let icoPromise: Promise<Buffer> | null = null;
   const ico = () => {
-    icoPromise ??= pngToIco(KERES_ICON_SOURCE);
+    icoPromise ??= buildFaviconIco();
     return icoPromise;
   };
 

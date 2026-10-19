@@ -1,12 +1,12 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import GalleryAddLinkModal from '../../src/components/features/gallery/GalleryAddLinkModal';
-import GalleryAddMediaModal from '../../src/components/features/gallery/GalleryAddMediaModal';
-import GalleryAttachExistingModal from '../../src/components/features/gallery/GalleryAttachExistingModal';
-import { promptGalleryAddKind } from '../../src/components/features/gallery/promptGalleryAddKind';
-import type { GallerySelect } from '../../src/db/schema';
+import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
+import GalleryAddMediaModal from '@/src/components/features/gallery/GalleryAddMediaModal';
+import GalleryAttachExistingModal from '@/src/components/features/gallery/GalleryAttachExistingModal';
+import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGalleryAddKind';
+import type { GallerySelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -36,7 +36,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -61,7 +61,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
 });
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 
@@ -71,7 +71,7 @@ jest.mock('expo-image', () => ({
 }));
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 

@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { stories } from './stories';
 import { scenes } from './scenes';
 
@@ -13,6 +13,8 @@ export const locations = table('locations', {
   climate: text('climate'),
   culture: text('culture'),
   politics: text('politics'),
+  /** 'interior' | 'exterior' | 'both'; null when it does not apply (see `LOCATION_INT_EXT`). */
+  intExt: text('int_ext'),
   isFavorite: boolean('is_favorite').notNull().default(false),
   extraNotes: text('extra_notes'),
   createdAt: timestampNow('created_at'),

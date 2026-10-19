@@ -1,8 +1,8 @@
 import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateCommentDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateCommentDataSchema, PartialCommentSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { comments } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { comments } from '@/db/schema';
 import {
   BaseSyncEntityHandler,
   SyncConflictError,
@@ -20,7 +20,8 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
   typeof PartialCommentSchema
 > {
   entityName = 'Comment';
-  tierLimitScope = 'none' as const;
+  // Not an entity, so no entity ceiling sees it: its own per-story cap, held against the story owner's plan.
+  tierLimitScope = 'comment' as const;
   // Where a comment is anchored and who wrote it are settled at creation.
   protected fixedFields = [
     'storyId',

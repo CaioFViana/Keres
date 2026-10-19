@@ -110,8 +110,9 @@ Serviços disponíveis:
 - API e Swagger: `http://localhost:3000/api/swagger`
 - Health check: `http://localhost:3000/api/kerescheck`
 - Painel administrativo compilado: `http://localhost:3000/admin`
-- Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/` — precisa de `bun run client:build`
+- Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/client/` — precisa de `bun run client:build:hosted` (um export feito para `/client`, não o de `client:build`)
 - Vitrine de histórias publicadas: `http://localhost:3000/showcase`
+- Landing page na raiz (opcional, desligada por padrão): ative no painel em Configurações → Páginas hospedadas — precisa de `bun run site:build:landing`
 - Painel administrativo com hot reload: `bun run admin:start` e abra `http://localhost:5173/admin/`
 
 ### Stack Docker local
@@ -167,7 +168,7 @@ Cada tag `v*.*.*` anexa os zips à [GitHub Release](https://github.com/caiofvian
 | Linux x64 | `Keres-Server-linux-x64-<versão>.zip` |
 | macOS Apple Silicon | `Keres-Server-macos-arm64-<versão>.zip` |
 
-Descompacte, execute `keres-server` / `keres-server.exe`. Não é preciso Bun, Node nem Docker. O zip contém o executável, o addon nativo do libSQL, as migrações, o painel `/admin` e um `README.md` (instruções e cópia de segurança). O compile da Bun não embute o `.node` do libSQL, por isso não é um único ficheiro.
+Descompacte, execute `keres-server` / `keres-server.exe`. Não é preciso Bun, Node nem Docker. O zip contém o executável, o addon nativo do libSQL, as migrações, as interfaces web hospedadas (painel `/admin`, cliente web `/client`, `/showcase`, landing page) e um `README.md` (instruções e cópia de segurança). O compile da Bun não embute o `.node` do libSQL, por isso não é um único ficheiro.
 
 Na primeira execução o assistente pergunta banco (SQLite por omissão), mídia local ou S3, porta e se escuta só neste computador ou na rede local. Os dados ficam **fora** da pasta do zip (atualizar o executável não apaga o banco):
 
@@ -339,6 +340,13 @@ bun run site:start      # http://localhost:5175
 bun run site:build
 ```
 
+O mesmo código tem um segundo build para a API servir na própria raiz, com os planos à venda do servidor, um formulário de contato e o servidor oficial `keres.me`:
+
+```bash
+bun run site:start:landing   # http://localhost:5176, /api com proxy para a API
+bun run site:build:landing   # apps/site/dist-landing, servido em / quando ativado
+```
+
 As capturas da vitrine da landing são fotos do próprio app, tiradas abrindo o build web real
 dentro do Electron com uma história de exemplo instalada:
 
@@ -356,7 +364,7 @@ O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `mas
 
 ## Documentação técnica
 
-- [Estrutura real do monorepo](docs/file_structure.md)
+- [Estrutura do monorepo e convenções de arquivos (onde vai um arquivo novo)](docs/file_structure.md)
 - [Plano e arquitetura do projeto](docs/project_plan.md)
 - [Fluxo de telas](docs/screen_flow.md)
 - [Mecânicas de escolhas](docs/choice_mechanics.md)

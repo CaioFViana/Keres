@@ -12,6 +12,7 @@ export interface UserListFilters {
   search?: string;
   isAdmin?: boolean;
   isDeleted?: boolean;
+  adultVerified?: boolean;
   tierId?: string;
   page?: number;
   pageSize?: number;

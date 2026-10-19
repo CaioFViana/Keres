@@ -1,8 +1,8 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import type { AppDrizzleClient } from '../../src/db';
-import migrations from '../../src/db/migrations';
-import * as schema from '../../src/db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import migrations from '@/src/db/migrations';
+import * as schema from '@/src/db/schema';
 
 /**
  * An in-memory test database for the services that talk to SQLite.

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ShowcasePackCard } from '@keres/shared';
-import { fetchPacks } from '../api/showcaseApi';
-import { PackCard } from '../components/PackCard';
+import { fetchPacks } from '@/showcase/api/showcaseApi';
+import { PackCard } from '@/showcase/components/PackCard';
 
 export function PacksPage() {
   const { t } = useTranslation('showcase');

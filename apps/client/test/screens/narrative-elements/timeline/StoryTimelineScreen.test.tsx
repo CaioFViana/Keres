@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 
+import StoryTimelineScreen from '@/src/screens/narrative-elements/timeline/StoryTimelineScreen';
+
 const mockNavigate = jest.fn();
 const mockSetChapterIds = jest.fn();
 const mockSetScaleMode = jest.fn();
@@ -51,17 +53,17 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate }),
 }));
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useStoryTimeline', () => ({
+jest.mock('@/src/hooks/story/useStoryTimeline', () => ({
   __esModule: true,
   useStoryTimeline: () => ({
     ...mockTimeline,
@@ -77,7 +79,7 @@ jest.mock('../../../../src/hooks/useStoryTimeline', () => ({
   }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -94,7 +96,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
@@ -108,7 +110,7 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -142,7 +144,7 @@ jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectP
   };
 });
 
-jest.mock('../../../../src/components/features/story-timeline/StoryTimelineCanvas', () => {
+jest.mock('@/src/components/features/story-timeline/StoryTimelineCanvas', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -181,7 +183,7 @@ jest.mock('../../../../src/components/features/story-timeline/StoryTimelineCanva
   };
 });
 
-jest.mock('../../../../src/components/features/story-timeline/StoryTimelineSheets', () => {
+jest.mock('@/src/components/features/story-timeline/StoryTimelineSheets', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -233,8 +235,6 @@ jest.mock('../../../../src/components/features/story-timeline/StoryTimelineSheet
     ),
   };
 });
-
-import StoryTimelineScreen from '../../../../src/screens/narrative-elements/timeline/StoryTimelineScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

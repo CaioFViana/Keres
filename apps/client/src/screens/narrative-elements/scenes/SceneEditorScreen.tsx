@@ -1,45 +1,49 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import Button from '../../../components/common/controls/Button/Button';
-import type { HeaderAction } from '../../../components/common/navigation/HeaderActions/HeaderActions';
-import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
-import type { ManuscriptMark } from '@keres/shared';
-import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
-import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
-import { RichBodyEditor } from '../../../components/features/manuscript/RichBodyEditor/RichBodyEditor';
-import { SceneBodyFooter } from '../../../components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
-import { SceneBodyToolbar } from '../../../components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
-import type { SceneSelect } from '../../../db/schema';
-import { useDrizzle } from '../../../db';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityComments } from '../../../hooks/useEntityComments';
+import Button from '@/src/components/common/controls/Button/Button';
+import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
+import CommentThreadModal from '@/src/components/features/comments/CommentThreadModal/CommentThreadModal';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
+import { SceneBodyFooter } from '@/src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
+import { SceneBodyToolbar } from '@/src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
+import {
+  ScreenplaySceneHeader,
+  useScreenplaySceneContext,
+} from '@/src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
+import type { SceneSelect } from '@/src/db/schema';
+import { useDrizzle } from '@/src/db';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../../hooks/useEntityRefreshLifecycle';
-import { useSceneBodyDraft } from '../../../hooks/useSceneBodyDraft';
-import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import { useStoryRole } from '../../../hooks/useStoryRole';
-import { useWebSelectionClip } from '../../../hooks/useWebSelectionClip';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { SCENE_BODY_DRAFT_FIELD } from '../../../services/EditorDraftService';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useSceneBodyDraft } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { SCENE_BODY_DRAFT_FIELD } from '@/src/services/drafts/EditorDraftService';
 import {
   createSceneService,
   type SceneService,
-} from '../../../services/storymanagement/SceneService';
-import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { useTheme } from '../../../theme';
-import { AppAlert } from '../../../utils/AppAlert';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+} from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
 type SceneEditorNavigation = NativeStackNavigationProp<
@@ -47,6 +51,16 @@ type SceneEditorNavigation = NativeStackNavigationProp<
   'SceneEditor'
 >;
 type EditorMode = 'write' | 'read' | 'review';
+
+/**
+ * The rich editor brings the web editor engine (TipTap and ProseMirror, a few hundred KB): it loads when a
+ * scene is opened for writing, not when the app starts.
+ */
+const RichBodyEditor = lazy(() =>
+  import('@/src/components/features/manuscript/RichBodyEditor/RichBodyEditor').then((module) => ({
+    default: module.RichBodyEditor,
+  })),
+);
 
 const MODES: {
   mode: EditorMode;
@@ -67,6 +81,7 @@ function SceneEditorContent({
 }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  useScreenTour('SceneEditor');
   // Write/read/review state machine: write owns the toolbar, the native editor and the save
   // footer; read and review render the live serialized doc (unsaved typing included), with
   // review adding the prose-comments entry. Mode switches never touch the doc.
@@ -130,7 +145,7 @@ function SceneEditorContent({
   // passage stays exactly where it was instead of jumping back to the top.
   const scrollRef = useRef<ScrollView | null>(null);
   const handleToolbarAction = useCallback(
-    (kind: ManuscriptMark) => {
+    (kind: Parameters<typeof applyFormat>[0]) => {
       applyFormat(kind);
       // A real editor keeps the caret: reassert input focus so typing
       // continues in the toggled style with the keyboard up.
@@ -211,20 +226,31 @@ function SceneEditorContent({
     [colors],
   );
 
+  const screenplay = useScreenplaySceneContext(scene, serializedBody);
+
   return (
     <View style={styles.container}>
-      {mode === 'write' && (
-        <SceneBodyToolbar
-          testID="scene-body-toolbar"
-          onAction={handleToolbarAction}
-          disabled={!canEdit || saving}
-          active={{
-            bold: activeMarks.includes('bold'),
-            italic: activeMarks.includes('italic'),
-            underline: activeMarks.includes('underline'),
-            strikethrough: activeMarks.includes('strikethrough'),
-          }}
+      {screenplay.isScreenplay ? (
+        <ScreenplaySceneHeader
+          place={screenplay.place}
+          cast={screenplay.cast}
+          plan={screenplay.plan}
         />
+      ) : null}
+      {mode === 'write' && (
+        <GuideAnchor screen="SceneEditor" part="toolbar">
+          <SceneBodyToolbar
+            testID="scene-body-toolbar"
+            onAction={handleToolbarAction}
+            disabled={!canEdit || saving}
+            active={{
+              bold: activeMarks.includes('bold'),
+              italic: activeMarks.includes('italic'),
+              underline: activeMarks.includes('underline'),
+              strikethrough: activeMarks.includes('strikethrough'),
+            }}
+          />
+        </GuideAnchor>
       )}
       <ScrollView
         ref={scrollRef}
@@ -242,15 +268,21 @@ function SceneEditorContent({
           // last on web and wipes both the visual and the doc. The placeholder
           // holds the layout for the (millisecond) wait.
           restoreSettled ? (
-            <RichBodyEditor
-              testID="scene-body-editor"
-              defaultHtml={initialHtml}
-              onHtmlChange={onHtmlChange}
-              onMarksChange={onMarksChange}
-              editable={canEdit && !saving}
-              canEdit={canEdit}
-              inputRef={editorRef}
-            />
+            <Suspense
+              fallback={
+                <View style={styles.editorPlaceholder} testID="scene-body-editor-loading" />
+              }
+            >
+              <RichBodyEditor
+                testID="scene-body-editor"
+                defaultHtml={initialHtml}
+                onHtmlChange={onHtmlChange}
+                onMarksChange={onMarksChange}
+                editable={canEdit && !saving}
+                canEdit={canEdit}
+                inputRef={editorRef}
+              />
+            </Suspense>
           ) : (
             <View style={styles.editorPlaceholder} testID="scene-body-editor-loading" />
           )
@@ -272,17 +304,19 @@ function SceneEditorContent({
         </View>
       )}
       {mode === 'write' && (
-        <SceneBodyFooter
-          testID="scene-body-footer"
-          wordCount={wordCount}
-          charCount={charCount}
-          sizeStatus={sizeStatus}
-          overLimit={overLimit}
-          canSave={canSave && canEdit}
-          saving={saving}
-          hasUnsavedChanges={hasUnsavedChanges}
-          onSave={() => void save()}
-        />
+        <GuideAnchor screen="SceneEditor" part="footer">
+          <SceneBodyFooter
+            testID="scene-body-footer"
+            wordCount={wordCount}
+            charCount={charCount}
+            sizeStatus={sizeStatus}
+            overLimit={overLimit}
+            canSave={canSave && canEdit}
+            saving={saving}
+            hasUnsavedChanges={hasUnsavedChanges}
+            onSave={() => void save()}
+          />
+        </GuideAnchor>
       )}
       <CommentThreadModal
         visible={commentsOpen}

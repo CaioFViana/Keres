@@ -3,17 +3,21 @@ import type { BoardNodeType } from '@keres/shared';
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../theme';
-import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
-import { getBoardPinAppearance, type BoardCardAppearance } from '../../../utils/boardPinAppearance';
+import { useTheme } from '@/src/theme';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
+import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
+import {
+  getBoardPinAppearance,
+  type BoardCardAppearance,
+} from '@/src/utils/board/boardPinAppearance';
 import {
   boardNodeSize,
   galleryDisplayPath,
   galleryHasImage,
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMedia,
-} from '../../../utils/boardLayout';
-import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
+} from '@/src/utils/board/boardLayout';
+import type { BoardEntitySummary } from '@/src/services/storymanagement/entities/boardEntitySummary';
 
 const DRAG_THRESHOLD = 5;
 
@@ -158,11 +162,7 @@ const BoardNodeView: React.FC<Props> = ({
           origin.current = { x: position.current.x, y: position.current.y };
           if (connectionModeRef.current) handlers.current.onConnectionStart(nodeRef.current);
           else handlers.current.onDragStart(nodeId.current);
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            setPointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.setPointerCapture?.(pointerId);
+          capturePointer(event);
         },
         onPanResponderMove: (_event, gesture) => {
           const zoom = Math.max(scaleRef.current, 0.01);
@@ -179,11 +179,7 @@ const BoardNodeView: React.FC<Props> = ({
           );
         },
         onPanResponderRelease: (event, gesture) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (connectionModeRef.current) {
             const zoom = Math.max(scaleRef.current, 0.01);
             handlers.current.onConnectionEnd(nodeId.current, gesture.dx / zoom, gesture.dy / zoom);
@@ -195,11 +191,7 @@ const BoardNodeView: React.FC<Props> = ({
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (connectionModeRef.current) handlers.current.onConnectionCancel();
           else handlers.current.onDragEnd(nodeId.current);
           dragging.current = false;
@@ -239,6 +231,9 @@ const BoardNodeView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => layoutEditing,
         onMoveShouldSetPanResponder: () => layoutEditing,
+        // Once the handle has the finger nothing takes it back - not the canvas, not the card around it:
+        // on native the default hands the gesture over to whoever asks, and the resize ended after a frame.
+        onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
           resizeOrigin.current = sizeRef.current;
           handlers.current.onDragStart(nodeId.current);

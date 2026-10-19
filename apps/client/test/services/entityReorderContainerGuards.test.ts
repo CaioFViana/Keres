@@ -2,13 +2,13 @@
  * @jest-environment node
  */
 import { AttributeType } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { createStatService } from '../../src/services/storymanagement/StatService';
-import { createStorySchemaFieldService } from '../../src/services/storymanagement/StorySchemaFieldService';
-import { entityBase, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
+import { entityBase, TEST_USER_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * A reorder for a story that is not here (a stale screen, a half-purged story) must fail fast

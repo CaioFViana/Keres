@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import NotesScreen from '@/src/screens/notes/NoteListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
@@ -13,7 +15,7 @@ let mockListState = {
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
 };
 let mockListProps: {
   data: { id: string; title: string }[];
@@ -37,7 +39,7 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -114,24 +116,24 @@ jest.mock('@/src/components/features/list-items/NoteListItem', () => ({
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('../../../src/state/noteStore', () => ({
+jest.mock('@/src/state/story/noteStore', () => ({
   __esModule: true,
   useNoteStore: jest.fn(),
 }));
@@ -140,15 +142,13 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import NotesScreen from '../../../src/screens/notes/NoteListScreen';
-
 const freshListState = () => ({
   listProps: {},
   items: [] as { id: string; title: string }[],
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
 });
 
 describe('NotesScreen', () => {

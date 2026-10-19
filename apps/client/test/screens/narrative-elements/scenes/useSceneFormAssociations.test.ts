@@ -1,20 +1,20 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { useSceneFormAssociations } from '@/src/screens/narrative-elements/scenes/useSceneFormAssociations';
+
 const mockUseSceneCharacterPresence = jest.fn();
 const mockUseEntityEffects = jest.fn();
 const mockUseEntityRelations = jest.fn();
 const mockFetchCharacterSceneRelations = jest.fn();
 
-jest.mock('../../../../src/hooks/useSceneCharacterPresence', () => ({
+jest.mock('@/src/screens/narrative-elements/scenes/useSceneCharacterPresence', () => ({
   useSceneCharacterPresence: (...args: unknown[]) => mockUseSceneCharacterPresence(...args),
 }));
-jest.mock('../../../../src/hooks/useEntityEffects', () => ({
+jest.mock('@/src/hooks/choice/useEntityEffects', () => ({
   useEntityEffects: (...args: unknown[]) => mockUseEntityEffects(...args),
 }));
-jest.mock('../../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useSceneFormAssociations } from '../../../../src/screens/narrative-elements/scenes/useSceneFormAssociations';
 
 const fakePresence = {
   marker: 'presence',

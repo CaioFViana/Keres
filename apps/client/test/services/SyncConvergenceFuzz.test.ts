@@ -1,20 +1,12 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/state/notificationStore', () => ({
-  useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
-}));
-jest.mock('../../src/services/MediaSyncService', () => ({
-  createMediaSyncService: () => ({
-    syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
-  }),
-}));
-
 import { and, eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createCollaborationEdits } from '../helpers/syncFuzzCollaboration';
-import { createNarrativeEdits } from '../helpers/syncFuzzNarrative';
-import { createWorldEdits } from '../helpers/syncFuzzWorld';
+import * as schema from '@/src/db/schema';
+import { createCollaborationEdits } from '@/test/helpers/syncFuzzCollaboration';
+import { createMediaEdits } from '@/test/helpers/syncFuzzMedia';
+import { createNarrativeEdits } from '@/test/helpers/syncFuzzNarrative';
+import { createWorldEdits } from '@/test/helpers/syncFuzzWorld';
 import {
   ApiSyncBackend,
   contentOf,
@@ -24,7 +16,16 @@ import {
   SyncHarness,
   type SyncDevice,
   USER_ID,
-} from '../helpers/syncDevices';
+} from '@/test/helpers/syncDevices';
+
+jest.mock('@/src/state/ui/notificationStore', () => ({
+  useNotificationStore: { getState: () => ({ showNotification: jest.fn() }) },
+}));
+jest.mock('@/src/services/media/MediaSyncService', () => ({
+  createMediaSyncService: () => ({
+    syncStoryMedia: async () => ({ uploaded: 0, downloaded: 0, failed: 0, offline: false }),
+  }),
+}));
 
 /**
  * Randomized convergence: several devices edit, delete and create characters; create, rename,
@@ -447,36 +448,42 @@ describe('randomized convergence', () => {
     const collaborationEdit = createCollaborationEdits(fuzzContext);
     const worldEdit = createWorldEdits(fuzzContext);
     const narrativeEdit = createNarrativeEdits(fuzzContext);
+    const mediaEdit = createMediaEdits(fuzzContext);
     // The things the links link: made once, on one device, and shared before anyone edits.
     await worldEdit.prime(devices[0]!);
     await narrativeEdit.prime(devices[0]!);
+    await mediaEdit.prime(devices[0]!);
     for (const device of devices) await device.sync();
     await devices[0]!.sync();
 
     const localEdit = async (device: SyncDevice) => {
       const kind = random();
-      if (kind < 0.2) {
+      if (kind < 0.18) {
         await sceneEdit(device);
         return;
       }
-      if (kind < 0.3) {
+      if (kind < 0.26) {
         await structureEdit(device);
         return;
       }
-      if (kind < 0.44) {
+      if (kind < 0.38) {
         await keyedEdit(device);
         return;
       }
-      if (kind < 0.58) {
+      if (kind < 0.5) {
         await collaborationEdit(device);
         return;
       }
-      if (kind < 0.74) {
+      if (kind < 0.64) {
         await worldEdit(device);
         return;
       }
-      if (kind < 0.9) {
+      if (kind < 0.78) {
         await narrativeEdit(device);
+        return;
+      }
+      if (kind < 0.9) {
+        await mediaEdit(device);
         return;
       }
       const ids = await liveIds(device);

@@ -2,9 +2,9 @@ import { act } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryDetail } from '@keres/shared';
-import { ShowcaseApp } from '../../src/showcase/App';
-import { readerStorageKey } from '../../src/showcase/reader/readerBridge';
-import { flush, render } from '../helpers/react';
+import { ShowcaseApp } from '@/showcase/App';
+import { readerStorageKey } from '@/showcase/reader/readerBridge';
+import { flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStory: vi.fn(),
@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
   fetchReaderUrl: mocks.fetchReaderUrl,

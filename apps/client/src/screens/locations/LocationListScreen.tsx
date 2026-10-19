@@ -1,10 +1,10 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -13,26 +13,23 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityArcIds } from '../../hooks/useEntityArcIds';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../hooks/useStoryRole';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
+import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOptions';
 import type {
   LocationStackParamList,
   MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import type { LocationWithTags } from '../../services/storymanagement/LocationService';
-import { createTagService } from '../../services/storymanagement/TagService';
-import { useLocationStore } from '../../state/locationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/navigation/drawer/MainSystemDrawer';
+import type { LocationWithTags } from '@/src/services/storymanagement/entities/LocationService';
+import { useLocationStore } from '@/src/state/story/locationStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'LocationsStack'>,
@@ -42,11 +39,8 @@ export type LocationsScreenNavigationProp = CompositeNavigationProp<
 const LocationsScreen = () => {
   useBackButtonHandler();
   useScreenTour('LocationsStack');
-  const listAnchorRef = useScreenAnchor('Locations', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
-  const drizzleDb = useDrizzle();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
 
   const {
@@ -57,55 +51,32 @@ const LocationsScreen = () => {
     storyId,
     advancedSearchCriteria: storeAdvancedSearchCriteria,
     setAdvancedSearchCriteria: setStoreAdvancedSearchCriteria,
-    toggleFavorite,
+    findMatching,
+    handleToggleFavorite,
   } = useEntityListScreen({
     useStore: useLocationStore,
     collectionKey: 'locations',
     changeEvent: 'location_changed',
   });
 
-  const activeArcId = useStoryStore((state) => state.activeArcId);
-  const arcIdsByLocation = useEntityArcIds(storyId ?? '', 'location');
-  const visibleLocations = useMemo(
-    () =>
-      locations.filter((location: LocationWithTags) =>
-        entityBelongsToActiveArc(arcIdsByLocation.get(location.id), activeArcId),
-      ),
-    [locations, arcIdsByLocation, activeArcId],
-  );
+  const {
+    data: visibleLocations,
+    outsideCount,
+    expanded: showingOtherArcs,
+    toggle: toggleOtherArcs,
+    previewCount,
+  } = useEntityArcScope({
+    storyId,
+    kind: 'location',
+    rows: locations as LocationWithTags[],
+    searchTerm: listProps.currentSearchTerm,
+    findMatching,
+  });
 
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const [tagService] = useState(() => createTagService(drizzleDb));
   const { canEdit } = useStoryRole(storyId);
+  const memoizedTagFilterOptions = useStoryTagFilterOptions(storyId);
 
-  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
-
-  // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
-  const fetchTags = useCallback(async () => {
-    if (!storyId) {
-      setAllTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId);
-      setAllTags(fetchedTags);
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    }
-  }, [storyId, tagService]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    fetchTags();
-  }, [fetchTags]);
-
-  useEffect(() => {
-    const handleTagChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchTags();
-    };
-    entityEventEmitter.on('tag_changed', handleTagChange);
-    return () => entityEventEmitter.off('tag_changed', handleTagChange);
-  }, [fetchTags, storyId]);
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -133,13 +104,6 @@ const LocationsScreen = () => {
     ],
   });
 
-  const handleToggleFavorite = useCallback(
-    async (locationId: string, isFavorite: boolean) => {
-      await toggleFavorite(locationId, isFavorite);
-    },
-    [toggleFavorite],
-  );
-
   const handleViewDetails = useCallback(
     (locationId: string) => {
       navigation.navigate('LocationDetail', { locationId });
@@ -157,10 +121,6 @@ const LocationsScreen = () => {
     ),
     [handleToggleFavorite, handleViewDetails],
   );
-
-  const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
-  }, [allTags]);
 
   const memoizedSortOptions = useMemo(() => {
     return [
@@ -184,10 +144,18 @@ const LocationsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Locations" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
+          onPreviewCount={previewCount}
           data={visibleLocations}
+          resultsNotice={
+            <OutsideArcNotice
+              count={outsideCount}
+              expanded={showingOtherArcs}
+              onToggle={toggleOtherArcs}
+            />
+          }
           renderItem={memoizedRenderItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
@@ -211,9 +179,12 @@ const LocationsScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
 export default LocationsScreen;

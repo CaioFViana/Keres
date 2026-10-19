@@ -1,4 +1,12 @@
-import { OperationLogEntityType, remapBoardContent, remapLocationMapContent } from '@keres/shared';
+import {
+  OperationLogEntityType,
+  remapBoardContent,
+  remapLocationMapContent,
+  remapSketchContent,
+  remapSketchCoverGalleryId,
+} from '@keres/shared';
+import { eq } from 'drizzle-orm';
+import { stories, storyArcs } from '@/db/schema';
 import type { DatabaseStoryPackageImportContext } from './DatabaseStoryPackageImportContext';
 import { insertPortableCollection } from './DatabaseStoryPackageCollectionRepository';
 
@@ -175,5 +183,139 @@ export async function importStoryAssets(context: DatabaseStoryPackageImportConte
       OperationLogEntityType.LocationMap,
       newStoryLocationMapsData,
     );
+  }
+
+  /*
+   * Sketches hold a gallery id only as a row-level cover link, remapped here after the
+   * gallery collection is in the id map. A snapshot the package does not carry clears
+   * the cover instead of pointing at a stranger's row.
+   */
+  const newStorySketchesData = (validatedFullStory.storySketches ?? []).map((original) => {
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return {
+      ...original,
+      id: newId,
+      storyId: targetStoryId,
+      content: remapSketchContent(original.content),
+      coverGalleryId: remapSketchCoverGalleryId(original.coverGalleryId, (id) => idMap.get(id)),
+      createdAt: new Date(original.createdAt),
+      updatedAt: new Date(original.updatedAt),
+      deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+    };
+  });
+  if (newStorySketchesData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.Sketch, newStorySketchesData);
+  }
+
+  /*
+   * The pages of a scene point at a scene (narrative phase), and at a Sketch or a Gallery medium
+   * (both written just above): every id is in the map by now. A page whose image the package does
+   * not carry keeps its text and waits for another image, as it does live.
+   */
+  const newScenePagesData = (validatedFullStory.scenePages ?? []).flatMap((original) => {
+    const sceneId = idMap.get(original.sceneId);
+    // A page of a scene the package lacks has nothing to belong to: it goes, as dangling rows do.
+    if (!sceneId) return [];
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return [
+      {
+        ...original,
+        id: newId,
+        storyId: targetStoryId,
+        sceneId,
+        sketchId: original.sketchId ? (idMap.get(original.sketchId) ?? null) : null,
+        galleryId: original.galleryId ? (idMap.get(original.galleryId) ?? null) : null,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+        deletedAt: null,
+      },
+    ];
+  });
+  if (newScenePagesData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.ScenePage, newScenePagesData);
+  }
+
+  /*
+   * Songs stand alone (they point at nothing but the story), so they are written before the music
+   * of the scenes that sing them, and before any gallery link whose owner is one.
+   */
+  const newSongsData = (validatedFullStory.songs ?? []).map((original) => {
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return {
+      ...original,
+      id: newId,
+      storyId: targetStoryId,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      isDeleted: false,
+      deletedAt: null,
+    };
+  });
+  if (newSongsData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.Song, newSongsData);
+  }
+
+  /*
+   * The music of a scene points at a scene (narrative phase), and at a Song or a Gallery medium (both
+   * written before this): every id is in the map by now. A link whose target the package does not
+   * carry keeps its cue and waits for another target, as it does live.
+   */
+  const newSceneMusicData = (validatedFullStory.sceneMusic ?? []).flatMap((original) => {
+    const sceneId = idMap.get(original.sceneId);
+    // Music of a scene the package lacks has nothing to belong to: it goes, as dangling rows do.
+    if (!sceneId) return [];
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return [
+      {
+        ...original,
+        id: newId,
+        storyId: targetStoryId,
+        sceneId,
+        songId: original.songId ? (idMap.get(original.songId) ?? null) : null,
+        galleryId: original.galleryId ? (idMap.get(original.galleryId) ?? null) : null,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+        deletedAt: null,
+      },
+    ];
+  });
+  if (newSceneMusicData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.SceneMusic, newSceneMusicData);
+  }
+
+  await relinkCoverGalleryIds(context);
+}
+
+/*
+ * The story and its arcs are written in the core phase, before any gallery row has a new id, so
+ * they are inserted without a cover and linked here. A cover the package does not carry stays
+ * empty rather than pointing at a stranger's row.
+ */
+async function relinkCoverGalleryIds(context: DatabaseStoryPackageImportContext): Promise<void> {
+  const { fullStory, idMap, targetStoryId, tx } = context;
+  const storyCover = fullStory.story.coverGalleryId
+    ? idMap.get(fullStory.story.coverGalleryId)
+    : undefined;
+  if (storyCover) {
+    await tx
+      .update(stories)
+      .set({ coverGalleryId: storyCover })
+      .where(eq(stories.id, targetStoryId));
+  }
+  for (const arc of fullStory.storyArcs ?? []) {
+    const arcId = idMap.get(arc.id);
+    const cover = arc.coverGalleryId ? idMap.get(arc.coverGalleryId) : undefined;
+    if (arcId && cover) {
+      await tx.update(storyArcs).set({ coverGalleryId: cover }).where(eq(storyArcs.id, arcId));
+    }
   }
 }

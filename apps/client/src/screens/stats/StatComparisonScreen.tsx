@@ -1,41 +1,39 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import Button from '../../components/common/controls/Button/Button';
+import Button from '@/src/components/common/controls/Button/Button';
 import MultiSelectPill, {
   SingleSelectPill,
-} from '../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { StatRadarChart } from '../../components/features/stats/StatRadarChart/StatRadarChart';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import type {
-  CustomizationStackParamList,
-  MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { deliverMapExport } from '../../utils/storyTransfer';
-import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
+import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/stats/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
-} from '@keres/shared/graphs/statRadarLayout';
-import { renderStatRadarSvg } from '@keres/shared/graphs/statRadarSvg';
-import { resolveStatValue } from '../../utils/statValues';
+} from '@keres/shared/graphs/stats/statRadarLayout';
+import { renderStatRadarSvg } from '@keres/shared/graphs/stats/statRadarSvg';
+import { resolveStatValue } from '@/src/utils/stats/statValues';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
+  StatsStackParamList,
   'StatComparison'
 >;
 
@@ -63,7 +61,7 @@ const StatComparisonScreen = () => {
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
   const navigation = useNavigation<StatComparisonNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatComparison'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatComparison'>>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const notation = (selectedStory?.statNotation ?? 'letter') as StatNotation;
@@ -181,6 +179,8 @@ const StatComparisonScreen = () => {
 
   const handleExport = useCallback(async () => {
     if (!layout || !selectedStory) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setExporting(true);
     try {
       const svg = renderStatRadarSvg(layout, {
@@ -195,11 +195,7 @@ const StatComparisonScreen = () => {
           border: colors.border,
         },
       });
-      const result = await deliverMapExport(
-        svg,
-        `${selectedStory.title}-stats.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const result = await deliverMapExport(svg, `${selectedStory.title}-stats.svg`, format);
       showNotification(
         result.delivered
           ? t('stat_export_success', { fileName: result.fileName })

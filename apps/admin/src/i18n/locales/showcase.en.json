@@ -10,6 +10,19 @@
     "responsibilityBody": "The stories here belong to the people who published them, and this server is run by whoever chose to run it. Keres, the application, is not affiliated with either, does not host or moderate these stories, and takes no position on them.",
     "serverVersion": "Server version {{version}}"
   },
+  "auth": {
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signOut": "Sign out",
+    "username": "Username",
+    "password": "Password",
+    "loginFailed": "Could not sign in.",
+    "signInHint": "A site account unlocks the adults-only shelf when it is age-verified and adults-only content is turned on in its app profile. The session lives only in this tab.",
+    "unverified": "not verified"
+  },
+  "common": {
+    "cancel": "Cancel"
+  },
   "footer": {
     "disclaimer": "Keres is a writing companion for planning stories. It is not affiliated with the server hosting this page, nor with the stories published on it, and it does not endorse or moderate them. Every story here belongs to the person who published it."
   },
@@ -30,7 +43,9 @@
     "publishedStories": "Published stories",
     "loading": "Loading…",
     "empty": "Nothing has been published on this server yet. When an author publishes a story, it shows up here.",
-    "loadFailed": "Could not load the stories."
+    "loadFailed": "Could not load the stories.",
+    "adultHint": "Signed-in verified adults can also see the +18 shelf here, once they turn on adults-only content in their app profile.",
+    "adultHintOptIn": "Your account is verified. Turn on adults-only content in your profile in the app to see the +18 shelf here."
   },
   "language": {
     "label": "Language"
@@ -157,7 +172,20 @@
     "readOnline": "Read online",
     "preparing": "Preparing…",
     "downloadFailed": "Could not start the download.",
-    "mediaCount": "{{included}}/{{total}} media"
+    "mediaCount": "{{included}}/{{total}} media",
+    "adultsOnly": "+18",
+    "gatedHint": "This story may be adults-only or unavailable. Sign in with a verified account to find out.",
+    "gatedOptInHint": "This story may be adults-only. Adults-only content is off on your account: turn it on in your profile in the app to see it.",
+    "universeTitle": "The whole universe",
+    "universeIntro": "Versions of the story as a whole: the story file (with every work in it), a manuscript and the story to read online.",
+    "workBy": "by {{author}}",
+    "medium": {
+      "generic": "Prose",
+      "screenplay": "Screenplay",
+      "comic": "Comic",
+      "storyboard": "Storyboard",
+      "campaign": "Campaign"
+    }
   },
   "theme": {
     "system": "Theme: System",

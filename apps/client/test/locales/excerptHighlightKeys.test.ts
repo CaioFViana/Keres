@@ -1,6 +1,6 @@
 /** @jest-environment node */
-import en from '../../src/locales/en.json';
-import pt from '../../src/locales/pt.json';
+import en from '@/src/locales/en.json';
+import pt from '@/src/locales/pt.json';
 
 describe('excerpt highlight locale keys', () => {
   it('defines the anchor notice in English and Portuguese', () => {

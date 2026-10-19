@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import PlotListScreen from '../../../src/screens/plots/PlotListScreen';
+import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
+import PlotListScreen from '@/src/screens/plots/PlotListScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -20,7 +20,7 @@ jest.mock('@react-navigation/native', () => ({
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -29,7 +29,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -49,62 +49,59 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock(
-  '../../../src/components/common/lists/GenericFilterSortList/GenericFilterSortList',
-  () => {
-    const { Text } = require('react-native');
-    const React = require('react');
-    return {
-      __esModule: true,
-      default: (props: any) => {
-        mockListProps = props;
-        const {
-          data,
-          renderItem,
-          keyExtractor,
-          onSearch,
-          onSortChange,
-          onSortDirectionChange,
-          emptyStateTitle,
-          emptyStateActions,
-        } = props;
-        return (
-          <>
-            <Text testID="gfs-search" onPress={() => onSearch('north')}>
-              search
-            </Text>
-            <Text testID="gfs-sort" onPress={() => onSortChange('sceneCount')}>
-              sort
-            </Text>
-            <Text testID="gfs-dir" onPress={() => onSortDirectionChange('desc')}>
-              dir
-            </Text>
-            {data.length === 0 ? (
-              <>
-                <Text testID="empty-title">{emptyStateTitle}</Text>
-                {(emptyStateActions ?? []).map((action: any) => (
-                  <Text
-                    key={action.label}
-                    testID={`empty-action-${action.label}`}
-                    onPress={action.onPress}
-                  >
-                    {action.label}
-                  </Text>
-                ))}
-              </>
-            ) : (
-              data.map((item: any) => (
-                <React.Fragment key={keyExtractor(item)}>{renderItem({ item })}</React.Fragment>
-              ))
-            )}
-          </>
-        );
-      },
-    };
-  },
-);
+jest.mock('@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList', () => {
+  const { Text } = require('react-native');
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: (props: any) => {
+      mockListProps = props;
+      const {
+        data,
+        renderItem,
+        keyExtractor,
+        onSearch,
+        onSortChange,
+        onSortDirectionChange,
+        emptyStateTitle,
+        emptyStateActions,
+      } = props;
+      return (
+        <>
+          <Text testID="gfs-search" onPress={() => onSearch('north')}>
+            search
+          </Text>
+          <Text testID="gfs-sort" onPress={() => onSortChange('sceneCount')}>
+            sort
+          </Text>
+          <Text testID="gfs-dir" onPress={() => onSortDirectionChange('desc')}>
+            dir
+          </Text>
+          {data.length === 0 ? (
+            <>
+              <Text testID="empty-title">{emptyStateTitle}</Text>
+              {(emptyStateActions ?? []).map((action: any) => (
+                <Text
+                  key={action.label}
+                  testID={`empty-action-${action.label}`}
+                  onPress={action.onPress}
+                >
+                  {action.label}
+                </Text>
+              ))}
+            </>
+          ) : (
+            data.map((item: any) => (
+              <React.Fragment key={keyExtractor(item)}>{renderItem({ item })}</React.Fragment>
+            ))
+          )}
+        </>
+      );
+    },
+  };
+});
 
-jest.mock('../../../src/components/features/list-items/PlotListItem', () => {
+jest.mock('@/src/components/features/list-items/PlotListItem', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -116,7 +113,7 @@ jest.mock('../../../src/components/features/list-items/PlotListItem', () => {
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -128,11 +125,11 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/hooks/useStoryPlots', () => ({
+jest.mock('@/src/screens/plots/useStoryPlots', () => ({
   useStoryPlots: () => mockPlotsData,
 }));
 
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -141,9 +138,9 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 
@@ -243,6 +240,28 @@ describe('PlotListScreen', () => {
     ]);
     mockListProps?.emptyStateActions?.[0].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('PlotForm', {});
+  });
+
+  it('filters by field, and says how many plots a filter would leave', async () => {
+    const view = await render(<PlotListScreen />);
+    const props = () => mockListProps as any;
+
+    expect(props().storyId).toBe('story-1');
+    await act(async () => props().onAdvancedSearch({ details: 'first' }));
+
+    expect(props().currentAdvancedSearchCriteria).toEqual({ details: 'first' });
+    expect(view.getByTestId('plot-plot-1')).toBeTruthy();
+    expect(view.queryByTestId('plot-plot-2')).toBeNull();
+    // The count is for the draft, not for what is applied now.
+    expect(await props().onPreviewCount({ name: 'beta' })).toBe(1);
+    expect(await props().onPreviewCount({})).toBe(2);
+  });
+
+  it('counts the typed words together with the draft filters', async () => {
+    const view = await render(<PlotListScreen />);
+    await fireEvent.press(view.getByTestId('gfs-search')); // "north": no plot has it
+
+    expect(await (mockListProps as any).onPreviewCount({ name: 'alpha' })).toBe(0);
   });
 
   it('sorts by scene count and direction', async () => {

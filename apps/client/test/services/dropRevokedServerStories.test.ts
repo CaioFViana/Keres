@@ -1,31 +1,32 @@
 /** @jest-environment node */
+import { noteAccessRevocation } from '@/src/services/social/accessRevocation';
+import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
+
 const mockDiscard = jest.fn(async (_id: string) => undefined);
 const mockFetchStories = jest.fn(async () => undefined);
 const mockNotify = jest.fn();
 const mockEmit = jest.fn();
 
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => ({ discardCollaboratedCopy: mockDiscard })),
 }));
-jest.mock('../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: { getState: () => ({ fetchStories: mockFetchStories }) },
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockNotify }) },
 }));
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('../../src/utils/i18n', () => ({
+jest.mock('@/src/utils/format/i18n', () => ({
   __esModule: true,
   default: { t: (key: string, params?: { title: string }) => `${key}:${params?.title}` },
 }));
-
-import { dropRevokedServerStories } from '../../src/services/sync/dropRevokedServerStories';
 
 const server = { id: 'server-1' } as never;
 const story = (id: string, myRole: string | null, title = id) => ({ id, title, myRole });
@@ -69,6 +70,21 @@ describe('dropRevokedServerStories', () => {
 
     expect(mockDiscard).not.toHaveBeenCalled();
     expect(mockFetchStories).not.toHaveBeenCalled();
+  });
+
+  it('names the moderation reason when the server revoked access for one', async () => {
+    noteAccessRevocation('gone', 'nsfw-story');
+    noteAccessRevocation('other', 'removed-by-admin');
+    const db = dbWith([story('gone', 'reader', 'Grown Tales'), story('other', 'reader', 'Old')]);
+
+    await expect(dropRevokedServerStories(db, server, [])).resolves.toEqual(['gone', 'other']);
+
+    expect(mockNotify).toHaveBeenCalledWith('story_access_revoked_nsfw:Grown Tales', 'info');
+    expect(mockNotify).toHaveBeenCalledWith('story_access_revoked_removed:Old', 'info');
+    expect(mockNotify).not.toHaveBeenCalledWith(
+      expect.stringContaining('story_access_lost'),
+      expect.anything(),
+    );
   });
 
   it('keeps going when one copy cannot be removed, and reports only those that went', async () => {

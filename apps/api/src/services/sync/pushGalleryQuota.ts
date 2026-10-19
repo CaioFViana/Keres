@@ -1,8 +1,8 @@
 import type { CreateStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../db';
-import { mediaBlobs } from '../../db/schema';
-import { tierEnforcementService } from '../TierEnforcementService';
+import { db } from '@/db';
+import { mediaBlobs } from '@/db/schema';
+import { tierEnforcementService } from '@/services/tiers/TierEnforcementService';
 
 /** What a row of this hash will really weigh: the stored blob's size, or the declared one until then. */
 async function chargedSize(hash: unknown, declared: unknown): Promise<number> {

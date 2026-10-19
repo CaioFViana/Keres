@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatDate, genreList, packContentLines } from '../../src/showcase/format';
+import { formatBytes, formatDate, genreList, packContentLines } from '@/showcase/format';
 
 /**
  * The site's formatting. The pack-lines plural rule mirrors the convention the translation audit

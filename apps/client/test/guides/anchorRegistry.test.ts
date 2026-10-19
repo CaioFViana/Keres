@@ -6,7 +6,7 @@ import {
   registerGuideAnchor,
   unionGuideRects,
   unregisterGuideAnchor,
-} from '../../src/guides/anchorRegistry';
+} from '@/src/guides/anchorRegistry';
 
 beforeEach(() => {
   __resetGuideAnchorsForTests();

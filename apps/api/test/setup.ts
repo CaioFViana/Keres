@@ -34,3 +34,23 @@ process.env.NODE_ENV = 'test';
 import * as os from 'node:os';
 import * as path from 'node:path';
 process.env.MEDIA_STORAGE_PATH ??= path.join(os.tmpdir(), 'keres-media-test');
+
+// The keys shared with a payment connector (see docs/payment_connectors.md). The tests that play the connector sign
+// with these; one per direction, as the server requires.
+process.env.PAYMENT_EVENTS_SECRET ??= 'test-events-secret-test-events-secret-000';
+process.env.PAYMENT_CONNECTOR_SECRET ??= 'test-connector-secret-test-connector-0001';
+
+// The keys shared with the age-verification service (see docs/age_verification.md). Same rule: one per direction.
+process.env.AGE_VERIFICATION_EVENTS_SECRET ??= 'test-age-events-secret-test-age-events-0000';
+process.env.AGE_VERIFICATION_SECRET ??= 'test-age-secret-test-age-secret-000000000001';
+
+// What the developer's own .env says about payments must not change what a test proves: the suites that need a
+// connector install a fake one, and a redirect to plain http is refused unless a test asks otherwise.
+process.env.PAYMENT_ALLOW_INSECURE_REDIRECTS = 'false';
+delete process.env.PAYMENT_CONNECTOR_URL;
+delete process.env.PAYMENT_PLAY_ENDPOINT_SECRET;
+
+// Age verification stays off in the suites (MODE unset = disabled): a suite that needs the service installs a fake one,
+// and `required` would otherwise make boot demand an address that no test has.
+delete process.env.AGE_VERIFICATION_MODE;
+delete process.env.AGE_VERIFICATION_URL;

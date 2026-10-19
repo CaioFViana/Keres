@@ -4,10 +4,12 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
 import { findFirstExcerptMatch } from '@keres/shared';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import { useWebSelectionClip } from '../../../../hooks/useWebSelectionClip';
-import type { CommentSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
-import CommentThreadModal from '../CommentThreadModal/CommentThreadModal';
+import { useWebSelectionClip } from '@/src/hooks/ui/useWebSelectionClip';
+import type { CommentSelect } from '@/src/db/schema';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import CommentThreadModal from '@/src/components/features/comments/CommentThreadModal/CommentThreadModal';
 
 export interface CommentableDetailFieldProps {
   storyId: string;
@@ -72,6 +74,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
     }
     return ranges;
   }, [comments, value]);
+  const styles = useThemedStyles(createStyles);
 
   if (!hasComments && !canComment) {
     return (
@@ -84,20 +87,6 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
       />
     );
   }
-
-  const styles = StyleSheet.create({
-    row: { flexDirection: 'row', alignItems: 'flex-start' },
-    field: { flex: 1 },
-    button: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginLeft: 8,
-      marginTop: 18,
-      paddingHorizontal: 4,
-      paddingVertical: 2,
-    },
-    count: { fontSize: 12, color: colors.textSecondary, marginLeft: 3 },
-  });
 
   return (
     <View style={styles.row}>
@@ -141,5 +130,20 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'flex-start' },
+    field: { flex: 1 },
+    button: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
+      marginTop: 18,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+    },
+    count: { ...typography.caption, color: colors.textSecondary, marginLeft: 3 },
+  });
 
 export default CommentableDetailField;

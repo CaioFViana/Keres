@@ -12,7 +12,7 @@ Data does **not** live in this program folder. Replacing the zip does not delete
 | macOS | `~/Library/Application Support/KeresServer` |
 | Linux | `~/.local/share/keres-server` |
 
-The CLI prints the LAN address (`http://192.168.x.x:<port>`). There is no `.local` hostname. `Ctrl+C` stops the server.
+The CLI prints the LAN address (`http://192.168.x.x:<port>`) once at startup, and again only if the machine's addresses change. There is no `.local` hostname. `Ctrl+C` stops the server.
 
 ## Backups (do this)
 

@@ -1,5 +1,5 @@
-import { storyPermissionTypeEnum } from '../enums';
-import { table, text, timestampNow, unique } from '../columns';
+import { storyPermissionTypeEnum } from '@/db/schema/enums';
+import { table, text, timestampNow, unique } from '@/db/schema/columns';
 import { stories } from './stories';
 import { users } from './users';
 

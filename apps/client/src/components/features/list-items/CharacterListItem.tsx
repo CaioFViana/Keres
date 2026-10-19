@@ -1,9 +1,9 @@
 import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { Text, View } from 'react-native';
-import type { CharacterWithTags } from '../../../services/storymanagement/CharacterService';
-import { useTheme } from '../../../theme';
-import { truncate } from '../../../utils/stringUtils';
+import type { CharacterWithTags } from '@/src/services/storymanagement/entities/CharacterService';
+import { useTheme } from '@/src/theme';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '@/src/components/common/display/TagList/TagList';

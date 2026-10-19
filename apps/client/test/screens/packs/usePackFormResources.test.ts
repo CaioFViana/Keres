@@ -1,28 +1,28 @@
+import { renderHook, waitFor } from '@testing-library/react-native';
+import { usePackFormResources } from '@/src/screens/packs/usePackFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreatePackService = jest.fn();
 const mockCreateStoryService = jest.fn();
 const mockGetAllStories = jest.fn();
 const mockShowNotification = jest.fn();
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('../../../src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   createPackService: (...args: unknown[]) => mockCreatePackService(...args),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: (...args: unknown[]) => mockCreateStoryService(...args),
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: (...args: unknown[]) => mockShowNotification(...args) }),
 }));
-
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { usePackFormResources } from '../../../src/screens/packs/usePackFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakePackService = { marker: 'pack-service' };

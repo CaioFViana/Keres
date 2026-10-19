@@ -6,7 +6,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": true
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/generated", "!apps/client/src/db/migrations/index.ts"]
   },
   "formatter": {
     "enabled": true,
@@ -15,10 +16,16 @@
     "lineWidth": 100
   },
   "linter": {
-    "enabled": false
+    "enabled": false,
+    "rules": {
+      "recommended": false
+    }
   },
   "assist": {
     "enabled": false
+  },
+  "json": {
+    "formatter": { "enabled": false }
   },
   "javascript": {
     "formatter": {
@@ -31,6 +38,75 @@
     {
       "includes": ["packages/shared/manuscript/compile/export/timesWidths.ts"],
       "formatter": { "enabled": false }
+    },
+    {
+      "includes": [
+        "packages/shared/**",
+        "apps/api/**",
+        "apps/desktop/**",
+        "apps/payments/**",
+        "apps/site/**",
+        "apps/verification/**"
+      ],
+      "linter": {
+        "enabled": true,
+        "rules": {
+          "complexity": {
+            "noBannedTypes": "error",
+            "noUselessThisAlias": "error",
+            "noUselessTypeConstraint": "error"
+          },
+          "correctness": {
+            "noUnusedImports": "error",
+            "noUnusedVariables": "error"
+          },
+          "style": {
+            "noCommonJs": "error",
+            "noNamespace": "error",
+            "useAsConstAssertion": "error",
+            "useImportType": {
+              "level": "error",
+              "options": {
+                "style": "auto"
+              }
+            }
+          },
+          "suspicious": {
+            "noExtraNonNullAssertion": "error",
+            "noMisleadingInstantiator": "error",
+            "noNonNullAssertedOptionalChain": "error",
+            "noUnsafeDeclarationMerging": "error",
+            "useNamespaceKeyword": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/shared/**", "apps/api/**", "apps/payments/**", "apps/verification/**"],
+      "linter": {
+        "enabled": true,
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/shared/test/**",
+        "apps/api/test/**",
+        "apps/payments/test/**",
+        "apps/verification/test/**"
+      ],
+      "linter": {
+        "enabled": true,
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
     }
   ]
 }

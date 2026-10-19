@@ -77,6 +77,9 @@ const NATURAL_KEYS: Record<string, readonly string[]> = {
   TagRelation: ['tagId', 'relationId', 'relationType'],
 };
 
+/** Entities the API only creates under a live scene (`assertSceneAlive`). */
+const SCENE_BOUND = new Set(['ScenePage', 'SceneMusic']);
+
 /** The one user the model knows: every push is theirs. */
 const ACTING_USER = 'server-user';
 
@@ -334,6 +337,14 @@ export class ReferenceSyncServer {
           continue;
         }
         const payload = normalized(update.entity, withoutImmutable(update.data ?? {}), 'create');
+        // Like `assertSceneAlive`: a page or a piece of music belongs to a scene that is still there.
+        if (SCENE_BOUND.has(update.entity)) {
+          const scene = this.rows.get(this.key('Scene', String(payload.sceneId)));
+          if (!scene || scene.isDeleted) {
+            refuse('referenced_entity_deleted');
+            continue;
+          }
+        }
         const twin = this.liveTwin(update.entity, { ...payload, id: entityId });
         if (twin) {
           refuse('duplicate', {

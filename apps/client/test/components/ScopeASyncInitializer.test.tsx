@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import SyncInitializer from '../../src/components/features/app/SyncInitializer';
+import SyncInitializer from '@/src/components/features/app/SyncInitializer';
 
 // A stable `t` like the real i18next one: a fresh closure per render would change the
 // reconciler's identity and fire effects the production app never refires.
@@ -10,7 +10,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockDrizzle = {};
-jest.mock('../../src/db', () => ({ useDrizzle: () => mockDrizzle }));
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDrizzle }));
 
 const mockApiClient = {
   setTokenProvider: jest.fn(),
@@ -18,7 +18,7 @@ const mockApiClient = {
   setBaseUrl: jest.fn(),
   get: jest.fn(async (): Promise<any> => null),
 };
-jest.mock('../../src/services/apiClient', () => ({
+jest.mock('@/src/services/api/apiClient', () => ({
   __esModule: true,
   // Mock factories run before this module's consts initialize: every mock value must be read
   // lazily (a getter/closure), never captured into the factory's return value.
@@ -26,12 +26,15 @@ jest.mock('../../src/services/apiClient', () => ({
     return mockApiClient;
   },
   isOfflineError: (error: { isOffline?: boolean }) => error?.isOffline === true,
+  isVerificationPendingError: (error: {
+    response?: { status?: number; data?: { code?: string } };
+  }) => error?.response?.status === 403 && error.response.data?.code === 'verification_pending',
   apiUrl: (url: string, endpoint: string) => `${url}${endpoint}`,
 }));
 
 const mockAuthTokenManager = { name: 'auth-token-manager' };
 const mockSetAuthDb = jest.fn();
-jest.mock('../../src/services/AuthTokenManager', () => ({
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({
   get authTokenManager() {
     return mockAuthTokenManager;
   },
@@ -39,14 +42,14 @@ jest.mock('../../src/services/AuthTokenManager', () => ({
 }));
 
 const mockSyncFriendships = jest.fn(async () => {});
-jest.mock('../../src/services/FriendshipService', () => ({
+jest.mock('@/src/services/social/FriendshipService', () => ({
   createFriendshipService: () => ({ syncFriendshipsWithServer: mockSyncFriendships }),
 }));
 
 const mockGetAllServers = jest.fn(async () => [] as unknown[]);
 const mockRefreshToken = jest.fn(async (server: unknown) => server);
 const mockGetServerById = jest.fn(async (_id: string) => null as unknown);
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   createServerService: () => ({
     getAllServers: mockGetAllServers,
     refreshServerToken: mockRefreshToken,
@@ -62,19 +65,27 @@ const mockRealtimeClass = jest.fn(() => ({
   stop: mockRtStop,
   subscribeToStory: mockRtSubscribe,
 }));
-jest.mock('../../src/services/ServerRealtimeService', () => ({
+const mockPlanUsageWatcher = jest.fn();
+jest.mock('@/src/hooks/billing/usePlanUsageWatcher', () => ({
+  usePlanUsageWatcher: (...args: unknown[]) => mockPlanUsageWatcher(...args),
+}));
+const mockPaymentDueWatcher = jest.fn();
+jest.mock('@/src/hooks/billing/usePaymentDueWatcher', () => ({
+  usePaymentDueWatcher: (...args: unknown[]) => mockPaymentDueWatcher(...args),
+}));
+jest.mock('@/src/services/servers/ServerRealtimeService', () => ({
   get ServerRealtimeService() {
     return mockRealtimeClass;
   },
 }));
 
 const mockGetAllStories = jest.fn(async () => [] as unknown[]);
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({ getAllStories: mockGetAllStories }),
 }));
 
 const mockDropRevoked = jest.fn(async () => [] as string[]);
-jest.mock('../../src/services/sync/dropRevokedServerStories', () => ({
+jest.mock('@/src/services/sync/dropRevokedServerStories', () => ({
   dropRevokedServerStories: (...args: unknown[]) => (mockDropRevoked as jest.Mock)(...args),
 }));
 
@@ -87,18 +98,19 @@ const mockSyncEngine = {
   ),
   downloadAndImportStory: jest.fn(async () => {}),
   requestSync: jest.fn(),
+  setRealtimeProbe: jest.fn(),
   deactivateStory: jest.fn(async () => {}),
   activateStory: jest.fn(async () => {}),
   startSync: jest.fn(),
 };
-jest.mock('../../src/services/sync/appSyncEngine', () => ({
+jest.mock('@/src/services/sync/appSyncEngine', () => ({
   get syncEngine() {
     return mockSyncEngine;
   },
 }));
 
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) => {
     const state = { showNotification: mockShowNotification };
     return selector ? selector(state) : state;
@@ -107,12 +119,12 @@ jest.mock('../../src/state/notificationStore', () => ({
 
 const mockFetchStories = jest.fn();
 const mockSyncInvitations = jest.fn(async () => undefined);
-jest.mock('../../src/services/StoryInvitationService', () => ({
+jest.mock('@/src/services/social/StoryInvitationService', () => ({
   __esModule: true,
   createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
 
-jest.mock('../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) => {
     const state = { fetchStories: mockFetchStories };
     return selector ? selector(state) : state;
@@ -122,13 +134,13 @@ jest.mock('../../src/state/storyListStore', () => ({
 const mockStoryState: {
   current: { selectedStory: { id: string; serverId: string | null } | null };
 } = { current: { selectedStory: null } };
-jest.mock('../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (state: unknown) => unknown) =>
     selector ? selector(mockStoryState.current) : mockStoryState.current,
 }));
 
 const mockRefreshConflicts = jest.fn(async () => {});
-jest.mock('../../src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/sync/syncConflictStore', () => ({
   useSyncConflictStore: { getState: () => ({ refresh: mockRefreshConflicts }) },
 }));
 
@@ -147,7 +159,7 @@ const mockUserSettings: {
     setActiveServer: jest.fn(),
   },
 };
-jest.mock('../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const hook = (selector?: (state: unknown) => unknown) =>
     selector ? selector(mockUserSettings.current) : mockUserSettings.current;
   return {
@@ -157,7 +169,7 @@ jest.mock('../../src/state/userSettingsStore', () => {
 
 const mockEEOn = jest.fn();
 const mockEEOff = jest.fn();
-jest.mock('../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: {
     on: (...args: unknown[]) => mockEEOn(...args),
     off: (...args: unknown[]) => mockEEOff(...args),
@@ -165,7 +177,7 @@ jest.mock('../../src/utils/EventEmitter', () => ({
 }));
 
 const mockInitialLoad = jest.fn();
-jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => ({
+jest.mock('@/src/hooks/lists/useEntityRefreshLifecycle', () => ({
   useEntityInitialLoad: (...args: unknown[]) => mockInitialLoad(...args),
 }));
 
@@ -224,6 +236,18 @@ describe('SyncInitializer', () => {
     expect(mockEEOn).toHaveBeenCalledWith('operation_log_updated', expect.any(Function));
     expect(mockEEOn).toHaveBeenCalledWith('sync_conflicts_changed', expect.any(Function));
     expect(mockInitialLoad).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it('keeps the plan usage of the open story watched, app-wide', async () => {
+    await render(<SyncInitializer>{null}</SyncInitializer>);
+
+    expect(mockPlanUsageWatcher).toHaveBeenCalled();
+  });
+
+  it('lets the payment reminder watch every server for the signed-in user', async () => {
+    await render(<SyncInitializer>{null}</SyncInitializer>);
+
+    expect(mockPaymentDueWatcher).toHaveBeenCalledWith(expect.anything(), expect.any(String));
   });
 
   it('skips reconciliation without a signed-in user', async () => {
@@ -329,6 +353,26 @@ describe('SyncInitializer', () => {
     });
     await flush();
     expect(mockShowNotification).toHaveBeenCalledWith('failed_to_sync_with_server: Home', 'error');
+  });
+
+  it('does not report a pending account as a failed sync: the app sends it to its verification', async () => {
+    mockGetAllServers.mockResolvedValue([server]);
+    mockSyncEngine.fetchServerStoryPreviews.mockRejectedValueOnce(
+      Object.assign(new Error('Request failed with status code 403'), {
+        response: {
+          status: 403,
+          data: { message: 'Verify your age', code: 'verification_pending' },
+        },
+      }),
+    );
+    await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
   it('skips a server whose sync protocol the app outgrew, with a clear message', async () => {

@@ -1,0 +1,146 @@
+import { renderHook } from '@testing-library/react-native';
+import { useRouteChronology } from '@/src/screens/routes/useRouteChronology';
+
+const mockStoryRoutes = jest.fn();
+const mockStoryCalendar = jest.fn();
+const mockSelectedStory = jest.fn();
+const mockDateFormat = jest.fn();
+
+jest.mock('@/src/screens/routes/useStoryRoutes', () => ({
+  __esModule: true,
+  useStoryRoutes: (...args: unknown[]) => mockStoryRoutes(...args),
+}));
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
+  __esModule: true,
+  useStoryCalendar: (...args: unknown[]) => mockStoryCalendar(...args),
+}));
+jest.mock('@/src/state/story/storyStore', () => ({
+  __esModule: true,
+  useStoryStore: (selector: (state: unknown) => unknown) =>
+    selector({ selectedStory: mockSelectedStory() }),
+}));
+jest.mock('@/src/state/app/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: (selector: (state: unknown) => unknown) =>
+    selector({ dateDisplayFormat: mockDateFormat() }),
+}));
+jest.mock('react-i18next', () => ({
+  __esModule: true,
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
+const firstScene = {
+  id: 'scene-a',
+  name: 'Beginning',
+  chapterId: 'chapter',
+  isDeleted: false,
+  gap: 12,
+  gapType: 'hours',
+  duration: 1,
+  durationType: 'hours',
+  calendarDateOverride: null,
+} as never;
+const secondScene = {
+  id: 'scene-b',
+  name: 'Arrival',
+  chapterId: 'chapter',
+  isDeleted: false,
+  gap: 2,
+  gapType: 'hours',
+  duration: 1,
+  durationType: 'hours',
+  calendarDateOverride: null,
+} as never;
+const steps = [
+  { id: 'visit-a', routeId: 'route', sceneId: 'scene-a', position: 1, isDeleted: false },
+  { id: 'visit-b', routeId: 'route', sceneId: 'scene-b', position: 2, isDeleted: false },
+] as never;
+
+beforeEach(() => {
+  mockSelectedStory.mockReturnValue({ id: 'story', timelineEpochDay: 0, timelineEpochSeconds: 0 });
+  mockDateFormat.mockReturnValue('iso');
+  mockStoryCalendar.mockReturnValue({ definition: null, calendars: [] });
+  mockStoryRoutes.mockReturnValue({
+    routes: [{ id: 'route', storyId: 'story' }],
+    scenes: [firstScene, secondScene],
+    stepsOf: jest.fn(() => steps),
+    validationOf: jest.fn(() => []),
+    sceneById: jest.fn((id: string) =>
+      ([firstScene, secondScene] as { id: string }[]).find((scene) => scene.id === id),
+    ),
+    chapterNameOf: jest.fn(() => 'Chapter one'),
+  });
+});
+
+describe('useRouteChronology', () => {
+  it('gives every RouteStep its own chronological row and a Gregorian date when no custom calendar exists', async () => {
+    const view = await renderHook(() => useRouteChronology('route'));
+
+    expect(view.result.current.layout.rows.map((row) => row.id)).toEqual(['visit-a', 'visit-b']);
+    expect(view.result.current.layout.rows[1].elapsedSeconds).toBe(3 * 60 * 60);
+    expect(view.result.current.dateForRow(0)).toMatch(/00:00$/);
+    expect(view.result.current.sceneForStep('visit-b')).toBe(secondScene);
+    expect(view.result.current.route?.id).toBe('route');
+  });
+
+  it('does not invent a date before the story opening has been anchored', async () => {
+    mockSelectedStory.mockReturnValue({
+      id: 'story',
+      timelineEpochDay: null,
+      timelineEpochSeconds: null,
+    });
+    const view = await renderHook(() => useRouteChronology('route'));
+
+    expect(view.result.current.dateForRow(0)).toBeNull();
+  });
+
+  it('resolves scene date overrides against the story calendar and names unknown chapters', async () => {
+    const definition = {
+      secondsPerMinute: 60,
+      minutesPerHour: 60,
+      hoursPerDay: 24,
+      daysPerWeek: 7,
+      weekdayNames: ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'],
+      unitNames: {},
+      months: [{ name: 'First', days: 30 }],
+      eras: [],
+      moons: [],
+      seasons: [],
+    } as never;
+    mockSelectedStory.mockReturnValue({ id: 'story', timelineEpochDay: 0 });
+    mockStoryCalendar.mockReturnValue({
+      definition,
+      calendars: [{ id: 'cal-2', definition }],
+    });
+    const dated = {
+      ...(firstScene as unknown as Record<string, unknown>),
+      calendarDateOverride: '1-01-05T00:00',
+      calendarDateOverrideCalendarId: 'cal-2',
+    } as never;
+    const gregorian = {
+      ...(secondScene as unknown as Record<string, unknown>),
+      calendarDateOverride: '1-01-01T12:00',
+      calendarDateOverrideCalendarId: null,
+    } as never;
+    const outOfBounds = {
+      ...(secondScene as unknown as Record<string, unknown>),
+      id: 'scene-c',
+      calendarDateOverride: '1-13-01T00:00',
+      calendarDateOverrideCalendarId: 'cal-2',
+    } as never;
+    mockStoryRoutes.mockReturnValue({
+      routes: [{ id: 'route', storyId: 'story' }],
+      scenes: [dated, gregorian, outOfBounds],
+      stepsOf: jest.fn(() => steps),
+      validationOf: jest.fn(() => []),
+      sceneById: jest.fn(),
+      chapterNameOf: jest.fn(() => undefined),
+    });
+    const view = await renderHook(() => useRouteChronology('route'));
+
+    expect(view.result.current.layout.rows.map((row) => row.id)).toEqual(['visit-a', 'visit-b']);
+    expect(view.result.current.dateForRow(0)).toMatch(/·/);
+    expect(view.result.current.sceneForStep('visit-b')).toBeUndefined();
+    expect(view.result.current.sceneForStep('missing')).toBeUndefined();
+  });
+});

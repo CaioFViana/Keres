@@ -1,5 +1,5 @@
 import * as SkiaMock from '@shopify/react-native-skia';
-import { matchEdgeFont } from '../../src/components/features/graphs/SkiaEdgeCanvas/matchEdgeFont';
+import { matchEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/matchEdgeFont';
 
 describe('matchEdgeFont', () => {
   afterEach(() => {

@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import CharacterFormScreen from '@/src/screens/characters/CharacterFormScreen';
+
 const mockShowNotification = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockReadSecondaryDraft = jest.fn();
@@ -16,50 +18,50 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
   useRoute: () => ({ params: mockRouteParams }),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/story/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => [],
 }));
-jest.mock('../../../src/hooks/useEntityFormSecondaryDraft', () => ({
+jest.mock('@/src/hooks/forms/useEntityFormSecondaryDraft', () => ({
   __esModule: true,
   useEntityFormSecondaryDraft: () => ({
     persistSecondaryDraft: jest.fn(),
     clearSecondaryDraft: jest.fn(),
   }),
 }));
-jest.mock('../../../src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   __esModule: true,
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadSecondaryDraft(...args),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => mockShowNotification,
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: { id: 'story-1' } }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { error: '#f00', primaryContainer: '#eef' }, isDarkMode: false }),
 }));
-jest.mock('../../../src/theme/commonStyles', () => ({
+jest.mock('@/src/theme/commonStyles', () => ({
   __esModule: true,
   getCommonInputStyles: () => ({ input: {}, multiline: {} }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({
     createTitle: 'Create character',
@@ -69,7 +71,7 @@ jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
     deleteLabel: 'Delete',
   }),
 }));
-jest.mock('../../../src/screens/characters/useCharacterFormResources', () => ({
+jest.mock('@/src/screens/characters/useCharacterFormResources', () => ({
   __esModule: true,
   useCharacterFormResources: () => ({
     drizzleDb: {},
@@ -77,11 +79,11 @@ jest.mock('../../../src/screens/characters/useCharacterFormResources', () => ({
     characterRelationServiceRef: { current: {} },
   }),
 }));
-jest.mock('../../../src/screens/characters/useCharacterFormState', () => ({
+jest.mock('@/src/screens/characters/useCharacterFormState', () => ({
   __esModule: true,
   useCharacterFormState: () => mockFormState,
 }));
-jest.mock('../../../src/screens/characters/useCharacterFormAssociations', () => ({
+jest.mock('@/src/screens/characters/useCharacterFormAssociations', () => ({
   __esModule: true,
   useCharacterFormAssociations: () => ({
     availableTags: [{ id: 'tag-1', name: 'Hero' }],
@@ -106,7 +108,7 @@ jest.mock('../../../src/screens/characters/useCharacterFormAssociations', () => 
     statRelationService: jest.fn(),
   }),
 }));
-jest.mock('../../../src/screens/characters/useCharacterFormActions', () => ({
+jest.mock('@/src/screens/characters/useCharacterFormActions', () => ({
   __esModule: true,
   useCharacterFormActions: () => ({
     deleting: mockDeleting,
@@ -116,7 +118,7 @@ jest.mock('../../../src/screens/characters/useCharacterFormActions', () => ({
     seeAlsoManagerRef: { current: null },
   }),
 }));
-jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => ({
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => ({
   __esModule: true,
   ScreenLoading: () => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -124,7 +126,7 @@ jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () 
     return react.createElement(native.Text, { testID: 'screen-loading' }, 'loading');
   },
 }));
-jest.mock('../../../src/screens/characters/CharacterFormContent', () => ({
+jest.mock('@/src/screens/characters/CharacterFormContent', () => ({
   __esModule: true,
   CharacterFormContent: (props: {
     formTitle: string;
@@ -168,8 +170,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import CharacterFormScreen from '../../../src/screens/characters/CharacterFormScreen';
 
 function freshFormState(overrides: Record<string, unknown> = {}) {
   const noop = jest.fn();
@@ -294,7 +294,7 @@ describe('CharacterFormScreen', () => {
   it('registers a reset header action while dirty', async () => {
     await render(<CharacterFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+      actions: { id: string; icon: string; disabled: boolean; onPress: () => void }[];
     };
     expect(config.actions).toHaveLength(1);
     expect(config.actions[0]).toMatchObject({
@@ -308,7 +308,7 @@ describe('CharacterFormScreen', () => {
     mockFormState = freshFormState({ isDirty: false });
     await render(<CharacterFormScreen />);
     const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
-      actions: Array<{ disabled: boolean }>;
+      actions: { disabled: boolean }[];
     };
     expect(config.actions[0].disabled).toBe(true);
   });

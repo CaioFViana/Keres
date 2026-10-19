@@ -6,24 +6,37 @@ const mocks = vi.hoisted(() => ({
   createApp: vi.fn(),
   listen: vi.fn(),
   loggerInfo: vi.fn(),
+  normalizeTags: vi.fn(),
   reconcile: vi.fn(),
   runMigrations: vi.fn(),
   setLogSink: vi.fn(),
+  createShutdown: vi.fn((_dependencies: unknown) => ({ run: vi.fn(), onSignal: vi.fn() })),
+  installShutdownHandlers: vi.fn(),
 }));
 
-vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
-vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
-vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
-vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
-vi.mock('../src/services/MediaStorageConfigurationService', () => ({
+vi.mock('@/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
+vi.mock('@/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
+vi.mock('@/index', () => ({ createApp: mocks.createApp }));
+vi.mock('@/services/static-delivery/hostedClientDelivery', () => ({
+  warmHostedClientDelivery: vi.fn(),
+}));
+vi.mock('@/services/admin/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
+vi.mock('@/services/accounts/UserTagMaintenance', () => ({
+  normalizeStoredUserTags: mocks.normalizeTags,
+}));
+vi.mock('@/services/media-storage/MediaStorageConfigurationService', () => ({
   assertMediaStorageConfiguration: mocks.assertStorage,
 }));
-vi.mock('../src/services/MediaStorageService', () => ({
+vi.mock('@/services/media-storage/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
-vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
-vi.mock('../src/utils/logger', () => ({
-  logger: { info: mocks.loggerInfo },
+vi.mock('@/services/compliance/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+vi.mock('@/shutdown', () => ({
+  createShutdown: mocks.createShutdown,
+  installShutdownHandlers: mocks.installShutdownHandlers,
+}));
+vi.mock('@/utils/logger', () => ({
+  logger: { info: mocks.loggerInfo, warn: vi.fn() },
   setLogSink: mocks.setLogSink,
 }));
 
@@ -31,6 +44,7 @@ beforeAll(async () => {
   mocks.runMigrations.mockResolvedValue(undefined);
   mocks.assertStorage.mockResolvedValue(undefined);
   mocks.cleanup.mockResolvedValue(2);
+  mocks.normalizeTags.mockResolvedValue(0);
   mocks.reconcile.mockResolvedValue(undefined);
   mocks.createApp.mockResolvedValue({
     listen: mocks.listen.mockImplementation(
@@ -40,7 +54,7 @@ beforeAll(async () => {
       ) => callback({ hostname: '127.0.0.1', port: 3000 }),
     ),
   });
-  await import('../src/server');
+  await import('@/server');
 });
 
 describe('production server bootstrap', () => {
@@ -49,12 +63,33 @@ describe('production server bootstrap', () => {
     expect(mocks.setLogSink).toHaveBeenCalledOnce();
     expect(mocks.assertStorage).toHaveBeenCalledOnce();
     expect(mocks.cleanup).toHaveBeenCalledOnce();
+    expect(mocks.normalizeTags).toHaveBeenCalledOnce();
     expect(mocks.reconcile).toHaveBeenCalledOnce();
+    // Tags are brought to their shape before the root admin is reconciled: its own may need it.
+    expect(mocks.normalizeTags.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.reconcile.mock.invocationCallOrder[0],
+    );
     expect(mocks.listen).toHaveBeenCalledWith(
       { port: '3000', maxRequestBodySize: 50 * 1024 * 1024 + 8 * 1024 * 1024 },
       expect.any(Function),
     );
     expect(mocks.loggerInfo).toHaveBeenCalledWith('Removed 2 abandoned temporary media upload(s).');
     expect(mocks.loggerInfo).toHaveBeenCalledWith('Elysia is running at http://127.0.0.1:3000');
+  });
+
+  it('installs the orderly shutdown, over the server it started', () => {
+    expect(mocks.installShutdownHandlers).toHaveBeenCalledOnce();
+    expect(mocks.createShutdown).toHaveBeenCalledOnce();
+    const dependencies = mocks.createShutdown.mock.calls[0][0] as {
+      getServer: () => unknown;
+      exit: unknown;
+      closeDatabase: unknown;
+      drainBackground: unknown;
+    };
+    expect(typeof dependencies.exit).toBe('function');
+    expect(typeof dependencies.closeDatabase).toBe('function');
+    expect(typeof dependencies.drainBackground).toBe('function');
+    // The mocked app has no server (it never listened for real): the shutdown copes with that.
+    expect(dependencies.getServer()).toBeUndefined();
   });
 });

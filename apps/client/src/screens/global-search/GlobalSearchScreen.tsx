@@ -1,0 +1,296 @@
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
+import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilterButton/FavoriteFilterButton';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
+import { useDrizzle } from '@/src/db';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
+import { createGlobalSearchService } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import type { FavoriteFilterState } from '@/src/types/entityFilters';
+import { debounce } from '@/src/utils/sync/debounce';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
+import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+
+type GlobalSearchScreenNavigationProp = DrawerNavigationProp<
+  MainSystemDrawerParamList,
+  'GlobalSearch'
+>;
+
+/** Fixed display order, matching `globalSearchFieldConfig`. Reuses the plural titles every drawer entry already defines. */
+const SECTION_ORDER: { entityType: GlobalSearchEntityType; titleKey: string }[] = [
+  { entityType: 'Character', titleKey: 'characters_title' },
+  { entityType: 'Location', titleKey: 'locations_title' },
+  { entityType: 'Chapter', titleKey: 'chapters_title' },
+  { entityType: 'Scene', titleKey: 'scenes_title' },
+  { entityType: 'Choice', titleKey: 'choices_title' },
+  { entityType: 'Item', titleKey: 'items_title' },
+  { entityType: 'ItemJourney', titleKey: 'item_journeys_title' },
+  { entityType: 'Tag', titleKey: 'tags_title' },
+  { entityType: 'Note', titleKey: 'notes_title' },
+  { entityType: 'WorldRule', titleKey: 'world_rules_title' },
+  { entityType: 'Plot', titleKey: 'plots_title' },
+  { entityType: 'Route', titleKey: 'routes_title' },
+  { entityType: 'Song', titleKey: 'songs_title' },
+];
+
+const SEARCH_DEBOUNCE_MS = 400;
+const MIN_QUERY_LENGTH = 2;
+
+interface ResultSection {
+  entityType: GlobalSearchEntityType;
+  title: string;
+  data: GlobalSearchResult[];
+}
+
+const GlobalSearchScreen = () => {
+  useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('GlobalSearch');
+  const { t } = useTranslation();
+  const { label } = useStoryVocabulary();
+  const { colors } = useTheme();
+  const navigation = useNavigation<GlobalSearchScreenNavigationProp>();
+  const drizzleDb = useDrizzle();
+  const { selectedStory } = useStoryStore();
+  const { userId } = useUserSettingsStore();
+  const storyId = selectedStory?.id;
+
+  const [globalSearchService] = useState(() => createGlobalSearchService(drizzleDb));
+
+  const [query, setQuery] = useState('');
+  const [committedQuery, setCommittedQuery] = useState('');
+  const [results, setResults] = useState<GlobalSearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [favoriteFilterState, setFavoriteFilterState] = useState<FavoriteFilterState>('all');
+
+  const debouncedSetCommittedQuery = useMemo(
+    () => debounce((value: string) => setCommittedQuery(value), SEARCH_DEBOUNCE_MS),
+    [],
+  );
+
+  useEffect(() => {
+    debouncedSetCommittedQuery(query);
+    return () => {
+      debouncedSetCommittedQuery.cancel?.();
+    };
+  }, [query, debouncedSetCommittedQuery]);
+
+  const [prevCommittedQuery, setPrevCommittedQuery] = useState(committedQuery);
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevUserId, setPrevUserId] = useState(userId);
+  const [prevGlobalSearchService, setPrevGlobalSearchService] = useState(globalSearchService);
+  if (
+    committedQuery !== prevCommittedQuery ||
+    storyId !== prevStoryId ||
+    userId !== prevUserId ||
+    globalSearchService !== prevGlobalSearchService
+  ) {
+    setPrevCommittedQuery(committedQuery);
+    setPrevStoryId(storyId);
+    setPrevUserId(userId);
+    setPrevGlobalSearchService(globalSearchService);
+    const trimmed = committedQuery.trim();
+    if (!storyId || !userId || trimmed.length < MIN_QUERY_LENGTH) {
+      setResults([]);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const trimmed = committedQuery.trim();
+    if (!storyId || !userId || trimmed.length < MIN_QUERY_LENGTH) {
+      return;
+    }
+
+    globalSearchService
+      .searchAllEntities(storyId, trimmed, userId)
+      .then((found) => {
+        if (!cancelled) setResults(found);
+      })
+      .catch((err) => {
+        console.error('Global search failed:', err);
+        if (!cancelled) setResults([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [committedQuery, storyId, userId, globalSearchService]);
+
+  useScreenHeader({
+    target: 'self',
+    title: t('global_search_title'),
+  });
+
+  const sections = useMemo<ResultSection[]>(() => {
+    const byEntityType = new Map<GlobalSearchEntityType, GlobalSearchResult[]>();
+    const filteredResults =
+      favoriteFilterState === 'all'
+        ? results
+        : results.filter(
+            (result) =>
+              result.isFavorite !== null &&
+              (favoriteFilterState === 'favorite' ? result.isFavorite : !result.isFavorite),
+          );
+    for (const result of filteredResults) {
+      if (!byEntityType.has(result.entityType)) byEntityType.set(result.entityType, []);
+      byEntityType.get(result.entityType)!.push(result);
+    }
+    return SECTION_ORDER.filter(
+      ({ entityType }) => (byEntityType.get(entityType)?.length ?? 0) > 0,
+    ).map(({ entityType, titleKey }) => ({
+      entityType,
+      title: `${
+        isStoryVocabularyEntityType(entityType) || entityType === 'ItemJourney'
+          ? label(entityType, true)
+          : t(titleKey)
+      } (${byEntityType.get(entityType)!.length})`,
+      data: byEntityType.get(entityType)!,
+    }));
+  }, [favoriteFilterState, results, t, label]);
+
+  const handleFavoriteFilterToggle = useCallback(() => {
+    setFavoriteFilterState((current) =>
+      current === 'all' ? 'favorite' : current === 'favorite' ? 'not-favorite' : 'all',
+    );
+  }, []);
+
+  const handleResultPress = useCallback(
+    (result: GlobalSearchResult) => {
+      if (result.occurrence) {
+        navigateToEntityDetail(navigation, result.entityType, result.id, {
+          occurrence: result.occurrence,
+        });
+      } else {
+        navigateToEntityDetail(navigation, result.entityType, result.id);
+      }
+    },
+    [navigation],
+  );
+
+  const trimmedQuery = query.trim();
+  const showPrompt = trimmedQuery.length < MIN_QUERY_LENGTH;
+  const showNoResults = !showPrompt && !loading && sections.length === 0;
+
+  return (
+    <View style={styles(colors).container}>
+      <View style={styles(colors).searchContainer}>
+        <GuideAnchor screen="GlobalSearch" part="search" style={styles(colors).searchRow}>
+          <TextInput
+            placeholder={t('global_search_placeholder')}
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+            style={styles(colors).searchInput}
+          />
+          <FavoriteFilterButton
+            state={favoriteFilterState}
+            onPress={handleFavoriteFilterToggle}
+            style={styles(colors).favoriteFilterButton}
+          />
+        </GuideAnchor>
+      </View>
+
+      {loading && (
+        <ActivityIndicator
+          size="small"
+          color={colors.primary}
+          style={styles(colors).loadingIndicator}
+        />
+      )}
+
+      {showPrompt && (
+        <View style={styles(colors).messageContainer}>
+          <Text style={styles(colors).messageText}>{t('global_search_prompt')}</Text>
+        </View>
+      )}
+
+      {showNoResults && (
+        <View style={styles(colors).messageContainer}>
+          <Text style={styles(colors).messageText}>
+            {t('global_search_no_results', { term: trimmedQuery })}
+          </Text>
+        </View>
+      )}
+
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => `${item.entityType}:${item.id}`}
+        renderItem={({ item }) => (
+          <GlobalSearchResultItem result={item} onPress={handleResultPress} />
+        )}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles(colors).sectionHeader}>{section.title}</Text>
+        )}
+        style={styles(colors).list}
+        stickySectionHeadersEnabled={false}
+      />
+    </View>
+  );
+};
+
+const styles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 10,
+      backgroundColor: colors.background,
+    },
+    searchContainer: {
+      paddingTop: 5,
+    },
+    searchRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
+    searchInput: {
+      flex: 1,
+    },
+    favoriteFilterButton: {
+      marginLeft: 10,
+    },
+    loadingIndicator: {
+      marginVertical: 8,
+    },
+    messageContainer: {
+      padding: 20,
+      alignItems: 'center',
+    },
+    messageText: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontSize: 15,
+    },
+    list: {
+      flex: 1,
+    },
+    sectionHeader: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: colors.primary,
+      backgroundColor: colors.background,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+    },
+  });
+
+export default GlobalSearchScreen;

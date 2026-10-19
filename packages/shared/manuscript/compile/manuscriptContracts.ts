@@ -1,12 +1,24 @@
 import { z } from 'zod';
+import { PAGE_FORMATS, PAGE_LAYOUTS } from './pageFormat';
+import { SONG_LANGUAGES, SONG_PLACEMENTS, SONG_REPEATS } from './songPrint';
 import { ManuscriptStyleSchema } from './manuscriptStyle';
 
 /** Manuscript renditions the pipeline produces - every one in pure TypeScript, on any host. */
-export const ManuscriptFormatSchema = z.enum(['docx', 'md', 'txt', 'html', 'pdf', 'epub']);
+export const ManuscriptFormatSchema = z.enum([
+  'docx',
+  'md',
+  'txt',
+  'html',
+  'pdf',
+  'epub',
+  // A screenplay: the script as Fountain text, or paged as the industry sets it (Courier, indents).
+  'fountain',
+  'screenplay-pdf',
+]);
 export type ManuscriptFormat = z.infer<typeof ManuscriptFormatSchema>;
 
 /** Largest manuscript the pipeline emits: anything bigger must be split first. */
-export const MAX_MANUSCRIPT_BYTES = 50 * 1024 * 1024;
+export const MAX_MANUSCRIPT_BYTES = 100 * 1024 * 1024;
 
 /** What a published version records about its manuscript rendition. */
 export const ManuscriptInfoSchema = z.object({
@@ -29,6 +41,8 @@ export const FORMAT_META: Record<ManuscriptFormat, { extension: string; mimeType
   html: { extension: 'html', mimeType: 'text/html' },
   pdf: { extension: 'pdf', mimeType: 'application/pdf' },
   epub: { extension: 'epub', mimeType: 'application/epub+zip' },
+  fountain: { extension: 'fountain', mimeType: 'text/plain' },
+  'screenplay-pdf': { extension: 'pdf', mimeType: 'application/pdf' },
 };
 
 const labelSchema = z.string().max(80);
@@ -37,6 +51,8 @@ const labelSchema = z.string().max(80);
 export const ManuscriptLabelsSchema = z.object({
   goToPage: labelSchema,
   goToScene: labelSchema,
+  /** A gamebook choice in the paged formats ends "Go to page 12, scene 7": this is the word before the number. */
+  sceneWord: labelSchema,
   looseHeading: labelSchema,
   tocHeading: labelSchema,
   /** Said after a gamebook choice whose target is not part of the export (an arc's edge). */
@@ -45,6 +61,16 @@ export const ManuscriptLabelsSchema = z.object({
   chooseStart: labelSchema,
   /** ...and each start is offered as this, followed by its scene. */
   beginAt: labelSchema,
+  /** A page's caption is this and its number: "Page 3". */
+  pageLabel: labelSchema,
+  /** ...in a storyboard it is a frame: "Frame 3". */
+  frameLabel: labelSchema,
+  /** Said in place of a page's picture when the picture is gone. */
+  mediaRemoved: labelSchema,
+  /** A scene's music is written as this and its title: "Music: Tavern song". */
+  musicLabel: labelSchema,
+  /** The heading of the appendix of songs. */
+  songsHeading: labelSchema,
 });
 export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 
@@ -52,12 +78,40 @@ export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   goToPage: 'Go to page',
   goToScene: 'See',
+  sceneWord: 'scene',
   looseHeading: 'Appendix',
   tocHeading: 'Contents',
   endOfExcerpt: 'end of this excerpt',
   chooseStart: 'Choose where to begin',
   beginAt: 'Begin',
+  pageLabel: 'Page',
+  frameLabel: 'Frame',
+  mediaRemoved: 'Image removed',
+  musicLabel: 'Music',
+  songsHeading: 'Songs',
 };
+
+/** What only a screenplay needs: the paper it is paged on and what its title page and headings say. */
+export const ScreenplayOptionsSchema = z.object({
+  /** Letter or A4: the page count depends on it, so it is always stated. */
+  paper: z.enum(['letter', 'a4']).default('letter'),
+  /** `#1#`, `#2#`... on every scene heading, printed in both margins. */
+  numberScenes: z.boolean().default(false),
+  /** Writes `INT. PLACE` from a scene's location when its text has no heading of its own. */
+  generateHeadings: z.boolean().default(true),
+  /** One `=` synopsis per scene from its summary (Fountain only; never printed). */
+  includeSynopses: z.boolean().default(true),
+  /** One `#` section per chapter (Fountain only; never printed). */
+  includeSections: z.boolean().default(true),
+  /** One `[[ ]]` note per piece of music of a scene (Fountain only; never printed). */
+  includeMusicNotes: z.boolean().default(false),
+  /** Title page lines. All optional; the title and author come from the work and the options. */
+  credit: z.string().max(120).optional(),
+  source: z.string().max(200).optional(),
+  draftDate: z.string().max(60).optional(),
+  contact: z.string().max(400).optional(),
+});
+export type ScreenplayOptions = z.infer<typeof ScreenplayOptionsSchema>;
 
 /** Every default is the device export's own, so a publication and a local file agree. */
 export const ManuscriptOptionsSchema = z.object({
@@ -78,6 +132,11 @@ export const ManuscriptOptionsSchema = z.object({
   sceneOrder: z.enum(['discovery', 'shuffled']).default('discovery'),
   /** Seed of the shuffled order; the same seed prints the same book. */
   shuffleSeed: z.string().max(64).optional(),
+  /**
+   * Branching stories only, in the paged formats (PDF, Word): every scene opens a page of its own. Off, scenes run
+   * on and a choice names both the page and the scene: "Go to page 12, scene 7".
+   */
+  scenePerPage: z.boolean().default(false),
   /** When set, only this arc's containers and scenes are included. */
   arcId: z.string().optional(),
   /** Label overrides; anything absent falls back to `DEFAULT_MANUSCRIPT_LABELS`. */
@@ -88,6 +147,34 @@ export const ManuscriptOptionsSchema = z.object({
   identifier: z.string().max(200).optional(),
   /** Book metadata (EPUB): BCP 47 language of the text, e.g. `pt-BR`. */
   language: z.string().max(35).optional(),
+  /** The frame a page's picture is shown in (`pageFormat.ts`); absent is the comic-book page's. */
+  pageFormat: z.enum(PAGE_FORMATS).optional(),
+  /**
+   * How the pages are laid out (`pageFormat.ts`): in a flow, as a planning sheet, or in spreads. The text formats
+   * (Markdown, plain text) carry no pictures and always flow.
+   */
+  pageLayout: z.enum(PAGE_LAYOUTS).default('flow'),
+  /**
+   * Puts the cover of the story (or of the work, for an arc export) first, in the formats that carry pictures. The
+   * caller that holds the pictures decides whether there is a cover to put: this only says it may be used.
+   */
+  includeCover: z.boolean().default(true),
+  /** Writes each scene's music under it, as a line of italic text: what it is and when it comes in. */
+  includeMusicCues: z.boolean().default(false),
+  /** Prints the songs the scenes sing: the words, never a reference or a recording. Off unless asked. */
+  includeSongs: z.boolean().default(false),
+  /** Where they go: all together at the end, or each after the scene that sings it. */
+  songsPlacement: z.enum(SONG_PLACEMENTS).default('appendix'),
+  /** The sung words, their translation, or both. */
+  songLanguage: z.enum(SONG_LANGUAGES).default('sung'),
+  /** A part of a song a scene already printed: printed again (`every`) or only named (`first-only`). */
+  songRepeat: z.enum(SONG_REPEATS).default('first-only'),
+  /** The chords stay in the lines, in brackets. */
+  songChords: z.boolean().default(false),
+  /** Pages are captioned "Page 3", or "Frame 3" in a storyboard. */
+  pageNoun: z.enum(['page', 'frame']).default('page'),
+  /** Only for the `fountain` and `screenplay-pdf` formats. */
+  screenplay: ScreenplayOptionsSchema.optional(),
 });
 export type ManuscriptOptions = z.infer<typeof ManuscriptOptionsSchema>;
 export type ManuscriptOptionsInput = z.input<typeof ManuscriptOptionsSchema>;

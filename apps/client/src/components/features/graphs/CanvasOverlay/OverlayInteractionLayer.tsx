@@ -2,7 +2,7 @@ import type { CanvasOverlayType, SpatialPoint } from '@keres/shared';
 import {
   hitTestCanvasOverlay,
   snapPointToTargets,
-} from '@keres/shared/graphs/canvasOverlayGeometry';
+} from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
 import type { OverlayDrawTool } from './overlayTools';
@@ -56,9 +56,11 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
     onPreviewRect,
     onSelectOverlay,
   });
+  const live = useRef({ mode, overlays, scale, snapTargets });
   useEffect(() => {
     // Latest-ref sync for the responder below: every reader runs on gestures, after effects
     // have flushed. No dependency array - the sync unconditionally followed every render.
+    live.current = { mode, overlays, scale, snapTargets };
     callbacks.current = {
       screenToWorld,
       onDrawTap,
@@ -67,6 +69,11 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
       onPreviewRect,
       onSelectOverlay,
     };
+    // The responder below is created once (see its empty dependency array): values it
+    // reads live behind the `live` ref instead, so a re-render mid-gesture never resets
+    // the accumulated gestureState. Recreating it per render pins web drags near the
+    // press point, because react-native-web recomputes dx/dy from a fresh accumulator
+    // on each new responder config.
   });
 
   const responder = useMemo(
@@ -81,7 +88,8 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
           startWorld.current = callbacks.current.screenToWorld(at);
         },
         onPanResponderMove: (event, gesture) => {
-          if (mode.kind !== 'draw' || !isRectDrawTool(mode.tool)) return;
+          if (live.current.mode.kind !== 'draw') return;
+          if (!isRectDrawTool(live.current.mode.tool)) return;
           const at = {
             x: startScreen.current.x + gesture.dx,
             y: startScreen.current.y + gesture.dy,
@@ -93,30 +101,34 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
         },
         onPanResponderRelease: (event, gesture) => {
           const moved = Math.hypot(gesture.dx, gesture.dy);
-          const safeScale = scale === 0 ? 1 : scale;
+          const safeScale = live.current.scale === 0 ? 1 : live.current.scale;
           if (moved < TAP_SLOP) {
             callbacks.current.onPreviewRect(null);
             const world = callbacks.current.screenToWorld({
               x: event.nativeEvent.locationX,
               y: event.nativeEvent.locationY,
             });
-            if (mode.kind === 'select') {
-              const hit = hitTestCanvasOverlay(world, overlays ?? [], HIT_SCREEN / safeScale);
+            if (live.current.mode.kind === 'select') {
+              const hit = hitTestCanvasOverlay(
+                world,
+                live.current.overlays ?? [],
+                HIT_SCREEN / safeScale,
+              );
               callbacks.current.onSelectOverlay(hit?.id ?? null);
               return;
             }
-            if (mode.tool === 'stamp') {
+            if (live.current.mode.tool === 'stamp') {
               callbacks.current.onStampPlace(world);
               return;
             }
-            if (!isRectDrawTool(mode.tool)) {
+            if (!isRectDrawTool(live.current.mode.tool)) {
               callbacks.current.onDrawTap(
-                snapPointToTargets(world, snapTargets, SNAP_SCREEN / safeScale),
+                snapPointToTargets(world, live.current.snapTargets, SNAP_SCREEN / safeScale),
               );
             }
             return;
           }
-          if (mode.kind === 'draw' && isRectDrawTool(mode.tool)) {
+          if (live.current.mode.kind === 'draw' && isRectDrawTool(live.current.mode.tool)) {
             const end = callbacks.current.screenToWorld({
               x: startScreen.current.x + gesture.dx,
               y: startScreen.current.y + gesture.dy,
@@ -129,7 +141,9 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
         },
         onPanResponderTerminate: () => callbacks.current.onPreviewRect(null),
       }),
-    [mode, overlays, scale, snapTargets],
+    // Created once: every value above is read through refs, so preview setStates (one per
+    // mousemove) never swap the responder mid-gesture. See the `live` ref above.
+    [],
   );
 
   return (

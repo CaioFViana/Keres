@@ -5,7 +5,7 @@ import {
   isUniqueViolation,
   postgresErrorCode,
   postgresErrorConstraint,
-} from '../../src/utils/errors';
+} from '@/utils/errors';
 
 const withCode = (code: string) => Object.assign(new Error(code), { code });
 const withConstraint = (constraint: string) => Object.assign(new Error(constraint), { constraint });

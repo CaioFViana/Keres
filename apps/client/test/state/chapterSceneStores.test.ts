@@ -1,11 +1,16 @@
 /** @jest-environment node */
-import * as schema from '../../src/db/schema';
-import { resetAllClientStores } from '../../src/state/resetAllClientStores';
-import { useChapterStore } from '../../src/state/chapterStore';
-import { useSceneStore } from '../../src/state/sceneStore';
-import { useUserSettingsStore } from '../../src/state/userSettingsStore';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { resetAllClientStores } from '@/src/state/resetAllClientStores';
+import { useChapterStore } from '@/src/state/story/chapterStore';
+import { useSceneStore } from '@/src/state/story/sceneStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The chapter and scene stores' structural actions: reorder and type conversion.
@@ -47,10 +52,10 @@ const seedScene = async (id: string, index: number): Promise<void> => {
   });
 };
 
-const chapterIndexes = async (): Promise<Array<[string, number]>> =>
+const chapterIndexes = async (): Promise<[string, number][]> =>
   (await database.db.query.chapters.findMany()).map((row) => [row.id, row.index]);
 
-const sceneIndexes = async (): Promise<Array<[string, number]>> =>
+const sceneIndexes = async (): Promise<[string, number][]> =>
   (await database.db.query.scenes.findMany()).map((row) => [row.id, row.index]);
 
 beforeEach(async () => {

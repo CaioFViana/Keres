@@ -48,6 +48,20 @@ import migration_44 from './0043_neat_salo';
 import migration_45 from './0044_absurd_mad_thinker';
 import migration_46 from './0045_purple_iceman';
 import migration_47 from './0046_lazy_skrulls';
+import migration_48 from './0047_previous_wither';
+import migration_49 from './0048_square_wolverine';
+import migration_50 from './0049_regular_sharon_carter';
+import migration_51 from './0050_dashing_terror';
+import migration_52 from './0051_nifty_vindicator';
+import migration_53 from './0052_violet_preak';
+import migration_54 from './0053_lyrical_mockingbird';
+import migration_55 from './0054_soft_turbo';
+import migration_56 from './0055_flawless_nightmare';
+import migration_57 from './0056_stiff_galactus';
+import migration_58 from './0057_colorful_warbound';
+import migration_59 from './0058_lethal_phantom_reporter';
+import migration_60 from './0059_terms_accepted_columns';
+import migration_61 from './0060_flawless_titania';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -97,6 +111,20 @@ const migrations = [
   { id: 45, name: '0044_absurd_mad_thinker', run: migration_45 },
   { id: 46, name: '0045_purple_iceman', run: migration_46 },
   { id: 47, name: '0046_lazy_skrulls', run: migration_47 },
+  { id: 48, name: '0047_previous_wither', run: migration_48 },
+  { id: 49, name: '0048_square_wolverine', run: migration_49 },
+  { id: 50, name: '0049_regular_sharon_carter', run: migration_50 },
+  { id: 51, name: '0050_dashing_terror', run: migration_51 },
+  { id: 52, name: '0051_nifty_vindicator', run: migration_52 },
+  { id: 53, name: '0052_violet_preak', run: migration_53 },
+  { id: 54, name: '0053_lyrical_mockingbird', run: migration_54 },
+  { id: 55, name: '0054_soft_turbo', run: migration_55 },
+  { id: 56, name: '0055_flawless_nightmare', run: migration_56 },
+  { id: 57, name: '0056_stiff_galactus', run: migration_57 },
+  { id: 58, name: '0057_colorful_warbound', run: migration_58 },
+  { id: 59, name: '0058_lethal_phantom_reporter', run: migration_59 },
+  { id: 60, name: '0059_terms_accepted_columns', run: migration_60 },
+  { id: 61, name: '0060_flawless_titania', run: migration_61 },
 ];
 
 export default migrations;

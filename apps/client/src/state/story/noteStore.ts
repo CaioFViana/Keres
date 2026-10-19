@@ -1,0 +1,32 @@
+import type {
+  NoteService,
+  NoteWithTags,
+} from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createEntityStore } from '@/src/state/lib/createEntityStore';
+
+export type { FavoriteFilterState } from '@/src/types/entityFilters';
+
+export const useNoteStore = createEntityStore<'notes', NoteWithTags, NoteService>({
+  collectionKey: 'notes',
+  favoriteEntityType: 'Note',
+  createService: createNoteService,
+  fetchEntities: (service, p) =>
+    service.getNotesByStoryId(
+      p.storyId,
+      p.searchTerm,
+      p.activeFilterTags,
+      p.activeSort,
+      p.sortDirection,
+      p.favoriteFilterState,
+      p.advancedSearchCriteria,
+    ),
+  updateFavorite: (service, userId, id, isFavorite) =>
+    service.updateNote(userId, id, { isFavorite }),
+  changeEvent: 'note_changed',
+  persistKey: 'note-storage',
+  errorMessages: {
+    fetch: 'Failed to load notes.',
+    toggleFavorite: 'Failed to update note favorite status.',
+  },
+});

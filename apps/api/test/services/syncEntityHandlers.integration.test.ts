@@ -2,21 +2,21 @@ import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@k
 import { CreateCharacterDataSchema, PartialCharacterSchema } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { characters, stories, tags, users } from '../../src/db/schema';
-import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
+import { db } from '@/db';
+import { characters, stories, tags, users } from '@/db/schema';
+import { CharacterSyncHandler } from '@/services/entity-sync-handlers/CharacterSyncHandler';
 import {
   BaseSyncEntityHandler,
   SyncConflictError,
   type SyncEntityHandler,
-} from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
-import { FavoriteSyncHandler } from '../../src/services/entity-sync-handlers/FavoriteSyncHandler';
-import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
-import { StorySyncHandler } from '../../src/services/entity-sync-handlers/StorySyncHandler';
-import { TagSyncHandler } from '../../src/services/entity-sync-handlers/TagSyncHandler';
-import { WorldRuleSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { FavoriteSyncHandler } from '@/services/entity-sync-handlers/FavoriteSyncHandler';
+import { NoteSyncHandler } from '@/services/entity-sync-handlers/NoteSyncHandler';
+import { StorySyncHandler } from '@/services/entity-sync-handlers/StorySyncHandler';
+import { TagSyncHandler } from '@/services/entity-sync-handlers/TagSyncHandler';
+import { WorldRuleSyncHandler } from '@/services/entity-sync-handlers/WorldRuleSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 const USER_ID = newId();
 const STORY_ID = newId();

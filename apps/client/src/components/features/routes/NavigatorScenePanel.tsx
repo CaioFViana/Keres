@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { StorySimulation } from '../../../hooks/useStorySimulation';
-import { useTheme } from '../../../theme';
-import { MarkdownPreview } from '../manuscript/MarkdownPreview/MarkdownPreview';
+import type { StorySimulation } from '@/src/hooks/story/useStorySimulation';
+import { useTheme } from '@/src/theme';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
 
 interface NavigatorScenePanelProps {
   simulation: StorySimulation;
@@ -43,7 +43,7 @@ export default function NavigatorScenePanel({
           padding: 16,
           marginTop: dense ? 4 : 16,
         },
-        title: { color: colors.text, fontWeight: '700', fontSize: 19 },
+        title: { color: colors.text, fontWeight: '700', fontSize: 18 },
         summary: { color: colors.text, fontSize: 16, lineHeight: 25, marginTop: 10 },
         body: { marginTop: 10 },
         muted: { color: colors.textSecondary, fontStyle: 'italic', marginTop: 10 },
@@ -51,7 +51,7 @@ export default function NavigatorScenePanel({
           borderWidth: 1,
           borderColor: colors.primary,
           borderRadius: 8,
-          padding: 13,
+          padding: 12,
           marginTop: 10,
         },
         unavailable: { opacity: 0.45, borderColor: colors.border },

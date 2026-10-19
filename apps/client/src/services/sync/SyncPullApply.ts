@@ -1,10 +1,10 @@
 import type { StoryUpdate } from '@keres/shared';
 import { and, eq, gt, isNull } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import * as schema from '../../db/schema';
-import type { OperationLogSelect } from '../../db/schema';
-import type { ClientSyncEntityHandler } from '../entity-sync-handlers/ClientSyncEntityHandler';
-import { withOpLogLock } from '../../utils/opLogMutex';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
+import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import type { SyncNotifier } from './SyncNotifier';
 import type { SyncPull } from './SyncPull';
 import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS } from './syncEvents';

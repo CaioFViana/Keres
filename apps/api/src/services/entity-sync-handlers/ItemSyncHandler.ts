@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreateItemDataSchema, PartialItemSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { characters, items } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { characters, items } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ItemSyncHandler extends BaseSyncEntityHandler<

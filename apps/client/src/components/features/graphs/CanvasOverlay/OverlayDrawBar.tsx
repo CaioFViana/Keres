@@ -5,8 +5,9 @@ import {
   CANVAS_ACTION_ROW_HEIGHT,
   CanvasActionBarButton,
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
-import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { useTheme } from '../../../../theme';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { OverlayDrawTool } from './overlayTools';
 
 interface OverlayDrawBarProps {
@@ -23,12 +24,14 @@ const HINT_KEYS: Record<OverlayDrawTool, string> = {
   rect: 'overlay_draw_rect_hint',
   ellipse: 'overlay_draw_rect_hint',
   stamp: 'overlay_draw_stamp_hint',
+  text: 'overlay_draw_text_hint',
   'preset:star': 'overlay_draw_rect_hint',
   'preset:diamond': 'overlay_draw_rect_hint',
   'preset:square': 'overlay_draw_rect_hint',
   'preset:triangle': 'overlay_draw_rect_hint',
   'preset:pentagon': 'overlay_draw_rect_hint',
   'preset:hexagon': 'overlay_draw_rect_hint',
+  balloon: 'overlay_draw_balloon_hint',
 };
 
 /**
@@ -40,27 +43,8 @@ const HINT_KEYS: Record<OverlayDrawTool, string> = {
  */
 const OverlayDrawBar: React.FC<OverlayDrawBarProps> = ({ tool, canFinish, onFinish, onCancel }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
-  const styles = StyleSheet.create({
-    bar: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    compactRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    rowDivider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: colors.border,
-      marginVertical: 8,
-    },
-    hint: { flex: 1, color: colors.textSecondary },
-    compactHintRow: { minHeight: CANVAS_ACTION_ROW_HEIGHT, justifyContent: 'center' },
-    compactHint: { color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
   const showFinish = tool === 'line' || tool === 'polygon';
   const cancel = (
     <CanvasActionBarButton
@@ -107,5 +91,26 @@ const OverlayDrawBar: React.FC<OverlayDrawBarProps> = ({ tool, canFinish, onFini
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    bar: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    compactRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginVertical: 8,
+    },
+    hint: { flex: 1, color: colors.textSecondary },
+    compactHintRow: { minHeight: CANVAS_ACTION_ROW_HEIGHT, justifyContent: 'center' },
+    compactHint: { color: colors.textSecondary },
+  });
 
 export default OverlayDrawBar;

@@ -3,16 +3,16 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import type { StoryStatsData } from '../../../../hooks/useStoryStats';
-import { useTheme } from '../../../../theme';
-import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
+import { useTheme } from '@/src/theme';
+import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/stats/statLadder';
 import {
   buildStatRadarLayout,
   MIN_PRIMARY_STATS_FOR_CHART,
-} from '@keres/shared/graphs/statRadarLayout';
-import { resolveStatValue } from '../../../../utils/statValues';
-import { StatRadarChart } from '../StatRadarChart/StatRadarChart';
+} from '@keres/shared/graphs/stats/statRadarLayout';
+import { resolveStatValue } from '@/src/utils/stats/statValues';
+import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
 
 /**
  * The stat block on the character's detail screen. Deliberately not a `CollapsibleCard`: it is the

@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { Story } from '@keres/shared/entities/Story';
+import type { Story } from '@keres/shared/entities/story/Story';
 import type { ThemeColors } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useThemeColors } from '../../../theme/useThemeColors';
+import CoverImage from '@/src/components/common/display/CoverImage/CoverImage';
+import { useThemeColors } from '@/src/theme/useThemeColors';
 
 export type StorySelectionListItemProps = {
   story: Story;
@@ -44,6 +45,16 @@ const StorySelectionListItem: React.FC<StorySelectionListItemProps> = ({
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       <View style={styles.accent} />
+      {story.coverGalleryId ? (
+        <View style={styles.cover}>
+          <CoverImage
+            galleryId={story.coverGalleryId}
+            width={46}
+            height={66}
+            testID={`story-cover-${story.id}`}
+          />
+        </View>
+      ) : null}
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>
           {story.title}
@@ -124,6 +135,10 @@ const createStyles = (theme: ThemeColors) =>
       width: 5,
       backgroundColor: theme.primary,
     },
+    cover: {
+      alignSelf: 'center',
+      marginLeft: 10,
+    },
     body: {
       flex: 1,
       paddingVertical: 12,
@@ -131,7 +146,7 @@ const createStyles = (theme: ThemeColors) =>
       justifyContent: 'center',
     },
     title: {
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
       color: theme.text,
     },

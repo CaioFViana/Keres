@@ -7,7 +7,7 @@ import { rm } from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Pool } from 'pg';
-import '../setup';
+import '@test/setup';
 
 /**
  * Applies the migrations exactly once, before any test file runs.

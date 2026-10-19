@@ -1,0 +1,217 @@
+import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Button from '@/src/components/common/controls/Button/Button';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import type { FriendshipWithServer } from '@/src/services/social/FriendshipService';
+import { useTheme } from '@/src/theme';
+import { getCommonCardStyles } from '@/src/theme/commonStyles';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import FriendChatButton from '@/src/components/features/messages/FriendChatButton';
+import FriendActionsModal, { type FriendAction } from './FriendActionsModal';
+
+export interface FriendshipRowActions {
+  onOpen: () => void;
+  onChat: () => void;
+  onAccept: () => void;
+  onDecline: () => void;
+  onCancel: () => void;
+  onUnfriend: () => void;
+  onBlock: () => void;
+  onUnblock: () => void;
+}
+
+interface FriendshipRowProps extends FriendshipRowActions {
+  item: FriendshipWithServer;
+  /** The user's id on the friendship's server: tells a request received from one sent. */
+  currentUsersServerId: string | undefined;
+}
+
+/**
+ * One friendship, by what it is: a request to answer (with the answers spelled out, not as icons), a
+ * request waiting on the other side, a friend (chat first, the rest behind a menu) or a block. It sits
+ * under its server's header, so it does not name the server again.
+ */
+const FriendshipRow: React.FC<FriendshipRowProps> = ({
+  item,
+  currentUsersServerId,
+  onOpen,
+  onChat,
+  onAccept,
+  onDecline,
+  onCancel,
+  onUnfriend,
+  onBlock,
+  onUnblock,
+}) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const cardStyles = getCommonCardStyles(colors);
+  const { isCompact } = useResponsiveLayout();
+
+  const isPending = item.status === FriendStatus.PENDING;
+  const isReceived = isPending && item.receiverId === currentUsersServerId;
+  const isSent = isPending && item.senderId === currentUsersServerId;
+  const isFriend = item.status === FriendStatus.FRIEND;
+  const isBlocked = item.status === FriendStatus.BLACKLISTED;
+  // Only the side that issued the block can undo it; a row with no recorded blocker predates the
+  // column and is offered to both, as the server does.
+  const canUnblock =
+    isBlocked && (item.blockedById === null || item.blockedById === currentUsersServerId);
+
+  const title = isReceived
+    ? t('friend_wants_to_be_friend', { name: item.friendUsername })
+    : item.friendUsername;
+  const subtitle = [
+    item.otherUserTag ? `@${item.otherUserTag}` : null,
+    isSent ? t('friend_request_sent_label') : null,
+    isBlocked ? t('friend_blocked_label') : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  // Remove and block end something: they are behind one button, chosen in the app's own modal.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuActions: FriendAction[] = [
+    ...(isFriend
+      ? [
+          {
+            id: 'unfriend',
+            label: t('friend_unfriend'),
+            icon: 'person-remove-outline' as const,
+            destructive: true,
+            onPress: onUnfriend,
+          },
+        ]
+      : []),
+    {
+      id: 'block',
+      label: t('friend_block'),
+      icon: 'ban-outline',
+      destructive: true,
+      onPress: onBlock,
+    },
+  ];
+  const blockMenu = (
+    <>
+      <Pressable
+        testID={`friend-menu-${item.id}`}
+        accessibilityRole="button"
+        accessibilityLabel={t('friend_more_actions', { name: item.friendUsername })}
+        onPress={() => setMenuOpen(true)}
+        hitSlop={6}
+        style={({ pressed }) => [styles.more, { opacity: pressed ? 0.6 : 1 }]}
+      >
+        <Ionicons name="ellipsis-horizontal" size={22} color={colors.textSecondary} />
+      </Pressable>
+      <FriendActionsModal
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        friendName={item.friendUsername}
+        actions={menuActions}
+      />
+    </>
+  );
+
+  const answers = isReceived ? (
+    <View style={isCompact ? styles.answers : styles.answersInline}>
+      <Button
+        icon="checkmark"
+        onPress={onAccept}
+        style={isCompact ? styles.answer : styles.answerInline}
+        testID={`friend-accept-${item.id}`}
+      >
+        {t('friend_accept')}
+      </Button>
+      <Button
+        variant="secondary"
+        icon="close"
+        onPress={onDecline}
+        style={isCompact ? styles.answer : styles.answerInline}
+        testID={`friend-decline-${item.id}`}
+      >
+        {t('friend_decline')}
+      </Button>
+      {blockMenu}
+    </View>
+  ) : null;
+
+  return (
+    <View style={[cardStyles.cardContainer, styles.card, isBlocked && styles.blocked]}>
+      <View style={styles.main}>
+        <Pressable
+          onPress={onOpen}
+          accessibilityRole="button"
+          accessibilityLabel={item.friendUsername}
+          style={styles.info}
+        >
+          <Avatar
+            color={item.otherUserAvatarColor}
+            icon={item.otherUserAvatarIcon}
+            seed={item.otherUserId}
+            size={44}
+          />
+          <View style={styles.texts}>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+              {title}
+            </Text>
+            {subtitle ? (
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
+        </Pressable>
+
+        {isFriend && (
+          <View style={styles.actions}>
+            <FriendChatButton
+              serverId={item.serverId}
+              friendUserId={item.otherUserId}
+              friendName={item.friendUsername}
+              onPress={onChat}
+              style={styles.iconButton}
+            />
+            {blockMenu}
+          </View>
+        )}
+        {isSent && (
+          <Button variant="secondary" onPress={onCancel} style={styles.compactButton}>
+            {t('friend_cancel_request')}
+          </Button>
+        )}
+        {canUnblock && (
+          <Button variant="secondary" onPress={onUnblock} style={styles.compactButton}>
+            {t('friend_unblock')}
+          </Button>
+        )}
+        {!isCompact && answers}
+      </View>
+
+      {isCompact && answers}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: { marginBottom: 10, padding: 14 },
+  more: { minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' },
+  blocked: { opacity: 0.75 },
+  main: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  info: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minWidth: 0 },
+  texts: { flex: 1, minWidth: 0 },
+  title: { fontSize: 16, fontWeight: '600' },
+  subtitle: { fontSize: 13, marginTop: 2 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  iconButton: { padding: 8 },
+  compactButton: { paddingVertical: 8, paddingHorizontal: 12 },
+  answers: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  answer: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
+  // On a wide screen the answers are buttons of their own size at the end of the row, not bars.
+  answersInline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  answerInline: { minWidth: 110, paddingVertical: 10 },
+});
+
+export default FriendshipRow;

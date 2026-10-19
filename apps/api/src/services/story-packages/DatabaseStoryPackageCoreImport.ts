@@ -17,6 +17,7 @@ export async function importStoryCore(context: DatabaseStoryPackageImportContext
     ...validatedFullStory.story,
     id: targetStoryId,
     userId: userId, // Ensure story is owned by the importing user
+    coverGalleryId: null, // Relinked once the gallery has new ids (assets phase)
     version: 1,
     createdAt: now,
     updatedAt: now,
@@ -32,6 +33,7 @@ export async function importStoryCore(context: DatabaseStoryPackageImportContext
       ...original,
       id: newId,
       storyId: targetStoryId,
+      coverGalleryId: null, // Relinked once the gallery has new ids (assets phase)
       version: 1,
       createdAt: now,
       updatedAt: now,

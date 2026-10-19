@@ -1,10 +1,10 @@
 /** @jest-environment node */
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import { ChoiceCheckClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckClientSyncHandler';
-import { ChoiceCheckGroupClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
-import { ItemJourneyClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemJourneyClientSyncHandler';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { ChoiceCheckClientSyncHandler } from '@/src/services/entity-sync-handlers/ChoiceCheckClientSyncHandler';
+import { ChoiceCheckGroupClientSyncHandler } from '@/src/services/entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
+import { ItemJourneyClientSyncHandler } from '@/src/services/entity-sync-handlers/ItemJourneyClientSyncHandler';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

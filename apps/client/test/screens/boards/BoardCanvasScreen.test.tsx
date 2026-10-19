@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import BoardCanvasScreen from '../../../src/screens/boards/BoardCanvasScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import BoardCanvasScreen from '@/src/screens/boards/BoardCanvasScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
 
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
@@ -46,13 +46,13 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockUseScreenTour = jest.fn();
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -75,7 +75,7 @@ jest.mock('../../../src/theme', () => {
   };
 });
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -95,7 +95,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/features/boards/BoardCanvas', () => {
+jest.mock('@/src/components/features/boards/BoardCanvas', () => {
   const { Text } = require('react-native');
   const React = require('react');
   return {
@@ -127,7 +127,7 @@ jest.mock('../../../src/components/features/boards/BoardCanvas', () => {
   };
 });
 
-jest.mock('../../../src/components/features/boards/BoardCanvasHeaderActions', () => {
+jest.mock('@/src/components/features/boards/BoardCanvasHeaderActions', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -145,7 +145,7 @@ jest.mock('../../../src/components/features/boards/BoardCanvasHeaderActions', ()
   };
 });
 
-jest.mock('../../../src/components/features/boards/BoardConnectionModal', () => {
+jest.mock('@/src/components/features/boards/BoardConnectionModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -160,7 +160,7 @@ jest.mock('../../../src/components/features/boards/BoardConnectionModal', () => 
   };
 });
 
-jest.mock('../../../src/components/features/boards/BoardNodeSheet', () => {
+jest.mock('@/src/components/features/boards/BoardNodeSheet', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -183,7 +183,7 @@ jest.mock('../../../src/components/features/boards/BoardNodeSheet', () => {
   };
 });
 
-jest.mock('../../../src/components/features/graphs/GraphCanvasControls/GraphCanvasControls', () => {
+jest.mock('@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -206,7 +206,7 @@ jest.mock('../../../src/components/features/graphs/GraphCanvasControls/GraphCanv
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -218,7 +218,7 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const state = { userId: 'user-1', exportFormat: 'svg' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
@@ -226,18 +226,18 @@ jest.mock('../../../src/state/userSettingsStore', () => {
   return { useUserSettingsStore };
 });
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector?: (s: any) => any) => {
     const state = { showNotification: mockNotify };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/state/boardDraftStore', () => ({
+jest.mock('@/src/state/drafts/boardDraftStore', () => ({
   useBoardDraftStore: { getState: () => ({ hydrate: mockHydrate, remember: mockRemember }) },
 }));
 
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -246,11 +246,11 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('../../../src/hooks/useBoardPinOptions', () => ({
+jest.mock('@/src/screens/boards/useBoardPinOptions', () => ({
   useBoardPinOptions: () => mockPinOptions,
   decodeBoardPinValue: (value: string) => {
     const separator = value.indexOf(':');
@@ -259,7 +259,7 @@ jest.mock('../../../src/hooks/useBoardPinOptions', () => ({
   },
 }));
 
-jest.mock('../../../src/hooks/useBoardCanvasLayout', () => ({
+jest.mock('@/src/screens/boards/useBoardCanvasLayout', () => ({
   useBoardCanvasLayout: () => ({
     handleMoveNode: jest.fn(),
     handleResizeNode: jest.fn(),
@@ -267,41 +267,41 @@ jest.mock('../../../src/hooks/useBoardCanvasLayout', () => ({
   }),
 }));
 
-jest.mock('../../../src/utils/boardEntitySummary', () => ({
+jest.mock('@/src/services/storymanagement/entities/boardEntitySummary', () => ({
   loadBoardEntitySummary: (...a: any[]) => mockLoadSummary(...a),
 }));
 
-jest.mock('../../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   navigateToEntityDetail: jest.fn(),
   toNavigableEntityType: () => 'Character',
 }));
 
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   deliverMapExport: (...a: any[]) => mockDeliverExport(...a),
   buildBoardMapFileName: () => 'board.svg',
 }));
 
-jest.mock('../../../src/utils/storyMapSvgExport', () => ({
+jest.mock('@/src/utils/io/storyMapSvgExport', () => ({
   buildStandaloneBoardSvg: (...a: any[]) => mockBuildSvg(...a),
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   useScreenHeader: ({ renderActions }: any = {}) => {
     (global as any).__headerActions = renderActions;
   },
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
-jest.mock('../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { useDrizzle: () => db };
 });
-jest.mock('../../../src/services/storymanagement/BoardService', () => ({
+jest.mock('@/src/services/storymanagement/entities/BoardService', () => ({
   createBoardService: () => ({ getById: mockGetBoard, updateBoard: mockUpdateBoard }),
 }));
-jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   createGalleryService: () => ({ getGalleriesByStoryId: mockGetGalleries }),
 }));
 
@@ -346,6 +346,72 @@ describe('BoardCanvasScreen', () => {
     mockLoadSummary.mockResolvedValue(null);
     mockBuildSvg.mockResolvedValue('<svg/>');
     mockDeliverExport.mockResolvedValue({ delivered: true, fileName: 'board.svg' });
+  });
+
+  describe('opening a board that was just saved', () => {
+    const nodes = (count: number) =>
+      ({
+        nodes: Array.from({ length: count }, (_, index) => ({ id: `n${index}` })),
+        edges: [],
+      }) as any;
+    const headerState = async () => {
+      const Actions = (global as any).__headerActions;
+      const actions = await render(<>{Actions()}</>);
+      return actions.getByTestId('header-dirty').props.children;
+    };
+
+    it('does not claim edits were restored: a draft with nothing unsaved is no draft', async () => {
+      // What the store still holds after a save and a close: the drawing, equal to what was saved.
+      mockGetBoard.mockResolvedValue({ ...board, content: nodes(2) });
+      mockHydrate.mockResolvedValue({
+        boardId: 'board-1',
+        storyId: 'story-1',
+        content: nodes(2),
+        savedContent: nodes(2),
+      });
+
+      const view = await render(<BoardCanvasScreen />);
+      await view.findByTestId('canvas-nodes');
+
+      expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:2');
+      expect(await headerState()).toBe('clean');
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_restored', 'info');
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_conflicts_with_saved', 'warning');
+    });
+
+    it('shows what the server has now when the saved board moved on and nothing was unsaved', async () => {
+      mockGetBoard.mockResolvedValue({ ...board, content: nodes(3) });
+      mockHydrate.mockResolvedValue({
+        boardId: 'board-1',
+        storyId: 'story-1',
+        content: nodes(2),
+        savedContent: nodes(2),
+      });
+
+      const view = await render(<BoardCanvasScreen />);
+      await view.findByTestId('canvas-nodes');
+
+      expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:3');
+      expect(await headerState()).toBe('clean');
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_conflicts_with_saved', 'warning');
+    });
+
+    it('still restores real unsaved edits, and stays dirty for them', async () => {
+      mockGetBoard.mockResolvedValue({ ...board, content: nodes(2) });
+      mockHydrate.mockResolvedValue({
+        boardId: 'board-1',
+        storyId: 'story-1',
+        content: nodes(4),
+        savedContent: nodes(2),
+      });
+
+      const view = await render(<BoardCanvasScreen />);
+      await view.findByTestId('canvas-nodes');
+
+      expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:4');
+      expect(await headerState()).toBe('dirty');
+      expect(mockNotify).toHaveBeenCalledWith('canvas_draft_restored', 'info');
+    });
   });
 
   it('shows the not-found error', async () => {

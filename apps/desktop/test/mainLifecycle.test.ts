@@ -1,4 +1,7 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import * as electron from 'electron';
+import { BrowserWindow } from 'electron';
+import { existsSync } from 'fs';
 
 const electronMocks = vi.hoisted(() => {
   const events = new Map<string, (...args: any[]) => unknown>();
@@ -32,6 +35,7 @@ const electronMocks = vi.hoisted(() => {
     handle: vi.fn(),
     protocolHandle: vi.fn(),
     quit: vi.fn(),
+    exit: vi.fn(),
     registerSchemesAsPrivileged: vi.fn(),
     windows,
   };
@@ -40,6 +44,7 @@ const electronMocks = vi.hoisted(() => {
 vi.mock('electron', () => ({
   app: {
     setName: vi.fn(),
+    requestSingleInstanceLock: vi.fn(() => true),
     commandLine: { appendSwitch: vi.fn() },
     isPackaged: false,
     whenReady: vi.fn(async () => {}),
@@ -48,6 +53,7 @@ vi.mock('electron', () => ({
       electronMocks.events.set(event, handler),
     ),
     quit: electronMocks.quit,
+    exit: electronMocks.exit,
   },
   BrowserWindow: Object.assign(electronMocks.BrowserWindow, { getAllWindows: vi.fn(() => []) }),
   ipcMain: { handle: electronMocks.handle },
@@ -74,8 +80,10 @@ vi.mock('electron', () => ({
 
 vi.mock('fs', () => ({ existsSync: vi.fn(() => true) }));
 
+let main: typeof import('../src/main');
+
 beforeAll(async () => {
-  await import('../src/main');
+  main = await import('../src/main');
   await vi.waitFor(() => expect(electronMocks.windows).toHaveLength(1));
 });
 
@@ -94,6 +102,9 @@ describe('desktop startup', () => {
     expect(electronMocks.BrowserWindow).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Keres',
+        // The compact layouts stop fitting below a phone's width; the window never goes smaller.
+        minWidth: 360,
+        minHeight: 560,
         webPreferences: expect.objectContaining({ contextIsolation: true, nodeIntegration: false }),
       }),
     );
@@ -119,10 +130,91 @@ describe('desktop startup', () => {
     expect(electronMocks.BrowserWindow).toHaveBeenCalledTimes(2);
   });
 
+  it('registers the hold that lets vault writes finish before quitting', () => {
+    const event = { preventDefault: vi.fn() };
+
+    electronMocks.events.get('before-quit')?.(event);
+
+    expect(electronMocks.events.has('before-quit')).toBe(true);
+    // Nothing is being written in this run, so the quit goes straight through.
+    expect(event.preventDefault).not.toHaveBeenCalled();
+  });
+
   it('quits when all windows close outside macOS', () => {
     electronMocks.events.get('window-all-closed')?.();
 
     expect(electronMocks.quit).toHaveBeenCalledOnce();
+  });
+});
+
+describe('a second launch, from the instance that is running', () => {
+  const window = (over: Record<string, unknown> = {}) => ({
+    isMinimized: vi.fn(() => false),
+    restore: vi.fn(),
+    focus: vi.fn(),
+    ...over,
+  });
+  const getAllWindows = () => (BrowserWindow as unknown as { getAllWindows: Mock }).getAllWindows;
+
+  it('holds the instance lock, and listens for the others that try', () => {
+    expect(electron.app.requestSingleInstanceLock).toHaveBeenCalledOnce();
+    expect(electronMocks.events.get('second-instance')).toBeTypeOf('function');
+  });
+
+  it('takes the lock after the app got its name and before it touched anything else', () => {
+    const lock = electron.app.requestSingleInstanceLock as Mock;
+    const name = electron.app.setName as Mock;
+    expect(name.mock.invocationCallOrder[0]).toBeLessThan(lock.mock.invocationCallOrder[0]);
+    expect(lock.mock.invocationCallOrder[0]).toBeLessThan(
+      electronMocks.clearCache.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('brings the window it has to the front', () => {
+    const open = window();
+    getAllWindows().mockReturnValueOnce([open]);
+
+    electronMocks.events.get('second-instance')?.();
+
+    expect(open.focus).toHaveBeenCalledOnce();
+    expect(open.restore).not.toHaveBeenCalled();
+  });
+
+  it('restores a window that was minimised before focusing it', () => {
+    const open = window({ isMinimized: vi.fn(() => true) });
+    getAllWindows().mockReturnValueOnce([open]);
+
+    electronMocks.events.get('second-instance')?.();
+
+    expect(open.restore).toHaveBeenCalledOnce();
+    expect(open.focus).toHaveBeenCalledOnce();
+  });
+
+  it('opens a window when it is running with none', async () => {
+    getAllWindows().mockReturnValueOnce([]);
+    const before = electronMocks.BrowserWindow.mock.calls.length;
+
+    electronMocks.events.get('second-instance')?.();
+
+    await vi.waitFor(() =>
+      expect(electronMocks.BrowserWindow.mock.calls.length).toBeGreaterThan(before),
+    );
+  });
+
+  it('logs when no window can be opened for the second launch', async () => {
+    (existsSync as Mock).mockReturnValueOnce(false);
+    getAllWindows().mockReturnValueOnce([]);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    electronMocks.events.get('second-instance')?.();
+
+    await vi.waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        '[desktop] could not open a window for the second launch:',
+        expect.any(Error),
+      ),
+    );
+    error.mockRestore();
   });
 });
 
@@ -176,5 +268,64 @@ describe('external links', () => {
 
     expect(event.preventDefault).not.toHaveBeenCalled();
     expect(electronMocks.openExternal).not.toHaveBeenCalled();
+  });
+});
+
+describe('graceful shutdown on OS signals', () => {
+  beforeEach(() => {
+    main.resetSignalShutdownForTests();
+    electronMocks.quit.mockClear();
+    electronMocks.exit.mockClear();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('wires SIGINT and SIGTERM to the graceful shutdown', () => {
+    const target = { on: vi.fn() };
+
+    main.registerProcessSignalHandlers(target);
+
+    expect(target.on).toHaveBeenCalledWith('SIGINT', main.handleSigint);
+    expect(target.on).toHaveBeenCalledWith('SIGTERM', main.handleSigterm);
+  });
+
+  it('routes the first signal through app.quit so before-quit can flush the vault', () => {
+    main.handleProcessSignal('SIGINT');
+
+    expect(electronMocks.quit).toHaveBeenCalledOnce();
+    expect(electronMocks.exit).not.toHaveBeenCalled();
+  });
+
+  it('forces an immediate exit on a second signal instead of hanging', () => {
+    main.handleProcessSignal('SIGTERM');
+    main.handleProcessSignal('SIGINT');
+
+    expect(electronMocks.quit).toHaveBeenCalledOnce();
+    expect(electronMocks.exit).toHaveBeenCalledTimes(1);
+    expect(electronMocks.exit).toHaveBeenCalledWith(1);
+  });
+
+  it('lets a quit be initiated again after the test seam resets it', () => {
+    main.handleProcessSignal('SIGINT');
+    main.resetSignalShutdownForTests();
+    main.handleProcessSignal('SIGTERM');
+
+    expect(electronMocks.quit).toHaveBeenCalledTimes(2);
+    expect(electronMocks.exit).not.toHaveBeenCalled();
+  });
+
+  it('routes the named SIGINT and SIGTERM listeners through the graceful shutdown', () => {
+    main.handleSigint();
+
+    expect(electronMocks.quit).toHaveBeenCalledTimes(1);
+
+    main.resetSignalShutdownForTests();
+    main.handleSigterm();
+
+    expect(electronMocks.quit).toHaveBeenCalledTimes(2);
+    expect(electronMocks.exit).not.toHaveBeenCalled();
   });
 });

@@ -1,8 +1,8 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { Chapter } from '@keres/shared/entities/Chapter'; // Import the Chapter entity interface
+import type { Chapter } from '@keres/shared/entities/narrative/Chapter'; // Import the Chapter entity interface
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import * as schema from '../../db/schema';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import * as schema from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class ChapterClientSyncHandler implements ClientSyncEntityHandler {

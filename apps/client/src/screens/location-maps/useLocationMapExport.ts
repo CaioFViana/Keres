@@ -1,0 +1,111 @@
+import type { LocationMapContentType } from '@keres/shared';
+import { useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { TFunction } from 'i18next';
+import type {
+  LocationMapConnection,
+  LocationMapContains,
+} from '@/src/components/features/location-maps/LocationMapCanvas';
+import type { LocationMapSelect } from '@/src/db/schema';
+import type { NotificationType } from '@/src/state/ui/notificationStore';
+import type { SvgExportColors } from '@/src/utils/svg/svgExport';
+import {
+  buildLocationMapFileName,
+  deliverMapExport,
+  type ExportFileLanguage,
+} from '@/src/utils/io/storyTransfer';
+import { buildStandaloneLocationMapSvg } from '@/src/utils/io/storyMapSvgExport';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
+
+type GalleryMediaById = Record<
+  string,
+  {
+    mediaType: string;
+    mimeType: string;
+    localPath: string | null;
+    thumbnailPath: string | null;
+  }
+>;
+
+interface Options {
+  map: LocationMapSelect | null;
+  content: LocationMapContentType;
+  galleryMediaById: GalleryMediaById;
+  nodeNames: Record<string, string>;
+  connections: LocationMapConnection[];
+  contains: LocationMapContains[];
+  colors: SvgExportColors;
+  t: TFunction;
+  showNotification: (message: string, type?: NotificationType) => void;
+  setExporting: Dispatch<SetStateAction<boolean>>;
+  /** App language for the file-name slug; never the system language. */
+  language: ExportFileLanguage;
+}
+
+/** Builds and delivers a standalone location-map SVG without inflating its screen controller. */
+export function useLocationMapExport({
+  map,
+  content,
+  galleryMediaById,
+  nodeNames,
+  connections,
+  contains,
+  colors,
+  t,
+  showNotification,
+  setExporting,
+  language,
+}: Options) {
+  return useCallback(async () => {
+    if (!map) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
+    setExporting(true);
+    try {
+      const svg = await buildStandaloneLocationMapSvg(content, galleryMediaById, {
+        title: map.name,
+        subtitle: t('location_map_export_subtitle', {
+          nodeCount: content.nodes.length,
+          imageCount: content.images.length,
+        }),
+        colors,
+        nodeNames,
+        connections,
+        contains,
+      });
+      const result = await deliverMapExport(
+        svg,
+        buildLocationMapFileName(map.name, new Date(), language),
+        format,
+      );
+      if (result.delivered) {
+        showNotification(
+          t('location_map_export_success', { fileName: result.fileName }),
+          'success',
+        );
+      } else {
+        showNotification(
+          t('location_map_export_no_share_target', { path: result.uri ?? result.fileName }),
+          'warning',
+        );
+      }
+    } catch (exportError) {
+      console.log('LocationMapScreen: failed to export map.', exportError);
+      showNotification(t('location_map_export_failed'), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }, [
+    colors,
+    connections,
+    contains,
+    content,
+    galleryMediaById,
+    map,
+    nodeNames,
+    setExporting,
+    showNotification,
+    t,
+    language,
+  ]);
+}

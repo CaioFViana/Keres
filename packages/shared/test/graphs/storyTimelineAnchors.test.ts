@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { TimelineAnchoredContainer } from '../../graphs/storyTimelineLayout';
+import type { TimelineAnchoredContainer } from '../../graphs/timeline/storyTimelineLayout';
 import {
   buildStoryTimelineLayout,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
-} from '../../graphs/storyTimelineLayout';
+} from '../../graphs/timeline/storyTimelineLayout';
 
 const scene = (id: string, index: number, extra: Record<string, unknown> = {}) => ({
   id,

@@ -127,7 +127,7 @@ describe('story package persistence boundary', () => {
 describe('recovery entity labels', () => {
   it('keeps relationship-specific labels in shared entity handlers', () => {
     const recoveryDisplayNames = readFileSync(
-      resolve(SOURCE_ROOT, 'services/AdminRecoveryDisplayNames.ts'),
+      resolve(SOURCE_ROOT, 'services/auth/AdminRecoveryDisplayNames.ts'),
       'utf8',
     );
 

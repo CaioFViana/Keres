@@ -1,4 +1,4 @@
-import type { WorldPieceSection } from '../entities/WorldRule';
+import type { WorldPieceSection } from '../entities/narrative/WorldRule';
 
 /** Theme-aware visual vocabulary shared by every entity surface. */
 export const ENTITY_APPEARANCE = {
@@ -28,6 +28,10 @@ export const ENTITY_APPEARANCE = {
   Route: { icon: 'git-branch', light: '#8A6508', dark: '#FFD700' },
   RouteStep: { icon: 'footsteps', light: '#00707D', dark: '#4DD0E1' },
   Board: { icon: 'albums', light: '#2F4F6F', dark: '#3D5A80' },
+  Sketch: { icon: 'brush-outline', light: '#6A1B9A', dark: '#BA68C8' },
+  ScenePage: { icon: 'newspaper-outline', light: '#4527A0', dark: '#9575CD' },
+  SceneMusic: { icon: 'musical-notes-outline', light: '#AD1457', dark: '#F06292' },
+  Song: { icon: 'musical-note-outline', light: '#C2185B', dark: '#F48FB1' },
   LocationMap: { icon: 'map-outline', light: '#00695C', dark: '#26A69A' },
   ItemJourney: { icon: 'walk', light: '#7C4DFF', dark: '#B388FF' },
   AttributeValue: { icon: 'options', light: '#5E35B1', dark: '#9575CD' },

@@ -1,9 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
-import { useSystemInsets } from '@/src/hooks/useSystemInsets';
+import {
+  headerAnchorId,
+  registerGuideAnchor,
+  unregisterGuideAnchor,
+} from '@/src/guides/anchorRegistry';
+import { measureGuideNode, useGuideAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useSystemInsets } from '@/src/hooks/ui/useSystemInsets';
 import { useTheme } from '@/src/theme';
 
 /**
@@ -25,6 +32,41 @@ export interface HeaderAction {
   busy?: boolean;
   /** Toggle-style actions show their icon (and menu label) in the primary color when on. */
   active?: boolean;
+  /** A dot on the icon: something new is behind this action. The burger shows it too while it hides this one. */
+  badge?: boolean;
+}
+
+/** The dot of an action's `badge`. */
+function BadgeDot({ testID }: { testID: string }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      testID={testID}
+      pointerEvents="none"
+      style={[styles.badge, { backgroundColor: colors.error, borderColor: colors.background }]}
+    />
+  );
+}
+
+/** The icon, wrapped with its dot only when there is one: an unbadged action keeps the bare icon. */
+function withBadge(icon: React.ReactElement, badge: boolean | undefined, testID: string) {
+  if (!badge) return icon;
+  return (
+    <View>
+      {icon}
+      <BadgeDot testID={testID} />
+    </View>
+  );
+}
+
+/** Makes one header action a tour target, by its icon. */
+function AnchoredAction({ icon, children }: { icon: string; children: React.ReactNode }) {
+  const anchorRef = useGuideAnchor(headerAnchorId(icon));
+  return (
+    <View ref={anchorRef} collapsable={false}>
+      {children}
+    </View>
+  );
 }
 
 export default function HeaderActions({ actions }: { actions: readonly HeaderAction[] }) {
@@ -40,31 +82,36 @@ export default function HeaderActions({ actions }: { actions: readonly HeaderAct
   return (
     <View style={styles.row}>
       {visible.map((action) => (
-        <Pressable
-          key={action.id}
-          accessibilityRole="button"
-          accessibilityLabel={action.label}
-          accessibilityState={{
-            disabled: !!(action.disabled || action.busy),
-            busy: !!action.busy,
-          }}
-          disabled={action.disabled || action.busy}
-          onPress={action.onPress}
-          style={({ pressed }) => [
-            styles.action,
-            { opacity: action.disabled ? 0.4 : pressed ? 0.6 : 1 },
-          ]}
-        >
-          {action.busy ? (
-            <ActivityIndicator color={colors.text} />
-          ) : (
-            <Ionicons
-              name={action.icon}
-              size={24}
-              color={action.active ? colors.primary : colors.text}
-            />
-          )}
-        </Pressable>
+        <AnchoredAction key={action.id} icon={action.icon}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={action.label}
+            accessibilityState={{
+              disabled: !!(action.disabled || action.busy),
+              busy: !!action.busy,
+            }}
+            disabled={action.disabled || action.busy}
+            onPress={action.onPress}
+            style={({ pressed }) => [
+              styles.action,
+              { opacity: action.disabled ? 0.4 : pressed ? 0.6 : 1 },
+            ]}
+          >
+            {action.busy ? (
+              <ActivityIndicator color={colors.text} />
+            ) : (
+              withBadge(
+                <Ionicons
+                  name={action.icon}
+                  size={24}
+                  color={action.active ? colors.primary : colors.text}
+                />,
+                action.badge,
+                `header-action-badge-${action.id}`,
+              )
+            )}
+          </Pressable>
+        </AnchoredAction>
       ))}
     </View>
   );
@@ -76,16 +123,31 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
   const { t } = useTranslation();
   const insets = useSystemInsets();
   const [open, setOpen] = useState(false);
+  useModalNavigationBar(open);
+  // Every action hides behind the one burger, so a tour pointing at one points at the burger.
+  const burgerRef = useRef<View>(null);
+  const icons = actions.map((action) => action.icon).join('|');
+  useEffect(() => {
+    const ids = icons.split('|').map(headerAnchorId);
+    for (const id of ids) registerGuideAnchor(id, () => measureGuideNode(burgerRef.current));
+    return () => ids.forEach(unregisterGuideAnchor);
+  }, [icons]);
   return (
     <View style={styles.row}>
       <Pressable
+        ref={burgerRef}
+        collapsable={false}
         testID="header-actions-menu"
         accessibilityRole="button"
         accessibilityLabel={t('header_actions_menu')}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.action, { opacity: pressed ? 0.6 : 1 }]}
       >
-        <Ionicons name="menu" size={24} color={colors.text} />
+        {withBadge(
+          <Ionicons name="menu" size={24} color={colors.text} />,
+          actions.some((action) => action.badge),
+          'header-actions-menu-badge',
+        )}
       </Pressable>
       <Modal
         visible={open}
@@ -133,11 +195,15 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
                   {action.busy ? (
                     <ActivityIndicator color={colors.text} />
                   ) : (
-                    <Ionicons
-                      name={action.icon}
-                      size={22}
-                      color={action.active ? colors.primary : colors.text}
-                    />
+                    withBadge(
+                      <Ionicons
+                        name={action.icon}
+                        size={22}
+                        color={action.active ? colors.primary : colors.text}
+                      />,
+                      action.badge,
+                      `header-menu-badge-${action.id}`,
+                    )
                   )}
                   <Text
                     style={[
@@ -160,6 +226,15 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', marginRight: 8, gap: 4 },
   action: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -3,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    borderWidth: 2,
+  },
   menuOverlay: {
     flex: 1,
     alignItems: 'flex-end',

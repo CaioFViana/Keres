@@ -1,10 +1,10 @@
 import { act, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import { StatLadderBar } from '../../src/components/features/stats/StatLadderBar/StatLadderBar';
-import { StatRadarChart } from '../../src/components/features/stats/StatRadarChart/StatRadarChart';
-import type { StatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
+import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
+import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
+import type { StatRadarLayout } from '@keres/shared/graphs/stats/statRadarLayout';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -25,7 +25,7 @@ jest.mock('../../src/theme', () => ({
 // The Skia drawings come from the global mock in `test/jest.setup.ts` (each drawing maps to a
 // `Skia*` host placeholder); only the CanvasKit gate is driven per case.
 const mockUseCanvasKitReady = jest.fn(() => true);
-jest.mock('../../src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
+jest.mock('@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
   useCanvasKitReady: (...args: unknown[]) =>
     (mockUseCanvasKitReady as (...inner: unknown[]) => boolean)(...args),
 }));

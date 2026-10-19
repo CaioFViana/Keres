@@ -1,7 +1,7 @@
 import { MAX_PRIMARY_STATS, type CreateStoryUpdate, type UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   characters,
   modes,
@@ -10,14 +10,14 @@ import {
   stats,
   stories,
   users,
-} from '../../src/db/schema';
-import { SyncConflictError } from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
-import { ModeSyncHandler } from '../../src/services/entity-sync-handlers/ModeSyncHandler';
-import { StatRelationSyncHandler } from '../../src/services/entity-sync-handlers/StatRelationSyncHandler';
-import { StatStrengthSyncHandler } from '../../src/services/entity-sync-handlers/StatStrengthSyncHandler';
-import { StatSyncHandler } from '../../src/services/entity-sync-handlers/StatSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { SyncConflictError } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { ModeSyncHandler } from '@/services/entity-sync-handlers/ModeSyncHandler';
+import { StatRelationSyncHandler } from '@/services/entity-sync-handlers/StatRelationSyncHandler';
+import { StatStrengthSyncHandler } from '@/services/entity-sync-handlers/StatStrengthSyncHandler';
+import { StatSyncHandler } from '@/services/entity-sync-handlers/StatSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 /**
  * The stat system's invariants do not fit into a database constraint: `stat_id` and `mode_id` are

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { packs, showcaseSettings } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { packService } from '../../src/services/PackService';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { packs, showcaseSettings } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { packService } from '@/services/story-packages/PackService';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 /** The whole `/public` group answers 404 while the Showcase is off - packs included. */
 async function enableShowcase(enabled = true): Promise<void> {

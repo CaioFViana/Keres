@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
+import {
+  boolean,
+  integer,
+  table,
+  text,
+  timestamp,
+  timestampNow,
+  uniqueIndex,
+} from '@/db/schema/columns';
 import { characters } from './characters';
 import { stories } from './stories';
 

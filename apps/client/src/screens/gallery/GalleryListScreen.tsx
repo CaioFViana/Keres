@@ -1,38 +1,44 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
 import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGalleryAddKind';
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
-import { useDrizzle } from '../../db';
-import type { GallerySelect } from '../../db/schemas/galleries';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
+import { useDrizzle } from '@/src/db';
+import type { GallerySelect } from '@/src/db/schemas/galleries';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import type {
   GalleryStackParamList,
   MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import { createGalleryLink } from '../../services/galleryLink';
-import { importPickedMediaAssets } from '../../services/galleryMediaImport';
-import { mediaFileService } from '../../services/MediaFileService';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { useGalleryStore } from '../../state/galleryStore';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
+} from '@/src/navigation/drawer/MainSystemDrawer';
+import {
+  GALLERY_ROW_PADDING,
+  galleryGridLayout,
+  galleryScrollbarWidth,
+} from '@/src/utils/ui/galleryGridLayout';
+import { createGalleryLink } from '@/src/services/media/galleryLink';
+import { importPickedMediaAssets } from '@/src/services/media/galleryMediaImport';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { useGalleryStore } from '@/src/state/story/galleryStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,
@@ -42,9 +48,7 @@ export type GalleryScreenNavigationProp = CompositeNavigationProp<
 const GalleryListScreen = () => {
   useBackButtonHandler();
   useScreenTour('GalleryStack');
-  const listAnchorRef = useScreenAnchor('Gallery', 'list');
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const { breakpoint } = useResponsiveLayout();
   const navigation = useNavigation<GalleryScreenNavigationProp>();
   const db = useDrizzle();
@@ -54,6 +58,24 @@ const GalleryListScreen = () => {
   /** Importing media is file I/O, not instantaneous; without this the screen would look frozen. */
   const [importing, setImporting] = useState(false);
   const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [listWidth, setListWidth] = useState(0);
+  const listWidthRef = useRef(0);
+  // The room a scrollbar takes from the list, for the list width and number of tiles it was measured
+  // with. Kept while those hold: reserving it makes the tiles shorter, which could remove the scrollbar
+  // and bring it back in turn. A different width or number of tiles (a search, say) measures anew.
+  const [scrollbar, setScrollbar] = useState({ forKey: '', width: 0 });
+  const scrollbarKeyRef = useRef('');
+
+  const handleListLayout = useCallback((event: LayoutChangeEvent) => {
+    const width = Math.round(event.nativeEvent.layout.width);
+    listWidthRef.current = width;
+    setListWidth(width);
+  }, []);
+
+  const handleContentWidth = useCallback((contentWidth: number) => {
+    const measured = galleryScrollbarWidth(listWidthRef.current, contentWidth);
+    if (measured > 0) setScrollbar({ forKey: scrollbarKeyRef.current, width: measured });
+  }, []);
 
   const {
     listProps,
@@ -197,15 +219,29 @@ const GalleryListScreen = () => {
     [toggleFavorite],
   );
 
+  // Before the list has been measured the window's breakpoint stands in for its width.
+  const scrollbarKey = `${listWidth}:${galleries.length}`;
+  useEffect(() => {
+    scrollbarKeyRef.current = scrollbarKey;
+  }, [scrollbarKey]);
+  const grid =
+    listWidth > 0
+      ? galleryGridLayout(listWidth, scrollbar.forKey === scrollbarKey ? scrollbar.width : 0)
+      : null;
+  const numColumns =
+    grid?.numColumns ?? (breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2);
+  const cardWidth = grid?.cardWidth;
+
   const renderGalleryItem = useCallback(
     ({ item }: { item: GallerySelect }) => (
       <GalleryGridItem
         media={item}
+        width={cardWidth}
         onPress={handleViewDetails}
         onToggleFavorite={handleToggleFavorite}
       />
     ),
-    [handleViewDetails, handleToggleFavorite],
+    [cardWidth, handleViewDetails, handleToggleFavorite],
   );
 
   const mediaTypeOptions = useMemo(
@@ -224,14 +260,7 @@ const GalleryListScreen = () => {
     [t],
   );
 
-  const numColumns = breakpoint === 'wide' ? 5 : breakpoint === 'medium' ? 3 : 2;
-
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    columnWrapper: {
-      paddingHorizontal: 5,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (error) {
     return <ScreenError message={error} onGoBack={() => navigation.goBack()} />;
@@ -247,7 +276,13 @@ const GalleryListScreen = () => {
           void handleAddLink(url, title);
         }}
       />
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor
+        screen="Gallery"
+        part="list"
+        testID="gallery-list-area"
+        style={{ flex: 1 }}
+        onLayout={handleListLayout}
+      >
         <GenericFilterSortList
           {...listProps}
           key={`gallery-columns-${numColumns}`}
@@ -255,9 +290,11 @@ const GalleryListScreen = () => {
           renderItem={renderGalleryItem}
           keyExtractor={(item) => item.id}
           numColumns={numColumns}
+          onContentWidthChange={handleContentWidth}
           columnWrapperStyle={styles.columnWrapper}
           searchPlaceholder={t('search_media')}
           filterOptions={mediaTypeOptions}
+          filterPlaceholder={t('filter_by_media_type')}
           sortOptions={sortOptions}
           entityName="Gallery"
           storyId={storyId || ''}
@@ -275,9 +312,17 @@ const GalleryListScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    columnWrapper: {
+      paddingHorizontal: GALLERY_ROW_PADDING,
+    },
+  });
 
 export default GalleryListScreen;

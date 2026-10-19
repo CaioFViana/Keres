@@ -1,6 +1,16 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { tiers, users } from '@/db/schema';
+import {
+  importTestStory,
+  newId,
+  registerUser,
+  request,
+  type TestUser,
+  uploadTestStory,
+} from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 
@@ -177,6 +187,72 @@ describe('POST /stories/import', () => {
     });
 
     const { status } = await request('POST', '/stories/import', { body: exported });
+
+    expect(status).toBe(401);
+  });
+
+  /**
+   * The app tells a plan's ceiling apart from other refusals by this code, and only by it: the words of the
+   * message are the fallback for older servers. So the import has to carry the code when the plan refuses it.
+   */
+  it('names a refusal by the plan ceiling with the tier_limit code', async () => {
+    await createStory(ana.token, 'The first one');
+    const tierId = newId();
+    await db.insert(tiers).values({
+      id: tierId,
+      name: `Tier ${tierId}`,
+      isDefault: false,
+      maxStories: 1,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: null,
+      maxStorageBytesTotal: null,
+    } as never);
+    await db.update(users).set({ tierId }).where(eq(users.id, ana.userId));
+
+    const { status, data } = await importTestStory(ana.token, 'The second one');
+    const refusal = data as { message?: string; code?: string };
+
+    expect(status).toBe(403);
+    expect(refusal.code).toBe('tier_limit');
+    expect(refusal.message).toMatch(/Story limit reached for your plan \(1\)/);
+  });
+});
+
+describe('GET /stories/:storyId/plan', () => {
+  it("answers with the owner's entity ceilings, unlimited when there is no plan", async () => {
+    const story = await createStory(ana.token);
+
+    const { status, data } = await request('GET', `/stories/${story.id}/plan`, {
+      token: ana.token,
+    });
+
+    expect(status).toBe(200);
+    expect(data).toEqual({
+      tierName: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      entitiesUsedTotal: 0,
+      maxCommentsPerStory: null,
+      maxContributorsPerStory: null,
+      commentsUsed: 0,
+      contributorsUsed: 0,
+    });
+  });
+
+  it('hides another user’s story behind a 404', async () => {
+    const story = await createStory(ana.token);
+    const bia = await registerUser('bia');
+
+    const { status } = await request('GET', `/stories/${story.id}/plan`, { token: bia.token });
+
+    expect(status).toBe(404);
+  });
+
+  it('requires a session', async () => {
+    const story = await createStory(ana.token);
+
+    const { status } = await request('GET', `/stories/${story.id}/plan`);
 
     expect(status).toBe(401);
   });

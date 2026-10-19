@@ -1,14 +1,18 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
+import VocabularyScreen from '@/src/screens/customization/VocabularyScreen';
+
 const mockUseScreenTour = jest.fn();
 const mockSetSelectedStory = jest.fn();
+const mockUpdateArc = jest.fn();
+let mockActiveArc: { id: string; title: string; vocabulary: null; medium?: string } | null = null;
 let mockSelectedStory: { id: string; vocabulary: null } | null = {
   id: 'story-1',
   vocabulary: null,
 };
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -16,31 +20,43 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ goBack: jest.fn() }),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
-  useStoryRole: () => ({ canManageStoryPolicy: true }),
+  useStoryRole: () => ({ canEdit: true, canManageStoryPolicy: true }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
+  __esModule: true,
+  useStoryArcs: () => ({ activeArc: mockActiveArc }),
+}));
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
+  __esModule: true,
+  createStoryArcService: () => ({ updateArc: mockUpdateArc }),
+}));
+jest.mock('@/src/state/app/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: () => ({ userId: 'user-1' }),
+}));
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({
     selectedStory: mockSelectedStory,
     setSelectedStory: mockSetSelectedStory,
   }),
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('@/src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({}),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -79,11 +95,28 @@ jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () 
   },
 }));
 
-import VocabularyScreen from '../../../src/screens/customization/VocabularyScreen';
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockSelectedStory = { id: 'story-1', vocabulary: null };
+});
+
+beforeEach(() => {
+  mockActiveArc = null;
+});
+
+it('says what the form of the work brings, words and all, inside a work of that form', async () => {
+  mockActiveArc = { id: 'arc-1', title: 'Pilot', vocabulary: null, medium: 'screenplay' };
+  const view = await render(<VocabularyScreen />);
+
+  expect(view.getByTestId('vocabulary-medium')).toBeTruthy();
+  expect(view.getByTestId('arc-medium-terms').props.children).toBe('arc_medium_changes_words');
+  expect(view.queryByTestId('arc-medium-effects')).toBeNull();
+});
+
+it('tells the story-wide view that forms of work have words of their own', async () => {
+  const view = await render(<VocabularyScreen />);
+
+  expect(view.getByTestId('vocabulary-medium').props.children).toBe('vocabulary_medium_story');
 });
 
 it('requests its guided tour', async () => {

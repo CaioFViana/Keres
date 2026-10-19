@@ -2,11 +2,11 @@
  * @jest-environment node
  */
 import { asc, eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createSyncConflictService } from '../../src/services/SyncConflictService';
-import { withOpLogLock } from '../../src/utils/opLogMutex';
-import { recordLocalOperation } from '../../src/utils/syncUtils';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createSyncConflictService } from '@/src/services/sync/SyncConflictService';
+import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
+import { recordLocalOperation } from '@/src/services/sync/syncUtils';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

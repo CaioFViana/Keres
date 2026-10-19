@@ -15,6 +15,16 @@ export const servers = sqliteTable('servers', {
   version: integer('version').notNull(),
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
   deletedAt: integer('deleted_at', { mode: 'timestamp' }),
+  /** Local copy of the server's terms as accepted, so they read without asking the server. */
+  tosText: text('tos_text'),
+  /** Version of the accepted copy (`SERVER_TERMS_VERSION` on the server that served it). */
+  tosVersion: text('tos_version'),
+  tosAcceptedAt: integer('tos_accepted_at', { mode: 'timestamp' }),
+  /** Local copy of the server's privacy policy as accepted, readable offline like the terms. */
+  privacyText: text('privacy_text'),
+  /** Version of the accepted copy (`PRIVACY_POLICY_VERSION` on the server that served it). */
+  privacyVersion: text('privacy_version'),
+  privacyAcceptedAt: integer('privacy_accepted_at', { mode: 'timestamp' }),
 });
 export type ServerInsert = InferInsertModel<typeof servers>;
 export type ServerSelect = InferSelectModel<typeof servers>;

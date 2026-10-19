@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -6,25 +6,20 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import type {
-  CustomizationStackParamList,
-  MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import type { StatNotation } from '@keres/shared/graphs/statLadder';
-import { buildStatRanking } from '../../utils/statRanking';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
+import type { StatNotation } from '@keres/shared/graphs/stats/statLadder';
+import { buildStatRanking } from '@/src/utils/stats/statRanking';
 
-type StatRankingNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
-  'StatRanking'
->;
+type StatRankingNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatRanking'>;
 
 /**
  * The tier list: one stat chosen at the top and everybody in the story sorted by it. Each mode
@@ -35,7 +30,7 @@ const StatRankingScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatRankingNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatRanking'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatRanking'>>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
   const notation = (selectedStory?.statNotation ?? 'letter') as StatNotation;

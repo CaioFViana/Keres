@@ -20,6 +20,10 @@ export const chapterAnchorEntityHandler: EntityDomainHandler = {
     { field: 'startSceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
     { field: 'endSceneId', targetEntityType: OperationLogEntityType.Scene, required: false },
   ],
+  async resolveCompactName(context, entityId) {
+    const reference = await chapterAnchorEntityHandler.resolveReference!(context, entityId);
+    return reference.name;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.ChapterAnchor, entityId);
     if (!row) return { name: undefined, type: context.translate('chapter_anchor') };

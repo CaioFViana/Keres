@@ -1,15 +1,18 @@
 import { isSupportedMediaMimeType } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { env } from '../../config/env';
-import type { JWTPayload } from '../../index';
-import { MediaHashMismatchError, mediaStorageService } from '../../services/MediaStorageService';
-import { storyPermissionService } from '../../services/StoryPermissionService';
+import { env } from '@/config/env';
+import type { JWTPayload } from '@/index';
+import {
+  MediaHashMismatchError,
+  mediaStorageService,
+} from '@/services/media-storage/MediaStorageService';
+import { storyPermissionService } from '@/services/stories/StoryPermissionService';
 import {
   BlobNotReferencedError,
   TierLimitExceededError,
   tierEnforcementService,
-} from '../../services/TierEnforcementService';
-import { AppError } from '../../utils/errors';
+} from '@/services/tiers/TierEnforcementService';
+import { AppError } from '@/utils/errors';
 
 const HASH_PATTERN = /^[a-f0-9]{32}$/;
 

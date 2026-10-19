@@ -2,10 +2,10 @@
  * @jest-environment node
  */
 import { AttributeType } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import { createStoryContentMetricsService } from '../../src/services/storymanagement/StoryContentMetricsService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createStoryContentMetricsService } from '@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService';
+import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 
@@ -175,6 +175,19 @@ it('keeps every dashboard count scoped to live entities and identifies real bran
     name: 'Importante',
     ...entityBase,
   });
+  await database.db.insert(schema.plots).values({
+    id: 'plot-1',
+    storyId: TEST_STORY_ID,
+    name: 'A vingança',
+    ...entityBase,
+  });
+  await database.db.insert(schema.boards).values({
+    id: 'board-1',
+    storyId: TEST_STORY_ID,
+    name: 'Quadro',
+    content: { nodes: [], edges: [] } as never,
+    ...entityBase,
+  });
   await database.db.insert(schema.storySchemaFields).values({
     id: 'field-1',
     storyId: TEST_STORY_ID,
@@ -199,6 +212,8 @@ it('keeps every dashboard count scoped to live entities and identifies real bran
     galleryCount: 1,
     tagCount: 1,
     customAttributeCount: 1,
+    plotCount: 1,
+    boardCount: 1,
     branchingStoryForkCount: 0,
   });
   await expect(service.getContentCounts()).resolves.toEqual({
@@ -213,6 +228,8 @@ it('keeps every dashboard count scoped to live entities and identifies real bran
     galleryCount: 1,
     tagCount: 1,
     customAttributeCount: 1,
+    plotCount: 1,
+    boardCount: 1,
     branchingStoryForkCount: 1,
   });
   await expect(service.getContentCounts(forkStoryId)).resolves.toMatchObject({

@@ -1,6 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import GalleryListScreen from '@/src/screens/gallery/GalleryListScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockDispatch = jest.fn();
@@ -29,6 +32,7 @@ let mockListProps: {
   data: { id: string }[];
   renderItem: (info: { item: { id: string } }) => React.ReactNode;
   numColumns?: number;
+  onContentWidthChange?: (width: number) => void;
   emptyStateTitle?: string;
   emptyStateMessage?: string;
   emptyStateActions?: { label: string; onPress: () => void }[];
@@ -49,7 +53,7 @@ jest.mock('@react-navigation/native', () => {
     DrawerActions: { closeDrawer: () => ({ type: 'CLOSE_DRAWER' }) },
   };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
@@ -120,10 +124,12 @@ jest.mock('@/src/components/features/list-items/GalleryGridItem', () => ({
   __esModule: true,
   default: ({
     media,
+    width,
     onPress,
     onToggleFavorite,
   }: {
     media: { id: string; isFavorite?: boolean };
+    width?: number;
     onPress: (id: string) => void;
     onToggleFavorite: (id: string, isFavorite: boolean) => void;
   }) => {
@@ -145,62 +151,63 @@ jest.mock('@/src/components/features/list-items/GalleryGridItem', () => ({
         },
         `fav ${media.id}`,
       ),
+      react.createElement(native.Text, { testID: `width-${media.id}` }, String(width)),
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ breakpoint: mockBreakpoint.current }),
 }));
-jest.mock('../../../src/services/galleryLink', () => ({
+jest.mock('@/src/services/media/galleryLink', () => ({
   __esModule: true,
   createGalleryLink: (...args: unknown[]) => mockCreateGalleryLink(...args),
 }));
-jest.mock('../../../src/services/galleryMediaImport', () => ({
+jest.mock('@/src/services/media/galleryMediaImport', () => ({
   __esModule: true,
   importPickedMediaAssets: (...args: unknown[]) => mockImportPickedMediaAssets(...args),
 }));
-jest.mock('../../../src/services/MediaFileService', () => ({
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: {
     pick: (...args: unknown[]) => mockPick(...args),
     pickDocuments: (...args: unknown[]) => mockPickDocuments(...args),
   },
 }));
-jest.mock('../../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({}),
 }));
-jest.mock('../../../src/state/galleryStore', () => ({
+jest.mock('@/src/state/story/galleryStore', () => ({
   __esModule: true,
   useGalleryStore: jest.fn(),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -223,9 +230,6 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import GalleryListScreen from '../../../src/screens/gallery/GalleryListScreen';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-
 const freshListState = () => ({
   listProps: {},
   items: [] as { id: string }[],
@@ -234,6 +238,10 @@ const freshListState = () => ({
   toggleFavorite: mockToggleFavorite,
   refetch: mockRefetch,
 });
+
+/** Sketches and songs live in the drawer, so the header carries only the add action. */
+const addAction = () =>
+  mockHeaderConfig.current!.actions.find((action: any) => action.id === 'add')!;
 
 describe('GalleryListScreen', () => {
   afterEach(() => {
@@ -279,6 +287,42 @@ describe('GalleryListScreen', () => {
     expect(mockListProps?.numColumns).toBe(5);
   });
 
+  it('sizes the grid by the measured width of the list, with one width for every card', async () => {
+    mockListState = { ...freshListState(), items: [{ id: 'g1' }] };
+    const view = await render(<GalleryListScreen />);
+
+    // Not measured yet: the breakpoint stands in, and the card takes its share of the row.
+    expect(view.getByTestId('width-g1').props.children).toBe('undefined');
+
+    await fireEvent(view.getByTestId('gallery-list-area'), 'layout', {
+      nativeEvent: { layout: { width: 1600, height: 900 } },
+    });
+
+    expect(mockListProps?.numColumns).toBe(7);
+    expect(view.getByTestId('width-g1').props.children).toBe('214');
+  });
+
+  it('leaves room for a scrollbar once the list reports a narrower content than its own width', async () => {
+    mockListState = { ...freshListState(), items: [{ id: 'g1' }] };
+    const view = await render(<GalleryListScreen />);
+    await fireEvent(view.getByTestId('gallery-list-area'), 'layout', {
+      nativeEvent: { layout: { width: 1600, height: 900 } },
+    });
+
+    // the list is 1580 wide inside its padding; 1564 of it is content, so a scrollbar takes 16
+    await act(async () => mockListProps?.onContentWidthChange?.(1564));
+    expect(view.getByTestId('width-g1').props.children).toBe('212');
+
+    // it stays reserved when the content widens again, so the tiles do not flip back and forth
+    await act(async () => mockListProps?.onContentWidthChange?.(1580));
+    expect(view.getByTestId('width-g1').props.children).toBe('212');
+
+    // a search that changes how many tiles there are measures the scrollbar anew
+    mockListState = { ...freshListState(), items: [{ id: 'g1' }, { id: 'g2' }] };
+    await view.rerender(<GalleryListScreen />);
+    expect(view.getByTestId('width-g1').props.children).toBe('214');
+  });
+
   it('shows the error state from the list hook', async () => {
     mockListState = { ...freshListState(), error: 'load failed' };
     const view = await render(<GalleryListScreen />);
@@ -301,7 +345,7 @@ describe('GalleryListScreen', () => {
   it('imports picked media and reports the summary', async () => {
     const view = await render(<GalleryListScreen />);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     expect(mockPromptGalleryAddKind).toHaveBeenCalled();
     const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
 
@@ -336,7 +380,7 @@ describe('GalleryListScreen', () => {
     await withSilencedConsole(['log'], async () => {
       await render(<GalleryListScreen />);
 
-      mockHeaderConfig.current?.actions[0].onPress();
+      addAction().onPress();
       const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
       mockPickDocuments.mockRejectedValue(new Error('denied'));
       await act(async () => {
@@ -357,7 +401,7 @@ describe('GalleryListScreen', () => {
     mockCreateGalleryLink.mockResolvedValue({ duplicate: true });
     const view = await render(<GalleryListScreen />);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
     await act(async () => {
       choose('link');
@@ -387,7 +431,7 @@ describe('GalleryListScreen', () => {
     mockCreateGalleryLink.mockResolvedValue(null);
     const view = await render(<GalleryListScreen />);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
     await act(async () => {
       choose('link');
@@ -398,7 +442,7 @@ describe('GalleryListScreen', () => {
     await waitFor(() => expect(view.queryByTestId('link-modal')).toBeNull());
     expect(mockLinkModalVisible).toBe(false);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     const chooseAgain = mockPromptGalleryAddKind.mock.calls[1][1] as (kind: string) => void;
     await act(async () => {
       chooseAgain('link');

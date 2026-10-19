@@ -154,4 +154,20 @@ describe('manuscript EPUB', () => {
     const build = () => buildManuscriptEpubBytes(manuscript, labels, {}, { modified: MODIFIED });
     expect(await build()).toEqual(await build());
   });
+
+  it('groups consecutive items into one list element', () => {
+    const listed = compileLinearManuscript({
+      title: 'Lists',
+      chapters: [makeChapter()],
+      scenes: [makeScene({ body: 'Intro.\n\n- one\n- two\n\n1. first\n2. second' })],
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Appendix',
+    });
+    const entries = new Map(buildManuscriptEpubEntries(listed, labels, {}, { modified: MODIFIED }));
+    const text = entries.get('OEBPS/text-001.xhtml')!;
+
+    expect(text).toContain('<ul>\n<li>one</li>\n<li>two</li>\n</ul>');
+    expect(text).toContain('<ol>\n<li>first</li>\n<li>second</li>\n</ol>');
+  });
 });

@@ -1,49 +1,47 @@
 import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { buildNarrativeProjection } from '@keres/shared';
-import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import type { Effect } from '@keres/shared/entities/Effect';
-import type { GraphEdge, GraphNode } from '@keres/shared/graphs/storyGraphLayout';
-import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
-import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
+import type { GraphEdge, GraphNode } from '@keres/shared/graphs/story/storyGraphLayout';
+import { buildStoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
+import { renderStoryMapSvg } from '@keres/shared/graphs/story/storyGraphSvg';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   ChoiceSelect,
   PlotSceneSelect,
   PlotSelect,
   SceneSelect,
-} from '../../../db/schema';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
-import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { createChapterService } from '../../../services/storymanagement/ChapterService';
-import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { createEffectService } from '../../../services/storymanagement/EffectService';
-import { createItemService } from '../../../services/storymanagement/ItemService';
-import { createPlotSceneService } from '../../../services/storymanagement/PlotSceneService';
-import { createPlotService } from '../../../services/storymanagement/PlotService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { useNotificationStore } from '../../../state/notificationStore';
-import { useStoryStore } from '../../../state/storyStore';
-import { useTheme } from '../../../theme';
-import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
+} from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useGraphStoryReload } from '@/src/hooks/graph/useGraphStoryReload';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createPlotSceneService } from '@/src/services/storymanagement/entities/PlotSceneService';
+import { createPlotService } from '@/src/services/storymanagement/entities/PlotService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
 import {
-  buildStoryMapFileName,
-  deliverMapExport,
-  exportFileLanguage,
-} from '../../../utils/storyTransfer';
+  describeChoiceCheck,
+  describeEffect,
+} from '@/src/utils/analysis/choiceCheckEffectDescriptions';
+import { buildStoryMapFileName } from '@/src/utils/io/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
+import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
 
 /**
  * The story map: the scenes and the choices that link one to another.
@@ -69,14 +67,13 @@ interface SceneNodeConnection {
 
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { definition: calendar } = useStoryCalendar();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceView'>>();
   const drizzleDb = useDrizzle();
   const { selectedStory } = useStoryStore();
-  const { showNotification } = useNotificationStore();
   const { isCompact } = useResponsiveLayout();
 
   const canvasRef = useRef<StoryGraphCanvasHandle>(null);
@@ -95,7 +92,6 @@ const ChoiceViewScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [labelsOverride, setLabelsOverride] = useState<boolean | null>(null);
-  const [exporting, setExporting] = useState(false);
 
   const storyId = selectedStory?.id;
 
@@ -142,22 +138,7 @@ const ChoiceViewScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Reload on focus: scenes and choices may have changed on another screen.
-  useFocusEffect(
-    useCallback(() => {
-      loadGraph();
-    }, [loadGraph]),
-  );
-
-  useEffect(() => {
-    const handleRemoteChange = (change: { storyId?: string }) => {
-      if (change?.storyId === storyId) {
-        loadGraph();
-      }
-    };
-    entityEventEmitter.on('story_data_changed', handleRemoteChange);
-    return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
-  }, [storyId, loadGraph]);
+  useGraphStoryReload(storyId, loadGraph);
 
   const isLinearFlow = selectedStory?.type === 'linear';
   const screenTitle = isLinearFlow ? t('story_flow_title') : t('story_map_title');
@@ -318,13 +299,12 @@ const ChoiceViewScreen = () => {
     [isLinearFlow, layout.edges.length, layout.nodes.length, t],
   );
 
-  const handleExport = useCallback(async () => {
-    if (!selectedStory || layout.nodes.length === 0) return;
-
-    setExporting(true);
-    try {
-      const svg = renderStoryMapSvg(layout, {
-        title: selectedStory.title,
+  const { exporting, handleExport } = useGraphMapExport({
+    story: selectedStory,
+    hasNodes: layout.nodes.length > 0,
+    renderSvg: (title) =>
+      renderStoryMapSvg(layout, {
+        title,
         subtitle: mapSubtitle,
         showEdgeLabels,
         labels: {
@@ -342,32 +322,15 @@ const ChoiceViewScreen = () => {
           accent: colors.accent,
           error: colors.error,
         },
-      });
-
-      const result = await deliverMapExport(
-        svg,
-        buildStoryMapFileName(selectedStory.title, new Date(), exportFileLanguage(i18n.language)),
-        useUserSettingsStore.getState().exportFormat,
-      );
-      if (result.delivered) {
-        showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');
-      } else {
-        // With no share sheet the file exists but the user has no way to reach it; saying where it is is more
-        // useful than claiming success.
-        showNotification(
-          t('story_map_export_no_share_target', {
-            path: result.uri || result.fileName,
-          }),
-          'warning',
-        );
-      }
-    } catch (exportError) {
-      console.log('ChoiceViewScreen: failed to export story map.', exportError);
-      showNotification(t('story_map_export_failed'), 'error');
-    } finally {
-      setExporting(false);
-    }
-  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t, i18n]);
+      }),
+    buildFileName: buildStoryMapFileName,
+    messageKeys: {
+      success: 'story_map_export_success',
+      noShareTarget: 'story_map_export_no_share_target',
+      failed: 'story_map_export_failed',
+    },
+    logMessage: 'ChoiceViewScreen: failed to export story map.',
+  });
 
   return (
     <ChoiceViewContent

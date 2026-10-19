@@ -1,3 +1,4 @@
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 import {
   act,
   cleanup,
@@ -6,7 +7,9 @@ import {
   type RenderResult,
   waitFor,
 } from '@testing-library/react-native';
-import type { GraphNode } from '@keres/shared/graphs/storyGraphLayout';
+import type { GraphNode } from '@keres/shared/graphs/story/storyGraphLayout';
+
+import ChoiceViewScreen from '@/src/screens/narrative-elements/choices/ChoiceViewScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -46,29 +49,29 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: { title: string }) => {
     mockHeaderArgs = args;
   },
 }));
 
-jest.mock('../../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: mockIsCompact }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   __esModule: true,
   useStoryCalendar: () => ({ definition: { id: 'cal-1' } }),
 }));
 
-jest.mock('../../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return {
     __esModule: true,
@@ -76,22 +79,22 @@ jest.mock('../../../../src/db', () => {
   };
 });
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('../../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
 
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: { getState: () => ({ exportFormat: 'png' }) },
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -107,7 +110,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (...args: unknown[]) => {
@@ -118,9 +121,9 @@ jest.mock('../../../../src/utils/EventEmitter', () => ({
   },
 }));
 
-jest.mock('../../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   __esModule: true,
-  ...jest.requireActual('../../../../src/utils/storyTransfer'),
+  ...jest.requireActual('@/src/utils/io/storyTransfer'),
   buildStoryMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));
@@ -133,52 +136,52 @@ jest.mock('react-i18next', () => {
   };
 });
 
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getScenesByStoryId: mockGetScenesByStoryId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getChoicesByStoryId: mockGetChoicesByStoryId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getChaptersByStoryId: mockGetChaptersByStoryId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ChoiceCheckGroupService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService', () => ({
   __esModule: true,
   createChoiceCheckGroupService: () => ({ getAllByStoryId: mockGetCheckGroups }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ChoiceCheckService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceCheckService', () => ({
   __esModule: true,
   createChoiceCheckService: () => ({ getAllByStoryId: mockGetChecks }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/EffectService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/EffectService', () => ({
   __esModule: true,
   createEffectService: () => ({ getAllByStoryId: mockGetEffects }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getItemsByStoryId: mockGetItemsByStoryId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/PlotService', () => ({
+jest.mock('@/src/services/storymanagement/entities/PlotService', () => ({
   __esModule: true,
   createPlotService: () => ({ getAllByStoryId: mockGetPlots }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/PlotSceneService', () => ({
+jest.mock('@/src/services/storymanagement/entities/PlotSceneService', () => ({
   __esModule: true,
   createPlotSceneService: () => ({ getAllByStoryId: mockGetPlotScenes }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/choices/ChoiceViewContent', () => {
+jest.mock('@/src/screens/narrative-elements/choices/ChoiceViewContent', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -262,8 +265,6 @@ jest.mock('../../../../src/screens/narrative-elements/choices/ChoiceViewContent'
     ),
   };
 });
-
-import ChoiceViewScreen from '../../../../src/screens/narrative-elements/choices/ChoiceViewScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
@@ -442,6 +443,7 @@ describe('ChoiceViewScreen', () => {
 
   it('exports the map and notifies success', async () => {
     mockLanguage = 'pt-BR';
+    jest.mocked(chooseExportFormat).mockResolvedValueOnce('png');
     const view = await render(<ChoiceViewScreen />);
     await waitFor(() => expect(jsonOf(view, 'view-content').loading).toBe(false));
     await fireEvent.press(view.getByTestId('content-export'));

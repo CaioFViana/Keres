@@ -2,10 +2,11 @@ import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { ItemSelect } from '../../../db/schemas/items';
-import type { TagSelect } from '../../../db/schema';
-import { useTheme } from '../../../theme';
-import { truncate } from '../../../utils/stringUtils';
+import type { ItemSelect } from '@/src/db/schemas/items';
+import type { TagSelect } from '@/src/db/schema';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import ListItemTitle from '@/src/components/features/list-items/ListItemTitle';
@@ -40,13 +41,7 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
 
   const referenceStyles = createReferenceListItemStyles(colors);
   const preview = summarizeEntityPreview(OperationLogEntityType.Item, item);
-  const styles = StyleSheet.create({
-    detailText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderHeaderContent = (currentItem: ItemSelect) => (
     <ListItemTitle
@@ -92,5 +87,14 @@ const ItemListItem: React.FC<ItemListItemProps> = ({
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    detailText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+  });
 
 export default ItemListItem;

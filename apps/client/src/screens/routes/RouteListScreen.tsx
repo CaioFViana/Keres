@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,14 +6,14 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import {
   ScreenError,
   ScreenLoading,
-} from '../../components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryRoutes } from '../../hooks/useStoryRoutes';
-import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'Routes'>;
@@ -39,7 +39,7 @@ export default function RouteListScreen() {
           borderRadius: 10,
           backgroundColor: colors.surface,
         },
-        name: { color: colors.text, fontSize: 17, fontWeight: '700' },
+        name: { color: colors.text, fontSize: 16, fontWeight: '700' },
         meta: { color: colors.textSecondary, marginTop: 5 },
         empty: {
           color: colors.textSecondary,

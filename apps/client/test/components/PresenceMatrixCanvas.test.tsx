@@ -1,20 +1,20 @@
 import { act, render } from '@testing-library/react-native';
 import { graphSeriesColor } from '@keres/shared';
 import React from 'react';
-import PresenceMatrixCanvas from '../../src/components/features/presence-matrix/PresenceMatrixCanvas';
+import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import {
   MAX_VISIBLE_SERIES,
   seriesColor,
-} from '../../src/components/features/presence-matrix/presenceMatrixConstants';
+} from '@/src/components/features/presence-matrix/presenceMatrixConstants';
 import {
   buildPresenceMatrixLayout,
   MATRIX_HEADER_HEIGHT,
   MATRIX_LABEL_WIDTH,
   MATRIX_PADDING,
   type PresenceMatrixLayout,
-} from '@keres/shared/graphs/presenceMatrixLayout';
+} from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -32,7 +32,7 @@ jest.mock('../../src/theme', () => ({
 }));
 
 const mockViewportOptions = { current: null as Record<string, any> | null };
-jest.mock('../../src/hooks/useCanvasViewport', () => ({
+jest.mock('@/src/hooks/canvas/useCanvasViewport', () => ({
   __esModule: true,
   useCanvasViewport: (_ref: unknown, _layout: unknown, options: Record<string, unknown>) => {
     mockViewportOptions.current = options as Record<string, any>;
@@ -46,7 +46,7 @@ jest.mock('../../src/hooks/useCanvasViewport', () => ({
   },
 }));
 
-jest.mock('../../src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame', () => {
+jest.mock('@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -56,7 +56,7 @@ jest.mock('../../src/components/features/graphs/GraphCanvasFrame/GraphCanvasFram
   };
 });
 
-jest.mock('../../src/components/features/graphs/CanvasLine/CanvasLine', () => {
+jest.mock('@/src/components/features/graphs/CanvasLine/CanvasLine', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

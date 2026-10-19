@@ -1,41 +1,44 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import type { Chapter } from '@keres/shared/entities/Chapter';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Choice } from '@keres/shared/entities/Choice';
-import type { Effect } from '@keres/shared/entities/Effect';
-import type { Item, ItemJourney } from '@keres/shared/entities/Item';
-import type { Location } from '@keres/shared/entities/Location';
+import type { Chapter } from '@keres/shared/entities/narrative/Chapter';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Choice } from '@keres/shared/entities/narrative/Choice';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item';
+import type { Location } from '@keres/shared/entities/narrative/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import type { SceneSelect } from '../../../db/schema';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import type { SceneSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import { stripManuscriptMarkers } from '@keres/shared';
-import { readStoredSceneBodyText } from '../../../hooks/useSceneBodyDraft';
-import { useEntityComments } from '../../../hooks/useEntityComments';
-import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
-import { useOpenGalleryMediaViewer } from '../../../hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '../../../hooks/useStoryRole';
-import { useStoryStore } from '../../../state/storyStore';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
-import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
-import { useSceneCalendarDates } from '../../../hooks/useSceneCalendarDates';
+import { readStoredSceneBodyText } from '@/src/screens/narrative-elements/scenes/useSceneBodyDraft';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { sceneFixedDate } from '@/src/utils/scene/sceneFixedDate';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../../hooks/useEntityRefreshLifecycle';
-import { useTheme } from '../../../theme';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import type { NarrativeElementsScreenNavigationProp } from '../chapters/NarrativeElementsListScreen';
-import { describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { NarrativeElementsScreenNavigationProp } from '@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
+import { describeEffect } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { SceneDetailContent } from './SceneDetailContent';
 import { useSceneDetailServices } from './useSceneDetailServices';
 
@@ -57,12 +60,14 @@ function excerptBody(body: string | null | undefined): string | null {
 const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const { definition: calendar } = useStoryCalendar();
+  const { definition: calendar, calendars } = useStoryCalendar();
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
   const { sceneId, occurrence } = route.params;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateDisplayFormat = useUserSettingsStore((state) => state.dateDisplayFormat);
+  const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
   const copy = useVocabularyEntityCopy('Scene');
   const locationCopy = useVocabularyEntityCopy('Location');
   const { selectedStory } = useStoryStore();
@@ -114,27 +119,7 @@ const SceneDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
   const [hasBodyDraft, setHasBodyDraft] = useState(false);
 
-  const styles = StyleSheet.create({
-    subTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      marginBottom: 15,
-    },
-    locationLink: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: colors.surface,
-    },
-    checkRow: { color: colors.text, marginTop: 4 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchScene = useCallback(async () => {
     if (!sceneServiceRef.current) {
@@ -605,6 +590,18 @@ const SceneDetailScreen = () => {
       onOpenEditor={openEditor}
       dateForScene={dateForScene}
       calendar={calendar}
+      fixedDate={sceneFixedDate(scene, {
+        calendars,
+        language: i18n.language,
+        format: dateDisplayFormat,
+        use24HourTime,
+        labels: {
+          gregorian: t('calendar_standard_title'),
+          notValid: t('scene_fixed_date_not_valid'),
+          am: t('attribute_date_am'),
+          pm: t('attribute_date_pm'),
+        },
+      })}
       locationCopy={locationCopy}
       location={location}
       handleLocationPress={handleLocationPress}
@@ -632,4 +629,28 @@ const SceneDetailScreen = () => {
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    subTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 15,
+    },
+    locationLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
+    checkRow: { color: colors.text, marginTop: 4 },
+  });
+
 export default SceneDetailScreen;

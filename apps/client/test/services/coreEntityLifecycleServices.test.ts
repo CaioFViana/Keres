@@ -1,15 +1,15 @@
 /**
  * @jest-environment node
  */
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { createCharacterRelationService } from '../../src/services/storymanagement/CharacterRelationService';
-import { createItemService } from '../../src/services/storymanagement/ItemService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

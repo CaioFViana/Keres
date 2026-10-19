@@ -5,9 +5,9 @@ import {
   type ServerStoryInvitation,
   type StoryInvitationServerLookup,
   useStoryInvitationList,
-} from '../../../../hooks/useStoryInvitationList';
-import { useTheme } from '../../../../theme';
-import { getCommonCardStyles } from '../../../../theme/commonStyles';
+} from '@/src/hooks/social/useStoryInvitationList';
+import { useTheme } from '@/src/theme';
+import { getCommonCardStyles } from '@/src/theme/commonStyles';
 
 interface StoryInvitationListProps {
   /** Resolves an invitation's server; invitations of an unknown server are not shown. */

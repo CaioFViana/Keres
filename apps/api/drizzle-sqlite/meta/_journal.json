@@ -267,6 +267,216 @@
       "when": 1790776835190,
       "tag": "0037_publication_package_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "6",
+      "when": 1790899275886,
+      "tag": "0038_fine_kid_colt",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "6",
+      "when": 1790951689973,
+      "tag": "0039_messaging",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1790951699468,
+      "tag": "0040_drop_contact_messages",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1790966819376,
+      "tag": "0041_audit_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "6",
+      "when": 1790969872668,
+      "tag": "0042_attempt_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "6",
+      "when": 1790976314281,
+      "tag": "0043_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1791126792806,
+      "tag": "0044_lively_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1791142954361,
+      "tag": "0045_same_ma_gnuci",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "6",
+      "when": 1791145588938,
+      "tag": "0046_aromatic_orphan",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1791148155232,
+      "tag": "0047_colossal_sheva_callister",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1791151179524,
+      "tag": "0048_slippery_callisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1791311190921,
+      "tag": "0049_thick_tyrannus",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1791312801528,
+      "tag": "0050_long_spencer_smythe",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1791313811339,
+      "tag": "0051_fantastic_silvermane",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "6",
+      "when": 1791316910889,
+      "tag": "0052_wild_sway",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "6",
+      "when": 1791317632869,
+      "tag": "0053_slippery_nicolaos",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1791319426137,
+      "tag": "0054_previous_hercules",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "6",
+      "when": 1791337809975,
+      "tag": "0055_same_maria_hill",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "6",
+      "when": 1791339612767,
+      "tag": "0056_messy_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "6",
+      "when": 1791733637910,
+      "tag": "0057_crazy_maximus",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "6",
+      "when": 1791766462968,
+      "tag": "0058_warm_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1791820564304,
+      "tag": "0059_flat_james_howlett",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "6",
+      "when": 1791822238293,
+      "tag": "0060_ancient_baron_strucker",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1791831630362,
+      "tag": "0061_careful_bloodstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "6",
+      "when": 1791852656880,
+      "tag": "0062_rare_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "6",
+      "when": 1791855229367,
+      "tag": "0063_pretty_red_ghost",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "6",
+      "when": 1791893168409,
+      "tag": "0064_fancy_gressill",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "6",
+      "when": 1791990106144,
+      "tag": "0065_user_show_nsfw",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "6",
+      "when": 1791991147830,
+      "tag": "0066_tier_max_contributors",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "6",
+      "when": 1791992288707,
+      "tag": "0067_registration_tiers_display",
+      "breakpoints": true
     }
   ]
 }

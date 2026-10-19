@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { showcaseLogoStorageService } from '../../src/services/ShowcaseLogoStorageService';
-import { registerUser, request, type TestUser } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { showcaseLogoStorageService } from '@/services/showcase/ShowcaseLogoStorageService';
+import { registerUser, request, type TestUser } from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 // Logo bytes go through the local blob backend, which uses `Bun.write`/`Bun.file`.
 installBunShim();
@@ -42,6 +42,7 @@ describe('GET /admin/showcase-settings', () => {
       id: 'singleton',
       isShowcaseEnabled: false,
       isHostedClientEnabled: true,
+      isLandingEnabled: false,
       siteName: 'Keres',
       sitePalette: 'default',
       logoContentType: null,
@@ -104,6 +105,15 @@ describe('PUT /admin/showcase-settings', () => {
     });
 
     expect(data).toMatchObject({ isShowcaseEnabled: true, siteName: 'Acme' });
+  });
+
+  it('toggles the landing page at the root', async () => {
+    const { data } = await request('PUT', '/admin/showcase-settings', {
+      token: admin.token,
+      body: { isLandingEnabled: true },
+    });
+
+    expect(data).toMatchObject({ isLandingEnabled: true });
   });
 
   it('requires an admin session', async () => {

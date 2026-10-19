@@ -1,17 +1,18 @@
 import type {
   CompiledManuscript,
-  ManuscriptEpubMetadata,
   ManuscriptFormat,
   ManuscriptRenderOptions,
   ManuscriptStyle,
 } from '@keres/shared';
-import { presentManuscript, renderManuscript, renderOptionsOf } from '@keres/shared';
+import { presentManuscript, renderOptionsOf } from '@keres/shared';
+import type { ManuscriptEpubMetadata } from '@keres/shared/manuscript/export';
 import {
   buildManuscriptFileName,
   deliverFile,
   type ExportDeliveryResult,
   type ExportFileLanguage,
-} from '../../../../utils/storyTransfer';
+} from '@/src/utils/io/storyTransfer';
+import { pdfFontMatrices } from '@/src/utils/io/pdfFontAssets';
 
 export type ManuscriptExportFormat = ManuscriptFormat;
 
@@ -43,11 +44,37 @@ const FORMAT_FILES: Record<
   html: { extension: 'html', mimeType: 'text/html', uti: 'public.html' },
   md: { extension: 'md', mimeType: 'text/markdown', uti: 'public.plain-text' },
   txt: { extension: 'txt', mimeType: 'text/plain', uti: 'public.plain-text' },
+  fountain: { extension: 'fountain', mimeType: 'text/plain', uti: 'public.plain-text' },
+  'screenplay-pdf': { extension: 'pdf', mimeType: 'application/pdf', uti: 'com.adobe.pdf' },
 };
+
+/** What a screenplay can be exported as, besides the book formats. */
+export const SCREENPLAY_EXPORT_FORMATS: ManuscriptExportFormat[] = ['fountain', 'screenplay-pdf'];
+
+/**
+ * Hands an already-compiled screenplay (Fountain text or the industry PDF) to the share sheet, named
+ * like every manuscript: the title, the date.
+ */
+export async function deliverScreenplay({
+  storyTitle,
+  bytes,
+  format,
+  language = 'en',
+}: {
+  storyTitle: string;
+  bytes: Uint8Array;
+  format: ManuscriptExportFormat;
+  language?: ExportFileLanguage;
+}): Promise<ExportDeliveryResult> {
+  const file = FORMAT_FILES[format];
+  const fileName = buildManuscriptFileName(storyTitle, file.extension, new Date(), language);
+  return deliverFile(bytes, fileName, file.mimeType, file.uti);
+}
 
 export type ManuscriptExportLabels = {
   goToPage: string;
   goToScene: string;
+  sceneWord?: string;
   tocHeading: string;
 };
 
@@ -65,6 +92,7 @@ export async function exportManuscript({
   style = {},
   metadata = {},
   language = 'en',
+  cjkMatrix = null,
 }: {
   storyTitle: string;
   manuscript: CompiledManuscript;
@@ -77,16 +105,35 @@ export async function exportManuscript({
   metadata?: ManuscriptEpubMetadata;
   /** App language for the file-name slug; never the system language. */
   language?: ExportFileLanguage;
-}): Promise<ExportDeliveryResult> {
+  /**
+   * CJK matrix for PDFs whose text needs the downloadable pack (loaded by the
+   * caller after the prompt). Absent = CJK degrades to `?`, exactly like the
+   * WinAnsi path always did.
+   */
+  cjkMatrix?: Uint8Array | null;
+}): Promise<ExportDeliveryResult & { unicodePdf: boolean }> {
   const file = FORMAT_FILES[format];
   const fileName = buildManuscriptFileName(storyTitle, file.extension, new Date(), language);
   const presented = presentManuscript(manuscript, style, language === 'pt' ? 'pt' : 'en');
+  // The serif matrices load only for PDFs (and fall back to Times when the
+  // bundled asset is unavailable): every other format skips them entirely.
+  // The CJK matrix joins them only when the caller resolved the pack.
+  const base = format === 'pdf' ? await pdfFontMatrices() : null;
+  const fonts =
+    format === 'pdf' && base ? { ...base, ...(cjkMatrix ? { cjk: cjkMatrix } : {}) } : undefined;
+  // The renderers carry `docx` and `jszip` (about half a megabyte): they load when an export runs, not at app start.
+  const { renderManuscript } = await import('@keres/shared/manuscript/export');
   const rendered = await renderManuscript(
     presented,
     format,
     labels,
     { ...renderOptionsOf(style), ...options },
     { modified: new Date(), ...metadata },
+    fonts,
   );
-  return deliverFile(rendered, fileName, file.mimeType, file.uti);
+  const delivery = await deliverFile(rendered, fileName, file.mimeType, file.uti);
+  // Whether the PDF took the embedded-subset path. The caller needs it: a
+  // CJK book on the legacy WinAnsi path exports every such char as `?`, and
+  // that must warn instead of passing silent.
+  return { ...delivery, unicodePdf: format === 'pdf' && !!fonts };
 }

@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface VideoPreviewPlayerProps {
   uri: string;

@@ -1,20 +1,20 @@
+import { renderHook } from '@testing-library/react-native';
+import { useCharacterFormResources } from '@/src/screens/characters/useCharacterFormResources';
+
 const mockDb = {};
 const mockCreateCharacterService: jest.Mock = jest.fn(() => ({ id: 'character-service' }));
 const mockCreateCharacterRelationService: jest.Mock = jest.fn(() => ({
   id: 'character-relation-service',
 }));
 
-jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   createCharacterService: (...args: unknown[]) => mockCreateCharacterService(...args),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/CharacterRelationService', () => ({
   createCharacterRelationService: (...args: unknown[]) =>
     mockCreateCharacterRelationService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useCharacterFormResources } from '../../../src/screens/characters/useCharacterFormResources';
 
 beforeEach(() => {
   jest.clearAllMocks();

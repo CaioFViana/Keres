@@ -8,9 +8,9 @@ import {
 import { useMemo } from 'react';
 import type React from 'react';
 import { StyleSheet, Text, View, type TextStyle } from 'react-native';
-import MarkedText from '../../../common/display/MarkedText/MarkedText';
-import { useTheme } from '../../../../theme';
-import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
+import { useTheme } from '@/src/theme';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
 
 function decorationLine(marks: ManuscriptMark[]): TextStyle['textDecorationLine'] {
   const underline = marks.includes('underline');
@@ -173,38 +173,69 @@ export function MarkdownPreview({
         blankBlock: {
           height: manuscriptTextMetrics.lineHeight,
         },
+        listRow: {
+          flexDirection: 'row',
+          marginBottom: manuscriptTextMetrics.paragraphSpacing,
+          paddingLeft: 16,
+        },
+        listMarker: {
+          color: colors.text,
+          fontSize: manuscriptTextMetrics.fontSize,
+          lineHeight: manuscriptTextMetrics.lineHeight,
+          minWidth: 22,
+        },
+        listBody: { flex: 1 },
       }),
     [colors],
   );
+  // Display numbers of one ordered run; any other block restarts the run at 1.
+  let orderedNumber = 0;
   return (
     <View testID={testID}>
-      {blocks.map((block, index) =>
-        block.spans.length === 0 ? (
-          <View key={`block-${index}`} style={styles.blankBlock} />
-        ) : (
-          <View key={`block-${index}`} style={styles.block}>
-            <Text selectable={selectable} style={styles.paragraph}>
-              {block.spans.map((span, spanIndex) => (
-                <InlineText
-                  key={spanIndex}
-                  span={span}
-                  ranges={spanRanges[index][spanIndex]}
-                  commentRanges={spanCommentRanges[index][spanIndex]}
-                  onCommentPress={onCommentPress}
-                  activeRangeIndex={
-                    activeRef !== null &&
-                    activeRef.blockIndex === index &&
-                    activeRef.spanIndex === spanIndex
-                      ? activeRef.rangeIndex
-                      : null
-                  }
-                  activeTextRef={activeTextRef}
-                />
-              ))}
+      {blocks.map((block, index) => {
+        const isListItem = block.kind === 'bullet' || block.kind === 'ordered';
+        if (block.kind === 'ordered') orderedNumber += 1;
+        else if (!isListItem) orderedNumber = 0;
+        if (block.spans.length === 0 && !isListItem) {
+          return <View key={`block-${index}`} style={styles.blankBlock} />;
+        }
+        const inline = (
+          <Text selectable={selectable} style={styles.paragraph}>
+            {block.spans.map((span, spanIndex) => (
+              <InlineText
+                key={spanIndex}
+                span={span}
+                ranges={spanRanges[index][spanIndex]}
+                commentRanges={spanCommentRanges[index][spanIndex]}
+                onCommentPress={onCommentPress}
+                activeRangeIndex={
+                  activeRef !== null &&
+                  activeRef.blockIndex === index &&
+                  activeRef.spanIndex === spanIndex
+                    ? activeRef.rangeIndex
+                    : null
+                }
+                activeTextRef={activeTextRef}
+              />
+            ))}
+          </Text>
+        );
+        if (!isListItem) {
+          return (
+            <View key={`block-${index}`} style={styles.block}>
+              {inline}
+            </View>
+          );
+        }
+        return (
+          <View key={`block-${index}`} style={styles.listRow}>
+            <Text selectable={false} style={styles.listMarker}>
+              {block.kind === 'bullet' ? '•' : `${orderedNumber}.`}
             </Text>
+            <View style={styles.listBody}>{inline}</View>
           </View>
-        ),
-      )}
+        );
+      })}
     </View>
   );
 }

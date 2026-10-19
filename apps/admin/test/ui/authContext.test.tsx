@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthProvider, useAuth } from '../../src/auth/AuthContext';
-import { SESSION_CLEARED_EVENT } from '../../src/api/apiClient';
-import { click, flush, render } from '../helpers/react';
+import { AuthProvider, useAuth } from '@/auth/AuthContext';
+import { SESSION_CLEARED_EVENT } from '@/api/apiClient';
+import { click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   getToken: vi.fn(),
@@ -11,12 +11,10 @@ const mocks = vi.hoisted(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   probeAdminAccess: vi.fn(),
-  clearServerSession: vi.fn(),
 }));
 
-vi.mock('../../src/api/apiClient', async () => {
-  const actual =
-    await vi.importActual<typeof import('../../src/api/apiClient')>('../../src/api/apiClient');
+vi.mock('@/api/apiClient', async () => {
+  const actual = await vi.importActual<typeof import('@/api/apiClient')>('@/api/apiClient');
   return {
     ...actual,
     getToken: mocks.getToken,
@@ -24,11 +22,10 @@ vi.mock('../../src/api/apiClient', async () => {
     setStoredUsername: mocks.setStoredUsername,
   };
 });
-vi.mock('../../src/api/AdminAuthService', () => ({
+vi.mock('@/api/AdminAuthService', () => ({
   login: mocks.login,
   logout: mocks.logout,
   probeAdminAccess: mocks.probeAdminAccess,
-  clearServerSession: mocks.clearServerSession,
 }));
 
 function AuthProbe() {
@@ -55,7 +52,6 @@ beforeEach(() => {
   mocks.login.mockResolvedValue({ userId: 'admin-1', username: 'admin' });
   mocks.logout.mockResolvedValue(undefined);
   mocks.probeAdminAccess.mockResolvedValue(undefined);
-  mocks.clearServerSession.mockResolvedValue(undefined);
 });
 
 describe('admin authentication context', () => {
@@ -178,7 +174,6 @@ describe('admin authentication context', () => {
     });
     await flush();
     expect(view.container.textContent).toContain('signed-out');
-    expect(mocks.clearServerSession).toHaveBeenCalled();
     await view.unmount();
   });
 });

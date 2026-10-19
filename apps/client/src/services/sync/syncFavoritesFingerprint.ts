@@ -1,6 +1,6 @@
 import { count, eq, max } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import { favorites } from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import { favorites } from '@/src/db/schema';
 
 /**
  * Local mirror of the server's public-favorites roster checksum (`getFavoritesFingerprint`

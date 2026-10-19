@@ -1,9 +1,9 @@
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryCard, ShowcaseStoryDetail } from '@keres/shared';
-import { ShowcaseApp } from '../../src/showcase/App';
+import { ShowcaseApp } from '@/showcase/App';
 import avatarIcons from 'virtual:keres-avatar-icons';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   fetchConfig: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
@@ -23,6 +23,7 @@ vi.mock('../../src/showcase/api/showcaseApi', () => ({
 
 const card: ShowcaseStoryCard = {
   storyId: 'story-1',
+  isNsfw: false,
   snapshot: {
     title: 'O Vale Silencioso',
     description: 'Uma trilha que ninguém percorre duas vezes.',
@@ -106,6 +107,21 @@ describe('showcase home', () => {
 
     const link = container.querySelector('a.story-card');
     expect(link?.getAttribute('href')).toBe('/story/story-1');
+    await unmount();
+  });
+
+  it('badges an adults-only card, and none on a safe one', async () => {
+    mocks.fetchStories.mockResolvedValue({
+      stories: [{ ...card, isNsfw: true }, card],
+      etag: 'W/"showcase-2"',
+    });
+    const { container, unmount } = await renderAt('/');
+    await flush();
+
+    const cards = [...container.querySelectorAll('a.story-card')];
+    expect(cards).toHaveLength(2);
+    expect(cards[0]?.querySelector('.badge-adult')).not.toBeNull();
+    expect(cards[1]?.querySelector('.badge-adult')).toBeNull();
     await unmount();
   });
 

@@ -1,5 +1,5 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -13,18 +13,21 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
-import type { PlotSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryPlots } from '../../hooks/useStoryPlots';
-import { useStoryRole } from '../../hooks/useStoryRole';
+import type { PlotSelect } from '@/src/db/schema';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import type { AdvancedSearchCriteria } from '@/src/utils/search/advancedSearchCriteria';
+import { plotMatches } from '@/src/utils/search/plotSearch';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
 import type {
   MainSystemDrawerParamList,
   PlotsStackParamList,
-} from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
+} from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type PlotsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'PlotsStack'>,
@@ -41,9 +44,7 @@ export type PlotsScreenNavigationProp = CompositeNavigationProp<
 const PlotListScreen = () => {
   useBackButtonHandler();
   useScreenTour('PlotsStack');
-  const listAnchorRef = useScreenAnchor('Plots', 'list');
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
@@ -51,12 +52,11 @@ const PlotListScreen = () => {
   const { plots, relationsOf, loading } = useStoryPlots(storyId, selectedStory?.type);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [fieldFilters, setFieldFilters] = useState<AdvancedSearchCriteria>({});
   const [activeSort, setActiveSort] = useState<string | null>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-  });
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -106,10 +106,7 @@ const PlotListScreen = () => {
   });
 
   const visiblePlots = useMemo(() => {
-    const term = searchQuery.trim().toLowerCase();
-    const filtered = term
-      ? plots.filter((plot) => `${plot.name} ${plot.details ?? ''}`.toLowerCase().includes(term))
-      : plots;
+    const filtered = plots.filter((plot) => plotMatches(plot, searchQuery, fieldFilters));
     const direction = sortDirection === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
       if (activeSort === 'createdAt')
@@ -120,7 +117,13 @@ const PlotListScreen = () => {
         return direction * (relationsOf(a.id).length - relationsOf(b.id).length);
       return direction * a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
     });
-  }, [activeSort, plots, relationsOf, searchQuery, sortDirection]);
+  }, [activeSort, fieldFilters, plots, relationsOf, searchQuery, sortDirection]);
+
+  const previewCount = useCallback(
+    async (criteria: AdvancedSearchCriteria) =>
+      plots.filter((plot) => plotMatches(plot, searchQuery, criteria)).length,
+    [plots, searchQuery],
+  );
 
   const sortOptions = useMemo(
     () => [
@@ -153,7 +156,7 @@ const PlotListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Plots" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           data={visiblePlots}
           renderItem={renderPlotListItem}
@@ -170,6 +173,10 @@ const PlotListScreen = () => {
           currentSortDirection={sortDirection}
           currentSortValue={activeSort}
           entityName="Plot"
+          storyId={storyId}
+          onAdvancedSearch={setFieldFilters}
+          onPreviewCount={previewCount}
+          currentAdvancedSearchCriteria={fieldFilters}
           emptyStateTitle={t('plots_empty_title')}
           emptyStateMessage={t('plots_empty_message')}
           emptyStateActions={
@@ -187,9 +194,14 @@ const PlotListScreen = () => {
           disableFavoriteFilter
           isLoading={loading}
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+  });
 
 export default PlotListScreen;

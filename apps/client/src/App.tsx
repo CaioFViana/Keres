@@ -1,5 +1,6 @@
 import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
 import GuideHost from '@/src/components/common/feedback/GuideHost/GuideHost';
+import ExportFormatHost from '@/src/components/features/export/ExportFormatHost';
 import SvgRasterHost from '@/src/components/features/export/SvgRasterHost';
 import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
@@ -16,12 +17,12 @@ import type { AppDrizzleClient } from './db';
 import { DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
-import apiClient from './services/apiClient';
-import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
-import { setEditorDraftDb } from './services/EditorDraftService';
-import { restoreHostedCookieSession } from './services/HostedCookieSession';
-import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
-import { useUserSettingsStore } from './state/userSettingsStore';
+import apiClient from './services/api/apiClient';
+import { authTokenManager, setAuthDb } from './services/auth/AuthTokenManager';
+import { setEditorDraftDb } from './services/drafts/EditorDraftService';
+import { restoreHostedCookieSession } from './services/auth/HostedCookieSession';
+import { hydrate as hydrateWebMediaStore } from './services/platform-web/webMediaStore';
+import { useUserSettingsStore } from './state/app/userSettingsStore';
 import {
   runSqliteWebSmokeProbe,
   shouldRunSqliteWebSmokeProbe,
@@ -29,9 +30,9 @@ import {
 import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
-import i18n from './utils/i18n';
-import { keepPageOutOfBackForwardCache } from './utils/pageLifecycle';
-import { isServerless } from './utils/serverless';
+import i18n from './utils/format/i18n';
+import { keepPageOutOfBackForwardCache } from './utils/ui/pageLifecycle';
+import { isServerless } from './utils/platform/clientFlavor';
 
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();
@@ -68,6 +69,8 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       {/* Every export's PNG is rasterized by this hidden canvas, so it also
           lives here, next to AppAlertHost. */}
       <SvgRasterHost />
+      {/* Every canvas export asks SVG or PNG through this one chooser. */}
+      <ExportFormatHost />
     </View>
   );
 };

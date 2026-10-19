@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { Platform } from 'react-native';
-import MapIcon from '../../src/components/common/display/MapIcon/MapIcon';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native');

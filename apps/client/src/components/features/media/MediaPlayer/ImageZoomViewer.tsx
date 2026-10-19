@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
 
 /**
  * A full-screen image viewer, with pinch zoom, drag and double tap.
@@ -42,6 +43,7 @@ interface Transform {
 
 const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose }) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  useModalNavigationBar(visible);
 
   const [content, setContent] = useState<{ width: number; height: number } | null>(null);
 
@@ -263,28 +265,6 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
     [clamp, handleDoubleTap, publish, zoomAround],
   );
 
-  const styles = StyleSheet.create({
-    backdrop: {
-      flex: 1,
-      backgroundColor: '#000000',
-    },
-    closeButton: {
-      position: 'absolute',
-      top: 44,
-      right: 16,
-      zIndex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      borderRadius: 20,
-      padding: 6,
-    },
-    image: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      transformOrigin: 'top left',
-    },
-  });
-
   return (
     <Modal
       visible={visible}
@@ -319,5 +299,27 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 44,
+    right: 16,
+    zIndex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    padding: 6,
+  },
+  image: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    transformOrigin: 'top left',
+  },
+});
 
 export default ImageZoomViewer;

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Appearance, Platform } from 'react-native';
-import type { AppDrizzleClient } from '../db';
-import { useThemeStore } from '../state/themeStore';
+import type { AppDrizzleClient } from '@/src/db';
+import { useThemeStore } from '@/src/state/ui/themeStore';
 import { setEntityAppearanceScheme, setGraphEntityPaletteScheme, themes } from '@keres/shared';
 import { ThemeContext } from './ThemeContext';
 

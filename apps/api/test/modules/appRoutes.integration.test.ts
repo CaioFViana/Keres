@@ -1,14 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { clientDistPath, showcaseDistPath } from '../../src/config/resourceRoot';
-import { eq } from 'drizzle-orm';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
-import { showcaseSettings, tiers, userRecoveryCodes, users } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { userService } from '../../src/services/UserService';
-import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { clientDistPath, showcaseDistPath } from '@/config/resourceRoot';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { showcaseSettings, tiers, users } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { userService } from '@/services/accounts/UserService';
+import { getApp, newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { hardDeleteUser, promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let ana: TestUser;
@@ -48,8 +47,8 @@ const rootRequest = async (path: string, headers: Record<string, string> = {}) =
  */
 const resolveRuntimeBundlePath = () => {
   const html = readFileSync(`${clientDistPath()}/index.html`, 'utf8');
-  const match = html.match(/src="(\/_expo\/[^"]+\.js)"/);
-  if (!match) throw new Error('client dist index.html references no _expo bundle');
+  const match = html.match(/src="(\/client\/_expo\/[^"]+\.js)"/);
+  if (!match) throw new Error('client dist index.html references no /client/_expo bundle');
   return match[1];
 };
 
@@ -123,8 +122,16 @@ describe('hosted bottleneck routes', () => {
       expect(text.length).toBeGreaterThan(0);
     }
 
-    expect((await rootRequest('/_expo/static/js/web/does-not-exist.js')).status).toBe(404);
-    expect((await rootRequest('/assets/does-not-exist.png')).status).toBe(404);
+    expect((await rootRequest('/client/_expo/static/js/web/does-not-exist.js')).status).toBe(404);
+    expect((await rootRequest('/client/assets/does-not-exist.png')).status).toBe(404);
+  });
+
+  it('leaves /_expo and /assets at the root unanswered now that the client lives under /client', async () => {
+    if (existsSync(`${clientDistPath()}/index.html`)) {
+      const bundle = resolveRuntimeBundlePath().replace(/^\/client/, '');
+      expect((await rootRequest(bundle)).status).not.toBe(200);
+    }
+    expect((await rootRequest('/assets/does-not-exist.png')).status).not.toBe(200);
   });
 
   it('treats a malformed bearer token like no token on public routes', async () => {
@@ -237,8 +244,7 @@ describe('admin user routes', () => {
 
 describe('user routes and account service', () => {
   const hardDelete = async (userId: string) => {
-    await db.delete(userRecoveryCodes).where(eq(userRecoveryCodes.userId, userId));
-    await db.delete(users).where(eq(users.id, userId));
+    await hardDeleteUser(userId);
   };
 
   it('fails tag, profile and password writes for an account that is gone', async () => {

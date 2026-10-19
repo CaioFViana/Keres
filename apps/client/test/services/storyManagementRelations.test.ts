@@ -3,19 +3,19 @@
  */
 import { AttributeType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createAttributeValueService } from '../../src/services/storymanagement/AttributeValueService';
-import { createCharacterRelationService } from '../../src/services/storymanagement/CharacterRelationService';
-import { createGalleryRelationService } from '../../src/services/storymanagement/GalleryRelationService';
-import { createLocationRelationService } from '../../src/services/storymanagement/LocationRelationService';
-import { createNoteRelationService } from '../../src/services/storymanagement/NoteRelationService';
-import { createSeeAlsoRelationService } from '../../src/services/storymanagement/SeeAlsoRelationService';
-import { createStorySchemaFieldService } from '../../src/services/storymanagement/StorySchemaFieldService';
-import { createStatService } from '../../src/services/storymanagement/StatService';
-import { createSuggestionService } from '../../src/services/storymanagement/SuggestionService';
-import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
-import { withSilencedConsole } from '../helpers/silenceConsole';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService';
+import { createGalleryRelationService } from '@/src/services/storymanagement/relations/GalleryRelationService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createSeeAlsoRelationService } from '@/src/services/storymanagement/relations/SeeAlsoRelationService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
+import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = 'story-1';
 const USER_ID = 'local-user';

@@ -1,3 +1,9 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useCharacterFormActions } from '@/src/screens/characters/useCharacterFormActions';
+import type { CharacterFormState } from '@/src/screens/characters/useCharacterFormState';
+import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
@@ -8,28 +14,28 @@ const mockValidateRequired = jest.fn();
 jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
   validateRequiredCustomAttributes: (...args: unknown[]) => mockValidateRequired(...args),
 }));
-jest.mock('@/src/hooks/useAsyncOperation', () => ({
+jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../src/services/storymanagement/AttributeValueService', () => ({
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
   createAttributeValueService: () => ({ saveValuesForEntity: mockSaveValuesForEntity }),
 }));
-jest.mock('../../../src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/forms/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: () => ({
     created: 'created',
     updated: 'updated',
@@ -43,12 +49,6 @@ jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import { useCharacterFormActions } from '../../../src/screens/characters/useCharacterFormActions';
-import type { CharacterFormState } from '../../../src/screens/characters/useCharacterFormState';
-import type { CharacterService } from '../../../src/services/storymanagement/CharacterService';
 
 const createState = (overrides: Partial<CharacterFormState> = {}): CharacterFormState =>
   ({

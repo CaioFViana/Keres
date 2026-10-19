@@ -1,12 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
 
 export interface GraphNodeSheetBadge {
   label: string;
   color: string;
+}
+
+/** A small button at the end of a row (edit, remove): it acts on the row, not on opening it. */
+export interface GraphNodeSheetRowAction {
+  icon: keyof typeof Ionicons.glyphMap;
+  /** Spoken label; the row is named in it by the caller (`Remove Friend`). */
+  label: string;
+  onPress: () => void;
+  destructive?: boolean;
 }
 
 export interface GraphNodeSheetItem {
@@ -18,6 +28,7 @@ export interface GraphNodeSheetItem {
   extra?: string;
   italicLabel?: boolean;
   onPress: () => void;
+  trailing?: GraphNodeSheetRowAction[];
 }
 
 export interface GraphNodeSheetSection {
@@ -25,6 +36,14 @@ export interface GraphNodeSheetSection {
   description?: string;
   emptyMessage?: string;
   items?: GraphNodeSheetItem[];
+  /** Buttons under the section's rows: add one more (a relation, a child), fold what it holds. */
+  actions?: GraphNodeSheetSectionAction[];
+}
+
+export interface GraphNodeSheetSectionAction {
+  label: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
 }
 
 interface GraphNodeSheetProps {
@@ -51,15 +70,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        sheet: {
-          backgroundColor: colors.surface,
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          paddingHorizontal: 20,
-          paddingTop: 16,
-          paddingBottom: 24,
-          maxHeight: '78%',
-        },
+        sheet: { maxHeight: '78%' },
         handle: {
           alignSelf: 'center',
           width: 42,
@@ -67,24 +78,6 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           borderRadius: 2,
           backgroundColor: colors.border,
           marginBottom: 14,
-        },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        },
-        headerText: {
-          flex: 1,
-          marginRight: 12,
-        },
-        title: {
-          fontSize: 19,
-          fontWeight: 'bold',
-          color: colors.text,
-        },
-        closeButton: { padding: 4 },
-        subtitle: {
-          fontSize: 13,
-          marginTop: 2,
         },
         badgeRow: {
           flexDirection: 'row',
@@ -130,14 +123,27 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           borderRadius: 8,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
-          paddingVertical: 9,
-          paddingHorizontal: 11,
-          marginBottom: 7,
+          paddingVertical: 10,
+          paddingHorizontal: 12,
+          marginBottom: 8,
         },
         itemText: {
           flex: 1,
           marginRight: 8,
         },
+        rowAction: { padding: 6, marginRight: 2 },
+        sectionAction: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: colors.primary,
+          paddingVertical: 10,
+          marginTop: 4,
+        },
+        sectionActionText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
         itemLabel: {
           fontSize: 13,
           fontWeight: '600',
@@ -149,7 +155,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           marginTop: 2,
         },
         itemExtra: {
-          fontSize: 11.5,
+          fontSize: 12,
           color: colors.primary,
           marginTop: 3,
         },
@@ -159,7 +165,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
           justifyContent: 'center',
           backgroundColor: colors.primary,
           borderRadius: 8,
-          paddingVertical: 13,
+          paddingVertical: 12,
           marginTop: 22,
         },
         actionText: {
@@ -177,23 +183,18 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
       visible
       onClose={onClose}
       placement="adaptive"
+      tone="raised"
+      inset="sheet"
       contentStyle={styles.sheet}
       maxHeight="78%"
     >
       <View style={styles.handle} />
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && (
-            <Text style={[styles.subtitle, { color: subtitle.color || colors.textSecondary }]}>
-              {subtitle.text}
-            </Text>
-          )}
-        </View>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        title={title}
+        subtitle={subtitle?.text}
+        subtitleColor={subtitle?.color}
+        onClose={onClose}
+      />
       {!!badges?.length && (
         <View style={styles.badgeRow}>
           {badges.map((badge) => (
@@ -218,7 +219,7 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
                       name={item.icon}
                       size={16}
                       color={colors.textSecondary}
-                      style={{ marginRight: 9 }}
+                      style={{ marginRight: 10 }}
                     />
                     <View style={styles.itemText}>
                       <Text
@@ -241,10 +242,37 @@ const GraphNodeSheet: React.FC<GraphNodeSheetProps> = ({
                         </Text>
                       )}
                     </View>
+                    {item.trailing?.map((action) => (
+                      <TouchableOpacity
+                        key={action.label}
+                        style={styles.rowAction}
+                        onPress={action.onPress}
+                        accessibilityRole="button"
+                        accessibilityLabel={action.label}
+                        hitSlop={6}
+                      >
+                        <Ionicons
+                          name={action.icon}
+                          size={18}
+                          color={action.destructive ? colors.error : colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                    ))}
                     <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
                   </TouchableOpacity>
                 ))
               ))}
+            {section.actions?.map((action) => (
+              <TouchableOpacity
+                key={action.label}
+                style={styles.sectionAction}
+                onPress={action.onPress}
+                accessibilityRole="button"
+              >
+                <Ionicons name={action.icon ?? 'add'} size={18} color={colors.primary} />
+                <Text style={styles.sectionActionText}>{action.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         ))}
         <TouchableOpacity style={styles.actionButton} onPress={onAction}>

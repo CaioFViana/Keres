@@ -1,10 +1,10 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useCalendarAnchorPreview } from '@/src/hooks/useCalendarAnchorPreview';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useCalendarAnchorPreview } from '@/src/hooks/story/useCalendarAnchorPreview';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
-import type { CalendarAnchorPreviewRow } from '@/src/utils/calendarAnchorPreview';
+import type { CalendarAnchorPreviewRow } from '@/src/utils/entity/calendarAnchorPreview';
 import type { CalendarDefinitionType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import type { TFunction } from 'i18next';
@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface Props {
   visible: boolean;
@@ -62,14 +63,13 @@ const CalendarAnchorsModal = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        content: { padding: 18, minHeight: 200 },
-        title: { color: colors.text, fontSize: 18, fontWeight: '700' },
+        content: { minHeight: 200 },
         hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 6 },
         header: {
           flexDirection: 'row',
           gap: 10,
           marginTop: 18,
-          paddingBottom: 7,
+          paddingBottom: 8,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
         },
@@ -77,7 +77,7 @@ const CalendarAnchorsModal = ({
         row: {
           flexDirection: 'row',
           gap: 10,
-          paddingVertical: 11,
+          paddingVertical: 12,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
           alignItems: 'center',
@@ -102,13 +102,16 @@ const CalendarAnchorsModal = ({
       visible={visible}
       onClose={onClose}
       placement="adaptive"
+      inset="regular"
       contentStyle={styles.content}
     >
-      <Text style={styles.title}>
-        {reviewing
-          ? t('calendar_change_preview_title')
-          : t('calendar_anchors_title', { name: calendarName })}
-      </Text>
+      <ModalHeader
+        title={
+          reviewing
+            ? t('calendar_change_preview_title')
+            : t('calendar_anchors_title', { name: calendarName })
+        }
+      />
       <Text style={styles.hint}>
         {reviewing ? t('calendar_change_preview_hint') : t('calendar_anchors_hint')}
       </Text>

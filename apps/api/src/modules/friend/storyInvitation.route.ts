@@ -1,8 +1,8 @@
 import { CreateStoryInvitationSchema, StoryIdParam, StoryInvitationIdParam } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { storyInvitationService } from '../../services/StoryInvitationService';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { storyInvitationService } from '@/services/stories/StoryInvitationService';
+import { AppError } from '@/utils/errors';
 
 const StoryInvitationResponseSchema = t.Object({
   id: t.String(),

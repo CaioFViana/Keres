@@ -6,17 +6,20 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { MAX_SYNC_PULL_BATCH, syncConflictValuesDiffer } from '@keres/shared';
-import type { FavoriteBehavior } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior } from '@keres/shared/entities/story/Story';
 import { and, eq, inArray } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import * as schema from '../../db/schema';
-import type { OperationLogSelect } from '../../db/schema';
-import { createULID } from '../../utils/entityUtils';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { withOpLogLock } from '../../utils/opLogMutex';
-import type { ClientSyncEntityHandler } from '../entity-sync-handlers/ClientSyncEntityHandler';
-import { getEntityTable, toEntityColumns } from '../entityTableRegistry';
-import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflictService';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
+import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
+import { getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
+import {
+  findContestedFields,
+  mergeLocalOperationPayloads,
+} from '@/src/services/sync/SyncConflictService';
 import {
   detachLandedOperation,
   raiseConflictsServerVersion,

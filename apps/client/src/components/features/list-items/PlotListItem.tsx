@@ -5,9 +5,10 @@ import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { PlotSelect } from '../../../db/schema';
-import { useTheme } from '../../../theme';
-import { truncate } from '../../../utils/stringUtils';
+import type { PlotSelect } from '@/src/db/schema';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 interface PlotListItemProps {
   plot: PlotSelect;
@@ -17,18 +18,10 @@ interface PlotListItemProps {
 }
 
 const PlotListItem: React.FC<PlotListItemProps> = ({ plot, sceneCount, onViewDetails }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const preview = summarizeEntityPreview(OperationLogEntityType.Plot, plot);
 
-  const styles = StyleSheet.create({
-    ...createSimpleEntityListItemStyles(colors),
-    count: {
-      color: colors.textSecondary,
-      fontSize: 13,
-      fontWeight: '600',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <GenericExpandedListItemWithActions
@@ -57,5 +50,15 @@ const PlotListItem: React.FC<PlotListItemProps> = ({ plot, sceneCount, onViewDet
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...createSimpleEntityListItemStyles(colors),
+    count: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+  });
 
 export default PlotListItem;

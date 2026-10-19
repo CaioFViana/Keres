@@ -4,12 +4,16 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { GallerySelect } from '../../../db/schemas/galleries';
-import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
-import { useTheme } from '../../../theme';
+import HighlightedText from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
+import type { GallerySelect } from '@/src/db/schemas/galleries';
+import { useGalleryThumbnailUri } from '@/src/hooks/media/useGalleryThumbnailUri';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface GalleryGridItemProps {
   media: GallerySelect;
+  /** The card's width; without it the card takes an equal share of its row. */
+  width?: number;
   onPress: (galleryId: string) => void;
   onToggleFavorite?: (galleryId: string, isFavorite: boolean) => void;
 }
@@ -59,30 +63,113 @@ function formatSize(bytes: number): string {
 /**
  * A cell of the gallery's grid.
  *
- * An image uses the file itself as its thumbnail; a video uses a frame extracted and persisted in
- * `thumbnailPath` (see `MediaFileService.generateVideoThumbnail`), because generating that at render
- * time would stall the scrolling of a whole grid. Audio has no frame to show and is left with the
+ * A video uses a frame extracted and persisted in `thumbnailPath` (see `MediaFileService.generateVideoThumbnail`),
+ * because generating that at render time would stall the scrolling of a whole grid. A big picture on web uses a
+ * thumbnail made once beside it (`useGalleryThumbnailUri`); any other picture is its own thumbnail. Audio has no frame to show and is left with the
  * type's icon alone.
  */
-const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onToggleFavorite }) => {
+const GalleryGridItem: React.FC<GalleryGridItemProps> = ({
+  media,
+  width,
+  onPress,
+  onToggleFavorite,
+}) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   const mediaType = media.mediaType as MediaType;
-  const resolvedUri = useResolvedMediaUri(
-    mediaType === 'video' ? media.thumbnailPath : media.localPath,
-  );
+  const resolvedUri = useGalleryThumbnailUri(media);
   const hasLocalImage = mediaType === 'image' && !!resolvedUri;
   const hasVideoThumbnail = mediaType === 'video' && !!resolvedUri;
+  // Without a thumbnail the type's icon is already the preview, so the corner badge would repeat it.
+  const showsThumbnail = hasLocalImage || hasVideoThumbnail;
   // A URL is already usable; an old local row can carry a stale transfer state, but it must not
   // turn that bookkeeping mistake into a misleading status for the person using the gallery.
   const isDownloading = galleryHasFile(mediaType) && media.downloadState === 'pending';
   const transferFailed = media.uploadState === 'failed' || media.downloadState === 'failed';
   const pendingUpload = media.uploadState === 'pending';
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles, [width, showsThumbnail]);
+
+  return (
+    <TouchableOpacity style={styles.container} onPress={() => onPress(media.id)}>
+      <View style={styles.preview}>
+        {showsThumbnail ? (
+          <Image
+            source={{ uri: resolvedUri as string }}
+            style={styles.image}
+            contentFit="cover"
+            transition={150}
+          />
+        ) : (
+          <Ionicons
+            name={iconForGalleryMedia(mediaType, media.mimeType)}
+            size={48}
+            color={colors.textSecondary}
+          />
+        )}
+
+        {mediaType === 'video' && (
+          <View style={styles.playOverlay} pointerEvents="none">
+            <Ionicons name="play-circle" size={36} color="#ffffff" />
+          </View>
+        )}
+
+        <View style={styles.badgeRow}>
+          {showsThumbnail && (
+            <View style={styles.badge}>
+              <Ionicons
+                name={iconForGalleryMedia(mediaType, media.mimeType)}
+                size={14}
+                color={colors.text}
+              />
+            </View>
+          )}
+          {onToggleFavorite && (
+            <TouchableOpacity
+              style={styles.badge}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={t('favorite')}
+              accessibilityState={{ selected: !!media.isFavorite }}
+              onPress={() => onToggleFavorite(media.id, !media.isFavorite)}
+            >
+              <Ionicons
+                name={media.isFavorite ? 'star' : 'star-outline'}
+                size={16}
+                color={media.isFavorite ? colors.star : colors.textSecondary}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.info}>
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+          <HighlightedText text={media.title || media.fileName} />
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={1}>
+          {t(`media_type_${mediaType}`)}
+          {media.sizeBytes > 0 ? ` · ${formatSize(media.sizeBytes)}` : ''}
+        </Text>
+        {isDownloading && <Text style={styles.statusText}>{t('media_downloading')}</Text>}
+        {!isDownloading && pendingUpload && (
+          <Text style={styles.statusText}>{t('media_pending_upload')}</Text>
+        )}
+        {transferFailed && <Text style={styles.statusText}>{t('media_transfer_failed')}</Text>}
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const createStyles = (
+  colors: ThemeColors,
+  [width, showsThumbnail]: [number | undefined, boolean],
+) =>
+  StyleSheet.create({
     container: {
-      flex: 1,
+      // A fixed width keeps a short last row from stretching its tiles across the whole list.
+      ...(width ? { width, flexGrow: 0, flexShrink: 0 } : { flex: 1 }),
       margin: 5,
       borderRadius: 8,
       overflow: 'hidden',
@@ -129,7 +216,8 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
       left: 6,
       right: 6,
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      // The star stays at the right even when the type badge is not shown.
+      justifyContent: showsThumbnail ? 'space-between' : 'flex-end',
       alignItems: 'flex-start',
     },
     badge: {
@@ -145,70 +233,5 @@ const GalleryGridItem: React.FC<GalleryGridItemProps> = ({ media, onPress, onTog
       fontStyle: 'italic',
     },
   });
-
-  return (
-    <TouchableOpacity style={styles.container} onPress={() => onPress(media.id)}>
-      <View style={styles.preview}>
-        {hasLocalImage || hasVideoThumbnail ? (
-          <Image
-            source={{ uri: resolvedUri as string }}
-            style={styles.image}
-            contentFit="cover"
-            transition={150}
-          />
-        ) : (
-          <Ionicons
-            name={iconForGalleryMedia(mediaType, media.mimeType)}
-            size={48}
-            color={colors.textSecondary}
-          />
-        )}
-
-        {mediaType === 'video' && (
-          <View style={styles.playOverlay} pointerEvents="none">
-            <Ionicons name="play-circle" size={36} color="#ffffff" />
-          </View>
-        )}
-
-        <View style={styles.badgeRow}>
-          <View style={styles.badge}>
-            <Ionicons
-              name={iconForGalleryMedia(mediaType, media.mimeType)}
-              size={14}
-              color={colors.text}
-            />
-          </View>
-          {onToggleFavorite && (
-            <TouchableOpacity
-              style={styles.badge}
-              onPress={() => onToggleFavorite(media.id, !media.isFavorite)}
-            >
-              <Ionicons
-                name={media.isFavorite ? 'star' : 'star-outline'}
-                size={16}
-                color={media.isFavorite ? colors.star : colors.textSecondary}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-          {media.title || media.fileName}
-        </Text>
-        <Text style={styles.subtitle} numberOfLines={1}>
-          {t(`media_type_${mediaType}`)}
-          {media.sizeBytes > 0 ? ` · ${formatSize(media.sizeBytes)}` : ''}
-        </Text>
-        {isDownloading && <Text style={styles.statusText}>{t('media_downloading')}</Text>}
-        {!isDownloading && pendingUpload && (
-          <Text style={styles.statusText}>{t('media_pending_upload')}</Text>
-        )}
-        {transferFailed && <Text style={styles.statusText}>{t('media_transfer_failed')}</Text>}
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 export default GalleryGridItem;

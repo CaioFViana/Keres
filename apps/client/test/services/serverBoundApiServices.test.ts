@@ -1,6 +1,16 @@
 /**
  * @jest-environment node
  */
+import { FriendshipApiService } from '@/src/services/api/FriendshipApiService';
+import {
+  PublicationApiService,
+  type PublishManuscriptOptions,
+} from '@/src/services/api/PublicationApiService';
+import { createKeresAxiosInstance } from '@/src/services/api/apiClient';
+import { storyInvitationApi } from '@/src/services/api/StoryInvitationApiService';
+import { storyPermissionApi } from '@/src/services/social/StoryPermissionService';
+import { UserApiService } from '@/src/services/api/UserApiService';
+
 const mockClient = {
   get: jest.fn(),
   post: jest.fn(),
@@ -9,18 +19,8 @@ const mockClient = {
   setTokenProvider: jest.fn(),
   setActiveServer: jest.fn(),
 };
-jest.mock('../../src/services/apiClient', () => ({ createKeresAxiosInstance: jest.fn() }));
-jest.mock('../../src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
-
-import { FriendshipApiService } from '../../src/services/FriendshipApiService';
-import {
-  PublicationApiService,
-  type PublishManuscriptOptions,
-} from '../../src/services/PublicationApiService';
-import { createKeresAxiosInstance } from '../../src/services/apiClient';
-import { storyInvitationApi } from '../../src/services/StoryInvitationApiService';
-import { storyPermissionApi } from '../../src/services/StoryPermissionService';
-import { UserApiService } from '../../src/services/UserApiService';
+jest.mock('@/src/services/api/apiClient', () => ({ createKeresAxiosInstance: jest.fn() }));
+jest.mock('@/src/services/auth/AuthTokenManager', () => ({ authTokenManager: {} }));
 
 const server = { id: 'server', idUser: 'me', url: 'https://target.test' } as any;
 
@@ -204,6 +204,36 @@ describe('server-bound API services', () => {
     await expect(service.getOwnProfile(server)).rejects.toThrow('boom');
   });
 
+  it('reads the own plan, treats a server without the route as having none, and rethrows other failures', async () => {
+    const service = new UserApiService();
+    mockClient.get.mockResolvedValueOnce({ data: { tierName: 'Free' } });
+
+    await expect(service.getOwnPlan(server)).resolves.toEqual({ tierName: 'Free' });
+    expect(mockClient.get).toHaveBeenCalledWith('/user/plan');
+
+    mockClient.get.mockRejectedValueOnce({ response: { status: 404 } });
+    await expect(service.getOwnPlan(server)).resolves.toBeNull();
+
+    mockClient.get.mockRejectedValueOnce(new Error('boom'));
+    await expect(service.getOwnPlan(server)).rejects.toThrow('boom');
+  });
+
+  it('asks the server whether its public pages are on, and says nothing when it cannot tell', async () => {
+    const service = new PublicationApiService();
+    mockClient.get.mockResolvedValueOnce({ data: { showcaseEnabled: false } });
+    await expect(service.isShowcaseEnabled(server)).resolves.toBe(false);
+    expect(mockClient.get).toHaveBeenCalledWith('/public/config');
+
+    mockClient.get.mockResolvedValueOnce({ data: { showcaseEnabled: true } });
+    await expect(service.isShowcaseEnabled(server)).resolves.toBe(true);
+
+    mockClient.get.mockResolvedValueOnce({ data: {} });
+    await expect(service.isShowcaseEnabled(server)).resolves.toBeUndefined();
+
+    mockClient.get.mockRejectedValueOnce(new Error('offline'));
+    await expect(service.isShowcaseEnabled(server)).resolves.toBeUndefined();
+  });
+
   it('maps every PublicationApiService route to its endpoint', async () => {
     mockClient.get.mockResolvedValue({ data: [{ id: 'pub-1' }] });
     mockClient.post.mockResolvedValue({ data: { id: 'pub-2' } });
@@ -223,13 +253,18 @@ describe('server-bound API services', () => {
 
     expect(mockClient.get).toHaveBeenCalledWith('/stories/publications/mine');
     expect(mockClient.get).toHaveBeenCalledWith('/stories/story/publications');
-    expect(mockClient.post).toHaveBeenCalledWith('/stories/story/publications', {
-      operationVersion: 7,
-      labelMode: 'both',
-      visibility: 'password',
-      password: 'secret',
-      includePackage: true,
-    });
+    // The request always carries the axios config third: empty without options.
+    expect(mockClient.post).toHaveBeenCalledWith(
+      '/stories/story/publications',
+      {
+        operationVersion: 7,
+        labelMode: 'both',
+        visibility: 'password',
+        password: 'secret',
+        includePackage: true,
+      },
+      {},
+    );
 
     // The manuscript travels as render options only: no bytes leave the device.
     const manuscript: PublishManuscriptOptions = {
@@ -242,25 +277,35 @@ describe('server-bound API services', () => {
       sceneOrder: 'shuffled',
       labels: {
         goToPage: 'Go to page',
+        sceneWord: 'scene',
         goToScene: 'See',
         looseHeading: 'Loose scenes',
         tocHeading: 'Contents',
         endOfExcerpt: 'end of this excerpt',
         chooseStart: 'Choose where to begin',
         beginAt: 'Begin',
+        pageLabel: 'Page',
+        frameLabel: 'Frame',
+        mediaRemoved: 'Image removed',
+        musicLabel: 'Music',
+        songsHeading: 'Songs',
       },
       author: null,
       language: 'en',
     };
     await service.publish(server, 'story', 7, 'both', 'public', undefined, manuscript);
-    expect(mockClient.post).toHaveBeenCalledWith('/stories/story/publications', {
-      operationVersion: 7,
-      labelMode: 'both',
-      visibility: 'public',
-      password: undefined,
-      manuscript,
-      includePackage: true,
-    });
+    expect(mockClient.post).toHaveBeenCalledWith(
+      '/stories/story/publications',
+      {
+        operationVersion: 7,
+        labelMode: 'both',
+        visibility: 'public',
+        password: undefined,
+        manuscript,
+        includePackage: true,
+      },
+      {},
+    );
 
     // The story file may be left out when something else is published in its place.
     await service.publish(
@@ -274,20 +319,61 @@ describe('server-bound API services', () => {
       {} as never,
       false,
     );
-    expect(mockClient.post).toHaveBeenLastCalledWith('/stories/story/publications', {
-      operationVersion: 7,
-      labelMode: 'both',
-      visibility: 'public',
-      password: undefined,
-      manuscript: undefined,
-      reader: {},
-      includePackage: false,
-    });
+    expect(mockClient.post).toHaveBeenLastCalledWith(
+      '/stories/story/publications',
+      {
+        operationVersion: 7,
+        labelMode: 'both',
+        visibility: 'public',
+        password: undefined,
+        manuscript: undefined,
+        reader: {},
+        includePackage: false,
+      },
+      {},
+    );
     expect(mockClient.put).toHaveBeenCalledWith('/stories/story/showcase', {
       visibility: 'public',
       password: undefined,
     });
     expect(mockClient.delete).toHaveBeenCalledWith('/stories/story/publications/pub-1');
     expect(mockClient.delete).toHaveBeenCalledWith('/stories/story/publications');
+  });
+
+  it('maps publish options onto the request config', async () => {
+    mockClient.post.mockResolvedValue({ data: { id: 'pub-3' } });
+    const service = new PublicationApiService();
+    const seen: number[] = [];
+    const controller = new AbortController();
+
+    await service.publish(
+      server,
+      'story',
+      7,
+      'both',
+      'public',
+      undefined,
+      undefined,
+      undefined,
+      true,
+      undefined,
+      {
+        timeoutMs: 90000,
+        signal: controller.signal,
+        onUploadProgress: (fraction: number) => seen.push(fraction),
+      },
+    );
+
+    expect(mockClient.post).toHaveBeenCalledTimes(1);
+    const config = mockClient.post.mock.calls[0][2] as {
+      timeout?: number;
+      signal?: AbortSignal;
+      onUploadProgress?: (event: { loaded?: number; total?: number }) => void;
+    };
+    expect(config.timeout).toBe(90000);
+    expect(config.signal).toBe(controller.signal);
+    // Loaded over total reaches the callback as a 0–1 fraction.
+    config.onUploadProgress?.({ loaded: 1, total: 4 });
+    expect(seen).toEqual([0.25]);
   });
 });

@@ -1,12 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { Layout } from '../../src/showcase/components/Layout';
-import { PasswordGate } from '../../src/showcase/components/PasswordGate';
-import {
-  SHOWCASE_THEME_KEY,
-  ShowcaseThemeProvider,
-} from '../../src/showcase/theme/ShowcaseThemeProvider';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { ShowcaseAuthProvider } from '@/showcase/auth/ShowcaseAuthProvider';
+import { Layout } from '@/showcase/components/Layout';
+import { PasswordGate } from '@/showcase/components/PasswordGate';
+import { SHOWCASE_THEME_KEY, ShowcaseThemeProvider } from '@/showcase/theme/ShowcaseThemeProvider';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 beforeEach(() => {
   localStorage.removeItem(SHOWCASE_THEME_KEY);
@@ -22,9 +20,11 @@ describe('showcase header theme toggle', () => {
     render(
       <MemoryRouter>
         <ShowcaseThemeProvider>
-          <Layout>
-            <p>page</p>
-          </Layout>
+          <ShowcaseAuthProvider>
+            <Layout>
+              <p>page</p>
+            </Layout>
+          </ShowcaseAuthProvider>
         </ShowcaseThemeProvider>
       </MemoryRouter>,
     );

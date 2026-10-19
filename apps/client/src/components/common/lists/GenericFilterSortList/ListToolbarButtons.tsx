@@ -1,0 +1,103 @@
+import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getOnColorForFill } from '@keres/shared';
+import { useTheme } from '@/src/theme';
+
+/** Opens the field filters. It says what it is and how many fields are narrowing the list. */
+export const FiltersButton: React.FC<{ count: number; onPress: () => void }> = ({
+  count,
+  onPress,
+}) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const onPrimary = getOnColorForFill(colors, colors.primary);
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.filters, { backgroundColor: colors.primary }]}
+      accessibilityRole="button"
+      accessibilityLabel={t('list_filters_button')}
+      testID="list-filters-button"
+    >
+      <Ionicons name="options-outline" size={22} color={onPrimary} />
+      <Text style={[styles.filtersLabel, { color: onPrimary }]}>{t('list_filters_button')}</Text>
+      {count > 0 ? (
+        <View
+          style={[styles.badge, { backgroundColor: colors.accent }]}
+          testID="list-filters-count"
+        >
+          <Text style={[styles.badgeText, { color: getOnColorForFill(colors, colors.accent) }]}>
+            {count}
+          </Text>
+        </View>
+      ) : null}
+    </TouchableOpacity>
+  );
+};
+
+/** Without a field to sort by there is nothing for the direction to turn around: the button waits for one. */
+export const SortDirectionButton: React.FC<{
+  direction: 'asc' | 'desc';
+  onPress: () => void;
+  disabled?: boolean;
+}> = ({ direction, onPress, disabled = false }) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      style={[styles.square, { backgroundColor: colors.primary }, disabled && styles.disabled]}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      accessibilityLabel={
+        direction === 'asc' ? t('list_sort_ascending') : t('list_sort_descending')
+      }
+      testID="list-sort-direction"
+    >
+      <Ionicons
+        name={direction === 'asc' ? 'arrow-up' : 'arrow-down'}
+        size={24}
+        color={getOnColorForFill(colors, colors.primary)}
+      />
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  disabled: { opacity: 0.4 },
+  filters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 50,
+    paddingHorizontal: 14,
+    borderRadius: 5,
+  },
+  filtersLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  square: {
+    width: 50,
+    height: 50,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

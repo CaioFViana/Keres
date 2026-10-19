@@ -1,8 +1,8 @@
-import type { AppDrizzleClient } from '../../db';
-import type { ServerSelect } from '../../db/schema';
-import { useStoryListStore } from '../../state/storyListStore';
-import type { ServerStoryPreview } from '../SyncEngineService';
-import { createStoryService } from '../storymanagement/StoryService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { ServerSelect } from '@/src/db/schema';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import type { ServerStoryPreview } from '@/src/services/sync/SyncEngineService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { dropRevokedServerStories } from './dropRevokedServerStories';
 
 export interface StoryImportEngine {

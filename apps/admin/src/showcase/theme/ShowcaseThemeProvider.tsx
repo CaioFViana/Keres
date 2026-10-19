@@ -8,7 +8,7 @@ import {
   writeThemePreference,
   type ResolvedTheme,
   type ThemePreference,
-} from '../../theme/theme';
+} from '@/theme/theme';
 
 export const SHOWCASE_THEME_KEY = 'keres_showcase_theme_preference';
 

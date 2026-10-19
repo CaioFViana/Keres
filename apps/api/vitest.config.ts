@@ -1,7 +1,9 @@
+import { apiAliases } from './vitest.alias';
 import { configDefaults, defineConfig } from 'vitest/config';
 import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
+  resolve: { alias: apiAliases },
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],

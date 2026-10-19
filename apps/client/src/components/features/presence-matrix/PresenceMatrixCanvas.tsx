@@ -1,12 +1,12 @@
 import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import CanvasLine from '../graphs/CanvasLine/CanvasLine';
-import GraphCanvasFrame from '../graphs/GraphCanvasFrame/GraphCanvasFrame';
-import type { CanvasViewportHandle } from '../../../hooks/useCanvasViewport';
-import { useCanvasViewport } from '../../../hooks/useCanvasViewport';
-import { useTheme } from '../../../theme';
+import CanvasLine from '@/src/components/features/graphs/CanvasLine/CanvasLine';
+import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport';
+import { useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
+import { useTheme } from '@/src/theme';
 import { spatialRectIntersects } from '@keres/shared';
-import type { PresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
+import type { PresenceMatrixLayout } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
 import {
   buildMatrixThreadSegments,
   MATRIX_CELL_INSET,
@@ -17,7 +17,8 @@ import {
   MATRIX_THREAD_OPACITY,
   MATRIX_THREAD_WIDTH,
   matrixRowCenterY,
-} from '@keres/shared/graphs/presenceMatrixLayout';
+} from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface Props {
   layout: PresenceMatrixLayout;
@@ -237,12 +238,13 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
               width: (chapter.end - chapter.start + 1) * layout.sceneWidth - 10,
             }}
           >
-            <Text
+            <ThemedText
+              tone="secondary"
               numberOfLines={1}
-              style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}
+              style={{ fontSize: 10, fontWeight: '700' }}
             >
               {chapter.name}
-            </Text>
+            </ThemedText>
           </View>
         ))}
         {visibleSceneIndexes.map((index) => {

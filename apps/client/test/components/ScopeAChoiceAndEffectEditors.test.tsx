@@ -1,12 +1,13 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import type { Effect } from '@keres/shared/entities/Effect';
+import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import React from 'react';
-import ChoiceCheckGroupEditor from '../../src/components/features/choices/ChoiceCheckGroupEditor';
-import EffectListEditor from '../../src/components/features/effects/EffectListEditor';
+import { StyleSheet } from 'react-native';
+import ChoiceCheckGroupEditor from '@/src/components/features/choices/ChoiceCheckGroupEditor';
+import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -24,7 +25,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/components/layout/ScreenSection/ScreenSection', () => {
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -33,7 +34,7 @@ jest.mock('../../src/components/layout/ScreenSection/ScreenSection', () => {
 });
 
 /** A dropdown reduced to what the editors read from it: its value, and a way to change it. */
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -42,11 +43,13 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
       value,
       onValueChange,
       placeholder,
+      style,
     }: {
       options: { label: string; value: string }[];
       value: string | null;
       onValueChange: (next: string | null) => void;
       placeholder?: string;
+      style?: unknown;
     }) => (
       <RN.View
         testID="single-select-pill"
@@ -54,6 +57,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
         value={value}
         onValueChange={onValueChange}
         placeholder={placeholder}
+        style={style}
       />
     ),
   };
@@ -195,6 +199,22 @@ describe('ChoiceCheckGroupEditor', () => {
     expect(onUpdateCheck).toHaveBeenCalledWith('check-1', { minVisits: 3 });
     await fireEvent.changeText(view.getByPlaceholderText('check_min_visits_placeholder'), '');
     expect(onUpdateCheck).toHaveBeenCalledWith('check-1', { minVisits: null });
+  });
+
+  it('lines every select up with the input beside it: the pill brings no margin of its own', async () => {
+    const view = await render(
+      <ChoiceCheckGroupEditor
+        {...baseProps}
+        checkGroups={[group()]}
+        checks={[check({ minVisits: 2 })]}
+      />,
+    );
+
+    const pills = view.getAllByTestId('single-select-pill');
+    expect(pills.length).toBeGreaterThan(0);
+    for (const pill of pills) {
+      expect(StyleSheet.flatten(pill.props.style).marginBottom).toBe(0);
+    }
   });
 
   it('edits an inventory check', async () => {

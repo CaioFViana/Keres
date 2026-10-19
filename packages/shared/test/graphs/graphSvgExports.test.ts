@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildLocationGraphLayout } from '../../graphs/locationGraphLayout';
+import { buildLocationGraphLayout } from '../../graphs/location/locationGraphLayout';
 import {
   renderLocationGraphMapSvg,
   type LocationGraphSvgOptions,
-} from '../../graphs/locationGraphSvg';
-import { buildStoryGraphLayout } from '../../graphs/storyGraphLayout';
-import { renderStoryMapSvg, type StoryMapSvgOptions } from '../../graphs/storyGraphSvg';
+} from '../../graphs/location/locationGraphSvg';
+import { buildStoryGraphLayout } from '../../graphs/story/storyGraphLayout';
+import { renderStoryMapSvg, type StoryMapSvgOptions } from '../../graphs/story/storyGraphSvg';
 
 const COLORS = {
   background: '#ffffff',
@@ -248,5 +248,49 @@ describe('location map specifics', () => {
     const svg = renderLocationGraphMapSvg(locationLayout(), locationOptions());
 
     expect(svg).not.toContain('stroke="#0033aa" stroke-width="2.5"');
+  });
+
+  describe('location map SVG arrows', () => {
+    const relations = (type: 'contains' | 'connected_to') => [
+      { id: 'r', locationAId: 'a', locationBId: 'b', relationType: type },
+    ];
+    const locations = [
+      { id: 'a', name: 'Reino' },
+      { id: 'b', name: 'Cidade' },
+    ];
+
+    it('draws an arrowhead on a contains line, in the colour of the line', () => {
+      const svg = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('contains')),
+        locationOptions(),
+      );
+
+      expect(svg).toMatch(/<polygon points="[^"]+" fill="#0033aa"/);
+    });
+
+    it('draws none on a connected_to line', () => {
+      const svg = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('connected_to')),
+        locationOptions(),
+      );
+
+      expect(svg).not.toContain('<polygon');
+    });
+
+    it('dashes the contains line and the legend swatch, and leaves connected_to solid, as on the map', () => {
+      const contains = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('contains')),
+        locationOptions(),
+      );
+      const connected = renderLocationGraphMapSvg(
+        buildLocationGraphLayout(locations, relations('connected_to')),
+        locationOptions(),
+      );
+
+      expect(contains).toMatch(/<path d="[^"]+" fill="none"[^>]*stroke-dasharray="6 4"/);
+      expect(contains).toMatch(/<line [^>]*stroke-width="1.8" stroke-dasharray="4 3"/);
+      expect(connected).not.toMatch(/<path d="[^"]+" fill="none"[^>]*stroke-dasharray/);
+      expect(connected).toMatch(/<line [^>]*stroke-width="1.4"\/>/);
+    });
   });
 });

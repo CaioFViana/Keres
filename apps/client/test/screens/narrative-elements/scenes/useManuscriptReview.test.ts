@@ -1,14 +1,14 @@
-jest.mock('../../../../src/hooks/useSceneBodyComments', () => ({
+import type { ManuscriptChapter, ManuscriptScene } from '@keres/shared';
+import { linearManuscriptSections } from '@keres/shared';
+import { resolveReviewScene } from '@/src/screens/narrative-elements/scenes/useManuscriptReview';
+
+jest.mock('@/src/hooks/scene/useSceneBodyComments', () => ({
   useSceneBodyComments: jest.fn(),
 }));
-jest.mock('../../../../src/hooks/useWebSelectionClip', () => ({
+jest.mock('@/src/hooks/ui/useWebSelectionClip', () => ({
   trackSelectionContainer: jest.fn(),
   readClippedSelection: jest.fn(),
 }));
-
-import type { ManuscriptChapter, ManuscriptScene } from '@keres/shared';
-import { linearManuscriptSections } from '@keres/shared';
-import { resolveReviewScene } from '../../../../src/screens/narrative-elements/scenes/useManuscriptReview';
 
 const chapters: ManuscriptChapter[] = [{ id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter' }];
 const scenes: ManuscriptScene[] = [

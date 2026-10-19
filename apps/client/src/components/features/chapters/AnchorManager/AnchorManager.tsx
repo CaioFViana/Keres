@@ -5,11 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
-import type { ChapterAnchorRow } from '@/src/hooks/useChapterAnchors';
-import { useChapterAnchors } from '@/src/hooks/useChapterAnchors';
-import { useNotificationStore } from '@/src/state/notificationStore';
+import type { ChapterAnchorRow } from '@/src/hooks/chapter/useChapterAnchors';
+import { useChapterAnchors } from '@/src/hooks/chapter/useChapterAnchors';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
 import { useTheme } from '@/src/theme';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import type { AnchorDraft } from './AnchorEditModal';
 import AnchorEditModal from './AnchorEditModal';
 
@@ -193,7 +193,11 @@ const AnchorManager: React.FC<Props> = ({ storyId, chapterId, currentUserId, edi
           ) : undefined,
         }))}
       />
-      {editable && !anchors.some((anchor) => !anchor.endSceneId) && (
+      {editable && scenes.length === 0 && (
+        // Placing a chapter is relative to a scene: with none in the story there is nothing to add yet.
+        <Text style={styles.empty}>{t('anchor_needs_scenes')}</Text>
+      )}
+      {editable && scenes.length > 0 && !anchors.some((anchor) => !anchor.endSceneId) && (
         <TouchableOpacity style={styles.add} onPress={() => setEditing({ id: null })}>
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
           <Text style={styles.addText}>{t('anchor_add')}</Text>

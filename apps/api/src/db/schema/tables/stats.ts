@@ -1,5 +1,14 @@
 import { relations } from 'drizzle-orm';
-import { boolean, index, integer, real, table, text, timestamp, timestampNow } from '../columns';
+import {
+  boolean,
+  index,
+  integer,
+  real,
+  table,
+  text,
+  timestamp,
+  timestampNow,
+} from '@/db/schema/columns';
 import { characters } from './characters';
 import { modes } from './modes';
 import { stories } from './stories';

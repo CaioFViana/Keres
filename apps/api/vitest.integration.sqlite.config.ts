@@ -8,7 +8,6 @@
  */
 process.env.DATABASE_DRIVER = 'sqlite';
 
-// eslint-disable-next-line import/first
 import baseConfig from './vitest.integration.config';
 
 export default baseConfig;

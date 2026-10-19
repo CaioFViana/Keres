@@ -9,21 +9,30 @@ const mocks = vi.hoisted(() => ({
   reconcile: vi.fn(),
   runMigrations: vi.fn(),
   setLogSink: vi.fn(),
+  createShutdown: vi.fn(() => ({ run: vi.fn(), onSignal: vi.fn() })),
+  installShutdownHandlers: vi.fn(),
 }));
 
-vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
-vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
-vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
-vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
-vi.mock('../src/services/MediaStorageConfigurationService', () => ({
+vi.mock('@/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
+vi.mock('@/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
+vi.mock('@/index', () => ({ createApp: mocks.createApp }));
+vi.mock('@/services/static-delivery/hostedClientDelivery', () => ({
+  warmHostedClientDelivery: vi.fn(),
+}));
+vi.mock('@/services/admin/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
+vi.mock('@/services/media-storage/MediaStorageConfigurationService', () => ({
   assertMediaStorageConfiguration: mocks.assertStorage,
 }));
-vi.mock('../src/services/MediaStorageService', () => ({
+vi.mock('@/services/media-storage/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
-vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
-vi.mock('../src/utils/logger', () => ({
-  logger: { info: mocks.loggerInfo },
+vi.mock('@/services/compliance/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+vi.mock('@/shutdown', () => ({
+  createShutdown: mocks.createShutdown,
+  installShutdownHandlers: mocks.installShutdownHandlers,
+}));
+vi.mock('@/utils/logger', () => ({
+  logger: { info: mocks.loggerInfo, warn: vi.fn() },
   setLogSink: mocks.setLogSink,
 }));
 
@@ -40,7 +49,7 @@ beforeAll(async () => {
       ) => callback({ hostname: '127.0.0.1', port: 3000 }),
     ),
   });
-  await import('../src/server');
+  await import('@/server');
 });
 
 describe('production server bootstrap integration', () => {

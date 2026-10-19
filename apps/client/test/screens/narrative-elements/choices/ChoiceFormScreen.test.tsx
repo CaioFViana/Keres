@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 
+import ChoiceFormScreen from '@/src/screens/narrative-elements/choices/ChoiceFormScreen';
+
 const mockHandleSave = jest.fn();
 const mockHandleDelete = jest.fn();
 const mockNavigate = jest.fn();
@@ -77,17 +79,17 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: mockRouteParams }),
 }));
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useEntityFormSecondaryDraft', () => ({
+jest.mock('@/src/hooks/forms/useEntityFormSecondaryDraft', () => ({
   __esModule: true,
   useEntityFormSecondaryDraft: () => ({
     persistSecondaryDraft: jest.fn(),
@@ -95,17 +97,17 @@ jest.mock('../../../../src/hooks/useEntityFormSecondaryDraft', () => ({
   }),
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
 
-jest.mock('../../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -120,7 +122,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: (kind: string) => ({
     entity: `${kind}-entity`,
@@ -138,7 +140,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormResources', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/useChoiceFormResources', () => ({
   __esModule: true,
   useChoiceFormResources: () => ({
     choiceServiceRef: { current: null },
@@ -147,7 +149,7 @@ jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormResou
   }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormState', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/useChoiceFormState', () => ({
   __esModule: true,
   useChoiceFormState: () => ({
     ...mockFormState,
@@ -158,7 +160,7 @@ jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormState
   }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormAssociations', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/useChoiceFormAssociations', () => ({
   __esModule: true,
   useChoiceFormAssociations: () => ({
     checks: {
@@ -195,7 +197,7 @@ jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormAssoc
   }),
 }));
 
-jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormActions', () => ({
+jest.mock('@/src/screens/narrative-elements/choices/useChoiceFormActions', () => ({
   __esModule: true,
   useChoiceFormActions: () => ({
     deleting: mockDeleting,
@@ -206,7 +208,7 @@ jest.mock('../../../../src/screens/narrative-elements/choices/useChoiceFormActio
   }),
 }));
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -214,7 +216,7 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock('../../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -239,7 +241,7 @@ jest.mock('../../../../src/components/common/forms/EntityFormContainer/EntityFor
   };
 });
 
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
@@ -259,7 +261,7 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -278,7 +280,7 @@ jest.mock('../../../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { TextInput } = require('react-native');
   return {
     __esModule: true,
@@ -304,7 +306,7 @@ jest.mock('../../../../src/components/common/inputs/TextInput/TextInput', () => 
   };
 });
 
-jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -351,7 +353,7 @@ jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectP
   };
 });
 
-jest.mock('../../../../src/components/features/choices/ChoiceCheckGroupEditor', () => {
+jest.mock('@/src/components/features/choices/ChoiceCheckGroupEditor', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -415,7 +417,7 @@ jest.mock('../../../../src/components/features/choices/ChoiceCheckGroupEditor', 
   };
 });
 
-jest.mock('../../../../src/components/features/effects/EffectListEditor', () => {
+jest.mock('@/src/components/features/effects/EffectListEditor', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -453,7 +455,7 @@ jest.mock('../../../../src/components/features/effects/EffectListEditor', () => 
   };
 });
 
-jest.mock('../../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -475,7 +477,7 @@ jest.mock('../../../../src/components/features/notes/NoteManager', () => {
   };
 });
 
-jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -496,8 +498,6 @@ jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoMan
     ),
   };
 });
-
-import ChoiceFormScreen from '../../../../src/screens/narrative-elements/choices/ChoiceFormScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

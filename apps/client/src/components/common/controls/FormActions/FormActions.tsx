@@ -1,7 +1,7 @@
 import React, { Children, isValidElement, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
 /**
  * The row of actions that closes a form, a modal or a detail screen.
@@ -39,15 +39,29 @@ interface Props {
   stackOnCompact?: boolean;
 }
 
+type ActionGroupComponent<P> = ((props: P) => React.ReactNode) & { actionGroup?: true };
+
+/**
+ * Marks a component that only returns buttons (typically in a fragment), so the row lays each of them
+ * out as its own action. Without it the component is one child, and everything it returns lands in a
+ * single slot with no space between. Only for components without hooks: the row calls them directly.
+ */
+export function markActionGroup<P>(component: (props: P) => React.ReactNode) {
+  const marked: ActionGroupComponent<P> = component;
+  marked.actionGroup = true;
+  return marked;
+}
+
 function actionChildren(
   children: React.ReactNode,
   prefix = '',
 ): { child: React.ReactNode; key: string }[] {
   return Children.toArray(children).flatMap((child, index) => {
     const key = `${prefix}/${isValidElement(child) ? (child.key ?? index) : index}`;
-    return isValidElement<{ children?: React.ReactNode }>(child) && child.type === React.Fragment
-      ? actionChildren(child.props.children, key)
-      : [{ child, key }];
+    if (!isValidElement<{ children?: React.ReactNode }>(child)) return [{ child, key }];
+    if (child.type === React.Fragment) return actionChildren(child.props.children, key);
+    const group = child.type as ActionGroupComponent<unknown>;
+    return group.actionGroup ? actionChildren(group(child.props), key) : [{ child, key }];
   });
 }
 

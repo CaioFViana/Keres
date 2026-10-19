@@ -11,8 +11,8 @@ import {
   sortIdPair,
 } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { characterRelations, characters } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { characterRelations, characters } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<

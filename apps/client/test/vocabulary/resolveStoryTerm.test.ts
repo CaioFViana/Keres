@@ -1,14 +1,14 @@
 /**
  * @jest-environment node
  */
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 import type { TFunction } from 'i18next';
 import {
   agreeStoryTerm,
   hasStoryTermOverride,
   resolveStoryGender,
   resolveStoryTerm,
-} from '../../src/vocabulary/resolveStoryTerm';
+} from '@/src/vocabulary/resolveStoryTerm';
 
 const t = ((key: string) => key) as unknown as TFunction;
 

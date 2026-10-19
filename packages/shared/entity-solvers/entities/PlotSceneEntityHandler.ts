@@ -22,6 +22,10 @@ export const plotSceneEntityHandler: EntityDomainHandler = {
     plotId: OperationLogEntityType.Plot,
     sceneId: OperationLogEntityType.Scene,
   },
+  async resolveCompactName(context, entityId) {
+    const reference = await plotSceneEntityHandler.resolveReference!(context, entityId);
+    return reference.name;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.PlotScene, entityId);
     if (!row) return { name: undefined, type: context.translate('plot_scenes') };

@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../theme';
-import type { GlobalSearchResult } from '../../../services/storymanagement/GlobalSearchService';
-import { ENTITY_TYPE_ICONS } from '../../../utils/entityTypeIcons';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
 
 interface GlobalSearchResultItemProps {
   result: GlobalSearchResult;
@@ -12,7 +13,7 @@ interface GlobalSearchResultItemProps {
 
 const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result, onPress }) => {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const styles = useThemedStyles(createStyles);
 
   return (
     <TouchableOpacity style={styles.container} onPress={() => onPress(result)}>
@@ -26,6 +27,16 @@ const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result,
         <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
           {result.title}
         </Text>
+        {!!result.arcTitle && (
+          <Text
+            style={styles.arc}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            testID="search-result-arc"
+          >
+            {result.arcTitle}
+          </Text>
+        )}
         {!!result.context && (
           <Text style={styles.context} numberOfLines={1} ellipsizeMode="tail">
             {result.context}
@@ -41,7 +52,7 @@ const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result,
   );
 };
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       flexDirection: 'row',
@@ -70,6 +81,7 @@ const createStyles = (colors: any) =>
       marginTop: 2,
     },
     context: { fontSize: 12, color: colors.primary, marginTop: 2 },
+    arc: { fontSize: 12, color: colors.textSecondary, fontStyle: 'italic', marginTop: 2 },
   });
 
 export default GlobalSearchResultItem;

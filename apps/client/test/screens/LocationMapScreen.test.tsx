@@ -1,5 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import LocationMapScreen from '@/src/screens/location-maps/LocationMapScreen';
+
 const mockColors = {
   background: '#111',
   border: '#444',
@@ -9,8 +11,8 @@ const mockColors = {
   text: '#fff',
   textSecondary: '#aaa',
 };
-jest.mock('../../src/theme', () => {
-  const actual = jest.requireActual('../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     __esModule: true,
     ...actual,
@@ -38,32 +40,32 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 const mockDb = {};
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
-jest.mock('../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../src/state/storyStore', () => {
+jest.mock('@/src/state/story/storyStore', () => {
   const state = { selectedStory: { id: 'story-1' } };
   return {
     __esModule: true,
     useStoryStore: (selector: (value: typeof state) => unknown) => selector(state),
   };
 });
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
@@ -74,21 +76,21 @@ const mockDraftState = {
   clear: jest.fn(),
   reset: jest.fn(),
 };
-jest.mock('../../src/state/locationMapDraftStore', () => ({
+jest.mock('@/src/state/drafts/locationMapDraftStore', () => ({
   __esModule: true,
   useLocationMapDraftStore: { getState: () => mockDraftState },
 }));
 
 const mockNavigateToEntity = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToEntity,
 }));
-jest.mock('../../src/hooks/useResolvedMediaUris', () => ({
+jest.mock('@/src/screens/location-maps/useResolvedMediaUris', () => ({
   __esModule: true,
   useResolvedMediaUris: () => ({}),
 }));
-jest.mock('../../src/hooks/useLocationMapRelations', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapRelations', () => ({
   __esModule: true,
   useLocationMapRelations: () => ({
     connections: [],
@@ -113,7 +115,7 @@ const mockGetLocations = jest.fn();
 const mockGetGalleries = jest.fn();
 const mockGetRelations = jest.fn();
 const mockGetMaps = jest.fn();
-jest.mock('../../src/services/storymanagement/LocationMapService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationMapService', () => ({
   __esModule: true,
   createLocationMapService: () => ({
     getById: mockGetById,
@@ -121,25 +123,25 @@ jest.mock('../../src/services/storymanagement/LocationMapService', () => ({
     updateMap: jest.fn(),
   }),
 }));
-jest.mock('../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   __esModule: true,
   createLocationService: () => ({ getAllByStoryId: mockGetLocations }),
 }));
-jest.mock('../../src/services/storymanagement/GalleryService', () => ({
+jest.mock('@/src/services/storymanagement/media-music/GalleryService', () => ({
   __esModule: true,
   createGalleryService: () => ({ getGalleriesByStoryId: mockGetGalleries }),
 }));
-jest.mock('../../src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   __esModule: true,
   createLocationRelationService: () => ({ getAllRelationsForStory: mockGetRelations }),
 }));
-jest.mock('../../src/utils/boardEntitySummary', () => ({
+jest.mock('@/src/services/storymanagement/entities/boardEntitySummary', () => ({
   __esModule: true,
   loadBoardEntitySummary: jest.fn(async () => ({ title: 'A fortaleza', body: 'Resumo local' })),
 }));
 
 let mockCanvasProps: any;
-jest.mock('../../src/components/features/location-maps/LocationMapCanvas', () => {
+jest.mock('@/src/components/features/location-maps/LocationMapCanvas', () => {
   const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   return {
@@ -154,7 +156,7 @@ jest.mock('../../src/components/features/location-maps/LocationMapCanvas', () =>
     }),
   };
 });
-jest.mock('../../src/hooks/useLocationMapTrajectories', () => ({
+jest.mock('@/src/screens/location-maps/useLocationMapTrajectories', () => ({
   __esModule: true,
   useLocationMapTrajectories: () => ({
     characters: [],
@@ -174,7 +176,7 @@ jest.mock('../../src/hooks/useLocationMapTrajectories', () => ({
     hasSelection: false,
   }),
 }));
-jest.mock('../../src/components/features/location-maps/LocationMapTools', () => {
+jest.mock('@/src/components/features/location-maps/LocationMapTools', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
@@ -188,7 +190,7 @@ jest.mock('../../src/components/features/location-maps/LocationMapTools', () => 
     ),
   };
 });
-jest.mock('../../src/components/features/location-maps/LocationMapNodeSheet', () => {
+jest.mock('@/src/components/features/location-maps/LocationMapNodeSheet', () => {
   const { Text, TouchableOpacity, View } = require('react-native');
   return {
     __esModule: true,
@@ -203,25 +205,23 @@ jest.mock('../../src/components/features/location-maps/LocationMapNodeSheet', ()
     ),
   };
 });
-jest.mock('../../src/components/features/location-maps/LocationMapMarkerSheet', () => ({
+jest.mock('@/src/components/features/location-maps/LocationMapMarkerSheet', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/components/features/location-maps/LocationMapHeaderActions', () => ({
+jest.mock('@/src/components/features/location-maps/LocationMapHeaderActions', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('../../src/components/features/graphs/GraphCanvasControls/GraphCanvasControls', () => ({
+jest.mock('@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls', () => ({
   __esModule: true,
   default: () => null,
 }));
 const mockUseScreenTour = jest.fn();
-jest.mock('../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-
-import LocationMapScreen from '../../src/screens/location-maps/LocationMapScreen';
 
 const map = {
   id: 'map-1',

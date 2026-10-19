@@ -1,0 +1,1 @@
+ALTER TABLE `registration_settings` ADD `allow_nsfw` integer DEFAULT false NOT NULL;

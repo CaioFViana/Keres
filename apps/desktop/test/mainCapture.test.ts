@@ -85,6 +85,7 @@ vi.mock('fs/promises', () => fileMocks);
 vi.mock('electron', () => ({
   app: {
     setName: vi.fn(),
+    requestSingleInstanceLock: vi.fn(() => true),
     commandLine: { appendSwitch: vi.fn() },
     isPackaged: false,
     whenReady: vi.fn(async () => undefined),

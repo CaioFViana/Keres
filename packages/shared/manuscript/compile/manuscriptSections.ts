@@ -1,3 +1,4 @@
+import type { LocationIntExt } from '../../entities/narrative/Location';
 import type { ChapterType } from '../../metadata/ChapterType';
 import { findAllCaseInsensitiveMatches } from '../../utils/excerptHighlight';
 
@@ -11,6 +12,41 @@ export interface ManuscriptChapter {
   arcId?: string | null;
 }
 
+/** One page (or frame) of a scene: a picture and the text that goes with it. */
+export interface ManuscriptPage {
+  id: string;
+  /** Key into the manuscript's pictures; `null` when the page's image is gone. */
+  mediaId: string | null;
+  fit: 'contain' | 'cover';
+  text: string | null;
+  /** The picture is a double-page spread: it takes two page numbers and, in spreads, both sides of the opening. */
+  spread?: boolean;
+}
+
+/** The words of a song a manuscript may print: what is sung, what it means, and which parts this scene sings. */
+export interface ManuscriptSong {
+  id: string;
+  title: string;
+  /** ChordPro text: the sung words, with their chords and sections. */
+  lyrics: string;
+  /** The same words in the reader's language, under the same section marks; `null` when there are none. */
+  lyricsTranslation: string | null;
+  /** The labels of the sections the scene sings; `null` is the whole song. */
+  sections: string[] | null;
+}
+
+/** A piece of music a scene has, as a manuscript can say it: what it is, who hears it, when it comes in. */
+export interface ManuscriptSceneMusic {
+  id: string;
+  /** `in-world`: the people in the story hear it. `score`: only whoever tells the story does. */
+  role: 'in-world' | 'score';
+  /** The song's title, or the name of the Gallery medium; `null` when what it pointed at is gone. */
+  title: string | null;
+  cue: string | null;
+  /** The song itself, carried only when the export prints songs. Never a Gallery reference. */
+  song?: ManuscriptSong;
+}
+
 /** The minimum the pipeline needs to know about a scene. */
 export interface ManuscriptScene {
   id: string;
@@ -21,6 +57,15 @@ export interface ManuscriptScene {
   isDeleted: boolean;
   /** Where a branching story begins; absent when the caller does not carry the flag. */
   isStart?: boolean;
+  /** The scene's summary: a screenplay writes it as a synopsis. Absent when the caller has none. */
+  summary?: string | null;
+  /** The place of the scene, for a screenplay's scene heading. Absent when the caller has none. */
+  locationName?: string | null;
+  locationIntExt?: LocationIntExt | null;
+  /** The scene's pages, in order: a comic or a storyboard. Absent when the caller has none. */
+  pages?: ManuscriptPage[];
+  /** The scene's music, in order. Absent when the caller has none. */
+  music?: ManuscriptSceneMusic[];
 }
 
 /** The minimum the pipeline needs to know about a route step. */

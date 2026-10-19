@@ -1,21 +1,22 @@
-import { act, render, type RenderResult } from '@testing-library/react-native';
+import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import * as SkiaMock from '@shopify/react-native-skia';
-import type { CharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
+import type { CharacterRelationGraphLayout } from '@keres/shared/graphs/character-relations/characterRelationGraphLayout';
 import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import CharacterRelationGraphCanvas, {
   type CharacterRelationGraphCanvasHandle,
-} from '../../src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
-import SkiaEdgeCanvas from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
-import SkiaOverlayErrorBoundary from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+} from '@/src/components/features/graphs/CharacterRelationGraph/CharacterRelationGraphCanvas';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#000',
       primary: '#85f',
       primaryContainer: '#223',
       surface: '#111',
+      onPrimary: '#fff',
       border: '#444',
       text: '#fff',
       textSecondary: '#aaa',
@@ -93,7 +94,10 @@ beforeEach(() => {
 
 afterEach(() => jest.restoreAllMocks());
 
-async function renderGraph(showEdgeLabels = true) {
+async function renderGraph(
+  showEdgeLabels = true,
+  props: Partial<React.ComponentProps<typeof CharacterRelationGraphCanvas>> = {},
+) {
   const ref = createRef<CharacterRelationGraphCanvasHandle>();
   const view = await render(
     <CharacterRelationGraphCanvas
@@ -101,10 +105,12 @@ async function renderGraph(showEdgeLabels = true) {
       layout={LAYOUT}
       showEdgeLabels={showEdgeLabels}
       selectedNodeId={null}
+      nodeAccessibilityLabel={(node) => `node ${node.id}`}
       onSelectNode={noop}
+      {...props}
     />,
   );
-  return { ref, root: view.container };
+  return { ref, root: view.container, view };
 }
 
 async function fireLayout(root: Root) {
@@ -212,12 +218,12 @@ describe('character relation graph skia overlay', () => {
     const plates = root.queryAll((node) => node.type === 'SkiaRoundedRect');
     expect(plates).toHaveLength(2);
     const ally = texts.find((text) => text.props.text === 'ally')!;
-    const plate = plates.find((candidate) => candidate.props.width === 4 * 6.2 + 10)!;
-    // Background plate keeps the historical sizing heuristic, centered on the label point.
+    const plate = plates.find((candidate) => candidate.props.width === 4 * 6 + 12)!;
+    // The plate is the measured text plus 12 of air, centered on the label point.
     expect(plate.props).toMatchObject({
-      x: 400 - (4 * 6.2 + 10) / 2,
+      x: 400 - (4 * 6 + 12) / 2,
       y: 260 - 8,
-      width: 4 * 6.2 + 10,
+      width: 4 * 6 + 12,
       height: 16,
       r: 4,
       color: '#000',
@@ -277,5 +283,170 @@ describe('character relation graph skia overlay', () => {
       ref.current!.zoomBy(2);
     });
     expectMirror();
+  });
+});
+
+/** Two characters, a third unrelated to the first, and the edges between them. */
+const FOCUS_LAYOUT = {
+  nodes: ['a', 'b', 'c'].map((id, index) => ({
+    id,
+    labelLines: [id.toUpperCase()],
+    isIsolated: false,
+    x: index * 300,
+    y: 0,
+    width: 112,
+    height: 44,
+  })),
+  edges: [
+    {
+      id: 'ab',
+      sourceId: 'a',
+      targetId: 'b',
+      path: 'M ab',
+      label: 'friend',
+      labelPosition: { x: 1, y: 1 },
+    },
+    {
+      id: 'bc',
+      sourceId: 'b',
+      targetId: 'c',
+      path: 'M bc',
+      label: 'rival',
+      labelPosition: { x: 2, y: 2 },
+    },
+  ],
+  width: 900,
+  height: 100,
+} as unknown as CharacterRelationGraphLayout;
+
+const pathOf = (root: Root, path: string) =>
+  root.queryAll((node) => node.type === 'SkiaPath' && node.props.path === path)[0];
+
+describe('character relation graph with a node in focus', () => {
+  it('draws the lines of the focused node strong and the rest barely there', async () => {
+    const { root } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      selectedNodeId: 'a',
+      focusNodeIds: new Set(['a', 'b']),
+    });
+    await fireLayout(root);
+
+    expect(pathOf(root, 'M ab').props).toMatchObject({
+      color: '#85f',
+      strokeWidth: 2.4,
+      opacity: 1,
+    });
+    expect(pathOf(root, 'M bc').props).toMatchObject({
+      color: '#444',
+      strokeWidth: 1.6,
+      opacity: 0.15,
+    });
+  });
+
+  it('writes only the relation types of the focused node', async () => {
+    const { root } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      selectedNodeId: 'a',
+      focusNodeIds: new Set(['a', 'b']),
+    });
+    await fireLayout(root);
+
+    expect(root.queryAll((node) => node.type === 'SkiaText').map((t) => t.props.text)).toEqual([
+      'friend',
+    ]);
+  });
+
+  it('writes every relation type when nothing is in focus', async () => {
+    const { root } = await renderGraph(true, { layout: FOCUS_LAYOUT });
+    await fireLayout(root);
+
+    expect(
+      root
+        .queryAll((node) => node.type === 'SkiaText')
+        .map((t) => t.props.text)
+        .sort(),
+    ).toEqual(['friend', 'rival']);
+  });
+});
+
+describe('character relation graph nodes', () => {
+  it('are buttons a screen reader can name, and selecting one reports it', async () => {
+    const onSelectNode = jest.fn();
+    const { view } = await renderGraph(true, { layout: FOCUS_LAYOUT, onSelectNode });
+
+    await fireEvent.press(view.getByRole('button', { name: 'node b' }));
+
+    expect(onSelectNode).toHaveBeenCalledWith(expect.objectContaining({ id: 'b' }));
+  });
+
+  it('fade when they are out of the focus, and only those', async () => {
+    const { view } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      selectedNodeId: 'a',
+      focusNodeIds: new Set(['a', 'b']),
+    });
+    await fireLayout(view.container);
+
+    const opacityOf = (id: string) => {
+      const inner = view.getByText(id.toUpperCase()).parent as NonNullable<
+        ReturnType<typeof view.getByText>['parent']
+      >;
+      return StyleSheet.flatten(inner.props.style).opacity;
+    };
+    expect(opacityOf('a')).toBeUndefined();
+    expect(opacityOf('b')).toBeUndefined();
+    expect(opacityOf('c')).toBeLessThan(0.5);
+  });
+
+  it('fill the selected one', async () => {
+    const { view } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      selectedNodeId: 'b',
+      focusNodeIds: new Set(['a', 'b', 'c']),
+    });
+    await fireLayout(view.container);
+
+    expect(view.getByRole('button', { name: 'node b' }).props.accessibilityState).toEqual({
+      selected: true,
+    });
+    expect(view.getByRole('button', { name: 'node a' }).props.accessibilityState).toEqual({
+      selected: false,
+    });
+  });
+
+  it('are inside a canvas named for a screen reader', async () => {
+    const { view } = await renderGraph(true, { label: 'Relation Map' });
+
+    expect(view.getByLabelText('Relation Map').props.role).toBe('region');
+  });
+});
+
+describe('character relation graph edge colours', () => {
+  it('draws an edge in the colour of its kind, found however it was written', async () => {
+    const { root } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      edgeColors: new Map([['friend', '#D55E00']]),
+    });
+    await fireLayout(root);
+
+    expect(pathOf(root, 'M ab').props.color).toBe('#D55E00');
+    // 'rival' has no colour of its own: the plain border colour.
+    expect(pathOf(root, 'M bc').props.color).toBe('#444');
+  });
+
+  it('keeps the colour of a kind while its line is strong or faded', async () => {
+    const { root } = await renderGraph(true, {
+      layout: FOCUS_LAYOUT,
+      selectedNodeId: 'a',
+      focusNodeIds: new Set(['a', 'b']),
+      edgeColors: new Map([
+        ['friend', '#D55E00'],
+        ['rival', '#009E73'],
+      ]),
+    });
+    await fireLayout(root);
+
+    expect(pathOf(root, 'M ab').props).toMatchObject({ color: '#D55E00', opacity: 1 });
+    expect(pathOf(root, 'M bc').props).toMatchObject({ color: '#009E73', opacity: 0.15 });
   });
 });

@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import FormField from '@/src/components/common/forms/FormField/FormField';
@@ -7,14 +7,16 @@ import type { PackSelectionType } from '@keres/shared';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import Button from '../../components/common/controls/Button/Button';
-import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '../../components/common/inputs/TextInput/TextInput';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { usePackFormActions } from './usePackFormActions';
 import { usePackFormResources } from './usePackFormResources';
 import { usePackFormState } from './usePackFormState';
@@ -74,19 +76,7 @@ const PackFormScreen = () => {
     navigation,
   });
 
-  const styles = StyleSheet.create({
-    switchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 14,
-    },
-    switchLabels: { flex: 1, marginRight: 12 },
-    label: { fontSize: 16, fontWeight: 'bold', color: colors.text },
-    switchHint: { color: colors.textSecondary, fontSize: 13 },
-    nested: { marginLeft: 18 },
-    cancelButton: { backgroundColor: colors.secondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (storiesLoading || loading) {
     return <ScreenLoading />;
@@ -115,6 +105,7 @@ const PackFormScreen = () => {
 
   return (
     <EntityFormContainer
+      planUsage={false}
       actions={
         <>
           <Button onPress={handleSave} disabled={saving} testID="save-pack">
@@ -201,5 +192,20 @@ const PackFormScreen = () => {
     </EntityFormContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 14,
+    },
+    switchLabels: { flex: 1, marginRight: 12 },
+    label: { ...typography.sectionTitle, color: colors.text },
+    switchHint: { color: colors.textSecondary, fontSize: 13 },
+    nested: { marginLeft: 18 },
+    cancelButton: { backgroundColor: colors.secondary },
+  });
 
 export default PackFormScreen;

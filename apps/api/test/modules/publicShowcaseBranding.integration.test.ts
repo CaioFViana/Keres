@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { showcaseLogoStorageService } from '../../src/services/ShowcaseLogoStorageService';
-import { registerUser, request, type TestUser } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+import { showcaseLogoStorageService } from '@/services/showcase/ShowcaseLogoStorageService';
+import { registerUser, request, type TestUser } from '@test/helpers/app';
+import { installBunShim } from '@test/helpers/bunShim';
+import { promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 // Logo bytes go through the local blob backend, which uses `Bun.write`/`Bun.file`.
 installBunShim();

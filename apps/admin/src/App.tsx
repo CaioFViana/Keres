@@ -1,11 +1,17 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
-import { LoginPage } from './auth/LoginPage';
+import { LoginPage } from './pages/auth/LoginPage';
 import { RequireAdmin } from './auth/RequireAdmin';
 import { Layout } from './components/Layout';
+import { AccessRecordsPage } from './pages/access-records/AccessRecordsPage';
+import { ActivityPage } from './pages/activity/ActivityPage';
+import { EvidenceHoldsPage } from './pages/evidence-holds/EvidenceHoldsPage';
+import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { LogsPage } from './pages/logs/LogsPage';
+import { MessagesPage } from './pages/messages/MessagesPage';
 import { RecoveryPage } from './pages/recovery/RecoveryPage';
 import { RegistrationSettingsPage } from './pages/settings/RegistrationSettingsPage';
+import { StoriesPage } from './pages/stories/StoriesPage';
 import { TiersPage } from './pages/tiers/TiersPage';
 import { UserFormPage } from './pages/users/UserFormPage';
 import { UsersListPage } from './pages/users/UsersListPage';
@@ -25,8 +31,16 @@ export function App() {
               <Route path="/users/new" element={<UserFormPage />} />
               <Route path="/users/:id" element={<UserFormPage />} />
               <Route path="/recovery" element={<RecoveryPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/access-records" element={<AccessRecordsPage />} />
+              <Route path="/evidence-holds" element={<EvidenceHoldsPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/tiers" element={<TiersPage />} />
+              <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/stories" element={<StoriesPage />} />
+              {/* The page used to be called Contact. */}
+              <Route path="/contact" element={<Navigate to="/messages" replace />} />
               <Route path="/settings" element={<RegistrationSettingsPage />} />
             </Route>
           </Route>

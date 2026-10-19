@@ -1,15 +1,18 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
-import { Ionicons } from '@expo/vector-icons';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import Button from '@/src/components/common/controls/Button/Button';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 interface CharacterRelationModalProps {
   isVisible: boolean;
@@ -34,14 +37,12 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   currentCharacterId,
   relatedCharacterIds,
 }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const characterCopy = useVocabularyEntityCopy('Character');
 
   const [relatedCharId, setRelatedCharId] = useState<string>('');
   const [relationType, setRelationType] = useState<string>('');
   const [errors, setErrors] = useState<{ relatedCharId?: string; relationType?: string }>({});
-  const [showCharacterPicker, setShowCharacterPicker] = useState(false);
 
   const [prevInitialRelation, setPrevInitialRelation] = useState<
     typeof initialRelation | undefined
@@ -90,126 +91,33 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
     onClose();
   };
 
-  const getCharacterName = (charId: string) => {
-    return characters.find((char) => char.id === charId)?.name || characterCopy.select;
-  };
-
   const relatedCharacterIdSet = new Set(relatedCharacterIds);
   const selectableCharacters = characters
     .filter((char) => char.id !== currentCharacterId && !relatedCharacterIdSet.has(char.id))
     .sort((a, b) => a.name.localeCompare(b.name));
+  // An edited relation keeps its partner, who is by definition already related and so not in the list.
+  const characterOptions = (
+    initialRelation ? characters.filter((char) => char.id === relatedCharId) : selectableCharacters
+  ).map((char) => ({ label: char.name, value: char.id }));
 
-  const handleSelectCharacter = (charId: string) => {
-    setRelatedCharId(charId);
-    setShowCharacterPicker(false);
-  };
-
-  const styles = StyleSheet.create({
-    modalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      padding: 20,
-    },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    formGroup: {
-      marginBottom: 15,
-    },
-    label: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    pickerContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      backgroundColor: colors.card,
-      marginBottom: 5,
-      paddingHorizontal: 10,
-      minHeight: 50,
-    },
-    pickerButton: {
-      paddingLeft: 10,
-    },
-    pickerText: {
-      flex: 1,
-      color: colors.text,
-      fontSize: 16,
-      paddingVertical: 8,
-    },
-    errorText: {
-      color: colors.error,
-      fontSize: 12,
-      marginTop: 5,
-    },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 20,
-      paddingHorizontal: '3%',
-    },
-    characterPickerModalContent: {
-      backgroundColor: colors.background,
-      borderRadius: 10,
-      padding: 10,
-    },
-    characterPickerItem: {
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    characterPickerText: {
-      color: colors.text,
-      fontSize: 16,
-    },
-    noCharactersText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
-    },
-    closeButton: {
-      marginTop: 20,
-      alignSelf: 'flex-end',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
-    <ResponsiveModal
-      visible={isVisible}
-      onClose={onClose}
-      contentStyle={styles.modalContent}
-      maxHeight="86%"
-    >
-      <Text style={styles.modalTitle}>
-        {initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
-      </Text>
+    <ResponsiveModal visible={isVisible} onClose={onClose} inset="roomy" maxHeight="86%">
+      <ModalHeader
+        title={initialRelation ? t('edit_character_relation') : t('add_character_relation_title')}
+      />
       <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
           <Text style={styles.label}>{t('related_character')}</Text>
-          <TouchableOpacity
-            style={[styles.pickerContainer, initialRelation && { opacity: 0.6 }]}
-            onPress={initialRelation ? undefined : () => setShowCharacterPicker(true)}
+          <SingleSelectPill
+            options={characterOptions}
+            value={relatedCharId || null}
+            onValueChange={(value) => setRelatedCharId(value ?? '')}
             disabled={!!initialRelation}
-          >
-            <Text style={styles.pickerText}>
-              {relatedCharId ? getCharacterName(relatedCharId) : characterCopy.select}
-            </Text>
-            <Ionicons
-              name="caret-down"
-              size={20}
-              color={colors.textSecondary}
-              style={styles.pickerButton}
-            />
-          </TouchableOpacity>
+            placeholder={characterCopy.select}
+            noOptionsText={t('no_characters_found')}
+          />
           {errors.relatedCharId && <Text style={styles.errorText}>{errors.relatedCharId}</Text>}
         </View>
 
@@ -231,34 +139,25 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
         <Button onPress={onClose}>{t('cancel')}</Button>
         <Button onPress={handleSave}>{t('save_changes')}</Button>
       </FormActions>
-      <ResponsiveModal
-        visible={showCharacterPicker}
-        onClose={() => setShowCharacterPicker(false)}
-        contentStyle={styles.characterPickerModalContent}
-        maxHeight="78%"
-      >
-        <FlatList
-          data={selectableCharacters}
-          keyExtractor={(item) => item.id}
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.characterPickerItem}
-              onPress={() => handleSelectCharacter(item.id)}
-            >
-              <Text style={styles.characterPickerText}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            <Text style={styles.noCharactersText}>{t('no_characters_found')}</Text>
-          }
-        />
-        <Button onPress={() => setShowCharacterPicker(false)} style={styles.closeButton}>
-          {t('close')}
-        </Button>
-      </ResponsiveModal>
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    formGroup: {
+      marginBottom: 15,
+    },
+    label: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      marginBottom: 5,
+    },
+    errorText: {
+      ...typography.caption,
+      color: colors.error,
+      marginTop: 5,
+    },
+  });
 
 export default CharacterRelationModal;

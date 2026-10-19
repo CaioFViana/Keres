@@ -1,12 +1,13 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import CanvasLine from '../../src/components/features/graphs/CanvasLine/CanvasLine';
-import GraphCanvasControls from '../../src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
-import GraphConnectionModal from '../../src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
-import GraphNodeSheet from '../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
+import CanvasLine from '@/src/components/features/graphs/CanvasLine/CanvasLine';
+import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
+import GraphEmptyState from '@/src/components/features/graphs/GraphEmptyState/GraphEmptyState';
+import GraphConnectionModal from '@/src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
+import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -27,7 +28,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -36,7 +37,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -60,7 +61,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -176,6 +177,79 @@ describe('GraphCanvasControls', () => {
   });
 });
 
+describe('GraphCanvasControls centring', () => {
+  it('shows the centre button only where something can be selected, and wires it', async () => {
+    const base = { onZoomIn: jest.fn(), onZoomOut: jest.fn(), onFit: jest.fn() };
+    const without = await render(<GraphCanvasControls {...base} />);
+    expect(without.queryByLabelText('center_on_selection')).toBeNull();
+
+    const onCenterSelection = jest.fn();
+    const withIt = await render(
+      <GraphCanvasControls {...base} onCenterSelection={onCenterSelection} />,
+    );
+    await fireEvent.press(withIt.getByLabelText('center_on_selection'));
+    expect(onCenterSelection).toHaveBeenCalledTimes(1);
+
+    const named = await render(
+      <GraphCanvasControls
+        {...base}
+        onCenterSelection={onCenterSelection}
+        labels={{ zoomIn: 'in', zoomOut: 'out', fit: 'fit', center: 'Go to character' }}
+      />,
+    );
+    expect(named.getByLabelText('Go to character')).toBeTruthy();
+  });
+});
+
+describe('GraphEmptyState', () => {
+  const colors = {
+    textSecondary: '#555',
+    text: '#111',
+    background: '#fff',
+    surface: '#fff',
+    border: '#ddd',
+    primary: '#00f',
+    onPrimary: '#fff',
+    error: '#f00',
+    primaryContainer: '#aaf',
+  } as never;
+
+  it('says what is missing and nothing more by default', async () => {
+    const view = await render(
+      <GraphEmptyState colors={colors} icon="people-outline" message="Nothing here" />,
+    );
+
+    expect(view.getByText('Nothing here')).toBeTruthy();
+    expect(view.queryByTestId('Create')).toBeNull();
+  });
+
+  it('adds a hint and an action that goes where the author can fix it', async () => {
+    const onAction = jest.fn();
+    const view = await render(
+      <GraphEmptyState
+        colors={colors}
+        icon="people-outline"
+        message="No characters yet"
+        hint="Characters you create show up here."
+        actionLabel="Create"
+        onAction={onAction}
+      />,
+    );
+
+    expect(view.getByText('Characters you create show up here.')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('Create'));
+    expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no action without a handler', async () => {
+    const view = await render(
+      <GraphEmptyState colors={colors} icon="people-outline" message="x" actionLabel="Create" />,
+    );
+
+    expect(view.queryByTestId('Create')).toBeNull();
+  });
+});
+
 describe('GraphNodeSheet', () => {
   const sections = [
     {
@@ -240,6 +314,90 @@ describe('GraphNodeSheet', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
     await pressText(view, 'Ghost');
     expect(sections[0].items?.[1].onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('GraphNodeSheet editing', () => {
+  const baseProps = {
+    title: 'Aria',
+    actionLabel: 'Open',
+    onAction: jest.fn(),
+    onClose: jest.fn(),
+  };
+
+  it('puts small actions at the end of a row, each acting only on its own', async () => {
+    const open = jest.fn();
+    const edit = jest.fn();
+    const remove = jest.fn();
+    const view = await render(
+      <GraphNodeSheet
+        {...baseProps}
+        sections={[
+          {
+            title: 'Relations',
+            items: [
+              {
+                id: 'r1',
+                icon: 'people-outline',
+                label: 'Bram',
+                detail: 'friend',
+                onPress: open,
+                trailing: [
+                  { icon: 'pencil', label: 'Edit Bram', onPress: edit },
+                  {
+                    icon: 'trash-outline',
+                    label: 'Remove Bram',
+                    onPress: remove,
+                    destructive: true,
+                  },
+                ],
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    await fireEvent.press(view.getByLabelText('Edit Bram'));
+    await fireEvent.press(view.getByLabelText('Remove Bram'));
+    expect(edit).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(open).not.toHaveBeenCalled();
+
+    await fireEvent.press(view.getByText('Bram'));
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds a button under the rows of a section, with or without rows', async () => {
+    const add = jest.fn();
+    const view = await render(
+      <GraphNodeSheet
+        {...baseProps}
+        sections={[
+          {
+            title: 'Relations',
+            emptyMessage: 'None yet',
+            items: [],
+            actions: [{ label: 'Add relation', onPress: add }],
+          },
+        ]}
+      />,
+    );
+
+    expect(view.getByText('None yet')).toBeTruthy();
+    await fireEvent.press(view.getByText('Add relation'));
+    expect(add).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no add button for a section that has none', async () => {
+    const view = await render(
+      <GraphNodeSheet
+        {...baseProps}
+        sections={[{ title: 'Relations', emptyMessage: 'None yet', items: [] }]}
+      />,
+    );
+
+    expect(view.queryByText('Add relation')).toBeNull();
   });
 });
 

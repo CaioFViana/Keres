@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../../db';
+import { useDrizzle } from '@/src/db';
 import {
   createChapterService,
   type ChapterService,
-} from '../../../services/storymanagement/ChapterService';
+} from '@/src/services/storymanagement/scenes-chapters/ChapterService';
 
 /** Owns the chapter service used by the form. */
 export function useChapterFormResources() {

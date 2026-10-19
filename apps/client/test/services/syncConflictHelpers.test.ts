@@ -4,7 +4,7 @@
 import {
   foldServerSnapshot,
   withoutDerivedPosition,
-} from '../../src/services/sync/syncConflictHelpers';
+} from '@/src/services/sync/syncConflictHelpers';
 
 describe('withoutDerivedPosition', () => {
   it("drops an arranged row's position: each device derives it from the rank", () => {

@@ -1,16 +1,21 @@
 /** @jest-environment node */
-jest.mock('../../src/services/MediaFileService', () => ({
+import axios from 'axios';
+import { eq } from 'drizzle-orm';
+import * as schema from '@/src/db/schema';
+import { createLocationMapService } from '@/src/services/storymanagement/entities/LocationMapService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@/src/services/media/MediaFileService', () => ({
   __esModule: true,
   mediaFileService: { deleteStoryMedia: jest.fn() },
 }));
-
-import axios from 'axios';
-import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createLocationMapService } from '../../src/services/storymanagement/LocationMapService';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 /**
  * The story service's edges: the not-found guards, the favorite reroute, plot counting, and the

@@ -1,18 +1,18 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { and, eq } from 'drizzle-orm';
-import { DrizzleContext } from '../db';
-import * as schema from '../db/schema';
-import { useStoryStore } from '../state/storyStore';
-import { entityEventEmitter } from '../utils/EventEmitter';
-import { useEntityInitialLoad } from '../hooks/useEntityRefreshLifecycle';
+import { DrizzleContext } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 import {
   buildMentionMatcher,
   EMPTY_MENTION_MATCHER,
   type MentionableEntity,
   type MentionMatcher,
-} from '../utils/entityMentions';
-import { loadEntityOptions } from '../utils/entityOptions';
-import { debounce } from '../utils/debounce';
+} from '@/src/utils/entity/entityMentions';
+import { loadEntityOptions } from '@/src/services/entity-solvers/entityOptions';
+import { debounce } from '@/src/utils/sync/debounce';
 import {
   buildAmbiguousMentionIndex,
   buildMentionBacklinkIndex,

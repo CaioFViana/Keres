@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { Animated, Platform, View } from 'react-native';
-import type { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
-import { useTheme } from '../../../../theme';
+import type { useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
+import { useTheme } from '@/src/theme';
 
 type CanvasViewportResult = ReturnType<typeof useCanvasViewport>;
 
@@ -28,6 +28,11 @@ interface GraphCanvasFrameProps {
    * armed; empty otherwise, so idle taps keep reaching the nodes below.
    */
   interactionOverlay?: React.ReactNode;
+  /**
+   * What the canvas is, for a screen reader (`Character relations`). It names the canvas as a
+   * region; on web the same element takes the keyboard, so `+`, `-`, `0` and the arrows work.
+   */
+  label?: string;
 }
 
 /**
@@ -92,6 +97,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   underlay,
   overlay,
   interactionOverlay,
+  label,
 }) => {
   const { colors } = useTheme();
 
@@ -102,7 +108,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
         overflow: 'hidden' as const,
         backgroundColor: colors.background,
         ...(Platform.OS === 'web'
-          ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
+          ? ({ userSelect: 'none', cursor: 'grab', outlineStyle: 'none' } as Record<string, string>)
           : {}),
       },
       content: graphCanvasPlaneStyle,
@@ -116,7 +122,15 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   useEffect(() => suppressNativeDragOnContainer(containerRef, Platform.OS), [containerRef]);
 
   return (
-    <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
+    <View
+      ref={containerRef}
+      style={styles.container}
+      onLayout={handleLayout}
+      role={label ? 'region' : undefined}
+      accessibilityLabel={label}
+      tabIndex={Platform.OS === 'web' ? 0 : undefined}
+      {...panHandlers}
+    >
       {underlay}
       {overlay}
       <Animated.View

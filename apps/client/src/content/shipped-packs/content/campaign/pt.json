@@ -1,0 +1,315 @@
+{
+  "id": "KRSPKCMPPTP000000000000000",
+  "name": "Campanha de mesa",
+  "description": "Uma crônica do que aconteceu na mesa: sessões com a data real, quem estava lá e as pontas soltas. Notas para o histórico, não um sistema de jogo.",
+  "authorName": "Keres",
+  "version": 1,
+  "content": {
+    "formatVersion": 1,
+    "storySchemaFields": [
+      {
+        "id": "KRSPKCMPPTF000000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "entityType": "Chapter",
+        "name": "Jogada em",
+        "key": "session_date",
+        "description": "A data real em que a mesa se reuniu, não a data na história.",
+        "type": "date",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 0,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTF001000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "entityType": "Chapter",
+        "name": "Na mesa",
+        "key": "at_the_table",
+        "description": "Quem jogou esta sessão.",
+        "type": "text",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 1,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTF002000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "entityType": "Chapter",
+        "name": "Pontas soltas",
+        "key": "open_threads",
+        "description": "O que ficou pendente, para retomar na próxima.",
+        "type": "long_text",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 2,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTF003000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "entityType": "Character",
+        "name": "Papel na mesa",
+        "key": "character_kind",
+        "description": null,
+        "type": "suggestion",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 3,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTF004000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "entityType": "Character",
+        "name": "Jogado por",
+        "key": "played_by",
+        "description": null,
+        "type": "text",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 4,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "suggestions": [
+      {
+        "id": "KRSPKCMPPTS060000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "type": "custom:KRSPKCMPPTF003000000000000",
+        "value": "Personagem de jogador",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTS061000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "type": "custom:KRSPKCMPPTF003000000000000",
+        "value": "NPC",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTS062000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "type": "custom:KRSPKCMPPTF003000000000000",
+        "value": "Companheiro",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTS063000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "type": "custom:KRSPKCMPPTF003000000000000",
+        "value": "Monstro",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "tags": [
+      {
+        "id": "KRSPKCMPPTG000000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "name": "NPC",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTG001000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "name": "Facção",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTG002000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "name": "Missão",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTG003000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "name": "Item mágico",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPPTG004000000000000",
+        "storyId": "KRSPKCMPPTP000000000000000",
+        "name": "Rumor",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "extras": {
+      "notes": [
+        {
+          "id": "KRSPKCMPPTN000000000000000",
+          "storyId": "KRSPKCMPPTP000000000000000",
+          "title": "Sessão zero",
+          "body": "O que a mesa combinou antes da primeira sessão: tom, limites, frequência dos encontros, quem conduz o jogo.",
+          "isFavorite": false,
+          "extraNotes": null,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        },
+        {
+          "id": "KRSPKCMPPTN001000000000000",
+          "storyId": "KRSPKCMPPTP000000000000000",
+          "title": "Regras da casa",
+          "body": "As regras pelas quais esta mesa joga, onde diferem do livro.",
+          "isFavorite": false,
+          "extraNotes": null,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        },
+        {
+          "id": "KRSPKCMPPTN002000000000000",
+          "storyId": "KRSPKCMPPTP000000000000000",
+          "title": "Linha do tempo da campanha",
+          "body": "Os grandes acontecimentos em ordem, sessão a sessão.",
+          "isFavorite": false,
+          "extraNotes": null,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        }
+      ]
+    },
+    "stats": [],
+    "statStrengths": [],
+    "settings": {
+      "statSystem": false,
+      "statNotation": "letter",
+      "vocabulary": {
+        "version": 1,
+        "language": "pt",
+        "terms": {
+          "Character": {
+            "singular": "Personagem",
+            "plural": "Personagens",
+            "grammaticalGender": "masculine"
+          },
+          "Location": {
+            "singular": "Local",
+            "plural": "Locais",
+            "grammaticalGender": "masculine"
+          },
+          "Chapter": {
+            "singular": "Sessão",
+            "plural": "Sessões",
+            "grammaticalGender": "feminine"
+          },
+          "Scene": {
+            "singular": "Cena",
+            "plural": "Cenas",
+            "grammaticalGender": "feminine"
+          },
+          "Event": {
+            "singular": "Evento de jogo",
+            "plural": "Eventos de jogo",
+            "grammaticalGender": "masculine"
+          },
+          "Item": {
+            "singular": "Item",
+            "plural": "Itens",
+            "grammaticalGender": "masculine"
+          },
+          "WorldRule": {
+            "singular": "Regra de mesa",
+            "plural": "Regras de mesa",
+            "grammaticalGender": "feminine"
+          },
+          "Choice": {
+            "singular": "Decisão de jogador",
+            "plural": "Decisões de jogador",
+            "grammaticalGender": "feminine"
+          },
+          "Arc": {
+            "singular": "Módulo",
+            "plural": "Módulos",
+            "grammaticalGender": "masculine"
+          }
+        }
+      }
+    }
+  }
+}

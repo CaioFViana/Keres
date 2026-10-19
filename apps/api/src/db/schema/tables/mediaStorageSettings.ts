@@ -1,4 +1,4 @@
-import { table, text, timestampNow } from '../columns';
+import { table, text, timestampNow } from '@/db/schema/columns';
 
 export const MEDIA_STORAGE_SETTINGS_SINGLETON_ID = 'singleton';
 

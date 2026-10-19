@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 // Runs with Node access, isolated from the page (contextIsolation: true in main.ts).
-// Bridges apps/client's media storage (see src/services/webMediaStore.ts) to real files on
+// Bridges apps/client's media storage (see src/services/platform-web/webMediaStore.ts) to real files on
 // disk through the main process - the renderer itself has no filesystem access. SQLite
 // stays on OPFS via expo-sqlite's own web implementation; only media (photos/videos) goes
 // through here, so imported files are real, visible, backupable files instead of living

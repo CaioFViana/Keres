@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateGalleryRelationDataSchema, PartialGalleryRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
+import { db, type CompatibleDb } from '@/db';
 import {
   characters,
   galleries,
@@ -16,8 +16,9 @@ import {
   locations,
   notes,
   scenes,
+  songs,
   worldRules,
-} from '../../db/schema';
+} from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 /**
@@ -123,6 +124,13 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
           ),
         });
         ownerExists = !!worldRule;
+        break;
+      }
+      case 'Song': {
+        const song = await database.query.songs.findFirst({
+          where: and(eq(songs.id, ownerId), eq(songs.storyId, storyId), eq(songs.isDeleted, false)),
+        });
+        ownerExists = !!song;
         break;
       }
       default:

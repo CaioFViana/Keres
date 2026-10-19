@@ -1,8 +1,8 @@
 import * as SkiaMock from '@shopify/react-native-skia';
 import { renderHook } from '@testing-library/react-native';
-import mediumTtf from '../../assets/fonts/Roboto-Medium.ttf';
-import regularTtf from '../../assets/fonts/Roboto-Regular.ttf';
-import { useEdgeFont } from '../../src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
+import mediumTtf from '@/assets/fonts/Roboto-Medium.ttf';
+import regularTtf from '@/assets/fonts/Roboto-Regular.ttf';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
 
 const bundledFont = { source: 'bundled' };
 const systemFont = { source: 'system' };

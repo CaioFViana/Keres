@@ -2,13 +2,21 @@ import { KeyboardAwareContext } from '@/src/components/layout/KeyboardAwareScree
 import React, { useContext, useState } from 'react';
 import type { TextInputProps } from 'react-native';
 import { Platform, TextInput as RNTextInput, StyleSheet } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 type CustomTextInputProps = TextInputProps & {
   /** The parent composite control already draws the focus boundary. */
   suppressInteractionBorder?: boolean;
 };
+
+const styles = StyleSheet.create({
+  multilineInput: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    textAlignVertical: 'top',
+  },
+});
 
 const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
   (
@@ -29,14 +37,6 @@ const TextInput = React.forwardRef<RNTextInput, CustomTextInputProps>(
     const [isFocused, setIsFocused] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const commonInputStyles = getCommonInputStyles(colors);
-
-    const styles = StyleSheet.create({
-      multilineInput: {
-        paddingTop: 10,
-        paddingBottom: 10,
-        textAlignVertical: 'top',
-      },
-    });
 
     // A multiline field asks to grow taller than the single-line default via `minHeight` in its
     // own `style` prop (normally `commonInputStyles.multiline`) - but every fixed

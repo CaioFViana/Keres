@@ -57,5 +57,5 @@ ${entries.join('\n')}
 };
 `;
 
-writeFileSync(join(process.cwd(), 'apps/client/src/utils/keresIconPaths.ts'), out);
+writeFileSync(join(process.cwd(), 'apps/client/src/utils/svg/keresIconPaths.ts'), out);
 console.log(`wrote ${entries.length} icons`);

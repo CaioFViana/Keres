@@ -3,7 +3,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import migrations from '../../src/db/migrations/index';
+import migrations from '@/src/db/migrations/index';
 
 /**
  * The three views of a client migration agree: the SQL, the generated module, and the index.

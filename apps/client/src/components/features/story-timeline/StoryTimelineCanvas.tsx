@@ -2,18 +2,18 @@ import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import CanvasLine from '@/src/components/features/graphs/CanvasLine/CanvasLine';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
-import { useCanvasViewport } from '@/src/hooks/useCanvasViewport';
+import type { CanvasViewportHandle } from '@/src/hooks/canvas/useCanvasViewport';
+import { useCanvasViewport } from '@/src/hooks/canvas/useCanvasViewport';
 import { useTheme } from '@/src/theme';
 import { getContrastTextColor, getReadableInk, spatialRectIntersects } from '@keres/shared';
-import type { StoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
+import type { StoryTimelineLayout } from '@keres/shared/graphs/timeline/storyTimelineLayout';
 import {
   TIMELINE_EVENT_LANE_HEIGHT,
   TIMELINE_LABEL_PADDING,
   TIMELINE_LABEL_WIDTH,
   TIMELINE_PADDING,
   TIMELINE_ROW_HEIGHT,
-} from '@keres/shared/graphs/storyTimelineLayout';
+} from '@keres/shared/graphs/timeline/storyTimelineLayout';
 
 interface Props {
   layout: StoryTimelineLayout;
@@ -162,8 +162,8 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             justifyContent: 'center',
           },
           rowTitle: { fontSize: 12, fontWeight: '700' },
-          rowDate: { fontSize: 9, marginTop: 1, color: colors.textSecondary },
-          chapter: { fontSize: 9, marginTop: 2 },
+          rowDate: { fontSize: 10, marginTop: 1, color: colors.textSecondary },
+          chapter: { fontSize: 10, marginTop: 2 },
           band: { position: 'absolute', borderWidth: 0.5 },
           eventBand: { position: 'absolute', borderRadius: 4, borderWidth: 1 },
           eventLabel: { position: 'absolute', fontSize: 10, fontWeight: '700' },
@@ -181,9 +181,9 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             justifyContent: 'center',
             paddingHorizontal: 6,
           },
-          barText: { fontSize: 9, fontWeight: '700', textAlign: 'center' },
-          gapText: { position: 'absolute', fontSize: 9, textAlign: 'center' },
-          sequence: { position: 'absolute', fontSize: 9, textAlign: 'center' },
+          barText: { fontSize: 10, fontWeight: '700', textAlign: 'center' },
+          gapText: { position: 'absolute', fontSize: 10, textAlign: 'center' },
+          sequence: { position: 'absolute', fontSize: 10, textAlign: 'center' },
         }),
       [colors.textSecondary],
     );

@@ -100,6 +100,14 @@ bun run client:build
 
 The output is written to `apps/client/dist`. It is static, but SQLite/OPFS support requires cross-origin isolation headers (`Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`) from the web server. The Electron wrapper already configures this environment.
 
+The base path is baked into every URL of an export, so each place it is served from has its own build, picked with `KERES_WEB_BASE_URL` (see `app.config.js`):
+
+| Script | Served from | Output |
+| --- | --- | --- |
+| `client:build` | the root - the Electron shell (`app://`) | `dist` |
+| `client:build:hosted` | `/client`, by the API | `dist-hosted` |
+| `build:pages` | `/Keres/client`, on GitHub Pages (serverless) | `dist-pages` |
+
 ### Desktop
 
 From the monorepo root:

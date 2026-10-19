@@ -2,7 +2,7 @@
   "expo": {
     "name": "Keres",
     "slug": "Keres-Client",
-    "version": "1.9.0",
+    "version": "1.10.1",
     "icon": "./assets/images/icon.png",
     "scheme": "keresclient",
     "userInterfaceStyle": "automatic",
@@ -18,7 +18,7 @@
       },
       "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.KeresClient"
+      "package": "me.keres.client"
     },
     "web": {
       "output": "single",
@@ -38,11 +38,13 @@
         }
       ],
       "expo-sqlite",
+      "expo-iap",
       "expo-secure-store",
       "expo-font",
       "expo-video",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      "./plugins/withCleartextTraffic"
     ],
     "experiments": {
       "reactCompiler": true

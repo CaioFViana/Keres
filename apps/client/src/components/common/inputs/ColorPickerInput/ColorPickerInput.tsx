@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import ColorPickerModal from '@/src/components/common/inputs/ColorPickerInput/ColorPickerModal';
 
@@ -30,7 +32,48 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
     setModalVisible(false);
   };
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles, [currentColor]);
+
+  return (
+    <View style={[styles.container, style]}>
+      <View style={[styles.inputWrapper]}>
+        <Pressable style={styles.colorSwatchButton} onPress={() => setModalVisible(true)}>
+          {/* Display color palette icon */}
+          <Ionicons
+            name={currentColor ? 'color-palette' : 'color-palette-outline'}
+            size={20}
+            color={colors.text}
+          />
+        </Pressable>
+        <TextInput
+          style={styles.textInput}
+          value={currentColor}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textSecondary}
+          editable={false}
+        />
+      </View>
+
+      <ResponsiveModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        contentStyle={styles.modalView}
+        inset="roomy"
+        maxHeight="92%"
+      >
+        <ColorPickerModal
+          currentColor={currentColor}
+          onSelectColor={handleSelectColor}
+          onClose={() => setModalVisible(false)}
+          title={placeholder}
+        />
+      </ResponsiveModal>
+    </View>
+  );
+};
+
+const createStyles = (colors: ThemeColors, [currentColor]: [string]) =>
+  StyleSheet.create({
     // A single border. `commonInputStyles.input` does NOT go here: it already brings a border +
     // `height: 50`, and added to this wrapper's border it drew two nested frames - and taller than it
     // should be, because `customComponentInput` still adds `paddingBottom: 50`. `marginBottom: 0` like
@@ -65,57 +108,17 @@ const ColorPickerInput: React.FC<ColorPickerInputProps> = ({
       borderColor: colors.text,
     },
     textInput: {
+      ...typography.bodyLarge,
       flex: 1,
       height: '100%',
       color: colors.text,
-      fontSize: 16,
       paddingHorizontal: 10,
       borderWidth: 0,
       backgroundColor: 'transparent',
     },
     modalView: {
-      backgroundColor: colors.background, // Use background for modal content
-      borderRadius: 20,
-      padding: 20,
       alignItems: 'center',
     },
   });
-
-  return (
-    <View style={[styles.container, style]}>
-      <View style={[styles.inputWrapper]}>
-        <Pressable style={styles.colorSwatchButton} onPress={() => setModalVisible(true)}>
-          {/* Display color palette icon */}
-          <Ionicons
-            name={currentColor ? 'color-palette' : 'color-palette-outline'}
-            size={20}
-            color={colors.text}
-          />
-        </Pressable>
-        <TextInput
-          style={styles.textInput}
-          value={currentColor}
-          placeholder={placeholder}
-          placeholderTextColor={colors.textSecondary}
-          editable={false}
-        />
-      </View>
-
-      <ResponsiveModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        contentStyle={styles.modalView}
-        maxHeight="92%"
-      >
-        <ColorPickerModal
-          currentColor={currentColor}
-          onSelectColor={handleSelectColor}
-          onClose={() => setModalVisible(false)}
-          title={placeholder}
-        />
-      </ResponsiveModal>
-    </View>
-  );
-};
 
 export default ColorPickerInput;

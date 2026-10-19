@@ -7,8 +7,8 @@ import {
   type ShowcaseStoryCard,
   type ShowcaseStoryDetail,
 } from '@keres/shared';
-import { ShowcaseApp } from '../../src/showcase/App';
-import { click, flush, render } from '../helpers/react';
+import { ShowcaseApp } from '@/showcase/App';
+import { click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => ({
   fetchPack: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
@@ -34,6 +34,7 @@ vi.mock('../../src/showcase/api/showcaseApi', () => ({
 
 const card: ShowcaseStoryCard = {
   storyId: 'story-1',
+  isNsfw: false,
   snapshot: {
     title: 'O Vale Silencioso',
     description: 'Uma trilha que ninguém percorre duas vezes.',
@@ -185,6 +186,7 @@ const unorderedPack: ShowcasePackDetail = {
       worldRules: [],
       notes: [],
       storyBoards: [],
+      storySketches: [],
       storyLocationMaps: [],
       characterScenes: [],
       characterRelations: [],

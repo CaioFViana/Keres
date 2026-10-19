@@ -1,10 +1,11 @@
 import type { ShowcaseStoryCard } from '@keres/shared';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
-import { paletteVars } from '../theme/paletteVars';
+import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
+import { paletteVars } from '@/showcase/theme/paletteVars';
 import { OwnerAvatar } from './OwnerAvatar';
-import { formatBytes, formatDate, genreList } from '../format';
+import { StoryCover } from './StoryCover';
+import { formatBytes, formatDate, genreList } from '@/showcase/format';
 
 export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
   const { resolved } = useShowcaseTheme();
@@ -20,10 +21,12 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
       style={paletteVars(snapshot.theme, resolved)}
     >
       <div className="story-card-accent" aria-hidden="true" />
+      <StoryCover storyId={story.storyId} hasCover={story.hasCover} className="story-card-cover" />
       <div className="story-card-body">
         <div className="story-card-head">
           <h3>{snapshot.title}</h3>
           <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
+          {story.isNsfw && <span className="badge badge-adult">{t('story.adultsOnly')}</span>}
         </div>
 
         {snapshot.description && <p className="story-card-desc">{snapshot.description}</p>}

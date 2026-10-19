@@ -1,9 +1,9 @@
-import { buildMentionMatcher } from '../../src/utils/entityMentions';
+import { buildMentionMatcher } from '@/src/utils/entity/entityMentions';
 import {
   buildAmbiguousMentionIndex,
   buildMentionBacklinkIndex,
   mentionRefKey,
-} from '../../src/mentions/mentionBacklinks';
+} from '@/src/mentions/mentionBacklinks';
 
 describe('mention backlinks', () => {
   it('uses the exact same conservative matcher as automatic links', () => {

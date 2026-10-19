@@ -3,11 +3,11 @@ import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/C
 import type { StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AppDrizzleClient } from '../../db';
-import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
-import type { NoteService } from '../../services/storymanagement/NoteService';
+import type { AppDrizzleClient } from '@/src/db';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import type { NoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
 
 type UseNoteFormStateOptions = {
   initialNoteId?: string;

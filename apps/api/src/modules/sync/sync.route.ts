@@ -7,12 +7,12 @@ import {
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { z } from 'zod';
-import { env } from '../../config/env';
-import type { JWTPayload } from '../../index';
-import { syncService } from '../../services/SyncService';
-import { logger } from '../../utils/logger';
-import { AppError } from '../../utils/errors';
-import { createAttemptLimiter } from '../../utils/rateLimiter';
+import { env } from '@/config/env';
+import type { JWTPayload } from '@/index';
+import { syncService } from '@/services/sync/SyncService';
+import { logger } from '@/utils/logger';
+import { AppError } from '@/utils/errors';
+import { createAttemptLimiter } from '@/utils/rateLimiter';
 
 const syncAttemptLimiter = createAttemptLimiter({
   maxAttempts: env.SYNC_REQUESTS_PER_MINUTE,

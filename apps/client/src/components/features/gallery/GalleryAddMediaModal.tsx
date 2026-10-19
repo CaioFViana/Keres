@@ -2,8 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export type EntityMediaAddKind = 'playable' | 'document' | 'link' | 'existing';
 
@@ -28,47 +30,17 @@ const addKinds: {
 const GalleryAddMediaModal: React.FC<Props> = ({ visible, onClose, onPick }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const styles = StyleSheet.create({
-    sheet: { backgroundColor: colors.surface, borderRadius: 10, padding: 20 },
-    header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-    title: { color: colors.text, flex: 1, fontSize: 20, fontWeight: 'bold' },
-    close: { padding: 4 },
-    message: { color: colors.textSecondary, lineHeight: 19, marginTop: 8 },
-    options: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 14,
-      justifyContent: 'center',
-      marginTop: 22,
-    },
-    option: {
-      alignItems: 'center',
-      backgroundColor: colors.primary,
-      borderRadius: 12,
-      height: 60,
-      justifyContent: 'center',
-      width: 60,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ResponsiveModal
       visible={visible}
       onClose={onClose}
-      contentStyle={styles.sheet}
+      tone="raised"
+      inset="roomy"
       maxHeight="86%"
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('gallery_add_title')}</Text>
-        <TouchableOpacity
-          accessibilityLabel={t('cancel')}
-          accessibilityRole="button"
-          onPress={onClose}
-          style={styles.close}
-        >
-          <Ionicons name="close" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader title={t('gallery_add_title')} onClose={onClose} closeLabel={t('cancel')} />
       <Text style={styles.message}>{t('gallery_add_message')}</Text>
       <View style={styles.options}>
         {addKinds.map((option) => (
@@ -86,5 +58,25 @@ const GalleryAddMediaModal: React.FC<Props> = ({ visible, onClose, onPick }) => 
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    message: { color: colors.textSecondary, lineHeight: 19 },
+    options: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 14,
+      justifyContent: 'center',
+      marginTop: 22,
+    },
+    option: {
+      alignItems: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      height: 60,
+      justifyContent: 'center',
+      width: 60,
+    },
+  });
 
 export default GalleryAddMediaModal;

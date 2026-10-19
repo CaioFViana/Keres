@@ -3,9 +3,9 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ItemJourneySelect, SceneSelect } from '@/src/db/schema';
-import { useChapterNames } from '@/src/hooks/useChapterNames';
+import { useChapterNames } from '@/src/hooks/chapter/useChapterNames';
 import { useTheme } from '@/src/theme';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 
 interface ItemJourneyRowsProps {
   journeys: ItemJourneySelect[];

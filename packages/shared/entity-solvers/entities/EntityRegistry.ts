@@ -22,6 +22,10 @@ import { locationEntityHandler } from './LocationEntityHandler';
 import { noteEntityHandler } from './NoteEntityHandler';
 import { tagEntityHandler } from './TagEntityHandler';
 import { boardEntityHandler } from './BoardEntityHandler';
+import { sketchEntityHandler } from './SketchEntityHandler';
+import { scenePageEntityHandler } from './ScenePageEntityHandler';
+import { sceneMusicEntityHandler } from './SceneMusicEntityHandler';
+import { songEntityHandler } from './SongEntityHandler';
 import { storyEntityHandler } from './StoryEntityHandler';
 import { locationMapEntityHandler } from './LocationMapEntityHandler';
 import { statEntityHandler } from './StatEntityHandler';
@@ -69,6 +73,10 @@ const ENTITY_HANDLERS: ReadonlyMap<OperationLogEntityType, EntityDomainHandler> 
   [noteEntityHandler.entityType, noteEntityHandler],
   [tagEntityHandler.entityType, tagEntityHandler],
   [boardEntityHandler.entityType, boardEntityHandler],
+  [sketchEntityHandler.entityType, sketchEntityHandler],
+  [scenePageEntityHandler.entityType, scenePageEntityHandler],
+  [sceneMusicEntityHandler.entityType, sceneMusicEntityHandler],
+  [songEntityHandler.entityType, songEntityHandler],
   [storyEntityHandler.entityType, storyEntityHandler],
   [locationMapEntityHandler.entityType, locationMapEntityHandler],
   [statEntityHandler.entityType, statEntityHandler],
@@ -183,6 +191,109 @@ export function getStorySyncEntityTypes(): readonly OperationLogEntityType[] {
   return [...ENTITY_HANDLERS.values()]
     .filter((handler) => handler.syncable !== false)
     .map((handler) => handler.entityType);
+}
+
+/**
+ * What a plan's entity ceilings (`maxEntitiesPerStory`, `maxEntitiesTotal`) do not count at all. The Story
+ * itself has its own ceiling (`maxStories`). A Favorite is a personal annotation. A Comment is a remark
+ * on the story, not story content: it has its own per-story ceiling (`maxCommentsPerStory`), counted
+ * for all its authors, against the story owner's plan.
+ */
+export const TIER_EXEMPT_ENTITY_TYPES: readonly string[] = ['Story', 'Favorite', 'Comment'];
+
+/**
+ * Rows that only tie entities together or give them a value. Kept, synchronized and shown, never counted:
+ * a plan limits what the writer creates (characters, scenes, custom field and stat definitions...), not how
+ * many times those are linked or filled in.
+ *
+ *  - links between two entities: character, location, note, tag, gallery and see-also relations, the
+ *    characters of a scene, the scenes of a plot, the steps of a route, an item's journey through scenes;
+ *  - values: what a custom field holds for an entity (`AttributeValue`) and a character's value of a stat
+ *    (`StatRelation`). The definitions they fill in (`StorySchemaField`, `Stat`) still count.
+ */
+export const TIER_RELATIONAL_ENTITY_TYPES: readonly string[] = [
+  'CharacterRelation',
+  'LocationRelation',
+  'NoteRelation',
+  'TagRelation',
+  'GalleryRelation',
+  'SeeAlsoRelation',
+  'CharacterScene',
+  'PlotScene',
+  'RouteStep',
+  'ItemJourney',
+  'AttributeValue',
+  'StatRelation',
+];
+
+/**
+ * Rows that are part of another entity, or a consequence or configuration of one, so no plan counts them.
+ * Counting the parts would charge twice for one thing the writer made: a scene is one entity whatever pages,
+ * music and choices it holds, and a choice is one whatever checks and effects it has.
+ *
+ *  - parts of an entity: a scene's pages (`ScenePage`) and music (`SceneMusic`), a choice's checks
+ *    (`ChoiceCheckGroup`, `ChoiceCheck`), a stat's ladder levels (`StatStrength`);
+ *  - consequences and configuration: the effects a choice applies (`Effect`), the branching `Choice` itself,
+ *    a chapter's anchor scene (`ChapterAnchor`), the suggested values of a custom field (`Suggestion`);
+ *  - `Gallery`: a media file is limited by its bytes, which keep their own quota (`maxStorageBytesPerStory`,
+ *    `maxStorageBytesTotal`), so counting the file as an entity as well would charge it twice.
+ */
+export const TIER_PART_ENTITY_TYPES: readonly string[] = [
+  'ScenePage',
+  'SceneMusic',
+  'ChoiceCheckGroup',
+  'ChoiceCheck',
+  'StatStrength',
+  'Effect',
+  'Choice',
+  'ChapterAnchor',
+  'Suggestion',
+  'Gallery',
+];
+
+/**
+ * The entity types the plan's entity ceilings count; the API enforces them, the client reports them.
+ * Everything a story synchronizes is counted except the exempt, the links and values, and the parts.
+ */
+export function getTierCountedEntityTypes(): readonly OperationLogEntityType[] {
+  return getStorySyncEntityTypes().filter(
+    (type) =>
+      !TIER_EXEMPT_ENTITY_TYPES.includes(type) &&
+      !TIER_RELATIONAL_ENTITY_TYPES.includes(type) &&
+      !TIER_PART_ENTITY_TYPES.includes(type),
+  );
+}
+
+/**
+ * How many entities of a portable story package a plan's entity ceilings would count: the live rows of the
+ * counted types only, the same rule `getTierCountedEntityTypes` gives the API and the client elsewhere. For an
+ * upload to be judged before it is written, not after.
+ */
+export function countTierEntitiesInStoryPackage(storyPackage: object): number {
+  const counted = new Set<string>(getTierCountedEntityTypes());
+  const collections = storyPackage as Record<string, unknown>;
+  let total = 0;
+  for (const { entityType, collection } of getStoryExportCollections()) {
+    if (!counted.has(entityType)) continue;
+    const rows = collections[collection];
+    if (!Array.isArray(rows)) continue;
+    total += rows.filter(
+      (row) =>
+        !(row && typeof row === 'object' && (row as { isDeleted?: unknown }).isDeleted === true),
+    ).length;
+  }
+  return total;
+}
+
+/**
+ * The entity types a story synchronizes that no plan counts: the links and values
+ * (`TIER_RELATIONAL_ENTITY_TYPES`) and the parts, consequences and configuration (`TIER_PART_ENTITY_TYPES`).
+ * The client shows them apart, for information.
+ */
+export function getTierFreeEntityTypes(): readonly OperationLogEntityType[] {
+  return getStorySyncEntityTypes().filter(
+    (type) => TIER_RELATIONAL_ENTITY_TYPES.includes(type) || TIER_PART_ENTITY_TYPES.includes(type),
+  );
 }
 
 /**

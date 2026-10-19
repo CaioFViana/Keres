@@ -1,6 +1,6 @@
 import { desc, relations } from 'drizzle-orm';
-import { index, json, table, text, timestampNow } from '../columns';
-import { apiLogLevelEnum } from '../enums';
+import { index, json, table, text, timestampNow } from '@/db/schema/columns';
+import { apiLogLevelEnum } from '@/db/schema/enums';
 import { stories } from './stories';
 import { users } from './users';
 

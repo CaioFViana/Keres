@@ -1,15 +1,15 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import LocationMapHeaderActions from '../../src/components/features/location-maps/LocationMapHeaderActions';
+import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { primary: '#9b5cff', text: '#fff', textSecondary: '#888' } }),
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const mockScreenAnchor = jest.fn();
-jest.mock('../../src/guides/useGuideAnchor', () => ({
+jest.mock('@/src/hooks/guides/useGuideAnchor', () => ({
   __esModule: true,
-  useGuideAnchor: jest.fn(() => () => {}),
+  useGuideAnchor: (id: string) => mockScreenAnchor(id),
   useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
 }));
 
@@ -34,7 +34,7 @@ describe('LocationMapHeaderActions', () => {
 
     expect(view.getByTestId('location-map-revert')).toBeTruthy();
     expect(view.getByTestId('location-map-save')).toBeTruthy();
-    expect(mockScreenAnchor).toHaveBeenCalledWith('LocationMap', 'document');
+    expect(mockScreenAnchor).toHaveBeenCalledWith('screen:LocationMap:document');
     expect(view.queryByLabelText('graph_connection_mode')).toBeNull();
     expect(view.queryByLabelText('trajectory_show')).toBeNull();
     expect(view.queryByLabelText('objects_edit')).toBeNull();

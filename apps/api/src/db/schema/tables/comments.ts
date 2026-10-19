@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { stories } from './stories';
 import { storySchemaFields } from './storySchemaFields';
 import { users } from './users';
@@ -14,7 +14,7 @@ export const comments = table('comments', {
   // database FK, the same pattern as AttributeValue.entityId/NoteRelation.relationId.
   entityType: text('entity_type').$type<CommentEntityType>().notNull(),
   entityId: text('entity_id').notNull(),
-  // Exactly one of fieldId/fieldKey is filled in - see packages/shared/entities/Comment.ts.
+  // Exactly one of fieldId/fieldKey is filled in - see packages/shared/entities/narrative/Comment.ts.
   fieldId: text('field_id').references(() => storySchemaFields.id),
   fieldKey: text('field_key'),
   contentSnapshot: text('content_snapshot'),

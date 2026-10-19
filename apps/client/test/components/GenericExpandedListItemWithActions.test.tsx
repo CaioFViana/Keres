@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
-import GenericExpandedListItemWithActions from '../../src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
+import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',

@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
 import type { PackContentType, PackVisibility } from '@keres/shared';
-import { index, integer, json, table, text, timestampNow } from '../columns';
+import { index, integer, json, table, text, timestampNow } from '@/db/schema/columns';
 import { users } from './users';
 
 /**

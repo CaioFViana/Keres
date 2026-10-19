@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreateSceneDataSchema, PartialSceneSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { chapters, locations, scenes, storyCalendars } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { chapters, locations, scenes, storyCalendars } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class SceneSyncHandler extends BaseSyncEntityHandler<

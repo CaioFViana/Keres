@@ -1,21 +1,21 @@
 /** @jest-environment node */
+import { importNewServerStories } from '@/src/services/sync/importNewServerStories';
+
 const mockFetchStories = jest.fn(async () => undefined);
 
-jest.mock('../../src/state/storyListStore', () => ({
+jest.mock('@/src/state/story/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: { getState: () => ({ fetchStories: mockFetchStories }) },
 }));
 const mockDropRevoked = jest.fn(async () => [] as string[]);
-jest.mock('../../src/services/sync/dropRevokedServerStories', () => ({
+jest.mock('@/src/services/sync/dropRevokedServerStories', () => ({
   __esModule: true,
   dropRevokedServerStories: (...args: unknown[]) => (mockDropRevoked as jest.Mock)(...args),
 }));
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => ({})),
 }));
-
-import { importNewServerStories } from '../../src/services/sync/importNewServerStories';
 
 const server = { id: 'server-1', idUser: 'me' } as never;
 

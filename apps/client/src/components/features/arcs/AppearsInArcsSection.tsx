@@ -6,7 +6,7 @@ import EntityRelationList from '@/src/components/common/display/EntityRelationLi
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 
 interface Props {
   arcs: StoryArcSelect[];
@@ -19,11 +19,6 @@ const AppearsInArcsSection: React.FC<Props> = ({ arcs }) => {
   const vocab = useStoryVocabulary();
 
   if (arcs.length === 0) return null;
-
-  const styles = StyleSheet.create({
-    // The same gap the list gives its own glyphs, kept here since `leading` replaces them.
-    icon: { marginRight: 10 },
-  });
 
   return (
     <CollapsibleCard
@@ -49,5 +44,10 @@ const AppearsInArcsSection: React.FC<Props> = ({ arcs }) => {
     </CollapsibleCard>
   );
 };
+
+const styles = StyleSheet.create({
+  // The same gap the list gives its own glyphs, kept here since `leading` replaces them.
+  icon: { marginRight: 10 },
+});
 
 export default AppearsInArcsSection;

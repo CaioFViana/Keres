@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config';
+import { adminAliases } from './vite.alias';
 import { keresAvatarIcons, keresLogo } from './vite.keresIcon';
 import coverageThresholds from '../../scripts/coverage-thresholds.json';
 
 export default defineConfig({
+  resolve: { alias: adminAliases },
   // The site's wordmark is a virtual module generated at build time (vite.keresIcon.ts). Without
   // the plugin here, any test that renders the site's layout fails to resolve the import.
   plugins: [keresLogo(), keresAvatarIcons()],

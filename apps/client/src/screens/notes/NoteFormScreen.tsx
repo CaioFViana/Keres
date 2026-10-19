@@ -1,27 +1,26 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
-import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import type { NotesStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
+import type { NotesStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useNoteFormActions } from './useNoteFormActions';
 import { useNoteFormAssociations } from './useNoteFormAssociations';
 import { useNoteFormResources } from './useNoteFormResources';
@@ -107,13 +106,7 @@ const NoteFormScreen = () => {
 
   const formTitle = isEditing ? t('edit_note_title') : t('create_note_title');
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   if (loading) {
     return <ScreenLoading />;
@@ -124,80 +117,57 @@ const NoteFormScreen = () => {
       title={formTitle}
       description={t('note_form_description')}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {t('delete_note_title')}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_note')}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          deleteLabel={t('delete_note_title')}
+          saveLabel={isEditing ? t('save_changes') : t('create_note')}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
-      <FormField label={t('title')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('title_placeholder')}
-            value={title}
-            onChangeText={setTitle}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('title')}
+        placeholder={t('title_placeholder')}
+        value={title}
+        onChangeText={setTitle}
+        style={commonInputStyles.input}
+      />
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('body')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('body_placeholder')}
-            value={body || ''}
-            onChangeText={setBody}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('body')}
+        placeholder={t('body_placeholder')}
+        value={body}
+        onChangeText={setBody}
+        style={commonInputStyles.multiline}
+      />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       <View style={styles.tagSection}>
-        <MultiSelectPill
-          options={availableTags.map((tag) => ({
-            label: tag.name,
-            value: tag.id,
-            color: tag.color || colors.primaryContainer,
-          }))}
-          selectedValues={selectedTagIds}
+        <EntityTagPicker
+          tags={availableTags}
+          selectedTagIds={selectedTagIds}
           onSelectionChange={handleTagSelectionChange}
           placeholder={t('select_tags_for_note')}
           label={t('note_tags')}
+          defaultColor={colors.primaryContainer}
         />
       </View>
     </EntityFormContainer>

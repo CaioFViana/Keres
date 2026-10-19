@@ -4,13 +4,9 @@ import {
   SHOWCASE_THEME_KEY,
   ShowcaseThemeProvider,
   useShowcaseTheme,
-} from '../../src/showcase/theme/ShowcaseThemeProvider';
-import {
-  paletteDisplayName,
-  paletteExists,
-  paletteVars,
-} from '../../src/showcase/theme/paletteVars';
-import { click, flush, render } from '../helpers/react';
+} from '@/showcase/theme/ShowcaseThemeProvider';
+import { paletteDisplayName, paletteExists, paletteVars } from '@/showcase/theme/paletteVars';
+import { click, flush, render } from '@test/helpers/react';
 
 function ThemeProbe() {
   const theme = useShowcaseTheme();

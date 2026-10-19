@@ -16,23 +16,23 @@ import {
   linearManuscriptSections,
   routeManuscriptSections,
 } from '@keres/shared';
-import MarkedText from '../../../components/common/display/MarkedText/MarkedText';
-import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
-import { ManuscriptReviewTools } from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
-import { ManuscriptSearchToolbar } from '../../../components/features/manuscript/ManuscriptSearchToolbar/ManuscriptSearchToolbar';
-import ManuscriptExplorer from '../../../components/features/manuscript/ManuscriptExplorer/ManuscriptExplorer';
-import ManuscriptIndexModal from '../../../components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
-import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
-import { useScreenTour } from '../../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useManuscriptData } from '../../../hooks/useManuscriptData';
-import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useStoryStore } from '../../../state/storyStore';
-import { useTheme } from '../../../theme';
-import { sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { MarkdownPreview } from '@/src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import { ManuscriptReviewTools } from '@/src/components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
+import { ManuscriptSearchToolbar } from '@/src/components/features/manuscript/ManuscriptSearchToolbar/ManuscriptSearchToolbar';
+import ManuscriptExplorer from '@/src/components/features/manuscript/ManuscriptExplorer/ManuscriptExplorer';
+import ManuscriptIndexModal from '@/src/components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useManuscriptData } from '@/src/screens/narrative-elements/scenes/useManuscriptData';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { sceneBelongsToActiveArc } from '@/src/utils/search/storyArcFilter';
 import {
   manuscriptModeHeaderActions,
   useManuscriptReview,
@@ -286,7 +286,7 @@ const ManuscriptScreen = () => {
         },
         containerTitle: { color: colors.text, fontSize: 24, fontWeight: '700' },
         containerEvent: { fontStyle: 'italic' },
-        looseTitle: { color: colors.textSecondary, fontSize: 17, fontStyle: 'italic' },
+        looseTitle: { color: colors.textSecondary, fontSize: 16, fontStyle: 'italic' },
         sceneHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
         sceneTitle: {
           flex: 1,

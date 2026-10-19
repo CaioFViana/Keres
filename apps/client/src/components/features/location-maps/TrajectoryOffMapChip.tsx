@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../theme';
+import { useTheme } from '@/src/theme';
 
 /**
  * Screen-space chip over the map canvas: how many trajectory stops fell outside this

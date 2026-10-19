@@ -1,8 +1,8 @@
 import type { SyncConflict as SharedSyncConflict } from '@keres/shared';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
-import type { OperationLogSelect } from '../../db/schema';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
 import { isFoldableDuplicate } from './duplicateFold';
 
 /**

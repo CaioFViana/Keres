@@ -1,9 +1,9 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
-import QuickAddSceneModal from '../../src/components/features/chapters/QuickAddSceneModal';
+import QuickAddSceneModal from '@/src/components/features/chapters/QuickAddSceneModal';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -24,7 +24,7 @@ jest.mock('react-i18next', () => {
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,

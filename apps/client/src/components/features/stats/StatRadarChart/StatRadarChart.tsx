@@ -8,13 +8,13 @@ import {
 } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { StatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
-import { measureEdgeLabelWidth } from '../../graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
-import { polygonPointsToPath } from '../../graphs/SkiaEdgeCanvas/polygonPointsToPath';
-import SkiaOverlayErrorBoundary from '../../graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
-import { useCanvasKitReady } from '../../graphs/SkiaEdgeCanvas/useCanvasKitReady';
-import { useEdgeFont } from '../../graphs/SkiaEdgeCanvas/useEdgeFont';
-import { useTheme } from '../../../../theme';
+import type { StatRadarLayout } from '@keres/shared/graphs/stats/statRadarLayout';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
+import { useTheme } from '@/src/theme';
 
 const LABEL_FONT_SIZE = 11;
 

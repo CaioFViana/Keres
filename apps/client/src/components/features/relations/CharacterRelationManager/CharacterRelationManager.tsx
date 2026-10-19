@@ -1,19 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { createULID } from '../../../../utils/entityUtils';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import Button from '@/src/components/common/controls/Button/Button';
 import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
-import { AppAlert } from '../../../../utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 interface CharacterRelationManagerProps {
   characterRelations: CharacterRelation[];
@@ -118,20 +119,7 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
     setIsModalVisible(false);
   };
 
-  const styles = StyleSheet.create({
-    ...relationSectionStyleDefs(colors),
-    relationTypeText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-    buttonContainer: {
-      marginBottom: 10,
-    },
-    noRelationsText: {
-      color: colors.textSecondary,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.container}>
@@ -186,5 +174,21 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...relationSectionStyleDefs(colors),
+    relationTypeText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    buttonContainer: {
+      marginBottom: 10,
+    },
+    noRelationsText: {
+      color: colors.textSecondary,
+    },
+  });
 
 export default CharacterRelationManager;

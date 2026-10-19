@@ -1,8 +1,12 @@
-import type { RegistrationSettings, UpdateRegistrationSettings } from '@keres/shared';
+import type {
+  RegistrationSettings,
+  RegistrationSettingsView,
+  UpdateRegistrationSettings,
+} from '@keres/shared';
 import { apiClient } from './apiClient';
 
 export const RegistrationSettingsApiService = {
-  async get(): Promise<RegistrationSettings> {
+  async get(): Promise<RegistrationSettingsView> {
     const { data } = await apiClient.get('/admin/registration-settings');
     return data;
   },

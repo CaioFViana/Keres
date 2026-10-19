@@ -1,15 +1,15 @@
 import { act, render, type RenderResult } from '@testing-library/react-native';
 import * as SkiaMock from '@shopify/react-native-skia';
-import type { StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type { StoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 import React, { createRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import StoryGraphCanvas, {
   type StoryGraphCanvasHandle,
-} from '../../src/components/features/graphs/StoryGraph/StoryGraphCanvas';
-import SkiaEdgeCanvas from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
-import SkiaOverlayErrorBoundary from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+} from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#000',
@@ -247,9 +247,9 @@ describe('story graph skia overlay', () => {
       text: 'go',
       color: '#aaa',
     });
-    const plate = plates.find((candidate) => candidate.props.width === 2 * 6.4 + 10)!;
+    const plate = plates.find((candidate) => candidate.props.width === 2 * 6 + 12)!;
     expect(plate.props).toMatchObject({
-      x: 400 - (2 * 6.4 + 10) / 2,
+      x: 400 - (2 * 6 + 12) / 2,
       y: 260 - 8,
       height: 16,
       r: 4,

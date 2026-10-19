@@ -1,6 +1,6 @@
 import { SYNC_PROTOCOL_HEADER, SYNC_PROTOCOL_VERSION } from '@keres/shared';
 import { describe, expect, it } from 'vitest';
-import { createApp } from '../../src/index';
+import { createApp } from '@/index';
 
 /**
  * Sanity check for this session's new/changed `response` schemas across auth, friend,

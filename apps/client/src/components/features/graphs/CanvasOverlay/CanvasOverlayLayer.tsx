@@ -1,6 +1,8 @@
 import {
   canvasOverlayBounds,
+  canvasOverlayTextFontSize,
   spatialRectIntersects,
+  wrapCanvasOverlayText,
   type CanvasOverlayType,
   type SpatialRect,
 } from '@keres/shared';
@@ -17,12 +19,13 @@ import {
   canvasOverlayFinalAngle,
   canvasOverlayPolylinePath,
   canvasOverlayRectPath,
-} from '@keres/shared/graphs/canvasOverlayGeometry';
-import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-skia';
+} from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
+import { DashPathEffect, Group, Path, Text as SkiaText } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
-import { measureEdgeLabelWidth } from '../SkiaEdgeCanvas/measureEdgeLabelWidth';
-import { polygonPointsToPath } from '../SkiaEdgeCanvas/polygonPointsToPath';
+import { balloonPath, balloonText } from '@keres/shared/graphs/canvas/canvasBalloon';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
 
 interface CanvasOverlayLayerProps {
   overlays: readonly CanvasOverlayType[] | undefined;
@@ -82,6 +85,54 @@ const CanvasOverlayLayer: React.FC<CanvasOverlayLayerProps> = ({
 
 export default CanvasOverlayLayer;
 
+/**
+ * Text at the overlay's own size, from the one base font every canvas loads. The font is scaled by
+ * a transform instead of being re-created at the new size: deriving a sized font needs the base
+ * font's typeface, and when that is unavailable (the web build) the derivation quietly fell back to
+ * the base font, so every size drew identically while the box and the wrapping changed. A scale
+ * works on every platform and stays crisp, since Skia rasterizes glyphs at the final matrix.
+ */
+function overlayTextScale(font: SkFont, fontSize: number): { scale: number; baseSize: number } {
+  let baseSize = fontSize;
+  try {
+    const size = font.getSize?.();
+    if (typeof size === 'number' && size > 0) baseSize = size;
+  } catch {
+    // A font that cannot report its size is drawn as is.
+  }
+  return { scale: fontSize / baseSize, baseSize };
+}
+
+/** One line of overlay text: `left` is its left edge (or null to center it in `centerWithin`). */
+function OverlayTextLine({
+  font,
+  text,
+  fontSize,
+  baseline,
+  color,
+  left,
+  centerWithin,
+}: {
+  font: SkFont;
+  text: string;
+  fontSize: number;
+  baseline: number;
+  color: string;
+  left?: number;
+  centerWithin?: { x: number; width: number };
+}) {
+  const { scale, baseSize } = overlayTextScale(font, fontSize);
+  const content = text || ' ';
+  // Measured at the base size, then scaled with the glyphs.
+  const width = measureEdgeLabelWidth(font, content, baseSize) * scale;
+  const x = centerWithin ? centerWithin.x + (centerWithin.width - width) / 2 : (left ?? 0);
+  return (
+    <Group transform={[{ translateX: x }, { translateY: baseline }, { scale }]}>
+      <SkiaText x={0} y={0} font={font} text={content} color={color} />
+    </Group>
+  );
+}
+
 const OverlayView = React.memo(function OverlayView({
   overlay,
   renderWindow,
@@ -99,16 +150,18 @@ const OverlayView = React.memo(function OverlayView({
   const color = overlay.color ?? stroke;
   const labelX = bounds.x + bounds.width / 2;
   const labelY = bounds.y + bounds.height / 2;
+  const labelled =
+    overlay.kind !== 'text' && overlay.kind !== 'balloon' ? overlay.label : undefined;
   const labelVisible =
-    !!overlay.label &&
+    !!labelled &&
     !!font &&
     spatialRectIntersects({ x: labelX, y: labelY, width: 1, height: 1 }, renderWindow);
   const label =
-    labelVisible && overlay.label && font ? (
+    labelVisible && labelled && font ? (
       <OverlayLabel
         x={labelX}
         y={labelY}
-        text={overlay.label}
+        text={labelled}
         color={color}
         halo={labelBackground}
         font={font}
@@ -215,6 +268,60 @@ const OverlayView = React.memo(function OverlayView({
     case 'stamp':
       // Native land (`CanvasStampView`); the vector layer never draws stamps.
       return null;
+    case 'balloon': {
+      const path = balloonPath(overlay, overlay.tail);
+      const block = balloonText(overlay);
+      return (
+        <>
+          <Path path={path} color={overlay.fillColor ?? labelBackground} />
+          <Path
+            path={path}
+            style="stroke"
+            color={color}
+            strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
+            strokeJoin="round"
+          />
+          {font &&
+            block.lines.map((line, index) => (
+              <OverlayTextLine
+                key={index}
+                font={font}
+                text={line}
+                fontSize={block.fontSize}
+                baseline={block.top + block.fontSize + index * block.lineHeight}
+                color={color}
+                centerWithin={{ x: overlay.x, width: overlay.width }}
+              />
+            ))}
+        </>
+      );
+    }
+    case 'text': {
+      // No font, no text: same null-safe rule as labels. Lines wrap through the shared
+      // estimator, so the screen breaks exactly where the SVG exporter does. The font is
+      // the overlay's own size, so growing the size grows the glyphs, not just the box.
+      if (!font) return null;
+      const fontSize = canvasOverlayTextFontSize(overlay);
+      const lines = wrapCanvasOverlayText(overlay.content, overlay.width, fontSize);
+      const lineHeight = fontSize * 1.35;
+      const centered = (overlay.align ?? 'left') === 'center';
+      return (
+        <>
+          {lines.map((line, index) => (
+            <OverlayTextLine
+              key={index}
+              font={font}
+              text={line}
+              fontSize={fontSize}
+              baseline={bounds.y + fontSize + index * lineHeight}
+              color={color}
+              left={bounds.x}
+              centerWithin={centered ? { x: bounds.x, width: bounds.width } : undefined}
+            />
+          ))}
+        </>
+      );
+    }
   }
 });
 

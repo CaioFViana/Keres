@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useEntityEffects } from '../../../hooks/useEntityEffects';
-import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useSceneCharacterPresence } from '../../../hooks/useSceneCharacterPresence';
+import { useEntityEffects } from '@/src/hooks/choice/useEntityEffects';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useSceneCharacterPresence } from '@/src/screens/narrative-elements/scenes/useSceneCharacterPresence';
 
 /** Owns the scene-scoped relation, character-presence and effect lifecycles used by the form. */
 export function useSceneFormAssociations(

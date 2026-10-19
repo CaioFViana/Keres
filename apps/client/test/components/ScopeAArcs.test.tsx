@@ -1,8 +1,14 @@
+// ResponsiveModal reads the system insets.
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import type { StoryArcSelect } from '../../src/db/schema';
-import AppearsInArcsSection from '../../src/components/features/arcs/AppearsInArcsSection';
-import ArcPickerModal from '../../src/components/features/arcs/ArcPickerModal';
+import type { StoryArcSelect } from '@/src/db/schema';
+import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
+import ArcPickerModal from '@/src/components/features/arcs/ArcPickerModal';
+
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
 // (Prototype-chained, not spread: spreading `react-native` trips native-only getters.)
@@ -18,7 +24,7 @@ jest.mock('react-native', () => {
   return mocked;
 });
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { primary: '#00f', surface: '#fff', text: '#111' } }),
 }));
 
@@ -26,15 +32,14 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({
     term: (value: string, plural = false) => (plural ? `${value}s` : value),
   }),
 }));
 
 const mockCollapsibleCard = jest.fn();
-jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+jest.mock('@/src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
   const React = require('react');
   const { View } = jest.requireActual('react-native');
   return function MockCollapsibleCard({
@@ -50,8 +55,7 @@ jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard',
 });
 
 const mockRelationList = jest.fn();
-jest.mock('../../src/components/common/display/EntityRelationList/EntityRelationList', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+jest.mock('@/src/components/common/display/EntityRelationList/EntityRelationList', () => {
   const React = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -64,8 +68,7 @@ jest.mock('../../src/components/common/display/EntityRelationList/EntityRelation
 });
 
 const mockMapIcon = jest.fn();
-jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+jest.mock('@/src/components/common/display/MapIcon/MapIcon', () => {
   const React = require('react');
   const { View } = jest.requireActual('react-native');
   return {

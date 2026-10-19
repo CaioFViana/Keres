@@ -1,0 +1,179 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { describe, expect, it } from 'vitest';
+import {
+  CLIENT_APP_ISOLATION_HEADERS,
+  HOSTED_CLIENT_HISTORY_GUARD,
+  HOSTED_CLIENT_META,
+  HOSTED_CLIENT_PATH_PREFIX,
+  hostedClientCacheControl,
+  hostedClientMimeType,
+  hostedClientRelativePath,
+  isHostedClientPath,
+  isShowcasePath,
+  readHostedClientFile,
+  rewriteHostedClientHtml,
+  resolveHostedClientFile,
+  SHOWCASE_PATH_PREFIX,
+} from '@/services/static-delivery/hostedClient';
+
+describe('rewriteHostedClientHtml', () => {
+  it('marks the page as co-hosted so the client can use the session cookie', () => {
+    const html = '<head></head><script src="/_expo/entry.js"></script>';
+    const rewritten = rewriteHostedClientHtml(html);
+    expect(rewritten).toContain(HOSTED_CLIENT_META);
+    expect(rewritten).toContain('src="/_expo/entry.js"');
+  });
+
+  it('keeps the browser URL at /client/ so a reload never asks for a screen name as a path', () => {
+    const rewritten = rewriteHostedClientHtml('<head></head>');
+    expect(rewritten).toContain('history.replaceState');
+    expect(rewritten).toContain('return "/client/"');
+    expect(HOSTED_CLIENT_HISTORY_GUARD).not.toContain('return "/"+');
+  });
+
+  it('leaves a page that already carries the markers untouched', () => {
+    const html = `<head>${HOSTED_CLIENT_META}</head><script>history.pushState=function()</script>`;
+    expect(rewriteHostedClientHtml(html)).toBe(html);
+  });
+
+  it('prepends both markers when the page has no head element', () => {
+    const rewritten = rewriteHostedClientHtml('<div id="root"></div>');
+    expect(rewritten.startsWith(HOSTED_CLIENT_META)).toBe(true);
+    expect(rewritten).toContain('history.replaceState');
+  });
+});
+
+describe('resolveHostedClientFile', () => {
+  it('serves index.html for / and real files under it, refusing path escape', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-hosted-'));
+    writeFileSync(
+      path.join(root, 'index.html'),
+      '<head></head><script src="/_expo/a.js"></script>',
+    );
+    mkdirSync(path.join(root, '_expo'));
+    writeFileSync(path.join(root, '_expo', 'a.js'), 'console.log(1)');
+
+    expect(resolveHostedClientFile(root, '/')?.html).toBe(true);
+    expect(readHostedClientFile(root, '/')?.body).toContain(HOSTED_CLIENT_META);
+    expect(readHostedClientFile(root, '/_expo/a.js')?.contentType).toContain('javascript');
+    expect(resolveHostedClientFile(root, '/../secret')).toBeNull();
+  });
+
+  it('falls a client route back to index.html', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-hosted-spa-'));
+    writeFileSync(path.join(root, 'index.html'), '<div id="root"></div>');
+    const resolved = resolveHostedClientFile(root, '/stories');
+    expect(resolved?.html).toBe(true);
+    expect(resolved?.filePath).toBe(path.join(root, 'index.html'));
+  });
+
+  it('treats a path of only slashes as the root', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-hosted-slash-'));
+    writeFileSync(path.join(root, 'index.html'), '<div id="root"></div>');
+
+    expect(resolveHostedClientFile(root, '///')?.filePath).toBe(path.join(root, 'index.html'));
+  });
+
+  it('answers null when the dist has no file to serve', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-hosted-empty-'));
+
+    expect(resolveHostedClientFile(root, '/stories')).toBeNull();
+    expect(readHostedClientFile(root, '/stories')).toBeNull();
+    expect(readHostedClientFile(root, '/foto.png')).toBeNull();
+  });
+
+  it('serves unknown extensions as opaque bytes', () => {
+    expect(hostedClientMimeType('bundle.xyz')).toBe('application/octet-stream');
+    expect(hostedClientMimeType('APP.JS')).toContain('javascript');
+  });
+
+  it('declares the isolation headers expo-sqlite needs', () => {
+    expect(CLIENT_APP_ISOLATION_HEADERS['Cross-Origin-Opener-Policy']).toBe('same-origin');
+    expect(CLIENT_APP_ISOLATION_HEADERS['Cross-Origin-Embedder-Policy']).toBe('require-corp');
+  });
+});
+
+describe('hostedClientCacheControl', () => {
+  it('keeps what the export names by its hash for a year, never to be asked about again', () => {
+    for (const file of [
+      '/_expo/static/js/web/index-cd2f273f.js',
+      '/_expo/static/css/EnrichedText-9bd60ad5.css',
+      '/assets/__node_modules/canvaskit-wasm/bin/full/canvaskit.d614134b.wasm',
+      '/assets/assets/images/welcome-emblem.a9c2fa17.png',
+    ]) {
+      expect([file, hostedClientCacheControl(file, false)]).toEqual([
+        file,
+        'public, max-age=31536000, immutable',
+      ]);
+    }
+  });
+
+  it('has the browser check the entry page, and whatever has no hash, every time', () => {
+    expect(hostedClientCacheControl('/index.html', true)).toBe('no-cache');
+    // A screen path answers with the entry page too, whatever the URL looks like.
+    expect(hostedClientCacheControl('/_expo/static/anything', true)).toBe('no-cache');
+    expect(hostedClientCacheControl('/favicon.ico', false)).toBe('no-cache');
+    expect(hostedClientCacheControl('/coi-sw.js', false)).toBe('no-cache');
+  });
+});
+
+describe('the client under its prefix', () => {
+  it('lives at /client, leaving the root free', () => {
+    expect(HOSTED_CLIENT_PATH_PREFIX).toBe('/client');
+  });
+
+  it('claims /client and what is under it, and nothing that only starts with the same letters', () => {
+    expect(isHostedClientPath('/client')).toBe(true);
+    expect(isHostedClientPath('/client/')).toBe(true);
+    expect(isHostedClientPath('/client/_expo/static/js/web/a.js')).toBe(true);
+    expect(isHostedClientPath('/')).toBe(false);
+    expect(isHostedClientPath('/clients')).toBe(false);
+    expect(isHostedClientPath('/clientele/x')).toBe(false);
+    expect(isHostedClientPath('/_expo/static/js/web/a.js')).toBe(false);
+    expect(isHostedClientPath('/assets/logo.png')).toBe(false);
+  });
+
+  it('sees a request path as the export does: the prefix is not a folder of it', () => {
+    expect(hostedClientRelativePath('/client')).toBe('/');
+    expect(hostedClientRelativePath('/client/')).toBe('/');
+    expect(hostedClientRelativePath('/client/_expo/a.js')).toBe('/_expo/a.js');
+    expect(hostedClientRelativePath('/client/StorySelection')).toBe('/StorySelection');
+  });
+
+  it('serves the entry, its assets and a screen path from the export, refusing escape', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-prefixed-'));
+    writeFileSync(
+      path.join(root, 'index.html'),
+      '<head></head><script src="/client/_expo/worker.js"></script>',
+    );
+    mkdirSync(path.join(root, '_expo'), { recursive: true });
+    writeFileSync(path.join(root, '_expo', 'worker.js'), 'onmessage=()=>{}');
+
+    const entry = readHostedClientFile(root, hostedClientRelativePath('/client/'));
+    expect(entry?.contentType).toContain('text/html');
+    expect(entry?.body).toContain('src="/client/_expo/worker.js"');
+    expect(
+      readHostedClientFile(root, hostedClientRelativePath('/client/_expo/worker.js'))?.contentType,
+    ).toContain('javascript');
+    expect(
+      typeof readHostedClientFile(root, hostedClientRelativePath('/client/Stories'))?.body,
+    ).toBe('string');
+    expect(
+      readHostedClientFile(root, hostedClientRelativePath('/client/_expo/../../secret')),
+    ).toBeNull();
+    expect(
+      readHostedClientFile(root, hostedClientRelativePath('/client/_expo/missing.js')),
+    ).toBeNull();
+  });
+});
+
+describe('isShowcasePath', () => {
+  it('matches /showcase and nested pages', () => {
+    expect(SHOWCASE_PATH_PREFIX).toBe('/showcase');
+    expect(isShowcasePath('/showcase')).toBe(true);
+    expect(isShowcasePath('/showcase/about')).toBe(true);
+    expect(isShowcasePath('/')).toBe(false);
+  });
+});

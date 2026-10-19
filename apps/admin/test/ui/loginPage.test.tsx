@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { LoginPage } from '../../src/auth/LoginPage';
-import { changeInput, flush, render, submit } from '../helpers/react';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { changeInput, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
   useAuth: vi.fn(),
 }));
 
-vi.mock('../../src/auth/AuthContext', () => ({ useAuth: mocks.useAuth }));
+vi.mock('@/auth/AuthContext', () => ({ useAuth: mocks.useAuth }));
 
 /**
  * The gate to the panel. What matters is the sequencing, not the pixels: who is already in goes

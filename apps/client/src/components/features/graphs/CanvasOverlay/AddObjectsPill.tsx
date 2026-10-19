@@ -1,5 +1,5 @@
 import type { Ionicons } from '@expo/vector-icons';
-import { CANVAS_OVERLAY_PRESETS } from '@keres/shared/graphs/canvasOverlayGeometry';
+import { CANVAS_OVERLAY_PRESETS } from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StyleProp, ViewStyle } from 'react-native';

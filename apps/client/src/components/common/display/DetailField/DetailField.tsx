@@ -2,14 +2,15 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
-import { useOccurrenceFlash } from '../../../../hooks/useOccurrenceLanding';
-import { useMentions } from '../../../../mentions/MentionContext';
-import { useTheme } from '../../../../theme';
+import { useOccurrenceFlash } from '@/src/hooks/nav/useOccurrenceLanding';
+import { useMentions } from '@/src/mentions/MentionContext';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import {
   splitTextIntoMentionSegments,
   type MentionSegment,
-} from '../../../../utils/entityMentions';
-import MarkedText from '../MarkedText/MarkedText';
+} from '@/src/utils/entity/entityMentions';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 
 interface DetailFieldProps {
   label: string;
@@ -96,33 +97,7 @@ const DetailField: React.FC<DetailFieldProps> = ({
   );
   const firstFlashIndex = flashBySegment.findIndex((local) => local.length > 0);
 
-  const styles = StyleSheet.create({
-    container: {
-      marginBottom: 12,
-    },
-    label: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-      marginBottom: 3,
-    },
-    value: {
-      fontSize: 16,
-      color: colors.text,
-      lineHeight: 22,
-    },
-    linkedValue: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-    },
-    linkedValueText: { color: colors.primary, flexShrink: 1 },
-    // Colour only, no underline: a paragraph with several mentions should still read as prose.
-    mention: { color: colors.primary },
-    linkIcon: { marginLeft: 4 },
-  });
+  const styles = useThemedStyles(createStyles);
   // Flash fills read as the manuscript's current hit: strong fill, legible ink.
   const flashHostStyle = { backgroundColor: colors.primary };
   const flashInkStyle = { color: colors.onPrimary };
@@ -241,5 +216,34 @@ const DetailField: React.FC<DetailFieldProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: 12,
+    },
+    label: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 3,
+    },
+    value: {
+      fontSize: 16,
+      color: colors.text,
+      lineHeight: 22,
+    },
+    linkedValue: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+    },
+    linkedValueText: { color: colors.primary, flexShrink: 1 },
+    // Colour only, no underline: a paragraph with several mentions should still read as prose.
+    mention: { color: colors.primary },
+    linkIcon: { marginLeft: 4 },
+  });
 
 export default DetailField;

@@ -1,18 +1,18 @@
 /** @jest-environment node */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
-
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useChoiceFormState } from '../../../../src/screens/narrative-elements/choices/useChoiceFormState';
+import { useChoiceFormState } from '@/src/screens/narrative-elements/choices/useChoiceFormState';
 import {
   resetEditorDraftDbForTests,
   setEditorDraftDb,
-} from '../../../../src/services/EditorDraftService';
-import type { ChoiceService } from '../../../../src/services/storymanagement/ChoiceService';
-import { createTestDatabase, type TestDatabase } from '../../../helpers/testDb';
+} from '@/src/services/drafts/EditorDraftService';
+import type { ChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
 
 let database: TestDatabase;
 

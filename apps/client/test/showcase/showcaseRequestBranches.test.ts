@@ -5,7 +5,7 @@ import {
   readShowcaseRequest,
   resetShowcaseRequestCacheForTests,
   showcaseInitialRoute,
-} from '../../src/showcase/showcaseRequest';
+} from '@/src/services/showcase/showcaseRequest';
 
 describe('showcaseRequest branches', () => {
   const originalLocation = window.location;

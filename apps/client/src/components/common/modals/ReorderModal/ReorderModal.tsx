@@ -2,9 +2,14 @@ import FormActions from '@/src/components/common/controls/FormActions/FormAction
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { space, typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
 interface ReorderModalProps<T> {
   isVisible: boolean;
@@ -75,117 +80,81 @@ function ReorderModal<T>({
     onClose();
   }, [onClose, onReorderConfirm, reorderedItems]);
 
-  const styles = StyleSheet.create({
-    overlay: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    content: {
-      width: '90%',
-      maxHeight: '80%',
-      backgroundColor: colors.surface,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: 20,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 20,
-    },
-    title: { flex: 1, fontSize: 20, fontWeight: 'bold', color: colors.text },
+  const styles = useThemedStyles(createStyles);
+
+  return (
+    <ResponsiveModal visible={isVisible} onClose={onClose} inset="regular" tone="raised">
+      <ModalHeader title={title} onClose={onClose} closeLabel={t('common_cancel')} />
+
+      {headerExtra}
+
+      <FlatList
+        style={layout.fill}
+        data={reorderedItems}
+        keyExtractor={getId}
+        ListEmptyComponent={emptyListComponent}
+        renderItem={({ item, index }) => {
+          const label = getLabel(item);
+          return (
+            <View style={styles.item}>
+              <Text style={styles.itemLabel}>{label}</Text>
+              <View style={styles.controls}>
+                <TouchableOpacity
+                  accessibilityLabel={`${label} up`}
+                  disabled={index === 0}
+                  onPress={() => moveItem(index, 'up')}
+                  style={styles.controlButton}
+                >
+                  <Ionicons
+                    name="arrow-up"
+                    size={24}
+                    color={index === 0 ? colors.textSecondary : colors.primary}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityLabel={`${label} down`}
+                  disabled={index === reorderedItems.length - 1}
+                  onPress={() => moveItem(index, 'down')}
+                  style={styles.controlButton}
+                >
+                  <Ionicons
+                    name="arrow-down"
+                    size={24}
+                    color={
+                      index === reorderedItems.length - 1 ? colors.textSecondary : colors.primary
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        }}
+      />
+
+      <FormActions>
+        <Button variant="secondary" onPress={onClose}>
+          {t('common_cancel')}
+        </Button>
+        <Button onPress={handleConfirm} disabled={confirmDisabled}>
+          {t('common_confirm')}
+        </Button>
+      </FormActions>
+    </ResponsiveModal>
+  );
+}
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     item: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      ...layout.rowBetween,
       paddingVertical: 10,
       paddingHorizontal: 5,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
-    itemLabel: { flex: 1, fontSize: 16, color: colors.text },
+    itemLabel: { ...typography.bodyLarge, flex: 1, color: colors.text },
     controls: { flexDirection: 'row' },
-    controlButton: { padding: 8 },
-    buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 },
+    controlButton: { padding: space.md },
   });
-
-  return (
-    <Modal animationType="fade" transparent visible={isVisible} onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <TouchableOpacity onPress={onClose} accessibilityLabel={t('common_cancel')}>
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          {headerExtra}
-
-          <FlatList
-            data={reorderedItems}
-            keyExtractor={getId}
-            ListEmptyComponent={emptyListComponent}
-            renderItem={({ item, index }) => {
-              const label = getLabel(item);
-              return (
-                <View style={styles.item}>
-                  <Text style={styles.itemLabel}>{label}</Text>
-                  <View style={styles.controls}>
-                    <TouchableOpacity
-                      accessibilityLabel={`${label} up`}
-                      disabled={index === 0}
-                      onPress={() => moveItem(index, 'up')}
-                      style={styles.controlButton}
-                    >
-                      <Ionicons
-                        name="arrow-up"
-                        size={24}
-                        color={index === 0 ? colors.textSecondary : colors.primary}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      accessibilityLabel={`${label} down`}
-                      disabled={index === reorderedItems.length - 1}
-                      onPress={() => moveItem(index, 'down')}
-                      style={styles.controlButton}
-                    >
-                      <Ionicons
-                        name="arrow-down"
-                        size={24}
-                        color={
-                          index === reorderedItems.length - 1
-                            ? colors.textSecondary
-                            : colors.primary
-                        }
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            }}
-          />
-
-          <FormActions>
-            <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
-              {t('common_cancel')}
-            </Button>
-            <Button
-              onPress={handleConfirm}
-              style={{ backgroundColor: colors.primary }}
-              disabled={confirmDisabled}
-            >
-              {t('common_confirm')}
-            </Button>
-          </FormActions>
-        </View>
-      </View>
-    </Modal>
-  );
-}
 
 export default ReorderModal;

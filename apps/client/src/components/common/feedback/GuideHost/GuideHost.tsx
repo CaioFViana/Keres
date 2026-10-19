@@ -1,28 +1,69 @@
 import { DrawerActions } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { Guide, GuideRect } from '../../../../guides/types';
+import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import type { Guide, GuideRect } from '@/src/guides/types';
+import { arrowOffset, cardLayout } from '@/src/guides/cardPlacement';
+import { useTweenedRect } from '@/src/hooks/guides/useTweenedRect';
 import GuideSpotlight from './GuideSpotlight';
-import { measureGuideAnchors, unionGuideRects } from '../../../../guides/anchorRegistry';
-import { useGuidePersistence } from '../../../../hooks/useGuidePersistence';
-import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { useSystemInsets } from '../../../../hooks/useSystemInsets';
-import { getGuideDrawer, scrollDrawerToRect } from '../../../../navigation/drawerGuideRegistry';
-import { useGuideStore } from '../../../../state/guideStore';
-import { useTheme } from '../../../../theme';
+import GuideStepCard from './GuideStepCard';
+import { measureGuideAnchors, unionGuideRects } from '@/src/guides/anchorRegistry';
+import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
+import { useGuidePersistence } from '@/src/hooks/ui/useGuidePersistence';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useSystemInsets } from '@/src/hooks/ui/useSystemInsets';
+import { getGuideDrawer, scrollDrawerToRect } from '@/src/navigation/drawer/drawerGuideRegistry';
+import { useGuideStore } from '@/src/state/ui/guideStore';
+import { useTheme } from '@/src/theme';
 
 /** Breathing room around the spotlighted target. */
 const SPOTLIGHT_PADDING = 8;
 /** How far below the drawer's top edge a scrolled-to group lands. */
 const DRAWER_SCROLL_MARGIN = 96;
-/** Grace for the drawer open/scroll animation before anchors are measured. */
-const DRAWER_SETTLE_MS = 400;
+/** How often anchors are measured while waiting for them to hold still, and for how long at most. */
+const SETTLE_POLL_MS = 50;
+const SETTLE_TIMEOUT_MS = 2000;
+
+/** The longest a tour waits to know where its first hole goes (and for the canvas) before opening. */
+const REVEAL_TIMEOUT_MS = 1500;
+
+/** What the card is guessed to measure before its first layout, so it is placed right from the start. */
+const DEFAULT_CARD_HEIGHT = 230;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const sameRect = (a: GuideRect | null, b: GuideRect | null) =>
+  a === b ||
+  (!!a &&
+    !!b &&
+    Math.abs(a.x - b.x) < 1 &&
+    Math.abs(a.y - b.y) < 1 &&
+    Math.abs(a.width - b.width) < 1 &&
+    Math.abs(a.height - b.height) < 1);
+
 /**
- * Renders the active guided tour (see `state/guideStore`). Mounted once near the app's root
+ * Where the anchors are once they hold still: measured every so often until two measurements agree
+ * (a drawer sliding in, a list scrolling into place and a section laying out all take as long as they
+ * take, on every device), or until a timeout, when the last one stands.
+ */
+async function measureSettled(
+  anchors: readonly string[],
+  isCancelled: () => boolean,
+): Promise<GuideRect | null> {
+  let previous = unionGuideRects(await measureGuideAnchors(anchors));
+  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+  while (!isCancelled() && Date.now() < deadline) {
+    await delay(SETTLE_POLL_MS);
+    const next = unionGuideRects(await measureGuideAnchors(anchors));
+    if (sameRect(previous, next)) return next;
+    previous = next;
+  }
+  return previous;
+}
+
+/**
+ * Renders the active guided tour (see `state/ui/guideStore`). Mounted once near the app's root
  * (`App.tsx`), the same way as `AppAlertHost`: a single `Modal`, isolated from the rest of the
  * screen tree, so any screen can own a tour without mounting anything locally.
  *
@@ -46,8 +87,11 @@ const GuideHost: React.FC = () => {
 const ActiveGuideOverlay: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  useModalNavigationBar(true);
   const { isWide } = useResponsiveLayout();
   const insets = useSystemInsets();
+  const windowSize = useWindowDimensions();
+  const [cardHeight, setCardHeight] = useState(DEFAULT_CARD_HEIGHT);
   const activeTour = useGuideStore((state) => state.activeTour);
   const nextStep = useGuideStore((state) => state.nextStep);
   const prevStep = useGuideStore((state) => state.prevStep);
@@ -55,22 +99,35 @@ const ActiveGuideOverlay: React.FC = () => {
   const completeTour = useGuideStore((state) => state.completeTour);
   const snoozeTour = useGuideStore((state) => state.snoozeTour);
   const recordSeen = useGuidePersistence();
-  const [spot, setSpot] = useState<GuideRect | null>(null);
+  // The drawer a step opened, so leaving the tour puts it back instead of leaving the menu open.
+  const openedDrawer = useRef<ReturnType<typeof getGuideDrawer>>(undefined);
+  const canvasReady = useCanvasKitReady();
+  const [measuredSpot, setSpot] = useState<GuideRect | null>(null);
 
   const guide: Guide | null = activeTour?.guide ?? null;
   const step = guide && activeTour ? guide.steps[activeTour.stepIndex] : undefined;
 
-  const [prevActiveTour, setPrevActiveTour] = useState(activeTour);
-  const [prevGuideStep, setPrevGuideStep] = useState(step);
-  const [prevIsWide, setPrevIsWide] = useState(isWide);
-  if (activeTour !== prevActiveTour || step !== prevGuideStep || isWide !== prevIsWide) {
-    setPrevActiveTour(activeTour);
-    setPrevGuideStep(step);
-    setPrevIsWide(isWide);
-    if (activeTour && step) {
-      setSpot(null);
-    }
-  }
+  // Nothing is drawn until the first step knows where its hole goes, and the canvas that draws it
+  // can: showing the dim first and the hole after is the flash a person sees when a tour starts.
+  // `waited` is the way out when either never comes - the tour then opens with what it has.
+  // A step with no anchors has no hole and nothing to measure, so both are read off the step instead of
+  // being set from an effect.
+  const hasAnchors = (step?.anchors?.length ?? 0) > 0;
+  const [measuredOnce, setMeasured] = useState(false);
+  const measured = measuredOnce || !hasAnchors;
+  const spot = hasAnchors ? measuredSpot : null;
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setWaited(true), REVEAL_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // The hole and the card stay where they are while the next step is measured and then slide straight
+  // to it: nothing is reset to a default place in between. The window height is read at that moment.
+  const windowHeightRef = useRef(windowSize.height);
+  useEffect(() => {
+    windowHeightRef.current = windowSize.height;
+  }, [windowSize.height]);
 
   useEffect(() => {
     if (!activeTour || !step) return;
@@ -78,49 +135,111 @@ const ActiveGuideOverlay: React.FC = () => {
     const anchors = step.anchors ?? [];
     if (anchors.length === 0) return;
     (async () => {
+      const measure = () => measureSettled(anchors, () => cancelled);
       if (step.drawerId) {
         const handle = getGuideDrawer(step.drawerId);
-        if (!handle) return;
-        // Opening an already-open drawer is a no-op router-side; permanent drawers need no open.
-        if (!isWide) handle.navigation.dispatch(DrawerActions.openDrawer());
-        const target = unionGuideRects(await measureGuideAnchors(anchors));
-        if (target) {
-          await scrollDrawerToRect(step.drawerId, target, DRAWER_SCROLL_MARGIN);
-          await delay(DRAWER_SETTLE_MS);
+        if (!handle) {
+          setMeasured(true);
+          return;
         }
+        // Opening an already-open drawer is a no-op router-side; permanent drawers need no open.
+        if (!isWide) {
+          handle.navigation.dispatch(DrawerActions.openDrawer());
+          openedDrawer.current = handle;
+        }
+        // The drawer slides in, then the group slides into view: each is measured where it comes to
+        // rest, not at a guessed time after it starts.
+        const target = await measure();
         if (cancelled) return;
+        // Only a group that is not already in view is scrolled to; one that is, is pointed at now.
+        const visible =
+          !!target && target.y >= 0 && target.y + target.height <= windowHeightRef.current;
+        if (target && !visible) {
+          await scrollDrawerToRect(step.drawerId, target, DRAWER_SCROLL_MARGIN);
+          if (cancelled) return;
+        }
+        const settled = visible ? target : await measure();
+        if (cancelled) return;
+        setSpot(settled);
+        setMeasured(true);
+        return;
       }
-      if (cancelled) return;
+      // A screen step shows its hole as soon as it is measured, then measures again until it holds
+      // still: a screen that is still loading lays out a moment later, and the hole grows to cover it.
       setSpot(unionGuideRects(await measureGuideAnchors(anchors)));
+      setMeasured(true);
+      const settled = await measure();
+      if (!cancelled) setSpot(settled);
     })().catch(() => {
       // Measuring must never break the tour; the card alone is the fallback.
-      if (!cancelled) setSpot(null);
+      if (!cancelled) {
+        setSpot(null);
+        setMeasured(true);
+      }
     });
     return () => {
       cancelled = true;
     };
   }, [activeTour, step, isWide]);
 
-  if (!guide || !step || !activeTour) {
+  // The hole as it should be, and as it is drawn: it slides from one step's target to the next, and the
+  // card follows it.
+  const padded = spot
+    ? {
+        x: Math.max(0, spot.x - SPOTLIGHT_PADDING),
+        y: Math.max(0, spot.y - SPOTLIGHT_PADDING),
+        width: spot.width + SPOTLIGHT_PADDING * 2,
+        height: spot.height + SPOTLIGHT_PADDING * 2,
+      }
+    : null;
+  const shownRect = useTweenedRect(padded);
+
+  // Where the card goes for this step, and the card as it is drawn: it slides there from wherever it
+  // was, edge or target, together with the hole.
+  const targetLayout = cardLayout({
+    spot: padded,
+    target: padded,
+    windowWidth: windowSize.width,
+    windowHeight: windowSize.height,
+    cardHeight,
+    topInset: insets.top,
+    bottomInset: insets.bottom,
+  });
+  // Until the tour is shown the card has no place: it must not start from the default one and slide to
+  // the first target the moment it appears.
+  const revealed = (measured && canvasReady) || waited;
+  const cardRect = useTweenedRect(
+    revealed
+      ? { x: targetLayout.left, y: targetLayout.top, width: targetLayout.width, height: 1 }
+      : null,
+  );
+
+  if (!guide || !step || !activeTour || !revealed) {
     return null;
   }
 
-  const isFirst = activeTour.stepIndex <= 0;
-  const isLast = activeTour.stepIndex >= guide.steps.length - 1;
   const drawerHandle = getGuideDrawer(guide.drawerId);
   const canShowHelp = Boolean(guide.helpPageId && drawerHandle);
 
+  const closeOpenedDrawer = () => {
+    openedDrawer.current?.navigation.dispatch(DrawerActions.closeDrawer());
+    openedDrawer.current = undefined;
+  };
+
   const handleSkip = () => {
+    closeOpenedDrawer();
     skipTour();
     recordSeen(guide.id);
   };
 
   const handleFinish = () => {
+    closeOpenedDrawer();
     completeTour();
     recordSeen(guide.id);
   };
 
   const handleSnooze = () => {
+    closeOpenedDrawer();
     // "Later" closes the card without recording: the tour opens on the next visit.
     snoozeTour();
   };
@@ -142,193 +261,41 @@ const ActiveGuideOverlay: React.FC = () => {
     handleSkip();
   };
 
-  const padded = spot
-    ? {
-        x: Math.max(0, spot.x - SPOTLIGHT_PADDING),
-        y: Math.max(0, spot.y - SPOTLIGHT_PADDING),
-        width: spot.width + SPOTLIGHT_PADDING * 2,
-        height: spot.height + SPOTLIGHT_PADDING * 2,
-      }
-    : null;
-
-  const styles = StyleSheet.create({
-    root: {
-      flex: 1,
-    },
-    dim: {
-      position: 'absolute',
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    },
-    // The card sits at the foot of a window the navigation bar draws over: its last row (the help
-    // link) needs room above the bar, not against it.
-    cardWrap: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      padding: 20,
-      paddingBottom: 20 + insets.bottom,
-    },
-    card: {
-      width: '100%',
-      maxWidth: 480,
-      alignSelf: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: 20,
-      borderWidth: 1,
-      borderColor: colors.border,
-      elevation: 6,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4.65,
-    },
-    title: {
-      fontSize: 17,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 8,
-    },
-    message: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      lineHeight: 20,
-      marginBottom: 16,
-    },
-    buttonRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: 10,
-    },
-    tertiaryRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
-    primaryRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: 10,
-    },
-    tertiaryButton: {
-      paddingVertical: 10,
-      paddingHorizontal: 8,
-    },
-    tertiaryButtonText: {
-      color: colors.primary,
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    button: {
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      minWidth: 72,
-      alignItems: 'center',
-    },
-    primaryButton: {
-      backgroundColor: colors.primary,
-    },
-    secondaryButton: {
-      backgroundColor: colors.background,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    primaryButtonText: {
-      color: colors.onPrimary,
-      fontSize: 15,
-      fontWeight: 'bold',
-    },
-    secondaryButtonText: {
-      color: colors.text,
-      fontSize: 15,
-      fontWeight: 'bold',
-    },
-    helpLink: {
-      marginTop: 4,
-      alignSelf: 'flex-start',
-      paddingVertical: 8,
-      paddingRight: 8,
-    },
-    helpLinkText: {
-      color: colors.primary,
-      fontSize: 14,
-      textDecorationLine: 'underline',
-    },
-  });
+  const layout = {
+    ...targetLayout,
+    ...(cardRect ? { left: cardRect.x, top: cardRect.y, width: cardRect.width } : null),
+    arrowX:
+      shownRect && cardRect
+        ? arrowOffset(shownRect, cardRect.x, cardRect.width)
+        : targetLayout.arrowX,
+  };
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={handleSkip}>
       <View style={styles.root}>
         {/* Eats every touch outside the card; the visuals below it are pointer-transparent. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} />
-        {padded ? (
-          <GuideSpotlight rect={padded} borderColor={colors.primary} />
-        ) : (
-          <View pointerEvents="none" style={[styles.dim, StyleSheet.absoluteFill]} />
-        )}
-        <View testID="guide-card-wrap" style={styles.cardWrap} pointerEvents="box-none">
-          <View style={styles.card} testID="guide-card">
-            <Text style={styles.title}>{t(step.titleKey)}</Text>
-            <Text style={styles.message}>{t(step.bodyKey)}</Text>
-            <View style={styles.buttonRow}>
-              <View style={styles.tertiaryRow}>
-                <TouchableOpacity
-                  testID="guide-skip"
-                  style={styles.tertiaryButton}
-                  onPress={handleSkip}
-                >
-                  <Text style={styles.tertiaryButtonText}>{t('guide_skip')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  testID="guide-snooze"
-                  style={styles.tertiaryButton}
-                  onPress={handleSnooze}
-                >
-                  <Text style={styles.tertiaryButtonText}>{t('tour_snooze')}</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.primaryRow}>
-                {!isFirst && (
-                  <TouchableOpacity
-                    testID="guide-prev"
-                    style={[styles.button, styles.secondaryButton]}
-                    onPress={prevStep}
-                  >
-                    <Text style={styles.secondaryButtonText}>{t('guide_back')}</Text>
-                  </TouchableOpacity>
-                )}
-                {isLast ? (
-                  <TouchableOpacity
-                    testID="guide-finish"
-                    style={[styles.button, styles.primaryButton]}
-                    onPress={handleFinish}
-                  >
-                    <Text style={styles.primaryButtonText}>{t('guide_finish')}</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    testID="guide-next"
-                    style={[styles.button, styles.primaryButton]}
-                    onPress={nextStep}
-                  >
-                    <Text style={styles.primaryButtonText}>{t('guide_next')}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-            {canShowHelp && (
-              <TouchableOpacity testID="guide-help" style={styles.helpLink} onPress={handleHelp}>
-                <Text style={styles.helpLinkText}>{t('guide_open_help')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+        <GuideSpotlight rect={shownRect} borderColor={colors.primary} />
+        <GuideStepCard
+          layout={layout}
+          title={t(step.titleKey)}
+          message={t(step.bodyKey)}
+          index={activeTour.stepIndex}
+          total={guide.steps.length}
+          canShowHelp={canShowHelp}
+          onSkip={handleSkip}
+          onSnooze={handleSnooze}
+          onPrev={prevStep}
+          onNext={nextStep}
+          onFinish={handleFinish}
+          onHelp={handleHelp}
+          onHeight={(height) => height > 0 && height !== cardHeight && setCardHeight(height)}
+        />
       </View>
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({ root: { flex: 1 } });
 
 export default GuideHost;

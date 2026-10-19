@@ -1,9 +1,11 @@
+import type { Table } from 'docx';
 import {
   AlignmentType,
   Bookmark,
   Document,
   Footer,
   HeadingLevel,
+  ImageRun,
   InternalHyperlink,
   LeaderType,
   Packer,
@@ -16,17 +18,21 @@ import {
   TextRun,
 } from 'docx';
 import {
-  sceneHeadingLabel,
   manuscriptTocEntries,
+  sceneHeadingLabel,
   type CompiledManuscript,
   type CompiledSpan,
   type ManuscriptRenderOptions,
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
+import { docxPageTables } from './manuscriptDocxPages';
+import { DEFAULT_PAGE_ASPECT, pageImageOf, withPageRuns } from './manuscriptPageFigure';
 
 export type ManuscriptDocxLabels = {
   /** Prefix of a choice reference, e.g. "Go to page" - the number itself is a PAGEREF field. */
   goToPage: string;
+  /** The word before a scene number: "Go to page 12, scene 7". Absent: "scene". */
+  sceneWord?: string;
   /** Index heading, e.g. "Contents". */
   tocHeading: string;
 };
@@ -36,6 +42,9 @@ const FIRST_LINE_INDENT_TWIPS = 720;
 const PARAGRAPH_SPACING_AFTER = 120;
 /** Block paragraphs: no indent, a full line of space between them. */
 const BLOCK_SPACING_AFTER = 240;
+/** The width of a picture on a page: the text width of A4 with 1" margins, in pixels (96 per inch). */
+const PAGE_IMAGE_WIDTH_PX = 600;
+
 /** Index page numbers flush right: A4 (11906 twips) minus 1" margins on both sides. */
 const TOC_TAB_TWIPS = 9026;
 
@@ -67,7 +76,28 @@ function documentStyles(options: ManuscriptRenderOptions) {
 }
 
 function spansToRuns(spans: CompiledSpan[]): TextRun[] {
-  return spans.map(
+  // Adjacent spans with identical marks ride one run: the parsers already
+  // merge, so this is normally a no-op pass — kept so a future span source
+  // can never multiply runs (and the document) behind the renderers' backs.
+  // Newlines never merge: break handling stays exactly where each span put it.
+  const merged: CompiledSpan[] = [];
+  for (const span of spans) {
+    const prev = merged[merged.length - 1];
+    if (
+      prev &&
+      !prev.text.includes('\n') &&
+      !span.text.includes('\n') &&
+      prev.bold === span.bold &&
+      prev.italic === span.italic &&
+      prev.underline === span.underline &&
+      prev.strikethrough === span.strikethrough
+    ) {
+      merged[merged.length - 1] = { ...prev, text: prev.text + span.text };
+    } else {
+      merged.push({ ...span });
+    }
+  }
+  return merged.map(
     (span) =>
       new TextRun({
         text: span.text,
@@ -89,7 +119,7 @@ export function buildManuscriptDocument(
   labels: ManuscriptDocxLabels,
   options: ManuscriptRenderOptions = {},
 ): Document {
-  const children: Paragraph[] = [];
+  const children: (Paragraph | Table)[] = [];
   const pushToc = (entries: ManuscriptTocEntry[]) => {
     if (entries.length === 0) return;
     children.push(
@@ -122,11 +152,40 @@ export function buildManuscriptDocument(
   };
   let firstContent = true;
   let tocEmitted = false;
-  for (const block of manuscript.blocks) {
+  const coverImage = manuscript.cover ? manuscript.images?.[manuscript.cover] : undefined;
+  if (coverImage) {
+    // The cover has the first page to itself: the picture whole, in the middle.
+    const scale = Math.min(PAGE_IMAGE_WIDTH_PX / coverImage.width, 860 / coverImage.height);
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            type: coverImage.mimeType === 'image/jpeg' ? 'jpg' : 'png',
+            data: coverImage.bytes,
+            transformation: {
+              width: Math.max(1, Math.round(coverImage.width * scale)),
+              height: Math.max(1, Math.round(coverImage.height * scale)),
+            },
+            altText: {
+              name: manuscript.title,
+              title: manuscript.title,
+              description: manuscript.title,
+            },
+          }),
+        ],
+      }),
+      new Paragraph({ children: [new PageBreak()] }),
+    );
+  }
+  // Display numbers of one ordered run; any other block restarts the run at 1.
+  let orderedNumber = 0;
+  for (const block of withPageRuns(manuscript.blocks, manuscript.pageLayout)) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) pushToc(manuscriptTocEntries(manuscript.blocks));
     }
+    if (block.kind !== 'ordered') orderedNumber = 0;
     switch (block.kind) {
       case 'title':
         children.push(
@@ -183,6 +242,8 @@ export function buildManuscriptDocument(
           new Paragraph({
             heading: HeadingLevel.HEADING_2,
             keepNext: true,
+            // A gamebook's scene opens a page of its own, so the page its choices point at is one scene's.
+            pageBreakBefore: block.ownPage === true && !firstContent,
             children: block.bookmarkId
               ? [new Bookmark({ id: block.bookmarkId, children: [run] })]
               : [run],
@@ -204,6 +265,74 @@ export function buildManuscriptDocument(
           ),
         );
         break;
+      case 'bullet':
+        children.push(
+          new Paragraph({
+            indent: { left: 360 },
+            spacing: { after: PARAGRAPH_SPACING_AFTER },
+            children: [new TextRun('•  '), ...spansToRuns(block.spans)],
+          }),
+        );
+        break;
+      case 'ordered': {
+        orderedNumber += 1;
+        children.push(
+          new Paragraph({
+            indent: { left: 360 },
+            spacing: { after: PARAGRAPH_SPACING_AFTER },
+            children: [new TextRun(`${orderedNumber}.  `), ...spansToRuns(block.spans)],
+          }),
+        );
+        break;
+      }
+      case 'pages':
+        children.push(...docxPageTables(block, manuscript));
+        break;
+      case 'page': {
+        if (manuscript.pageLayout === 'sheet') {
+          children.push(...docxPageTables(block, manuscript));
+          break;
+        }
+        children.push(
+          new Paragraph({
+            keepNext: true,
+            spacing: { before: 240, after: 80 },
+            children: [new TextRun({ text: block.label, bold: true })],
+          }),
+        );
+        const image = pageImageOf(block, manuscript);
+        if (!block.image || !image) {
+          children.push(
+            new Paragraph({
+              spacing: { after: 240 },
+              children: [new TextRun({ text: block.placeholder, italics: true })],
+            }),
+          );
+          break;
+        }
+        // The picture sits whole in the frame; Word has no crop to give, so a page that fills its
+        // frame is shown whole here too.
+        const frameHeight = PAGE_IMAGE_WIDTH_PX / (manuscript.pageAspect ?? DEFAULT_PAGE_ASPECT);
+        const scale = Math.min(PAGE_IMAGE_WIDTH_PX / image.width, frameHeight / image.height);
+        children.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 240 },
+            children: [
+              new ImageRun({
+                type: image.mimeType === 'image/jpeg' ? 'jpg' : 'png',
+                data: image.bytes,
+                transformation: {
+                  width: Math.max(1, Math.round(image.width * scale)),
+                  height: Math.max(1, Math.round(image.height * scale)),
+                },
+                altText: { name: block.label, title: block.label, description: block.label },
+              }),
+            ],
+          }),
+        );
+        break;
+      }
       case 'scene-break':
         children.push(
           new Paragraph({
@@ -221,6 +350,19 @@ export function buildManuscriptDocument(
               children: [
                 new TextRun(`${lead} — ${labels.goToPage} `),
                 new PageReference(block.targetBookmarkId, { hyperlink: true }),
+                // The page can hold several scenes: the scene's number says which one.
+                ...(block.targetSceneNumber === undefined
+                  ? []
+                  : [
+                      new TextRun(
+                        `, ${labels.sceneWord ?? 'scene'} ${block.targetSceneNumber}${
+                          block.targetSceneName &&
+                          block.targetSceneName !== String(block.targetSceneNumber)
+                            ? ` (${block.targetSceneName})`
+                            : ''
+                        }`,
+                      ),
+                    ]),
               ],
             }),
           );

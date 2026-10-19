@@ -1,4 +1,5 @@
 import {
+  countTierEntitiesInStoryPackage,
   describeStoryIntegrityViolations,
   findStoryExportIntegrityErrors,
   FullStoryExportSchema,
@@ -6,12 +7,17 @@ import {
   StoryExportVersionError,
 } from '@keres/shared';
 import { ulid } from 'ulid';
-import { db } from '../../db';
-import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
-import { AppError } from '../../utils/errors';
-import { logger } from '../../utils/logger';
-import { renumberAllArranged } from '../sync/arrangedRanks';
-import { ensurePublicFavoriteOperationLogs } from '../sync/publicFavoriteRepair';
+import { db } from '@/db';
+import { storyNsfwService } from '@/services/stories/StoryNsfwService';
+import {
+  TierLimitExceededError,
+  tierEnforcementService,
+} from '@/services/tiers/TierEnforcementService';
+import { AppError, STORY_PREVIOUSLY_ON_SERVER } from '@/utils/errors';
+import { logger } from '@/utils/logger';
+import { purgeStoryData } from '@/services/compliance/StoryPurgeService';
+import { renumberAllArranged } from '@/services/sync/arrangedRanks';
+import { ensurePublicFavoriteOperationLogs } from '@/services/sync/publicFavoriteRepair';
 import { importStoryAssets } from './DatabaseStoryPackageAssetsImport';
 import { importStoryCore } from './DatabaseStoryPackageCoreImport';
 import { importStoryFinalCollections } from './DatabaseStoryPackageFinalImport';
@@ -24,7 +30,12 @@ import { importNarrativeCollections } from './DatabaseStoryPackageNarrativeImpor
  * it deliberately contains neither entity conversion rules nor generic SQL inserts.
  */
 export class DatabaseStoryPackageImporter {
-  async importStory(userId: string, fullStoryJSON: unknown, newStoryId?: string): Promise<string> {
+  async importStory(
+    userId: string,
+    fullStoryJSON: unknown,
+    newStoryId?: string,
+    options: { replaceUnlinked?: boolean } = {},
+  ): Promise<string> {
     let migrated: unknown;
     try {
       migrated = migrateStoryExport(fullStoryJSON);
@@ -49,14 +60,30 @@ export class DatabaseStoryPackageImporter {
       );
     }
 
+    // Sending a story that is flagged adults-only is flagging it: the same privilege as turning the flag on by sync, so
+    // the server's allowance and the account's verification are read here too, before anything is written.
+    if (validatedFullStory.story.isNsfw) {
+      const refusal = await storyNsfwService.nsfwFlagRefusal(userId);
+      if (refusal) throw new AppError(403, refusal);
+    }
+
     // Fails fast before opening the transaction: importing a whole story and only then refusing it would
     // leave the user with no idea why nothing was saved, and would burn database work on an import that
     // was going to be discarded anyway.
     try {
       await tierEnforcementService.assertCanCreateStory(userId);
+      await tierEnforcementService.assertCanImportEntities(
+        userId,
+        countTierEntitiesInStoryPackage(validatedFullStory),
+      );
+      // Comments are not entities: the package's live ones answer to the per-story cap of their own.
+      const liveComments = (validatedFullStory.comments ?? []).filter(
+        (comment) => !comment.isDeleted,
+      ).length;
+      await tierEnforcementService.assertCanImportComments(userId, liveComments);
     } catch (error) {
       if (error instanceof TierLimitExceededError) {
-        throw new AppError(403, error.message);
+        throw new AppError(403, error.message, 'tier_limit');
       }
       throw error;
     }
@@ -77,9 +104,22 @@ export class DatabaseStoryPackageImporter {
         });
 
         if (existingStory) {
-          throw new Error(
-            `Story with ID ${targetStoryId} already exists for this user. Import not allowed as overwriting is disabled.`,
-          );
+          if (!existingStory.isDeleted) {
+            throw new AppError(
+              409,
+              `Story with ID ${targetStoryId} already exists for this user. Import not allowed as overwriting is disabled.`,
+            );
+          }
+          // The story was unlinked from this server before: its data is still here, marked deleted. Sending it
+          // again starts it over, which the owner has to agree to - the old data goes for good.
+          if (!options.replaceUnlinked) {
+            throw new AppError(
+              409,
+              'This story was on this server before. Sending it again deletes the old data that is still kept here and uploads it as a new story.',
+              STORY_PREVIOUSLY_ON_SERVER,
+            );
+          }
+          await purgeStoryData(tx, targetStoryId);
         }
       }
 

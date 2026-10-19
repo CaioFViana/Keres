@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useChoiceFormResources } from '@/src/screens/narrative-elements/choices/useChoiceFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateChoiceService = jest.fn();
 const mockFetchScenes = jest.fn();
@@ -7,13 +10,13 @@ const mockFetchItems = jest.fn();
 const mockSetItemDb = jest.fn();
 const mockInitItem = jest.fn();
 
-jest.mock('../../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('../../../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   createChoiceService: (...args: unknown[]) => mockCreateChoiceService(...args),
 }));
-jest.mock('../../../../src/state/sceneStore', () => ({
+jest.mock('@/src/state/story/sceneStore', () => ({
   useSceneStore: () => ({
     scenes: [{ id: 'scene-1' }],
     fetchScenes: mockFetchScenes,
@@ -21,7 +24,7 @@ jest.mock('../../../../src/state/sceneStore', () => ({
     initializeService: mockInitScene,
   }),
 }));
-jest.mock('../../../../src/state/itemStore', () => ({
+jest.mock('@/src/state/story/itemStore', () => ({
   useItemStore: () => ({
     items: [{ id: 'item-1' }],
     fetchItems: mockFetchItems,
@@ -29,9 +32,6 @@ jest.mock('../../../../src/state/itemStore', () => ({
     initializeService: mockInitItem,
   }),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useChoiceFormResources } from '../../../../src/screens/narrative-elements/choices/useChoiceFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'choice-service' };

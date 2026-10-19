@@ -1,20 +1,20 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { Platform, StyleSheet } from 'react-native';
-import AppAlertHost from '../../../src/components/common/feedback/AppAlertHost/AppAlertHost';
-import NotificationItem from '../../../src/components/common/feedback/NotificationItem/NotificationItem';
-import NotificationPopup from '../../../src/components/common/feedback/NotificationPopup/NotificationPopup';
+import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
+import NotificationItem from '@/src/components/common/feedback/NotificationItem/NotificationItem';
+import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import {
   ScreenError,
   ScreenLoading,
-} from '../../../src/components/common/feedback/ScreenState/ScreenState';
-import { useAppAlertStore } from '../../../src/state/appAlertStore';
-import { useGalleryMediaViewerStore } from '../../../src/state/galleryMediaViewerStore';
-import { useNotificationStore } from '../../../src/state/notificationStore';
-import { usePresenceMatrixViewerStore } from '../../../src/state/presenceMatrixViewerStore';
-import { useShippedPacksInstallerStore } from '../../../src/state/shippedPacksInstallerStore';
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useAppAlertStore } from '@/src/state/ui/appAlertStore';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({

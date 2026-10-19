@@ -18,7 +18,7 @@ import { exampleStoryNarratives } from './lib/exampleStoryNarrative';
  */
 const CONTENT_ROOT = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  '../src/exampleStories/content',
+  '../src/content/example-stories/content',
 );
 
 const requested = process.argv[2];

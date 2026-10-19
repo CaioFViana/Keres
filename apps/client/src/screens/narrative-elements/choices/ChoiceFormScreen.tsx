@@ -1,31 +1,29 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntitySeeAlsoManager from '@/src/components/features/see-also/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ChoiceCheckGroupEditor from '@/src/components/features/choices/ChoiceCheckGroupEditor';
 import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { useTheme } from '../../../theme';
-import { getCommonInputStyles } from '../../../theme/commonStyles';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useChoiceFormActions } from './useChoiceFormActions';
 import { useChoiceFormAssociations } from './useChoiceFormAssociations';
 import { useChoiceFormResources } from './useChoiceFormResources';
@@ -139,13 +137,7 @@ const ChoiceFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   const sceneOptions = useMemo(
     () => scenes.map((scene) => ({ label: scene.name, value: scene.id })),
@@ -207,34 +199,23 @@ const ChoiceFormScreen = () => {
       title={formTitle}
       description={copy.formDescription}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {copy.deleteLabel}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          deleteLabel={copy.deleteLabel}
+          saveLabel={copy.saveLabel}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
-      <FormField label={t('text')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('text_placeholder')}
-            value={text}
-            onChangeText={setText}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('text')}
+        placeholder={t('text_placeholder')}
+        value={text}
+        onChangeText={setText}
+        style={commonInputStyles.multiline}
+      />
 
       <FormField label={t('vocabulary_parent_entity', { entity: sceneCopy.entity })}>
         <SingleSelectPill
@@ -256,31 +237,23 @@ const ChoiceFormScreen = () => {
         />
       </FormField>
 
-      <FormField label={t('choice_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('choice_notes_placeholder')}
-            value={notes || ''}
-            onChangeText={setNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('choice_notes')}
+        placeholder={t('choice_notes_placeholder')}
+        value={notes}
+        onChangeText={setNotes}
+        style={commonInputStyles.multiline}
+      />
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <MultiSelectPill
-            options={availableTags.map((tag) => ({
-              label: tag.name,
-              value: tag.id,
-              color: tag.color || colors.primaryContainer,
-            }))}
-            selectedValues={selectedTagIds}
+          <EntityTagPicker
+            tags={availableTags}
+            selectedTagIds={selectedTagIds}
             onSelectionChange={setSelectedTagIds}
             placeholder={t('select_tags_for_choice')}
             label={t('choice_tags')}
+            defaultColor={colors.primaryContainer}
           />
         </View>
       )}
@@ -323,27 +296,29 @@ const ChoiceFormScreen = () => {
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={choiceNoteRelations}
             availableNotes={allNotes}
             onSave={saveNoteRelation}
             onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentChoiceId ?? ''}
-            currentEntityType="Choice"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Choice',
+              entityId: currentChoiceId ?? '',
+            }}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Choice"
-            entityId={currentChoiceId ?? ''}
-            editable={true}
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Choice',
+              entityId: currentChoiceId ?? '',
+            }}
           />
         </View>
       )}

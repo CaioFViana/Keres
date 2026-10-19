@@ -17,8 +17,9 @@ Screens in React Navigation work through stacks (and, in the case of the main sy
 
 - The main screen when there is no pending Cold Install (`StorySelectionScreen`): it lists all the user's stories and which server each is linked to (or none, if offline-only).
 - Story CRUD (`StoryFormScreen`): creation allows setting every field, including `type` (`linear`/`branching`); editing restricts some.
-- Server CRUD (`ServerRegistrationScreen`/`ServerManagementScreen`): registering a remote Keres server (login/password) to which stories can be sent/linked.
+- Servers (`ServerManagementScreen`, `ServerDetailScreen`, `ServerRegistrationScreen`): the list shows each registered server compactly (address, user and `@tag`, last sync, and whether it answers - a status pill with the API version); opening one shows `ServerDetailScreen`, which has everything that can be done with it - the `@tag` (inline), messages to its administrators, profile and avatar (`MyProfileScreen`), password and recovery codes (`ChangePasswordScreen`), the connection (`ServerRegistrationScreen` in edit mode: address, or sign in again) and removal. Registering a remote Keres server (login/password) is how stories get sent/linked to it.
 - Friendship management (`FriendshipListScreen`, `FriendshipFormScreen`, `FriendDetailScreen`) and the user profile (`MyProfileScreen`, `ChangePasswordScreen`) - relevant for collaboration between users of the same server.
+- Messages (in the friendship stack): `MessageInboxScreen` (one line per conversation over every server, and a picker to start one) reached from a header icon on `FriendshipListScreen`; `ConversationScreen` (paged history, composer, delete for oneself) reached from the inbox, from a message icon on a friend's row and header (`FriendDetailScreen`), and from `ServerDetailScreen` (the server's administrators). Messages are online-only: the server is the only copy.
 - General app settings (`AppSettingsScreen`): theme (light/dark) and language.
 - Story import/export through JSON (`ImportExportScreen`).
 - Example stories ready to import (`examplestories/ExampleStoriesScreen`).

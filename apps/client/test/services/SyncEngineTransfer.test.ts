@@ -1,33 +1,45 @@
 /**
  * @jest-environment node
  */
+import axios from 'axios';
+import { eq } from 'drizzle-orm';
+import * as schema from '@/src/db/schema';
+import { createCommentService } from '@/src/services/storymanagement/notes-tags-comments/CommentService';
+import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import type { SyncEngineService } from '@/src/services/sync/SyncEngineService';
+import { createAppSyncEngine } from '@/src/services/sync/appSyncEngine';
+import { isPlanLimitMessage } from '@/src/services/sync/StoryTransfer';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: { getState: () => ({ showNotification: mockShowNotification }) },
 }));
 
-jest.mock('../../src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   __esModule: true,
   createServerService: jest.fn(),
 }));
 
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(),
 }));
 
-jest.mock('../../src/services/storymanagement/FavoriteService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/FavoriteService', () => ({
   __esModule: true,
   createFavoriteService: jest.fn(),
 }));
 
-jest.mock('../../src/services/storymanagement/CommentService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/CommentService', () => ({
   __esModule: true,
   createCommentService: jest.fn(),
 }));
 
-jest.mock('../../src/services/MediaSyncService', () => ({
+jest.mock('@/src/services/media/MediaSyncService', () => ({
   __esModule: true,
   createMediaSyncService: () => ({
     syncStoryMedia: jest.fn(async () => ({
@@ -39,23 +51,12 @@ jest.mock('../../src/services/MediaSyncService', () => ({
   }),
 }));
 
-import axios from 'axios';
-import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createCommentService } from '../../src/services/storymanagement/CommentService';
-import { createFavoriteService } from '../../src/services/storymanagement/FavoriteService';
-import { createServerService } from '../../src/services/ServerService';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import type { SyncEngineService } from '../../src/services/SyncEngineService';
-import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
-
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 /** Forma completa de `ServerSelect`, para os testes chamarem a API real sem cast. */
 const SERVER = {
   id: 'server-1',
   name: 'Casa',
-  url: 'http://servidor',
+  url: 'http://192.168.0.10',
   idUser: 'server-user',
   userName: 'ana',
   tag: 'ana',
@@ -65,6 +66,12 @@ const SERVER = {
   version: 1,
   isDeleted: false,
   deletedAt: null,
+  tosText: null,
+  tosVersion: null,
+  tosAcceptedAt: null,
+  privacyText: null,
+  privacyVersion: null,
+  privacyAcceptedAt: null,
 };
 const LOCAL_USER = 'local-user';
 const NOW = new Date('2026-08-10T12:00:00.000Z');
@@ -97,6 +104,34 @@ function installAdapter() {
     });
 
     const key = Object.keys(routes).find((fragment) => url.includes(fragment));
+    const scripted =
+      key === undefined
+        ? undefined
+        : (routes[key] as { refusedWith?: string; refusedCode?: string; conflictCode?: string });
+    if (scripted?.conflictCode) {
+      const error: any = new Error('Request failed with status code 409');
+      error.config = config;
+      error.request = {};
+      error.response = {
+        status: 409,
+        data: { message: 'was here before', code: scripted.conflictCode },
+        config,
+        headers: {},
+      };
+      throw error;
+    }
+    if (scripted?.refusedWith) {
+      const error: any = new Error('Request failed with status code 403');
+      error.config = config;
+      error.request = {};
+      error.response = {
+        status: 403,
+        data: { message: scripted.refusedWith, code: scripted.refusedCode },
+        config,
+        headers: {},
+      };
+      throw error;
+    }
     if (key === undefined || routes[key] === null) {
       const error: any = new Error('Request failed with status code 500');
       error.config = config;
@@ -361,6 +396,80 @@ describe('uploadNewStoryToServer', () => {
     );
   });
 
+  it('hands on the reason when the server refuses the story, such as the plan limit', async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = { refusedWith: 'Story limit reached for your plan (1).' };
+
+    const result = await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    expect(result).toEqual({
+      success: false,
+      reason: 'refused',
+      message: 'Story limit reached for your plan (1).',
+      planLimit: true,
+    });
+    expect(mockStoryService.updateStory).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The server's own `tier_limit` code is what the app trusts first: the words are only a fallback for older servers,
+   * so a plan refusal stays a plan refusal even when its text no longer says "your plan".
+   */
+  it('takes the tier_limit code as a plan limit, whatever the message says', async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = {
+      refusedWith: 'Anything without the words',
+      refusedCode: 'tier_limit',
+    };
+
+    const result = await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    expect(result).toEqual({
+      success: false,
+      reason: 'refused',
+      message: 'Anything without the words',
+      planLimit: true,
+    });
+  });
+
+  it('does not call an adults-only refusal a plan limit, so no plan hint is shown for it', async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = {
+      refusedWith: 'This server has no age verification, so it has no adults-only area.',
+    };
+
+    const result = await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    expect(result).toEqual({
+      success: false,
+      reason: 'refused',
+      message: 'This server has no age verification, so it has no adults-only area.',
+      planLimit: false,
+    });
+  });
+
+  it("says the story was on the server before when the server asks for the owner's agreement", async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = { conflictCode: 'STORY_PREVIOUSLY_ON_SERVER' };
+
+    const result = await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    expect(result).toEqual({ success: false, reason: 'previously_on_server' });
+    expect(mockStoryService.updateStory).not.toHaveBeenCalled();
+  });
+
+  it('asks the server to erase the old copy only when the owner agreed to it', async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = { storyId: STORY_ID };
+
+    await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+    await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER, { replaceOldCopy: true });
+
+    const imports = seen.filter((request) => request.url.includes('/stories/import'));
+    expect(imports[0].url).not.toContain('replaceUnlinked');
+    expect(imports[1].url).toContain('replaceUnlinked=true');
+  });
+
   it('marks every operation included in the imported snapshot as already sent', async () => {
     await seedLocalStory({ lastOperationLog: 4 });
     await seedOperation('op-favorite', { entityType: 'Favorite', operationVersion: 2 });
@@ -393,5 +502,29 @@ describe('uploadNewStoryToServer', () => {
 
     expect(result).toMatchObject({ success: false, reason: 'error' });
     expect(mockStoryService.updateStory).not.toHaveBeenCalled();
+  });
+});
+
+describe('isPlanLimitMessage', () => {
+  it('recognises every plan ceiling the API words for the story import', () => {
+    for (const message of [
+      'Story limit reached for your plan (1).',
+      'This story has 900 entities, more than your plan allows in one story (500).',
+      "This story has 3 entities and you already have 9: together that is over your plan's total (10).",
+      'Storage limit for this story reached for your plan (1000 bytes).',
+    ]) {
+      expect(isPlanLimitMessage(message)).toBe(true);
+    }
+  });
+
+  it('does not take any other refusal for a plan limit', () => {
+    for (const message of [
+      'This server has no age verification, so it has no adults-only area.',
+      'Only age-verified (+18) users can flag stories adults-only.',
+      'The showcase is disabled on this server.',
+      'Only the owner of a story can publish it.',
+    ]) {
+      expect(isPlanLimitMessage(message)).toBe(false);
+    }
   });
 });

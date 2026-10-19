@@ -1,9 +1,9 @@
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import {
   ScreenError,
   ScreenLoading,
@@ -12,25 +12,27 @@ import type { RelatedEntityItem } from '@/src/components/common/lists/RelatedEnt
 import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
-import type { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
+import type { TagRelation } from '@keres/shared/entities/narrative/Tag'; // Import TagRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema'; // Import TagSelect
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { TagSelect } from '@/src/db/schema'; // Import TagSelect
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { EntityService } from '../../services/EntityService'; // Import EntityService
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService'; // Import createTagRelationService
-import { createTagService } from '../../services/storymanagement/TagService'; // Import createTagService
-import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
-import { useTheme } from '../../theme';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { EntityService } from '@/src/services/entity-solvers/EntityService'; // Import EntityService
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService'; // Import createTagRelationService
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService'; // Import createTagService
+import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
+import type { ThemeColors } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 import type { TagsScreenNavigationProp } from './TagListScreen';
 
@@ -43,7 +45,6 @@ type TagDetailScreenRouteProp = RouteProp<TagDetailScreenParamList, 'TagDetail'>
 
 const TagDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
   const navigation = useNavigation<TagsScreenNavigationProp>();
   const route = useRoute<TagDetailScreenRouteProp>();
   const { tagId, occurrence } = route.params;
@@ -67,15 +68,7 @@ const TagDetailScreen = () => {
   }, [drizzleDb]);
 
   const [tag, setTag] = useState<TagSelect | null>(null);
-  const {
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    commentsByField,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(selectedStory?.id, 'Tag', tagId);
+  const comments = useEntityComments(selectedStory?.id, 'Tag', tagId);
   const [allTagRelations, setAllTagRelations] = useState<TagRelation[]>([]);
   const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
     chapter: [],
@@ -102,26 +95,7 @@ const TagDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
-  const styles = StyleSheet.create({
-    detailText: {
-      fontSize: 16,
-      color: colors.text,
-      marginBottom: 5,
-    },
-    colorDisplayContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 10,
-    },
-    colorCircle: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.textSecondary,
-      marginRight: 10,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchTag = useCallback(async () => {
     if (!tagServiceRef.current) {
@@ -288,16 +262,7 @@ const TagDetailScreen = () => {
     );
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: tag.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(tag.storyId, comments);
 
   return (
     <DetailContainer
@@ -334,5 +299,27 @@ const TagDetailScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    detailText: {
+      ...typography.bodyLarge,
+      color: colors.text,
+      marginBottom: 5,
+    },
+    colorDisplayContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    colorCircle: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.textSecondary,
+      marginRight: 10,
+    },
+  });
 
 export default TagDetailScreen;

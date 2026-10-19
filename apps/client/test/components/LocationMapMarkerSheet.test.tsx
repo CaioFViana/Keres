@@ -4,9 +4,9 @@ import React from 'react';
 import LocationMapMarkerSheet, {
   LOCATION_MAP_MARKER_SHEET_INNER_PADDING,
   LOCATION_MAP_MARKER_SHEET_HORIZONTAL_INSET,
-} from '../../src/components/features/location-maps/LocationMapMarkerSheet';
+} from '@/src/components/features/location-maps/LocationMapMarkerSheet';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#111',
@@ -20,22 +20,22 @@ jest.mock('../../src/theme', () => ({
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock(
-  '../../src/components/layout/ResponsiveModal/ResponsiveModal',
+  '@/src/components/layout/ResponsiveModal/ResponsiveModal',
   () =>
     function MockResponsiveModal({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
     },
 );
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: ({ children }: { children: React.ReactNode }) => <Text>{children}</Text>,
   };
 });
-jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => () => null);
-jest.mock('../../src/components/common/inputs/IconPickerInput/IconPickerInput', () => () => null);
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => ({
+jest.mock('@/src/components/common/inputs/ColorPickerInput/ColorPickerInput', () => () => null);
+jest.mock('@/src/components/common/inputs/IconPickerInput/IconPickerInput', () => () => null);
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => ({
   SingleSelectPill: () => null,
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));

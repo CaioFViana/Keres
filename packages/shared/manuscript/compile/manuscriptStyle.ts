@@ -33,7 +33,7 @@ export const ManuscriptStyleSchema = z.object({
 });
 export type ManuscriptStyle = z.infer<typeof ManuscriptStyleSchema>;
 
-export const MANUSCRIPT_PRESETS = ['ebook', 'paperback', 'submission'] as const;
+export const MANUSCRIPT_PRESETS = ['ebook', 'paperback', 'submission', 'chronicle'] as const;
 export type ManuscriptPreset = (typeof MANUSCRIPT_PRESETS)[number];
 
 /** A preset: a format and the settings its destination expects, each one overridable. */
@@ -87,6 +87,19 @@ export const MANUSCRIPT_PRESET_SETTINGS: Record<ManuscriptPreset, ManuscriptPres
       lineSpacing: 2,
       paragraphStyle: 'indent',
       sceneSeparator: 'hash',
+      collapseSpaces: true,
+    },
+  },
+  // The record of a tabletop campaign, for the table to read: every session a heading in the index,
+  // each scene named, plain paragraphs and a rule between scenes. Offered where the work is a campaign.
+  chronicle: {
+    format: 'pdf',
+    includeToc: true,
+    includeSceneNames: true,
+    titlePage: false,
+    style: {
+      paragraphStyle: 'block',
+      sceneSeparator: 'rule',
       collapseSpaces: true,
     },
   },
@@ -261,6 +274,72 @@ function presentSpans(
   });
 }
 
+/** One block through the style: pure in (block, style, fill, language). */
+export type BlockPresenter = (block: CompiledBlock) => CompiledBlock;
+
+function fillFor(style: ManuscriptStyle): (text: string) => string {
+  const placeholders = style.placeholders ?? {};
+  return (text) =>
+    Object.keys(placeholders).length === 0
+      ? text
+      : text.replace(/<\$([a-z]{1,20})>/g, (whole, name: string) => placeholders[name] ?? whole);
+}
+
+/**
+ * The per-block half of `presentManuscript`, shared with the compilers: when
+ * the pipeline presents each block at creation, no second full copy of every
+ * span ever exists. Behavior is identical either way (each block is
+ * independent: no transform reads its neighbors).
+ */
+export function blockPresenterFor(
+  style: ManuscriptStyle = {},
+  language: 'en' | 'pt' = 'en',
+): BlockPresenter {
+  const fill = fillFor(style);
+  // Without quotes, collapsing or placeholders every span transform below is
+  // provably a no-op: return blocks untouched instead of copying every span.
+  // (Chapter numbering is checked per block regardless.)
+  const spansIdentity =
+    (!style.quotes || style.quotes === 'straight') &&
+    !style.collapseSpaces &&
+    Object.keys(style.placeholders ?? {}).length === 0;
+  const plain = (text: string) =>
+    presentSpans(
+      [{ text, bold: false, italic: false, underline: false, strikethrough: false }],
+      style,
+      fill,
+    )[0]!.text;
+  const numbering = style.chapterNumbering ?? 'arabic';
+  return (block) => {
+    switch (block.kind) {
+      case 'title':
+      case 'subtitle':
+        return spansIdentity ? block : { ...block, text: fill(block.text) };
+      case 'chapter': {
+        if (block.number === null || numbering === 'arabic') {
+          return block;
+        }
+        if (numbering === 'none') {
+          return { ...block, number: null };
+        }
+        const label =
+          numbering === 'roman'
+            ? romanNumeral(block.number)
+            : numberInWords(block.number, language);
+        return { ...block, number: null, name: `${label}. ${block.name}` };
+      }
+      case 'paragraph':
+      case 'bullet':
+      case 'ordered':
+        return spansIdentity ? block : { ...block, spans: presentSpans(block.spans, style, fill) };
+      case 'choice':
+        return spansIdentity ? block : { ...block, text: plain(block.text) };
+      default:
+        return block;
+    }
+  };
+}
+
 /**
  * The compiled manuscript as the style presents it. Pure: the renderers only ever draw what this
  * hands them. `language` picks the words of spelled-out chapter numbers.
@@ -270,61 +349,43 @@ export function presentManuscript(
   style: ManuscriptStyle = {},
   language: 'en' | 'pt' = 'en',
 ): CompiledManuscript {
-  const placeholders = style.placeholders ?? {};
-  const fill = (text: string) =>
-    Object.keys(placeholders).length === 0
-      ? text
-      : text.replace(/<\$([a-z]{1,20})>/g, (whole, name: string) => placeholders[name] ?? whole);
-  const plain = (text: string) =>
-    presentSpans(
-      [{ text, bold: false, italic: false, underline: false, strikethrough: false }],
-      style,
-      fill,
-    )[0]!.text;
-  const numbering = style.chapterNumbering ?? 'arabic';
+  const present = blockPresenterFor(style, language);
+  const finished = finishPresentedManuscript(
+    manuscript.title,
+    manuscript.blocks.map(present),
+    style,
+  );
+  // The pictures and their frame ride along: presenting changes words, never what a page shows.
+  return {
+    ...finished,
+    ...(manuscript.images ? { images: manuscript.images } : {}),
+    ...(manuscript.pageAspect !== undefined ? { pageAspect: manuscript.pageAspect } : {}),
+    // How the pages are laid out and the cover are not words either: they ride along too.
+    ...(manuscript.pageLayout ? { pageLayout: manuscript.pageLayout } : {}),
+    ...(manuscript.cover ? { cover: manuscript.cover } : {}),
+  };
+}
 
-  const blocks: CompiledBlock[] = [];
-  for (const block of manuscript.blocks) {
-    switch (block.kind) {
-      case 'title':
-      case 'subtitle':
-        blocks.push({ ...block, text: fill(block.text) });
-        break;
-      case 'chapter': {
-        if (block.number === null || numbering === 'arabic') {
-          blocks.push(block);
-        } else if (numbering === 'none') {
-          blocks.push({ ...block, number: null });
-        } else {
-          const label =
-            numbering === 'roman'
-              ? romanNumeral(block.number)
-              : numberInWords(block.number, language);
-          blocks.push({ ...block, number: null, name: `${label}. ${block.name}` });
-        }
-        break;
-      }
-      case 'paragraph':
-        blocks.push({ ...block, spans: presentSpans(block.spans, style, fill) });
-        break;
-      case 'choice':
-        blocks.push({ ...block, text: plain(block.text) });
-        break;
-      default:
-        blocks.push(block);
-    }
-  }
+/**
+ * The tail half of `presentManuscript` over already-presented blocks: front
+ * matter plus title fill. The pipeline's fused path ends here instead of
+ * mapping a second full copy of every span.
+ */
+export function finishPresentedManuscript(
+  title: string,
+  blocks: CompiledBlock[],
+  style: ManuscriptStyle = {},
+): CompiledManuscript {
+  const fill = fillFor(style);
+  const out = [...blocks];
   // The generated title page: its lines follow the title block (and a route's subtitle).
   const frontMatter = (style.frontMatter ?? []).map(fill).filter((line) => line.trim() !== '');
   if (frontMatter.length > 0) {
     let at = 0;
-    while (
-      at < blocks.length &&
-      (blocks[at]!.kind === 'title' || blocks[at]!.kind === 'subtitle')
-    ) {
+    while (at < out.length && (out[at]!.kind === 'title' || out[at]!.kind === 'subtitle')) {
       at += 1;
     }
-    blocks.splice(at, 0, ...frontMatter.map((text): CompiledBlock => ({ kind: 'subtitle', text })));
+    out.splice(at, 0, ...frontMatter.map((text): CompiledBlock => ({ kind: 'subtitle', text })));
   }
-  return { title: fill(manuscript.title), blocks };
+  return { title: fill(title), blocks: out };
 }

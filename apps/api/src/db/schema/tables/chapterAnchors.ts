@@ -1,5 +1,5 @@
 import type { ScenePosition } from '@keres/shared';
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { chapters } from './chapters';
 import { scenes } from './scenes';
 import { stories } from './stories';

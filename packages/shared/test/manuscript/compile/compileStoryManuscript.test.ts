@@ -1,9 +1,7 @@
 import JSZip from 'jszip';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import {
-  compileStoryManuscript,
-  type CompileStoryManuscriptInput,
-} from '../../../manuscript/compile/compileStoryManuscript';
+import { compileStoryManuscript } from '../../../manuscript/compile/compileStoryManuscript';
+import type { CompileStoryManuscriptInput } from '../../../manuscript/compile/presentedManuscript';
 import type { ManuscriptChoice } from '../../../manuscript/compile/export/manuscriptCompiler';
 import {
   DEFAULT_MANUSCRIPT_LABELS,
@@ -13,9 +11,9 @@ import type {
   ManuscriptChapter,
   ManuscriptScene,
 } from '../../../manuscript/compile/manuscriptSections';
-import type { ChapterRowType } from '../../../schemas/ChapterSchemas';
-import type { ChoiceType } from '../../../schemas/ChoiceSchemas';
-import type { SceneType } from '../../../schemas/SceneSchemas';
+import type { ChapterRowType } from '../../../schemas/narrative/ChapterSchemas';
+import type { ChoiceType } from '../../../schemas/narrative/ChoiceSchemas';
+import type { SceneType } from '../../../schemas/narrative/SceneSchemas';
 
 describe('structural inputs', () => {
   it('accepts FullStoryExport collections as well as minimal rows', () => {
@@ -287,5 +285,28 @@ describe('compileStoryManuscript limits', () => {
     await expect(compileStoryManuscript(big, { format: 'txt' })).rejects.toThrow(
       `exceeds the ${MAX_MANUSCRIPT_BYTES}-byte limit`,
     );
-  });
+    // It builds, validates and renders a hundred megabytes of text: a fraction of a second here, but on a
+    // busy CI machine the default five seconds is not a margin for that.
+  }, 60_000);
+
+  it('compiles what fits under the raised budget', async () => {
+    // Sixty megabytes: refused under the old cap, accepted now.
+    const fitting = input({
+      scenes: [
+        {
+          id: 's-1',
+          chapterId: 'ch-1',
+          name: 'Opening',
+          index: 1,
+          body: 'x'.repeat(60 * 1024 * 1024),
+          isDeleted: false,
+        },
+      ],
+    });
+
+    const result = await compileStoryManuscript(fitting, { format: 'txt' });
+
+    expect(result.bytes.length).toBeGreaterThan(50 * 1024 * 1024);
+    expect(result.bytes.length).toBeLessThanOrEqual(MAX_MANUSCRIPT_BYTES);
+  }, 60_000);
 });

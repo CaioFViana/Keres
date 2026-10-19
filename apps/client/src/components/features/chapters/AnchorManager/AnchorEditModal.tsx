@@ -4,14 +4,17 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import type { ScenePosition } from '@keres/shared';
 import { SCENE_POSITIONS } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**
  * One stretch of story time: from a moment, and optionally to a moment.
@@ -155,102 +158,7 @@ const AnchorEditModal: React.FC<Props> = ({
     });
   })();
 
-  const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      // ResponsiveModal clips rounded surfaces; focus borders on inputs need to paint into padding.
-      overflow: 'visible',
-    },
-    keyboardContent: {
-      paddingBottom: 12,
-      paddingHorizontal: 2,
-      paddingVertical: 2,
-    },
-    handle: {
-      alignSelf: 'center',
-      width: 42,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: colors.border,
-      marginBottom: 14,
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 8,
-      textAlign: 'center',
-    },
-    preview: {
-      fontSize: 14,
-      color: colors.text,
-      lineHeight: 20,
-      marginBottom: 16,
-      textAlign: 'center',
-    },
-    modes: {
-      flexDirection: 'row',
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      overflow: 'hidden',
-      marginBottom: 18,
-    },
-    mode: {
-      flexGrow: 1,
-      flexShrink: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 8,
-      alignItems: 'center',
-    },
-    modeText: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
-    formGroup: {
-      marginBottom: 16,
-      paddingHorizontal: 2,
-      paddingVertical: 2,
-    },
-    timingRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      marginTop: 8,
-    },
-    numberWidthInput: { width: '30%' },
-    unitField: { flex: 1 },
-    label: { fontSize: 16, color: colors.text, marginBottom: 6 },
-    positions: {
-      flexDirection: 'row',
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      overflow: 'hidden',
-      marginTop: 8,
-    },
-    position: { flexGrow: 1, flexShrink: 1, paddingVertical: 10, alignItems: 'center' },
-    positionText: { fontSize: 13, fontWeight: '700' },
-    distanceToggle: { marginTop: 10, paddingVertical: 6 },
-    distanceToggleText: { fontSize: 13, fontWeight: '700', color: colors.primary },
-    distanceBlock: { marginTop: 8, gap: 8 },
-    directionRow: {
-      flexDirection: 'row',
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      overflow: 'hidden',
-    },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 17 },
-    buttons: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 16,
-      paddingHorizontal: '3%',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const patch = (changes: Partial<AnchorDraft>) =>
     setDraft((current) => ({ ...current, ...changes }));
@@ -334,6 +242,8 @@ const AnchorEditModal: React.FC<Props> = ({
                     )
                   }
                   placeholder={t('anchor_offset_unit_placeholder')}
+                  // The pill carries a bottom margin of its own; beside an input in a centred row it lifts the pill off the input's line.
+                  style={styles.unitSelect}
                   multiple={false}
                 />
               </View>
@@ -423,6 +333,8 @@ const AnchorEditModal: React.FC<Props> = ({
       visible={visible}
       onClose={onCancel}
       placement="adaptive"
+      tone="raised"
+      inset="sheet"
       contentStyle={styles.sheet}
       maxHeight="86%"
     >
@@ -431,67 +343,178 @@ const AnchorEditModal: React.FC<Props> = ({
         keyboardVerticalOffset={0}
       >
         {isCompact && <View style={styles.handle} />}
-        <Text style={styles.title}>{t('anchor_modal_title')}</Text>
-        <Text style={styles.preview}>{preview}</Text>
-        <View style={styles.modes}>
-          {(['open', 'closed'] as const).map((option) => {
-            const selected = mode === option;
-            const disabled = option === 'open' && !allowOpenStretch;
-            return (
-              <TouchableOpacity
-                key={option}
-                disabled={disabled}
-                onPress={() => setModeTo(option)}
-                style={[
-                  styles.mode,
-                  selected && { backgroundColor: colors.primaryContainer },
-                  disabled && { opacity: 0.45 },
-                ]}
+        <ModalHeader title={t('anchor_modal_title')} />
+        <Text style={styles.explainer}>{t('anchor_how_it_works')}</Text>
+        {scenes.length === 0 ? (
+          <>
+            <Text style={styles.needsScenes}>{t('anchor_needs_scenes')}</Text>
+            <FormActions>
+              <Button onPress={onCancel} testID="anchor-understood">
+                {t('anchor_understood')}
+              </Button>
+            </FormActions>
+          </>
+        ) : (
+          <>
+            <Text style={styles.preview}>{preview}</Text>
+            <View style={styles.modes}>
+              {(['open', 'closed'] as const).map((option) => {
+                const selected = mode === option;
+                const disabled = option === 'open' && !allowOpenStretch;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    disabled={disabled}
+                    onPress={() => setModeTo(option)}
+                    style={[
+                      styles.mode,
+                      selected && { backgroundColor: colors.primaryContainer },
+                      disabled && { opacity: 0.45 },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.modeText,
+                        { color: selected ? colors.onPrimaryContainer : colors.textSecondary },
+                      ]}
+                    >
+                      {t(option === 'open' ? 'anchor_mode_open' : 'anchor_mode_closed')}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {mode === 'open' && (
+              <Text style={[styles.hint, { marginBottom: 12 }]}>
+                {hasContents ? t('anchor_mode_open_hint') : t('anchor_mode_open_empty_hint')}
+              </Text>
+            )}
+            {renderPoint('start')}
+            {mode === 'closed' && renderPoint('end')}
+            <FormActions>
+              <Button onPress={onCancel}>{t('cancel')}</Button>
+              <Button
+                onPress={() =>
+                  onConfirm(
+                    mode === 'open'
+                      ? {
+                          ...draft,
+                          endSceneId: null,
+                          endPosition: null,
+                          endOffset: null,
+                          endOffsetUnit: null,
+                        }
+                      : draft,
+                  )
+                }
+                disabled={!complete}
+                testID="confirm-anchor"
               >
-                <Text
-                  style={[
-                    styles.modeText,
-                    { color: selected ? colors.onPrimaryContainer : colors.textSecondary },
-                  ]}
-                >
-                  {t(option === 'open' ? 'anchor_mode_open' : 'anchor_mode_closed')}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        {mode === 'open' && (
-          <Text style={[styles.hint, { marginBottom: 12 }]}>
-            {hasContents ? t('anchor_mode_open_hint') : t('anchor_mode_open_empty_hint')}
-          </Text>
+                {t('save')}
+              </Button>
+            </FormActions>
+          </>
         )}
-        {renderPoint('start')}
-        {mode === 'closed' && renderPoint('end')}
-        <FormActions>
-          <Button onPress={onCancel}>{t('cancel')}</Button>
-          <Button
-            onPress={() =>
-              onConfirm(
-                mode === 'open'
-                  ? {
-                      ...draft,
-                      endSceneId: null,
-                      endPosition: null,
-                      endOffset: null,
-                      endOffsetUnit: null,
-                    }
-                  : draft,
-              )
-            }
-            disabled={!complete}
-            testID="confirm-anchor"
-          >
-            {t('save')}
-          </Button>
-        </FormActions>
       </KeyboardAwareScreen>
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    // ResponsiveModal clips rounded surfaces; focus borders on inputs need to paint into padding.
+    // `flex: 1` because KeyboardAwareScreen is `flex: 1` too: under a surface that only has a max
+    // height it collapses to nothing on native, leaving the backdrop with an empty sheet.
+    sheet: { flex: 1, overflow: 'visible' },
+    keyboardContent: {
+      paddingBottom: 12,
+      paddingHorizontal: 2,
+      paddingVertical: 2,
+    },
+    handle: {
+      alignSelf: 'center',
+      width: 42,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginBottom: 14,
+    },
+    explainer: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 16,
+      lineHeight: 20,
+    },
+    needsScenes: {
+      ...typography.body,
+      color: colors.text,
+      marginBottom: 8,
+      lineHeight: 21,
+    },
+    preview: {
+      ...typography.body,
+      color: colors.text,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    modes: {
+      flexDirection: 'row',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      overflow: 'hidden',
+      marginBottom: 18,
+    },
+    mode: {
+      flexGrow: 1,
+      flexShrink: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 8,
+      alignItems: 'center',
+    },
+    modeText: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
+    formGroup: {
+      marginBottom: 16,
+      paddingHorizontal: 2,
+      paddingVertical: 2,
+    },
+    timingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 8,
+    },
+    numberWidthInput: { width: '30%' },
+    unitField: { flex: 1 },
+    unitSelect: { marginBottom: 0 },
+    label: { ...typography.bodyLarge, color: colors.text, marginBottom: 6 },
+    positions: {
+      flexDirection: 'row',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      overflow: 'hidden',
+      marginTop: 8,
+    },
+    position: { flexGrow: 1, flexShrink: 1, paddingVertical: 10, alignItems: 'center' },
+    positionText: { fontSize: 13, fontWeight: '700' },
+    distanceToggle: { marginTop: 10, paddingVertical: 6 },
+    distanceToggleText: { fontSize: 13, fontWeight: '700', color: colors.primary },
+    distanceBlock: { marginTop: 8, gap: 8 },
+    directionRow: {
+      flexDirection: 'row',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 17 },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 16,
+      paddingHorizontal: '3%',
+    },
+  });
 
 export default AnchorEditModal;

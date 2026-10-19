@@ -1,14 +1,15 @@
+import { assessManuscriptSize, screenplayGeometry, screenplayPreset } from '@keres/shared';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { useState } from 'react';
-import ManuscriptExportOptions from '../../../src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
+import { useEffect, useState } from 'react';
+import ManuscriptExportOptions from '@/src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import {
   defaultExportSettings,
   type ManuscriptExportSettings,
-} from '../../../src/components/features/manuscript/export/manuscriptExportSettings';
+} from '@/src/components/features/manuscript/export/manuscriptExportSettings';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -50,7 +51,9 @@ function Harness({
   branching?: boolean;
 }) {
   const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
-  latest = settings;
+  useEffect(() => {
+    latest = settings;
+  });
   return (
     <ManuscriptExportOptions
       settings={settings}
@@ -68,6 +71,225 @@ function Harness({
 afterEach(() => {
   cleanup();
   latest = null;
+});
+
+const SCRIPT_FORMATS = [...ALL_FORMATS, 'fountain', 'screenplay-pdf'] as const;
+
+function ScriptHarness({
+  estimate = null,
+}: {
+  estimate?: Parameters<typeof ManuscriptExportOptions>[0]['screenplayEstimate'];
+}) {
+  const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+  useEffect(() => {
+    latest = settings;
+  });
+  return (
+    <ManuscriptExportOptions
+      settings={settings}
+      onChange={setSettings}
+      formats={SCRIPT_FORMATS}
+      branching={false}
+      showLooseSwitch
+      looseCount={2}
+      chapterNumberingAvailable
+      arcs={[]}
+      screenplayEstimate={estimate}
+    />
+  );
+}
+
+describe('ManuscriptExportOptions page layout', () => {
+  function PagesHarness({ medium }: { medium: 'comic' | 'storyboard' | null }) {
+    const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+    useEffect(() => {
+      latest = settings;
+    });
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch={false}
+        looseCount={0}
+        chapterNumberingAvailable
+        arcs={[]}
+        pagesMedium={medium}
+      />
+    );
+  }
+
+  it('offers the layouts of a comic, and lets the medium of the work choose until the person does', async () => {
+    const view = await render(<PagesHarness medium="comic" />);
+    await fireEvent.press(view.getByTestId('export-format-pdf'));
+
+    expect(view.getByTestId('export-page-layout-sheet')).toBeTruthy();
+    expect(view.getByTestId('export-page-layout-spreads')).toBeTruthy();
+    expect(view.getByTestId('export-page-layout-flow')).toBeTruthy();
+    expect(latest?.pageLayout).toBeNull();
+
+    await fireEvent.press(view.getByTestId('export-page-layout-spreads'));
+    expect(latest?.pageLayout).toBe('spreads');
+  });
+
+  it('offers nothing for the formats with no pictures', async () => {
+    const comic = await render(<PagesHarness medium="comic" />);
+    await fireEvent.press(comic.getByTestId('export-format-md'));
+    expect(comic.queryByTestId('export-page-layout')).toBeNull();
+  });
+
+  it('offers nothing for a work with no pages to set', async () => {
+    const prose = await render(<PagesHarness medium={null} />);
+    await fireEvent.press(prose.getByTestId('export-format-pdf'));
+    expect(prose.queryByTestId('export-page-layout')).toBeNull();
+  });
+});
+
+describe('ManuscriptExportOptions cover', () => {
+  function CoverHarness({ hasCover }: { hasCover: boolean }) {
+    const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+    useEffect(() => {
+      latest = settings;
+    });
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch={false}
+        looseCount={0}
+        chapterNumberingAvailable
+        arcs={[]}
+        hasCover={hasCover}
+      />
+    );
+  }
+
+  it('offers to put the cover first, on by default, in a format that carries pictures', async () => {
+    const view = await render(<CoverHarness hasCover />);
+    await fireEvent.press(view.getByTestId('export-format-pdf'));
+
+    expect(view.getByTestId('export-cover')).toBeTruthy();
+    expect(latest?.cover).toBe(true);
+    await fireEvent.press(view.getByTestId('export-cover'));
+    expect(latest?.cover).toBe(false);
+  });
+
+  it('offers nothing for a format without pictures, or when there is no cover', async () => {
+    const text = await render(<CoverHarness hasCover />);
+    await fireEvent.press(text.getByTestId('export-format-md'));
+    expect(text.queryByTestId('export-cover')).toBeNull();
+  });
+
+  it('offers nothing when the story and the work have no cover', async () => {
+    const bare = await render(<CoverHarness hasCover={false} />);
+    await fireEvent.press(bare.getByTestId('export-format-pdf'));
+    expect(bare.queryByTestId('export-cover')).toBeNull();
+  });
+});
+
+describe('ManuscriptExportOptions size', () => {
+  const assess = (bytes: number) => assessManuscriptSize(bytes, 100 * 1024 * 1024);
+
+  function SizeHarness({ size }: { size: ReturnType<typeof assessManuscriptSize> | null }) {
+    const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch
+        looseCount={2}
+        chapterNumberingAvailable
+        arcs={[]}
+        sizeEstimate={size}
+      />
+    );
+  }
+
+  it('says how big the file will be, and warns as it nears and passes the limit', async () => {
+    const ok = await render(<SizeHarness size={assess(5 * 1024 * 1024)} />);
+    expect(ok.getByTestId('export-size-ok').props.children).toContain('export_size_ok');
+    expect(ok.getByTestId('export-size-ok').props.children).toContain('5.0 MB');
+    await ok.unmount();
+
+    const near = await render(<SizeHarness size={assess(90 * 1024 * 1024)} />);
+    expect(near.getByTestId('export-size-near')).toBeTruthy();
+    await near.unmount();
+
+    const over = await render(<SizeHarness size={assess(120 * 1024 * 1024)} />);
+    expect(over.getByTestId('export-size-over')).toBeTruthy();
+  });
+
+  it('shows no figure for what is too small to count, and nothing without an estimate', async () => {
+    const tiny = await render(<SizeHarness size={assess(2048)} />);
+    expect(tiny.getByTestId('export-size-ok').props.children).toContain('< 0.1 MB');
+    await tiny.unmount();
+
+    const none = await render(<SizeHarness size={null} />);
+    expect(none.queryByTestId('export-size-ok')).toBeNull();
+  });
+});
+
+describe('ManuscriptExportOptions for a screenplay', () => {
+  it('offers the screenplay formats and swaps the book choices for the screenplay ones', async () => {
+    const view = await render(<ScriptHarness />);
+    expect(view.getByTestId('export-format-fountain')).toBeTruthy();
+    expect(view.getByTestId('export-format-screenplay-pdf')).toBeTruthy();
+    expect(view.queryByTestId('export-screenplay-paper-letter')).toBeNull();
+    expect(view.getByTestId('export-scene-names')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('export-format-screenplay-pdf'));
+
+    expect(latest?.format).toBe('screenplay-pdf');
+    expect(view.getByTestId('export-screenplay-paper-letter')).toBeTruthy();
+    expect(view.getByTestId('export-screenplay-numbers')).toBeTruthy();
+    expect(view.getByTestId('export-screenplay-headings')).toBeTruthy();
+    expect(view.getByTestId('export-author')).toBeTruthy();
+    // The book's own choices mean nothing to a script and are not asked.
+    expect(view.queryByTestId('export-scene-names')).toBeNull();
+    expect(view.queryByTestId('export-quotes-curly')).toBeNull();
+    expect(view.queryByTestId('export-preset-ebook')).toBeNull();
+  });
+
+  it('changes the paper, the numbering and the headings, one at a time', async () => {
+    const view = await render(<ScriptHarness />);
+    await fireEvent.press(view.getByTestId('export-format-fountain'));
+
+    await fireEvent.press(view.getByTestId('export-screenplay-paper-a4'));
+    expect(latest?.screenplay.paper).toBe('a4');
+    await fireEvent(view.getByTestId('export-screenplay-numbers'), 'valueChange', true);
+    expect(latest?.screenplay.numberScenes).toBe(true);
+    await fireEvent(view.getByTestId('export-screenplay-headings'), 'valueChange', false);
+    expect(latest?.screenplay).toEqual({
+      paper: 'a4',
+      numberScenes: true,
+      generateHeadings: false,
+    });
+  });
+
+  it('shows the estimate beside the numbers it stands on', async () => {
+    const estimate = {
+      pages: 12,
+      eighths: 12 * 8 - 3,
+      preset: screenplayPreset('letter'),
+      geometry: screenplayGeometry(screenplayPreset('letter')),
+    };
+    const view = await render(<ScriptHarness estimate={estimate} />);
+    await fireEvent.press(view.getByTestId('export-format-fountain'));
+
+    expect(view.getByTestId('screenplay-estimate-pages')).toBeTruthy();
+    expect(view.getByTestId('screenplay-estimate-how').props.children).toContain('Courier');
+  });
+
+  it('shows no estimate for a book format', async () => {
+    const view = await render(<ScriptHarness estimate={null} />);
+
+    expect(view.queryByTestId('screenplay-estimate')).toBeNull();
+  });
 });
 
 describe('ManuscriptExportOptions', () => {
@@ -187,5 +409,90 @@ describe('ManuscriptExportOptions', () => {
     expect(latest).toMatchObject({ sceneOrder: 'shuffled', preset: 'custom' });
     await fireEvent.press(view.getByTestId('export-scene-order-discovery'));
     expect(latest?.sceneOrder).toBe('discovery');
+  });
+});
+
+describe('ManuscriptExportOptions page estimate for prose', () => {
+  const estimate = {
+    pages: 42,
+    pageSize: 'a4' as const,
+    fontSize: 12,
+    lineSpacing: 2,
+    marginPt: 56.7,
+    firstLineIndentPt: 22,
+  };
+
+  function PagesHarness({
+    onEstimate,
+    pageEstimate = null,
+    format = 'pdf' as const,
+  }: {
+    onEstimate?: () => void;
+    pageEstimate?: typeof estimate | null;
+    format?: 'pdf' | 'docx' | 'epub';
+  }) {
+    const [settings, setSettings] = useState<ManuscriptExportSettings>(() => ({
+      ...defaultExportSettings('Ana'),
+      format,
+    }));
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch
+        looseCount={2}
+        chapterNumberingAvailable
+        arcs={[]}
+        onEstimatePages={onEstimate}
+        pageEstimate={pageEstimate}
+      />
+    );
+  }
+
+  it('offers to count the pages of a PDF, and asks only when pressed', async () => {
+    const onEstimate = jest.fn();
+    const view = await render(<PagesHarness onEstimate={onEstimate} />);
+
+    expect(onEstimate).not.toHaveBeenCalled();
+    await fireEvent.press(view.getByTestId('prose-estimate-run'));
+    expect(onEstimate).toHaveBeenCalledTimes(1);
+    expect(view.queryByTestId('prose-estimate-pages')).toBeNull();
+  });
+
+  it('says the count with the page, the font, the spacing and the margins it stands on', async () => {
+    const view = await render(
+      <PagesHarness onEstimate={() => undefined} pageEstimate={estimate} />,
+    );
+
+    expect(view.getByTestId('prose-estimate-pages').props.children).toBe(
+      'export_prose_estimate_pages:{"count":42}',
+    );
+    const how = view.getByTestId('prose-estimate-how').props.children as string;
+    expect(how).toContain('export_prose_how_font:{"size":12,"spacing":2}');
+    expect(how).toContain('export_prose_how_margins:{"margin":"2"}');
+    expect(how).toContain('export_prose_how_indent');
+    expect(how).toContain('export_prose_how_note');
+    expect(how).not.toContain('docx');
+  });
+
+  it('says it is the PDF count when the file is a Word one, and offers no count for other formats', async () => {
+    const word = await render(
+      <PagesHarness format="docx" onEstimate={() => undefined} pageEstimate={estimate} />,
+    );
+    expect(word.getByTestId('prose-estimate-how').props.children).toContain(
+      'export_prose_how_note_docx',
+    );
+    await word.unmount();
+
+    const epub = await render(<PagesHarness format="epub" onEstimate={() => undefined} />);
+    expect(epub.queryByTestId('prose-estimate')).toBeNull();
+  });
+
+  it('is not offered where the screen gives no way to count', async () => {
+    const view = await render(<PagesHarness />);
+
+    expect(view.queryByTestId('prose-estimate')).toBeNull();
   });
 });

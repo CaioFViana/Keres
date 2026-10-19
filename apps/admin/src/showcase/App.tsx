@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { ShowcaseAuthProvider } from './auth/ShowcaseAuthProvider';
 import { Layout } from './components/Layout';
 import { ShowcaseConfigProvider } from './config/ShowcaseConfigProvider';
 import { AboutPage } from './pages/AboutPage';
@@ -10,24 +11,27 @@ import { StoryPage } from './pages/StoryPage';
 import { ShowcaseThemeProvider } from './theme/ShowcaseThemeProvider';
 
 /**
- * The public site. No login, no session route and no path to `/admin` - the administration panel
- * is another app, with another build, served under another prefix.
+ * The public site. Sign-in exists only for one reason - unlocking the adults-only shelf for
+ * verified readers - and lives in its own tab-scoped session: no path to `/admin`, which stays
+ * another app, another build, another prefix.
  */
 export function ShowcaseApp() {
   return (
     <ShowcaseThemeProvider>
       <ShowcaseConfigProvider>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/story/:storyId" element={<StoryPage />} />
-            <Route path="/story/:storyId/read/:publicationId" element={<ReaderPage />} />
-            <Route path="/packs" element={<PacksPage />} />
-            <Route path="/pack/:packId" element={<PackPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
+        <ShowcaseAuthProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/story/:storyId" element={<StoryPage />} />
+              <Route path="/story/:storyId/read/:publicationId" element={<ReaderPage />} />
+              <Route path="/packs" element={<PacksPage />} />
+              <Route path="/pack/:packId" element={<PackPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Layout>
+        </ShowcaseAuthProvider>
       </ShowcaseConfigProvider>
     </ShowcaseThemeProvider>
   );

@@ -1,13 +1,13 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
-import type { CustomAttributeValues } from '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import {
   LocationFormContent,
   type LocationFormContentProps,
-} from '../../../src/screens/locations/LocationFormContent';
+} from '@/src/screens/locations/LocationFormContent';
 
-jest.mock('../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -27,7 +27,7 @@ jest.mock('../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -52,7 +52,7 @@ jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormCo
   };
 });
 
-jest.mock('../../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -71,7 +71,7 @@ jest.mock('../../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../../src/components/common/forms/FormSwitchField/FormSwitchField', () => {
+jest.mock('@/src/components/common/forms/FormSwitchField/FormSwitchField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -91,7 +91,7 @@ jest.mock('../../../src/components/common/forms/FormSwitchField/FormSwitchField'
   };
 });
 
-jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -113,36 +113,58 @@ jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock(
-  '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({
-        storyId,
-        fields,
-        onChange,
-      }: {
-        storyId: string;
-        fields: unknown[];
-        onChange: (fieldId: string, value: string) => void;
-      }) => (
-        <>
-          <Text testID="custom-fields">{`${storyId}:${fields.length}`}</Text>
-          <Text testID="custom-fields-change" onPress={() => onChange('f-1', 'v-1')}>
-            change
-          </Text>
-        </>
-      ),
-    };
-  },
-);
-
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
+    default: ({
+      storyId,
+      fields,
+      onChange,
+    }: {
+      storyId: string;
+      fields: unknown[];
+      onChange: (fieldId: string, value: string) => void;
+    }) => (
+      <>
+        <Text testID="custom-fields">{`${storyId}:${fields.length}`}</Text>
+        <Text testID="custom-fields-change" onPress={() => onChange('f-1', 'v-1')}>
+          change
+        </Text>
+      </>
+    ),
+  };
+});
+
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    SingleSelectPill: ({
+      options,
+      value,
+      onValueChange,
+    }: {
+      options: { label: string; value: string }[];
+      value: string | null;
+      onValueChange: (value: string | null) => void;
+    }) => (
+      <>
+        <Text testID="int-ext-value">{String(value)}</Text>
+        {options.map((option) => (
+          <Text
+            key={option.value}
+            testID={`int-ext-option-${option.value}`}
+            onPress={() => onValueChange(option.value)}
+          >
+            {option.label}
+          </Text>
+        ))}
+        <Text testID="int-ext-clear" onPress={() => onValueChange(null)}>
+          clear
+        </Text>
+      </>
+    ),
     default: ({
       options,
       selectedValues,
@@ -167,7 +189,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -191,7 +213,7 @@ jest.mock('../../../src/components/features/notes/NoteManager', () => {
 });
 
 jest.mock(
-  '../../../src/components/features/relations/LocationRelationManager/LocationRelationManager',
+  '@/src/components/features/relations/LocationRelationManager/LocationRelationManager',
   () => {
     const { Text } = require('react-native');
     return {
@@ -231,7 +253,7 @@ jest.mock(
   },
 );
 
-jest.mock('../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -252,12 +274,14 @@ function baseProps(overrides = {}) {
     deleting: false,
     isEditing: true,
     handleDelete: jest.fn(),
-    colors: { error: '#ff0000', primaryContainer: '#eeeeff' },
+    colors: { error: '#ff0000', primaryContainer: '#eeeeff', textSecondary: '#666666' },
     t,
     name: 'Keep',
     setName: noop,
     description: 'A stronghold',
     setDescription: noop,
+    intExt: 'interior',
+    setIntExt: jest.fn(),
     climate: 'Cold',
     setClimate: noop,
     culture: 'Northern',
@@ -350,6 +374,20 @@ describe('LocationFormContent', () => {
     expect(props.setCustomValues).toHaveBeenCalledTimes(1);
     const updater = props.setCustomValues.mock.calls[0][0];
     expect(updater({})).toEqual({ 'f-1': 'v-1' });
+  });
+
+  it('offers interior, exterior and both for the scene heading, and lets it be cleared', async () => {
+    const props = baseProps();
+    const view = await render(
+      <LocationFormContent {...(props as unknown as LocationFormContentProps)} />,
+    );
+    expect(view.getByTestId('int-ext-value').props.children).toBe('interior');
+    await fireEvent.press(view.getByTestId('int-ext-option-exterior'));
+    expect(props.setIntExt).toHaveBeenCalledWith('exterior');
+    await fireEvent.press(view.getByTestId('int-ext-option-both'));
+    expect(props.setIntExt).toHaveBeenCalledWith('both');
+    await fireEvent.press(view.getByTestId('int-ext-clear'));
+    expect(props.setIntExt).toHaveBeenLastCalledWith(null);
   });
 
   it('hides the delete button when creating and disables actions while deleting', async () => {

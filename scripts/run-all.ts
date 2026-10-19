@@ -12,6 +12,10 @@ import { PACKAGES, run, runInPackage, scriptsOf } from './lib/packages';
  * failure stops everything: in a chain ordered by dependency, the second error is usually a
  * consequence of the first.
  *
+ * A package may declare a `<script>:ci` variant (the client's `test:coverage:ci`): where `CI` is set - GitHub
+ * Actions sets it - that variant runs in place of the script. It exists so a laptop keeps the resource limits
+ * the local script carries (`--maxWorkers=2`, 512 MB) while a runner, which has the machine to itself, does not.
+ *
  * `--only <name>` restricts the run to a single package (CI's per-package matrix jobs use
  * this); a package without the script is a clean skip, not a failure. The repository's own
  * scripts are only checked on unfiltered `typecheck` runs - CI covers them in a dedicated job.
@@ -49,7 +53,11 @@ if (targets.length === 0) {
 
 for (const pkg of targets) {
   console.log(`\n=== ${pkg.name}: ${script}`);
-  const code = runInPackage(pkg, script);
+  const variant = `${script}:ci`;
+  const code = runInPackage(
+    pkg,
+    process.env.CI && scriptsOf(pkg).includes(variant) ? variant : script,
+  );
   if (code !== 0) {
     console.error(`\n${pkg.name}: "${script}" failed (exit code ${code}).`);
     process.exit(code);

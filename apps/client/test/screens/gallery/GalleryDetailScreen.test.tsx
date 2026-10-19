@@ -1,5 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
+import GalleryDetailScreen from '@/src/screens/gallery/GalleryDetailScreen';
+
 const mockGoBack = jest.fn();
 let mockContentProps: {
   galleryId: string;
@@ -19,11 +21,11 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/screens/gallery/GalleryDetailContent', () => ({
+jest.mock('@/src/screens/gallery/GalleryDetailContent', () => ({
   __esModule: true,
   default: (props: { galleryId: string; onClose: () => void; showCloseButton?: boolean }) => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -36,7 +38,7 @@ jest.mock('../../../src/screens/gallery/GalleryDetailContent', () => ({
     );
   },
 }));
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
@@ -44,8 +46,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import GalleryDetailScreen from '../../../src/screens/gallery/GalleryDetailScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

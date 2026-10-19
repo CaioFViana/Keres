@@ -1,33 +1,31 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../hooks/useStoryRole';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryTagFilterOptions } from '@/src/hooks/story/useStoryTagFilterOptions';
+import { useTitleDateSortOptions } from '@/src/hooks/lists/useTitleDateSortOptions';
 import type {
   MainSystemDrawerParamList,
   NotesStackParamList,
-} from '../../navigation/MainSystemStack';
-import type { NoteWithTags } from '../../services/storymanagement/NoteService';
-import { createTagService } from '../../services/storymanagement/TagService';
-import { useNoteStore } from '../../state/noteStore';
-import { entityEventEmitter } from '../../utils/EventEmitter';
+} from '@/src/navigation/drawer/MainSystemDrawer';
+import type { NoteWithTags } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { useNoteStore } from '@/src/state/story/noteStore';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type NotesScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NotesStack'>,
@@ -37,14 +35,9 @@ export type NotesScreenNavigationProp = CompositeNavigationProp<
 const NotesScreen = () => {
   useBackButtonHandler();
   useScreenTour('NotesStack');
-  const listAnchorRef = useScreenAnchor('Notes', 'list');
   const { t } = useTranslation();
 
-  const drizzleDb = useDrizzle();
   const navigation = useNavigation<NotesScreenNavigationProp>();
-
-  const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const [tagService] = useState(() => createTagService(drizzleDb));
 
   const {
     listProps,
@@ -52,7 +45,7 @@ const NotesScreen = () => {
     isInitialLoading,
     error,
     storyId,
-    toggleFavorite,
+    handleToggleFavorite,
   } = useEntityListScreen({
     useStore: useNoteStore,
     collectionKey: 'notes',
@@ -60,33 +53,7 @@ const NotesScreen = () => {
   });
 
   const { canEdit } = useStoryRole(storyId);
-
-  // Tags power the filter dropdown, so they're fetched here rather than by the list hook.
-  const fetchTags = useCallback(async () => {
-    if (!storyId) {
-      setAllTags([]);
-      return;
-    }
-    try {
-      const fetchedTags = await tagService.getTagsByStoryId(storyId);
-      setAllTags(fetchedTags);
-    } catch (error) {
-      console.error('Failed to fetch tags:', error);
-    }
-  }, [storyId, tagService]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
-    fetchTags();
-  }, [fetchTags]);
-
-  useEffect(() => {
-    const handleTagChange = (changedStoryId: string) => {
-      if (changedStoryId === storyId) fetchTags();
-    };
-    entityEventEmitter.on('tag_changed', handleTagChange);
-    return () => entityEventEmitter.off('tag_changed', handleTagChange);
-  }, [fetchTags, storyId]);
+  const memoizedTagFilterOptions = useStoryTagFilterOptions(storyId);
 
   useScreenHeader({
     target: 'parent',
@@ -101,13 +68,6 @@ const NotesScreen = () => {
       },
     ],
   });
-
-  const handleToggleFavorite = useCallback(
-    async (noteId: string, isFavorite: boolean) => {
-      await toggleFavorite(noteId, isFavorite);
-    },
-    [toggleFavorite],
-  );
 
   const handleViewDetails = useCallback(
     (noteId: string) => {
@@ -127,17 +87,7 @@ const NotesScreen = () => {
     [handleViewDetails, handleToggleFavorite],
   );
 
-  const memoizedTagFilterOptions = useMemo(() => {
-    return allTags.map((tag: TagSelect) => ({ label: tag.name, value: tag.id, color: tag.color }));
-  }, [allTags]);
-
-  const memoizedSortOptions = useMemo(() => {
-    return [
-      { label: t('sort_by_title'), value: 'title' },
-      { label: t('sort_by_created_at'), value: 'createdAt' },
-      { label: t('sort_by_updated_at'), value: 'updatedAt' },
-    ];
-  }, [t]);
+  const memoizedSortOptions = useTitleDateSortOptions();
 
   if (isInitialLoading) {
     return <ScreenLoading message={t('loading_notes')} />;
@@ -149,7 +99,7 @@ const NotesScreen = () => {
 
   return (
     <ScreenContainer>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Notes" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
           data={notes}
@@ -175,7 +125,7 @@ const NotesScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </ScreenContainer>
   );
 };

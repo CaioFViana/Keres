@@ -1,8 +1,8 @@
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
-import type { FullStoryExportType } from '../../schemas/FullStorySchemas';
-import type { GalleryType } from '../../schemas/GallerySchemas';
-import { CURRENT_STORY_FORMAT_VERSION } from '../../schemas/StoryExportVersion';
+import type { FullStoryExportType } from '../../schemas/story/FullStorySchemas';
+import type { GalleryType } from '../../schemas/narrative/GallerySchemas';
+import { CURRENT_STORY_FORMAT_VERSION } from '../../schemas/story/StoryExportVersion';
 import {
   buildStoryZipBytes,
   extractStoryZip,

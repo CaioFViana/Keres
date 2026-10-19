@@ -18,7 +18,12 @@
     "verbatimModuleSyntax": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@test/*": ["./test/*"],
+      "@root/*": ["./*"]
+    }
   },
   "include": ["src", "test"]
 }

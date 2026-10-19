@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createExclusiveGate } from '../../src/utils/exclusive';
+import { createExclusiveGate } from '@/utils/exclusive';
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

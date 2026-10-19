@@ -7,7 +7,7 @@ import {
   getToken,
   setStoredUsername,
   setToken,
-} from '../../src/api/apiClient';
+} from '@/api/apiClient';
 
 afterEach(() => {
   clearLocalSession();

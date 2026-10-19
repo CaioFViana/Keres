@@ -1,13 +1,13 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
-import type { CustomAttributeValues } from '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import {
   CharacterFormContent,
   type CharacterFormContentProps,
-} from '../../../src/screens/characters/CharacterFormContent';
+} from '@/src/screens/characters/CharacterFormContent';
 
-jest.mock('../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -27,7 +27,7 @@ jest.mock('../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -52,7 +52,7 @@ jest.mock('../../../src/components/common/forms/EntityFormContainer/EntityFormCo
   };
 });
 
-jest.mock('../../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -71,7 +71,7 @@ jest.mock('../../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../../src/components/common/forms/FormSwitchField/FormSwitchField', () => {
+jest.mock('@/src/components/common/forms/FormSwitchField/FormSwitchField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -91,7 +91,7 @@ jest.mock('../../../src/components/common/forms/FormSwitchField/FormSwitchField'
   };
 });
 
-jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -113,7 +113,7 @@ jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock('../../../src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
+jest.mock('@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -137,37 +137,34 @@ jest.mock('../../../src/components/common/inputs/SuggestionTextInput/SuggestionT
   };
 });
 
-jest.mock(
-  '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({
-        storyId,
-        fields,
-        values,
-        onChange,
-      }: {
-        storyId: string;
-        fields: unknown[];
-        values: object;
-        onChange: (fieldId: string, value: string) => void;
-      }) => (
-        <>
-          <Text testID="custom-fields">
-            {JSON.stringify({ storyId, fields: fields.length, values })}
-          </Text>
-          <Text testID="custom-fields-change" onPress={() => onChange('f-1', 'v-1')}>
-            change
-          </Text>
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      storyId,
+      fields,
+      values,
+      onChange,
+    }: {
+      storyId: string;
+      fields: unknown[];
+      values: object;
+      onChange: (fieldId: string, value: string) => void;
+    }) => (
+      <>
+        <Text testID="custom-fields">
+          {JSON.stringify({ storyId, fields: fields.length, values })}
+        </Text>
+        <Text testID="custom-fields-change" onPress={() => onChange('f-1', 'v-1')}>
+          change
+        </Text>
+      </>
+    ),
+  };
+});
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -195,7 +192,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/features/stats/ModeManager/ModeManager', () => {
+jest.mock('@/src/components/features/stats/ModeManager/ModeManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -228,7 +225,7 @@ jest.mock('../../../src/components/features/stats/ModeManager/ModeManager', () =
 });
 
 jest.mock(
-  '../../../src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor',
+  '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor',
   () => {
     const { Text } = require('react-native');
     return {
@@ -262,7 +259,7 @@ jest.mock(
 );
 
 jest.mock(
-  '../../../src/components/features/relations/CharacterRelationManager/CharacterRelationManager',
+  '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager',
   () => {
     const { Text } = require('react-native');
     return {
@@ -272,7 +269,7 @@ jest.mock(
   },
 );
 
-jest.mock('../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -295,7 +292,7 @@ jest.mock('../../../src/components/features/notes/NoteManager', () => {
   };
 });
 
-jest.mock('../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,

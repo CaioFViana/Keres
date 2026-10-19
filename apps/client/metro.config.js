@@ -25,7 +25,12 @@ config.resolver.assetExts.push('wasm');
 // has no import.meta at all, so force Metro to resolve zustand there on every platform.
 const zustandRoot = path.dirname(require.resolve('zustand/package.json'));
 const upstreamResolveRequest = config.resolver.resolveRequest;
+// The barrel of twenty icon families becomes the one the app uses (see src/icons/vectorIcons.ts).
+const vectorIconsShim = path.join(__dirname, 'src', 'icons', 'vectorIcons.ts');
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === '@expo/vector-icons') {
+    return { type: 'sourceFile', filePath: vectorIconsShim };
+  }
   if (moduleName === 'zustand' || moduleName.startsWith('zustand/')) {
     const subpath = moduleName === 'zustand' ? 'index' : moduleName.slice('zustand/'.length);
     return { type: 'sourceFile', filePath: path.join(zustandRoot, `${subpath}.js`) };

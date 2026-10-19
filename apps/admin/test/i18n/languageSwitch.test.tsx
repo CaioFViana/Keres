@@ -1,10 +1,10 @@
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryCard } from '@keres/shared';
-import i18n, { ADMIN_LANGUAGE_KEY, SHOWCASE_LANGUAGE_KEY } from '../../src/i18n';
-import { LanguageSelect } from '../../src/i18n/LanguageSelect';
-import { ShowcaseApp } from '../../src/showcase/App';
-import { changeInput, flush, render } from '../helpers/react';
+import i18n, { ADMIN_LANGUAGE_KEY, SHOWCASE_LANGUAGE_KEY } from '@/i18n';
+import { LanguageSelect } from '@/i18n/LanguageSelect';
+import { ShowcaseApp } from '@/showcase/App';
+import { changeInput, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStories: vi.fn(),
@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   fetchConfig: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
@@ -24,6 +24,7 @@ vi.mock('../../src/showcase/api/showcaseApi', () => ({
 
 const card: ShowcaseStoryCard = {
   storyId: 'story-1',
+  isNsfw: false,
   snapshot: {
     title: 'O Vale Silencioso',
     description: null,

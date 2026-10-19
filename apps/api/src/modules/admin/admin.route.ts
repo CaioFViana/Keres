@@ -1,8 +1,14 @@
 import { Elysia } from 'elysia';
+import { adminAccessRecordsRoutes } from './adminAccessRecords.route';
+import { adminEvidenceHoldsRoutes } from './adminEvidenceHolds.route';
+import { adminActivityRoutes } from './adminActivity.route';
 import { adminApiLogRoutes } from './adminApiLog.route';
+import { adminMessageRoutes } from './adminMessage.route';
+import { adminPaymentRoutes } from './adminPayment.route';
 import { adminRecoveryRoutes } from './adminRecovery.route';
 import { adminRegistrationRoutes } from './adminRegistration.route';
 import { adminShowcaseRoutes } from './adminShowcase.route';
+import { adminStoryRoutes } from './adminStory.route';
 import { adminTierRoutes } from './adminTier.route';
 import { adminUserRoutes } from './adminUser.route';
 
@@ -17,8 +23,14 @@ import { adminUserRoutes } from './adminUser.route';
  */
 export const adminRoutes = new Elysia()
   .group('/users', (app) => app.use(adminUserRoutes))
+  .group('/stories', (app) => app.use(adminStoryRoutes))
   .group('/tiers', (app) => app.use(adminTierRoutes))
   .group('/registration-settings', (app) => app.use(adminRegistrationRoutes))
   .group('/showcase-settings', (app) => app.use(adminShowcaseRoutes))
   .group('/recovery', (app) => app.use(adminRecoveryRoutes))
-  .group('/logs', (app) => app.use(adminApiLogRoutes));
+  .group('/messages', (app) => app.use(adminMessageRoutes))
+  .group('/payments', (app) => app.use(adminPaymentRoutes))
+  .group('/logs', (app) => app.use(adminApiLogRoutes))
+  .group('/activity', (app) => app.use(adminActivityRoutes))
+  .group('/access-records', (app) => app.use(adminAccessRecordsRoutes))
+  .group('/evidence-holds', (app) => app.use(adminEvidenceHoldsRoutes));

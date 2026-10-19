@@ -1,32 +1,33 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '../../components/common/controls/Button/Button';
-import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
-import TextInput from '../../components/common/inputs/TextInput/TextInput';
-import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
-import { createStatStrengthService } from '../../services/storymanagement/StatStrengthService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { generateNumericLadder, sortLadder, type StatTier } from '@keres/shared/graphs/statLadder';
-import { StatLadderBar } from '../../components/features/stats/StatLadderBar/StatLadderBar';
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { useDrizzle } from '@/src/db';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
+import { createStatStrengthService } from '@/src/services/storymanagement/choices-stats/StatStrengthService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import {
+  generateNumericLadder,
+  sortLadder,
+  type StatTier,
+} from '@keres/shared/graphs/stats/statLadder';
+import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 
-type StatLadderNavigationProp = NativeStackNavigationProp<
-  CustomizationStackParamList,
-  'StatLadder'
->;
+type StatLadderNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatLadder'>;
 
 interface DraftTier {
   /** A draft-only key; already-saved tiers also carry the database id. */
@@ -52,7 +53,7 @@ const StatLadderScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatLadderNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatLadder'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatLadder'>>();
   const statId = route.params?.statId ?? null;
   const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();

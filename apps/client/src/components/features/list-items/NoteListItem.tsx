@@ -1,9 +1,11 @@
 import React from 'react';
 import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { StyleSheet, Text, View } from 'react-native';
-import type { NoteWithTags } from '../../../services/storymanagement/NoteService';
-import { useTheme } from '../../../theme';
-import { truncate } from '../../../utils/stringUtils';
+import type { NoteWithTags } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { truncate } from '@/src/utils/format/stringUtils';
 
 import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
 import TagList from '@/src/components/common/display/TagList/TagList';
@@ -15,29 +17,10 @@ interface NoteListItemProps {
 }
 
 const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onToggleFavorite }) => {
-  const { colors } = useTheme();
-
   const preview = summarizeEntityPreview(OperationLogEntityType.Note, note);
   const bodySummary = truncate(preview?.primaryDetail, 300);
 
-  const styles = StyleSheet.create({
-    noteInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    noteTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      flexShrink: 1,
-    },
-    bodyText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 5,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderHeaderContent = (n: NoteWithTags) => (
     <View style={styles.noteInfo}>
@@ -68,5 +51,24 @@ const NoteListItem: React.FC<NoteListItemProps> = ({ note, onViewDetails, onTogg
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    noteInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    noteTitle: {
+      ...typography.title,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    bodyText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 5,
+    },
+  });
 
 export default NoteListItem;

@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import PackBrowseScreen from '@/src/screens/packs/PackBrowseScreen';
+
 const mockNotify = jest.fn();
 const mockGetAllServers = jest.fn();
 const mockListPacks = jest.fn();
@@ -10,7 +12,7 @@ const mockDb = {};
 const mockT = (key: string) => key;
 
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
 }));
@@ -41,35 +43,35 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/services/PackApiService', () => ({
+jest.mock('@/src/services/api/PackApiService', () => ({
   __esModule: true,
   packApiService: {
     list: (...args: unknown[]) => mockRemoteList(...args),
     download: (...args: unknown[]) => mockDownload(...args),
   },
 }));
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   __esModule: true,
   createServerService: () => ({ getAllServers: mockGetAllServers }),
 }));
-jest.mock('../../../src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   __esModule: true,
   createPackService: () => ({
     listPacks: mockListPacks,
     importRemotePack: mockImportRemotePack,
   }),
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -88,8 +90,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import PackBrowseScreen from '../../../src/screens/packs/PackBrowseScreen';
 
 const makeServer = (overrides = {}) => ({
   id: 'server-1',

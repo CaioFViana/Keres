@@ -3,13 +3,15 @@ import type { OperationLogEntityType } from '@keres/shared';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
-import type { CommentSelect } from '../../../db/schema';
-import { useAuthorProfiles } from '../../../hooks/useAuthorProfiles';
-import { useCommentFieldLabel } from '../../../hooks/useCommentFieldLabel';
-import { useEntityName } from '../../../hooks/useEntityName';
-import { useTheme } from '../../../theme';
-import type { CommentCriticality } from '../../../utils/commentCriticality';
-import { CRITICALITY_ICONS } from '../../../utils/commentCriticality';
+import type { CommentSelect } from '@/src/db/schema';
+import { useAuthorProfiles } from '@/src/hooks/social/useAuthorProfiles';
+import { useCommentFieldLabel } from '@/src/hooks/comments/useCommentFieldLabel';
+import { useEntityName } from '@/src/hooks/entity/useEntityName';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { CommentCriticality } from '@/src/utils/entity/commentCriticality';
+import { CRITICALITY_ICONS } from '@/src/utils/entity/commentCriticality';
 
 interface CommentListItemProps {
   comment: CommentSelect;
@@ -27,35 +29,7 @@ const CommentListItem: React.FC<CommentListItemProps> = ({ comment, onPress }) =
   const profiles = useAuthorProfiles(comment.storyId, [comment.authorUserId]);
   const author = profiles[comment.authorUserId] ?? null;
 
-  const styles = StyleSheet.create({
-    cardContainer: {
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      padding: 15,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    headerRow: { flexDirection: 'row', alignItems: 'center' },
-    entityName: {
-      fontSize: 15,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginLeft: 6,
-      flexShrink: 1,
-    },
-    fieldLabel: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    commentText: { fontSize: 14, color: colors.text, marginTop: 6 },
-    footerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 8,
-    },
-    authorRow: { flexDirection: 'row', alignItems: 'center' },
-    authorName: { fontSize: 12, color: colors.textSecondary, marginLeft: 6 },
-    timestamp: { fontSize: 12, color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <TouchableOpacity
@@ -96,5 +70,36 @@ const CommentListItem: React.FC<CommentListItemProps> = ({ comment, onPress }) =
     </TouchableOpacity>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    cardContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    headerRow: { flexDirection: 'row', alignItems: 'center' },
+    entityName: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginLeft: 6,
+      flexShrink: 1,
+    },
+    fieldLabel: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+    commentText: { fontSize: 14, color: colors.text, marginTop: 6 },
+    footerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 8,
+    },
+    authorRow: { flexDirection: 'row', alignItems: 'center' },
+    authorName: { ...typography.caption, color: colors.textSecondary, marginLeft: 6 },
+    timestamp: { ...typography.caption, color: colors.textSecondary },
+  });
 
 export default CommentListItem;

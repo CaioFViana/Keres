@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { logger } from '../../src/utils/logger';
+import { logger } from '@/utils/logger';
 
 function captureLine(channel: 'log' | 'warn' | 'error', emit: () => void): Record<string, any> {
   const spy = vi.spyOn(console, channel).mockImplementation(() => {});

@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { useNavigation } from '@react-navigation/native';
@@ -10,32 +10,31 @@ import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import ReorderModal from '../../components/common/modals/ReorderModal/ReorderModal';
-import { useDrizzle } from '../../db';
-import type { StatSelect } from '../../db/schema';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
-import { createStatService } from '../../services/storymanagement/StatService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { formatStatValue, type StatNotation } from '@keres/shared/graphs/statLadder';
-import { createStoryService } from '../../services/storymanagement/StoryService';
+import ReorderModal from '@/src/components/common/modals/ReorderModal/ReorderModal';
+import { useDrizzle } from '@/src/db';
+import type { StatSelect } from '@/src/db/schema';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
+import { createStatService } from '@/src/services/storymanagement/choices-stats/StatService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { formatStatValue, type StatNotation } from '@keres/shared/graphs/stats/statLadder';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
-type StatListNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatList'>;
+type StatListNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatList'>;
 
 /** The root of the "Stats" menu: the registered axes, and the shortcuts to the ladder, the comparison and the ranking. */
 const StatListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('StatList');
-  const settingsAnchorRef = useScreenAnchor('Stats', 'settings');
-  const axesAnchorRef = useScreenAnchor('Stats', 'axes');
   const { t } = useTranslation();
 
   const { colors } = useTheme();
@@ -230,7 +229,7 @@ const StatListScreen = () => {
           { justifyContent: 'center', alignItems: 'center' },
         ]}
       >
-        <Text style={{ color: colors.error }}>{t('no_story_selected')}</Text>
+        <ThemedText tone="error">{t('no_story_selected')}</ThemedText>
       </View>
     );
   }
@@ -249,9 +248,9 @@ const StatListScreen = () => {
     statNotation !== ((selectedStory?.statNotation ?? 'letter') as StatNotation);
 
   const settingsCard = (
-    <View
-      ref={settingsAnchorRef}
-      collapsable={false}
+    <GuideAnchor
+      screen="Stats"
+      part="settings"
       style={styles.settingsCard}
       testID="stat-system-settings"
     >
@@ -295,7 +294,7 @@ const StatListScreen = () => {
           </Button>
         </FormActions>
       )}
-    </View>
+    </GuideAnchor>
   );
 
   return (
@@ -339,7 +338,7 @@ const StatListScreen = () => {
       </View>
 
       {statSystem ? (
-        <View ref={axesAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GuideAnchor screen="Stats" part="axes" style={{ flex: 1 }}>
           <FlatList
             data={sections}
             keyExtractor={(section) => section.key}
@@ -379,7 +378,7 @@ const StatListScreen = () => {
               </View>
             )}
           />
-        </View>
+        </GuideAnchor>
       ) : (
         <>
           {settingsCard}

@@ -1,12 +1,12 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import SuggestionTextInput from '../../../src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
-import TextInput from '../../../src/components/common/inputs/TextInput/TextInput';
-import { KeyboardAwareContext } from '../../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { useSuggestions } from '../../../src/hooks/useSuggestions';
+import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { KeyboardAwareContext } from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { useSuggestions } from '@/src/hooks/entity/useSuggestions';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -46,11 +46,11 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MIcon',
 }));
 
-jest.mock('../../../src/hooks/useSuggestions', () => ({
+jest.mock('@/src/hooks/entity/useSuggestions', () => ({
   useSuggestions: jest.fn(() => ({ suggestions: [], loading: false, reload: jest.fn() })),
 }));
 
-jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const react = jest.requireActual('react') as typeof import('react');
   return {
     __esModule: true,

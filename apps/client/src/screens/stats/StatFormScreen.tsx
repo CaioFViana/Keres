@@ -1,34 +1,34 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '../../components/common/controls/Button/Button';
-import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
-import { ScreenLoading } from '../../components/common/feedback/ScreenState/ScreenState';
-import TextInput from '../../components/common/inputs/TextInput/TextInput';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
-import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
+import type { StatsStackParamList } from '@/src/navigation/stacks/StatsStack';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useStatFormActions } from './useStatFormActions';
 import { useStatFormResources } from './useStatFormResources';
 import { useStatFormState } from './useStatFormState';
 
-type StatFormNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatForm'>;
+type StatFormNavigationProp = NativeStackNavigationProp<StatsStackParamList, 'StatForm'>;
 
 const StatFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<StatFormNavigationProp>();
-  const route = useRoute<RouteProp<CustomizationStackParamList, 'StatForm'>>();
+  const route = useRoute<RouteProp<StatsStackParamList, 'StatForm'>>();
   const statId = route.params?.statId;
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();

@@ -1,24 +1,24 @@
 // The hook lists `t` in its effect deps, so the mock must return a stable function like
 // the real i18n does; a fresh closure per render re-triggers hydration forever.
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useTagFormState } from '@/src/screens/tags/useTagFormState';
+import {
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '@/src/services/drafts/EditorDraftService';
+import type { TagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
+
 const mockTranslate = jest.fn((key: string) => key);
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockTranslate }),
 }));
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { useTagFormState } from '../../../src/screens/tags/useTagFormState';
-import {
-  resetEditorDraftDbForTests,
-  setEditorDraftDb,
-} from '../../../src/services/EditorDraftService';
-import type { TagService } from '../../../src/services/storymanagement/TagService';
-import { createTestDatabase, type TestDatabase } from '../../helpers/testDb';
 
 let database: TestDatabase;
 

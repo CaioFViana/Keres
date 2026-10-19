@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { choices, scenes, stories, users } from '../../src/db/schema';
-import { RouteSyncHandler } from '../../src/services/entity-sync-handlers/RouteSyncHandler';
-import { RouteStepSyncHandler } from '../../src/services/entity-sync-handlers/RouteStepSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { choices, scenes, stories, users } from '@/db/schema';
+import { RouteSyncHandler } from '@/services/entity-sync-handlers/RouteSyncHandler';
+import { RouteStepSyncHandler } from '@/services/entity-sync-handlers/RouteStepSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

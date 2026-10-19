@@ -1,5 +1,5 @@
-import { screenAnchorId } from '../../src/guides/anchorRegistry';
-import { getScreenGuide } from '../../src/guides/registry';
+import { screenAnchorId } from '@/src/guides/anchorRegistry';
+import { getScreenGuide } from '@/src/guides/registry';
 
 describe.each([
   ['BoardCanvas', 'BoardCanvas', 'boards'],

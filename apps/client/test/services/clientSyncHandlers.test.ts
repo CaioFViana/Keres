@@ -3,43 +3,47 @@
  */
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { AttributeValueClientSyncHandler } from '../../src/services/entity-sync-handlers/AttributeValueClientSyncHandler';
-import { BoardClientSyncHandler } from '../../src/services/entity-sync-handlers/BoardClientSyncHandler';
-import { ChapterAnchorClientSyncHandler } from '../../src/services/entity-sync-handlers/ChapterAnchorClientSyncHandler';
-import { ChapterClientSyncHandler } from '../../src/services/entity-sync-handlers/ChapterClientSyncHandler';
-import { CharacterClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterClientSyncHandler';
-import { CharacterSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSceneClientSyncHandler';
-import { ChoiceClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceClientSyncHandler';
-import { ChoiceCheckClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckClientSyncHandler';
-import { ChoiceCheckGroupClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
-import { EffectClientSyncHandler } from '../../src/services/entity-sync-handlers/EffectClientSyncHandler';
-import { GalleryRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/GalleryRelationClientSyncHandler';
-import { ItemClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemClientSyncHandler';
-import { ItemJourneyClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemJourneyClientSyncHandler';
-import { LocationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationClientSyncHandler';
-import { LocationMapClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationMapClientSyncHandler';
-import { NoteClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteClientSyncHandler';
-import { NoteRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/NoteRelationClientSyncHandler';
-import { PlotClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotClientSyncHandler';
-import { PlotSceneClientSyncHandler } from '../../src/services/entity-sync-handlers/PlotSceneClientSyncHandler';
-import { RouteClientSyncHandler } from '../../src/services/entity-sync-handlers/RouteClientSyncHandler';
-import { RouteStepClientSyncHandler } from '../../src/services/entity-sync-handlers/RouteStepClientSyncHandler';
-import { SceneClientSyncHandler } from '../../src/services/entity-sync-handlers/SceneClientSyncHandler';
-import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
-import { StoryCalendarClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryCalendarClientSyncHandler';
-import { StoryArcClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryArcClientSyncHandler';
+import * as schema from '@/src/db/schema';
+import { AttributeValueClientSyncHandler } from '@/src/services/entity-sync-handlers/AttributeValueClientSyncHandler';
+import { BoardClientSyncHandler } from '@/src/services/entity-sync-handlers/BoardClientSyncHandler';
+import { ChapterAnchorClientSyncHandler } from '@/src/services/entity-sync-handlers/ChapterAnchorClientSyncHandler';
+import { ChapterClientSyncHandler } from '@/src/services/entity-sync-handlers/ChapterClientSyncHandler';
+import { CharacterClientSyncHandler } from '@/src/services/entity-sync-handlers/CharacterClientSyncHandler';
+import { CharacterSceneClientSyncHandler } from '@/src/services/entity-sync-handlers/CharacterSceneClientSyncHandler';
+import { ChoiceClientSyncHandler } from '@/src/services/entity-sync-handlers/ChoiceClientSyncHandler';
+import { ChoiceCheckClientSyncHandler } from '@/src/services/entity-sync-handlers/ChoiceCheckClientSyncHandler';
+import { ChoiceCheckGroupClientSyncHandler } from '@/src/services/entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
+import { EffectClientSyncHandler } from '@/src/services/entity-sync-handlers/EffectClientSyncHandler';
+import { GalleryRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/GalleryRelationClientSyncHandler';
+import { ItemClientSyncHandler } from '@/src/services/entity-sync-handlers/ItemClientSyncHandler';
+import { ItemJourneyClientSyncHandler } from '@/src/services/entity-sync-handlers/ItemJourneyClientSyncHandler';
+import { LocationClientSyncHandler } from '@/src/services/entity-sync-handlers/LocationClientSyncHandler';
+import { LocationMapClientSyncHandler } from '@/src/services/entity-sync-handlers/LocationMapClientSyncHandler';
+import { NoteClientSyncHandler } from '@/src/services/entity-sync-handlers/NoteClientSyncHandler';
+import { NoteRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/NoteRelationClientSyncHandler';
+import { PlotClientSyncHandler } from '@/src/services/entity-sync-handlers/PlotClientSyncHandler';
+import { PlotSceneClientSyncHandler } from '@/src/services/entity-sync-handlers/PlotSceneClientSyncHandler';
+import { RouteClientSyncHandler } from '@/src/services/entity-sync-handlers/RouteClientSyncHandler';
+import { RouteStepClientSyncHandler } from '@/src/services/entity-sync-handlers/RouteStepClientSyncHandler';
+import { SceneClientSyncHandler } from '@/src/services/entity-sync-handlers/SceneClientSyncHandler';
+import { StorySchemaFieldClientSyncHandler } from '@/src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
+import { StoryCalendarClientSyncHandler } from '@/src/services/entity-sync-handlers/StoryCalendarClientSyncHandler';
+import { StoryArcClientSyncHandler } from '@/src/services/entity-sync-handlers/StoryArcClientSyncHandler';
+import { SceneMusicClientSyncHandler } from '@/src/services/entity-sync-handlers/SceneMusicClientSyncHandler';
+import { ScenePageClientSyncHandler } from '@/src/services/entity-sync-handlers/ScenePageClientSyncHandler';
+import { SketchClientSyncHandler } from '@/src/services/entity-sync-handlers/SketchClientSyncHandler';
+import { SongClientSyncHandler } from '@/src/services/entity-sync-handlers/SongClientSyncHandler';
 import {
   ModeClientSyncHandler,
   StatClientSyncHandler,
   StatRelationClientSyncHandler,
   StatStrengthClientSyncHandler,
-} from '../../src/services/entity-sync-handlers/StatClientSyncHandler';
-import { SuggestionClientSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionClientSyncHandler';
-import { TagClientSyncHandler } from '../../src/services/entity-sync-handlers/TagClientSyncHandler';
-import { TagRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/TagRelationClientSyncHandler';
-import { WorldRuleClientSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleClientSyncHandler';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/services/entity-sync-handlers/StatClientSyncHandler';
+import { SuggestionClientSyncHandler } from '@/src/services/entity-sync-handlers/SuggestionClientSyncHandler';
+import { TagClientSyncHandler } from '@/src/services/entity-sync-handlers/TagClientSyncHandler';
+import { TagRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/TagRelationClientSyncHandler';
+import { WorldRuleClientSyncHandler } from '@/src/services/entity-sync-handlers/WorldRuleClientSyncHandler';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const CREATED_AT = '2026-08-10T12:00:00.000Z';
@@ -769,6 +773,100 @@ const HANDLERS = [
       deletedAt: null,
     }),
     change: { name: 'Awakened' },
+  },
+  {
+    name: 'Sketch',
+    build: () => new SketchClientSyncHandler(),
+    table: schema.sketches,
+    labelColumn: 'name' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      name: 'Planta da casa',
+      description: null,
+      content: { strokes: [] },
+      coverGalleryId: null,
+      coverSourceHash: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { name: 'Planta do sobrado' },
+  },
+  {
+    name: 'Song',
+    build: () => new SongClientSyncHandler(),
+    table: schema.songs,
+    labelColumn: 'title' as const,
+    // Filed under the story in its own payload, like the other handlers that ignore the pull context.
+    usesStoryContext: false,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      title: 'Canção de ninar',
+      notes: null,
+      lyrics: 'Dorme, meu bem',
+      lyricsTranslation: null,
+      melody: null,
+      key: null,
+      tempo: null,
+      meter: null,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { title: 'Canção de embalar' },
+  },
+  {
+    name: 'SceneMusic',
+    build: () => new SceneMusicClientSyncHandler(),
+    table: schema.sceneMusic,
+    labelColumn: 'cue' as const,
+    usesStoryContext: false,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      sceneId: `scene-${id}`,
+      rank: 'a0',
+      songId: `song-${id}`,
+      galleryId: null,
+      role: 'score',
+      cue: 'entra no segundo ato',
+      sections: ['verso 1'],
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { cue: 'entra no fim da cena' },
+  },
+  {
+    name: 'ScenePage',
+    build: () => new ScenePageClientSyncHandler(),
+    table: schema.scenePages,
+    labelColumn: 'text' as const,
+    usesStoryContext: false,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      sceneId: `scene-${id}`,
+      rank: 'a0',
+      sketchId: `sketch-${id}`,
+      galleryId: null,
+      fit: 'contain',
+      text: 'A porta se abre.',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { text: 'A porta se fecha.' },
   },
 ];
 

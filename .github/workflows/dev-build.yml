@@ -223,10 +223,10 @@ jobs:
         run: bunx expo prebuild --platform android --non-interactive
       - name: Set Android versionCode/versionName
         working-directory: apps/client
-        run: bun scripts/ci/set-android-version.ts ${{ needs.version.outputs.version }}
+        run: bun ../../scripts/ci/set-android-version.ts ${{ needs.version.outputs.version }} --allow-prerelease
       - name: Wire up release signing
         working-directory: apps/client
-        run: bun scripts/ci/patch-android-release-signing.ts
+        run: bun ../../scripts/ci/patch-android-release-signing.ts
       - name: Decode release keystore
         working-directory: apps/client/android/app
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore.jks

@@ -17,6 +17,7 @@ interface ThemeState {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   cyclePreference: () => void;
+  setPreference: (preference: ThemePreference) => void;
   /** A palette name from `@keres/shared`; `default` reproduces the panel's original look. */
   palette: string;
   setPalette: (name: string) => void;
@@ -60,6 +61,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setPreference((current) => cycleThemePreference(current));
   }, []);
 
+  const setPreferenceState = useCallback((next: ThemePreference) => setPreference(next), []);
+
   const setPalette = useCallback((name: string) => setPaletteState(name), []);
 
   const value = useMemo(
@@ -67,10 +70,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       preference,
       resolved,
       cyclePreference,
+      setPreference: setPreferenceState,
       palette,
       setPalette,
     }),
-    [preference, resolved, cyclePreference, palette, setPalette],
+    [preference, resolved, cyclePreference, setPreferenceState, palette, setPalette],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

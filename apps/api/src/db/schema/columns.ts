@@ -1,6 +1,6 @@
 import * as pg from 'drizzle-orm/pg-core';
 import * as sqlite from 'drizzle-orm/sqlite-core';
-import { usingSqlite } from '../dialect';
+import { usingSqlite } from '@/db/dialect';
 
 /**
  * Table shape consumed by the application's dynamic entity registry. The reference schema is
@@ -116,6 +116,11 @@ export const uniqueIndex = asPostgresCompatible<typeof pg.uniqueIndex>(
 
 export const unique = asPostgresCompatible<typeof pg.unique>(
   usingSqlite ? sqlite.unique : pg.unique,
+);
+
+/** A composite primary key, declared in the table's extra-config callback: `primaryKey({ columns: [...] })`. */
+export const primaryKey = asPostgresCompatible<typeof pg.primaryKey>(
+  usingSqlite ? sqlite.primaryKey : pg.primaryKey,
 );
 
 /**

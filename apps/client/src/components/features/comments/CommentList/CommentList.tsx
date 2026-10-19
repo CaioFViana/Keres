@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import CommentListItem from '@/src/components/features/list-items/CommentListItem';
-import type { CommentSelect } from '../../../../db/schema';
-import { useStoryComments } from '../../../../hooks/useStoryComments';
-import { useTheme } from '../../../../theme';
+import type { CommentSelect } from '@/src/db/schema';
+import { useStoryComments } from '@/src/hooks/comments/useStoryComments';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface CommentListProps {
   storyId: string;
@@ -29,14 +30,7 @@ const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPre
     return comments.filter((comment) => comment.commentText.toLowerCase().includes(query));
   }, [comments, search]);
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, padding: 10 },
-    // TextInput's own default style caps width at 80% - overridden here so the search box
-    // fills the available width instead of leaving a fixed gap on wide screens.
-    searchInput: { marginBottom: 10, width: '100%' },
-    emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: 20 },
-    footer: { paddingVertical: 20, alignItems: 'center' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.container}>
@@ -69,5 +63,15 @@ const CommentList: React.FC<CommentListProps> = ({ storyId, pageSize = 20, onPre
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, padding: 10 },
+    // TextInput's own default style caps width at 80% - overridden here so the search box
+    // fills the available width instead of leaving a fixed gap on wide screens.
+    searchInput: { marginBottom: 10, width: '100%' },
+    emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: 20 },
+    footer: { paddingVertical: 20, alignItems: 'center' },
+  });
 
 export default CommentList;

@@ -1,0 +1,489 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { BackHandler } from 'react-native';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+
+import MainDashboardScreen from '@/src/screens/main-story-stack/MainDashboardScreen';
+
+const mockNavigate = jest.fn();
+const mockDispatch = jest.fn();
+const mockParentDispatch = jest.fn();
+const mockShowNotification = jest.fn();
+const mockGetContentCounts = jest.fn();
+const mockAnalyzeStoryCheap = jest.fn();
+const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
+const mockUpdateClientSettings = jest.fn();
+
+let mockSelectedStory: { id: string; title: string } | null = {
+  id: 'story-1',
+  title: 'My Story',
+};
+let mockConflicts: { id: string }[] = [];
+
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual('@react-navigation/native');
+  const react = jest.requireActual('react') as typeof import('react');
+  return {
+    ...actual,
+    __esModule: true,
+    useNavigation: () => ({
+      navigate: mockNavigate,
+      dispatch: mockDispatch,
+      getParent: () => ({ dispatch: mockParentDispatch }),
+    }),
+    useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
+  };
+});
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/services/account/ClientSettingsService', () => ({
+  __esModule: true,
+  getClientSettings: jest.fn(),
+  updateClientSettings: (...args: unknown[]) => mockUpdateClientSettings(...args),
+}));
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
+  __esModule: true,
+  useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
+}));
+let mockRole: string | null = 'owner';
+let mockCanManage = true;
+let mockCanReport = false;
+const mockReport = jest.fn();
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
+  __esModule: true,
+  useStoryRole: () => ({
+    role: mockRole,
+    canEdit: true,
+    canManageStoryPolicy: mockCanManage,
+    isLoading: false,
+  }),
+}));
+let mockResume: { id: string; name: string; chapterName: string | null; editedAt: Date } | null = {
+  id: 'scene-9',
+  name: 'The bridge',
+  chapterName: 'Arrival',
+  editedAt: new Date('2026-10-08T10:00:00.000Z'),
+};
+jest.mock('@/src/hooks/scene/useResumeScene', () => ({
+  __esModule: true,
+  useResumeScene: () => mockResume,
+}));
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
+  __esModule: true,
+  useStoryArcs: () => ({ arcs: [] }),
+}));
+jest.mock('@/src/screens/main-story-stack/useStoryReport', () => ({
+  __esModule: true,
+  useStoryReport: () => ({ canReport: mockCanReport, sending: false, report: mockReport }),
+}));
+jest.mock('@/src/components/features/story/ReportStoryModal/ReportStoryModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: { visible: boolean; storyTitle: string }) => (
+      <Text testID="report-modal">
+        {JSON.stringify({ visible: props.visible, title: props.storyTitle })}
+      </Text>
+    ),
+  };
+});
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryContentMetricsService', () => ({
+  __esModule: true,
+  createStoryContentMetricsService: () => ({ getContentCounts: mockGetContentCounts }),
+}));
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryAnalysisService', () => ({
+  __esModule: true,
+  createStoryAnalysisService: () => ({ analyzeStoryCheap: mockAnalyzeStoryCheap }),
+}));
+jest.mock('@/src/state/story/storyStore', () => ({
+  __esModule: true,
+  useStoryStore: () => ({ selectedStory: mockSelectedStory }),
+}));
+jest.mock('@/src/state/ui/notificationStore', () => ({
+  __esModule: true,
+  useNotificationStore: () => ({ showNotification: mockShowNotification }),
+}));
+jest.mock('@/src/state/sync/syncConflictStore', () => ({
+  __esModule: true,
+  useSyncConflictStore: (selector: (state: { conflicts: { id: string }[] }) => unknown) =>
+    selector({ conflicts: mockConflicts }),
+}));
+jest.mock('@/src/screens/main-story-stack/MainDashboardContent', () => ({
+  __esModule: true,
+  MainDashboardContent: (props: {
+    story: { id: string } | null;
+    conflictCount: number;
+    conflictSheetOpen: boolean;
+    onOpenConflictSheet: () => void;
+    onCloseConflictSheet: () => void;
+    characterCount?: number;
+    analysisIssueCount?: number;
+    forkCount?: number;
+    onOpenAnalysis: () => void;
+    onOpenOperationLog: () => void;
+    writing?: {
+      resume: { id: string } | null;
+      canEdit: boolean;
+      onContinue: (sceneId: string) => void;
+      onNewScene: () => void;
+      onNewCharacter: () => void;
+      onNewNote: () => void;
+      onOpenManuscript: () => void;
+      onExportManuscript: () => void;
+      onPublishManuscript?: () => void;
+    };
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.View,
+      null,
+      react.createElement(
+        native.Text,
+        { testID: 'dashboard-marker' },
+        JSON.stringify({
+          storyId: props.story?.id ?? null,
+          conflicts: props.conflictCount,
+          sheetOpen: props.conflictSheetOpen,
+          characters: props.characterCount ?? null,
+          analysis: props.analysisIssueCount ?? null,
+          forks: props.forkCount ?? null,
+        }),
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'open-sheet', onPress: props.onOpenConflictSheet },
+        'open',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'close-sheet', onPress: props.onCloseConflictSheet },
+        'close',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'open-analysis', onPress: props.onOpenAnalysis },
+        'analysis',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-resume' },
+        props.writing?.resume?.id ?? 'none',
+      ),
+      react.createElement(
+        native.Text,
+        {
+          testID: 'writing-continue',
+          onPress: () => props.writing?.onContinue(props.writing.resume?.id ?? ''),
+        },
+        'continue',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-new-scene', onPress: props.writing?.onNewScene },
+        'scene',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-new-character', onPress: props.writing?.onNewCharacter },
+        'character',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-new-note', onPress: props.writing?.onNewNote },
+        'note',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-manuscript', onPress: props.writing?.onOpenManuscript },
+        'manuscript',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'writing-export', onPress: props.writing?.onExportManuscript },
+        'export',
+      ),
+      props.writing?.onPublishManuscript
+        ? react.createElement(
+            native.Text,
+            { testID: 'writing-publish', onPress: props.writing.onPublishManuscript },
+            'publish',
+          )
+        : null,
+      react.createElement(
+        native.Text,
+        { testID: 'open-oplog', onPress: props.onOpenOperationLog },
+        'oplog',
+      ),
+    );
+  },
+}));
+jest.mock('react-i18next', () => ({
+  __esModule: true,
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
+const fullCounts = {
+  characterCount: 3,
+  locationCount: 2,
+  chapterCount: 4,
+  sceneCount: 10,
+  choiceCount: 5,
+  noteCount: 6,
+  worldRuleCount: 1,
+  itemCount: 7,
+  galleryCount: 8,
+  tagCount: 9,
+  customAttributeCount: 11,
+  plotCount: 12,
+  boardCount: 13,
+  branchingStoryForkCount: 2,
+};
+
+function jsonOf(view: { getByTestId: (id: string) => { props: { children?: unknown } } }) {
+  return JSON.parse(view.getByTestId('dashboard-marker').props.children as string);
+}
+
+describe('MainDashboardScreen', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSelectedStory = { id: 'story-1', title: 'My Story' };
+    mockConflicts = [{ id: 'c-1' }, { id: 'c-2' }];
+    mockRole = 'owner';
+    mockCanManage = true;
+    mockCanReport = false;
+    mockGetContentCounts.mockResolvedValue(fullCounts);
+    mockAnalyzeStoryCheap.mockResolvedValue({ findings: [{ id: 'f-1' }, { id: 'f-2' }] });
+  });
+
+  function reportAction() {
+    const headerCall = mockUseScreenHeader.mock.calls[0][0] as {
+      actions: { id: string; visible?: boolean; onPress: () => void }[];
+    };
+    return headerCall.actions.find((action) => action.id === 'action-report')!;
+  }
+
+  it('requests its guided tour', async () => {
+    await render(<MainDashboardScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('MainDashboard');
+  });
+
+  it('completes the first-story trail on arrival and celebrates once', async () => {
+    useUserSettingsStore.setState({
+      tutorialProgress: {
+        version: 1,
+        seen: [],
+        firstStory: { choice: 'create', done: false, dismissed: false },
+      },
+    });
+    mockUpdateClientSettings.mockImplementation(
+      async (_db: unknown, patch: Record<string, unknown>) => {
+        useUserSettingsStore.setState({
+          tutorialProgress: JSON.parse(patch.seenTutorials as string),
+        });
+        return undefined;
+      },
+    );
+    try {
+      await render(<MainDashboardScreen />);
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith('first_story_success', 'success'),
+      );
+      const [, written] = mockUpdateClientSettings.mock.calls[0];
+      expect(JSON.parse(written.seenTutorials).firstStory.done).toBe(true);
+      // The persisted done flag keeps later focuses quiet.
+      expect(mockShowNotification).toHaveBeenCalledTimes(1);
+    } finally {
+      useUserSettingsStore.getState().resetSettings();
+    }
+  });
+
+  it('fetches counts and analysis issues into the dashboard content', async () => {
+    const view = await render(<MainDashboardScreen />);
+    await waitFor(() => expect(mockGetContentCounts).toHaveBeenCalledWith('story-1'));
+    await waitFor(() => expect(mockAnalyzeStoryCheap).toHaveBeenCalledWith('story-1'));
+    expect(jsonOf(view)).toMatchObject({
+      storyId: 'story-1',
+      conflicts: 2,
+      characters: 3,
+      analysis: 2,
+      forks: 2,
+    });
+  });
+
+  it('opens and closes the conflict sheet', async () => {
+    const view = await render(<MainDashboardScreen />);
+    expect(jsonOf(view).sheetOpen).toBe(false);
+    await fireEvent.press(view.getByTestId('open-sheet'));
+    expect(jsonOf(view).sheetOpen).toBe(true);
+    await fireEvent.press(view.getByTestId('close-sheet'));
+    expect(jsonOf(view).sheetOpen).toBe(false);
+  });
+
+  it('navigates to analysis, operation log and settings', async () => {
+    const view = await render(<MainDashboardScreen />);
+    await fireEvent.press(view.getByTestId('open-analysis'));
+    expect(mockNavigate).toHaveBeenCalledWith('StoryAnalysisStack', {
+      screen: 'StoryAnalysis',
+      params: { storyId: 'story-1' },
+    });
+    await fireEvent.press(view.getByTestId('open-oplog'));
+    expect(mockNavigate).toHaveBeenCalledWith('OperationLogStack', { screen: 'OperationLog' });
+    const headerCall = mockUseScreenHeader.mock.calls[0][0] as {
+      title: string;
+      actions: { onPress: () => void }[];
+    };
+    expect(headerCall.title).toBe('My Story');
+    headerCall.actions[0].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('StorySettings', { screen: 'StorySettingsIndex' });
+  });
+
+  it('hands the writing block the last scene and opens where each shortcut leads - the forms on a stack started over', async () => {
+    const view = await render(<MainDashboardScreen />);
+    expect(view.getByTestId('writing-resume').props.children).toBe('scene-9');
+
+    await fireEvent.press(view.getByTestId('writing-continue'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      state: { index: 0, routes: [{ name: 'SceneEditor', params: { sceneId: 'scene-9' } }] },
+    });
+    await fireEvent.press(view.getByTestId('writing-new-scene'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      state: { index: 0, routes: [{ name: 'SceneForm', params: {} }] },
+    });
+    await fireEvent.press(view.getByTestId('writing-new-character'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('CharactersStack', {
+      state: { index: 0, routes: [{ name: 'CharacterForm', params: {} }] },
+    });
+    await fireEvent.press(view.getByTestId('writing-new-note'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NotesStack', {
+      state: { index: 0, routes: [{ name: 'NoteForm', params: {} }] },
+    });
+    await fireEvent.press(view.getByTestId('writing-manuscript'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      screen: 'Manuscript',
+      params: {},
+    });
+    await fireEvent.press(view.getByTestId('writing-export'));
+    expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
+      screen: 'ManuscriptExport',
+    });
+  });
+
+  it('offers the owner to publish the manuscript', async () => {
+    const view = await render(<MainDashboardScreen />);
+
+    await fireEvent.press(await view.findByTestId('writing-publish'));
+
+    expect(mockNavigate).toHaveBeenLastCalledWith('StoryShare', {
+      screen: 'StoryPublish',
+      params: undefined,
+    });
+  });
+
+  it('does not offer a writer to publish the manuscript', async () => {
+    mockCanManage = false;
+    const view = await render(<MainDashboardScreen />);
+
+    await view.findByTestId('writing-resume');
+    expect(view.queryByTestId('writing-publish')).toBeNull();
+  });
+
+  it('warns when opening settings without a story', async () => {
+    mockSelectedStory = null;
+    await render(<MainDashboardScreen />);
+    const headerCall = mockUseScreenHeader.mock.calls[0][0] as {
+      title: string;
+      actions: { onPress: () => void }[];
+    };
+    expect(headerCall.title).toBe('dashboard_title');
+    headerCall.actions[0].onPress();
+    expect(mockShowNotification).toHaveBeenCalledWith('no_story_selected_for_settings', 'warning');
+    expect(mockGetContentCounts).not.toHaveBeenCalled();
+    expect(mockAnalyzeStoryCheap).not.toHaveBeenCalled();
+  });
+
+  it('exits to story selection on a double back press', async () => {
+    let backAction: (() => boolean) | null = null;
+    const spy = jest.spyOn(BackHandler, 'addEventListener').mockImplementation(((
+      ...args: unknown[]
+    ) => {
+      backAction = args[1] as () => boolean;
+      return { remove: jest.fn() };
+    }) as never);
+    try {
+      await render(<MainDashboardScreen />);
+      expect(backAction).not.toBeNull();
+      expect(backAction!()).toBe(true);
+      expect(mockShowNotification).toHaveBeenCalledWith('press_back_again_to_exit', 'info');
+      expect(backAction!()).toBe(true);
+      expect(mockParentDispatch).toHaveBeenCalledTimes(1);
+      expect(mockParentDispatch.mock.calls[0][0]).toMatchObject({
+        type: 'RESET',
+        payload: { index: 0, routes: [{ name: 'StorySelection' }] },
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('hides the report action from the owner', async () => {
+    mockRole = 'owner';
+    mockCanReport = true;
+    await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(false);
+  });
+
+  it('shows the report action to a known non-owner and opens the dialog', async () => {
+    mockRole = 'reader';
+    mockCanReport = true;
+    const view = await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(true);
+
+    // Opening the action shows the report dialog for this story.
+    expect(JSON.parse(view.getByTestId('report-modal').props.children)).toMatchObject({
+      visible: false,
+      title: 'My Story',
+    });
+    await act(async () => {
+      reportAction().onPress();
+    });
+    expect(JSON.parse(view.getByTestId('report-modal').props.children).visible).toBe(true);
+  });
+
+  it('hides the report action while the role is unresolved', async () => {
+    mockRole = null;
+    mockCanReport = true;
+    await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(false);
+  });
+
+  it('hides the report action on a local-only story', async () => {
+    mockRole = 'reader';
+    mockCanReport = false;
+    await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(false);
+  });
+
+  it('keeps the dashboard usable when metrics fail', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockGetContentCounts.mockRejectedValue(new Error('metrics down'));
+    mockAnalyzeStoryCheap.mockRejectedValue(new Error('analysis down'));
+    try {
+      const view = await render(<MainDashboardScreen />);
+      await waitFor(() => expect(mockGetContentCounts).toHaveBeenCalled());
+      await waitFor(() => expect(mockAnalyzeStoryCheap).toHaveBeenCalled());
+      expect(jsonOf(view)).toMatchObject({ storyId: 'story-1', characters: null, analysis: null });
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+});

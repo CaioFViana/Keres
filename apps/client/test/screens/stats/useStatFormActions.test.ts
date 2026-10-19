@@ -1,16 +1,16 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { useStatFormActions } from '@/src/screens/stats/useStatFormActions';
+import type { StatFormState } from '@/src/screens/stats/useStatFormState';
+import type { StatService } from '@/src/services/storymanagement/choices-stats/StatService';
+
 const mockAlert = jest.fn();
 
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { useStatFormActions } from '../../../src/screens/stats/useStatFormActions';
-import type { StatFormState } from '../../../src/screens/stats/useStatFormState';
-import type { StatService } from '../../../src/services/storymanagement/StatService';
 
 const createState = (overrides: Partial<StatFormState> = {}): StatFormState =>
   ({

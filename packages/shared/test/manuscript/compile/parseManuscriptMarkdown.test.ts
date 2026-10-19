@@ -196,9 +196,10 @@ describe('stripManuscriptMarkers', () => {
   it('removes whole-line separators but keeps dialogue dashes', () => {
     expect(stripManuscriptMarkers('Before\n\n---\n\nAfter')).toBe('Before\n\n\n\nAfter');
     expect(stripManuscriptMarkers('***')).toBe('');
-    expect(stripManuscriptMarkers('- Not a separator, dialogue')).toBe(
-      '- Not a separator, dialogue',
-    );
+    // A hyphen marker starts a list item (like the editor's `- ` trigger), so
+    // only it strips; em-dash dialogue stays literal.
+    expect(stripManuscriptMarkers('- A list item')).toBe('A list item');
+    expect(stripManuscriptMarkers('— Not a list, dialogue')).toBe('— Not a list, dialogue');
   });
 
   it('keeps unmatched markers literal, like the renderer', () => {
@@ -218,6 +219,44 @@ describe('stripManuscriptMarkers', () => {
     expect(stripManuscriptMarkers('**a\\*b**')).toBe('a*b');
     expect(stripManuscriptMarkers('\\# head')).toBe('# head');
     expect(stripManuscriptMarkers('a\\\\b')).toBe('a\\b');
+  });
+});
+
+describe('parseManuscriptMarkdown lists', () => {
+  it('reads bullet and ordered items with their marks', () => {
+    const blocks = parseManuscriptMarkdown('- **bold** move\n\n3. third *step*');
+
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]).toMatchObject({ kind: 'bullet' });
+    expect(blocks[0].inlines).toEqual([{ text: 'bold', bold: true }, { text: ' move' }]);
+    expect(blocks[1]).toMatchObject({ kind: 'ordered', index: 3 });
+  });
+
+  it('splits items sharing one chunk without blank lines', () => {
+    const blocks = parseManuscriptMarkdown('Intro\n\n- one\n- two\n\nOutro');
+
+    expect(blocks.map((block) => block.kind)).toEqual([
+      'paragraph',
+      'bullet',
+      'bullet',
+      'paragraph',
+    ]);
+    expect(blocks.map((block) => block.key)).toEqual(['block-0', 'block-1', 'block-2', 'block-3']);
+  });
+
+  it('reads escaped markers as literal paragraphs', () => {
+    const blocks = parseManuscriptMarkdown('\\- nope\n\n\\2. nope');
+
+    expect(blocks.map((block) => block.kind)).toEqual(['paragraph', 'paragraph']);
+    expect(blocks[0].inlines).toEqual([{ text: '- nope' }]);
+    expect(blocks[1].inlines).toEqual([{ text: '2. nope' }]);
+  });
+
+  it('strips list markers like any other marker', () => {
+    expect(stripManuscriptMarkers('- hello')).toBe('hello');
+    expect(stripManuscriptMarkers('4. hello')).toBe('hello');
+    expect(stripManuscriptMarkers('\\- hello')).toBe('- hello');
+    expect(stripManuscriptMarkers('- **bold** move')).toBe('bold move');
   });
 });
 

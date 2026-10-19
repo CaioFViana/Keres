@@ -1,4 +1,4 @@
-import { index, table, text, timestampNow } from '../columns';
+import { index, table, text, timestampNow } from '@/db/schema/columns';
 
 /**
  * One row per version a user published, kept only long enough to count "publications per day".

@@ -1,6 +1,8 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import SuggestionUsageScreen from '@/src/screens/suggestions/SuggestionUsageScreen';
+
 const mockGoBack = jest.fn();
 const mockDrawerNavigate = jest.fn();
 const mockDrawer = { navigate: mockDrawerNavigate };
@@ -31,7 +33,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
@@ -46,17 +48,17 @@ jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => ({
     return react.createElement(native.View, { testID: 'rename-modal' }, children);
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/services/storymanagement/SuggestionService', () => {
-  const types = jest.requireActual('../../../src/services/storymanagement/suggestionTypes');
+jest.mock('@/src/services/storymanagement/suggestions/SuggestionService', () => {
+  const types = jest.requireActual('@/src/services/storymanagement/suggestions/suggestionTypes');
   return {
     __esModule: true,
     isNamedListType: types.isNamedListType,
@@ -68,16 +70,16 @@ jest.mock('../../../src/services/storymanagement/SuggestionService', () => {
     }),
   };
 });
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
     selector({ selectedStory: { id: mockSelectedStoryId.current } }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -91,15 +93,15 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   __esModule: true,
   navigateToEntityDetail: (...args: unknown[]) => mockNavigateToEntityDetail(...args),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ label: mockLabel }),
 }));
@@ -107,8 +109,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import SuggestionUsageScreen from '../../../src/screens/suggestions/SuggestionUsageScreen';
 
 const usages = [
   { entityType: 'Character', id: 'char-1', title: 'Aria', snippet: 'role: Healer' },
@@ -262,7 +262,7 @@ describe('SuggestionUsageScreen', () => {
     );
     const onReturn = mockNavigateToEntityDetail.mock.calls[0][3].onReturn as () => void;
     onReturn();
-    expect(mockDrawerNavigate).toHaveBeenCalledWith('CustomizationStack', {
+    expect(mockDrawerNavigate).toHaveBeenCalledWith('StorySettings', {
       screen: 'SuggestionUsage',
       params: { type: 'character_role', value: 'Healer' },
     });

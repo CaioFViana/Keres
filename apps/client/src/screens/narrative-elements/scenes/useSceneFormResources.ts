@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { useDrizzle } from '../../../db';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { useChapterStore } from '../../../state/chapterStore';
-import { useCharacterStore } from '../../../state/characterStore';
-import { useItemStore } from '../../../state/itemStore';
-import { useLocationStore } from '../../../state/locationStore';
+import { useDrizzle } from '@/src/db';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useChapterStore } from '@/src/state/story/chapterStore';
+import { useCharacterStore } from '@/src/state/story/characterStore';
+import { useItemStore } from '@/src/state/story/itemStore';
+import { useLocationStore } from '@/src/state/story/locationStore';
 
 /** Owns the scene service and the story-scoped lookup stores used by the form. */
 export function useSceneFormResources(storyId?: string) {

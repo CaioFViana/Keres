@@ -1,5 +1,5 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,40 +14,42 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import ItemListItem from '@/src/components/features/list-items/ItemListItem';
 import ItemJourneyRows from '@/src/components/features/item-journeys/ItemJourneyRows';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import type {
   ChapterSelect,
   ChoiceSelect,
   ItemJourneySelect,
   SceneSelect,
   TagSelect,
-} from '../../db/schema';
-import type { ItemSelect } from '../../db/schemas/items';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityArcIds } from '../../hooks/useEntityArcIds';
-import { useEntityListScreen } from '../../hooks/useEntityListScreen';
-import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
+} from '@/src/db/schema';
+import type { ItemSelect } from '@/src/db/schemas/items';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
+import { useEntityArcScope } from '@/src/hooks/arcs/useEntityArcScope';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
 import type {
   ItemStackParamList,
   MainSystemDrawerParamList,
-} from '../../navigation/MainSystemStack';
-import { useItemStore } from '../../state/itemStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createChoiceService } from '../../services/storymanagement/ChoiceService';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { createTagService } from '../../services/storymanagement/TagService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
-import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/navigation/drawer/MainSystemDrawer';
+import { useItemStore } from '@/src/state/story/itemStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { orderItemJourneysByNarrative } from '@/src/utils/entity/itemJourneyOrder';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'ItemsStack'>,
@@ -57,16 +59,14 @@ export type ItemsScreenNavigationProp = CompositeNavigationProp<
 const ItemListScreen = () => {
   useBackButtonHandler();
   useScreenTour('ItemsStack');
-  const listAnchorRef = useScreenAnchor('Items', 'list');
   const { t } = useTranslation();
   const { agree, term } = useStoryVocabulary();
-  const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const navigation = useNavigation<ItemsScreenNavigationProp>();
   const { openItemList } = useOpenPresenceMatrixViewer();
 
-  const { listProps, items, isInitialLoading, error, storyId, toggleFavorite } =
+  const { listProps, items, isInitialLoading, error, storyId, handleToggleFavorite, findMatching } =
     useEntityListScreen({
       useStore: useItemStore,
       collectionKey: 'items',
@@ -166,44 +166,38 @@ const ItemListScreen = () => {
     loadTags();
   }, [loadTags]);
 
-  useEffect(() => {
-    const refreshTags = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadTags();
-    };
-    entityEventEmitter.on('tag_changed', refreshTags);
-    entityEventEmitter.on('tag_relation_changed', refreshTags);
-    return () => {
-      entityEventEmitter.off('tag_changed', refreshTags);
-      entityEventEmitter.off('tag_relation_changed', refreshTags);
-    };
-  }, [loadTags, storyId]);
+  useTagChangeReload(storyId, loadTags);
 
-  const activeArcId = useStoryStore((state) => state.activeArcId);
-  const arcIdsByItem = useEntityArcIds(storyId ?? '', 'item');
-  const itemsWithTags = useMemo(
+  const foundItems = useMemo(
     () =>
       (items as ItemSelect[])
         .map((item) => ({ ...item, tags: tagsByItemId.get(item.id) ?? [] }))
         .filter(
           (item) =>
-            (activeTagIds.length === 0 ||
-              item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id))) &&
-            entityBelongsToActiveArc(arcIdsByItem.get(item.id), activeArcId),
+            activeTagIds.length === 0 ||
+            item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id)),
         ),
-    [activeArcId, activeTagIds, arcIdsByItem, items, tagsByItemId],
+    [activeTagIds, items, tagsByItemId],
   );
+  const {
+    data: itemsWithTags,
+    outsideCount,
+    expanded: showingOtherArcs,
+    toggle: toggleOtherArcs,
+    previewCount,
+  } = useEntityArcScope({
+    storyId,
+    kind: 'item',
+    rows: foundItems,
+    searchTerm: listProps.currentSearchTerm,
+    findMatching,
+  });
 
   const handleViewDetails = useCallback(
     (itemId: string) => {
       navigation.navigate('ItemDetail', { itemId });
     },
     [navigation],
-  );
-  const handleToggleFavorite = useCallback(
-    async (itemId: string, isFavorite: boolean) => {
-      await toggleFavorite(itemId, isFavorite);
-    },
-    [toggleFavorite],
   );
   const handleOpenJourney = useCallback(
     (itemJourneyId: string) => navigation.navigate('ItemJourneyDetail', { itemJourneyId }),
@@ -282,7 +276,7 @@ const ItemListScreen = () => {
     [t],
   );
 
-  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -320,10 +314,18 @@ const ItemListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Items" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
+          onPreviewCount={previewCount}
           data={itemsWithTags}
+          resultsNotice={
+            <OutsideArcNotice
+              count={outsideCount}
+              expanded={showingOtherArcs}
+              onToggle={toggleOtherArcs}
+            />
+          }
           renderItem={memoizedItemListItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
@@ -351,9 +353,12 @@ const ItemListScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
 export default ItemListScreen;

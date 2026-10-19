@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import TagsScreen from '@/src/screens/tags/TagListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
@@ -20,7 +22,7 @@ const freshListState = () => ({
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
 });
 
 let mockListState = freshListState();
@@ -45,11 +47,11 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -125,15 +127,15 @@ jest.mock('@/src/components/features/list-items/TagListItem', () => ({
     );
   },
 }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('../../../src/state/tagStore', () => ({
+jest.mock('@/src/state/story/tagStore', () => ({
   __esModule: true,
   useTagStore: jest.fn(),
 }));
@@ -141,8 +143,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import TagsScreen from '../../../src/screens/tags/TagListScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

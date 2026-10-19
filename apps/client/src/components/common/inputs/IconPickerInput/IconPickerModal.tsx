@@ -19,9 +19,10 @@ import {
 } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
-import { useIconRecents } from '../../../../hooks/useIconRecents';
-import { useTheme } from '../../../../theme';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { useIconRecents } from '@/src/hooks/ui/useIconRecents';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 /**
  * The list lives in `@keres/shared` because the public site draws the same avatar - see
@@ -51,6 +52,14 @@ interface IconPickerModalProps {
 }
 
 const CELL_MARGIN = 4;
+
+/** The values the styles read: the grid's size and cell size, the window height, and the compact flag. */
+type Metrics = {
+  iconGridSize: number;
+  iconCellSize: number;
+  screenHeight: number;
+  isCompact: boolean;
+};
 
 /** `keres:bow-arrow` reads as "Bow arrow" for labels and screen readers. */
 function prettyName(value: string): string {
@@ -142,101 +151,11 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
     onSelectIcon(value);
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      width: iconGridSize + 40,
-      // The wrapped chips grow vertically on narrow windows; the cap keeps the whole
-      // modal on screen while the grid below yields the room.
-      maxHeight: screenHeight - 120,
-      alignItems: 'center',
-      padding: 20,
-      backgroundColor: colors.background,
-    },
-    // The close control lives in the header, not below the grid: on short windows the
-    // grid yields its room to the wrapped chips, and a bottom button would clip away
-    // with no scroll to reach it. Every fixed row carries flexShrink 0 - the web
-    // shrinks flex items by default, which would squeeze e.g. the recents scroller
-    // (a squeezed scroller clips its cells); only the grid below may yield.
-    header: {
-      width: '100%',
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 0,
-      marginBottom: 12,
-    },
-    title: {
-      flex: 1,
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      textAlign: 'center',
-    },
-    closeButton: {
-      padding: 5,
-    },
-    search: { width: '100%', flexShrink: 0, marginBottom: 12 },
-    // Width-bound like the search: on web an unbounded child of a centered column sizes
-    // to its content and spills past the modal instead of scrolling. The chips wrap
-    // instead of scrolling horizontally, denser on compact windows.
-    chips: {
-      width: '100%',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      flexShrink: 0,
-      gap: 8,
-      marginBottom: 12,
-    },
-    chip: {
-      paddingHorizontal: isCompact ? 10 : 14,
-      paddingVertical: isCompact ? 6 : 8,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    chipSelected: { borderColor: colors.primary },
-    chipLabel: { color: colors.textSecondary, fontSize: isCompact ? 12 : 14 },
-    chipLabelSelected: { color: colors.primary },
-    sectionLabel: {
-      alignSelf: 'flex-start',
-      flexShrink: 0,
-      color: colors.textSecondary,
-      marginBottom: 8,
-    },
-    recents: {
-      width: '100%',
-      flexShrink: 0,
-      marginBottom: 12,
-      maxHeight: iconCellSize + CELL_MARGIN * 2,
-    },
-    grid: {
-      justifyContent: 'center',
-    },
-    cell: {
-      width: iconCellSize,
-      height: iconCellSize,
-      margin: CELL_MARGIN,
-      borderRadius: iconCellSize / 2,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 2,
-      borderColor: colors.border,
-    },
-    cellSelected: {
-      borderColor: colors.primary,
-    },
-    empty: { color: colors.textSecondary, textAlign: 'center', paddingVertical: 24 },
-    iconList: {
-      width: '100%',
-      // The only row allowed to yield: grows with its content up to the cap, and
-      // shrinks when the container's cap bites (tall wrapped chips on short
-      // windows) - the grid scrolls either way.
-      flexGrow: 1,
-      flexShrink: 1,
-      maxHeight: Math.max(220, screenHeight * 0.5),
-    },
-  });
+  const metrics = useMemo<Metrics>(
+    () => ({ iconGridSize, iconCellSize, screenHeight, isCompact }),
+    [iconGridSize, iconCellSize, screenHeight, isCompact],
+  );
+  const styles = useThemedStyles(createStyles, [metrics]);
 
   const renderCell = (value: string) => (
     <TouchableOpacity
@@ -251,7 +170,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
   );
 
   return (
-    <View style={styles.container}>
+    <View testID="icon-picker-container" style={styles.container}>
       <View style={styles.header}>
         {title ? <Text style={styles.title}>{title}</Text> : <View style={{ flex: 1 }} />}
         <TouchableOpacity
@@ -319,5 +238,107 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors, [m]: [Metrics]) =>
+  StyleSheet.create({
+    container: {
+      width: m.iconGridSize + 40,
+      // The wrapped chips grow vertically on narrow windows; the cap keeps the whole
+      // modal on screen while the grid below yields the room.
+      maxHeight: m.screenHeight - 120,
+      // The modal surface around it has its own cap (and padding) that this number knows nothing
+      // about. A native flex item does not shrink by default, so without this the surface clipped the
+      // bottom of the grid - the last row cut off, out of the scroll's reach - whenever the recents row
+      // made the content tall enough to hit that cap. The grid is the one child that yields.
+      flexShrink: 1,
+      alignItems: 'center',
+      padding: 20,
+      backgroundColor: colors.background,
+    },
+    // The close control lives in the header, not below the grid: on short windows the
+    // grid yields its room to the wrapped chips, and a bottom button would clip away
+    // with no scroll to reach it. Every fixed row carries flexShrink 0 - the web
+    // shrinks flex items by default, which would squeeze e.g. the recents scroller
+    // (a squeezed scroller clips its cells); only the grid below may yield.
+    header: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexShrink: 0,
+      marginBottom: 12,
+    },
+    title: {
+      flex: 1,
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: colors.text,
+      textAlign: 'center',
+    },
+    closeButton: {
+      padding: 5,
+    },
+    search: { width: '100%', flexShrink: 0, marginBottom: 12 },
+    // Width-bound like the search: on web an unbounded child of a centered column sizes
+    // to its content and spills past the modal instead of scrolling. The chips wrap
+    // instead of scrolling horizontally, denser on compact windows.
+    chips: {
+      width: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      flexShrink: 0,
+      gap: 8,
+      marginBottom: 12,
+    },
+    chip: {
+      paddingHorizontal: m.isCompact ? 10 : 14,
+      paddingVertical: m.isCompact ? 6 : 8,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    chipSelected: { borderColor: colors.primary },
+    chipLabel: { color: colors.textSecondary, fontSize: m.isCompact ? 12 : 14 },
+    chipLabelSelected: { color: colors.primary },
+    sectionLabel: {
+      alignSelf: 'flex-start',
+      flexShrink: 0,
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    recents: {
+      width: '100%',
+      flexShrink: 0,
+      marginBottom: 12,
+      maxHeight: m.iconCellSize + CELL_MARGIN * 2,
+    },
+    grid: {
+      justifyContent: 'center',
+    },
+    cell: {
+      width: m.iconCellSize,
+      height: m.iconCellSize,
+      margin: CELL_MARGIN,
+      borderRadius: m.iconCellSize / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 2,
+      borderColor: colors.border,
+    },
+    cellSelected: {
+      borderColor: colors.primary,
+    },
+    empty: { color: colors.textSecondary, textAlign: 'center', paddingVertical: 24 },
+    iconList: {
+      width: '100%',
+      // The only row allowed to yield: grows with its content up to the cap, and
+      // shrinks when the container's cap bites (tall wrapped chips on short
+      // windows) - the grid scrolls either way.
+      flexGrow: 1,
+      flexShrink: 1,
+      maxHeight: Math.max(220, m.screenHeight * 0.5),
+    },
+  });
 
 export default IconPickerModal;

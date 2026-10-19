@@ -8,6 +8,6 @@ Each subject has a pair: `*Layout.ts` computes the geometry (pure, testable, col
 with `react-native-svg` and the second in the export button. Sharing both modules keeps the
 on-screen drawing and the exported image the same geometry.
 
-Import each module by its path (`@keres/shared/graphs/presenceMatrixSvg`), with no barrel: three
+Import each module by its path (`@keres/shared/graphs/presence-matrix/presenceMatrixSvg`), with no barrel: three
 of these modules export constants with the same name (`NODE_WIDTH`, `GRAPH_PADDING`) for
 different drawings, and a barrel would make that collision ambiguous instead of explicit.

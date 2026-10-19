@@ -12,9 +12,9 @@ import {
   PartialGallerySchema,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { galleries } from '../../db/schema';
-import { mediaStorageService } from '../MediaStorageService';
+import { db, type CompatibleDb } from '@/db';
+import { galleries } from '@/db/schema';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 /**

@@ -2,9 +2,14 @@ import type { ManuscriptMark } from '@keres/shared';
 import { createElement, useCallback, useMemo, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View, type NativeSyntheticEvent } from 'react-native';
-import { EnrichedTextInput, type EnrichedTextInputInstance } from 'react-native-enriched-html';
-import { useTheme } from '../../../../theme';
-import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
+import {
+  EnrichedTextInput,
+  type EnrichedTextInputInstance,
+  type HtmlStyle,
+  type TextShortcut,
+} from 'react-native-enriched-html';
+import { useTheme } from '@/src/theme';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
 
 export type RichBodyEditorProps = {
   /** Initial HTML (uncontrolled input: later edits live natively, streamed out). */
@@ -47,6 +52,16 @@ function marksFromStyleState(state: LibStyleState): ManuscriptMark[] {
  * safe — and a second editor would want the same native look anyway.
  */
 const WEB_CSS_SCOPE_ID = 'keres-rich-body-editor';
+
+/**
+ * No type-to-format shortcuts: the host would turn a typed `- ` or `1. ` at
+ * a line start into a list, which hijacks hyphen dialogue (`- Fala`) most
+ * writers never meant as a list. Lists stay explicit through the toolbar
+ * (tapping its button again lifts the item back to plain text). Pasted lists
+ * still parse, and stored `- `/`1. ` still round-trips. Module-scope so the
+ * identity is stable across the keystroke re-renders.
+ */
+const NO_TEXT_SHORTCUTS: TextShortcut[] = [];
 
 /**
  * Inner-host layout the `style` prop cannot reach: it lands inline on the
@@ -107,6 +122,10 @@ function RichBodyEditorInner({
   // keystroke — nuking focus and racing `getHTML` against a destroyed editor
   // (schema-null crash). Later content arrives via imperative `setValue`.
   const [seedHtml] = useState(defaultHtml);
+  // Mount-only as well: the web host builds its editor from the placeholder too, and a new one means a new
+  // editor (reseeded from `defaultHtml`, so what was typed is gone). A language switched while writing
+  // shows in the placeholder the next time the editor opens.
+  const [placeholder] = useState(() => t('manuscript_empty'));
   // Stable handlers: the web host resubscribes its editor listeners whenever
   // these identities change, and the parent re-renders on every keystroke.
   const handleChangeHtml = useCallback(
@@ -143,6 +162,13 @@ function RichBodyEditorInner({
       }),
     [colors],
   );
+  // List markers follow the theme text color: the host draws bullets black
+  // by default, which vanishes on a dark surface. (Web inherits the input
+  // color through `currentColor`, so this only changes native.)
+  const htmlStyle = useMemo<HtmlStyle>(
+    () => ({ ul: { bulletColor: colors.text }, ol: { markerColor: colors.text } }),
+    [colors],
+  );
   // Permitted-but-disabled (saving) locks pointer input without remounting:
   // the remount key above ignores transient disables, so the container takes
   // over the lock the `editable` flip used to imply on web.
@@ -164,12 +190,14 @@ function RichBodyEditorInner({
         onChangeState={handleChangeState}
         editable={editable}
         autoFocus={autoFocus}
-        placeholder={t('manuscript_empty')}
+        placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
         scrollEnabled={false}
         selectionColor={colors.primary}
         // Links are outside the manuscript model: pasted URLs stay plain text.
         linkRegex={null}
+        htmlStyle={htmlStyle}
+        textShortcuts={NO_TEXT_SHORTCUTS}
       />
     </View>
   );

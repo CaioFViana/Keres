@@ -1,10 +1,10 @@
 /** @jest-environment node */
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import HeaderActions from '../../src/components/common/navigation/HeaderActions/HeaderActions';
-import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
+import HeaderActions from '@/src/components/common/navigation/HeaderActions/HeaderActions';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { text: '#111', primary: '#00f', surface: '#eee', border: '#ddd' },
   }),
@@ -14,7 +14,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: jest.fn(() => ({
     width: 1400,
     height: 900,
@@ -171,7 +171,6 @@ it('keeps a single action inline on compact screens, with no burger', async () =
 });
 
 describe('the compact burger menu and the status bar', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- the context under test.
   const { SafeAreaInsetsContext } = require('react-native-safe-area-context');
   const actions = [
     { id: 'a', icon: 'add' as const, label: 'A', onPress: jest.fn() },
@@ -200,5 +199,70 @@ describe('the compact burger menu and the status bar', () => {
 
     const panel = screen.getByTestId('header-actions-menu-panel');
     expect(StyleSheet.flatten(panel.props.style).marginTop).toBe(8);
+  });
+});
+
+describe('a badge on an action', () => {
+  it('puts a dot on that action only, and on none when no action has one', async () => {
+    const plain = await render(
+      <HeaderActions
+        actions={[{ id: 'chat', icon: 'chatbubble-outline', label: 'Chat', onPress: jest.fn() }]}
+      />,
+    );
+    expect(plain.queryByTestId('header-action-badge-chat')).toBeNull();
+
+    const badged = await render(
+      <HeaderActions
+        actions={[
+          {
+            id: 'chat',
+            icon: 'chatbubble-ellipses',
+            label: 'Chat',
+            badge: true,
+            onPress: jest.fn(),
+          },
+          { id: 'edit', icon: 'pencil-outline', label: 'Edit', onPress: jest.fn() },
+        ]}
+      />,
+    );
+    expect(badged.getByTestId('header-action-badge-chat')).toBeTruthy();
+    expect(badged.queryByTestId('header-action-badge-edit')).toBeNull();
+  });
+
+  it('shows the dot on the burger, so a badged action hidden in the menu is not lost', async () => {
+    mockLayout.mockReturnValue(COMPACT);
+    const screen = await render(
+      <HeaderActions
+        actions={[
+          {
+            id: 'chat',
+            icon: 'chatbubble-ellipses',
+            label: 'Chat',
+            badge: true,
+            onPress: jest.fn(),
+          },
+          { id: 'edit', icon: 'pencil-outline', label: 'Edit', onPress: jest.fn() },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId('header-actions-menu-badge')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('header-actions-menu'));
+    expect(screen.getByTestId('header-menu-badge-chat')).toBeTruthy();
+    expect(screen.queryByTestId('header-menu-badge-edit')).toBeNull();
+  });
+
+  it('leaves the burger bare when nothing behind it is badged', async () => {
+    mockLayout.mockReturnValue(COMPACT);
+    const screen = await render(
+      <HeaderActions
+        actions={[
+          { id: 'a', icon: 'add', label: 'Add', onPress: jest.fn() },
+          { id: 'b', icon: 'pencil-outline', label: 'Edit', onPress: jest.fn() },
+        ]}
+      />,
+    );
+
+    expect(screen.queryByTestId('header-actions-menu-badge')).toBeNull();
   });
 });

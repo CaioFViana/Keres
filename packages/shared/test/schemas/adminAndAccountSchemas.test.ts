@@ -19,7 +19,7 @@ import {
   UpdateUserProfileSchema,
   UpdateUserTagSchema,
 } from '../../index';
-import { UserTargetIdParam } from '../../schemas/FriendshipRouteSchemas';
+import { UserTargetIdParam } from '../../schemas/social/FriendshipRouteSchemas';
 
 const id = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
@@ -43,14 +43,22 @@ describe('administrative and account contracts', () => {
       page: 1,
       pageSize: 50,
     });
-    // z.coerce.boolean() follows JavaScript truthiness: route adapters must pass booleans,
-    // not literal query strings, when false needs to remain false.
+    // Query strings arrive as text over HTTP: '?isDeleted=false' must stay false,
+    // not coerce via JavaScript truthiness (Boolean('false') === true).
     expect(AdminUserListQuerySchema.parse({ isAdmin: true, isDeleted: false })).toMatchObject({
       isAdmin: true,
       isDeleted: false,
       page: 1,
       pageSize: 25,
     });
+    expect(AdminUserListQuerySchema.parse({ isAdmin: 'false', isDeleted: 'false' })).toMatchObject({
+      isAdmin: false,
+      isDeleted: false,
+    });
+    expect(AdminUserListQuerySchema.parse({ isDeleted: 'true' })).toMatchObject({
+      isDeleted: true,
+    });
+    expect(() => AdminUserListQuerySchema.parse({ isDeleted: 'banana' })).toThrow();
     expect(AdminDeletedItemsQuerySchema.parse({ entityType: 'Story', storyId: id })).toEqual({
       entityType: 'Story',
       storyId: id,
@@ -87,13 +95,20 @@ describe('administrative and account contracts', () => {
         isRegistrationOpen: true,
         maxUsers: null,
         autoManage: false,
+        allowNsfw: false,
         defaultTierId: null,
+        currency: 'BRL',
+        tiersDisplay: 'sale',
         updatedAt: '2025-01-01',
       }).updatedAt,
     ).toBeInstanceOf(Date);
     expect(TierCreateInputSchema.parse({ name: 'Free' })).toEqual({
       name: 'Free',
       isDefault: false,
+      isPublicForSale: false,
+      sortOrder: 0,
+      webMonthlyEnabled: true,
+      webYearlyEnabled: true,
     });
     // The daily publication ceiling: absent and null are unlimited, zero forbids publishing.
     expect(TierCreateInputSchema.parse({ name: 'T', maxPublicationsPerDay: 5 })).toMatchObject({

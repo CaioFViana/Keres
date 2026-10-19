@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
-import TrajectoryOffMapChip from '../../src/components/features/location-maps/TrajectoryOffMapChip';
+import TrajectoryOffMapChip from '@/src/components/features/location-maps/TrajectoryOffMapChip';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { surface: '#111', border: '#444', textSecondary: '#aaa' } }),
 }));
 jest.mock('react-i18next', () => ({

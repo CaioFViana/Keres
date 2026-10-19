@@ -1,6 +1,6 @@
 /** @jest-environment node */
-import en from '../../src/locales/en.json';
-import pt from '../../src/locales/pt.json';
+import en from '@/src/locales/en.json';
+import pt from '@/src/locales/pt.json';
 
 const KEYS = [
   'export_manuscript_format_html',
@@ -12,6 +12,13 @@ const KEYS = [
   'export_manuscript_scene_order_discovery',
   'export_manuscript_scene_order_shuffled',
   'export_manuscript_scene_order_hint',
+  'publish_compiling',
+  'publish_uploading',
+  'publish_upload_progress',
+  'publish_compile_failed',
+  'publish_upload_failed',
+  'publish_retry',
+  'publish_cancel_upload',
 ] as const;
 
 describe('publish manuscript locale keys', () => {

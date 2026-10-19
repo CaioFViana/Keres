@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 import {
   agreeStoryTerm,
   defaultGrammaticalGender,
@@ -9,7 +9,7 @@ import {
   isStoryVocabularyEntityType,
   localeFamily,
   resolveStoryGender,
-} from '../../src/vocabulary/resolveStoryTerm';
+} from '@/src/vocabulary/resolveStoryTerm';
 
 describe('localeFamily', () => {
   it.each([

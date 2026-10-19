@@ -1,0 +1,497 @@
+import type { GraphPoint } from '../story/storyGraphLayout';
+import { wrapLabel } from '../story/storyGraphLayout';
+import type { GraphLayoutDirection } from '../common/graphLayoutDirection';
+import {
+  labelFitsBetween,
+  placeEdgeLabels,
+  type LabelledSegment,
+} from '../canvas/edgeLabelPlacement';
+import {
+  findConnectedComponents,
+  maxOf,
+  minOf,
+  normalizeToPadding,
+  round,
+  straightEdgeBetween,
+} from '../common/graphLayoutShared';
+
+/**
+ * Positioning for the character relation graph: characters become nodes, relations become edges.
+ * Pure on purpose, like `storyGraphLayout.ts` - no React, no database, no platform, so the
+ * positioning can be tested in isolation and reused between the screen and (later, if it makes
+ * sense) the export.
+ *
+ * The choice graph has a natural direction (start -> end of a story) and therefore uses a layered
+ * layout. Not here: "who knows whom" has no beginning and no end, so layers make no sense - the
+ * layout used is radial (one circle per group of connected characters). The choice is also about
+ * scale: a force-directed layout (an iterative simulation that relaxes until it settles) gives a
+ * more "organic" result, but its cost grows with the square of the number of characters in a
+ * synchronous simulation on the JS thread - unworkable for the "massive" story this feature has to
+ * withstand. A circle is O(n log n) (sorting only), deterministic (the same story always draws the
+ * same map) and its cost does not depend on how many iterations are run, because there is no
+ * iteration at all.
+ *
+ * Each connected component (a group of characters linked to one another, ignoring the rest)
+ * becomes its own circle, and the circles are packed side by side like shelves. That avoids a
+ * single giant circle when a story has several unrelated families/factions - each one stays
+ * readable in its own corner instead of getting lost in one big circle. Characters with no
+ * recorded relation go to a separate grid, the same way unreachable scenes go to the
+ * "disconnected" grid on the story map.
+ */
+
+export interface GraphCharacter {
+  id: string;
+  name: string;
+}
+
+export interface GraphRelation {
+  id: string;
+  character1Id: string;
+  character2Id: string;
+  relationType: string;
+}
+
+export const NODE_WIDTH = 112;
+export const NODE_HEIGHT = 44;
+export const GRAPH_PADDING = 28;
+/** Minimum space between neighbouring nodes on the same circle. */
+const NODE_GAP = 18;
+/** Space between clusters/rows in the packing grid. */
+const CLUSTER_GAP = 60;
+/** Minimum radius even for clusters of 2-3 characters, so they are not squeezed together. */
+const MIN_CLUSTER_RADIUS = NODE_HEIGHT * 1.6;
+/** From this many characters on, the most connected one sits in the middle and the rest ring it. */
+const HUB_IN_MIDDLE_FROM = 4;
+/** Far enough from a hub in the middle that its box and a ring node's box do not touch. */
+const MIN_HUB_RING_RADIUS = NODE_WIDTH + NODE_GAP;
+/** How much wider than tall the ring around a hub is. */
+const RING_STRETCH = 1.4;
+/** Each time a label does not fit between its nodes the ring grows by this much, up to the limit. */
+const RADIUS_GROWTH = 1.12;
+const MAX_RADIUS_GROWTHS = 8;
+const LABEL_MAX_CHARS = 14;
+const LABEL_MAX_LINES = 2;
+
+export interface RelationGraphNode {
+  id: string;
+  character: GraphCharacter;
+  labelLines: string[];
+  /** How many relations this character has - 0 for those that land in the "no relations" grid. */
+  degree: number;
+  isIsolated: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface RelationGraphEdge {
+  id: string;
+  relation: GraphRelation;
+  sourceId: string;
+  targetId: string;
+  label: string;
+  /** An SVG path's `d` - a straight segment between the two nodes' borders (no arrow: the relation has no direction). */
+  path: string;
+  labelPosition: GraphPoint;
+}
+
+/** An edge with the segment its label slides along, until the labels are placed. */
+type BuiltEdge = RelationGraphEdge & { segment: { start: GraphPoint; end: GraphPoint } };
+
+export interface CharacterRelationGraphLayout {
+  nodes: RelationGraphNode[];
+  edges: RelationGraphEdge[];
+  width: number;
+  height: number;
+  /** Groups of characters connected to each other, isolated from the rest. */
+  clusterCount: number;
+  isolatedCount: number;
+}
+
+/** A node under construction: it holds the neighbours while the components have not been separated yet. */
+interface WorkNode {
+  character: GraphCharacter;
+  neighbors: WorkEdge[];
+  component: number;
+}
+
+interface WorkEdge {
+  relation: GraphRelation;
+  a: WorkNode;
+  b: WorkNode;
+}
+
+/** Builds the complete layout. Returns an empty graph when there are no characters. */
+export function buildCharacterRelationGraphLayout(
+  characters: GraphCharacter[],
+  relations: GraphRelation[],
+  direction: GraphLayoutDirection = 'top-to-bottom',
+): CharacterRelationGraphLayout {
+  const nodeById = new Map<string, WorkNode>();
+  for (const character of characters) {
+    nodeById.set(character.id, { character, neighbors: [], component: -1 });
+  }
+
+  const workEdges: WorkEdge[] = [];
+  for (const relation of relations) {
+    const a = nodeById.get(relation.character1Id);
+    const b = nodeById.get(relation.character2Id);
+    // A deleted character whose relation has not been cleaned up yet - the same treatment as a choice
+    // left dangling on the story map: ignored rather than breaking the drawing.
+    if (!a || !b) continue;
+    const edge: WorkEdge = { relation, a, b };
+    a.neighbors.push(edge);
+    b.neighbors.push(edge);
+    workEdges.push(edge);
+  }
+
+  const allNodes = [...nodeById.values()];
+  if (allNodes.length === 0) {
+    return {
+      nodes: [],
+      edges: [],
+      width: GRAPH_PADDING * 2,
+      height: GRAPH_PADDING * 2,
+      clusterCount: 0,
+      isolatedCount: 0,
+    };
+  }
+
+  const components = findComponents(allNodes);
+  const clusterComponents = components.filter((component) => component.length > 1);
+  const isolatedComponents = components.filter((component) => component.length === 1).flat();
+
+  const clusterBoxes = clusterComponents
+    .map(layoutComponentCircular)
+    // Largest first keeps the shelf packing tighter (first-fit decreasing).
+    .sort((a, b) => b.width * b.height - a.width * a.height);
+
+  const packed = packClusters(clusterBoxes, direction);
+  const isolatedNodes =
+    direction === 'left-to-right'
+      ? layoutIsolatedColumn(
+          isolatedComponents,
+          packed.nodes.length > 0 ? packed.width + CLUSTER_GAP : 0,
+          packed.height,
+        )
+      : layoutIsolatedGrid(
+          isolatedComponents,
+          packed.width,
+          packed.nodes.length > 0 ? packed.height + CLUSTER_GAP : 0,
+        );
+
+  const nodes = [...packed.nodes, ...isolatedNodes];
+  const { width, height } = normalizeToPadding(nodes, GRAPH_PADDING);
+
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const edges: BuiltEdge[] = [];
+  const segments: LabelledSegment[] = [];
+  for (const workEdge of workEdges) {
+    const source = nodesById.get(workEdge.a.character.id);
+    const target = nodesById.get(workEdge.b.character.id);
+    if (!source || !target) continue;
+    const edge = buildEdge(workEdge, source, target);
+    edges.push(edge);
+    segments.push({ id: edge.id, label: edge.label, ...edge.segment });
+  }
+  const labelPositions = placeEdgeLabels(segments, nodes);
+  const placedEdges = edges.map(({ segment: _segment, ...edge }) => ({
+    ...edge,
+    labelPosition: labelPositions.get(edge.id) ?? edge.labelPosition,
+  }));
+
+  return {
+    nodes,
+    edges: placedEdges,
+    width,
+    height,
+    clusterCount: clusterComponents.length,
+    isolatedCount: isolatedComponents.length,
+  };
+}
+
+/** Connected components, ignoring any notion of direction - there never was one here. */
+function findComponents(nodes: WorkNode[]): WorkNode[][] {
+  return findConnectedComponents(nodes, (node) =>
+    node.neighbors.map((edge) => (edge.a === node ? edge.b : edge.a)),
+  );
+}
+
+/**
+ * Orders a cluster's characters so the circle is walked by relation proximity rather than by
+ * name. Starting from the most connected one and visiting neighbours breadth-first (BFS) puts
+ * directly related characters near each other on the circle, which reduces chords crossing the
+ * middle of the drawing - without that, an arbitrary order would cross edges everywhere.
+ */
+function orderByBreadthFromHub(members: WorkNode[]): WorkNode[] {
+  const hub = [...members].sort(
+    (a, b) =>
+      b.neighbors.length - a.neighbors.length || a.character.id.localeCompare(b.character.id),
+  )[0];
+
+  const order: WorkNode[] = [];
+  const visited = new Set<WorkNode>([hub]);
+  const queue = [hub];
+
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    order.push(node);
+    const next = node.neighbors
+      .map((edge) => (edge.a === node ? edge.b : edge.a))
+      .filter((neighbor) => !visited.has(neighbor))
+      .sort((a, b) => a.character.name.localeCompare(b.character.name));
+    for (const neighbor of next) {
+      visited.add(neighbor);
+      queue.push(neighbor);
+    }
+  }
+
+  return order;
+}
+
+/**
+ * Orders the characters around a hub so that those related to one another stand side by side on the
+ * ring: their line then runs along the ring instead of across it, through the hub. Starts from the
+ * one with most relations inside the ring and keeps walking to a related one not yet placed; when
+ * none is left it goes on with the next in the order it was given.
+ */
+function orderRingByRelations(ring: WorkNode[]): WorkNode[] {
+  const inRing = new Set(ring);
+  const related = (node: WorkNode) =>
+    node.neighbors.map((edge) => (edge.a === node ? edge.b : edge.a)).filter((n) => inRing.has(n));
+  const ringDegree = new Map(ring.map((node) => [node, related(node).length]));
+
+  const remaining = new Set(ring);
+  const ordered: WorkNode[] = [];
+  let current: WorkNode | undefined = [...ring].sort(
+    (a, b) => ringDegree.get(b)! - ringDegree.get(a)!,
+  )[0];
+  let fallback = 0;
+
+  while (current) {
+    remaining.delete(current);
+    ordered.push(current);
+    const next: WorkNode | undefined = related(current)
+      .filter((node) => remaining.has(node))
+      .sort((a, b) => ringDegree.get(b)! - ringDegree.get(a)!)[0];
+    if (next) {
+      current = next;
+      continue;
+    }
+    while (fallback < ring.length && !remaining.has(ring[fallback])) fallback++;
+    current = ring[fallback];
+  }
+
+  return ordered;
+}
+
+/** Whether every relation among the members has room for its label between the two boxes it joins. */
+function labelsClear(nodes: RelationGraphNode[], members: WorkNode[]): boolean {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const seen = new Set<string>();
+  for (const member of members) {
+    for (const edge of member.neighbors) {
+      if (seen.has(edge.relation.id)) continue;
+      seen.add(edge.relation.id);
+      const source = byId.get(edge.a.character.id);
+      const target = byId.get(edge.b.character.id);
+      if (!source || !target) continue;
+      const { start, end } = straightEdgeBetween(source, target);
+      const label = edge.relation.relationType ?? '';
+      if (!labelFitsBetween({ id: edge.relation.id, label, start, end }, source, target)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+interface ClusterBox {
+  nodes: RelationGraphNode[];
+  width: number;
+  height: number;
+}
+
+/**
+ * Lays a cluster out around a circle. A small group (two or three) walks the whole circle; a larger
+ * one puts its most connected character in the middle with the rest on the ring around it, so the
+ * hub's relations are short spokes and the lines that used to cut across the middle of the circle
+ * are gone. Either way the radius is large enough that the nodes do not overlap.
+ */
+function layoutComponentCircular(members: WorkNode[]): ClusterBox {
+  const ordered = orderByBreadthFromHub(members);
+  const count = ordered.length;
+  const hubInMiddle = count >= HUB_IN_MIDDLE_FROM;
+  const ring = hubInMiddle ? orderRingByRelations(ordered.slice(1)) : ordered;
+
+  const circumferenceNeeded = ring.length * (NODE_WIDTH + NODE_GAP);
+  const baseRadius = Math.max(
+    hubInMiddle ? MIN_HUB_RING_RADIUS : MIN_CLUSTER_RADIUS,
+    circumferenceNeeded / (2 * Math.PI),
+  );
+  // The nodes are wider than tall, so around a hub the ring is wider than tall too: a spoke that
+  // runs sideways has the same room for its label as one that runs up.
+  const stretch = hubInMiddle ? RING_STRETCH : 1;
+
+  const place = (radius: number): RelationGraphNode[] => {
+    const placed = ring.map((work, index) => {
+      const angle = (index / ring.length) * Math.PI * 2 - Math.PI / 2; // first node at the top of the circle
+      const centerX = Math.cos(angle) * radius * stretch;
+      const centerY = Math.sin(angle) * radius;
+      return buildNode(work, centerX - NODE_WIDTH / 2, centerY - NODE_HEIGHT / 2);
+    });
+    if (hubInMiddle) placed.unshift(buildNode(ordered[0], -NODE_WIDTH / 2, -NODE_HEIGHT / 2));
+    return placed;
+  };
+
+  // A relation's label sits on its line, under the two nodes it joins: widen the ring until no
+  // label is half hidden behind one of them (a few steps at most, so a crowded group stays bounded).
+  let radius = baseRadius;
+  let nodes = place(radius);
+  for (let step = 0; step < MAX_RADIUS_GROWTHS && !labelsClear(nodes, members); step++) {
+    radius *= RADIUS_GROWTH;
+    nodes = place(radius);
+  }
+
+  const minX = minOf(nodes.map((node) => node.x));
+  const minY = minOf(nodes.map((node) => node.y));
+  for (const node of nodes) {
+    node.x -= minX;
+    node.y -= minY;
+  }
+
+  return {
+    nodes,
+    width: maxOf(nodes.map((node) => node.x + node.width)),
+    height: maxOf(nodes.map((node) => node.y + node.height)),
+  };
+}
+
+/**
+ * Packs the clusters into shelves (shelf packing): it fills a row until a target width is
+ * exceeded, then starts the next one. Far from optimal, but simple, O(k) and enough to keep a
+ * story with dozens of unrelated families/factions from turning into a kilometre-long horizontal
+ * strip.
+ */
+function packClusters(
+  clusters: ClusterBox[],
+  direction: GraphLayoutDirection = 'top-to-bottom',
+): {
+  nodes: RelationGraphNode[];
+  width: number;
+  height: number;
+} {
+  if (clusters.length === 0) {
+    return { nodes: [], width: 0, height: 0 };
+  }
+
+  const totalArea = clusters.reduce((sum, cluster) => sum + cluster.width * cluster.height, 0);
+  const rowTargetWidth =
+    direction === 'left-to-right'
+      ? Infinity
+      : Math.max(maxOf(clusters.map((cluster) => cluster.width)), Math.sqrt(totalArea) * 1.4);
+
+  const nodes: RelationGraphNode[] = [];
+  let rowX = 0;
+  let rowY = 0;
+  let rowHeight = 0;
+  let packedWidth = 0;
+
+  for (const cluster of clusters) {
+    if (rowX > 0 && rowX + cluster.width > rowTargetWidth) {
+      rowY += rowHeight + CLUSTER_GAP;
+      rowX = 0;
+      rowHeight = 0;
+    }
+
+    for (const node of cluster.nodes) {
+      nodes.push({ ...node, x: node.x + rowX, y: node.y + rowY });
+    }
+
+    rowX += cluster.width + CLUSTER_GAP;
+    rowHeight = Math.max(rowHeight, cluster.height);
+    packedWidth = Math.max(packedWidth, rowX - CLUSTER_GAP);
+  }
+
+  return { nodes, width: packedWidth, height: rowY + rowHeight };
+}
+
+/** On wide screens, characters with no relations sit to the right of the connected groups. */
+function layoutIsolatedColumn(
+  isolated: WorkNode[],
+  startX: number,
+  canvasHeight: number,
+): RelationGraphNode[] {
+  if (isolated.length === 0) return [];
+
+  const rowStep = NODE_HEIGHT + NODE_GAP;
+  const rows = Math.max(1, Math.floor((canvasHeight || rowStep * 4) / rowStep));
+  const sorted = [...isolated].sort((a, b) => a.character.name.localeCompare(b.character.name));
+
+  return sorted.map((work, index) => {
+    const column = Math.floor(index / rows);
+    const row = index % rows;
+    return buildNode(work, startX + column * (NODE_WIDTH + NODE_GAP), row * rowStep);
+  });
+}
+
+/**
+ * A grid for the characters with no recorded relation, below the clusters.
+ *
+ * The number of columns follows the width of the rest of the map so the grid is not wider than the
+ * clusters - with no cluster at all (a story with nothing but loose characters), it falls back to
+ * four.
+ */
+function layoutIsolatedGrid(
+  isolated: WorkNode[],
+  canvasWidth: number,
+  startY: number,
+): RelationGraphNode[] {
+  if (isolated.length === 0) return [];
+
+  const columnStep = NODE_WIDTH + NODE_GAP;
+  const usableWidth = canvasWidth > 0 ? canvasWidth : columnStep * 4;
+  const columns = Math.max(1, Math.min(isolated.length, Math.floor(usableWidth / columnStep)));
+
+  const sorted = [...isolated].sort((a, b) => a.character.name.localeCompare(b.character.name));
+
+  return sorted.map((work, index) => {
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    return buildNode(work, column * columnStep, startY + row * (NODE_HEIGHT + NODE_GAP));
+  });
+}
+
+function buildNode(work: WorkNode, x: number, y: number): RelationGraphNode {
+  return {
+    id: work.character.id,
+    character: work.character,
+    labelLines: wrapLabel(work.character.name, LABEL_MAX_CHARS, LABEL_MAX_LINES),
+    degree: work.neighbors.length,
+    isIsolated: work.neighbors.length === 0,
+    x,
+    y,
+    width: NODE_WIDTH,
+    height: NODE_HEIGHT,
+  };
+}
+
+function buildEdge(
+  work: WorkEdge,
+  source: RelationGraphNode,
+  target: RelationGraphNode,
+): BuiltEdge {
+  const { start, end, path } = straightEdgeBetween(source, target);
+
+  return {
+    id: work.relation.id,
+    relation: work.relation,
+    sourceId: source.id,
+    targetId: target.id,
+    label: work.relation.relationType ?? '',
+    path,
+    labelPosition: { x: round((start.x + end.x) / 2), y: round((start.y + end.y) / 2) },
+    segment: { start, end },
+  };
+}

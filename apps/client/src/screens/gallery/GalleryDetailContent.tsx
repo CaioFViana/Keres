@@ -1,6 +1,6 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { Ionicons } from '@expo/vector-icons';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { galleryHasFile, type MediaType } from '@keres/shared';
 import { iconForGalleryMedia } from '@/src/components/features/list-items/GalleryGridItem';
 import { Image } from 'expo-image';
@@ -19,26 +19,28 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import AudioPreviewPlayer from '@/src/components/features/media/MediaPlayer/AudioPreviewPlayer';
 import ImageZoomViewer from '@/src/components/features/media/MediaPlayer/ImageZoomViewer';
 import VideoPreviewPlayer from '@/src/components/features/media/MediaPlayer/VideoPreviewPlayer';
-import { useDrizzle } from '../../db';
-import type { GallerySelect } from '../../db/schemas/galleries';
+import { useDrizzle } from '@/src/db';
+import type { GallerySelect } from '@/src/db/schemas/galleries';
 import {
   decodeOwnerValue,
   encodeOwnerValue,
   useGalleryOwnerOptions,
-} from '../../hooks/useGalleryOwnerOptions';
-import { useResolvedMediaUri } from '../../hooks/useResolvedMediaUri';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
-import { mediaFileService } from '../../services/MediaFileService';
-import type { GalleryOwnerRef } from '../../services/storymanagement/GalleryRelationService';
-import { createGalleryRelationService } from '../../services/storymanagement/GalleryRelationService';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { AppAlert } from '../../utils/AppAlert';
-import { openGalleryExternally } from '../../utils/openGalleryExternally';
+} from '@/src/screens/gallery/useGalleryOwnerOptions';
+import { useResolvedMediaUri } from '@/src/hooks/media/useResolvedMediaUri';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useResponsiveLayout } from '@/src/hooks/ui/useResponsiveLayout';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import type { GalleryOwnerRef } from '@/src/services/storymanagement/relations/GalleryRelationService';
+import { createGalleryRelationService } from '@/src/services/storymanagement/relations/GalleryRelationService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { openGalleryExternally } from '@/src/services/media/openGalleryExternally';
 
 function formatSize(bytes: number): string {
   if (bytes <= 0) return '—';
@@ -71,7 +73,7 @@ interface GalleryDetailContentProps {
  *
  * That second form exists because opening the media through `navigation.navigate` makes the whole app
  * lose focus on the Drawer tab the person was on, and each tab has a `blur` listener that resets its
- * own stack to the list (see `MainSystemStack.tsx`) - useful for genuinely switching tabs, but it threw
+ * own stack to the list (see `MainSystemDrawer.tsx`) - useful for genuinely switching tabs, but it threw
  * away the entity's detail screen merely for having shown a media file on top. A `Modal` does not take
  * part in React Navigation's focus, so it does not trigger that reset.
  */
@@ -231,104 +233,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
     ]);
   }, [media, userId, galleryService, showNotification, t, onClose]);
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    content: {
-      padding: 20,
-      width: '100%',
-      maxWidth: 1500,
-      alignSelf: 'center',
-    },
-    layout: {
-      width: '100%',
-    },
-    wideLayout: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 24,
-    },
-    widePreviewColumn: {
-      flex: 1,
-    },
-    wideDetailsColumn: {
-      flex: 1.15,
-    },
-    preview: {
-      width: '100%',
-      aspectRatio: 1,
-      borderRadius: 8,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      marginBottom: 15,
-    },
-    widePreview: {
-      marginBottom: 0,
-    },
-    image: {
-      width: '100%',
-      height: '100%',
-    },
-    placeholderText: {
-      color: colors.textSecondary,
-      marginTop: 10,
-      fontSize: 14,
-      textAlign: 'center',
-      paddingHorizontal: 20,
-    },
-    headerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 15,
-    },
-    headerActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    closeButton: {
-      padding: 4,
-    },
-    fileName: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      flex: 1,
-      marginRight: 10,
-    },
-    metaRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingVertical: 4,
-    },
-    metaLabel: {
-      fontSize: 13,
-      color: colors.textSecondary,
-    },
-    metaValue: {
-      fontSize: 13,
-      color: colors.text,
-      flexShrink: 1,
-      textAlign: 'right',
-      marginLeft: 10,
-    },
-    input: {
-      width: '100%',
-      marginBottom: 10,
-    },
-    notesInput: {
-      height: 100,
-      textAlignVertical: 'top',
-      paddingTop: 10,
-    },
-    deleteButton: {
-      backgroundColor: colors.error,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   if (loading) {
     return <ScreenLoading message={t('loading')} padded />;
@@ -495,7 +400,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
             <FavoritedByList storyId={media.storyId} entityId={galleryId} entityType="Gallery" />
 
             {canEdit && (
-              <FormActions stackOnCompact style={{ marginTop: 25 }}>
+              <FormActions stackOnCompact style={{ marginTop: 24 }}>
                 <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
                   {t('delete')}
                 </Button>
@@ -517,5 +422,104 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
     </>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    content: {
+      padding: 20,
+      width: '100%',
+      maxWidth: 1500,
+      alignSelf: 'center',
+    },
+    layout: {
+      width: '100%',
+    },
+    wideLayout: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 24,
+    },
+    widePreviewColumn: {
+      flex: 1,
+    },
+    wideDetailsColumn: {
+      flex: 1.15,
+    },
+    preview: {
+      width: '100%',
+      aspectRatio: 1,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      marginBottom: 15,
+    },
+    widePreview: {
+      marginBottom: 0,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    placeholderText: {
+      color: colors.textSecondary,
+      marginTop: 10,
+      fontSize: 14,
+      textAlign: 'center',
+      paddingHorizontal: 20,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 15,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    closeButton: {
+      padding: 4,
+    },
+    fileName: {
+      ...typography.title,
+      color: colors.text,
+      flex: 1,
+      marginRight: 10,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 4,
+    },
+    metaLabel: {
+      fontSize: 13,
+      color: colors.textSecondary,
+    },
+    metaValue: {
+      fontSize: 13,
+      color: colors.text,
+      flexShrink: 1,
+      textAlign: 'right',
+      marginLeft: 10,
+    },
+    input: {
+      width: '100%',
+      marginBottom: 10,
+    },
+    notesInput: {
+      height: 100,
+      textAlignVertical: 'top',
+      paddingTop: 10,
+    },
+    deleteButton: {
+      backgroundColor: colors.error,
+    },
+  });
 
 export default GalleryDetailContent;

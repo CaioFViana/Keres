@@ -1,13 +1,13 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
-import FavoriteButton from '../../../src/components/common/lists/GenericExpandedListItemWithActions/Buttons/FavoriteButton';
-import ViewDetailsButton from '../../../src/components/common/lists/GenericExpandedListItemWithActions/Buttons/ViewDetailsButton';
-import GenericExpandedListItemWithActions from '../../../src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
-import GenericFilterSortList from '../../../src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
-import GenericListItem from '../../../src/components/common/lists/GenericListItem/GenericListItem';
+import FavoriteButton from '@/src/components/common/lists/GenericExpandedListItemWithActions/Buttons/FavoriteButton';
+import ViewDetailsButton from '@/src/components/common/lists/GenericExpandedListItemWithActions/Buttons/ViewDetailsButton';
+import GenericExpandedListItemWithActions from '@/src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';
+import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
+import GenericListItem from '@/src/components/common/lists/GenericListItem/GenericListItem';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -49,21 +49,44 @@ jest.mock('@expo/vector-icons', () => ({
 
 // The filter/sort pills open through ResponsiveModal, which reads the system bottom inset.
 // The hook needs a SafeAreaProvider that these unit tests do not mount, so stub it.
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
 
-jest.mock('../../../src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal', () => {
+const mockSchemaFields = jest.fn((..._args: unknown[]) => [] as unknown[]);
+jest.mock('@/src/hooks/story/useStorySchemaFields', () => ({
+  useStorySchemaFields: (...args: unknown[]) => mockSchemaFields(...args),
+}));
+
+jest.mock('@/src/hooks/lists/useEntityPickerOptions', () => ({
+  useEntityPickerOptions: () => ({
+    options: [{ id: 'e1', name: 'Ent One' }],
+    loading: false,
+    reload: jest.fn(),
+  }),
+}));
+
+jest.mock('@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal', () => {
   const react = jest.requireActual('react') as typeof import('react');
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
     __esModule: true,
-    default: ({ isVisible, onClose, onSearch }: any) =>
+    default: ({ isVisible, onClose, onSearch, excludeFields, previewCount }: any) =>
       isVisible
         ? react.createElement(
             react.Fragment,
             null,
             react.createElement(native.Text, { testID: 'adv-open' }, 'advanced'),
+            react.createElement(
+              native.Text,
+              { testID: 'adv-preview', onPress: () => previewCount?.({ name: 'x' }) },
+              typeof previewCount,
+            ),
+            react.createElement(
+              native.Text,
+              { testID: 'adv-exclude' },
+              JSON.stringify(excludeFields ?? null),
+            ),
             react.createElement(
               native.Text,
               { testID: 'adv-go', onPress: () => onSearch({ name: 'x' }) },
@@ -138,14 +161,14 @@ describe('FavoriteButton', () => {
   it('shows the state and toggles on press', async () => {
     const onPress = jest.fn();
     const off = await render(<FavoriteButton isFavorite={false} onPress={onPress} />);
-    const offIcon = off.container.queryAll((node) => node.type === 'MIcon')[0];
+    const offIcon = off.container.queryAll((node) => node.type === 'Icon')[0];
     expect(offIcon.props.name).toBe('star-outline');
     expect(offIcon.props.color).toBe('#555555');
     await fireEvent.press(offIcon);
     expect(onPress).toHaveBeenCalledTimes(1);
 
     const on = await render(<FavoriteButton isFavorite onPress={() => {}} />);
-    const onIcon = on.container.queryAll((node) => node.type === 'MIcon')[0];
+    const onIcon = on.container.queryAll((node) => node.type === 'Icon')[0];
     expect(onIcon.props.name).toBe('star');
     expect(onIcon.props.color).toBe('#0000ff');
   });
@@ -155,7 +178,7 @@ describe('ViewDetailsButton', () => {
   it('uses the primary color by default and forwards presses', async () => {
     const onPress = jest.fn();
     const screen = await render(<ViewDetailsButton onPress={onPress} />);
-    const icon = screen.container.queryAll((node) => node.type === 'MIcon')[0];
+    const icon = screen.container.queryAll((node) => node.type === 'Icon')[0];
     expect(icon.props.name).toBe('eye');
     expect(icon.props.color).toBe('#0000ff');
     await fireEvent.press(icon);
@@ -164,7 +187,7 @@ describe('ViewDetailsButton', () => {
 
   it('accepts a color override', async () => {
     const screen = await render(<ViewDetailsButton onPress={() => {}} color="#123456" />);
-    expect(screen.container.queryAll((node) => node.type === 'MIcon')[0].props.color).toBe(
+    expect(screen.container.queryAll((node) => node.type === 'Icon')[0].props.color).toBe(
       '#123456',
     );
   });
@@ -184,7 +207,7 @@ describe('GenericExpandedListItemWithActions', () => {
 
   const chevron = (screen: Awaited<ReturnType<typeof render>>) =>
     screen.container.queryAll(
-      (node) => node.type === 'MIcon' && ['chevron-up', 'chevron-down'].includes(node.props.name),
+      (node) => node.type === 'Icon' && ['chevron-up', 'chevron-down'].includes(node.props.name),
     )[0].props.name;
 
   it('toggles uncontrolled state and reports it', async () => {
@@ -209,7 +232,7 @@ describe('GenericExpandedListItemWithActions', () => {
     const onToggleFavorite = jest.fn();
     const screen = await renderRow({ item: { isFavorite: false }, onToggleFavorite });
     const star = screen.container.queryAll(
-      (node) => node.type === 'MIcon' && node.props.name === 'star-outline',
+      (node) => node.type === 'Icon' && node.props.name === 'star-outline',
     )[0];
     await fireEvent.press(star);
     expect(onToggleFavorite).toHaveBeenCalledWith('x', true);
@@ -219,7 +242,7 @@ describe('GenericExpandedListItemWithActions', () => {
     const screen = await renderRow({ onToggleFavorite: () => {} });
     expect(
       screen.container.queryAll(
-        (node) => node.type === 'MIcon' && String(node.props.name).startsWith('star'),
+        (node) => node.type === 'Icon' && String(node.props.name).startsWith('star'),
       ),
     ).toHaveLength(0);
   });
@@ -228,7 +251,7 @@ describe('GenericExpandedListItemWithActions', () => {
     const onViewDetails = jest.fn();
     const screen = await renderRow({ onViewDetails });
     const eye = screen.container.queryAll(
-      (node) => node.type === 'MIcon' && node.props.name === 'eye',
+      (node) => node.type === 'Icon' && node.props.name === 'eye',
     )[0];
     await fireEvent.press(eye);
     expect(onViewDetails).toHaveBeenCalledWith('x');
@@ -325,12 +348,13 @@ describe('GenericFilterSortList', () => {
   });
 
   it('sorts through the single picker and flips direction', async () => {
-    const props = baseProps();
+    const props = { ...baseProps(), currentSortValue: 'name' };
     const screen = await render(
       <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
     );
 
-    await fireEvent.press(screen.getAllByTestId('multiselect-trigger')[1]);
+    // No tags in this story, so the sort picker is the only pill.
+    await fireEvent.press(screen.getAllByTestId('multiselect-trigger')[0]);
     await fireEvent.press(screen.getByTestId('multiselect-option-name'));
     expect(props.onSortChange).toHaveBeenCalledWith('name');
 
@@ -342,6 +366,47 @@ describe('GenericFilterSortList', () => {
     await fireEvent.press(arrow());
     expect(props.onSortDirectionChange).toHaveBeenCalledWith('desc');
     expect(arrow().props.name).toBe('arrow-down');
+  });
+
+  it('keeps the direction arrow waiting until there is a field to sort by', async () => {
+    const props = baseProps();
+    const screen = await render(
+      <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
+    );
+
+    expect(screen.getByTestId('list-sort-direction').props.accessibilityState.disabled).toBe(true);
+    await screen.rerender(
+      <GenericFilterSortList
+        {...props}
+        sortOptions={[{ label: 'Name', value: 'name' }]}
+        currentSortValue="name"
+      />,
+    );
+    expect(screen.getByTestId('list-sort-direction').props.accessibilityState.disabled).toBe(false);
+  });
+
+  it('follows the direction its parent gives it, such as a remembered one that arrives late', async () => {
+    const props = { ...baseProps(), currentSortValue: 'name' };
+    const screen = await render(
+      <GenericFilterSortList {...props} sortOptions={[{ label: 'Name', value: 'name' }]} />,
+    );
+    const arrow = () =>
+      screen.container.queryAll(
+        (node) => node.type === 'Icon' && ['arrow-up', 'arrow-down'].includes(node.props.name),
+      )[0];
+    expect(arrow().props.name).toBe('arrow-up');
+
+    await screen.rerender(
+      <GenericFilterSortList
+        {...props}
+        sortOptions={[{ label: 'Name', value: 'name' }]}
+        currentSortDirection="desc"
+      />,
+    );
+
+    expect(arrow().props.name).toBe('arrow-down');
+    await fireEvent.press(arrow());
+    expect(props.onSortDirectionChange).toHaveBeenCalledWith('asc');
   });
 
   it('cycles the favorite filter', async () => {
@@ -397,10 +462,8 @@ describe('GenericFilterSortList', () => {
     const props = baseProps();
     const screen = await render(<GenericFilterSortList {...props} />);
 
-    const advanced = screen.container.queryAll(
-      (node) => node.type === 'Icon' && node.props.name === 'search-outline',
-    )[0];
-    await fireEvent.press(advanced);
+    // Without an entity and a story there is nothing to filter by field, so there is no button.
+    expect(screen.queryByTestId('list-filters-button')).toBeNull();
     expect(screen.queryByTestId('adv-open')).toBeNull();
   });
 
@@ -416,10 +479,7 @@ describe('GenericFilterSortList', () => {
       />,
     );
 
-    const advanced = screen.container.queryAll(
-      (node) => node.type === 'Icon' && node.props.name === 'search-outline',
-    )[0];
-    await fireEvent.press(advanced);
+    await fireEvent.press(screen.getByTestId('list-filters-button'));
     expect(screen.getByTestId('adv-open')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('adv-go'));
     expect(onAdvancedSearch).toHaveBeenCalledWith({ name: 'x' });
@@ -439,6 +499,25 @@ describe('GenericFilterSortList', () => {
     expect(screen.getByText('extra filters')).toBeTruthy();
     expect(screen.getByText('row-One')).toBeTruthy();
     expect(screen.getByText('row-Two')).toBeTruthy();
+  });
+
+  it('reports the width of its content, only to a screen that asks', async () => {
+    const onContentWidthChange = jest.fn();
+    const props = baseProps();
+    const asking = await render(
+      <GenericFilterSortList {...props} onContentWidthChange={onContentWidthChange} />,
+    );
+    const listOf = (view: typeof asking) =>
+      view.container.queryAll(
+        (node: any) => node.props?.keyboardShouldPersistTaps === 'handled' && !!node.props?.data,
+      )[0] as any;
+    listOf(asking).props.onContentSizeChange(320, 900);
+    expect(onContentWidthChange).toHaveBeenCalledWith(320);
+
+    const silent = await render(<GenericFilterSortList {...props} />);
+    // the list measures itself either way; a screen that did not ask is simply not told
+    expect(() => listOf(silent).props.onContentSizeChange(320, 900)).not.toThrow();
+    expect(onContentWidthChange).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to plain text without a guided empty state', async () => {
@@ -516,5 +595,181 @@ describe('GenericFilterSortList', () => {
 
     expect(screen.getByText('custom empty')).toBeTruthy();
     expect(screen.queryByTestId('guided-empty-state')).toBeNull();
+  });
+
+  describe('feedback on what narrows the list', () => {
+    const empty = [] as { id: string; name: string }[];
+    const filtered = (extra: Record<string, unknown> = {}) => ({
+      ...baseProps(),
+      entityName: 'Character',
+      storyId: 's1',
+      onAdvancedSearch: jest.fn(),
+      onFavoriteFilterChange: jest.fn(),
+      onSearchSubmit: jest.fn(),
+      filterOptions: [{ label: 'Tag A', value: 'a' }],
+      ...extra,
+    });
+
+    it('offers to empty the search box only once there is text', async () => {
+      const props = filtered();
+      const view = await render(<GenericFilterSortList {...props} currentSearchTerm="" />);
+      expect(view.queryByTestId('list-search-clear')).toBeNull();
+
+      await view.rerender(<GenericFilterSortList {...props} currentSearchTerm="Ly" />);
+      await fireEvent.press(view.getByTestId('list-search-clear'));
+      expect(props.onSearch).toHaveBeenCalledWith('');
+      expect(props.onSearchSubmit).toHaveBeenCalledWith('');
+    });
+
+    it('says "no results" - not "nothing yet" - while a search leaves no rows', async () => {
+      const props = filtered({ emptyStateTitle: 'Nothing yet', data: empty });
+      const view = await render(<GenericFilterSortList {...props} currentSearchTerm="zzz" />);
+
+      expect(view.getByTestId('no-results-state')).toBeTruthy();
+      expect(view.queryByTestId('guided-empty-state')).toBeNull();
+      expect(view.queryByText('Nothing yet')).toBeNull();
+    });
+
+    it('keeps the "nothing yet" guide while nothing narrows the list', async () => {
+      const props = filtered({ emptyStateTitle: 'Nothing yet', data: empty });
+      const view = await render(<GenericFilterSortList {...props} />);
+
+      expect(view.getByText('Nothing yet')).toBeTruthy();
+      expect(view.queryByTestId('no-results-state')).toBeNull();
+    });
+
+    it('clears the search, tags, favorites and field filters from the empty state', async () => {
+      const props = filtered({ data: empty });
+      const view = await render(
+        <GenericFilterSortList
+          {...props}
+          currentSearchTerm="zzz"
+          selectedFilterValues={['a']}
+          currentFavoriteFilterState="favorite"
+          currentAdvancedSearchCriteria={{ name: 'Lyra' }}
+        />,
+      );
+
+      await fireEvent.press(view.getByTestId('no-results-clear'));
+
+      expect(props.onSearch).toHaveBeenCalledWith('');
+      expect(props.onSearchSubmit).toHaveBeenCalledWith('');
+      expect(props.onFilterChange).toHaveBeenCalledWith([]);
+      expect(props.onFavoriteFilterChange).toHaveBeenCalledWith('all');
+      expect(props.onAdvancedSearch).toHaveBeenCalledWith({});
+    });
+
+    it('lets an explicit empty component win even with a filter on', async () => {
+      const props = filtered({ data: empty });
+      const view = await render(
+        <GenericFilterSortList
+          {...props}
+          currentSearchTerm="zzz"
+          emptyListComponent={<Text>custom empty</Text>}
+        />,
+      );
+
+      expect(view.getByText('custom empty')).toBeTruthy();
+      expect(view.queryByTestId('no-results-state')).toBeNull();
+    });
+
+    it('shows each field filter as a chip, counts them on the button, and removes one at a time', async () => {
+      const props = filtered();
+      const view = await render(
+        <GenericFilterSortList
+          {...props}
+          currentAdvancedSearchCriteria={{ name: 'Lyra', race: 'Elf', gender: '' }}
+        />,
+      );
+
+      expect(view.getByTestId('filter-chip-name')).toBeTruthy();
+      expect(view.getByTestId('filter-chip-race')).toBeTruthy();
+      // An emptied field is not a filter: no chip, and it is not counted.
+      expect(view.queryByTestId('filter-chip-gender')).toBeNull();
+      expect(view.getByTestId('list-filters-count').props.children).toBeTruthy();
+      expect(view.getByText('2')).toBeTruthy();
+
+      await fireEvent.press(view.getByTestId('filter-chip-name-remove'));
+      expect(props.onAdvancedSearch).toHaveBeenCalledWith({ race: 'Elf' });
+    });
+
+    it('shows the favorites view as a chip and leaves it through the chip', async () => {
+      const props = filtered();
+      const view = await render(
+        <GenericFilterSortList {...props} currentFavoriteFilterState="favorite" />,
+      );
+
+      expect(view.getByTestId('filter-chip-favorite')).toBeTruthy();
+      await fireEvent.press(view.getByTestId('filter-chip-favorite-remove'));
+      expect(props.onFavoriteFilterChange).toHaveBeenCalledWith('all');
+    });
+
+    it('shows no chips and no count when nothing is filtered', async () => {
+      const view = await render(<GenericFilterSortList {...filtered()} />);
+
+      expect(view.queryByTestId('active-filter-chips')).toBeNull();
+      expect(view.queryByTestId('list-filters-count')).toBeNull();
+    });
+
+    it('gives the filters dialog the way to count what they would show', async () => {
+      const onPreviewCount = jest.fn(async () => 4);
+      const view = await render(
+        <GenericFilterSortList {...filtered()} onPreviewCount={onPreviewCount} />,
+      );
+      await fireEvent.press(view.getByTestId('list-filters-button'));
+
+      expect(view.getByTestId('adv-preview').props.children).toBe('function');
+      await fireEvent.press(view.getByTestId('adv-preview'));
+      expect(onPreviewCount).toHaveBeenCalledWith({ name: 'x' });
+    });
+
+    it('does not offer the favorites field in the filters: the star already does that', async () => {
+      const view = await render(<GenericFilterSortList {...filtered()} />);
+      await fireEvent.press(view.getByTestId('list-filters-button'));
+      expect(view.getByTestId('adv-exclude').props.children).toBe('["isFavorite"]');
+
+      const withoutStar = await render(
+        <GenericFilterSortList {...filtered()} disableFavoriteFilter />,
+      );
+      await fireEvent.press(withoutStar.getByTestId('list-filters-button'));
+      expect(withoutStar.getByTestId('adv-exclude').props.children).toBe('[]');
+    });
+  });
+
+  describe('the tag filter', () => {
+    it('says what it filters by when that is not tags', async () => {
+      const view = await render(
+        <GenericFilterSortList
+          {...baseProps()}
+          filterOptions={[{ label: 'Image', value: 'image' }]}
+          filterPlaceholder="Filter by type"
+        />,
+      );
+      expect(view.getByText('Filter by type')).toBeTruthy();
+      expect(view.queryByText('filter_by_tags')).toBeNull();
+    });
+
+    it('is left out when the story has no tags to filter by', async () => {
+      const view = await render(<GenericFilterSortList {...baseProps()} />);
+      expect(view.queryByText('filter_by_tags')).toBeNull();
+    });
+
+    it('is left out where a screen turns it off', async () => {
+      const view = await render(
+        <GenericFilterSortList
+          {...baseProps()}
+          filterOptions={[{ label: 'Tag A', value: 'a' }]}
+          disableTagFilter
+        />,
+      );
+      expect(view.queryByText('filter_by_tags')).toBeNull();
+    });
+
+    it('stays while one is selected, so it can be taken off', async () => {
+      const view = await render(
+        <GenericFilterSortList {...baseProps()} selectedFilterValues={['a']} />,
+      );
+      expect(view.getAllByTestId('multiselect-trigger')).toHaveLength(2);
+    });
   });
 });

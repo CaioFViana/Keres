@@ -8,7 +8,7 @@ import {
   saveLauncherFiles,
   type LauncherPublicConfig,
   type LauncherSecrets,
-} from '../../src/launcher/config';
+} from '@/launcher/config';
 
 const secrets: LauncherSecrets = {
   jwtSecret: generateSecret(),

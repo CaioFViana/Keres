@@ -2,15 +2,12 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  generateSecret,
-  type LauncherPublicConfig,
-  type LauncherSecrets,
-} from '../../src/launcher/config';
-import type { LauncherIo } from '../../src/launcher/io';
-import { runLauncher } from '../../src/launcher/run';
-import { assertDriverNotChanged } from '../../src/launcher/wizard';
-import { createTranslator } from '../../src/launcher/i18n';
+import { generateSecret, type LauncherPublicConfig, type LauncherSecrets } from '@/launcher/config';
+import type { LauncherIo } from '@/launcher/io';
+import { createClient } from '@libsql/client';
+import { runLauncher } from '@/launcher/run';
+import { assertDriverNotChanged } from '@/launcher/wizard';
+import { createTranslator } from '@/launcher/i18n';
 
 function fakeIo(answers: string[] = [], interactive = true): { lines: string[]; io: LauncherIo } {
   const lines: string[] = [];
@@ -65,7 +62,11 @@ describe('runLauncher', () => {
 
   it('runs --backup without starting the HTTP server', async () => {
     const dataDir = mkdtempSync(path.join(os.tmpdir(), 'keres-run-bak-'));
-    writeFileSync(path.join(dataDir, 'keres.db'), 'db');
+    const database = createClient({
+      url: `file:${path.join(dataDir, 'keres.db').replace(/\\/g, '/')}`,
+    });
+    await database.execute('CREATE TABLE notes (body TEXT)');
+    database.close();
     const configPath = writeConfig(dataDir);
     const parent = mkdtempSync(path.join(os.tmpdir(), 'keres-out-bak-'));
     const { lines, io } = fakeIo([], false);

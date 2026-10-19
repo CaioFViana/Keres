@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
-import * as schema from '../../db/schema';
-import { createRouteService } from '../storymanagement/RouteService';
+import type { AppDrizzleClient } from '@/src/db';
+import * as schema from '@/src/db/schema';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 
 /**
  * The decision about a route's whole path (`routePaths.ts` records it): what it looks like, and how

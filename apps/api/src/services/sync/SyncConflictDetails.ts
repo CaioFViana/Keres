@@ -1,6 +1,6 @@
 import { and, eq, max } from 'drizzle-orm';
-import { db } from '../../db';
-import { operationLog } from '../../db/schema';
+import { db } from '@/db';
+import { operationLog } from '@/db/schema';
 
 /**
  * Conflict-response helpers for the API sync protocol. It derives the fields changed since a

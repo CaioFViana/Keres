@@ -2,6 +2,10 @@ import { assertStorySyncHandlerCoverage } from '@keres/shared';
 import { AttributeValueSyncHandler } from './AttributeValueSyncHandler';
 import type { SyncEntityHandler } from './BaseSyncEntityHandler';
 import { BoardSyncHandler } from './BoardSyncHandler';
+import { SketchSyncHandler } from './SketchSyncHandler';
+import { ScenePageSyncHandler } from './ScenePageSyncHandler';
+import { SceneMusicSyncHandler } from './SceneMusicSyncHandler';
+import { SongSyncHandler } from './SongSyncHandler';
 import { ChapterAnchorSyncHandler } from './ChapterAnchorSyncHandler';
 import { ChapterSyncHandler } from './ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './CharacterRelationSyncHandler';
@@ -52,6 +56,9 @@ export function registerApiSyncHandlers(): Map<string, SyncEntityHandler> {
     () => new ChapterSyncHandler(),
     () => new LocationSyncHandler(),
     () => new SceneSyncHandler(),
+    () => new ScenePageSyncHandler(),
+    () => new SceneMusicSyncHandler(),
+    () => new SongSyncHandler(),
     () => new GallerySyncHandler(),
     () => new GalleryRelationSyncHandler(),
     () => new NoteSyncHandler(),
@@ -65,6 +72,7 @@ export function registerApiSyncHandlers(): Map<string, SyncEntityHandler> {
     () => new StoryCalendarSyncHandler(),
     () => new StoryArcSyncHandler(),
     () => new BoardSyncHandler(),
+    () => new SketchSyncHandler(),
     () => new LocationMapSyncHandler(),
     () => new CharacterRelationSyncHandler(),
     () => new ItemSyncHandler(),

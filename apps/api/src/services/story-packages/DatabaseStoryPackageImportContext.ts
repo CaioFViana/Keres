@@ -1,5 +1,5 @@
 import type { FullStoryExportType } from '@keres/shared';
-import type { CompatibleDb } from '../../db';
+import type { CompatibleDb } from '@/db';
 
 /**
  * Mutable state shared by every ordered import phase within one database transaction. It keeps

@@ -1,6 +1,6 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import {
@@ -13,14 +13,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { useStoryRoutes } from '../../hooks/useStoryRoutes';
-import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { commonDetailStyleDefs } from '../../theme/commonStyles';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { commonDetailStyleDefs } from '@/src/theme/commonStyles';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteDetail'>;
 type ScreenRoute = RouteProp<PlotsStackParamList, 'RouteDetail'>;

@@ -2,6 +2,8 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import React from 'react';
 import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
 
+import StoryArcFormScreen from '@/src/screens/customization/StoryArcFormScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigation = { navigate: mockNavigate, goBack: mockGoBack };
@@ -30,11 +32,11 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('@/src/components/common', () => ({
@@ -60,12 +62,13 @@ jest.mock('@/src/components/common', () => ({
     value: string;
     onChangeText: (value: string) => void;
     multiline?: boolean;
+    testID?: string;
     style?: StyleProp<TextStyle>;
   }) => {
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');
     return react.createElement(native.TextInput, {
-      testID: props.multiline ? 'input-description' : 'input-title',
+      testID: props.testID ?? (props.multiline ? 'input-description' : 'input-title'),
       value: props.value,
       onChangeText: props.onChangeText,
       style: props.style,
@@ -150,23 +153,71 @@ jest.mock('@/src/components/common/controls/FormActions/FormActions', () => ({
   },
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('@/src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('@/src/hooks/useStoryArcs', () => ({
+jest.mock('@/src/hooks/story/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ activeArc: mockActiveArc }),
 }));
-jest.mock('@/src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
-jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/components/features/arcs/ArcMediumSelect', () => ({
+  __esModule: true,
+  default: ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.Text,
+      { testID: 'medium-pick', onPress: () => onChange('comic') },
+      `medium:${value}`,
+    );
+  },
+}));
+jest.mock('@/src/components/features/arcs/PageFormatSelect', () => ({
+  __esModule: true,
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string | null;
+    onChange: (value: string | null) => void;
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.Text,
+      { testID: 'format-pick', onPress: () => onChange('wide') },
+      `format:${value}`,
+    );
+  },
+}));
+jest.mock('@/src/components/features/gallery/GalleryCoverField', () => ({
+  __esModule: true,
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string | null;
+    onChange: (value: string | null) => void;
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.Text,
+      { testID: 'cover-pick', onPress: () => onChange('gallery-9') },
+      `cover:${value}`,
+    );
+  },
+}));
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({ term: (value: string) => value }),
 }));
-jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryArcService', () => ({
   __esModule: true,
   createStoryArcService: () => ({
     getById: mockGetArcById,
@@ -174,16 +225,16 @@ jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
     createArc: mockCreateArc,
   }),
 }));
-jest.mock('@/src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: { selectedStory: unknown }) => unknown) =>
     selector({ selectedStory: mockStory }),
 }));
-jest.mock('@/src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: mockUserId }),
 }));
-jest.mock('@/src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
@@ -206,8 +257,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import StoryArcFormScreen from '../../../src/screens/customization/StoryArcFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -328,6 +377,91 @@ it('creates an arc on save and goes back', async () => {
     ),
   );
   expect(mockGoBack).toHaveBeenCalled();
+});
+
+it('saves the form of the work, the author and the cover on create', async () => {
+  const view = await render(<StoryArcFormScreen />);
+
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Issue One');
+  await fireEvent.press(view.getByTestId('medium-pick'));
+  await fireEvent.press(view.getByTestId('cover-pick'));
+  await waitFor(() => expect(view.getByTestId('medium-pick').props.children).toBe('medium:comic'));
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockCreateArc).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({
+        title: 'Issue One',
+        medium: 'comic',
+        author: null,
+        coverGalleryId: 'gallery-9',
+      }),
+    ),
+  );
+});
+
+it('offers the page format only for a comic or a storyboard, and saves the one picked', async () => {
+  const view = await render(<StoryArcFormScreen />);
+
+  expect(view.queryByTestId('format-pick')).toBeNull();
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Issue One');
+  await fireEvent.press(view.getByTestId('medium-pick'));
+  expect(view.getByTestId('format-pick').props.children).toBe('format:null');
+  await fireEvent.press(view.getByTestId('format-pick'));
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockCreateArc).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ medium: 'comic', pageFormat: 'wide' }),
+    ),
+  );
+});
+
+it('hydrates a page format of a work that is not a comic, so it is never hidden', async () => {
+  mockArcId = 'arc-1';
+  mockGetArcById.mockResolvedValue({
+    title: 'Pilot',
+    description: null,
+    icon: null,
+    themeOverride: null,
+    medium: 'generic',
+    pageFormat: 'b5',
+  });
+  const view = await render(<StoryArcFormScreen />);
+
+  await waitFor(() => expect(view.getByTestId('format-pick').props.children).toBe('format:b5'));
+});
+
+it('hydrates the form of the work and writes it back on update', async () => {
+  mockArcId = 'arc-1';
+  mockGetArcById.mockResolvedValue({
+    title: 'Pilot',
+    description: null,
+    icon: null,
+    themeOverride: null,
+    medium: 'screenplay',
+    author: 'A. Writer',
+    coverGalleryId: 'gallery-1',
+  });
+  const view = await render(<StoryArcFormScreen />);
+
+  await waitFor(() =>
+    expect(view.getByTestId('medium-pick').props.children).toBe('medium:screenplay'),
+  );
+  expect(view.getByTestId('cover-pick').props.children).toBe('cover:gallery-1');
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Pilot II');
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockUpdateArc).toHaveBeenCalledWith(
+      'user-1',
+      'arc-1',
+      expect.objectContaining({
+        medium: 'screenplay',
+        author: 'A. Writer',
+        coverGalleryId: 'gallery-1',
+      }),
+    ),
+  );
 });
 
 it('saves the picked icon on create', async () => {

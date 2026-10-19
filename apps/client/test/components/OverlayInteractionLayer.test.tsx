@@ -3,7 +3,7 @@ import type { CanvasOverlayType } from '@keres/shared';
 import { PanResponder } from 'react-native';
 import OverlayInteractionLayer, {
   type OverlayCatcherMode,
-} from '../../src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
+} from '@/src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
 
 const FRAME: CanvasOverlayType = {
   id: 'ov-1',
@@ -114,5 +114,53 @@ describe('OverlayInteractionLayer', () => {
     await config.onPanResponderGrant(tapEvent(500, 500));
     await config.onPanResponderRelease(tapEvent(500, 500), { dx: 0, dy: 0 });
     expect(callbacks.onSelectOverlay).toHaveBeenCalledWith(null);
+  });
+
+  it('keeps one responder across re-renders and keeps calling the latest callbacks', async () => {
+    // Preview setStates re-render on every mousemove; recreating the responder there
+    // resets the accumulated gestureState, which pinned web drags near the press point.
+    const create = jest.spyOn(PanResponder, 'create');
+    const firstPreview = jest.fn();
+    const renderLayer = (onPreviewRect: jest.Mock) =>
+      render(
+        <OverlayInteractionLayer
+          mode={{ kind: 'draw', tool: 'frame' }}
+          screenToWorld={(point) => point}
+          scale={1}
+          overlays={[]}
+          snapTargets={[]}
+          onDrawTap={jest.fn()}
+          onStampPlace={jest.fn()}
+          onDrawRect={jest.fn()}
+          onPreviewRect={onPreviewRect}
+          onSelectOverlay={jest.fn()}
+        />,
+      );
+    const view = await renderLayer(firstPreview);
+    expect(create).toHaveBeenCalledTimes(1);
+    const secondPreview = jest.fn();
+    await view.rerender(
+      <OverlayInteractionLayer
+        mode={{ kind: 'draw', tool: 'frame' }}
+        screenToWorld={(point) => point}
+        scale={1}
+        overlays={[]}
+        snapTargets={[]}
+        onDrawTap={jest.fn()}
+        onStampPlace={jest.fn()}
+        onDrawRect={jest.fn()}
+        onPreviewRect={secondPreview}
+        onSelectOverlay={jest.fn()}
+      />,
+    );
+    expect(create).toHaveBeenCalledTimes(1);
+    const [config] = (create as jest.Mock).mock.calls[0] as any[];
+    await config.onPanResponderGrant(tapEvent(0, 0));
+    await config.onPanResponderMove(tapEvent(30, 20), { dx: 30, dy: 20 });
+    expect(secondPreview).toHaveBeenCalledWith({
+      start: { x: 0, y: 0 },
+      end: { x: 30, y: 20 },
+    });
+    expect(firstPreview).not.toHaveBeenCalled();
   });
 });

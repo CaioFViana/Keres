@@ -23,6 +23,9 @@ services:
     image: ghcr.io/caiofviana/keres:${KERES_IMAGE_TAG:-latest}
     pull_policy: always
     restart: unless-stopped
+    # The server stops in order (requests finish, the record is written, the database closed): give it the
+    # time. SHUTDOWN_GRACE_MS must stay below this.
+    stop_grace_period: 30s
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -33,6 +36,7 @@ services:
       ROOT_ADMIN_PASSWORD: ${ROOT_ADMIN_PASSWORD:?Define ROOT_ADMIN_PASSWORD no arquivo .env}
       # Local is the default. For S3, fill in MEDIA_S3_* in the deploy .env; the server blocks a backend
       # switch when the database already holds media, to avoid losing files.
+      SHUTDOWN_GRACE_MS: "20000"
       MEDIA_STORAGE_DRIVER: ${MEDIA_STORAGE_DRIVER:-local}
       MEDIA_STORAGE_PATH: /app/apps/api/media-storage
       MEDIA_MAX_BYTES: ${MEDIA_MAX_BYTES:-52428800}
@@ -43,10 +47,24 @@ services:
       MEDIA_S3_SECRET_ACCESS_KEY: ${MEDIA_S3_SECRET_ACCESS_KEY:-}
       MEDIA_S3_PREFIX: ${MEDIA_S3_PREFIX:-keres}
       MEDIA_S3_FORCE_PATH_STYLE: ${MEDIA_S3_FORCE_PATH_STYLE:-false}
+      # Erasure ledger (account ids and dates only): lives on its own volume, which the backup service never
+      # mounts, so restoring a dump cannot bring an erased account back. See deploy/README.md.
+      ERASURE_LEDGER_PATH: /app/apps/api/erasure-ledger/ledger.ndjson
+      ERASURE_LEDGER_RETENTION_DAYS: ${ERASURE_LEDGER_RETENTION_DAYS:-100}
+      # Accounts are 18+ (docs/age_verification.md). `manual` is the Docker default: no verification service,
+      # accounts start unverified and an administrator marks them by hand. `required` sends every new account
+      # through a verification service and refuses to boot without the service's address and keys.
+      AGE_VERIFICATION_MODE: ${AGE_VERIFICATION_MODE:-manual}
+      AGE_VERIFICATION_URL: ${AGE_VERIFICATION_URL:-}
+      AGE_VERIFICATION_SECRET: ${AGE_VERIFICATION_SECRET:-}
+      AGE_VERIFICATION_SECRET_PREVIOUS: ${AGE_VERIFICATION_SECRET_PREVIOUS:-}
+      AGE_VERIFICATION_EVENTS_SECRET: ${AGE_VERIFICATION_EVENTS_SECRET:-}
+      AGE_VERIFICATION_EVENTS_SECRET_PREVIOUS: ${AGE_VERIFICATION_EVENTS_SECRET_PREVIOUS:-}
     ports:
       - "${KERES_BIND_ADDRESS:-127.0.0.1}:${KERES_PORT:-3000}:3000"
     volumes:
       - media_storage:/app/apps/api/media-storage
+      - erasure_ledger:/app/apps/api/erasure-ledger
     depends_on:
       db:
         condition: service_healthy
@@ -59,6 +77,30 @@ services:
     networks:
       - backend
 
+  # Nightly pg_dump of the official Postgres: 30 daily dumps (BACKUP_RETENTION_DAYS)
+  # and the first dump of each month kept too, the newest BACKUP_MONTHLY_KEEP (default
+  # 3, 0 to 3). The dumps live in the db_backups volume - back that volume up off the
+  # machine, onto encrypted storage with access limited to operators. See deploy/README.md.
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    command: ["sh", "/deploy/backup.sh"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-keres}
+      POSTGRES_USER: ${POSTGRES_USER:-keres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD no arquivo .env}
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_MONTHLY_KEEP: ${BACKUP_MONTHLY_KEEP:-3}
+    volumes:
+      - ./deploy/backup.sh:/deploy/backup.sh:ro
+      - db_backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge
@@ -66,3 +108,5 @@ networks:
 volumes:
   db_data:
   media_storage:
+  db_backups:
+  erasure_ledger:

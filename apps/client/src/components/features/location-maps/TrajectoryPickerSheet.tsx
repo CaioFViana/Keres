@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useTheme } from '../../../theme';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { space } from '@/src/theme/tokens';
 
 interface TrajectoryPickerSheetProps {
   characters: { id: string; name: string }[];
@@ -39,35 +42,7 @@ const TrajectoryPickerSheet: React.FC<TrajectoryPickerSheetProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      maxHeight: '78%',
-    },
-    scroll: { flexShrink: 1 },
-    scrollContent: { paddingHorizontal: 22, paddingTop: 2, paddingBottom: 24 },
-    title: { color: colors.text, fontSize: 19, fontWeight: 'bold', flex: 1 },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 16,
-    },
-    section: {
-      color: colors.text,
-      fontSize: 13,
-      fontWeight: '700',
-      marginTop: 14,
-      marginBottom: 6,
-    },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-    rowLabel: { color: colors.text, flex: 1 },
-    hint: { color: colors.textSecondary, marginTop: 4 },
-    clear: { marginTop: 20 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderRows = (
     entries: { id: string; name: string }[],
@@ -101,12 +76,15 @@ const TrajectoryPickerSheet: React.FC<TrajectoryPickerSheetProps> = ({
     );
 
   return (
-    <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
+    <ResponsiveModal
+      visible
+      onClose={onClose}
+      placement="adaptive"
+      tone="raised"
+      contentStyle={styles.sheet}
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>{t('trajectory_title')}</Text>
-        <TouchableOpacity onPress={onClose} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
+        <ModalHeader title={t('trajectory_title')} onClose={onClose} />
       </View>
       <ScrollView
         testID="trajectory-picker-scroll"
@@ -147,5 +125,25 @@ const TrajectoryPickerSheet: React.FC<TrajectoryPickerSheetProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { maxHeight: '78%' },
+    scroll: { flexShrink: 1 },
+    scrollContent: { paddingHorizontal: 22, paddingTop: 2, paddingBottom: 24 },
+    // The sheet has no padding of its own: the header and the scroll body lay out their inset.
+    header: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.md },
+    section: {
+      color: colors.text,
+      fontSize: 13,
+      fontWeight: '700',
+      marginTop: 14,
+      marginBottom: 6,
+    },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+    rowLabel: { color: colors.text, flex: 1 },
+    hint: { color: colors.textSecondary, marginTop: 4 },
+    clear: { marginTop: 20 },
+  });
 
 export default TrajectoryPickerSheet;

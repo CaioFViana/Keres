@@ -1,0 +1,1 @@
+ALTER TABLE "sketches" ADD COLUMN "cover_source_hash" text;

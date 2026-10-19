@@ -358,6 +358,223 @@
       "when": 1790776833505,
       "tag": "0050_publication_package_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1790899272082,
+      "tag": "0051_nice_cloak",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1790902634867,
+      "tag": "0052_kind_amazoness",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1790951688617,
+      "tag": "0053_messaging",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1790951698229,
+      "tag": "0054_drop_contact_messages",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1790966817713,
+      "tag": "0055_audit_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1790969871117,
+      "tag": "0056_attempt_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1790976320411,
+      "tag": "0057_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1791126788178,
+      "tag": "0058_reflective_ricochet",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1791142947679,
+      "tag": "0059_empty_whizzer",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1791145586519,
+      "tag": "0060_left_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1791148153813,
+      "tag": "0061_great_speed",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1791151177793,
+      "tag": "0062_known_vulcan",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1791311189348,
+      "tag": "0063_acoustic_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1791312800153,
+      "tag": "0064_oval_captain_cross",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1791313809996,
+      "tag": "0065_tough_black_crow",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1791316909521,
+      "tag": "0066_rainy_dreaming_celestial",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1791317631487,
+      "tag": "0067_awesome_bushwacker",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1791319424771,
+      "tag": "0068_deep_swordsman",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1791337808377,
+      "tag": "0069_swift_proemial_gods",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1791339611307,
+      "tag": "0070_smooth_golden_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1791733636371,
+      "tag": "0071_left_chameleon",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1791766461705,
+      "tag": "0072_worthless_the_liberteens",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1791820382515,
+      "tag": "0073_slippery_dracula",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1791822236971,
+      "tag": "0074_wandering_lockjaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1791831628825,
+      "tag": "0075_noisy_silk_fever",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1791852652647,
+      "tag": "0076_massive_fenris",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1791855221232,
+      "tag": "0077_regular_ogun",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1791893166813,
+      "tag": "0078_even_big_bertha",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1791990101667,
+      "tag": "0079_user_show_nsfw",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1791991142936,
+      "tag": "0080_tier_max_contributors",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1791992279644,
+      "tag": "0081_registration_tiers_display",
+      "breakpoints": true
     }
   ]
 }

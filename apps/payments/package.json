@@ -1,0 +1,25 @@
+{
+  "name": "@keres/payments",
+  "version": "1.10.1",
+  "private": true,
+  "license": "MPL-2.0",
+  "description": "Official Keres payment microservice: speaks the connector contract to a Keres server, PayPal and Google Pay (via Stripe Checkout) to people on the web, Google Play Billing on mobile.",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome lint --error-on-warnings .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@keres/shared": "workspace:*",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.6",
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.10"
+  }
+}

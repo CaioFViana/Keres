@@ -8,20 +8,22 @@ import type {
 } from '@keres/shared';
 import { and, asc, eq, max, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, withWriteTransaction } from '../../db';
-import { operationLog, stories } from '../../db/schema';
-import { AppError } from '../../utils/errors';
-import { eventManager } from '../../utils/EventManager';
-import { logger } from '../../utils/logger';
+import { db, withWriteTransaction } from '@/db';
+import { operationLog, stories } from '@/db/schema';
+import { AppError } from '@/utils/errors';
+import { eventManager } from '@/utils/EventManager';
+import { logger } from '@/utils/logger';
 import type {
   SyncEntityRow,
   SyncEntityHandler,
   SyncPayload,
-} from '../entity-sync-handlers/BaseSyncEntityHandler';
-import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler';
-import { storyPermissionService } from '../StoryPermissionService';
-import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
+} from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { SyncConflictError } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { storyPermissionService } from '@/services/stories/StoryPermissionService';
+import { TierLimitExceededError } from '@/services/tiers/TierEnforcementService';
 import { readPushEnvelope, writtenPayload } from './pushEnvelope';
+import { assertPlanRoomFor } from './pushPlanRoom';
+import { storyNsfwRefusal } from './storyNsfwGuard';
 import { refuseTwin } from './pushTwins';
 import { movesArrangedRows, normalizeArrangedUpdate, renumberArranged } from './arrangedRanks';
 import { assertGalleryStorageQuota } from './pushGalleryQuota';
@@ -33,9 +35,17 @@ import {
 } from './SyncConflictDetails';
 import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
 import { findIdempotentHit } from './SyncPushIdempotency';
-import { shouldCompactStoryNow, storyUpdateFlipsFavorites } from './pushPolicy';
+import {
+  shouldCompactStoryNow,
+  storyUpdateFlipsFavorites,
+  storyUpdateTouchesNsfw,
+} from './pushPolicy';
 import type { SyncOperationLogService } from './SyncOperationLogService';
-import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
+import {
+  enforceNsfwCollaboratorsAfterStoryChange,
+  repairPublicFavoritesAfterStoryChange,
+} from './storyChangeRepairs';
+import { auditService } from '@/services/compliance/AuditService';
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates
@@ -101,6 +111,7 @@ export class SyncPushService {
     const applied: SyncAppliedOperation[] = [];
     const conflicts: SyncConflict[] = [];
     let storyBehaviorChanged = false;
+    let storyNsfwTouched = false;
     /**
      * Entities that already conflicted in this batch. The following operations on them were built on
      * top of a base we have just refused, so applying them would corrupt the state - they are refused
@@ -177,6 +188,12 @@ export class SyncPushService {
           'unauthorized',
           `Reader access does not permit changes to ${update.entity}.`,
         );
+        continue;
+      }
+
+      const nsfwRefusal = await storyNsfwRefusal(update, userId);
+      if (nsfwRefusal) {
+        recordConflict('unauthorized', nsfwRefusal);
         continue;
       }
 
@@ -310,11 +327,7 @@ export class SyncPushService {
               // recorded row exists (the row came from outside sync): no pull ever carries 0.
               alreadyAppliedVersion = recordedCreate?.operationVersion ?? 0;
             } else {
-              if (handler.tierLimitScope === 'story') {
-                await tierEnforcementService.assertCanCreateStory(userId);
-              } else if (handler.tierLimitScope === 'entity') {
-                await tierEnforcementService.assertCanCreateEntity(userId, storyId);
-              }
+              await assertPlanRoomFor(handler, update.entity, userId, storyId);
               await assertGalleryStorageQuota(update, currentEntity, userId, storyId);
               await refuseTwin(
                 handler,
@@ -340,11 +353,7 @@ export class SyncPushService {
               handler.isDeletedRow(currentEntity) &&
               (update as UpdateStoryUpdate).changes?.isDeleted === false
             ) {
-              if (handler.tierLimitScope === 'story') {
-                await tierEnforcementService.assertCanCreateStory(userId);
-              } else if (handler.tierLimitScope === 'entity') {
-                await tierEnforcementService.assertCanCreateEntity(userId, storyId);
-              }
+              await assertPlanRoomFor(handler, update.entity, userId, storyId);
             }
             // Restored, or re-keyed, a row may become what a live row of another id already is.
             const changes = ((update as UpdateStoryUpdate).changes ?? {}) as Record<
@@ -407,6 +416,17 @@ export class SyncPushService {
       } catch (error) {
         if (error instanceof TierLimitExceededError) {
           recordConflict('limit_exceeded', error.message, conflictContext());
+          // A device that keeps pushing what the plan refuses would say so every few seconds: one line per
+          // story is enough for the administrators to see a user is up against their plan.
+          auditService.recordThrottled(`sync-limit:${userId}:${storyId}`, 10 * 60_000, {
+            category: 'limits',
+            action: 'limits.exceeded',
+            outcome: 'denied',
+            actorUserId: userId,
+            targetType: 'story',
+            targetId: storyId,
+            meta: { route: 'sync', entity: update.entity, reason: error.message },
+          });
           continue;
         }
         if (error instanceof SyncConflictError) {
@@ -515,6 +535,9 @@ export class SyncPushService {
       if (storyUpdateFlipsFavorites(update)) {
         storyBehaviorChanged = true;
       }
+      if (storyUpdateTouchesNsfw(update)) {
+        storyNsfwTouched = true;
+      }
     }
 
     if (applied.length > 0) {
@@ -539,30 +562,14 @@ export class SyncPushService {
     }
 
     if (storyBehaviorChanged) {
-      await this.repairPublicFavoritesAfterStoryChange(storyId);
+      await repairPublicFavoritesAfterStoryChange(storyId);
+    }
+
+    if (storyNsfwTouched) {
+      await enforceNsfwCollaboratorsAfterStoryChange(storyId);
     }
 
     return { lastOperationVersion, applied, conflicts };
-  }
-
-  /**
-   * A Story op may have flipped `favoriteBehavior` to `individual_public`, exposing imported
-   * favorites that have no operation logs. Repairing here - once per story edit, not once per
-   * pull per client - covers the switch at its source. Best-effort like compaction: the
-   * pull-time fingerprint mismatch re-runs the same repair, so a failure here self-heals.
-   */
-  private async repairPublicFavoritesAfterStoryChange(storyId: string): Promise<void> {
-    try {
-      const current = await db.query.stories.findFirst({
-        where: eq(stories.id, storyId),
-        columns: { favoriteBehavior: true },
-      });
-      if (current?.favoriteBehavior === 'individual_public') {
-        await ensurePublicFavoriteOperationLogs(storyId);
-      }
-    } catch (error) {
-      logger.error('SyncService: public favorite repair after story change failed', error);
-    }
   }
 
   private async getMaxOperationVersion(storyId: string): Promise<number> {

@@ -2,8 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { getContrastTextColor, isValidHexColor } from '@keres/shared';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface Tag {
   id: string;
@@ -34,36 +36,11 @@ const TagList: React.FC<TagListProps> = ({
   const { t } = useTranslation();
   const isChip = variant === 'chip';
 
-  const styles = StyleSheet.create({
-    container: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      marginTop: isChip ? 10 : 8,
-      marginBottom: isChip ? 10 : 0,
-      // Spacing between tags belongs to the container: with it on each tag, the last row still charged its
-      // bottom margin and left dead space under the list.
-      gap: isChip ? 8 : 5,
-    },
-    chip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderRadius: isChip ? 15 : 5,
-      paddingVertical: isChip ? 5 : 2,
-      paddingHorizontal: isChip ? 10 : 6,
-    },
-    chipText: {
-      fontSize: isChip ? 14 : 12,
-      fontWeight: isChip ? 'bold' : 'normal',
-    },
-    removeButton: {
-      marginLeft: 5,
-      padding: 2,
-    },
-  });
+  const styles = useThemedStyles(createStyles, [isChip]);
 
   if (!tags || tags.length === 0) {
     if (!emptyMessage) return null;
-    return <Text style={{ color: colors.textSecondary }}>{emptyMessage}</Text>;
+    return <ThemedText tone="secondary">{emptyMessage}</ThemedText>;
   }
 
   return (
@@ -91,5 +68,34 @@ const TagList: React.FC<TagListProps> = ({
     </View>
   );
 };
+
+// The palette does not reach these styles: only the chip variant (`isChip`) changes them.
+const createStyles = (_colors: ThemeColors, [isChip]: [boolean]) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginTop: isChip ? 10 : 8,
+      marginBottom: isChip ? 10 : 0,
+      // Spacing between tags belongs to the container: with it on each tag, the last row still charged its
+      // bottom margin and left dead space under the list.
+      gap: isChip ? 8 : 5,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: isChip ? 15 : 5,
+      paddingVertical: isChip ? 5 : 2,
+      paddingHorizontal: isChip ? 10 : 6,
+    },
+    chipText: {
+      fontSize: isChip ? 14 : 12,
+      fontWeight: isChip ? 'bold' : 'normal',
+    },
+    removeButton: {
+      marginLeft: 5,
+      padding: 2,
+    },
+  });
 
 export default TagList;

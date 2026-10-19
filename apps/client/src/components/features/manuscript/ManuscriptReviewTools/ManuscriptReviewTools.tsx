@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import Button from '../../../common/controls/Button/Button';
-import CommentThreadModal from '../../comments/CommentThreadModal/CommentThreadModal';
-import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
-import type { CommentSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
-import { readClippedSelection } from '../../../../hooks/useWebSelectionClip';
+import Button from '@/src/components/common/controls/Button/Button';
+import CommentThreadModal from '@/src/components/features/comments/CommentThreadModal/CommentThreadModal';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
+import type { CommentSelect } from '@/src/db/schema';
+import { useTheme } from '@/src/theme';
+import { readClippedSelection } from '@/src/hooks/ui/useWebSelectionClip';
 
 export interface ManuscriptReviewBar {
   sceneLabel: string;

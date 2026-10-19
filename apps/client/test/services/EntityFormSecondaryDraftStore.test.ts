@@ -6,15 +6,15 @@ import {
   readEditorDraft,
   resetEditorDraftDbForTests,
   setEditorDraftDb,
-} from '../../src/services/EditorDraftService';
+} from '@/src/services/drafts/EditorDraftService';
 import {
   clearEntityFormSecondaryDraft,
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
   resetEntityFormSecondaryDraftLocksForTests,
   writeEntityFormSecondaryDraft,
-} from '../../src/services/storymanagement/EntityFormSecondaryDraftStore';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),

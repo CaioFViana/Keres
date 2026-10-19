@@ -2,10 +2,10 @@ import { render, type RenderResult } from '@testing-library/react-native';
 import * as SkiaMock from '@shopify/react-native-skia';
 import type { LocationMapContentType } from '@keres/shared';
 import { clipSpatialSegment } from '@keres/shared';
-import { pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
-import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
+import { pointOnCircleBoundary } from '@keres/shared/graphs/location/locationMapGeometry';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
 import { StyleSheet } from 'react-native';
-import LocationMapConnectionLayer from '../../src/components/features/location-maps/LocationMapConnectionLayer';
+import LocationMapConnectionLayer from '@/src/components/features/location-maps/LocationMapConnectionLayer';
 
 type Root = RenderResult['container'];
 

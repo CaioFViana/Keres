@@ -1,19 +1,19 @@
+import { renderHook } from '@testing-library/react-native';
+import { useLocationFormResources } from '@/src/screens/locations/useLocationFormResources';
+
 const mockDb = {};
 const mockCreateLocationService: jest.Mock = jest.fn(() => ({ id: 'location-service' }));
 const mockCreateLocationRelationService: jest.Mock = jest.fn(() => ({
   id: 'location-relation-service',
 }));
 
-jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDb }));
-jest.mock('../../../src/services/storymanagement/LocationService', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => mockDb }));
+jest.mock('@/src/services/storymanagement/entities/LocationService', () => ({
   createLocationService: (...args: unknown[]) => mockCreateLocationService(...args),
 }));
-jest.mock('../../../src/services/storymanagement/LocationRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/LocationRelationService', () => ({
   createLocationRelationService: (...args: unknown[]) => mockCreateLocationRelationService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useLocationFormResources } from '../../../src/screens/locations/useLocationFormResources';
 
 beforeEach(() => {
   jest.clearAllMocks();

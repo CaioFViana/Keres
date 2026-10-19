@@ -1,9 +1,9 @@
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import Button from '../../../common/controls/Button/Button';
-import { useTheme } from '../../../../theme';
-import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
+import Button from '@/src/components/common/controls/Button/Button';
+import { useTheme } from '@/src/theme';
+import { manuscriptTextMetrics } from '@/src/components/features/manuscript/manuscriptTextMetrics';
 import type { ManuscriptSizeStatus } from '@keres/shared';
 
 export type SceneBodyFooterProps = {

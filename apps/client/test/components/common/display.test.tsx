@@ -1,21 +1,18 @@
 import { avatarColorFromSeed } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
-import Avatar from '../../../src/components/common/display/Avatar/Avatar';
-import CollapsibleCard from '../../../src/components/common/display/CollapsibleCard/CollapsibleCard';
-import DetailField from '../../../src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '../../../src/components/common/display/EntityMetadata/EntityMetadata';
-import EntityRelationList from '../../../src/components/common/display/EntityRelationList/EntityRelationList';
-import SummaryCard from '../../../src/components/common/display/SummaryCard/SummaryCard';
-import TagList from '../../../src/components/common/display/TagList/TagList';
-import {
-  MentionMatcherContext,
-  MentionNavigationContext,
-} from '../../../src/mentions/MentionContext';
-import { EMPTY_MENTION_MATCHER } from '../../../src/utils/entityMentions';
+import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import EntityMetadata from '@/src/components/common/display/EntityMetadata/EntityMetadata';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
+import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
+import TagList from '@/src/components/common/display/TagList/TagList';
+import { MentionMatcherContext, MentionNavigationContext } from '@/src/mentions/MentionContext';
+import { EMPTY_MENTION_MATCHER } from '@/src/utils/entity/entityMentions';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -55,13 +52,13 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MIcon',
 }));
 
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({
     term: (type: string, plural = false) => (plural ? `${type}s` : type),
   }),
 }));
 
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({
     width: 390,
     height: 844,
@@ -305,12 +302,11 @@ describe('SummaryCard', () => {
     );
 
     expect(screen.getByText(/total_stories_summary/)).toBeTruthy();
+    // Folded at first: the tiles are only drawn once the card is opened.
+    expect(screen.queryByText('Characters')).toBeNull();
+    await fireEvent.press(screen.getByText(/total_stories_summary/));
     expect(screen.getByText('Characters')).toBeTruthy();
-    const tile = screen.getByText('Characters').parent!;
-    const count = tile.children.filter((child) => typeof child !== 'string')[1] as {
-      props: { children?: unknown };
-    };
-    expect(String(count.props.children)).toBe('3');
+    expect(screen.getByText('3')).toBeTruthy();
     expect(screen.queryByText('notes')).toBeNull();
   });
 
@@ -337,13 +333,10 @@ describe('SummaryCard', () => {
       <SummaryCard title="Story" isBranchingStory branchingStoryForkCount={2} choiceCount={9} />,
     );
 
+    await fireEvent.press(screen.getByText('Story'));
     expect(screen.getByText('forks')).toBeTruthy();
     expect(screen.getByText('Choices')).toBeTruthy();
-    const tile = screen.getByText('Choices').parent!;
-    const count = tile.children.filter((child) => typeof child !== 'string')[1] as {
-      props: { children?: unknown };
-    };
-    expect(String(count.props.children)).toBe('9');
+    expect(screen.getByText('9')).toBeTruthy();
   });
 });
 
@@ -388,5 +381,78 @@ describe('TagList', () => {
 
     expect(screen.getByText('Magic')).toBeTruthy();
     expect(screen.queryByLabelText('remove')).toBeNull();
+  });
+});
+
+describe('SummaryCard as a block of the story home', () => {
+  it('is always open and puts the analysis status beside its heading', async () => {
+    const onPress = jest.fn();
+    const screen = await render(
+      <SummaryCard
+        layout="section"
+        title="Story overview"
+        characterCount={4}
+        sceneCount={0}
+        analysisSummary={{ issueCount: 3, onPress }}
+      />,
+    );
+
+    expect(screen.getByText('Story overview')).toBeTruthy();
+    expect(screen.getByText('Characters')).toBeTruthy();
+    expect(screen.getByText('4')).toBeTruthy();
+    await fireEvent.press(screen.getByText('story_analysis_issues_found'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts none as a quiet zero, not a missing value', async () => {
+    const screen = await render(
+      <SummaryCard layout="section" title="Story overview" sceneCount={0} />,
+    );
+
+    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.queryByText('common_na')).toBeNull();
+  });
+});
+
+describe('SummaryCard counts', () => {
+  // Every count is 1 here, so the number of tiles is the number of 1s drawn.
+  const tilesOf = (screen: { queryAllByText: (text: string) => unknown[] }) =>
+    screen.queryAllByText('1');
+  const all = {
+    chapterCount: 1,
+    sceneCount: 1,
+    plotCount: 1,
+    locationCount: 1,
+    characterCount: 1,
+    noteCount: 1,
+    worldRuleCount: 1,
+    itemCount: 1,
+    galleryCount: 1,
+    boardCount: 1,
+    tagCount: 1,
+    customAttributeCount: 1,
+    branchingStoryForkCount: 1,
+    choiceCount: 1,
+  };
+
+  it('shows twelve for a linear story, so the grid divides into 2, 3, 4 or 6 columns', async () => {
+    const screen = await render(<SummaryCard layout="section" title="Overview" {...all} />);
+
+    expect(tilesOf(screen)).toHaveLength(12);
+    expect(screen.queryByText('plots_title')).toBeTruthy();
+    expect(screen.queryByText('boards_title')).toBeTruthy();
+    expect(screen.queryByText('forks')).toBeNull();
+  });
+
+  it('still shows twelve for a branching story, swapping tags and fields for forks and choices', async () => {
+    const screen = await render(
+      <SummaryCard layout="section" title="Overview" isBranchingStory {...all} />,
+    );
+
+    expect(tilesOf(screen)).toHaveLength(12);
+    expect(screen.queryByText('forks')).toBeTruthy();
+    expect(screen.queryByText('Choices')).toBeTruthy();
+    expect(screen.queryByText('tags_title')).toBeNull();
+    expect(screen.queryByText('custom_attributes')).toBeNull();
   });
 });

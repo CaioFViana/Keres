@@ -3,15 +3,16 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import type { LocationRelationSelect, LocationSelect } from '../../../../db/schema';
-import { useTheme } from '../../../../theme';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
+import type { LocationRelationSelect, LocationSelect } from '@/src/db/schema';
+import { useTheme, type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import Button from '@/src/components/common/controls/Button/Button';
 import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
-import { AppAlert } from '../../../../utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 interface LocationRelationManagerProps {
   currentLocationId: string;
@@ -199,23 +200,7 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
     ]);
   };
 
-  const styles = StyleSheet.create({
-    ...relationSectionStyleDefs(colors),
-    subsectionTitle: {
-      fontSize: 15,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 10,
-      marginBottom: 6,
-    },
-    buttonContainer: {
-      marginBottom: 10,
-    },
-    noRelationsText: {
-      color: colors.textSecondary,
-      marginBottom: 8,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.container}>
@@ -349,5 +334,24 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...relationSectionStyleDefs(colors),
+    subsectionTitle: {
+      fontSize: 15,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 10,
+      marginBottom: 6,
+    },
+    buttonContainer: {
+      marginBottom: 10,
+    },
+    noRelationsText: {
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+  });
 
 export default LocationRelationManager;

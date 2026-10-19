@@ -1,11 +1,13 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -18,31 +20,31 @@ import EntityGalleryManager from '@/src/components/features/gallery/GalleryManag
 import ItemJourneyTimeline from '@/src/components/features/item-journeys/ItemJourney/ItemJourneyTimeline';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
-import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDrizzle } from '../../db';
-import type { CharacterSelect, ItemSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { CharacterSelect, ItemSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityInitialLoad,
   useEntityEventSubscriptions,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import { createItemService } from '../../services/storymanagement/ItemService';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
 
 export type ItemDetailScreenParamList = {
@@ -83,15 +85,7 @@ const ItemDetailScreen = () => {
 
   const [item, setItem] = useState<ItemSelect | null>(null);
   const { canEdit } = useStoryRole(item?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(item?.storyId, 'Item', itemId);
+  const comments = useEntityComments(item?.storyId, 'Item', itemId);
 
   const {
     selectedTags: itemTags,
@@ -191,6 +185,9 @@ const ItemDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -205,41 +202,27 @@ const ItemDetailScreen = () => {
     ? allCharacters.find((c) => c.id === item.characterOwnerId)
     : undefined;
 
-  const commentField = createCommentFieldBindings({
-    storyId: item.storyId,
-    mentionSourceId: item.id,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(item.storyId, comments, item.id);
 
-  return (
-    <DetailContainer
-      title={item.name}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={itemTags} variant="chip" emptyMessage={t('no_tags_found')} />
+
       <CommentableDetailField
         {...commentField('description', item.description || t('common_na'))}
         label={t('description')}
       />
+
       <CommentableDetailField
         {...commentField('category', item.category || t('common_na'))}
         label={t('category')}
       />
+
       <CommentableDetailField
         {...commentField('initialState', item.initialState || t('common_na'))}
         label={t('initial_state')}
       />
+
       <DetailField
         label={t('item_character_owner_label', {
           character: term('Character'),
@@ -248,25 +231,19 @@ const ItemDetailScreen = () => {
         value={owner?.name || t('common_na')}
       />
 
-      <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
-
-      <CommentableDetailField
-        {...commentField('extraNotes', item.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-      <DetailField
-        label={t('is_favorite')}
-        value={item.isFavorite ? t('common_yes') : t('common_no')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
+
       <EntityGalleryManager
         ownerId={itemId}
         ownerType="Item"
         onPressMedia={openGalleryMediaViewer}
         editable={canEdit}
       />
+    </>
+  );
 
+  const relationsPanel = (
+    <>
       {selectedStory && (
         <>
           <ItemJourneyTimeline
@@ -291,6 +268,22 @@ const ItemDetailScreen = () => {
       <AppearsInArcsSection arcs={appearingArcs} />
 
       <SeeAlsoManager storyId={item.storyId} entityType="Item" entityId={itemId} editable={false} />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields storyId={item.storyId} entityType="Item" entityId={itemId} />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', item.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
+
+      <DetailField
+        label={t('is_favorite')}
+        value={item.isFavorite ? t('common_yes') : t('common_no')}
+      />
 
       <FavoritedByList storyId={item.storyId} entityId={itemId} entityType="Item" />
 
@@ -300,6 +293,25 @@ const ItemDetailScreen = () => {
         updatedAt={item.updatedAt}
         entityType="Item"
         entityId={item.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={item.name}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

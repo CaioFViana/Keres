@@ -7,12 +7,12 @@ const mocks = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-vi.mock('../../src/api/apiClient', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../src/api/apiClient')>();
+vi.mock('@/api/apiClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/apiClient')>();
   return { ...actual, apiClient: mocks };
 });
 
-import { ShowcaseSettingsApiService } from '../../src/api/ShowcaseSettingsApiService';
+import { ShowcaseSettingsApiService } from '@/api/ShowcaseSettingsApiService';
 
 const settings = {
   id: 'singleton',

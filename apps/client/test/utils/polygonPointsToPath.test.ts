@@ -1,4 +1,4 @@
-import { polygonPointsToPath } from '../../src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
 
 describe('polygonPointsToPath', () => {
   it('closes comma-separated pairs into a path', () => {

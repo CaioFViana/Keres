@@ -1,5 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 
+import StoryInvitationList from '@/src/components/features/story/StoryInvitationList/StoryInvitationList';
+
 const mockAccept = jest.fn();
 const mockClose = jest.fn();
 const mockAlert = jest.fn();
@@ -14,7 +16,7 @@ jest.mock('react-i18next', () => ({
       params ? `${key}:${JSON.stringify(params)}` : key,
   }),
 }));
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -29,27 +31,25 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
-jest.mock('../../src/services/storyInvitationActions', () => ({
+jest.mock('@/src/services/social/storyInvitationActions', () => ({
   __esModule: true,
   acceptStoryInvitation: (...args: unknown[]) => mockAccept(...args),
   closeStoryInvitation: (...args: unknown[]) => mockClose(...args),
 }));
 let mockInvitations: unknown[] = [];
-jest.mock('../../src/hooks/useStoryInvitations', () => ({
+jest.mock('@/src/hooks/social/useStoryInvitations', () => ({
   __esModule: true,
   useStoryInvitations: () => mockInvitations,
 }));
-
-import StoryInvitationList from '../../src/components/features/story/StoryInvitationList/StoryInvitationList';
 
 const server = { id: 'server-1', idUser: 'me' };
 const serverFor = (id: string) => (id === 'server-1' ? (server as never) : undefined);
@@ -157,6 +157,18 @@ describe('StoryInvitationList', () => {
     await confirmLastAlert();
 
     expect(mockNotify).toHaveBeenCalledWith('story_invitation_failed', 'error');
+  });
+
+  it('says the plan has no room left when accepting is refused with 429, and keeps the invitation', async () => {
+    mockAccept.mockRejectedValue({ response: { status: 429 } });
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    const view = await render(<StoryInvitationList serverFor={serverFor} />);
+
+    await fireEvent.press(view.getByTestId('story-invitation-accept-inv-1'));
+    await confirmLastAlert();
+
+    expect(mockNotify).toHaveBeenCalledWith('accept_invitation_limit_reached', 'error');
+    expect(mockClose).not.toHaveBeenCalled();
   });
 
   it('hides invitations of servers this device no longer knows', async () => {

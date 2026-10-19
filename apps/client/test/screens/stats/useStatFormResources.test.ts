@@ -1,19 +1,19 @@
+import { renderHook } from '@testing-library/react-native';
+import { useStatFormResources } from '@/src/screens/stats/useStatFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateStatService = jest.fn();
 const mockUseStoryStats = jest.fn();
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('../../../src/services/storymanagement/StatService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/StatService', () => ({
   createStatService: (...args: unknown[]) => mockCreateStatService(...args),
 }));
-jest.mock('../../../src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: (...args: unknown[]) => mockUseStoryStats(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useStatFormResources } from '../../../src/screens/stats/useStatFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'stat-service' };

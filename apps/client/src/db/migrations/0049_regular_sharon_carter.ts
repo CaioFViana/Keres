@@ -1,0 +1,20 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
+
+export default async function (db: SQLiteDatabase) {
+  await db.execAsync(`
+  CREATE TABLE "sketches" (
+	"id" text PRIMARY KEY NOT NULL,
+	"story_id" text NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"content" text NOT NULL,
+	"cover_gallery_id" text,
+	"created_at" integer NOT NULL,
+	"updated_at" integer NOT NULL,
+	"version" integer NOT NULL,
+	"is_deleted" integer NOT NULL,
+	"deleted_at" integer
+);
+
+`);
+}

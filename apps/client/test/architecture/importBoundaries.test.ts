@@ -95,27 +95,27 @@ const COMPONENTS_THAT_STILL_FETCH = [
  * listener and recursively requesting the same entity.
  */
 const ENTITY_DETAIL_SCREEN =
-  /^screens\/(?:characters|items|itemJourneys|locations|notes|tags|worldrules)\/.*Detail.*Screen\.tsx$|^screens\/narrative-elements\/(?:scenes|chapters|choices)\/.*Detail.*Screen\.tsx$/;
+  /^screens\/(?:characters|items|item-journeys|locations|notes|tags|world-rules)\/.*Detail.*Screen\.tsx$|^screens\/narrative-elements\/(?:scenes|chapters|choices)\/.*Detail.*Screen\.tsx$/;
 
 /** Shared lifecycle owners that refresh visible data from local entity events. */
 const SHARED_REFRESH_LIFECYCLE_OWNERS = [
   'components/features/app/SyncInitializer.tsx',
-  'hooks/useAppearsInArcs.ts',
-  'hooks/useEntityArcIds.ts',
-  'hooks/useCustomAttributeValues.ts',
-  'hooks/useFavoriters.ts',
-  'hooks/useOperationLogs.ts',
-  'hooks/useStoryComments.ts',
-  'hooks/useChapterNames.ts',
-  'hooks/useEntityComments.ts',
-  'hooks/useSeeAlsoRelations.ts',
-  'hooks/useStoryCalendar.ts',
-  'hooks/useStoryPlots.ts',
-  'hooks/useStoryRole.ts',
-  'hooks/useStorySchemaFields.ts',
-  'hooks/useStoryStats.ts',
+  'hooks/arcs/useAppearsInArcs.ts',
+  'hooks/arcs/useEntityArcIds.ts',
+  'hooks/entity/useCustomAttributeValues.ts',
+  'hooks/social/useFavoriters.ts',
+  'hooks/sync/useOperationLogs.ts',
+  'hooks/comments/useStoryComments.ts',
+  'hooks/chapter/useChapterNames.ts',
+  'hooks/comments/useEntityComments.ts',
+  'hooks/relations/useSeeAlsoRelations.ts',
+  'hooks/story/useStoryCalendar.ts',
+  'screens/plots/useStoryPlots.ts',
+  'hooks/story/useStoryRole.ts',
+  'hooks/story/useStorySchemaFields.ts',
+  'hooks/story/useStoryStats.ts',
   'mentions/MentionMatcherProvider.tsx',
-  'screens/enterstack/FriendDetailScreen.tsx',
+  'screens/enter-stack/social/FriendDetailScreen.tsx',
 ] as const;
 
 /** Components that draw story content - the basis of the site's static showcase. */
@@ -129,14 +129,16 @@ const PRESENTATIONAL_SEEDS = [
   'components/common/display/CollapsibleCard/CollapsibleCard.tsx',
   'components/common/lists/GenericListItem/GenericListItem.tsx',
   'components/features/relations/RelationManager/GenericRelationDisplay.tsx',
-  'components/features/relations/RelationManager/RelationRow.tsx',
 ];
 
 describe('import boundaries', () => {
   it('keeps sync engine policy in the application composition root', () => {
-    const engine = readFileSync(join(SOURCE_ROOT, 'services/SyncEngineService.ts'), 'utf8');
+    const engine = readFileSync(join(SOURCE_ROOT, 'services/sync/SyncEngineService.ts'), 'utf8');
     const composition = readFileSync(join(SOURCE_ROOT, 'services/sync/appSyncEngine.ts'), 'utf8');
-    const realtime = readFileSync(join(SOURCE_ROOT, 'services/ServerRealtimeService.ts'), 'utf8');
+    const realtime = readFileSync(
+      join(SOURCE_ROOT, 'services/servers/ServerRealtimeService.ts'),
+      'utf8',
+    );
 
     expect(engine).toContain(
       'public constructor(private readonly dependencies: SyncEngineDependencies)',

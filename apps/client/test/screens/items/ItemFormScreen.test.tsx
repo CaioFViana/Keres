@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import ItemFormScreen from '@/src/screens/items/ItemFormScreen';
+
 const mockGoBack = jest.fn();
 const mockNavigation = { goBack: mockGoBack };
 const mockRoute: { params: { itemId?: string } } = { params: {} };
@@ -81,7 +83,7 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
@@ -213,7 +215,7 @@ jest.mock('@/src/components/features/notes/NoteManager', () => {
     ),
   };
 });
-jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const react = jest.requireActual('react');
   const { Text } = require('react-native');
   return {
@@ -221,26 +223,26 @@ jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () 
     default: react.forwardRef(() => <Text testID="seealso-manager">seealso</Text>),
   };
 });
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityFormSecondaryDraft', () => ({
+jest.mock('@/src/hooks/forms/useEntityFormSecondaryDraft', () => ({
   __esModule: true,
   useEntityFormSecondaryDraft: () => ({
     persistSecondaryDraft: jest.fn(),
     clearSecondaryDraft: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/story/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => mockCustomFields,
 }));
-jest.mock('../../../src/screens/items/useItemFormResources', () => ({
+jest.mock('@/src/screens/items/useItemFormResources', () => ({
   __esModule: true,
   useItemFormResources: () => ({ drizzleDb: mockDb, itemServiceRef: { current: {} } }),
 }));
-jest.mock('../../../src/screens/items/useItemFormState', () => ({
+jest.mock('@/src/screens/items/useItemFormState', () => ({
   __esModule: true,
   useItemFormState: () => ({
     ...mockFormState.current,
@@ -254,7 +256,7 @@ jest.mock('../../../src/screens/items/useItemFormState', () => ({
     setCustomValues: mockSetCustomValues,
   }),
 }));
-jest.mock('../../../src/screens/items/useItemFormAssociations', () => ({
+jest.mock('@/src/screens/items/useItemFormAssociations', () => ({
   __esModule: true,
   useItemFormAssociations: () => ({
     availableTags: [{ id: 'tag-1', name: 'Relic', color: '#f00' }],
@@ -270,7 +272,7 @@ jest.mock('../../../src/screens/items/useItemFormAssociations', () => ({
     characterOptions: [{ label: 'Aria', value: 'char-1' }],
   }),
 }));
-jest.mock('../../../src/screens/items/useItemFormActions', () => ({
+jest.mock('@/src/screens/items/useItemFormActions', () => ({
   __esModule: true,
   useItemFormActions: () => ({
     deleting: mockActionsState.current.deleting,
@@ -280,15 +282,15 @@ jest.mock('../../../src/screens/items/useItemFormActions', () => ({
     seeAlsoManagerRef: mockSeeAlsoManagerRef,
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory.current }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -304,11 +306,11 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => mockVocabularyCopy,
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => mockVocabulary,
 }));
@@ -316,8 +318,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import ItemFormScreen from '../../../src/screens/items/ItemFormScreen';
 
 describe('ItemFormScreen', () => {
   afterEach(() => {

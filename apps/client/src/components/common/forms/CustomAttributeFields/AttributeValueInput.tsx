@@ -5,7 +5,7 @@ import StoryDateInput from '@/src/components/common/inputs/StoryDateInput/StoryD
 import SuggestionListInput from '@/src/components/common/inputs/SuggestionListInput/SuggestionListInput';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { useEntityPickerOptions } from '@/src/hooks/useEntityPickerOptions';
+import { useEntityPickerOptions } from '@/src/hooks/lists/useEntityPickerOptions';
 import type { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import {
@@ -15,9 +15,9 @@ import {
   getEntityAppearance,
 } from '@keres/shared';
 import React, { useMemo } from 'react';
-import { CUSTOM_FIELD_METADATA_PREFIX } from '../../../../utils/customAttributeFieldMetadata';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import { CUSTOM_FIELD_METADATA_PREFIX } from '@/src/utils/entity/customAttributeFieldMetadata';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 interface AttributeValueInputProps {
   type: AttributeType | string;

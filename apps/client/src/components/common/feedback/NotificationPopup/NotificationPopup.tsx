@@ -1,9 +1,9 @@
 import { Modal, Platform, StyleSheet, View } from 'react-native';
-import { useGalleryMediaViewerStore } from '../../../../state/galleryMediaViewerStore';
-import { useNotificationStore } from '../../../../state/notificationStore';
-import { usePresenceMatrixViewerStore } from '../../../../state/presenceMatrixViewerStore';
-import { useShippedPacksInstallerStore } from '../../../../state/shippedPacksInstallerStore';
-import NotificationLanes from '../NotificationLanes/NotificationLanes';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
+import NotificationLanes from '@/src/components/common/feedback/NotificationLanes/NotificationLanes';
 
 const NotificationPopup = () => {
   const { currentNotifications } = useNotificationStore();

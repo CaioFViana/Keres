@@ -2,22 +2,14 @@ import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SYNC_PROTOCOL_HEADER } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { env } from '../../src/config/env';
-import { db } from '../../src/db';
-import {
-  friendships,
-  galleries,
-  stories,
-  storyPublications,
-  tiers,
-  userRecoveryCodes,
-  users,
-} from '../../src/db/schema';
-import { showcaseSettings } from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { showcaseService } from '../../src/services/ShowcaseService';
-import { userService } from '../../src/services/UserService';
-import { installBunShim } from '../helpers/bunShim';
+import { env } from '@/config/env';
+import { db } from '@/db';
+import { friendships, galleries, stories, storyPublications, tiers, users } from '@/db/schema';
+import { showcaseSettings } from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { showcaseService } from '@/services/showcase/ShowcaseService';
+import { userService } from '@/services/accounts/UserService';
+import { installBunShim } from '@test/helpers/bunShim';
 import {
   getApp,
   newId,
@@ -25,8 +17,8 @@ import {
   request,
   uploadTestStory,
   type TestUser,
-} from '../helpers/app';
-import { promoteToAdmin, truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { hardDeleteUser, promoteToAdmin, truncateAll } from '@test/helpers/database';
 
 installBunShim();
 
@@ -136,7 +128,7 @@ describe('public showcase routes', () => {
     expect(status).toBe(200);
     expect(data).toEqual([]);
 
-    await expect(showcaseService.getStoryDetail(newId())).resolves.toBeNull();
+    await expect(showcaseService.getStoryDetail(newId(), false)).resolves.toBeNull();
   });
 
   it('falls back to a generic filename when the title carries no slug', async () => {
@@ -288,8 +280,7 @@ describe('auth routes', () => {
   });
 
   it('answers 401 for a session whose account is gone', async () => {
-    await db.delete(userRecoveryCodes).where(eq(userRecoveryCodes.userId, ana.userId));
-    await db.delete(users).where(eq(users.id, ana.userId));
+    await hardDeleteUser(ana.userId);
 
     expect((await request('GET', '/auth/me', { token: ana.token })).status).toBe(401);
   });

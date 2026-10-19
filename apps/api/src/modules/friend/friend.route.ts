@@ -1,8 +1,9 @@
-import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas';
+import { UserTargetIdParam } from '@keres/shared/schemas/social/FriendshipRouteSchemas';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { friendshipService } from '../../services/FriendshipService';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { friendshipService } from '@/services/accounts/FriendshipService';
+import { storyPermissionService } from '@/services/stories/StoryPermissionService';
+import { AppError } from '@/utils/errors';
 
 /** A `friendships` row exactly as `.returning()`/`db.query` sends it back - `createdAt`/
  *  `updatedAt` are raw Date instances here (unlike EnrichedFriendshipResponseSchema below,
@@ -137,6 +138,28 @@ export const friendRoutes = new Elysia()
       detail: {
         summary: 'Unfriend a user',
         description: 'Removes a user from your friends list.',
+        tags: ['Friendships'],
+      },
+    },
+  )
+  .get(
+    '/shared-stories/:targetUserId',
+    async ({ params, userId }) =>
+      storyPermissionService.getStoriesSharedBetween(userId, params.targetUserId),
+    {
+      params: UserTargetIdParam,
+      response: t.Array(
+        t.Object({
+          storyId: t.String(),
+          title: t.String(),
+          ownedByMe: t.Boolean(),
+          permissionType: t.Union([t.Literal('reader'), t.Literal('writer')]),
+        }),
+      ),
+      detail: {
+        summary: 'Stories shared with a friend',
+        description:
+          'The stories the caller and a friend work on together: those one owns and the other collaborates on. Empty when they are not friends.',
         tags: ['Friendships'],
       },
     },

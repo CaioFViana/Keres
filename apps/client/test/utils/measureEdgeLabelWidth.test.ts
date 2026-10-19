@@ -1,5 +1,5 @@
 import type { SkFont } from '@shopify/react-native-skia';
-import { measureEdgeLabelWidth } from '../../src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
 
 describe('measureEdgeLabelWidth', () => {
   it('sums the glyph advances', () => {

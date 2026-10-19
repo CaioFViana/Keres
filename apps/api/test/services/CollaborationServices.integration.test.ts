@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { FriendshipService } from '../../src/services/FriendshipService';
-import { StoryInvitationService } from '../../src/services/StoryInvitationService';
-import { StoryPermissionService } from '../../src/services/StoryPermissionService';
-import { registerUser, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { FriendshipService } from '@/services/accounts/FriendshipService';
+import { StoryInvitationService } from '@/services/stories/StoryInvitationService';
+import { StoryPermissionService } from '@/services/stories/StoryPermissionService';
+import { registerUser, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let bia: TestUser;

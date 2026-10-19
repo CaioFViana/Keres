@@ -1,3 +1,7 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import { useCharacterFormAssociations } from '@/src/screens/characters/useCharacterFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 const mockSetSelectedTagIds = jest.fn();
 const mockAlert = jest.fn();
@@ -6,35 +10,31 @@ const mockReadDraft = jest.fn();
 const mockPatchDraft = jest.fn();
 let mockModes: { id: string; characterId: string }[] = [];
 
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-jest.mock('../../../src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: () => ({ modes: mockModes }),
 }));
-jest.mock('../../../src/services/storymanagement/ModeService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ModeService', () => ({
   createModeService: jest.fn(() => ({ id: 'mode-service' })),
 }));
-jest.mock('../../../src/services/storymanagement/StatRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/StatRelationService', () => ({
   createStatRelationService: jest.fn(() => ({ id: 'stat-relation-service' })),
 }));
-jest.mock('../../../src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadDraft(...args),
   patchEntityFormSecondaryDraft: (...args: unknown[]) => mockPatchDraft(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import { useCharacterFormAssociations } from '../../../src/screens/characters/useCharacterFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

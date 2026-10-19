@@ -1,7 +1,8 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { decodeTime } from 'ulid';
-import { db, type CompatibleDb } from '../../db';
-import { operationLog } from '../../db/schema';
+import { env } from '@/config/env';
+import { db, type CompatibleDb } from '@/db';
+import { operationLog } from '@/db/schema';
 
 /**
  * Server-side history compaction ("squash") for the sync operation log.
@@ -45,21 +46,52 @@ export interface UpdateSquashRun {
   deleteIds: string[];
 }
 
-export interface HistoryCompactionPolicy {
+/** How long an entity's updates stay granular, and how many of its newest ones always do. */
+export interface EntityCompactionRule {
   /** Only squash updates strictly older than this. */
   olderThan: Date;
   /** The newest N updates per entity are never squashed. */
   keepRecentPerEntity: number;
 }
 
+export interface HistoryCompactionPolicy extends EntityCompactionRule {
+  /**
+   * Rules of the entity types that differ from the general one: the heavy ones, whose every update carries a large
+   * payload (see `HEAVY_ENTITY_TYPES`). A type not named here follows the general rule above.
+   */
+  byEntityType?: Record<string, EntityCompactionRule>;
+}
+
 export const DEFAULT_KEEP_RECENT_PER_ENTITY = 20;
 export const DEFAULT_SQUASH_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * The entity types whose updates are big - a scene's body, a sketch's strokes, a board, a map, a song - so that
+ * every kept update is a whole large copy. They squash sooner and keep fewer granular updates: the history of a
+ * body edited fifty times is fifty bodies, and nobody reviews edit number thirty. Conflict detection is not
+ * weakened by it: the merged row keeps every changed field and the run's last version (see the header).
+ */
+export const HEAVY_ENTITY_TYPES = ['Scene', 'Sketch', 'Board', 'LocationMap', 'Song'] as const;
+export const DEFAULT_HEAVY_KEEP_RECENT_PER_ENTITY = 3;
+export const DEFAULT_HEAVY_SQUASH_AGE_MS = 48 * 60 * 60 * 1000;
+
 export function defaultCompactionPolicy(now: Date = new Date()): HistoryCompactionPolicy {
-  return {
-    olderThan: new Date(now.getTime() - DEFAULT_SQUASH_AGE_MS),
-    keepRecentPerEntity: DEFAULT_KEEP_RECENT_PER_ENTITY,
+  const heavy: EntityCompactionRule = {
+    olderThan: new Date(now.getTime() - env.SYNC_SQUASH_HEAVY_AGE_HOURS * HOUR_MS),
+    keepRecentPerEntity: env.SYNC_SQUASH_HEAVY_KEEP_RECENT,
   };
+  return {
+    olderThan: new Date(now.getTime() - env.SYNC_SQUASH_AGE_DAYS * 24 * HOUR_MS),
+    keepRecentPerEntity: env.SYNC_SQUASH_KEEP_RECENT,
+    byEntityType: Object.fromEntries(HEAVY_ENTITY_TYPES.map((type) => [type, heavy])),
+  };
+}
+
+const HOUR_MS = 60 * 60 * 1000;
+
+/** The rule an entity type follows: its own when the policy names it, the general one otherwise. */
+function ruleFor(policy: HistoryCompactionPolicy, entityType: string): EntityCompactionRule {
+  return policy.byEntityType?.[entityType] ?? policy;
 }
 
 const entityKey = (op: Pick<CompactableOperation, 'entityType' | 'entityId'>): string =>
@@ -90,19 +122,18 @@ export function planUpdateSquash(
   const sorted = [...ops].sort((left, right) => left.operationVersion - right.operationVersion);
 
   // The newest K updates per entity stay granular, whatever their age.
-  const updateIdsByEntity = new Map<string, string[]>();
+  const updatesByEntity = new Map<string, { entityType: string; ids: string[] }>();
   for (const op of sorted) {
     if (op.operationType !== 'update') continue;
-    const bucket = updateIdsByEntity.get(entityKey(op));
-    if (bucket) bucket.push(op.id);
-    else updateIdsByEntity.set(entityKey(op), [op.id]);
+    const bucket = updatesByEntity.get(entityKey(op));
+    if (bucket) bucket.ids.push(op.id);
+    else updatesByEntity.set(entityKey(op), { entityType: op.entityType, ids: [op.id] });
   }
   const protectedIds = new Set<string>();
-  // `slice(-0)` is `slice(0)`: with no retention budget, nothing is protected.
-  if (policy.keepRecentPerEntity > 0) {
-    for (const ids of updateIdsByEntity.values()) {
-      for (const id of ids.slice(-policy.keepRecentPerEntity)) protectedIds.add(id);
-    }
+  for (const { entityType, ids } of updatesByEntity.values()) {
+    const keep = ruleFor(policy, entityType).keepRecentPerEntity;
+    // `slice(-0)` is `slice(0)`: with no retention budget, nothing is protected.
+    if (keep > 0) for (const id of ids.slice(-keep)) protectedIds.add(id);
   }
 
   // A run never crosses an entity, a structural op, or (for favourites) an author. Every write of a
@@ -146,8 +177,9 @@ export function planUpdateSquash(
       }
       current = [];
     };
+    const olderThan = ruleFor(policy, segment[0]!.entityType).olderThan.getTime();
     for (const op of segment) {
-      if (recordedAt(op) < policy.olderThan.getTime() && !protectedIds.has(op.id)) {
+      if (recordedAt(op) < olderThan && !protectedIds.has(op.id)) {
         current.push(op);
       } else {
         flush();

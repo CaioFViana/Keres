@@ -1,16 +1,16 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
-import PresenceMatrixViewerOverlay from '../../src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
+import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
 
 let mockRequest: unknown = null;
 const mockClose = jest.fn();
-jest.mock('../../src/state/presenceMatrixViewerStore', () => ({
+jest.mock('@/src/state/ui/presenceMatrixViewerStore', () => ({
   __esModule: true,
   usePresenceMatrixViewerStore: (selector: (state: unknown) => unknown) =>
     selector({ request: mockRequest, close: mockClose }),
 }));
 
-jest.mock('../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal', () => {
+jest.mock('@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -31,7 +31,7 @@ jest.mock('../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenMod
 });
 
 const mockContentProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/features/presence-matrix/PresenceMatrixViewerContent', () => {
+jest.mock('@/src/components/features/presence-matrix/PresenceMatrixViewerContent', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

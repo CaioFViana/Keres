@@ -1,7 +1,7 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -9,13 +9,13 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
-import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useRouteFormActions } from './useRouteFormActions';
 import { useRouteFormResources } from './useRouteFormResources';
 import { useRouteFormState } from './useRouteFormState';
@@ -89,11 +89,7 @@ export default function RouteFormScreen() {
       </FormField>
       {isEditing ? (
         <FormActions stackOnCompact>
-          <Button
-            onPress={handleDelete}
-            style={{ backgroundColor: colors.error }}
-            disabled={saving || deleting}
-          >
+          <Button onPress={handleDelete} variant="destructive" disabled={saving || deleting}>
             {t('delete_route_title')}
           </Button>
           <Button onPress={handleSave} disabled={saving || deleting}>

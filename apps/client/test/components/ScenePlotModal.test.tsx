@@ -1,10 +1,10 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import ScenePlotModal from '../../src/components/features/plots/PlotSceneManager/ScenePlotModal';
-import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
-import type { PlotScene } from '@keres/shared/entities/PlotScene';
+import ScenePlotModal from '@/src/components/features/plots/PlotSceneManager/ScenePlotModal';
+import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/narrative/PlotScene';
+import type { PlotScene } from '@keres/shared/entities/narrative/PlotScene';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -26,7 +26,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({
     entity: 'Scene',
@@ -35,7 +35,7 @@ jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
   }),
 }));
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -45,7 +45,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -55,7 +55,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -65,7 +65,7 @@ jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {
@@ -75,7 +75,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/FormActions/FormActions', () => {
+jest.mock('@/src/components/common/controls/FormActions/FormActions', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

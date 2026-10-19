@@ -1,16 +1,17 @@
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType } from '@keres/shared';
-import CommentListItem from '../../src/components/features/list-items/CommentListItem';
+import CommentListItem from '@/src/components/features/list-items/CommentListItem';
 import GalleryGridItem, {
   iconForGalleryMedia,
-} from '../../src/components/features/list-items/GalleryGridItem';
-import GlobalSearchResultItem from '../../src/components/features/list-items/GlobalSearchResultItem';
-import OperationLogListItem from '../../src/components/features/list-items/OperationLogListItem';
-import type { CommentSelect, GallerySelect, OperationLogSelect } from '../../src/db/schema';
-import type { GlobalSearchResult } from '../../src/services/storymanagement/GlobalSearchService';
+} from '@/src/components/features/list-items/GalleryGridItem';
+import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
+import OperationLogListItem from '@/src/components/features/list-items/OperationLogListItem';
+import type { CommentSelect, GallerySelect, OperationLogSelect } from '@/src/db/schema';
+import type { GlobalSearchResult } from '@/src/services/storymanagement/story-lifecycle/GlobalSearchService';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -37,30 +38,30 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Icon',
 }));
 
-jest.mock('../../src/components/common/display/Avatar/Avatar', () => () => null);
+jest.mock('@/src/components/common/display/Avatar/Avatar', () => () => null);
 
 const mockUseEntityName = jest.fn();
-jest.mock('../../src/hooks/useEntityName', () => ({
+jest.mock('@/src/hooks/entity/useEntityName', () => ({
   useEntityName: (...args: unknown[]) => mockUseEntityName(...args),
 }));
 
 const mockUseCommentFieldLabel = jest.fn();
-jest.mock('../../src/hooks/useCommentFieldLabel', () => ({
+jest.mock('@/src/hooks/comments/useCommentFieldLabel', () => ({
   useCommentFieldLabel: (...args: unknown[]) => mockUseCommentFieldLabel(...args),
 }));
 
 const mockUseAuthorProfiles = jest.fn();
-jest.mock('../../src/hooks/useAuthorProfiles', () => ({
+jest.mock('@/src/hooks/social/useAuthorProfiles', () => ({
   useAuthorProfiles: (...args: unknown[]) => mockUseAuthorProfiles(...args),
 }));
 
 const mockUseUserDisplayName = jest.fn();
-jest.mock('../../src/hooks/useUserDisplayName', () => ({
+jest.mock('@/src/hooks/social/useUserDisplayName', () => ({
   useUserDisplayName: (...args: unknown[]) => mockUseUserDisplayName(...args),
 }));
 
 const mockUseResolvedMediaUri = jest.fn();
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({
   useResolvedMediaUri: (...args: unknown[]) => mockUseResolvedMediaUri(...args),
 }));
 
@@ -264,7 +265,44 @@ describe('GalleryGridItem', () => {
     expect(mockImage).not.toHaveBeenCalled();
     expect(view.getByText('map.png')).toBeTruthy();
     const icons = view.container.queryAll((node: any) => node.type === Ionicons);
-    expect(icons.some((icon) => icon.props.name === 'musical-notes-outline')).toBe(true);
+    // The icon is the preview itself; a corner badge would only repeat it.
+    expect(icons.filter((icon) => icon.props.name === 'musical-notes-outline')).toHaveLength(1);
+  });
+
+  it('badges the type in the corner only when a thumbnail hides the type icon', async () => {
+    const view = await render(<GalleryGridItem media={gallery()} onPress={jest.fn()} />);
+
+    const icons = view.container.queryAll((node: any) => node.type === Ionicons);
+    expect(icons.filter((icon) => icon.props.name === 'image-outline')).toHaveLength(1);
+  });
+
+  it('keeps a fixed width when given one, so a short last row does not stretch', async () => {
+    const styleOf = (view: RenderResult) => {
+      const root = view.toJSON() as unknown as { props: { style: unknown } };
+      return StyleSheet.flatten(root.props.style as object) as Record<string, unknown>;
+    };
+
+    const sized = await render(
+      <GalleryGridItem media={gallery()} width={180} onPress={jest.fn()} />,
+    );
+    expect(styleOf(sized)).toEqual(
+      expect.objectContaining({ width: 180, flexGrow: 0, flexShrink: 0 }),
+    );
+
+    const shared = await render(<GalleryGridItem media={gallery()} onPress={jest.fn()} />);
+    expect(styleOf(shared)).toEqual(expect.objectContaining({ flex: 1 }));
+  });
+
+  it('labels its favorite button and marks the state', async () => {
+    const view = await render(
+      <GalleryGridItem
+        media={gallery({ isFavorite: true })}
+        onPress={jest.fn()}
+        onToggleFavorite={jest.fn()}
+      />,
+    );
+
+    expect(view.getByLabelText('favorite').props.accessibilityState).toEqual({ selected: true });
   });
 
   it('reports transfer states', async () => {

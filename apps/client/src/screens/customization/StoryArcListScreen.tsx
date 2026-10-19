@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -8,18 +8,20 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
-import { useTheme } from '@/src/theme';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/hooks/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import type { ArcsStackParamList } from '@/src/navigation/stacks/ArcsStack';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 
 const StoryArcListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -33,8 +35,7 @@ const StoryArcListScreen = () => {
   const { userId } = useUserSettingsStore();
   const notify = useNotificationStore((state) => state.showNotification);
   const vocab = useStoryVocabulary();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<CustomizationStackParamList, 'StoryArcList'>>();
+  const navigation = useNavigation<NativeStackNavigationProp<ArcsStackParamList, 'StoryArcList'>>();
   const [arcs, setArcs] = useState<StoryArcSelect[]>([]);
 
   const reload = useCallback(async () => {
@@ -95,23 +96,7 @@ const StoryArcListScreen = () => {
     );
   };
 
-  const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: colors.background, padding: 14 },
-    intro: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 14 },
-    card: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      backgroundColor: colors.card,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: 14,
-      marginBottom: 10,
-    },
-    title: { fontSize: 16, fontWeight: '700', color: colors.text },
-    empty: { fontSize: 13, color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <ScrollView ref={listAnchorRef} style={styles.root}>
@@ -139,5 +124,24 @@ const StoryArcListScreen = () => {
     </ScrollView>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.background, padding: 14 },
+    intro: { fontSize: 13, color: colors.textSecondary, lineHeight: 19, marginBottom: 14 },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.card,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: 10,
+    },
+    title: { ...typography.sectionTitle, color: colors.text },
+    empty: { fontSize: 13, color: colors.textSecondary },
+  });
 
 export default StoryArcListScreen;

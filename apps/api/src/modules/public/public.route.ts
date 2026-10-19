@@ -1,22 +1,40 @@
-import { APP_RELEASE, FORMAT_META } from '@keres/shared';
+import { APP_RELEASE } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { jwtShowcase } from '../../config/jwt';
-import { packService } from '../../services/PackService';
-import { publicationStorageService } from '../../services/PublicationStorageService';
-import { showcaseLogoStorageService } from '../../services/ShowcaseLogoStorageService';
-import { showcaseService } from '../../services/ShowcaseService';
-import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
-import { AppError } from '../../utils/errors';
-import { createAttemptLimiter } from '../../utils/rateLimiter';
+import { jwtShowcase } from '@/config/jwt';
+import type { JWTPayload } from '@/index';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
+import { packService } from '@/services/story-packages/PackService';
+import { publicationStorageService } from '@/services/publication/PublicationStorageService';
+import { showcaseLogoStorageService } from '@/services/showcase/ShowcaseLogoStorageService';
+import { showcaseService } from '@/services/showcase/ShowcaseService';
+import { showcaseSettingsService } from '@/services/showcase/ShowcaseSettingsService';
+import { AppError } from '@/utils/errors';
+import { createAttemptLimiter } from '@/utils/rateLimiter';
 import { publicReaderRoutes } from './publicReader.route';
-import { DOWNLOAD_URL_TTL_SECONDS, verifyShowcaseToken } from './showcaseAccess';
+import {
+  manuscriptMetaOf,
+  OwnerSchema,
+  SnapshotSchema,
+  slugify,
+  VersionSchema,
+} from './publicShapes';
+import {
+  DOWNLOAD_URL_TTL_SECONDS,
+  signedPublicationUrl,
+  verifyNsfwToken,
+  verifyShowcaseToken,
+} from './showcaseAccess';
+import { openShowcaseStory } from './showcaseGate';
+import { publicationCacheControl, publicationOr404 } from './showcasePublication';
 
 /**
  * The public site. No route here requires authentication, and none of them returns anything a
  * story's owner has not chosen to publish.
  *
  * With the Showcase off (the default), everything here answers 404 - not 403: a server that does not
- * want a public face also does not need to announce that the feature exists.
+ * want a public face also does not need to announce that the feature exists. The landing page's
+ * own calls (`/tiers`, `/contact`) live in `publicLanding.route.ts`, mounted next to this module
+ * but outside its guard.
  */
 
 /** The same window as /login: 5 attempts per 15 minutes, per story and per IP. */
@@ -25,67 +43,30 @@ const unlockLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 * 60 *
 /** A single message for "does not exist" and "wrong password" - see the comment on `/unlock`. */
 const UNLOCK_FAILURE = 'Incorrect password.';
 
-function slugify(title: string): string {
-  return (
-    title
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60) || 'story'
-  );
-}
-
-const OwnerSchema = t.Object({
-  username: t.String(),
-  tag: t.String(),
-  avatarColor: t.Nullable(t.String()),
-  avatarIcon: t.Nullable(t.String()),
-});
-
-const SnapshotSchema = t.Object({
-  title: t.String(),
-  description: t.Nullable(t.String()),
-  genre: t.Nullable(t.String()),
-  language: t.Nullable(t.String()),
-  author: t.Nullable(t.String()),
-  type: t.String(),
-  theme: t.Nullable(t.String()),
-});
-
-const VersionSchema = t.Object({
-  id: t.String(),
-  label: t.String(),
-  byteSize: t.Number(),
-  mediaIncluded: t.Number(),
-  mediaTotal: t.Number(),
-  createdAt: t.String(),
-  packageIncluded: t.Boolean(),
-  manuscript: t.Nullable(
-    t.Object({
-      format: t.String(),
-      byteSize: t.Number(),
-    }),
-  ),
-  reader: t.Nullable(t.Object({ byteSize: t.Number() })),
-});
-
-/** A version's manuscript delivery metadata, or null when the version carries no manuscript. */
-function manuscriptMetaOf(publication: {
-  manuscriptFormat: string | null;
-}): { extension: string; mimeType: string } | null {
-  if (!publication.manuscriptFormat) {
-    return null;
+/**
+ * Whether this request may see NSFW showcase content: a live age-verified session (resolved by
+ * the global derive, from Bearer or cookie), or - for one story - a content token issued to such
+ * a session. Anything else sees only the safe catalog. Never throws.
+ */
+async function maySeeNsfw(
+  user: JWTPayload | null,
+  showcaseJwt: {
+    verify: (token: string) => Promise<{ storyId?: string; nsfwOk?: boolean } | false>;
+  },
+  authorization: string | undefined,
+  storyId: string,
+): Promise<boolean> {
+  if (await showcaseService.viewerIncludesNsfw(user)) {
+    return true;
   }
-  return (
-    (FORMAT_META as Record<string, { extension: string; mimeType: string }>)[
-      publication.manuscriptFormat
-    ] ?? null
-  );
+  return verifyNsfwToken(showcaseJwt, authorization, storyId);
 }
 
 export const publicRoutes = new Elysia()
+  // The global derive already resolves the session (Bearer or cookie) into `user` for every
+  // request - this only declares the field for TypeScript, like the other modules do. Public
+  // routes decide per endpoint whether it matters; nothing here 401s on a missing session.
+  .decorate('user', null as JWTPayload | null)
   .use(jwtShowcase)
   .get(
     '/config',
@@ -93,6 +74,9 @@ export const publicRoutes = new Elysia()
       const settings = await showcaseSettingsService.getOrCreate();
       return {
         showcaseEnabled: settings.isShowcaseEnabled,
+        // Absent on older servers: a client that finds no such field publishes the legacy way.
+        // A constant, not a setting: this server always takes client-compiled bytes.
+        compiledUpload: true,
         serverVersion: APP_RELEASE.version,
         siteName: settings.siteName,
         sitePalette: settings.sitePalette,
@@ -105,6 +89,7 @@ export const publicRoutes = new Elysia()
     {
       response: t.Object({
         showcaseEnabled: t.Boolean(),
+        compiledUpload: t.Boolean(),
         serverVersion: t.String(),
         siteName: t.String(),
         sitePalette: t.String(),
@@ -113,7 +98,7 @@ export const publicRoutes = new Elysia()
       detail: {
         summary: 'Showcase availability',
         description:
-          'Whether this server exposes a public showcase. The only route here that answers while it is disabled.',
+          'Whether this server exposes a public showcase. The only route in this module that answers while it is disabled (the landing calls live in their own module).',
         tags: ['Showcase'],
       },
     },
@@ -165,8 +150,9 @@ export const publicRoutes = new Elysia()
       )
       .get(
         '/stories',
-        async ({ set, headers }) => {
-          const etag = await showcaseService.listEtag();
+        async ({ set, headers, user }) => {
+          const includeNsfw = await showcaseService.viewerIncludesNsfw(user);
+          const etag = await showcaseService.listEtag(includeNsfw);
           const cacheControl = 'public, max-age=0, must-revalidate';
           if (headers['if-none-match'] === etag) {
             // A raw `Response`: a 304 cannot have a body, and returning a value from here would make Elysia
@@ -179,7 +165,10 @@ export const publicRoutes = new Elysia()
           set.headers['etag'] = etag;
           // The site polls on an interval; without this every repeated visit would download the whole list.
           set.headers['cache-control'] = cacheControl;
-          return showcaseService.listPublicStories();
+          // The list of one viewer class never validates another's cache: the etag carries the
+          // class, and a forged etag only earns a refetch of what the forger may already see.
+          set.headers['vary'] = 'Authorization';
+          return showcaseService.listPublicStories(includeNsfw);
         },
         {
           detail: {
@@ -220,7 +209,7 @@ export const publicRoutes = new Elysia()
       )
       .get(
         '/stories/:storyId',
-        async ({ params, headers, jwtShowcase: showcaseJwt }) => {
+        async ({ params, headers, jwtShowcase: showcaseJwt, user }) => {
           const entry = await showcaseService.getEntry(params.storyId);
           if (!entry) {
             throw new AppError(404, 'Not found.');
@@ -239,7 +228,15 @@ export const publicRoutes = new Elysia()
             }
           }
 
-          const detail = await showcaseService.getStoryDetail(params.storyId);
+          // Shadowbanned (deactivated owner/story) and NSFW-to-unverified answer like
+          // unpublished: 404, indistinguishable from a story that was never there.
+          const includeNsfw = await maySeeNsfw(
+            user,
+            showcaseJwt,
+            headers['authorization'],
+            params.storyId,
+          );
+          const detail = await showcaseService.getStoryDetail(params.storyId, includeNsfw);
           if (!detail) {
             throw new AppError(404, 'Not found.');
           }
@@ -254,6 +251,7 @@ export const publicRoutes = new Elysia()
               snapshot: SnapshotSchema,
               owner: OwnerSchema,
               versions: t.Array(VersionSchema),
+              hasCover: t.Optional(t.Boolean()),
               updatedAt: t.String(),
             }),
           ]),
@@ -265,9 +263,46 @@ export const publicRoutes = new Elysia()
           },
         },
       )
+      .get(
+        '/stories/:storyId/cover',
+        async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
+          // The same gates as the story's page: a password, an adults-only shelf and a hidden story keep their cover too.
+          await openShowcaseStory({
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [
+              headers['authorization'],
+              query.access ? `Showcase ${query.access}` : undefined,
+            ],
+          });
+          const cover = await showcaseService.coverOf(params.storyId);
+          const stored = cover ? await mediaStorageService.read(cover.hash) : null;
+          if (!cover || !stored) {
+            throw new AppError(404, 'Not found.');
+          }
+          set.headers['content-type'] = cover.mimeType;
+          set.headers['x-content-type-options'] = 'nosniff';
+          // A cover can change; an adults-only story's is not for a shared cache.
+          set.headers['cache-control'] = (await showcaseService.isNsfwStory(params.storyId))
+            ? 'private, max-age=300'
+            : 'public, max-age=300';
+          return stored.body;
+        },
+        {
+          params: t.Object({ storyId: t.String() }),
+          query: t.Object({ access: t.Optional(t.String()) }),
+          detail: {
+            summary: 'The cover of a published story',
+            description:
+              'The picture the author chose as the cover, as it is now. 404 when the story has none, or is not for this viewer.',
+            tags: ['Showcase'],
+          },
+        },
+      )
       .post(
         '/stories/:storyId/unlock',
-        async ({ params, body, jwtShowcase: showcaseJwt, server, request }) => {
+        async ({ params, body, jwtShowcase: showcaseJwt, server, request, user }) => {
           const clientIp = server?.requestIP(request)?.address ?? 'unknown';
           if (!unlockLimiter.registerAttempt(`${params.storyId}:${clientIp}`)) {
             throw new AppError(429, 'Too many attempts. Try again later.');
@@ -281,7 +316,14 @@ export const publicRoutes = new Elysia()
           }
 
           unlockLimiter.clearAttempts(`${params.storyId}:${clientIp}`);
-          return { token: await showcaseJwt.sign({ storyId: params.storyId }) };
+          // A verified adult keeps their gating through header-less fetches: the token carries
+          // the proof, so downloads and the reader of an NSFW+password story keep working.
+          const nsfwOk = await showcaseService.viewerIncludesNsfw(user);
+          return {
+            token: await showcaseJwt.sign(
+              nsfwOk ? { storyId: params.storyId, nsfwOk: true } : { storyId: params.storyId },
+            ),
+          };
         },
         {
           params: t.Object({ storyId: t.String() }),
@@ -296,36 +338,24 @@ export const publicRoutes = new Elysia()
       )
       .get(
         '/stories/:storyId/publications/:publicationId/download',
-        async ({ params, headers, query, jwtShowcase: showcaseJwt, set }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          if (entry.visibility === 'password') {
-            // An `<a download>` carries no header, so the page asks for the link at `POST .../download-url` and
-            // gets the token back as a parameter, valid for 60 seconds. It is the only place where it appears in
-            // a URL.
-            const authorized =
-              (await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-              (await verifyShowcaseToken(
-                showcaseJwt,
-                query.access ? `Showcase ${query.access}` : undefined,
-                params.storyId,
-              ));
-            if (!authorized) {
-              throw new AppError(404, 'Not found.');
-            }
-          }
+        async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
+          await openShowcaseStory({
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [
+              headers['authorization'],
+              query.access ? `Showcase ${query.access}` : undefined,
+            ],
+          });
 
-          const publication = await showcaseService.getPublication(
-            params.storyId,
-            params.publicationId,
-          );
           // A version made only of a manuscript and/or the reader has no package to serve (nor, on S3,
           // a key to sign).
-          if (!publication || !publication.packageIncluded) {
-            throw new AppError(404, 'Not found.');
-          }
+          const publication = await publicationOr404(
+            params.storyId,
+            params.publicationId,
+            (candidate) => candidate.packageIncluded,
+          );
 
           const fileName = `${slugify(
             (publication.snapshot as { title: string }).title,
@@ -352,8 +382,7 @@ export const publicRoutes = new Elysia()
 
           set.headers['content-type'] = 'application/zip';
           set.headers['content-disposition'] = `attachment; filename="${fileName}"`;
-          // A publication never changes after it is created.
-          set.headers['cache-control'] = 'public, max-age=31536000, immutable';
+          set.headers['cache-control'] = await publicationCacheControl(params.storyId);
           return body;
         },
         {
@@ -369,36 +398,30 @@ export const publicRoutes = new Elysia()
       )
       .post(
         '/stories/:storyId/publications/:publicationId/download-url',
-        async ({ params, headers, jwtShowcase: showcaseJwt }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          if (
-            entry.visibility === 'password' &&
-            !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
-          ) {
-            throw new AppError(404, 'Not found.');
-          }
-
-          const publication = await showcaseService.getPublication(
+        async ({ params, headers, jwtShowcase: showcaseJwt, user }) => {
+          const { entry, includeNsfw } = await openShowcaseStory({
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [headers['authorization']],
+          });
+          await publicationOr404(
             params.storyId,
             params.publicationId,
+            (candidate) => candidate.packageIncluded,
           );
-          if (!publication || !publication.packageIncluded) {
-            throw new AppError(404, 'Not found.');
-          }
 
-          const access =
-            entry.visibility === 'password'
-              ? await showcaseJwt.sign({
-                  storyId: params.storyId,
-                  exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
-                })
-              : undefined;
-
-          const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/download`;
-          return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
+          // A token goes into the URL when the plain address would not open: password stories
+          // (existing behavior), or a verified adult's NSFW download (the `nsfwOk` proof, so the
+          // header-less download keeps the gating without carrying the session).
+          return signedPublicationUrl({
+            showcaseJwt,
+            entry,
+            storyId: params.storyId,
+            publicationId: params.publicationId,
+            includeNsfw,
+            resource: 'download',
+          });
         },
         {
           params: t.Object({ storyId: t.String(), publicationId: t.String() }),
@@ -413,25 +436,16 @@ export const publicRoutes = new Elysia()
       )
       .get(
         '/stories/:storyId/publications/:publicationId/manuscript/download',
-        async ({ params, headers, query, jwtShowcase: showcaseJwt, set }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          if (entry.visibility === 'password') {
-            // Same arrangement as the package download: the token arrives as a query parameter
-            // because `<a download>` carries no header.
-            const authorized =
-              (await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId)) ||
-              (await verifyShowcaseToken(
-                showcaseJwt,
-                query.access ? `Showcase ${query.access}` : undefined,
-                params.storyId,
-              ));
-            if (!authorized) {
-              throw new AppError(404, 'Not found.');
-            }
-          }
+        async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
+          await openShowcaseStory({
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [
+              headers['authorization'],
+              query.access ? `Showcase ${query.access}` : undefined,
+            ],
+          });
 
           const publication = await showcaseService.getPublication(
             params.storyId,
@@ -471,8 +485,7 @@ export const publicRoutes = new Elysia()
 
           set.headers['content-type'] = meta.mimeType;
           set.headers['content-disposition'] = `attachment; filename="${fileName}"`;
-          // A publication never changes after it is created.
-          set.headers['cache-control'] = 'public, max-age=31536000, immutable';
+          set.headers['cache-control'] = await publicationCacheControl(params.storyId);
           return body;
         },
         {
@@ -488,36 +501,27 @@ export const publicRoutes = new Elysia()
       )
       .post(
         '/stories/:storyId/publications/:publicationId/manuscript/download-url',
-        async ({ params, headers, jwtShowcase: showcaseJwt }) => {
-          const entry = await showcaseService.getEntry(params.storyId);
-          if (!entry) {
-            throw new AppError(404, 'Not found.');
-          }
-          if (
-            entry.visibility === 'password' &&
-            !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
-          ) {
-            throw new AppError(404, 'Not found.');
-          }
-
-          const publication = await showcaseService.getPublication(
+        async ({ params, headers, jwtShowcase: showcaseJwt, user }) => {
+          const { entry, includeNsfw } = await openShowcaseStory({
+            storyId: params.storyId,
+            user,
+            showcaseJwt,
+            credentials: [headers['authorization']],
+          });
+          await publicationOr404(
             params.storyId,
             params.publicationId,
+            (candidate) => manuscriptMetaOf(candidate) !== null,
           );
-          if (!publication || !manuscriptMetaOf(publication)) {
-            throw new AppError(404, 'Not found.');
-          }
 
-          const access =
-            entry.visibility === 'password'
-              ? await showcaseJwt.sign({
-                  storyId: params.storyId,
-                  exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
-                })
-              : undefined;
-
-          const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/manuscript/download`;
-          return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
+          return signedPublicationUrl({
+            showcaseJwt,
+            entry,
+            storyId: params.storyId,
+            publicationId: params.publicationId,
+            includeNsfw,
+            resource: 'manuscript/download',
+          });
         },
         {
           params: t.Object({ storyId: t.String(), publicationId: t.String() }),

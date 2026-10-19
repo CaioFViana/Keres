@@ -7,8 +7,8 @@ import {
   type ShowcasePackDetail,
   type StorySchemaEntityType,
 } from '@keres/shared';
-import { ShowcaseApp } from '../../src/showcase/App';
-import { flush, render } from '../helpers/react';
+import { ShowcaseApp } from '@/showcase/App';
+import { flush, render } from '@test/helpers/react';
 
 /**
  * The public packs on the Showcase.
@@ -29,7 +29,7 @@ const mocks = vi.hoisted(() => ({
   fetchPack: vi.fn(),
 }));
 
-vi.mock('../../src/showcase/api/showcaseApi', () => ({
+vi.mock('@/showcase/api/showcaseApi', () => ({
   fetchStories: mocks.fetchStories,
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
@@ -60,6 +60,7 @@ const noExtras: PackContentType['extras'] = {
   worldRules: [],
   notes: [],
   storyBoards: [],
+  storySketches: [],
   storyLocationMaps: [],
   characterScenes: [],
   characterRelations: [],

@@ -1,13 +1,14 @@
 import { getEntityAppearance } from '@keres/shared';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
-import { useTheme } from '../../../../theme';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
-import { createULID } from '../../../../utils/entityUtils';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { createULID } from '@/src/utils/entity/entityUtils';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 import RelationManager from '@/src/components/features/relations/RelationManager/RelationManager'; // Removed BaseItem, BaseRelation
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
@@ -37,10 +38,9 @@ const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
 }) => {
   const { t } = useTranslation();
   const characterCopy = useVocabularyEntityCopy('Character');
-  const { colors } = useTheme();
   const navigateToDetail = useNavigateToEntityDetail();
 
-  const styles = StyleSheet.create(relationSectionStyleDefs(colors));
+  const styles = useThemedStyles(createStyles);
 
   const handleCharacterPress = useCallback(
     (character: Character) => {
@@ -122,5 +122,7 @@ const SceneCharacterManager: React.FC<SceneCharacterManagerProps> = ({
     />
   );
 };
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create(relationSectionStyleDefs(colors));
 
 export default SceneCharacterManager;

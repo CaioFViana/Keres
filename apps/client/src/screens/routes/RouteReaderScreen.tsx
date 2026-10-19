@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
@@ -9,13 +9,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryRoutes } from '../../hooks/useStoryRoutes';
-import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteReader'>;
 type ScreenRoute = RouteProp<PlotsStackParamList, 'RouteReader'>;

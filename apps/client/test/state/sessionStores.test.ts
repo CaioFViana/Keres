@@ -1,18 +1,18 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/services/ClientSettingsService', () => ({
+import * as ClientSettingsService from '@/src/services/account/ClientSettingsService';
+import { useGalleryMediaViewerStore } from '@/src/state/ui/galleryMediaViewerStore';
+import { useHeaderBackActionStore } from '@/src/state/ui/headerBackActionStore';
+import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
+import { useThemeStore } from '@/src/state/ui/themeStore';
+
+jest.mock('@/src/services/account/ClientSettingsService', () => ({
   __esModule: true,
   getClientSettings: jest.fn(),
   updateClientSettings: jest.fn(),
 }));
-
-import * as ClientSettingsService from '../../src/services/ClientSettingsService';
-import { useGalleryMediaViewerStore } from '../../src/state/galleryMediaViewerStore';
-import { useHeaderBackActionStore } from '../../src/state/headerBackActionStore';
-import { useLocationMapDraftStore } from '../../src/state/locationMapDraftStore';
-import { usePresenceMatrixViewerStore } from '../../src/state/presenceMatrixViewerStore';
-import { useThemeStore } from '../../src/state/themeStore';
 
 const settingsService = ClientSettingsService as unknown as {
   getClientSettings: jest.Mock;
@@ -82,6 +82,18 @@ describe('small session stores', () => {
       returnToOrigin,
     );
     expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBeUndefined();
+  });
+
+  it('forgets a way back only for the screen it was registered for', () => {
+    const returnToOrigin = jest.fn();
+    const store = useHeaderBackActionStore.getState();
+    store.setCrossStackReturnAction(returnToOrigin, 'StoryPublish');
+
+    store.clearCrossStackReturnAction('StoryArcForm');
+    expect(useHeaderBackActionStore.getState().crossStackReturnAction).toBe(returnToOrigin);
+
+    store.clearCrossStackReturnAction('StoryPublish');
+    expect(useHeaderBackActionStore.getState().crossStackReturnAction).toBeUndefined();
   });
 });
 

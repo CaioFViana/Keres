@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
+import ItemDetailScreen from '@/src/screens/items/ItemDetailScreen';
 
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
@@ -62,12 +64,15 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
   },
 }));
+jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
+  require('@/test/helpers/detailTabsMock'),
+);
 jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
@@ -218,70 +223,70 @@ jest.mock('@/src/components/features/arcs/AppearsInArcsSection', () => {
     ),
   };
 });
-jest.mock('@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: () => <Text testID="seealso-marker">seealso</Text>,
   };
 });
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: () => <Text testID="entity-metadata">metadata</Text>,
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => mockEntityComments,
 }));
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   __esModule: true,
   useEntityRelations: () => mockEntityRelations,
 }));
-jest.mock('../../../src/hooks/useAppearsInArcs', () => ({
+jest.mock('@/src/hooks/arcs/useAppearsInArcs', () => ({
   __esModule: true,
   useAppearsInArcs: () => mockArcs,
 }));
-jest.mock('../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenGalleryMediaViewer,
 }));
-jest.mock('../../../src/hooks/useOpenPresenceMatrixViewer', () => ({
+jest.mock('@/src/hooks/character/useOpenPresenceMatrixViewer', () => ({
   __esModule: true,
   useOpenPresenceMatrixViewer: () => ({ openItem: mockOpenJourneyMap }),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getAllByStoryId: mockGetCharacters }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemService', () => ({
   __esModule: true,
   createItemService: () => ({ getById: mockGetItemById }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { primary: '#00f' } }),
 }));
-jest.mock('../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => mockVocabularyCopy,
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => mockVocabulary,
 }));
@@ -289,8 +294,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import ItemDetailScreen from '../../../src/screens/items/ItemDetailScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

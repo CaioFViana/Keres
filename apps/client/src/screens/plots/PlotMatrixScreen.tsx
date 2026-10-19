@@ -3,27 +3,27 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { PresenceMatrixCanvasHandle } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { graphSeriesColor } from '@keres/shared';
-import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presence-matrix/presenceMatrixSvg';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryPlots } from '../../hooks/useStoryPlots';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { deliverMapExport } from '../../utils/storyTransfer';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 /** Same cap as the presence matrix: the two charts are read side by side. */
 const MAX_VISIBLE_SERIES = 12;
@@ -121,6 +121,8 @@ const PlotMatrixScreen = () => {
 
   const exportMatrix = useCallback(async () => {
     if (!selectedStory || layout.rows.length === 0) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setSaving(true);
     try {
       const svg = renderPresenceMatrixSvg(layout, {
@@ -132,11 +134,7 @@ const PlotMatrixScreen = () => {
         border: colors.border,
         showRowCoverage: true,
       });
-      const result = await deliverMapExport(
-        svg,
-        `${selectedStory.title}-tramas.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const result = await deliverMapExport(svg, `${selectedStory.title}-tramas.svg`, format);
       notify(
         result.delivered
           ? t('plot_matrix_export_success', { fileName: result.fileName })
@@ -183,7 +181,7 @@ const PlotMatrixScreen = () => {
           justifyContent: 'center',
           padding: 32,
         },
-        emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 12 },
+        emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 },
         emptyDescription: {
           color: colors.textSecondary,
           fontSize: 14,

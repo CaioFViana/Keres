@@ -1,18 +1,18 @@
 /**
  * @jest-environment node
  */
-jest.mock('../../src/db/migrations', () => ({
+import Database from 'better-sqlite3';
+
+import { migrate } from '@/src/db/migrate';
+import migrations from '@/src/db/migrations';
+
+jest.mock('@/src/db/migrations', () => ({
   __esModule: true,
   default: [
     { name: 'successful', run: jest.fn().mockResolvedValue(undefined) },
     { name: 'broken', run: jest.fn().mockRejectedValue(new Error('broken migration')) },
   ],
 }));
-
-import Database from 'better-sqlite3';
-
-import { migrate } from '../../src/db/migrate';
-import migrations from '../../src/db/migrations';
 
 const [successful, broken] = migrations as unknown as {
   name: string;

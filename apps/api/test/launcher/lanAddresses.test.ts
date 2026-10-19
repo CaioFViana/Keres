@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatLanUrls, lanHttpUrls, listLanIPv4 } from '../../src/launcher/lanAddresses';
+import { formatLanUrls, lanHttpUrls, listLanIPv4 } from '@/launcher/lanAddresses';
 
 describe('listLanIPv4', () => {
   it('keeps non-internal IPv4 addresses and skips loopback, IPv6 and APIPA', () => {

@@ -3,8 +3,8 @@ import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@k
 import { CreateStoryDataSchema, PartialStorySchema } from '@keres/shared';
 import { ownerOnlyFieldsIn } from '@keres/shared';
 import type { z } from 'zod';
-import { db, type CompatibleDb } from '../../db';
-import { stories } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { stories } from '@/db/schema';
 import {
   BaseSyncEntityHandler,
   SyncConflictError,

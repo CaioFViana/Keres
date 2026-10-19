@@ -149,8 +149,9 @@ describe('character form responsibilities', () => {
     expect(state).toContain('initialCharacterId');
     expect(state).toContain('retainPersistedCharacterId');
     expect(state).not.toMatch(/getById\(currentCharacterId/);
-    expect(actions).toContain('saveEntityWithSecondaryData');
+    expect(actions).toContain('useEntityFormActions');
     expect(actions).toContain('retainPersistedCharacterId');
+    expect(actions).not.toMatch(/saveEntityWithSecondaryData|AppAlert|createAttributeValueService/);
     expect(associations).toContain('preserveDraftOnEntityCreation: true');
   });
 });
@@ -186,8 +187,10 @@ describe('location form responsibilities', () => {
     expect(state).toContain('initialLocationId');
     expect(state).toContain('retainPersistedLocationId');
     expect(state).not.toMatch(/getById\(currentLocationId/);
-    expect(actions).toContain('saveEntityWithSecondaryData');
+    // The save/delete flow lives once in the shared hook; the entity's hook only configures it.
+    expect(actions).toContain('useEntityFormActions');
     expect(actions).toContain('retainPersistedLocationId');
+    expect(actions).not.toMatch(/saveEntityWithSecondaryData|AppAlert|createAttributeValueService/);
     expect(associations).toContain('preserveDraftOnEntityCreation: true');
   });
 });
@@ -196,7 +199,7 @@ describe('extracted multi-step form responsibilities', () => {
   const forms = [
     {
       label: 'WorldRule',
-      dir: 'screens/worldrules',
+      dir: 'screens/world-rules',
       screen: 'WorldRuleFormScreen.tsx',
       prefix: 'WorldRule',
       idName: 'WorldRuleId',
@@ -236,7 +239,7 @@ describe('extracted multi-step form responsibilities', () => {
     },
     {
       label: 'ItemJourney',
-      dir: 'screens/itemJourneys',
+      dir: 'screens/item-journeys',
       screen: 'ItemJourneyFormScreen.tsx',
       prefix: 'ItemJourney',
       idName: 'ItemJourneyId',
@@ -244,9 +247,12 @@ describe('extracted multi-step form responsibilities', () => {
     },
   ] as const;
 
+  // Forms whose save/delete flow is configured on the shared useEntityFormActions hook.
+  const sharedActionForms = ['WorldRule', 'Item', 'Chapter', 'Choice', 'ItemJourney', 'Note'];
+
   it.each(forms)(
     '$label keeps service setup and persistence coordination outside the screen',
-    ({ dir, screen, prefix, idName, createService }) => {
+    ({ label, dir, screen, prefix, idName, createService }) => {
       const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
       const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
       const actions = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`), 'utf8');
@@ -267,7 +273,15 @@ describe('extracted multi-step form responsibilities', () => {
       expect(state).toContain(`initial${idName}`);
       expect(state).toContain(`retainPersisted${idName}`);
       expect(state).not.toMatch(new RegExp(`getById\\(current${idName}`));
-      expect(actions).toContain('saveEntityWithSecondaryData');
+      if (sharedActionForms.includes(label)) {
+        // The save/delete flow lives once in the shared hook; the entity's hook only configures it.
+        expect(actions).toContain('useEntityFormActions');
+        expect(actions).not.toMatch(
+          /saveEntityWithSecondaryData|AppAlert|createAttributeValueService/,
+        );
+      } else {
+        expect(actions).toContain('saveEntityWithSecondaryData');
+      }
       expect(actions).toContain(`retainPersisted${idName}`);
       expect(associations).toContain('preserveDraftOnEntityCreation: true');
     },
@@ -278,7 +292,7 @@ describe('extracted simple form responsibilities', () => {
   const forms = [
     {
       label: 'Story',
-      dir: 'screens/enterstack',
+      dir: 'screens/enter-stack/story-entry',
       screen: 'StoryFormScreen.tsx',
       prefix: 'Story',
       idParam: 'initialStoryId',
@@ -294,7 +308,7 @@ describe('extracted simple form responsibilities', () => {
     },
     {
       label: 'Friendship',
-      dir: 'screens/enterstack',
+      dir: 'screens/enter-stack/social',
       screen: 'FriendshipFormScreen.tsx',
       prefix: 'Friendship',
       idParam: null,
@@ -302,7 +316,7 @@ describe('extracted simple form responsibilities', () => {
     },
     {
       label: 'StorySchemaField',
-      dir: 'screens/storyschema',
+      dir: 'screens/story-schema',
       screen: 'StorySchemaFieldFormScreen.tsx',
       prefix: 'StorySchemaField',
       idParam: 'initialFieldId',
@@ -373,7 +387,7 @@ describe('extracted simple form responsibilities', () => {
  * and a name that stays listed after having been broken up.
  */
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT: Array<string> = [];
+const FILES_OVER_THE_LIMIT: string[] = [];
 
 /** Counts only meaningful source lines, leaving comments and visual spacing out of the ceiling. */
 function codeLineCount(content: string): number {
@@ -435,5 +449,19 @@ describe('file size', () => {
       .sort();
 
     expect(oversized).toEqual([...FILES_OVER_THE_LIMIT].sort());
+  });
+});
+
+describe('shared entity form actions', () => {
+  it('owns the save flow every entity form configures: secondary data, attributes, event, feedback', () => {
+    const shared = readFileSync(
+      resolve(SOURCE_ROOT, 'hooks/forms/useEntityFormActions.ts'),
+      'utf8',
+    );
+
+    expect(shared).toContain('saveEntityWithSecondaryData');
+    expect(shared).toContain('createAttributeValueService');
+    expect(shared).toContain('entityEventEmitter.emit(config.changeEvent');
+    expect(shared).toContain('useConfirmDelete');
   });
 });

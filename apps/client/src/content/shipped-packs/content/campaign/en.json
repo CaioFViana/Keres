@@ -1,0 +1,315 @@
+{
+  "id": "KRSPKCMPENP000000000000000",
+  "name": "Tabletop campaign",
+  "description": "A chronicle of what happened at the table: sessions with their real date, who was there, and the threads left open. Notes for the history, not a game system.",
+  "authorName": "Keres",
+  "version": 1,
+  "content": {
+    "formatVersion": 1,
+    "storySchemaFields": [
+      {
+        "id": "KRSPKCMPENF000000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "entityType": "Chapter",
+        "name": "Played on",
+        "key": "session_date",
+        "description": "The real date the table met, not the date in the story.",
+        "type": "date",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 0,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENF001000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "entityType": "Chapter",
+        "name": "At the table",
+        "key": "at_the_table",
+        "description": "Who played this session.",
+        "type": "text",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 1,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENF002000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "entityType": "Chapter",
+        "name": "Open threads",
+        "key": "open_threads",
+        "description": "What was left hanging, to pick up next time.",
+        "type": "long_text",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 2,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENF003000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "entityType": "Character",
+        "name": "Role at the table",
+        "key": "character_kind",
+        "description": null,
+        "type": "suggestion",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 3,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENF004000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "entityType": "Character",
+        "name": "Played by",
+        "key": "played_by",
+        "description": null,
+        "type": "text",
+        "targetEntityType": null,
+        "isRequired": false,
+        "defaultValue": null,
+        "order": 4,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "suggestions": [
+      {
+        "id": "KRSPKCMPENS060000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "type": "custom:KRSPKCMPENF003000000000000",
+        "value": "Player character",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENS061000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "type": "custom:KRSPKCMPENF003000000000000",
+        "value": "NPC",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENS062000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "type": "custom:KRSPKCMPENF003000000000000",
+        "value": "Companion",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENS063000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "type": "custom:KRSPKCMPENF003000000000000",
+        "value": "Monster",
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "tags": [
+      {
+        "id": "KRSPKCMPENG000000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "name": "NPC",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENG001000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "name": "Faction",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENG002000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "name": "Quest",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENG003000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "name": "Magic item",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      {
+        "id": "KRSPKCMPENG004000000000000",
+        "storyId": "KRSPKCMPENP000000000000000",
+        "name": "Rumor",
+        "color": null,
+        "isFavorite": false,
+        "extraNotes": null,
+        "createdAt": "2026-01-01T00:00:00.000Z",
+        "updatedAt": "2026-01-01T00:00:00.000Z",
+        "version": 1,
+        "isDeleted": false,
+        "deletedAt": null
+      }
+    ],
+    "extras": {
+      "notes": [
+        {
+          "id": "KRSPKCMPENN000000000000000",
+          "storyId": "KRSPKCMPENP000000000000000",
+          "title": "Session zero",
+          "body": "What the table agreed before the first session: tone, limits, how often you meet, who runs the game.",
+          "isFavorite": false,
+          "extraNotes": null,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        },
+        {
+          "id": "KRSPKCMPENN001000000000000",
+          "storyId": "KRSPKCMPENP000000000000000",
+          "title": "House rules",
+          "body": "The rules this table plays by, where they differ from the book.",
+          "isFavorite": false,
+          "extraNotes": null,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        },
+        {
+          "id": "KRSPKCMPENN002000000000000",
+          "storyId": "KRSPKCMPENP000000000000000",
+          "title": "Campaign timeline",
+          "body": "The big events in order, session by session.",
+          "isFavorite": false,
+          "extraNotes": null,
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        }
+      ]
+    },
+    "stats": [],
+    "statStrengths": [],
+    "settings": {
+      "statSystem": false,
+      "statNotation": "letter",
+      "vocabulary": {
+        "version": 1,
+        "language": "en",
+        "terms": {
+          "Character": {
+            "singular": "Character",
+            "plural": "Characters",
+            "grammaticalGender": "neutral"
+          },
+          "Location": {
+            "singular": "Place",
+            "plural": "Places",
+            "grammaticalGender": "neutral"
+          },
+          "Chapter": {
+            "singular": "Session",
+            "plural": "Sessions",
+            "grammaticalGender": "neutral"
+          },
+          "Scene": {
+            "singular": "Scene",
+            "plural": "Scenes",
+            "grammaticalGender": "neutral"
+          },
+          "Event": {
+            "singular": "Game Event",
+            "plural": "Game Events",
+            "grammaticalGender": "neutral"
+          },
+          "Item": {
+            "singular": "Item",
+            "plural": "Items",
+            "grammaticalGender": "neutral"
+          },
+          "WorldRule": {
+            "singular": "Table Rule",
+            "plural": "Table Rules",
+            "grammaticalGender": "neutral"
+          },
+          "Choice": {
+            "singular": "Player Choice",
+            "plural": "Player Choices",
+            "grammaticalGender": "neutral"
+          },
+          "Arc": {
+            "singular": "Module",
+            "plural": "Modules",
+            "grammaticalGender": "neutral"
+          }
+        }
+      }
+    }
+  }
+}

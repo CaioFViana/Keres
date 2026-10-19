@@ -2,25 +2,26 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
-import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presence-matrix/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presence-matrix/presenceMatrixSvg';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { CharacterSelect, ItemSelect } from '../../../db/schema';
-import { usePresenceMatrixCatalog } from '../../../hooks/usePresenceMatrixCatalog';
-import { useNotificationStore } from '../../../state/notificationStore';
-import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
-import { useStoryStore } from '../../../state/storyStore';
-import { useTheme } from '../../../theme';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { deliverMapExport } from '../../../utils/storyTransfer';
-import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
+import type { CharacterSelect, ItemSelect } from '@/src/db/schema';
+import { usePresenceMatrixCatalog } from '@/src/hooks/character/usePresenceMatrixCatalog';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import type { PresenceMatrixViewerRequest } from '@/src/state/ui/presenceMatrixViewerStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
 import { MAX_VISIBLE_SERIES, seriesColor } from './presenceMatrixConstants';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 type BulkOrder = 'appearance' | 'alphabetical';
 
 const PresenceMatrixViewerContent: React.FC<{
@@ -208,6 +209,8 @@ const PresenceMatrixViewerContent: React.FC<{
   ]);
   const exportMap = useCallback(async () => {
     if (!story || !layout.rows.length) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setSaving(true);
     try {
       const svg = renderPresenceMatrixSvg(layout, {
@@ -220,11 +223,7 @@ const PresenceMatrixViewerContent: React.FC<{
         border: colors.border,
         showRowCoverage: request.kind === 'character',
       });
-      const r = await deliverMapExport(
-        svg,
-        `${story.title}-presenca.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const r = await deliverMapExport(svg, `${story.title}-presenca.svg`, format);
       notify(
         r.delivered
           ? t('presence_matrix_export_success', { fileName: r.fileName })
@@ -239,14 +238,6 @@ const PresenceMatrixViewerContent: React.FC<{
     () =>
       StyleSheet.create({
         root: { flex: 1, backgroundColor: colors.background },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 12,
-          borderBottomWidth: 1,
-          borderColor: colors.border,
-        },
-        title: { flex: 1, color: colors.text, fontSize: 17, fontWeight: '700' },
         chips: {
           flexDirection: 'row',
           gap: 6,
@@ -259,7 +250,7 @@ const PresenceMatrixViewerContent: React.FC<{
           alignItems: 'center',
           gap: 5,
           borderRadius: 14,
-          paddingHorizontal: 9,
+          paddingHorizontal: 10,
           paddingVertical: 5,
         },
         controls: { position: 'absolute', right: 14, bottom: 18, gap: 8 },
@@ -290,7 +281,7 @@ const PresenceMatrixViewerContent: React.FC<{
           justifyContent: 'center',
           padding: 32,
         },
-        emptyTitle: { color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 12 },
+        emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginTop: 12 },
         emptyDescription: {
           color: colors.textSecondary,
           fontSize: 14,
@@ -299,7 +290,7 @@ const PresenceMatrixViewerContent: React.FC<{
           maxWidth: 360,
           textAlign: 'center',
         },
-        orderModal: { padding: 18, gap: 10 },
+        orderModal: { gap: 10 },
         orderModalTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 4 },
         orderOption: {
           borderWidth: 1,
@@ -326,12 +317,7 @@ const PresenceMatrixViewerContent: React.FC<{
   if (story?.type !== 'linear')
     return (
       <View style={styles.root}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('presence_matrix_title')}</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={26} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+        <ModalHeader bordered title={t('presence_matrix_title')} onClose={onClose} />
         <Text style={styles.message}>{t('presence_matrix_branching_unavailable')}</Text>
       </View>
     );
@@ -343,14 +329,13 @@ const PresenceMatrixViewerContent: React.FC<{
     );
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {request.kind === 'item' ? t('presence_matrix_item_title') : t('presence_matrix_title')}
-        </Text>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={26} color={colors.text} />
-        </TouchableOpacity>
-      </View>
+      <ModalHeader
+        bordered
+        title={
+          request.kind === 'item' ? t('presence_matrix_item_title') : t('presence_matrix_title')
+        }
+        onClose={onClose}
+      />
       {request.kind === 'character' && (
         <MultiSelectPill
           options={characters.map((character) => ({
@@ -430,6 +415,7 @@ const PresenceMatrixViewerContent: React.FC<{
         visible={bulkOrderVisible}
         onClose={() => setBulkOrderVisible(false)}
         keyboardAvoiding={false}
+        inset="regular"
       >
         <View style={styles.orderModal}>
           <Text style={styles.orderModalTitle}>{t('presence_matrix_add_all')}</Text>

@@ -1,0 +1,58 @@
+import { eq } from 'drizzle-orm';
+import { useEffect, useState } from 'react';
+import { useDrizzle } from '@/src/db';
+import { servers, stories } from '@/src/db/schema';
+import type { ResolvedUserProfile } from './useUserProfileResolver';
+import { useUserProfileResolver } from './useUserProfileResolver';
+
+/** Resolves author profiles for a story's comments, using that story's server when needed. */
+export function useAuthorProfiles(
+  storyId: string | undefined,
+  userIds: readonly string[],
+  enabled = true,
+): Record<string, ResolvedUserProfile> {
+  const db = useDrizzle();
+  const resolveProfile = useUserProfileResolver();
+  const [profiles, setProfiles] = useState<Record<string, ResolvedUserProfile>>({});
+  const idsKey = [...userIds].sort().join(',');
+
+  const [prevEnabled, setPrevEnabled] = useState(enabled);
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevIdsKey, setPrevIdsKey] = useState(idsKey);
+  if (enabled !== prevEnabled || storyId !== prevStoryId || idsKey !== prevIdsKey) {
+    setPrevEnabled(enabled);
+    setPrevStoryId(storyId);
+    setPrevIdsKey(idsKey);
+    if (enabled && (!storyId || !idsKey)) {
+      setProfiles({});
+    }
+  }
+
+  useEffect(() => {
+    if (!enabled || !storyId || !idsKey) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const story = await db.query.stories.findFirst({
+        where: eq(stories.id, storyId),
+        columns: { serverId: true },
+      });
+      const storyServer = story?.serverId
+        ? await db.query.servers.findFirst({ where: eq(servers.id, story.serverId) })
+        : undefined;
+      const uniqueIds = idsKey ? idsKey.split(',') : [];
+      const resolved = await Promise.all(
+        uniqueIds.map((userId) => resolveProfile(userId, storyServer)),
+      );
+      if (!cancelled) {
+        setProfiles(Object.fromEntries(resolved.map((profile) => [profile.id, profile])));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [db, enabled, idsKey, resolveProfile, storyId]);
+
+  return profiles;
+}

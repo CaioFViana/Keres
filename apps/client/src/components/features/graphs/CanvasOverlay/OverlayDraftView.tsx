@@ -2,7 +2,7 @@ import type { SpatialPoint } from '@keres/shared';
 import {
   canvasOverlayPolylinePath,
   canvasOverlayRectPath,
-} from '@keres/shared/graphs/canvasOverlayGeometry';
+} from '@keres/shared/graphs/canvas/canvasOverlayGeometry';
 import { Circle, DashPathEffect, Path } from '@shopify/react-native-skia';
 import React from 'react';
 

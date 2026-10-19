@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import type { AppDrizzleClient } from '../../../db';
-import type { StoryArcSelect } from '../../../db/schema';
-import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { createStoryArcService } from '../../../services/storymanagement/StoryArcService';
+import type { AppDrizzleClient } from '@/src/db';
+import type { StoryArcSelect } from '@/src/db/schema';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
 
 type UseChapterFormAssociationsOptions = {
   currentChapterId: string | undefined;

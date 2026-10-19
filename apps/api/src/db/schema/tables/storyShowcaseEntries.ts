@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
-import { table, text, timestampNow } from '../columns';
-import { showcaseVisibilityEnum, publicationLabelModeEnum } from '../enums';
+import { table, text, timestampNow } from '@/db/schema/columns';
+import { showcaseVisibilityEnum, publicationLabelModeEnum } from '@/db/schema/enums';
 import { stories } from './stories';
 import { storyPublications } from './storyPublications';
 import { users } from './users';

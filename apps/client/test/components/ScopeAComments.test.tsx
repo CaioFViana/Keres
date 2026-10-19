@@ -1,12 +1,12 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import CommentableDetailField from '../../src/components/features/comments/CommentableDetailField/CommentableDetailField';
-import CommentList from '../../src/components/features/comments/CommentList/CommentList';
-import type CommentThreadModal from '../../src/components/features/comments/CommentThreadModal/CommentThreadModal';
-import type { CommentSelect } from '../../src/db/schema';
+import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import CommentList from '@/src/components/features/comments/CommentList/CommentList';
+import type CommentThreadModal from '@/src/components/features/comments/CommentThreadModal/CommentThreadModal';
+import type { CommentSelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -35,7 +35,7 @@ jest.mock('@expo/vector-icons', () => ({
 // (Prototype-chained, not spread: spreading `react-native` trips native-only getters.)
 jest.mock('react-native', () => {
   const actual = jest.requireActual('react-native');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const React = require('react');
   const mocked = Object.create(actual);
   // defineProperty: the prototype's exports are setter-less getters, so plain
@@ -69,7 +69,7 @@ jest.mock('react-native', () => {
 });
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -79,9 +79,9 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 });
 
 const mockKeyboardAwareScreen = jest.fn();
-jest.mock('../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
   const actual = jest.requireActual(
-    '../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
+    '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
   );
   return {
     __esModule: true,
@@ -98,7 +98,7 @@ jest.mock('../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -123,7 +123,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
 });
 
 const mockDetailField = jest.fn();
-jest.mock('../../src/components/common/display/DetailField/DetailField', () => {
+jest.mock('@/src/components/common/display/DetailField/DetailField', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -140,7 +140,7 @@ jest.mock('../../src/components/common/display/DetailField/DetailField', () => {
 });
 
 const mockThreadModal = jest.fn();
-jest.mock('../../src/components/features/comments/CommentThreadModal/CommentThreadModal', () => ({
+jest.mock('@/src/components/features/comments/CommentThreadModal/CommentThreadModal', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockThreadModal(props);
@@ -149,11 +149,11 @@ jest.mock('../../src/components/features/comments/CommentThreadModal/CommentThre
 }));
 
 const mockUseStoryComments = jest.fn();
-jest.mock('../../src/hooks/useStoryComments', () => ({
+jest.mock('@/src/hooks/comments/useStoryComments', () => ({
   useStoryComments: (...args: unknown[]) => mockUseStoryComments(...args),
 }));
 
-jest.mock('../../src/components/features/list-items/CommentListItem', () => {
+jest.mock('@/src/components/features/list-items/CommentListItem', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -164,12 +164,12 @@ jest.mock('../../src/components/features/list-items/CommentListItem', () => {
 });
 
 const mockUseAuthorProfiles = jest.fn();
-jest.mock('../../src/hooks/useAuthorProfiles', () => ({
+jest.mock('@/src/hooks/social/useAuthorProfiles', () => ({
   useAuthorProfiles: (...args: unknown[]) => mockUseAuthorProfiles(...args),
 }));
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -336,7 +336,7 @@ describe('CommentThreadModal', () => {
   it('renders nothing when hidden', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(<RealModal {...baseProps} visible={false} />);
@@ -347,7 +347,7 @@ describe('CommentThreadModal', () => {
   it('pre-fills the excerpt from a fresh selection on open', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(<RealModal {...baseProps} visible={false} />);
@@ -360,7 +360,7 @@ describe('CommentThreadModal', () => {
   it('lists the thread oldest-first with excerpts', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     mockUseAuthorProfiles.mockReturnValue({
@@ -391,7 +391,7 @@ describe('CommentThreadModal', () => {
   it('posts a comment with the chosen criticality and resets the form', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const onSubmit = jest.fn(async () => {});
@@ -421,7 +421,7 @@ describe('CommentThreadModal', () => {
   it('warns when the excerpt no longer matches the snapshot', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(<RealModal {...baseProps} />);
@@ -433,7 +433,7 @@ describe('CommentThreadModal', () => {
   it('marks the typed excerpt where it first anchors in the snapshot', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(<RealModal {...baseProps} />);
@@ -448,7 +448,7 @@ describe('CommentThreadModal', () => {
   it('shows the prose snapshot rendered and anchors excerpts in it', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(
@@ -468,7 +468,7 @@ describe('CommentThreadModal', () => {
   it('frames a long prose preview around the anchored excerpt', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(
@@ -491,7 +491,7 @@ describe('CommentThreadModal', () => {
   it('flows line breaks as spaces and anchors across them', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(
@@ -515,7 +515,7 @@ describe('CommentThreadModal', () => {
   it('keeps literal markers literal outside prose mode', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(<RealModal {...baseProps} fieldValueSnapshot="Score: 2 * 3 = 6" />);
@@ -529,7 +529,7 @@ describe('CommentThreadModal', () => {
   it('marks only the first anchor when the excerpt repeats', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(
@@ -548,7 +548,7 @@ describe('CommentThreadModal', () => {
   it('anchors accents and leaves a stale excerpt unmarked with its warning', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(
@@ -568,7 +568,7 @@ describe('CommentThreadModal', () => {
   it('renders saved excerpts as highlighter marks', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     mockUseAuthorProfiles.mockReturnValue({
@@ -585,7 +585,7 @@ describe('CommentThreadModal', () => {
   it('explains the first-match anchor only in the manuscript composer', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const manuscript = await render(<RealModal {...baseProps} showExcerptAnchorNotice />);
@@ -598,7 +598,7 @@ describe('CommentThreadModal', () => {
   it('alerts when posting fails', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const onSubmit = jest.fn(async () => {
@@ -617,7 +617,7 @@ describe('CommentThreadModal', () => {
   it('deletes a comment after confirmation', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const onDelete = jest.fn(async () => {});
@@ -638,7 +638,7 @@ describe('CommentThreadModal', () => {
   it('hides deletion for uninvolved readers and the composer for readers', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(
@@ -658,7 +658,7 @@ describe('CommentThreadModal', () => {
   it('pins the composer through the footer slot instead of the scroll content', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(<RealModal {...baseProps} />);
@@ -674,7 +674,7 @@ describe('CommentThreadModal', () => {
   it('grows the composer inputs with their measured content', async () => {
     const RealModal = (
       jest.requireActual(
-        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+        '@/src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(<RealModal {...baseProps} />);

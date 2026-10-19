@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
@@ -12,14 +12,16 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { HelpSearchBar } from '../../components/features/help/HelpSearchBar/HelpSearchBar';
-import { HighlightedText } from '../../components/features/help/HelpSearchBar/HighlightedText';
-import type { DocLibrary } from '../../help/library';
-import { helpLibrary } from '../../help/library';
-import { createHelpSearchIndex, searchHelp } from '../../help/search';
-import { useTheme } from '../../theme';
-import { debounce } from '../../utils/debounce';
-import { setDocumentTitle } from '../../utils/documentTitle';
+import { HelpSearchBar } from '@/src/components/features/help/HelpSearchBar/HelpSearchBar';
+import { HighlightedText } from '@/src/components/features/help/HelpSearchBar/HighlightedText';
+import type { DocLibrary } from '@/src/content/help/library';
+import { helpLibrary } from '@/src/content/help/library';
+import { createHelpSearchIndex, searchHelp } from '@/src/content/help/search';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import { debounce } from '@/src/utils/sync/debounce';
+import { setDocumentTitle } from '@/src/utils/nav/documentTitle';
 
 type HelpNavigation = NativeStackNavigationProp<Record<string, object | undefined>>;
 
@@ -67,29 +69,7 @@ export function HelpIndexScreen({
     }, [t, library.indexTitleKey]),
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    section: {
-      marginHorizontal: 16,
-      marginTop: 12,
-      borderColor: colors.border,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 8,
-      overflow: 'hidden',
-    },
-    sectionHeader: {
-      padding: 14,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      backgroundColor: colors.surface,
-    },
-    sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    title: { fontSize: 17, fontWeight: '700', color: colors.text },
-    card: { padding: 14, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
-    summary: { color: colors.textSecondary, marginTop: 4, lineHeight: 19 },
-    label: { color: colors.textSecondary, fontSize: 12, marginBottom: 3 },
-    empty: { padding: 24, color: colors.textSecondary, textAlign: 'center' },
-  });
+  const styles = useThemedStyles(createStyles);
   const openPage = (id: string) => navigation.navigate(library.pageRouteName, { pageId: id });
 
   return (
@@ -187,3 +167,28 @@ export function HelpIndexScreen({
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    section: {
+      marginHorizontal: 16,
+      marginTop: 12,
+      borderColor: colors.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    sectionHeader: {
+      padding: 14,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: colors.surface,
+    },
+    sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    title: { fontSize: 16, fontWeight: '700', color: colors.text },
+    card: { padding: 14, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
+    summary: { color: colors.textSecondary, marginTop: 4, lineHeight: 19 },
+    label: { ...typography.caption, color: colors.textSecondary, marginBottom: 3 },
+    empty: { padding: 24, color: colors.textSecondary, textAlign: 'center' },
+  });

@@ -1,6 +1,8 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import LocationsScreen from '@/src/screens/locations/LocationListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
@@ -18,7 +20,8 @@ let mockListState = {
   storyId: 'story-1' as string | undefined,
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn() as jest.Mock,
 };
 let mockListProps: {
   data: { id: string; name: string }[];
@@ -42,7 +45,7 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -111,44 +114,44 @@ jest.mock('@/src/components/features/list-items/LocationListItem', () => ({
     );
   },
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('../../../src/hooks/useEntityArcIds', () => ({
+jest.mock('@/src/hooks/arcs/useEntityArcIds', () => ({
   __esModule: true,
   useEntityArcIds: (...args: unknown[]) => mockUseLocationArcIds(...args),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('../../../src/state/locationStore', () => ({
+jest.mock('@/src/state/story/locationStore', () => ({
   __esModule: true,
   useLocationStore: jest.fn(),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: object) => unknown) => mockUseStoryStore(selector),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#fff' } }),
 }));
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     term: (value: string, plural?: boolean) => (plural ? `${value}s` : value),
@@ -159,8 +162,6 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import LocationsScreen from '../../../src/screens/locations/LocationListScreen';
-
 const freshListState = () => ({
   listProps: {},
   items: [] as { id: string; name: string }[],
@@ -169,7 +170,8 @@ const freshListState = () => ({
   storyId: 'story-1' as string | undefined,
   advancedSearchCriteria: null,
   setAdvancedSearchCriteria: mockSetAdvancedSearchCriteria,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn(async () => [] as unknown[]),
 });
 
 beforeEach(() => {
@@ -243,6 +245,31 @@ it('renders locations with tag filters and wires item actions', async () => {
 
   await fireEvent.press(screen.getByTestId('view-loc-1'));
   expect(mockNavigate).toHaveBeenCalledWith('LocationDetail', { locationId: 'loc-1' });
+});
+
+it('counts the rows a filter would leave in the active arc, as the list shows them', async () => {
+  mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) =>
+    selector({ activeArcId: 'arc-1' }),
+  );
+  mockUseLocationArcIds.mockReturnValue(
+    new Map([
+      ['loc-1', ['arc-1']],
+      ['loc-2', ['arc-2']],
+    ]),
+  );
+  mockListState = {
+    ...freshListState(),
+    items: [],
+    findMatching: jest.fn(async () => [
+      { id: 'loc-1', name: 'Keep' },
+      { id: 'loc-2', name: 'Forest' },
+      { id: 'loc-3', name: 'Unlinked' },
+    ]),
+  };
+  await render(<LocationsScreen />);
+
+  expect(await (mockListProps as any).onPreviewCount({ name: 'x' })).toBe(2);
+  expect(mockListState.findMatching).toHaveBeenCalledWith({ name: 'x' });
 });
 
 it('hides locations from other arcs but keeps unlinked ones', async () => {

@@ -1,10 +1,12 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -17,39 +19,40 @@ import AnchorManager from '@/src/components/features/chapters/AnchorManager/Anch
 import ConvertContainerModal from '@/src/components/features/chapters/ConvertContainerModal/ConvertContainerModal';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import type { ChapterType } from '@keres/shared';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import { useDrizzle } from '@/src/db';
 import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '@/src/hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '@/src/hooks/useEntityComments';
-import { useEntityRelations } from '@/src/hooks/useEntityRelations';
-import { useStoryArcs } from '@/src/hooks/useStoryArcs';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { useChapterStore } from '@/src/state/chapterStore';
-import type { LocationService } from '@/src/services/storymanagement/LocationService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService';
-import type { SceneService } from '@/src/services/storymanagement/SceneService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
-import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
-import { useTheme } from '@/src/theme';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { useChapterStore } from '@/src/state/story/chapterStore';
+import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { useSceneCalendarDates } from '@/src/hooks/scene/useSceneCalendarDates';
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 import { commonDetailStyleDefs } from '@/src/theme/commonStyles';
-import { useVocabularyEntityCopy } from '@/src/vocabulary/useVocabularyEntityCopy';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import {
   formatChapterUniverseDuration,
   formatSceneUniverseDuration,
   hasSceneUniverseDuration,
-} from '@/src/utils/sceneTiming';
-import type { Location } from '@keres/shared/entities/Location';
+} from '@/src/utils/scene/sceneTiming';
+import type { Location } from '@keres/shared/entities/narrative/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -65,7 +68,6 @@ type ChapterDetailScreenRouteProp = RouteProp<ChapterDetailScreenParamList, 'Cha
 
 const ChapterDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const route = useRoute<ChapterDetailScreenRouteProp>();
   const { chapterId, occurrence } = route.params;
@@ -101,15 +103,7 @@ const ChapterDetailScreen = () => {
   const { canEdit } = useStoryRole(chapter?.storyId);
   const { definition: calendar } = useStoryCalendar();
   const { dateForScene } = useSceneCalendarDates(selectedStory?.id);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(chapter?.storyId, 'Chapter', chapterId);
+  const comments = useEntityComments(chapter?.storyId, 'Chapter', chapterId);
 
   const {
     selectedTags: chapterTags,
@@ -125,7 +119,7 @@ const ChapterDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const styles = StyleSheet.create({ ...commonDetailStyleDefs(colors) });
+  const styles = useThemedStyles(createStyles);
 
   const fetchChapter = useCallback(async () => {
     if (!chapterServiceRef.current) {
@@ -272,6 +266,9 @@ const ChapterDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -284,24 +281,17 @@ const ChapterDetailScreen = () => {
     return <ScreenError padded message={copy.dataMissing} onGoBack={() => navigation.goBack()} />;
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: chapter.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(chapter.storyId, comments);
 
-  return (
-    <DetailContainer title={chapter.name} landing={occurrence ?? null}>
+  const detailsPanel = (
+    <>
       <TagList tags={chapterTags} variant="chip" emptyMessage={t('no_tags_found')} />
+
       <CommentableDetailField
         {...commentField('summary', chapter.summary || t('common_na'))}
         label={t('summary')}
       />
+
       {selectedStory?.type === 'linear' && (
         <>
           {allScenes
@@ -336,26 +326,15 @@ const ChapterDetailScreen = () => {
           value={arcs.find((arc) => arc.id === chapter.arcId)?.title || t('common_na')}
         />
       ) : null}
+    </>
+  );
 
-      <CustomAttributeDetailFields
-        storyId={chapter.storyId}
-        entityType="Chapter"
-        entityId={chapterId}
-      />
-
-      <DetailField
-        label={t('is_favorite')}
-        value={chapter.isFavorite ? t('common_yes') : t('common_no')}
-      />
-      <CommentableDetailField
-        {...commentField('extraNotes', chapter.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
+  const relationsPanel = (
+    <>
       <AnchorManager
         storyId={chapter.storyId}
         chapterId={chapterId}
-        currentUserId={currentUserId}
+        currentUserId={comments.currentUserId}
         editable={false}
       />
 
@@ -405,6 +384,26 @@ const ChapterDetailScreen = () => {
         entityId={chapterId}
         editable={false}
       />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields
+        storyId={chapter.storyId}
+        entityType="Chapter"
+        entityId={chapterId}
+      />
+
+      <DetailField
+        label={t('is_favorite')}
+        value={chapter.isFavorite ? t('common_yes') : t('common_no')}
+      />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', chapter.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <FavoritedByList storyId={chapter.storyId} entityId={chapterId} entityType="Chapter" />
 
@@ -414,6 +413,20 @@ const ChapterDetailScreen = () => {
         updatedAt={chapter.updatedAt}
         entityType="Chapter"
         entityId={chapter.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={chapter.name}
+      landing={occurrence ?? null}
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
 
       <View style={styles.buttonContainer}>
@@ -441,5 +454,8 @@ const ChapterDetailScreen = () => {
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonDetailStyleDefs(colors) });
 
 export default ChapterDetailScreen;

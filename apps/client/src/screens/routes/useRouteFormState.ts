@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
-import type { createRouteService } from '../../services/storymanagement/RouteService';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import type { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
 
 type RouteService = ReturnType<typeof createRouteService>;
 

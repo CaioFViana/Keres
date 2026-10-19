@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
-import { users } from '../db/schema';
-import type { JWTPayload } from '../index';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import type { JWTPayload } from '@/index';
 import { AppError } from './errors';
 
 /**

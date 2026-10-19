@@ -1,16 +1,17 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useConflictReviewData } from '../../../../hooks/useConflictReviewData';
-import { useSyncConflictActions } from '../../../../hooks/useSyncConflictActions';
-import { useSyncConflictStore } from '../../../../state/syncConflictStore';
-import { useUserSettingsStore } from '../../../../state/userSettingsStore';
-import { useTheme } from '../../../../theme';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { useConflictReviewData } from '@/src/hooks/sync/useConflictReviewData';
+import { useSyncConflictActions } from '@/src/hooks/sync/useSyncConflictActions';
+import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { AppAlert } from '@/src/utils/AppAlert';
-import ConflictDetailSheet from '../ConflictDetailSheet/ConflictDetailSheet';
-import ConflictFieldDiffSheet from '../ConflictFieldDiffSheet/ConflictFieldDiffSheet';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import ConflictDetailSheet from '@/src/components/features/sync/ConflictDetailSheet/ConflictDetailSheet';
+import ConflictFieldDiffSheet from '@/src/components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet';
 import ConflictRow from './ConflictRow';
 
 interface SyncConflictReviewSheetProps {
@@ -26,10 +27,10 @@ interface SyncConflictReviewSheetProps {
  * comparison when there really are multiple genuinely disputed fields.
  */
 const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visible, onClose }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const conflicts = useSyncConflictStore((state) => state.conflicts);
-  const { isResolving, keepLocal, keepServer, keepServerAndCloneBoard } = useSyncConflictActions();
+  const { isResolving, keepLocal, keepServer, keepServerAndCloneBoard, keepServerAndCloneSketch } =
+    useSyncConflictActions();
   const userId = useUserSettingsStore((state) => state.userId);
   const selectedConflictId = useSyncConflictStore((state) => state.selectedConflictId);
   const selectConflict = useSyncConflictStore((state) => state.selectConflict);
@@ -105,42 +106,28 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
     [keepServerAndCloneBoard, t, userId],
   );
 
-  const styles = StyleSheet.create({
-    sheet: {
-      backgroundColor: colors.surface,
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 24,
-      maxHeight: '78%',
+  const resolveCloneSketch = useCallback(
+    (conflictId: string, sketchName: string) => {
+      if (!userId) return;
+      AppAlert.alert(t('conflict_confirm_title'), t('conflict_confirm_clone_sketch'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('conflict_confirm_action'),
+          onPress: () => {
+            setDetailConflictId(null);
+            void keepServerAndCloneSketch(
+              conflictId,
+              userId,
+              t('sketch_copy_name', { name: sketchName }),
+            );
+          },
+        },
+      ]);
     },
-    handle: {
-      alignSelf: 'center',
-      width: 42,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: colors.border,
-      marginBottom: 14,
-    },
-    header: { flexDirection: 'row', alignItems: 'center' },
-    title: { flex: 1, fontSize: 19, fontWeight: 'bold', color: colors.text },
-    closeButton: { padding: 4 },
-    sectionTitle: {
-      fontSize: 13,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginTop: 18,
-      marginBottom: 6,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-    },
-    emptyText: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginTop: 12,
-    },
-  });
+    [keepServerAndCloneSketch, t, userId],
+  );
+
+  const styles = useThemedStyles(createStyles);
 
   return (
     <>
@@ -148,21 +135,17 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
         visible={visible}
         onClose={onClose}
         placement="adaptive"
+        tone="raised"
+        inset="sheet"
         contentStyle={styles.sheet}
         maxHeight="78%"
       >
         <View style={styles.handle} />
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('conflict_review_title')}</Text>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.closeButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('conflict_close_review')}
-          >
-            <Ionicons name="close" size={24} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
+        <ModalHeader
+          title={t('conflict_review_title')}
+          onClose={onClose}
+          closeLabel={t('conflict_close_review')}
+        />
 
         {sections.length === 0 ? (
           <Text style={styles.emptyText}>{t('conflict_review_empty')}</Text>
@@ -182,6 +165,11 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
                 onCloneBoard={
                   item.offerBoardClone && userId
                     ? () => resolveCloneBoard(item.id, item.title)
+                    : undefined
+                }
+                onCloneSketch={
+                  item.offerSketchClone && userId
+                    ? () => resolveCloneSketch(item.id, item.title)
                     : undefined
                 }
                 onOpenDetails={() => setDetailConflictId(item.id)}
@@ -205,6 +193,11 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
               ? () => resolveCloneBoard(detailConflict.id, detailSummary.title)
               : undefined
           }
+          onCloneSketch={
+            detailSummary.offerSketchClone && userId
+              ? () => resolveCloneSketch(detailConflict.id, detailSummary.title)
+              : undefined
+          }
           onCompareFields={() => {
             setDetailConflictId(null);
             selectConflict(detailConflict.id);
@@ -223,5 +216,32 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
     </>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { maxHeight: '78%' },
+    handle: {
+      alignSelf: 'center',
+      width: 42,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginBottom: 14,
+    },
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginTop: 18,
+      marginBottom: 6,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 12,
+    },
+  });
 
 export default SyncConflictReviewSheet;

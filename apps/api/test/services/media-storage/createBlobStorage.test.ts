@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../../src/config/env', () => ({
+vi.mock('@/config/env', () => ({
   env: {
     MEDIA_STORAGE_DRIVER: 'local',
     MEDIA_STORAGE_PATH: '/tmp/keres-media-test',
@@ -14,10 +14,10 @@ vi.mock('../../../src/config/env', () => ({
   },
 }));
 
-import { env } from '../../../src/config/env';
-import { createBlobStorage } from '../../../src/services/media-storage/createBlobStorage';
-import { LocalFilesystemBlobStorage } from '../../../src/services/media-storage/LocalFilesystemBlobStorage';
-import { S3BlobStorage } from '../../../src/services/media-storage/S3BlobStorage';
+import { env } from '@/config/env';
+import { createBlobStorage } from '@/services/media-storage/createBlobStorage';
+import { LocalFilesystemBlobStorage } from '@/services/media-storage/LocalFilesystemBlobStorage';
+import { S3BlobStorage } from '@/services/media-storage/S3BlobStorage';
 
 describe('createBlobStorage', () => {
   it('builds a local backend by default and an S3 backend when configured', () => {

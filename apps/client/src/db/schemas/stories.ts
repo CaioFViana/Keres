@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 
 export const stories = sqliteTable('stories', {
   id: text('id').primaryKey(),
@@ -38,7 +38,9 @@ export const stories = sqliteTable('stories', {
   allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' })
     .notNull()
     .default(false),
-  /** Renders entity names found in the story's text as links. See `utils/entityMentions.ts`. */
+  /** Adults-only story: only age-verified (+18) users may be added. Owner-only on the server. */
+  isNsfw: integer('is_nsfw', { mode: 'boolean' }).notNull().default(false),
+  /** Renders entity names found in the story's text as links. See `utils/entity/entityMentions.ts`. */
   autoLinkMentions: integer('auto_link_mentions', { mode: 'boolean' }).notNull().default(false),
   /** Story Analysis also reports elements that are not referenced anywhere. Opinion, so opt-in. */
   completenessChecks: integer('completeness_checks', { mode: 'boolean' }).notNull().default(false),
@@ -48,6 +50,8 @@ export const stories = sqliteTable('stories', {
   statNotation: text('stat_notation').notNull().default('letter'),
   /** Per-story presentation terminology. Null means the app's standard translated vocabulary. */
   vocabulary: text('vocabulary', { mode: 'json' }).$type<StoryVocabulary | null>(),
+  /** Gallery medium used as the universe cover; a row-level link, remapped on import. */
+  coverGalleryId: text('cover_gallery_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

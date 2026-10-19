@@ -1,16 +1,23 @@
+// ResponsiveModal reads the system insets.
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { buildReorderItems } from '@keres/shared';
 import React from 'react';
-import RelatedScenesList from '../../src/components/features/scenes/RelatedScenesList/RelatedScenesList';
-import SceneNavigationControls from '../../src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
+import RelatedScenesList from '@/src/components/features/scenes/RelatedScenesList/RelatedScenesList';
+import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
 import ScenePresenceList, {
   groupScenePresenceEntries,
-} from '../../src/components/features/scenes/ScenePresenceList/ScenePresenceList';
-import SceneReorderModal from '../../src/components/features/scenes/SceneReorderModal/SceneReorderModal';
-import SceneTimingFields from '../../src/components/features/scenes/SceneTimingFields';
-import type { SceneSelect } from '../../src/db/schema';
+} from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
+import type { SceneCalendarOption } from '@/src/components/features/scenes/SceneFixedDateField';
+import SceneTimingFields from '@/src/components/features/scenes/SceneTimingFields';
+import type { SceneSelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
+
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -29,10 +36,10 @@ jest.mock('../../src/theme', () => ({
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../src/components/common/forms/FormField/FormField', () => {
+jest.mock('@/src/components/common/forms/FormField/FormField', () => {
   const ReactActual = require('react');
   const { Text, View } = jest.requireActual('react-native');
   return {
@@ -48,7 +55,7 @@ jest.mock('../../src/components/common/forms/FormField/FormField', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -61,7 +68,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -75,23 +82,23 @@ jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
 });
 
 const mockChapterNameOf = jest.fn();
-jest.mock('../../src/hooks/useChapterNames', () => ({
+jest.mock('@/src/hooks/chapter/useChapterNames', () => ({
   __esModule: true,
   useChapterNames: () => mockChapterNameOf,
 }));
 
 const mockNavigate = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigate,
 }));
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({ entity: 'Chapter' }),
 }));
 
-jest.mock('../../src/hooks/useBindChapterStore', () => ({
+jest.mock('@/src/hooks/chapter/useBindChapterStore', () => ({
   __esModule: true,
   useBindChapterStore: () => ({
     chapters: [
@@ -102,7 +109,7 @@ jest.mock('../../src/hooks/useBindChapterStore', () => ({
 }));
 
 const mockReorderProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/common/modals/ReorderModal/ReorderModal', () => {
+jest.mock('@/src/components/common/modals/ReorderModal/ReorderModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -155,7 +162,8 @@ describe('SceneTimingFields', () => {
     onCalendarDateOverrideChange: jest.fn(),
     calendarDateOverrideCalendarId: null as string | null,
     onCalendarDateOverrideCalendarIdChange: jest.fn(),
-    calendars: [{ id: 'cal-1', name: 'Custom' }],
+    calendars: [] as SceneCalendarOption[],
+    storyHasEpoch: true,
     inputStyle: {},
   });
 
@@ -205,34 +213,20 @@ describe('SceneTimingFields', () => {
     expect(props.onDurationTypeChange).toHaveBeenCalledWith('hours');
   });
 
-  it('shows the fixed-date calendar only once a date is typed', async () => {
+  it('starts the fixed date as an explanation and a button, and notes the gap once one is set', async () => {
     const props = timingProps();
     const screen = await render(<SceneTimingFields {...props} />);
 
-    expect(screen.queryByTestId('single-select-scene_fixed_date_calendar')).toBeNull();
+    expect(screen.getByText('scene_fixed_date_empty_hint')).toBeTruthy();
+    expect(screen.queryByText('scene_fixed_date_gap_note')).toBeNull();
 
-    await act(async () => {
-      screen.getByTestId('input-scene_fixed_date_placeholder').props.onChangeText('Day 12');
-    });
-    expect(props.onCalendarDateOverrideChange).toHaveBeenCalledWith('Day 12');
-
-    await screen.rerender(<SceneTimingFields {...props} calendarDateOverride="Day 12" />);
-    const calendar = screen.getByTestId('single-select-scene_fixed_date_calendar');
-    expect(calendar.props.options).toEqual([
-      { label: 'calendar_standard_title', value: '__gregorian__' },
-      { label: 'Custom', value: 'cal-1' },
-    ]);
-    expect(calendar.props.value).toBe('__gregorian__');
-
-    await act(async () => {
-      calendar.props.onValueChange('__gregorian__');
-    });
+    await fireEvent.press(screen.getByTestId('scene-fixed-date-set'));
+    expect(props.onCalendarDateOverrideChange).toHaveBeenCalledWith('0001-01-01T00:00');
     expect(props.onCalendarDateOverrideCalendarIdChange).toHaveBeenCalledWith(null);
 
-    await act(async () => {
-      screen.getByTestId('single-select-scene_fixed_date_calendar').props.onValueChange('cal-1');
-    });
-    expect(props.onCalendarDateOverrideCalendarIdChange).toHaveBeenCalledWith('cal-1');
+    await screen.rerender(<SceneTimingFields {...props} calendarDateOverride="0001-01-01T00:00" />);
+    expect(screen.getByText('scene_fixed_date_gap_note')).toBeTruthy();
+    expect(screen.queryByTestId('scene-fixed-date-set')).toBeNull();
   });
 });
 

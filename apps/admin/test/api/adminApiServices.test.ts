@@ -4,20 +4,25 @@ const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
+  patch: vi.fn(),
   delete: vi.fn(),
 }));
 
-vi.mock('../../src/api/apiClient', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../src/api/apiClient')>();
+vi.mock('@/api/apiClient', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/apiClient')>();
   return { ...actual, apiClient: mocks };
 });
 
-import { AdminUserApiService } from '../../src/api/AdminUserApiService';
-import { LogsApiService } from '../../src/api/LogsApiService';
-import { RecoveryApiService } from '../../src/api/RecoveryApiService';
-import { RegistrationSettingsApiService } from '../../src/api/RegistrationSettingsApiService';
-import { ShowcaseSettingsApiService } from '../../src/api/ShowcaseSettingsApiService';
-import { TierApiService } from '../../src/api/TierApiService';
+import { AdminUserApiService } from '@/api/AdminUserApiService';
+import { AdminStoryApiService } from '@/api/AdminStoryApiService';
+import { ActivityApiService } from '@/api/ActivityApiService';
+import { PaymentsApiService } from '@/api/PaymentsApiService';
+import { LogsApiService } from '@/api/LogsApiService';
+import { MessagesApiService } from '@/api/MessagesApiService';
+import { RecoveryApiService } from '@/api/RecoveryApiService';
+import { RegistrationSettingsApiService } from '@/api/RegistrationSettingsApiService';
+import { ShowcaseSettingsApiService } from '@/api/ShowcaseSettingsApiService';
+import { TierApiService } from '@/api/TierApiService';
 
 /**
  * These modules are thin on purpose, but they are the map between screen and route: a wrong verb
@@ -26,7 +31,7 @@ import { TierApiService } from '../../src/api/TierApiService';
  */
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const method of [mocks.get, mocks.post, mocks.put, mocks.delete]) {
+  for (const method of [mocks.get, mocks.post, mocks.put, mocks.patch, mocks.delete]) {
     method.mockResolvedValue({ data: { ok: true } });
   }
 });
@@ -89,6 +94,70 @@ describe('AdminUserApiService', () => {
     mocks.get.mockRejectedValue(new Error('Username already taken.'));
 
     await expect(AdminUserApiService.get('user-1')).rejects.toThrow('Username already taken.');
+  });
+});
+
+describe('AdminStoryApiService', () => {
+  it('maps moderation reads to the admin story content routes', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+
+    await AdminStoryApiService.list({ nsfw: true, page: 1 });
+    await AdminStoryApiService.collaborators('story-1');
+    await AdminStoryApiService.media('story-1');
+    await AdminStoryApiService.boards('story-1');
+    await AdminStoryApiService.locationMaps('story-1');
+    await AdminStoryApiService.sketches('story-1');
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories', {
+      params: { nsfw: true, page: 1 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/collaborators');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/media');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/boards');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/location-maps');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/sketches');
+  });
+
+  it('maps the moderation writes to the story and collaborator routes', async () => {
+    await AdminStoryApiService.setNsfw('story-1', true);
+    await AdminStoryApiService.removeCollaborator('story-1', 'user-2');
+
+    expect(mocks.patch).toHaveBeenCalledWith('/admin/stories/story-1', { isNsfw: true });
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/stories/story-1/collaborators/user-2');
+    await expect(AdminStoryApiService.removeCollaborator('story-1', '../x')).rejects.toThrow();
+  });
+
+  it('downloads blobs as binary through the story-bound admin route', async () => {
+    const bytes = new Blob(['bytes']);
+    mocks.get.mockResolvedValue({ data: bytes });
+
+    await expect(AdminStoryApiService.blob('story-1', 'a'.repeat(32))).resolves.toBe(bytes);
+    expect(mocks.get).toHaveBeenCalledWith(`/admin/stories/story-1/blobs/${'a'.repeat(32)}`, {
+      responseType: 'blob',
+    });
+  });
+
+  it('refuses unsafe story ids and hashes before sending', async () => {
+    await expect(AdminStoryApiService.media('../x')).rejects.toThrow();
+    await expect(AdminStoryApiService.blob('story-1', '../../etc')).rejects.toThrow();
+    expect(mocks.get).not.toHaveBeenCalled();
+  });
+
+  it('maps the entity browser to the story entities routes', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+
+    await AdminStoryApiService.entityTypes('story-1');
+    await AdminStoryApiService.entities('story-1', 'Character', 2, 10);
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/entities');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/entities/Character', {
+      params: { page: 2, pageSize: 10 },
+    });
+  });
+
+  it('refuses an unsafe entity type before sending', async () => {
+    await expect(AdminStoryApiService.entities('story-1', '../x')).rejects.toThrow();
+    expect(mocks.get).not.toHaveBeenCalled();
   });
 });
 
@@ -171,6 +240,68 @@ describe('ShowcaseSettingsApiService', () => {
   });
 });
 
+describe('PaymentsApiService', () => {
+  it('maps the summary, the subscriptions and the ledger to the payments routes', async () => {
+    await PaymentsApiService.summary();
+    await PaymentsApiService.health();
+    await PaymentsApiService.subscriptions({ status: 'due', page: 2 });
+    await PaymentsApiService.events({ page: 3 });
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/summary');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/health');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/subscriptions', {
+      params: { status: 'due', page: 2 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/events', { params: { page: 3 } });
+  });
+
+  it('reads one person’s subscription, and gives a plan, on the routes of that person', async () => {
+    mocks.get.mockResolvedValue({ data: { subscription: null, canCancelAtProvider: false } });
+    mocks.post.mockResolvedValue({ data: { subscription: null, canCancelAtProvider: false } });
+
+    await expect(PaymentsApiService.userSubscription('user-1')).resolves.toEqual({
+      subscription: null,
+      canCancelAtProvider: false,
+    });
+    await PaymentsApiService.giveGift('user-1', {
+      tierId: 'tier-1',
+      months: 2,
+      cancelRenewal: true,
+      consent: true,
+    });
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/users/user-1/subscription');
+    expect(mocks.post).toHaveBeenCalledWith('/admin/payments/users/user-1/gift', {
+      tierId: 'tier-1',
+      months: 2,
+      cancelRenewal: true,
+      consent: true,
+    });
+  });
+
+  it('refuses an id that is not a single path segment, rather than sending it', async () => {
+    await expect(PaymentsApiService.userSubscription('../users')).rejects.toThrow();
+    await expect(PaymentsApiService.giveGift('a/b', { tierId: 't', months: 1 })).rejects.toThrow();
+  });
+});
+
+describe('ActivityApiService', () => {
+  it('maps the record, its summary and its export to the activity routes', async () => {
+    await ActivityApiService.list({ category: 'auth', page: 2 });
+    await ActivityApiService.summary(168);
+    await ActivityApiService.exportCsv({ outcome: 'failure' });
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/activity', {
+      params: { category: 'auth', page: 2 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/activity/summary', { params: { hours: 168 } });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/activity/export', {
+      params: { outcome: 'failure' },
+      responseType: 'blob',
+    });
+  });
+});
+
 describe('LogsApiService', () => {
   it('browses persisted API logs with the filters as query parameters', async () => {
     mocks.get.mockResolvedValue({ data: { items: [], total: 0, page: 1, pageSize: 50 } });
@@ -221,5 +352,33 @@ describe('RecoveryApiService', () => {
       params: filters,
     });
     expect(result.pageSize).toBe(50);
+  });
+});
+
+describe('MessagesApiService', () => {
+  it('maps the inbox calls to the message routes', async () => {
+    await MessagesApiService.list({ source: 'site', page: 2 });
+    await MessagesApiService.open('msg-1');
+    await MessagesApiService.patch('msg-1', { archived: true });
+    await MessagesApiService.reply('msg-1', 'Hello');
+    await MessagesApiService.remove('msg-1');
+    await MessagesApiService.unreadCount();
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/messages', {
+      params: { source: 'site', page: 2 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/messages/msg-1');
+    expect(mocks.patch).toHaveBeenCalledWith('/admin/messages/msg-1', { archived: true });
+    expect(mocks.post).toHaveBeenCalledWith('/admin/messages/msg-1/reply', { body: 'Hello' });
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/messages/msg-1');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/messages/unread-count');
+  });
+
+  it('refuses unsafe path segments', async () => {
+    await expect(MessagesApiService.open('../x')).rejects.toThrow();
+    await expect(MessagesApiService.patch('../x', { read: true })).rejects.toThrow();
+    await expect(MessagesApiService.reply('../x', 'hi')).rejects.toThrow();
+    await expect(MessagesApiService.remove('../x')).rejects.toThrow();
+    expect(mocks.get).not.toHaveBeenCalled();
   });
 });

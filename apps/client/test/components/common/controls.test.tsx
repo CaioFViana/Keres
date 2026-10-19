@@ -1,11 +1,11 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { StyleSheet, View } from 'react-native';
-import Button from '../../../src/components/common/controls/Button/Button';
-import ThemedSwitch from '../../../src/components/common/controls/ThemedSwitch/ThemedSwitch';
-import TriStateToggleButton from '../../../src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
+import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import TriStateToggleButton from '@/src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
 
-jest.mock('../../../src/theme', () => {
-  const actual = jest.requireActual('../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
@@ -97,6 +97,97 @@ describe('Button', () => {
     expect(StyleSheet.flatten(host.props.style).backgroundColor).toBe('#123456');
     expect(host.props.accessibilityLabel).toBe('Save story');
     expect(host.props.accessibilityHint).toBe('Saves the current story');
+  });
+});
+
+describe('Button variants', () => {
+  const styleOf = (screen: Awaited<ReturnType<typeof render>>, testID: string) =>
+    StyleSheet.flatten(screen.getByTestId(testID).props.style);
+
+  it('draws secondary and danger as outlines, and primary as the fill', async () => {
+    const screen = await render(
+      <>
+        <Button testID="primary" onPress={jest.fn()}>
+          Go
+        </Button>
+        <Button testID="secondary" variant="secondary" onPress={jest.fn()}>
+          Maybe
+        </Button>
+        <Button testID="danger" variant="danger" onPress={jest.fn()}>
+          Stop
+        </Button>
+      </>,
+    );
+
+    expect(styleOf(screen, 'primary')).toMatchObject({ backgroundColor: '#0000ff' });
+    expect(styleOf(screen, 'secondary')).toMatchObject({
+      backgroundColor: 'transparent',
+      borderColor: '#0000ff',
+    });
+    expect(styleOf(screen, 'danger')).toMatchObject({
+      backgroundColor: 'transparent',
+      borderColor: '#ff0000',
+    });
+    // The label takes the outline's color, so it reads on the page behind it.
+    expect(StyleSheet.flatten(screen.getByText('Stop').props.style).color).toBe('#ff0000');
+    expect(StyleSheet.flatten(screen.getByText('Maybe').props.style).color).toBe('#0000ff');
+  });
+
+  it('fills a destructive button in the error colour, with no outline', async () => {
+    const screen = await render(
+      <Button testID="destructive" variant="destructive" onPress={jest.fn()}>
+        Delete
+      </Button>,
+    );
+
+    const style = styleOf(screen, 'destructive');
+    expect(style).toMatchObject({ backgroundColor: '#ff0000' });
+    expect(style).not.toHaveProperty('borderWidth');
+    expect(StyleSheet.flatten(screen.getByText('Delete').props.style).color).not.toBe('#ff0000');
+  });
+});
+
+const iconsOf = (view: Awaited<ReturnType<typeof render>>) =>
+  view.container.queryAll((node: any) => node.type === 'Icon') as any[];
+
+describe('Button icon', () => {
+  it('draws the icon before a text label, in the label color, and keeps the word', async () => {
+    const onPress = jest.fn();
+    const screen = await render(
+      <Button variant="danger" icon="ban-outline" onPress={onPress}>
+        Block
+      </Button>,
+    );
+
+    const icon = iconsOf(screen)[0];
+    expect(icon.props).toMatchObject({ name: 'ban-outline', size: 18, color: '#ff0000' });
+    expect(StyleSheet.flatten(screen.getByText('Block').props.style).color).toBe('#ff0000');
+    await fireEvent.press(screen.getByText('Block'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the on-fill color for the icon of a filled button', async () => {
+    const screen = await render(
+      <Button icon="checkmark" onPress={jest.fn()}>
+        Accept
+      </Button>,
+    );
+
+    const icon = iconsOf(screen)[0];
+    expect(icon.props.color).toBe(StyleSheet.flatten(screen.getByText('Accept').props.style).color);
+  });
+
+  it('has no icon unless one is given, and leaves node children alone', async () => {
+    const plain = await render(<Button onPress={jest.fn()}>Plain</Button>);
+    expect(iconsOf(plain)).toHaveLength(0);
+
+    const custom = await render(
+      <Button icon="ban-outline" onPress={jest.fn()}>
+        <View testID="custom" />
+      </Button>,
+    );
+    expect(custom.getByTestId('custom')).toBeTruthy();
+    expect(iconsOf(custom)).toHaveLength(0);
   });
 });
 

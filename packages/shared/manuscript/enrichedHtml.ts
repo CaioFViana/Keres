@@ -1,6 +1,7 @@
 import {
   normalizeManuscriptDocument,
   normalizeManuscriptSpans,
+  type ManuscriptBlock,
   type ManuscriptDocument,
   type ManuscriptMark,
   type ManuscriptSpan,
@@ -11,13 +12,14 @@ import {
  * `react-native-enriched-html` editor, whose source of truth is HTML.
  *
  * Canonical tags mirror the editor's supported set: `<p>` paragraphs
- * (an empty `<p></p>` is a blank line), `<b>`/`<i>`/`<u>`/`<s>` inline marks.
- * A bare `<br>` between blocks is the host's empty-paragraph encoding (it
- * emits `<p></p>` as `<br>`); a `<br>` after text stays a soft break. Nothing
- * else the editor can produce (headings, lists, links, … — reachable via
- * paste) survives as structure: prose text is never lost, structure outside
- * the model degrades to plain paragraphs. Unknown tags, comments, scripts
- * and styles are dropped the same way.
+ * (an empty `<p></p>` is a blank line), `<ul>`/`<ol>` lists of `<li>` items,
+ * `<b>`/`<i>`/`<u>`/`<s>` inline marks. A bare `<br>` between blocks is the
+ * host's empty-paragraph encoding (it emits `<p></p>` as `<br>`); a `<br>`
+ * after text stays a soft break, and inside a list item it reads as a space
+ * (items are single-line). Nothing else the editor can produce (headings,
+ * links, … — reachable via paste) survives as structure: prose text is never
+ * lost, structure outside the model degrades to plain paragraphs. Unknown
+ * tags, comments, scripts and styles are dropped the same way.
  *
  * The emitter never writes `<br>`: the host rewrites interior `<br>` into
  * paragraph splits plus phantom empties when seeding (proven against the real
@@ -62,9 +64,6 @@ const BLOCK_TAGS = new Set([
   'h5',
   'h6',
   'blockquote',
-  'ul',
-  'ol',
-  'li',
   'codeblock',
   'div',
   'pre',
@@ -115,10 +114,46 @@ type RawSpan = { text: string; marks: ManuscriptMark[] };
 export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
   const withoutComments = html.replace(/<!--[\s\S]*?-->/g, '');
   const tokens = withoutComments.split(/(<[^<>]*>)/g);
-  const blocks: ManuscriptSpan[][] = [];
+  const blocks: {
+    kind: 'paragraph' | 'bullet' | 'ordered';
+    index: number;
+    spans: ManuscriptSpan[];
+  }[] = [];
   let current: RawSpan[] = [];
   let marks: ManuscriptMark[] = [];
   let skipDepth = 0;
+  // List context: `<ul>`/`<ol>` push a frame, `<li>` opens one single-line
+  // item inside it. Nested lists flatten (inner items read as siblings).
+  const listStack: { ordered: boolean; index: number }[] = [];
+  let item: { ordered: boolean; index: number; parts: RawSpan[] } | null = null;
+
+  const pushBlock = (
+    spans: ManuscriptSpan[],
+    kind: 'paragraph' | 'bullet' | 'ordered',
+    index: number,
+  ) => {
+    blocks.push({ kind, index, spans });
+  };
+
+  /** Emits the open item as one bullet/ordered block, collapsing whitespace to spaces. */
+  const flushItem = () => {
+    if (!item) return;
+    const words: RawSpan[] = [];
+    for (const part of item.parts) {
+      for (const chunk of part.text.split(/\s+/)) {
+        if (chunk !== '') words.push({ text: chunk, marks: part.marks });
+      }
+    }
+    const joined: RawSpan[] = [];
+    words.forEach((word, wordIndex) => {
+      if (wordIndex > 0) joined.push({ text: ' ', marks: [] });
+      joined.push(word);
+    });
+    const spans = normalizeManuscriptSpans(joined);
+    if (item.ordered) pushBlock(spans, 'ordered', item.index);
+    else pushBlock(spans, 'bullet', 0);
+    item = null;
+  };
   // Set by a block open, cleared by any significant content: lets a close
   // tell an explicit `<p></p>` (blank line) from pretty-printing whitespace.
   let pendingEmpty = false;
@@ -169,7 +204,7 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
         last.text = last.text.replace(/\s+$/, '');
         const trimmed = group.filter((span) => span.text !== '');
         if (trimmed.some((span) => span.text.trim() !== '')) {
-          blocks.push(normalizeManuscriptSpans(trimmed));
+          pushBlock(normalizeManuscriptSpans(trimmed), 'paragraph', 0);
         }
       }
     }
@@ -185,14 +220,15 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
     const explicitEmpty = pendingEmpty && !hasSignificantContent();
     flushBlock();
     pendingEmpty = false;
-    if (explicitEmpty) blocks.push([]);
+    if (explicitEmpty) pushBlock([], 'paragraph', 0);
   };
 
   for (const token of tokens) {
     if (!token.startsWith('<') || !token.endsWith('>')) {
       if (skipDepth === 0 && token !== '') {
         const text = decodeEntities(token);
-        current.push({ text, marks: [...marks] });
+        if (item) item.parts.push({ text, marks: [...marks] });
+        else current.push({ text, marks: [...marks] });
         if (/\S/.test(text)) pendingEmpty = false;
       }
       continue;
@@ -206,9 +242,42 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
       continue;
     }
     if (skipDepth > 0) continue;
+    if (name === 'ul' || name === 'ol') {
+      if (closing) {
+        flushItem();
+        flushBlock();
+        listStack.pop();
+      } else {
+        flushBlock();
+        listStack.push({ ordered: name === 'ol', index: 0 });
+      }
+      continue;
+    }
+    if (name === 'li') {
+      const frame = listStack[listStack.length - 1];
+      // A stray `<li>` outside any list degrades to a plain paragraph boundary.
+      if (!frame) {
+        if (closing) closeBoundary();
+        else {
+          flushBlock();
+          pendingEmpty = true;
+        }
+        continue;
+      }
+      if (closing) {
+        flushItem();
+      } else {
+        flushItem();
+        flushBlock();
+        if (frame.ordered) frame.index += 1;
+        item = { ordered: frame.ordered, index: frame.index, parts: [] };
+      }
+      continue;
+    }
     if (closing) {
       if (BLOCK_TAGS.has(name)) {
-        closeBoundary();
+        if (item) item.parts.push({ text: ' ', marks: [] });
+        else closeBoundary();
       } else if (TAG_TO_MARK[name] !== undefined) {
         const mark = TAG_TO_MARK[name];
         const at = marks.lastIndexOf(mark);
@@ -217,17 +286,24 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
       continue;
     }
     if (BLOCK_TAGS.has(name)) {
-      flushBlock();
-      pendingEmpty = true;
+      if (item) {
+        // Block structure inside an item flattens to spacing: items stay single-line.
+        if (item.parts.length > 0) item.parts.push({ text: ' ', marks: [] });
+      } else {
+        flushBlock();
+        pendingEmpty = true;
+      }
     } else if (name === 'br' || name === 'wbr') {
-      if (hasSignificantContent()) {
+      if (item) {
+        item.parts.push({ text: ' ', marks: [] });
+      } else if (hasSignificantContent()) {
         current.push({ text: NEWLINE_STANDIN, marks: [] });
         pendingEmpty = false;
       } else {
         // Bare break between blocks: the host's empty-paragraph encoding.
         current = [];
         pendingEmpty = false;
-        blocks.push([]);
+        pushBlock([], 'paragraph', 0);
       }
     } else if (name === 'hr') {
       flushBlock();
@@ -238,17 +314,24 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
     }
     // Any other tag: dropped, inner text kept.
   }
+  flushItem();
   closeBoundary();
   return normalizeManuscriptDocument({
-    blocks: blocks.map((spans) => ({ kind: 'paragraph', spans })),
+    blocks: blocks.map((block) =>
+      block.kind === 'ordered'
+        ? { kind: 'ordered' as const, index: block.index, spans: block.spans }
+        : { kind: block.kind, spans: block.spans },
+    ),
   });
 }
 
 /**
  * Serializes a document to the editor's canonical HTML (`<p>`/marks, with
- * `<p></p>` for blank lines). Soft lines promote to paragraphs: the host
- * rewrites an interior `<br>` into splits plus phantom empties when seeding,
- * so the boundary form never carries `<br>`.
+ * `<p></p>` for blank lines, consecutive items grouped in `<ul>`/`<ol>`).
+ * Soft lines promote to paragraphs: the host rewrites an interior `<br>`
+ * into splits plus phantom empties when seeding, so the boundary form never
+ * carries `<br>` — except inside items, where a stray break degrades to a
+ * space on the way back in.
  */
 export function documentToEnrichedHtml(doc: ManuscriptDocument): string {
   const normalized = normalizeManuscriptDocument(doc);
@@ -262,8 +345,32 @@ export function documentToEnrichedHtml(doc: ManuscriptDocument): string {
     }
     return text;
   };
+  const itemInner = (block: ManuscriptBlock): string => {
+    const lines: ManuscriptSpan[][] = [[]];
+    for (const span of block.spans) {
+      span.text.split('\n').forEach((segment, index) => {
+        if (index > 0) lines.push([]);
+        if (segment !== '') lines[lines.length - 1].push({ text: segment, marks: span.marks });
+      });
+    }
+    return lines
+      .map((line) => line.map((span) => wrapMark(escapeHtml(span.text), span.marks)).join(''))
+      .join('<br>');
+  };
   const blocksHtml: string[] = [];
-  for (const block of normalized.blocks) {
+  let at = 0;
+  while (at < normalized.blocks.length) {
+    const block = normalized.blocks[at];
+    if (block.kind === 'bullet' || block.kind === 'ordered') {
+      const tag = block.kind === 'bullet' ? 'ul' : 'ol';
+      const items: string[] = [];
+      while (at < normalized.blocks.length && normalized.blocks[at].kind === block.kind) {
+        items.push(`<li>${itemInner(normalized.blocks[at])}</li>`);
+        at += 1;
+      }
+      blocksHtml.push(`<${tag}>${items.join('')}</${tag}>`);
+      continue;
+    }
     const lines: ManuscriptSpan[][] = [[]];
     for (const span of block.spans) {
       span.text.split('\n').forEach((segment, index) => {
@@ -275,6 +382,7 @@ export function documentToEnrichedHtml(doc: ManuscriptDocument): string {
       const inner = line.map((span) => wrapMark(escapeHtml(span.text), span.marks)).join('');
       blocksHtml.push(`<p>${inner}</p>`);
     }
+    at += 1;
   }
   return `<html>${blocksHtml.join('')}</html>`;
 }

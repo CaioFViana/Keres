@@ -1,8 +1,8 @@
 import type { SyncConflict as SharedSyncConflict } from '@keres/shared';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import * as schema from '../../db/schema';
-import type { OperationLogSelect } from '../../db/schema';
-import { recordLocalOperationSync } from '../../utils/syncUtils';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { recordLocalOperationSync } from '@/src/services/sync/syncUtils';
 import { isFoldableDuplicate } from './duplicateFold';
 import type { SyncContext } from './SyncContext';
 import { type RoutePathStep } from './routePathDecision';

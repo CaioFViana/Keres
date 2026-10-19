@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+
+import NoteDetailScreen from '@/src/screens/notes/NoteDetailScreen';
 
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
@@ -43,12 +45,15 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
   },
 }));
+jest.mock('@/src/components/layout/DetailTabs/DetailTabs', () =>
+  require('@/test/helpers/detailTabsMock'),
+);
 jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
@@ -163,55 +168,55 @@ jest.mock('@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList
     },
   };
 });
-jest.mock('@/src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: () => <Text testID="entity-metadata">metadata</Text>,
   };
 });
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityComments', () => ({
+jest.mock('@/src/hooks/comments/useEntityComments', () => ({
   __esModule: true,
   useEntityComments: () => mockEntityComments,
 }));
-jest.mock('../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
   __esModule: true,
   useOpenGalleryMediaViewer: () => mockOpenGalleryMediaViewer,
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit.current }),
 }));
-jest.mock('../../../src/services/EntityService', () => ({
+jest.mock('@/src/services/entity-solvers/EntityService', () => ({
   __esModule: true,
   EntityService: { getEntityIdentifier: (...args: unknown[]) => mockGetEntityIdentifier(...args) },
 }));
-jest.mock('../../../src/services/storymanagement/NoteService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/NoteService', () => ({
   __esModule: true,
   createNoteService: () => ({ getById: mockGetNoteById }),
 }));
-jest.mock('../../../src/services/storymanagement/NoteRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/NoteRelationService', () => ({
   __esModule: true,
   createNoteRelationService: () => ({ getRelationsForNote: mockGetRelationsForNote }),
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({}),
 }));
-jest.mock('../../../src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { primary: '#00f' } }),
 }));
@@ -219,8 +224,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import NoteDetailScreen from '../../../src/screens/notes/NoteDetailScreen';
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

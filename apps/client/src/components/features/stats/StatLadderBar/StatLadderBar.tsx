@@ -8,13 +8,13 @@ import {
 } from '@shopify/react-native-skia';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { StatTier } from '@keres/shared/graphs/statLadder';
-import { buildStatLadderBar } from '@keres/shared/graphs/statLadderBarLayout';
-import { measureEdgeLabelWidth } from '../../graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
-import SkiaOverlayErrorBoundary from '../../graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
-import { useCanvasKitReady } from '../../graphs/SkiaEdgeCanvas/useCanvasKitReady';
-import { useEdgeFont } from '../../graphs/SkiaEdgeCanvas/useEdgeFont';
-import { useTheme } from '../../../../theme';
+import type { StatTier } from '@keres/shared/graphs/stats/statLadder';
+import { buildStatLadderBar } from '@keres/shared/graphs/stats/statLadderBarLayout';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { useCanvasKitReady } from '@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
+import { useTheme } from '@/src/theme';
 
 /**
  * A stat's tier ruler: where each rung starts and where the character's value lands.

@@ -1,15 +1,15 @@
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+
 jest.mock('react-native-safe-area-context', () => ({
   __esModule: true,
   useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
 }));
 
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '../../src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -418,5 +418,57 @@ describe('MultiSelectPill, custom trigger', () => {
 
     await fireEvent.press(screen.getByTestId('custom-trigger'));
     expect(screen.queryByTestId('multiselect-option-loc-1')).toBeNull();
+  });
+});
+
+describe('SingleSelectPill, wording of the list', () => {
+  const render1 = (props: Partial<React.ComponentProps<typeof SingleSelectPill>> = {}) =>
+    render(
+      <SingleSelectPill
+        options={[{ label: 'Atena', value: 'atena' }]}
+        value={null}
+        onValueChange={jest.fn()}
+        {...props}
+      />,
+    );
+
+  it('hands the label, the search hint and the empty text to the list it opens', async () => {
+    const screen = await render1({
+      label: 'Related character',
+      searchPlaceholder: 'Find a character',
+      noOptionsText: 'No characters found',
+    });
+
+    // The label above the field, and again as the title of the list.
+    expect(screen.getByText('Related character')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    expect(screen.getAllByText('Related character')).toHaveLength(2);
+
+    await fireEvent.changeText(screen.getByPlaceholderText('Find a character'), 'zzz');
+    expect(screen.getByText('No characters found')).toBeTruthy();
+  });
+
+  it('keeps the standard wording when none is given', async () => {
+    const screen = await render1();
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+    await fireEvent.changeText(screen.getByPlaceholderText('search'), 'zzz');
+
+    expect(screen.getByText('no_tags_available')).toBeTruthy();
+  });
+
+  it('shows the chosen option as the value of the field', async () => {
+    const screen = await render1({ value: 'atena', placeholder: 'Choose' });
+
+    expect(screen.getByText('Atena')).toBeTruthy();
+    expect(screen.queryByText('Choose')).toBeNull();
+  });
+
+  it('keeps a disabled field closed', async () => {
+    const screen = await render1({ disabled: true });
+
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
+
+    expect(screen.queryByTestId('multiselect-option-atena')).toBeNull();
   });
 });

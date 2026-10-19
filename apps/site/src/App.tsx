@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { SiteThemeProvider } from './theme/SiteThemeProvider';
+import { SITE_TEXT_CONTEXT } from './variant';
 
 export function SiteApp() {
   const { t, i18n } = useTranslation();
@@ -12,7 +13,7 @@ export function SiteApp() {
   useEffect(() => {
     document.title = t('meta.title');
     document.documentElement.lang = i18n.language;
-    const description = t('meta.description');
+    const description = t('meta.description', { context: SITE_TEXT_CONTEXT });
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');

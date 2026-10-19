@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import PlotMatrixScreen from '../../../src/screens/plots/PlotMatrixScreen';
+import PlotMatrixScreen from '@/src/screens/plots/PlotMatrixScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -20,7 +20,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -40,7 +40,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -57,7 +57,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/features/presence-matrix/PresenceMatrixCanvas', () => {
+jest.mock('@/src/components/features/presence-matrix/PresenceMatrixCanvas', () => {
   const { Text } = require('react-native');
   const React = require('react');
   return {
@@ -85,7 +85,7 @@ jest.mock('../../../src/components/features/presence-matrix/PresenceMatrixCanvas
   };
 });
 
-jest.mock('../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
+jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -104,7 +104,7 @@ jest.mock('../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -116,11 +116,11 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (s: any) => any) => selector({ showNotification: mockNotify }),
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => {
+jest.mock('@/src/state/app/userSettingsStore', () => {
   const state = { userId: 'user-1', exportFormat: 'svg' };
   const useUserSettingsStore = (selector?: (s: any) => any) =>
     typeof selector === 'function' ? selector(state) : state;
@@ -128,26 +128,26 @@ jest.mock('../../../src/state/userSettingsStore', () => {
   return { useUserSettingsStore };
 });
 
-jest.mock('../../../src/hooks/useStoryPlots', () => ({
+jest.mock('@/src/screens/plots/useStoryPlots', () => ({
   useStoryPlots: () => mockPlotsData,
 }));
 
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   useStoryVocabulary: () => ({ term: (key: string) => key }),
 }));
 
-jest.mock('../../../src/utils/storyTransfer', () => ({
+jest.mock('@/src/utils/io/storyTransfer', () => ({
   deliverMapExport: (...a: any[]) => mockDeliverExport(...a),
   buildBoardMapFileName: (a: string, b: string) => `${a}-${b}.svg`,
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

@@ -1,10 +1,10 @@
 import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { RegistrationSettingsPage } from '../../src/pages/settings/RegistrationSettingsPage';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { TiersPage } from '../../src/pages/tiers/TiersPage';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { RegistrationSettingsPage } from '@/pages/settings/RegistrationSettingsPage';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { TiersPage } from '@/pages/tiers/TiersPage';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   listTiers: vi.fn(),
@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   updateShowcaseSettings: vi.fn(),
 }));
 
-vi.mock('../../src/api/TierApiService', () => ({
+vi.mock('@/api/TierApiService', () => ({
   TierApiService: {
     list: mocks.listTiers,
     create: mocks.createTier,
@@ -25,10 +25,10 @@ vi.mock('../../src/api/TierApiService', () => ({
     softDelete: mocks.softDeleteTier,
   },
 }));
-vi.mock('../../src/api/RegistrationSettingsApiService', () => ({
+vi.mock('@/api/RegistrationSettingsApiService', () => ({
   RegistrationSettingsApiService: { get: mocks.getSettings, update: mocks.updateSettings },
 }));
-vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+vi.mock('@/api/ShowcaseSettingsApiService', () => ({
   ShowcaseSettingsApiService: {
     get: mocks.getShowcaseSettings,
     update: mocks.updateShowcaseSettings,
@@ -42,11 +42,21 @@ const withProviders = (page: ReactElement) =>
     </MemoryRouter>,
   );
 
+const showTab = async (container: HTMLDivElement, label: string) => {
+  await click(
+    Array.from(container.querySelectorAll('[role="tab"]')).find(
+      (tab) => tab.textContent === label,
+    )!,
+  );
+  await flush();
+};
+
 const settings = (over: Record<string, unknown> = {}) => ({
   isRegistrationOpen: true,
   autoManage: false,
   maxUsers: null,
   defaultTierId: null,
+  currency: 'BRL',
   ...over,
 });
 
@@ -60,6 +70,13 @@ const tier = (over: Record<string, unknown> = {}) => ({
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  maxCommentsPerStory: null,
+  maxContributorsPerStory: null,
+  maxMessagesPerDay: null,
+  priceMonthlyCents: null,
+  priceYearlyCents: null,
+  isPublicForSale: false,
+  sortOrder: 0,
   isDeleted: false,
   ...over,
 });
@@ -117,14 +134,27 @@ describe('registration settings', () => {
     await view.unmount();
   });
 
+  it('says, by the default plan, what people have without paying and what no default means', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    const hint =
+      view.container.querySelector('[data-testid="default-tier-hint"]')?.textContent ?? '';
+    expect(hint).toContain('without paying');
+    expect(hint).toContain('free plan');
+    expect(hint).toContain('paid-only');
+    expect(hint).toContain('no limits');
+    await view.unmount();
+  });
+
   it('hides the manual switch while registration is automatic', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
     const checkboxes = () => Array.from(view.container.querySelectorAll('input[type="checkbox"]'));
 
-    expect(checkboxes()).toHaveLength(4); // registration ×2, showcase ×2
+    expect(checkboxes()).toHaveLength(3); // registration ×2 and the adults-only switch; other tabs stay hidden
     await click(checkboxes()[0]); // auto-manage on
-    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(3);
+    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(2);
 
     await submit(view.container.querySelector('form')!);
     await flush();
@@ -167,6 +197,7 @@ describe('registration settings', () => {
       maxUsers: 500,
       autoManage: false,
       defaultTierId: 'tier-1',
+      currency: 'BRL',
     });
     expect(view.container.querySelector('.success-text')).not.toBeNull();
     await view.unmount();
@@ -218,6 +249,79 @@ describe('registration settings', () => {
     expect(view.container.querySelector('form')).not.toBeNull();
     await view.unmount();
   });
+
+  it('switches sections through tabs, one at a time', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    const tabs = Array.from(view.container.querySelectorAll('[role="tab"]'));
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'Registration',
+      'Hosted Pages',
+      'Appearance',
+    ]);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(view.container.querySelector('.settings-sections form')).not.toBeNull();
+    expect(view.container.querySelector('.appearance-preview')).toBeNull();
+
+    await click(tabs[2]);
+    await flush();
+
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+    expect(view.container.querySelector('.settings-sections form')).toBeNull();
+    expect(view.container.querySelector('.appearance-preview')).not.toBeNull();
+    await view.unmount();
+  });
+
+  it('disables save until something changes, then reports the draft state', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+    const form = view.container.querySelector('form')!;
+    const save = () =>
+      Array.from(form.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Save',
+      )! as HTMLButtonElement;
+
+    expect(save().disabled).toBe(true);
+    expect(form.textContent).toContain('All changes saved.');
+
+    await changeInput(form.querySelector('input[type="number"]')!, '500');
+    await flush();
+
+    expect(save().disabled).toBe(false);
+    expect(form.textContent).toContain('Unsaved changes.');
+    await view.unmount();
+  });
+
+  it('uppercases the typed currency and saves it with the rest', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    const label = Array.from(view.container.querySelectorAll('form label')).find((node) =>
+      node.textContent?.includes('Currency (ISO code)'),
+    )!;
+    await changeInput(label.querySelector('input')!, 'usd');
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ currency: 'USD' }));
+    await view.unmount();
+  });
+
+  it('refuses a negative max users instead of saving it', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    await changeInput(view.container.querySelector('input[type="number"]')!, '-5');
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.updateSettings).not.toHaveBeenCalled();
+    expect(view.container.querySelector('.error-text')?.textContent).toBe(
+      'Enter a whole number of 0 or more.',
+    );
+    await view.unmount();
+  });
 });
 
 describe('showcase settings card', () => {
@@ -226,29 +330,51 @@ describe('showcase settings card', () => {
       node.textContent?.includes('Hosted Pages'),
     )!;
 
-  it('toggles the public site on and off', async () => {
+  it('holds toggle edits as a draft until saved once', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
+    const save = () =>
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!;
 
-    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[0]);
+    await click(card.querySelectorAll('input[type="checkbox"]')[0]);
     await flush();
 
-    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith({ isShowcaseEnabled: true });
-    expect(showcaseCard(view.container).querySelector('.success-text')).not.toBeNull();
+    expect(mocks.updateShowcaseSettings).not.toHaveBeenCalled();
+    expect(card.textContent).toContain('Unsaved changes.');
+
+    await click(save());
+    await flush();
+
+    expect(mocks.updateShowcaseSettings).toHaveBeenCalledTimes(1);
+    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith({
+      isShowcaseEnabled: true,
+      isHostedClientEnabled: true,
+      isLandingEnabled: false,
+      siteName: 'Keres',
+      sitePalette: 'default',
+    });
+    expect(card.querySelector('.success-text')).not.toBeNull();
+    expect(card.textContent).toContain('All changes saved.');
     await view.unmount();
   });
 
-  it('reports a toggle failure', async () => {
+  it('reports a save failure', async () => {
     mocks.updateShowcaseSettings.mockRejectedValue(new Error('Read-only mode.'));
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
 
-    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[1]);
+    await click(card.querySelectorAll('input[type="checkbox"]')[1]);
+    await flush();
+    await click(
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!,
+    );
     await flush();
 
-    expect(showcaseCard(view.container).querySelector('.error-text')?.textContent).toBe(
-      'Read-only mode.',
-    );
+    expect(card.querySelector('.error-text')?.textContent).toBe('Read-only mode.');
     await view.unmount();
   });
 
@@ -256,8 +382,28 @@ describe('showcase settings card', () => {
     mocks.getShowcaseSettings.mockRejectedValue(new Error('Showcase settings are down.'));
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Hosted Pages');
 
     expect(view.container.textContent).toContain('Showcase settings are down.');
+    await view.unmount();
+  });
+
+  it('saves the landing page toggle with the rest of the draft', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
+
+    await click(card.querySelectorAll('input[type="checkbox"]')[2]);
+    await flush();
+    await click(
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!,
+    );
+    await flush();
+
+    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ isLandingEnabled: true }),
+    );
     await view.unmount();
   });
 
@@ -265,6 +411,7 @@ describe('showcase settings card', () => {
     mocks.getShowcaseSettings.mockRejectedValue(undefined);
     const failed = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(failed.container, 'Hosted Pages');
     expect(failed.container.textContent).toContain('Failed to load.');
     await failed.unmount();
 
@@ -277,19 +424,55 @@ describe('showcase settings card', () => {
     mocks.updateShowcaseSettings.mockRejectedValue(undefined);
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
-    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[0]);
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
+    await click(card.querySelectorAll('input[type="checkbox"]')[0]);
     await flush();
-    expect(showcaseCard(view.container).querySelector('.error-text')?.textContent).toBe(
-      'Save failed.',
+    await click(
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!,
     );
+    await flush();
+    expect(card.querySelector('.error-text')?.textContent).toBe('Save failed.');
     await view.unmount();
   });
 });
 
 describe('appearance card', () => {
+  it('switches the theme through the segmented control', async () => {
+    localStorage.removeItem('keres_admin_theme_preference');
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+    await showTab(view.container, 'Appearance');
+
+    const dark = Array.from(view.container.querySelectorAll('.segmented button')).find(
+      (button) => button.textContent === 'Dark',
+    )!;
+    expect(dark.getAttribute('aria-pressed')).toBe('false');
+
+    await click(dark);
+    await flush();
+
+    expect(localStorage.getItem('keres_admin_theme_preference')).toBe('dark');
+    expect(dark.getAttribute('aria-pressed')).toBe('true');
+    await view.unmount();
+  });
+
+  it('previews the panel with the live theme variables', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+    await showTab(view.container, 'Appearance');
+
+    const preview = view.container.querySelector('.appearance-preview')!;
+    expect(preview.querySelector('.appearance-preview-sidebar')).not.toBeNull();
+    expect(preview.querySelector('.appearance-preview-button')).not.toBeNull();
+    expect(preview.querySelector('.appearance-preview-card')).not.toBeNull();
+    await view.unmount();
+  });
+
   it('remembers the chosen palette in this browser', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Appearance');
 
     const selects = view.container.querySelectorAll('select');
     const paletteSelect = selects[selects.length - 1];
@@ -303,6 +486,60 @@ describe('appearance card', () => {
 });
 
 describe('tiers page', () => {
+  it('says to keep a free plan as the default, and that a free plan at 0 makes the server paid-only', async () => {
+    mocks.listTiers.mockResolvedValue([]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const note = view.container.querySelector('[data-testid="free-plan-note"]')?.textContent ?? '';
+    expect(note).toContain('Always keep a free plan');
+    expect(note).toContain('no limits at all');
+    expect(note).toContain('0 allows nothing');
+    expect(note).toContain('paid-only');
+    // What 0 does to a person is said, not left to be found out.
+    expect(note).toContain('cannot create stories');
+    expect(note).toContain('collaborate');
+    await view.unmount();
+  });
+
+  it('tells, on the plan being edited, that ticking default is the same setting as in Settings', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+    expect(view.container.querySelector('[data-testid="default-note"]')).toBeNull();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+
+    const note = view.container.querySelector('[data-testid="default-note"]')?.textContent ?? '';
+    expect(note).toContain('free plan');
+    expect(note).toContain('paid period ends');
+    expect(note).toContain('same setting');
+    await view.unmount();
+  });
+
+  it('says on every ceiling that blank is unlimited and 0 is none', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+
+    const hints = Array.from(view.container.querySelectorAll('.form-card label .hint')).map(
+      (hint) => hint.textContent,
+    );
+    expect(hints.filter((hint) => hint === '(blank = unlimited, 0 = none)').length).toBeGreaterThan(
+      5,
+    );
+    await view.unmount();
+  });
+
   it('edits an existing tier and saves through update', async () => {
     mocks.listTiers.mockResolvedValue([tier()]);
     const view = await withProviders(<TiersPage />);
@@ -372,14 +609,102 @@ describe('tiers page', () => {
     await view.unmount();
   });
 
+  it('asks for the comments per story, says what a comment is, and keeps 0 apart from empty (unlimited)', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxCommentsPerStory: 5 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Comments/story');
+    expect(card.textContent).toContain('5');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    expect(view.container.querySelector('[data-testid="comments-note"]')!.textContent).toContain(
+      'Comments are not entities: this caps how many comments (by anyone) one story may hold; blank = unlimited',
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max comments per story'),
+    )!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Chatty');
+    await changeInput(label.querySelector('input')!, '0');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxCommentsPerStory: 0 }),
+    );
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('.form-card input')!, 'Open');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxCommentsPerStory: null }),
+    );
+    await view.unmount();
+  });
+
+  it('asks for the collaborators per story, says whom it counts, and keeps 0 (nobody) apart from empty (unlimited)', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxContributorsPerStory: 4 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Collaborators/story');
+    expect(card.textContent).toContain('4');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    expect(
+      view.container.querySelector('[data-testid="contributors-note"]')!.textContent,
+    ).toContain('Readers and writers both count, the owner does not');
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max collaborators per story'),
+    )!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Solo');
+    await changeInput(label.querySelector('input')!, '0');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxContributorsPerStory: 0 }),
+    );
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('.form-card input')!, 'Open');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxContributorsPerStory: null }),
+    );
+    await view.unmount();
+  });
+
   it('asks for the publications per day, labelled, and keeps 0 (none allowed) apart from empty (unlimited)', async () => {
     mocks.listTiers.mockResolvedValue([tier({ maxPublicationsPerDay: 3 })]);
     const view = await withProviders(<TiersPage />);
     await flush();
 
-    // The column and its value.
-    expect(view.container.querySelector('thead')!.textContent).toContain('Publications/day');
-    expect(view.container.querySelector('tbody tr')!.textContent).toContain('3');
+    // The card groups and the value.
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Limits');
+    expect(card.textContent).toContain('Storage');
+    expect(card.textContent).toContain('Prices');
+    expect(card.textContent).toContain('Publications/day');
+    expect(card.textContent).toContain('3');
 
     await click(
       Array.from(view.container.querySelectorAll('button')).find(
@@ -412,6 +737,45 @@ describe('tiers page', () => {
     await view.unmount();
   });
 
+  it('asks for the messages per day, and keeps 0 (silenced) apart from empty (unlimited)', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxMessagesPerDay: 12 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Messages/day');
+    expect(card.textContent).toContain('12');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max messages to users per day'),
+    )!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Quiet');
+    await changeInput(label.querySelector('input')!, '0');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxMessagesPerDay: 0 }),
+    );
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('.form-card input')!, 'Open');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxMessagesPerDay: null }),
+    );
+    await view.unmount();
+  });
+
   it('loads the ceiling of the tier being edited', async () => {
     mocks.listTiers.mockResolvedValue([tier({ maxPublicationsPerDay: 7 })]);
     const view = await withProviders(<TiersPage />);
@@ -428,6 +792,70 @@ describe('tiers page', () => {
     expect(mocks.updateTier).toHaveBeenCalledWith(
       'tier-1',
       expect.objectContaining({ maxPublicationsPerDay: 7 }),
+    );
+    await view.unmount();
+  });
+
+  it('shows storage limits as KB/MB/GB and edits them as an amount and a unit', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({ maxStorageBytesPerStory: 100 * 1024 * 1024, maxStorageBytesTotal: 2 * 1024 ** 3 }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('100 MB');
+    expect(card.textContent).toContain('2 GB');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max storage per story'),
+    )!;
+    const amount = label.querySelector('input')!;
+    const unit = label.querySelector('select')!;
+    expect(amount.value).toBe('100');
+    expect(unit.value).toBe('MB');
+
+    // A new amount keeps the unit; a new unit keeps the amount.
+    await changeInput(amount, '250');
+    await changeInput(unit, 'GB');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.updateTier).toHaveBeenCalledWith(
+      'tier-1',
+      expect.objectContaining({
+        maxStorageBytesPerStory: 250 * 1024 ** 3,
+        maxStorageBytesTotal: 2 * 1024 ** 3,
+      }),
+    );
+    await view.unmount();
+  });
+
+  it('leaves a cleared storage limit unlimited', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxStorageBytesTotal: 1024 ** 3 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max storage total'),
+    )!;
+    await changeInput(label.querySelector('input')!, '');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.updateTier).toHaveBeenCalledWith(
+      'tier-1',
+      expect.objectContaining({ maxStorageBytesTotal: null }),
     );
     await view.unmount();
   });
@@ -503,7 +931,7 @@ describe('tiers page', () => {
     );
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Tier in use.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Tier in use.');
     await view.unmount();
   });
 
@@ -521,9 +949,9 @@ describe('tiers page', () => {
     const view = await withProviders(<TiersPage />);
     await flush();
 
-    const row = view.container.querySelector('tbody tr')!;
-    expect(row.textContent).toContain('Yes');
-    expect(row.textContent).toContain('∞');
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Default');
+    expect(card.textContent).toContain('∞');
     await view.unmount();
   });
 
@@ -544,12 +972,18 @@ describe('tiers page', () => {
     expect(view.container.querySelector('.error-text')?.textContent).toBe('Save failed.');
 
     await click(
-      Array.from(view.container.querySelectorAll('tbody button')).find(
+      Array.from(view.container.querySelectorAll('.modal button')).find(
+        (button) => button.textContent === 'Cancel',
+      )!,
+    );
+    await flush();
+    await click(
+      Array.from(view.container.querySelectorAll('.tier-card button')).find(
         (button) => button.textContent === 'Delete',
       )!,
     );
     await flush();
-    expect(window.alert).toHaveBeenCalledWith('Delete failed.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Delete failed.');
     await view.unmount();
   });
 
@@ -560,7 +994,7 @@ describe('tiers page', () => {
 
     expect(view.container.querySelector('.status-badge.deleted')).not.toBeNull();
     expect(
-      Array.from(view.container.querySelectorAll('tbody button')).find(
+      Array.from(view.container.querySelectorAll('.tier-card button')).find(
         (button) => button.textContent === 'Edit',
       ),
     ).toBeUndefined();
@@ -585,12 +1019,180 @@ describe('tiers page', () => {
     await view.unmount();
   });
 
+  it('refuses a negative ceiling instead of sending it to the API', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.modal label')).find((node) =>
+      node.textContent?.includes('Max stories'),
+    )!;
+    await changeInput(label.querySelector('input')!, '-3');
+    await submit(view.container.querySelector('.modal form')!);
+    await flush();
+
+    expect(mocks.createTier).not.toHaveBeenCalled();
+    expect(view.container.querySelector('.error-text')?.textContent).toBe(
+      'Enter a whole number of 0 or more.',
+    );
+    await view.unmount();
+  });
+
   it('shows a failure when the list fails to load', async () => {
     mocks.listTiers.mockRejectedValue(new Error('Tiers are down.'));
     const view = await withProviders(<TiersPage />);
     await flush();
 
     expect(view.container.querySelector('.error-text')?.textContent).toBe('Tiers are down.');
+    await view.unmount();
+  });
+
+  it('saves sale pricing in cents and previews the yearly discount', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const labels = Array.from(view.container.querySelectorAll('.form-card label'));
+    const byText = (text: string) =>
+      labels.find((node) => node.textContent?.includes(text))!.querySelector('input')!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Pro');
+    await changeInput(byText('Price per month'), '19.90');
+    await changeInput(byText('Price per year'), '199');
+    await click(byText('Show on the public site'));
+    await changeInput(byText('Display order'), '2');
+
+    // 199.00 against 12 × 19.90: −17%.
+    expect(view.container.querySelector('.form-card')!.textContent).toContain('−17% vs monthly');
+
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.createTier).toHaveBeenCalledWith(
+      expect.objectContaining({
+        priceMonthlyCents: 1990,
+        priceYearlyCents: 19900,
+        isPublicForSale: true,
+        sortOrder: 2,
+      }),
+    );
+    await view.unmount();
+  });
+
+  it('shows prices formatted and zero as free', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({ priceMonthlyCents: 1990, priceYearlyCents: 0, isPublicForSale: true }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('19.90');
+    expect(card.textContent).toContain('Free');
+    expect(card.textContent).toContain('For sale');
+    await view.unmount();
+  });
+
+  it('shows the store products on the card and saves them from the form', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({ playMonthlyProductId: 'plus_monthly', playYearlyProductId: null }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('plus_monthly');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const labels = Array.from(view.container.querySelectorAll('.form-card label'));
+    const byText = (text: string) =>
+      labels.find((node) => node.textContent?.includes(text))!.querySelector('input')!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Pro');
+    await changeInput(byText('Play product (monthly)'), 'plus_monthly');
+    await changeInput(byText('Play product (yearly)'), 'plus_yearly');
+
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.createTier).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playMonthlyProductId: 'plus_monthly',
+        playYearlyProductId: 'plus_yearly',
+        webMonthlyEnabled: true,
+        webYearlyEnabled: true,
+      }),
+    );
+    await view.unmount();
+  });
+
+  it('sells a plan outside the web when the web sale is unticked', async () => {
+    mocks.listTiers.mockResolvedValue([tier({})]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const labels = Array.from(view.container.querySelectorAll('.form-card label'));
+    const webMonthly = labels
+      .find((node) => node.textContent?.includes('Web (monthly)'))!
+      .querySelector('input')!;
+    await click(webMonthly);
+
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.createTier).toHaveBeenCalledWith(
+      expect.objectContaining({ webMonthlyEnabled: false, webYearlyEnabled: true }),
+    );
+    await view.unmount();
+  });
+
+  it('shows and edits the web purchase switches and the sale flag a tier already has', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({
+        webMonthlyEnabled: false,
+        webYearlyEnabled: true,
+        isPublicForSale: true,
+        sortOrder: 3,
+      }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const facts = view.container.querySelector('.tier-card')!.textContent ?? '';
+    expect(facts).toMatch(/Web \(monthly\)\s*No/);
+    expect(facts).toMatch(/Web \(yearly\)\s*Yes/);
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+    const boxes = Array.from(
+      view.container.querySelectorAll<HTMLInputElement>('.form-card input[type="checkbox"]'),
+    );
+    expect(boxes.some((box) => box.checked)).toBe(true);
+    expect(boxes.some((box) => !box.checked)).toBe(true);
+    const sort = Array.from(
+      view.container.querySelectorAll<HTMLInputElement>('.form-card input[type="number"]'),
+    ).find((input) => input.value === '3');
+    expect(sort).toBeDefined();
     await view.unmount();
   });
 });

@@ -1,7 +1,6 @@
 import { cookie } from '@elysiajs/cookie';
 import { cors } from '@elysiajs/cors';
 import { jwt } from '@elysiajs/jwt';
-import { staticPlugin } from '@elysiajs/static';
 import { Elysia, t } from 'elysia';
 import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
@@ -9,21 +8,36 @@ import {
   adminDistPath as resolveAdminDistPath,
   clientDistPath as resolveClientDistPath,
   desktopIconPath,
+  landingDistPath as resolveLandingDistPath,
   showcaseDistPath as resolveShowcaseDistPath,
 } from './config/resourceRoot';
 import {
-  CLIENT_APP_ISOLATION_HEADERS,
-  isClientDistRootAssetPath,
+  HOSTED_CLIENT_PATH_PREFIX,
+  hostedClientRelativePath,
+  isHostedClientPath,
   isShowcasePath,
-  readClientDistRootAsset,
-  readHostedClientFile,
+  resolveHostedClientFile,
   SHOWCASE_PATH_PREFIX,
-} from './services/hostedClient';
+} from './services/static-delivery/hostedClient';
+import { deliverDistFile } from './services/static-delivery/distStaticDelivery';
+import {
+  hostedClientDelivery,
+  hostedClientDeliveryInput,
+} from './services/static-delivery/hostedClientDelivery';
+import { sendStaticDelivery } from './services/static-delivery/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
-import { showcaseSettingsService } from './services/ShowcaseSettingsService';
+import { requestAudit } from './plugins/requestAudit';
+import { assertPendingSessionMayReach } from './services/age-verification/pendingAccess';
+import { showcaseSettingsService } from './services/showcase/ShowcaseSettingsService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
+import {
+  applyAdminUiSecurityHeaders,
+  applyClientAppIsolationHeaders,
+} from './services/static-delivery/uiSecurityHeaders';
+import { isDatabaseConnectivityError } from './utils/databaseConnectivity';
+import type { JWTPayload } from './types/jwtPayload';
 
 /**
  * Co-hosting the admin panel: bringing the API up already serves the web app alongside it, in the
@@ -58,78 +72,90 @@ const showcaseFaviconPath = path.join(showcaseDistPath, 'favicon.ico');
 const clientDistPath = resolveClientDistPath();
 const clientDistIndexPath = path.join(clientDistPath, 'index.html');
 const clientUiAvailable = existsSync(clientDistIndexPath);
+/**
+ * The landing page (`apps/site`'s second build output). Like the showcase, its static files
+ * live under their own prefix (`/_landing/`, Vite's `base`) and the *page* lives at the root:
+ * mounting the files directly at `/` would shadow the API routes. Unlike the other bundles,
+ * a missing one stays silent at boot - the landing is opt-in and off by default, so most
+ * servers will never build it.
+ */
+const landingDistPath = resolveLandingDistPath();
+const landingDistIndexPath = path.join(landingDistPath, 'index.html');
+const landingUiAvailable = existsSync(landingDistIndexPath);
+/** The same .ico, generated from the same PNG, by the landing page's build. */
+const landingFaviconPath = path.join(landingDistPath, 'favicon.ico');
 
 /** Fallback before an admin build exists — same PNG desktop uses, not copied into admin. */
 const desktopIconFilePath = desktopIconPath();
 
-/** Headers for the co-hosted admin SPA (static assets + HTML fallback). Not applied to `/api/admin/*`. */
-const ADMIN_UI_SECURITY_HEADERS: Record<string, string> = {
-  'Content-Security-Policy':
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'no-referrer',
-  'X-Frame-Options': 'DENY',
-};
-
-const SERVER_LANDING_SECURITY_HEADERS: Record<string, string> = {
-  'Content-Security-Policy':
-    "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'no-referrer',
-  'X-Frame-Options': 'DENY',
-};
-
-function applyAdminUiSecurityHeaders(set: { headers: Record<string, string | number> }): void {
-  for (const [name, value] of Object.entries(ADMIN_UI_SECURITY_HEADERS)) {
-    set.headers[name] = value;
-  }
-}
-
-function applyServerLandingSecurityHeaders(set: {
-  headers: Record<string, string | number>;
-}): void {
-  for (const [name, value] of Object.entries(SERVER_LANDING_SECURITY_HEADERS)) {
-    set.headers[name] = value;
-  }
-}
-
-/** A deliberately static page: the server stays useful without exposing the hosted client. */
-function serverLandingHtml(): string {
-  return `<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keres Server</title><style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#121212;color:#fff;font-family:system-ui,sans-serif}
-main{width:min(34rem,calc(100% - 3rem));padding:2.5rem;border:1px solid #333;border-radius:1rem;background:#1e1e1e;text-align:center}
-h1{margin:0 0 .75rem;color:#bb86fc}p{margin:0 0 2rem;color:#d0c8d8;line-height:1.55}.actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}a{padding:.7rem 1rem;border-radius:.55rem;background:#bb86fc;color:#1b1024;text-decoration:none;font-weight:700}a.secondary{background:transparent;color:#eaddff;border:1px solid #bb86fc}
-</style></head><body><main><h1>Keres Server</h1><p>Este endereço hospeda um servidor Keres.</p><div class="actions"><a href="/admin">Administração</a><a class="secondary" href="/showcase">Vitrine</a></div></main></body></html>`;
-}
-
-function applyClientAppIsolationHeaders(set: { headers: Record<string, string | number> }): void {
-  for (const [name, value] of Object.entries(CLIENT_APP_ISOLATION_HEADERS)) {
-    set.headers[name] = value;
-  }
-}
-
-function isClientAppPath(pathname: string): boolean {
-  return pathname === '/' || isClientDistRootAssetPath(pathname);
-}
-
-function serveClientRootAsset(
+/**
+ * The admin panel: a file of its build, or - for a route of the panel that is not a file (say,
+ * /admin/users, which React Router resolves in the browser) - the same index.html. Without that
+ * fallback an F5 on /admin/users would give a 404.
+ *
+ * Shared by `/admin` and `/admin/*`: the router sees them as two paths, and only one of them used to be
+ * registered, so `/admin` fell to the catch-all and was sent to the root while `/admin/` opened the panel.
+ */
+async function serveAdminUi(
   set: { status?: number | string; headers: Record<string, string | number> },
   request: Request,
-): Uint8Array | { message: string } {
+  requestPath: string,
+): Promise<Uint8Array | string | Response | { message: string }> {
+  // Do not let the removed `/admin/api/*` contract become a 200 with index.html.
+  if (requestPath === '/admin/api' || requestPath.startsWith('/admin/api/')) {
+    set.status = 404;
+    return { message: 'Not found' };
+  }
+  if (!adminUiAvailable) {
+    set.status = 404;
+    return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
+  }
+  applyAdminUiSecurityHeaders(set);
+  // A file of the build (compressed and cacheable, see `StaticDelivery`)...
+  const file = await deliverDistFile(adminDistPath, requestPath.slice('/admin'.length), request);
+  if (file) return sendStaticDelivery(set, file);
+  // ...otherwise, the SPA fallback.
+  // Node/Vitest has no `Bun.file`; the HTML is tiny so a sync read is fine.
+  set.headers['content-type'] = 'text/html; charset=utf-8';
+  return readFileSync(adminDistIndexPath, 'utf8');
+}
+
+/**
+ * The hosted client: its entry page and everything it loads, all under `/client`. The entry is what the
+ * administrator can switch off (`isHostedClientEnabled`); the assets it asks for are served regardless,
+ * as they always were - without the entry nobody asks for them, and a database query per asset would be
+ * a poor trade.
+ */
+async function serveHostedClient(
+  set: { status?: number | string; headers: Record<string, string | number> },
+  request: Request,
+): Promise<Uint8Array | string | Response | { message: string }> {
   if (!clientUiAvailable) {
     set.status = 404;
     return { message: 'Not found' };
   }
-  const file = readClientDistRootAsset(clientDistPath, new URL(request.url).pathname);
-  if (!file) {
+  const resolved = resolveHostedClientFile(
+    clientDistPath,
+    hostedClientRelativePath(new URL(request.url).pathname),
+  );
+  if (!resolved) {
     set.status = 404;
     return { message: 'Not found' };
   }
+  // The same default as the root had: on while the database is starting up or is down.
+  if (resolved.html && !(await showcaseSettingsService.isHostedClientEnabled().catch(() => true))) {
+    set.status = 404;
+    return { message: 'Not found' };
+  }
+  const delivery = await hostedClientDelivery.deliver({
+    ...hostedClientDeliveryInput(clientDistPath, resolved.filePath, resolved.html),
+    request: {
+      acceptEncoding: request.headers.get('accept-encoding'),
+      ifNoneMatch: request.headers.get('if-none-match'),
+    },
+  });
   applyClientAppIsolationHeaders(set);
-  set.headers['content-type'] = file.contentType;
-  return file.body;
+  return sendStaticDelivery(set, delivery);
 }
 
 if (!showcaseUiAvailable) {
@@ -146,40 +172,13 @@ if (!adminUiAvailable) {
 
 if (!clientUiAvailable) {
   logger.warn(
-    `Hosted client not built - / will not serve the web app. Run 'bun run client:build' to enable it.`,
+    `Hosted client not built - /client will not serve the web app. Run 'bun run client:build:hosted' to enable it.`,
   );
 }
 
-/** pg/network error codes that mean "couldn't reach or lost the database", not an app bug. */
-const DB_CONNECTIVITY_ERROR_CODES = new Set([
-  'ECONNREFUSED',
-  'ENOTFOUND',
-  'ETIMEDOUT',
-  'EHOSTUNREACH',
-  'ENETUNREACH',
-  'EAI_AGAIN',
-  '57P03', // Postgres: cannot_connect_now
-]);
+export { isDatabaseConnectivityError };
 
-export function isDatabaseConnectivityError(error: unknown): boolean {
-  let current: unknown = error;
-  // drizzle/pg wrap the root network error in `.cause`, sometimes more than one layer deep.
-  for (let depth = 0; current && depth < 5; depth++) {
-    const code = (current as { code?: unknown }).code;
-    if (typeof code === 'string' && DB_CONNECTIVITY_ERROR_CODES.has(code)) {
-      return true;
-    }
-    current = (current as { cause?: unknown }).cause;
-  }
-  return false;
-}
-
-// Define a placeholder type for the JWT payload
-// In a real application, this would be derived from your User entity
-export interface JWTPayload {
-  userId: string;
-  username: string;
-}
+export type { JWTPayload };
 
 /** Creates the application without migrating the database, reconciling the admin or opening a port. */
 export async function createApp() {
@@ -195,6 +194,7 @@ export async function createApp() {
             // Define schema for JWT payload
             userId: t.String(),
             username: t.String(),
+            pending: t.Optional(t.Literal(true)),
           }),
         }),
       )
@@ -212,10 +212,14 @@ export async function createApp() {
           credentials: false,
         }),
       )
-      .derive(async ({ jwt, headers, cookie }) => {
-        let token: string | null | undefined = headers['authorization']?.startsWith('Bearer ')
-          ? headers['authorization'].slice(7)
-          : null;
+      .derive(async ({ jwt, headers, cookie, request }) => {
+        // The showcase sends session and unlock comma-joined (`Bearer <s>, Showcase <u>`): only
+        // the Bearer half is a session here, the Showcase half belongs to the public routes.
+        const bearerHalf = headers['authorization']
+          ?.split(',')
+          .map((half) => half.trim())
+          .find((half) => half.startsWith('Bearer '));
+        let token: string | null | undefined = bearerHalf ? bearerHalf.slice(7) : null;
 
         if (!token && typeof cookie['access_token'].value === 'string') {
           token = cookie['access_token'].value;
@@ -234,13 +238,19 @@ export async function createApp() {
         // happened to carry a stale token; each route that actually requires auth already does
         // its own `if (!user) { 401 }` check right after this runs, so nothing is lost by
         // deferring the rejection to there instead.
+        let payload: JWTPayload | null;
         try {
-          const payload = await jwt.verify(token);
-          return { user: (payload || null) as JWTPayload | null };
+          payload = ((await jwt.verify(token)) || null) as JWTPayload | null;
         } catch {
           return { user: null };
         }
+        // A pending account's session reaches only the verification routes - refused here, before any route runs,
+        // with no database hit. Outside the try: the refusal is an answer, not an invalid token.
+        if (payload?.pending) assertPendingSessionMayReach(request);
+        return { user: payload };
       })
+      // Who did what, for the administrators: after the session is known, before any route.
+      .use(requestAudit)
       .onError(({ code, error, set, path, request, user, params }) => {
         const err = error instanceof Error ? error : new Error(String(error));
         const label = `${request.method} ${path}`;
@@ -259,7 +269,7 @@ export async function createApp() {
             userId,
             storyId,
           });
-          return { message: err.message };
+          return err.code ? { message: err.message, code: err.code } : { message: err.message };
         }
 
         // Route handlers that deliberately picked a non-500 status before throwing a plain
@@ -294,26 +304,24 @@ export async function createApp() {
       .get(
         '/',
         async ({ set }) => {
-          // The root is the web client (the same export Electron uses), so Expo Router lives at `/` as it does
-          // on the desktop. The administrator can swap that for a minimal landing page. The root has always
-          // served the client without depending on the database. Preserving that path while the database is
-          // still starting up or is down avoids trading a useful page for a 503; the configuration's default is
-          // also "on".
-          const hostedClientEnabled = await showcaseSettingsService
-            .isHostedClientEnabled()
-            .catch(() => true);
-          if (clientUiAvailable && hostedClientEnabled) {
-            const file = readHostedClientFile(clientDistPath, '/');
-            if (file) {
-              applyClientAppIsolationHeaders(set);
-              set.headers['content-type'] = file.contentType;
-              return file.body;
-            }
-          }
-          if (!hostedClientEnabled) {
-            applyServerLandingSecurityHeaders(set);
+          // The root resolves in order: the landing page when the administrator enabled it, the
+          // hosted client at /client, the showcase, and finally the API docs. Each step needs
+          // both its build and its switch - an enabled page whose bundle was never built falls
+          // through to the next, so the root always answers with something useful. It has never
+          // depended on the database: while it is starting up or is down, the defaults (landing
+          // off, client on) apply rather than trading a useful page for a 503.
+          const settings = await showcaseSettingsService.getOrCreate().catch(() => null);
+          const landingEnabled = settings?.isLandingEnabled ?? false;
+          const hostedClientEnabled = settings?.isHostedClientEnabled ?? true;
+          if (landingUiAvailable && landingEnabled) {
+            applyAdminUiSecurityHeaders(set);
             set.headers['content-type'] = 'text/html; charset=utf-8';
-            return serverLandingHtml();
+            return readFileSync(landingDistIndexPath, 'utf8');
+          }
+          if (clientUiAvailable && hostedClientEnabled) {
+            set.status = 302;
+            set.headers.location = `${HOSTED_CLIENT_PATH_PREFIX}/`;
+            return;
           }
           if (showcaseUiAvailable && (await showcaseSettingsService.isEnabled())) {
             set.status = 302;
@@ -326,21 +334,34 @@ export async function createApp() {
         },
         {
           detail: {
-            summary: 'Hosted Keres client (or showcase / Swagger)',
+            summary: 'Origin root (landing, hosted client, showcase or Swagger)',
             description:
-              'Serves the web export of apps/client at the origin root, with COOP/COEP so expo-sqlite can use SharedArrayBuffer. Falls back to /showcase or /api/swagger when the export is missing.',
+              'Serves the landing page when enabled, else redirects to the hosted web client at /client, the showcase, or the API docs.',
             tags: ['Client'],
           },
         },
       )
+      // `/client` and `/client/` are one path to the router, so there is no redirect between them: it
+      // would answer itself forever. The entry is the same either way.
+      .get('/client', ({ set, request }) => serveHostedClient(set, request), {
+        detail: { summary: 'Hosted Keres client (entry)', tags: ['Client'] },
+      })
+      .get('/client/*', ({ set, request }) => serveHostedClient(set, request), {
+        detail: {
+          summary: 'Hosted Keres client',
+          description:
+            'Serves the web export of apps/client built for /client (KERES_WEB_BASE_URL), with COOP/COEP so expo-sqlite can use SharedArrayBuffer. A path with no file falls back to the entry page.',
+          tags: ['Client'],
+        },
+      })
       .get(
         '/favicon.ico',
         ({ set }) => {
-          // The panel and the public site generate the same .ico, from the same PNG - either one works.
-          // Looking in both keeps the tab from having no icon on a server that only built the site (or only the
-          // panel); the client's PNG is the last resort, for when no build exists yet.
-          const generatedIcoPath = [adminFaviconPath, showcaseFaviconPath].find((candidate) =>
-            existsSync(candidate),
+          // The panel, the public site and the landing page generate the same .ico, from the same
+          // PNG - any one works. Looking in all keeps the tab from having no icon on a server that
+          // only built one of them; the client's PNG is the last resort, for when no build exists yet.
+          const generatedIcoPath = [adminFaviconPath, showcaseFaviconPath, landingFaviconPath].find(
+            (candidate) => existsSync(candidate),
           );
           const filePath = generatedIcoPath ?? desktopIconFilePath;
           const useGeneratedIco = !!generatedIcoPath;
@@ -366,14 +387,18 @@ export async function createApp() {
       .use(createApiRoutes())
       .onAfterHandle(({ request, set }) => {
         const pathname = new URL(request.url).pathname;
-        if (isClientAppPath(pathname)) {
+        if (isHostedClientPath(pathname)) {
           applyClientAppIsolationHeaders(set);
           return;
         }
         if (pathname.startsWith('/admin')) {
           applyAdminUiSecurityHeaders(set);
         }
-        if (isShowcasePath(pathname) || pathname.startsWith('/_showcase')) {
+        if (
+          isShowcasePath(pathname) ||
+          pathname.startsWith('/_showcase') ||
+          pathname.startsWith('/_landing')
+        ) {
           applyAdminUiSecurityHeaders(set);
         }
       })
@@ -387,33 +412,19 @@ export async function createApp() {
         set.status = 404;
         return { message: 'Not found' };
       })
-      .use(
-        adminUiAvailable
-          ? await staticPlugin({ assets: adminDistPath, prefix: '/admin', alwaysStatic: true })
-          : new Elysia(),
+      .get(
+        '/admin',
+        ({ set, request, path: requestPath }) => serveAdminUi(set, request, requestPath),
+        {
+          detail: {
+            summary: 'Admin panel (single-page app, entry without the slash)',
+            tags: ['Admin'],
+          },
+        },
       )
       .get(
         '/admin/*',
-        ({ set, path: requestPath }) => {
-          // `staticPlugin` and the SPA fallback are both compiled by Elysia; for paths that look like a panel
-          // route, the fallback takes precedence over the `.all()` above. Do not let the removed
-          // `/admin/api/*` contract become a 200 with index.html.
-          if (requestPath === '/admin/api' || requestPath.startsWith('/admin/api/')) {
-            set.status = 404;
-            return { message: 'Not found' };
-          }
-          if (!adminUiAvailable) {
-            set.status = 404;
-            return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
-          }
-          applyAdminUiSecurityHeaders(set);
-          // SPA fallback: any panel route that is not a real static file (say, /admin/users, a React Router
-          // client route) gets the same index.html, which then resolves the route in the browser. Without this,
-          // an F5 on /admin/users would give a 404.
-          // Node/Vitest has no `Bun.file`; the HTML is tiny so a sync read is fine.
-          set.headers['content-type'] = 'text/html; charset=utf-8';
-          return readFileSync(adminDistIndexPath, 'utf8');
-        },
+        ({ set, request, path: requestPath }) => serveAdminUi(set, request, requestPath),
         {
           detail: {
             summary: 'Admin panel (single-page app)',
@@ -431,7 +442,8 @@ export async function createApp() {
         {
           detail: {
             summary: 'Legacy hosted-client path',
-            description: 'The web client used to live at /app; it now occupies the origin root.',
+            description:
+              'The web client used to live at /app, and then at the root; it is under /client now.',
             tags: ['Client'],
           },
         },
@@ -486,30 +498,42 @@ export async function createApp() {
           },
         },
       )
-      .get('/_expo/*', ({ set, request }) => serveClientRootAsset(set, request), {
-        detail: {
-          summary: 'Expo web runtime (worker and bundles requested from origin root)',
-          tags: ['Client'],
+      // The static files of the public site and of the landing page, under the prefix Vite built them for.
+      // Their pages are served at the root and at /showcase; only what they load comes from here.
+      .get(
+        '/_showcase/*',
+        async ({ set, request, path: requestPath }) => {
+          const file = showcaseUiAvailable
+            ? await deliverDistFile(
+                showcaseDistPath,
+                requestPath.slice('/_showcase'.length),
+                request,
+              )
+            : null;
+          if (!file) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          return sendStaticDelivery(set, file);
         },
-      })
-      .get('/assets/*', ({ set, request }) => serveClientRootAsset(set, request), {
-        detail: {
-          summary: 'Expo web static assets requested from origin root',
-          tags: ['Client'],
-        },
-      })
-      .use(
-        showcaseUiAvailable
-          ? await staticPlugin({
-              assets: showcaseDistPath,
-              prefix: '/_showcase',
-              alwaysStatic: true,
-            })
-          : new Elysia(),
+        { detail: { summary: 'Showcase static files', tags: ['Showcase'] } },
       )
-      // Expo Router only recognises `/`. An F5 on `/StorySelection` (or whatever React Navigation has
-      // written into the bar) has to come back to the root, not serve the index at that path - otherwise
-      // the Router shows unmatched. The API and /showcase were already registered above.
+      .get(
+        '/_landing/*',
+        async ({ set, request, path: requestPath }) => {
+          const file = landingUiAvailable
+            ? await deliverDistFile(landingDistPath, requestPath.slice('/_landing'.length), request)
+            : null;
+          if (!file) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          return sendStaticDelivery(set, file);
+        },
+        { detail: { summary: 'Landing page static files', tags: ['Client'] } },
+      )
+      // A path nobody answers - an old bookmark, a stale reload - goes back to the root, which sends it
+      // on. The API, /showcase, /client and /_landing were already registered above.
       .get(
         '/*',
         ({ set, path: requestPath }) => {
@@ -527,9 +551,8 @@ export async function createApp() {
         },
         {
           detail: {
-            summary: 'Refresh fallback to the hosted client',
-            description:
-              'Unknown non-API paths redirect to / so a refresh never lands on an Expo Router unmatched screen.',
+            summary: 'Fallback to the root',
+            description: 'Unknown non-API paths redirect to /.',
             tags: ['Client'],
           },
         },

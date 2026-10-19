@@ -1,11 +1,11 @@
 import type { SyncConflict as SharedSyncConflict } from '@keres/shared';
 import { syncConflictValuesDiffer } from '@keres/shared';
 import { and, eq, inArray } from 'drizzle-orm';
-import * as schema from '../../db/schema';
-import type { OperationLogSelect } from '../../db/schema';
-import { recordLocalOperationSync } from '../../utils/syncUtils';
-import { getEntityTable, toEntityColumns } from '../entityTableRegistry';
-import { mergeLocalOperationPayloads } from '../SyncConflictService';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import { recordLocalOperationSync } from '@/src/services/sync/syncUtils';
+import { getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
+import { mergeLocalOperationPayloads } from '@/src/services/sync/SyncConflictService';
 import type { SyncContext } from './SyncContext';
 import { SNAPSHOT_BOOKKEEPING, withoutDerivedPosition } from './syncConflictHelpers';
 import { deriveBaseVersion } from './syncPure';

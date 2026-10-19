@@ -1,5 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
+import CommentListScreen from '@/src/screens/comments/CommentListScreen';
+
 const mockNavigateToDetail = jest.fn();
 const mockUseScreenTour = jest.fn();
 let mockSelectedStory: { id: string } | null = { id: 'story-1' };
@@ -17,29 +19,29 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   __esModule: true,
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: { background: '#fff', text: '#111', textSecondary: '#555' },
   }),
 }));
-jest.mock('../../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
@@ -67,8 +69,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import CommentListScreen from '../../../src/screens/comments/CommentListScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -30,7 +30,7 @@ COPY apps/admin apps/admin
 COPY apps/client/assets/images/desktop_icon.png apps/client/assets/images/desktop_icon.png
 RUN cd apps/admin && bun run build
 
-# ---- client-web-build: Expo web export served by the API at / ----
+# ---- client-web-build: Expo web export served by the API at /client ----
 # Só client + shared. Copiar o workspace inteiro (desktop/site/api/admin) faz o `bun install`
 # puxar Electron e, pior, `better-sqlite3` — devDependency só dos testes do client, módulo
 # nativo cujo `install` dispara node-gyp e exige Python/g++ que esta imagem não tem (e que
@@ -59,7 +59,26 @@ ENV EXPO_NO_TELEMETRY=1
 ENV NODE_OPTIONS=--max-old-space-size=3072
 WORKDIR /app/apps/client
 RUN bun scripts/generate-indexes.ts \
- && node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web
+ && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web --output-dir dist-hosted \
+ && bun scripts/inject-web-preloads.ts dist-hosted
+
+# ---- site-landing-build: the landing page the API serves at / ----
+# Só site. Como o admin-build (e ao contrário do client acima), precisa das devDependencies
+# (o `vite build` é o próprio toolchain) - por isso o install aqui é completo, não `--production`.
+# O PNG do ícone entra pelo mesmo motivo do admin-build: favicon e wordmark são gerados dele.
+FROM oven/bun:latest AS site-landing-build
+WORKDIR /app
+# A mesma barreira de serialização do estágio do client: deps → admin → client → site.
+COPY --from=client-web-build /app/apps/client/dist-hosted/index.html /tmp/.client-built
+COPY package.json bun.lock ./
+COPY apps/site/package.json apps/site/package.json
+COPY patches patches
+# Not --frozen-lockfile: partial workspace, same reason as the deps stage above.
+RUN bun install --linker=hoisted
+COPY apps/site apps/site
+COPY apps/client/assets/images/desktop_icon.png apps/client/assets/images/desktop_icon.png
+WORKDIR /app/apps/site
+RUN bun run build:landing
 
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----
 # Deliberately does NOT copy apps/admin/package.json: admin is already built to static files by
@@ -108,10 +127,20 @@ COPY apps/api/drizzle-sqlite ./apps/api/drizzle-sqlite
 # apps/admin/dist-showcase), independente de process.cwd().
 COPY --from=admin-build /app/apps/admin/dist ./apps/admin/dist
 COPY --from=admin-build /app/apps/admin/dist-showcase ./apps/admin/dist-showcase
-# Cliente web co-hospedado em /app (o mesmo export que o Electron empacota). Sem
-# este estágio a API sobe, só o /app 404. Expo fica isolado deste stage para o
-# runtime continuar só com Bun.
-COPY --from=client-web-build /app/apps/client/dist ./apps/client/dist
+# Cliente web co-hospedado em /client: um export próprio (baseUrl=/client), não o `dist` que o
+# Electron empacota, que é feito para a raiz. Sem este estágio a API sobe, só o /client 404. Expo
+# fica isolado deste stage para o runtime continuar só com Bun.
+COPY --from=client-web-build /app/apps/client/dist-hosted ./apps/client/dist-hosted
+# Landing page servida em /: um build próprio (baseUrl=/_landing), não o `dist` que o Pages
+# publica, feito para `/Keres/`. Sem este estágio a raiz cai na cadeia de redirects.
+COPY --from=site-landing-build /app/apps/site/dist-landing ./apps/site/dist-landing
+
+# Each static file gets a brotli and a gzip copy beside it, and a manifest lists them (see
+# apps/api/scripts/precompress-dist.ts). The server then answers from those copies: it does not compress
+# 25 MB of web bundles at every boot, and it does not keep compressed copies of them in memory. It runs here, as
+# root and before the chown below, so the copies belong to the same user as the files they sit next to.
+COPY apps/api/scripts/precompress-dist.ts ./apps/api/scripts/precompress-dist.ts
+RUN bun apps/api/scripts/precompress-dist.ts apps/admin/dist apps/admin/dist-showcase apps/client/dist-hosted apps/site/dist-landing
 
 WORKDIR /app/apps/api
 

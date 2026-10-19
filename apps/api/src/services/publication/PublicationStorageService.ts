@@ -1,0 +1,120 @@
+import { FORMAT_META, type ManuscriptFormat } from '@keres/shared';
+import type { BlobStorage } from '@/services/media-storage/BlobStorage';
+import { createBlobStorage } from '@/services/media-storage/createBlobStorage';
+
+/**
+ * Where the .zip files of published versions live.
+ *
+ * It uses the same `createBlobStorage()` as media - so a server configured with
+ * `MEDIA_STORAGE_DRIVER=s3` already keeps publications in S3, which is where they belong: they are
+ * the largest objects this API produces. No new environment variable.
+ *
+ * Outside `MediaStorageService` on purpose: there, blobs are addressed by MD5, deduplicated
+ * globally, counted against the tier's quota and collected by `deleteBlobIfUnreferenced`. A
+ * publication package is none of that - it is a unique artifact, with its own owner and lifetime,
+ * deleted along with the row that describes it.
+ */
+export class PublicationStorageService {
+  constructor(private readonly blobStorage: BlobStorage = createBlobStorage()) {}
+
+  storageKeyFor(storyId: string, publicationId: string): string {
+    return `publications/${storyId}/${publicationId}.zip`;
+  }
+
+  async store(storyId: string, publicationId: string, bytes: Uint8Array): Promise<void> {
+    await this.blobStorage.put(
+      this.storageKeyFor(storyId, publicationId),
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+      'application/zip',
+    );
+  }
+
+  async read(storyId: string, publicationId: string) {
+    return this.blobStorage.get(this.storageKeyFor(storyId, publicationId));
+  }
+
+  /**
+   * A short-lived signed URL, when the backend supports it (S3). `null` on local disk, and then the
+   * caller serves the bytes normally.
+   */
+  async presignedUrl(
+    storyId: string,
+    publicationId: string,
+    ttlSeconds: number,
+  ): Promise<string | null> {
+    if (!this.blobStorage.presignGet) {
+      return null;
+    }
+    return this.blobStorage.presignGet(this.storageKeyFor(storyId, publicationId), ttlSeconds);
+  }
+
+  async delete(storyId: string, publicationId: string): Promise<void> {
+    await this.blobStorage.delete(this.storageKeyFor(storyId, publicationId));
+  }
+
+  /** Manuscript sibling of the package: same folder, `.manuscript.{ext}` suffix. */
+  manuscriptKeyFor(storyId: string, publicationId: string, extension: string): string {
+    return `publications/${storyId}/${publicationId}.manuscript.${extension}`;
+  }
+
+  async storeManuscript(
+    storyId: string,
+    publicationId: string,
+    bytes: Uint8Array,
+    format: ManuscriptFormat,
+  ): Promise<void> {
+    const meta = FORMAT_META[format];
+    await this.blobStorage.put(
+      this.manuscriptKeyFor(storyId, publicationId, meta.extension),
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+      meta.mimeType,
+    );
+  }
+
+  async readManuscript(storyId: string, publicationId: string, extension: string) {
+    return this.blobStorage.get(this.manuscriptKeyFor(storyId, publicationId, extension));
+  }
+
+  /** Signed manuscript URL, or `null` on backends that cannot sign (same contract as the .zip). */
+  async presignedManuscriptUrl(
+    storyId: string,
+    publicationId: string,
+    extension: string,
+    ttlSeconds: number,
+  ): Promise<string | null> {
+    if (!this.blobStorage.presignGet) {
+      return null;
+    }
+    return this.blobStorage.presignGet(
+      this.manuscriptKeyFor(storyId, publicationId, extension),
+      ttlSeconds,
+    );
+  }
+
+  async deleteManuscript(storyId: string, publicationId: string, extension: string): Promise<void> {
+    await this.blobStorage.delete(this.manuscriptKeyFor(storyId, publicationId, extension));
+  }
+
+  /** The online reader page, a sibling of the package: same folder, `.reader.html`. */
+  readerKeyFor(storyId: string, publicationId: string): string {
+    return `publications/${storyId}/${publicationId}.reader.html`;
+  }
+
+  async storeReader(storyId: string, publicationId: string, bytes: Uint8Array): Promise<void> {
+    await this.blobStorage.put(
+      this.readerKeyFor(storyId, publicationId),
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+      'text/html; charset=utf-8',
+    );
+  }
+
+  async readReader(storyId: string, publicationId: string) {
+    return this.blobStorage.get(this.readerKeyFor(storyId, publicationId));
+  }
+
+  async deleteReader(storyId: string, publicationId: string): Promise<void> {
+    await this.blobStorage.delete(this.readerKeyFor(storyId, publicationId));
+  }
+}
+
+export const publicationStorageService = new PublicationStorageService();

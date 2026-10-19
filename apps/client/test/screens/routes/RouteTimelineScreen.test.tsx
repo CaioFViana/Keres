@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import RouteTimelineScreen from '../../../src/screens/routes/RouteTimelineScreen';
+import RouteTimelineScreen from '@/src/screens/routes/RouteTimelineScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -18,7 +18,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -38,7 +38,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/features/story-timeline/StoryTimelineCanvas', () => {
+jest.mock('@/src/components/features/story-timeline/StoryTimelineCanvas', () => {
   const { Text } = require('react-native');
   const React = require('react');
   return {
@@ -63,7 +63,7 @@ jest.mock('../../../src/components/features/story-timeline/StoryTimelineCanvas',
   };
 });
 
-jest.mock('../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
+jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -83,26 +83,26 @@ jest.mock('../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet
   };
 });
 
-jest.mock('../../../src/hooks/useRouteChronology', () => ({
+jest.mock('@/src/screens/routes/useRouteChronology', () => ({
   useRouteChronology: () => mockChronology,
 }));
 
-jest.mock('../../../src/hooks/useStoryCalendar', () => ({
+jest.mock('@/src/hooks/story/useStoryCalendar', () => ({
   useStoryCalendar: () => ({ definition: null }),
 }));
 
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('../../../src/utils/sceneTiming', () => ({
+jest.mock('@/src/utils/scene/sceneTiming', () => ({
   formatSceneGap: () => 'gap',
   formatSceneUniverseDuration: () => 'dur',
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

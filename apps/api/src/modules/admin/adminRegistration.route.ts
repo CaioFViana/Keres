@@ -1,19 +1,23 @@
-import { UpdateRegistrationSettingsSchema } from '@keres/shared';
+import { type RegistrationSettingsView, UpdateRegistrationSettingsSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
-import { registrationSettingsService } from '../../services/RegistrationSettingsService';
-import { TierNotFoundError } from '../../services/TierService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+import type { JWTPayload } from '@/index';
+import { ageVerificationMode } from '@/services/age-verification/ageVerificationMode';
+import { registrationSettingsService } from '@/services/admin/RegistrationSettingsService';
+import { TierNotFoundError } from '@/services/tiers/TierService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 export const adminRegistrationRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
 
   .get(
     '/',
-    async ({ user }) => {
+    async ({ user }): Promise<RegistrationSettingsView> => {
       await requireAdmin(user);
-      return registrationSettingsService.getOrCreate();
+      // Read-only on purpose: the admin page must show the mode the adults-only switch depends on. The PUT
+      // schema does not take it, so the mode can only ever be changed by the server's environment.
+      const settings = await registrationSettingsService.getOrCreate();
+      return { ...settings, ageVerificationMode: ageVerificationMode() };
     },
     {
       detail: {
@@ -51,7 +55,11 @@ export const adminRegistrationRoutes = new Elysia()
         isRegistrationOpen: t.Optional(t.Boolean()),
         maxUsers: t.Optional(t.Nullable(t.Number())),
         autoManage: t.Optional(t.Boolean()),
+        allowNsfw: t.Optional(t.Boolean()),
         defaultTierId: t.Optional(t.Nullable(t.String())),
+        currency: t.Optional(t.String()),
+        // A string, not a union: the Zod schema is the gate, and an unknown mode answers 400 like the other fields.
+        tiersDisplay: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Update registration settings',

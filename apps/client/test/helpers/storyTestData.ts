@@ -1,4 +1,4 @@
-import * as schema from '../../src/db/schema';
+import * as schema from '@/src/db/schema';
 import type { TestDatabase } from './testDb';
 
 export const TEST_STORY_ID = 'story-test';

@@ -1,7 +1,7 @@
 import type { CreateStoryUpdate, CreateWorldRuleDataType } from '@keres/shared';
 import { CreateWorldRuleDataSchema, PartialWorldRuleSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { worldRules } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { worldRules } from '@/db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 export class WorldRuleSyncHandler extends BaseSyncEntityHandler<

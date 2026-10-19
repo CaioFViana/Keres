@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
@@ -11,22 +11,28 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import SharePackModal from '../../components/features/packs/SharePackModal/SharePackModal';
-import { useDrizzle } from '../../db';
+import SharePackModal from '@/src/components/features/packs/SharePackModal/SharePackModal';
+import { useDrizzle } from '@/src/db';
 import type { PackVisibility } from '@keres/shared';
-import type { ServerSelect } from '../../db/schema';
-import { packApiService } from '../../services/PackApiService';
-import { createServerService } from '../../services/ServerService';
-import { useScreenAnchor } from '../../guides/useGuideAnchor';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
-import { packExtrasChips } from '../../utils/packChips';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { isServerless } from '../../utils/serverless';
+import type { ServerSelect } from '@/src/db/schema';
+import { packApiService } from '@/src/services/api/PackApiService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import {
+  createPackService,
+  type PackSummary,
+} from '@/src/services/storymanagement/packs/PackService';
+import { packExtrasChips } from '@/src/services/storymanagement/packs/packChips';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { isServerless } from '@/src/utils/platform/clientFlavor';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.
@@ -43,8 +49,6 @@ import { isServerless } from '../../utils/serverless';
 const PackListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('PackList');
-  const listAnchorRef = useScreenAnchor('Packs', 'list');
-  const actionsAnchorRef = useScreenAnchor('Packs', 'actions');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<{ navigate: (screen: string, params?: unknown) => void }>();
@@ -146,67 +150,7 @@ const PackListScreen = () => {
     [drizzleDb, load, showNotification, t],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    ...commonDetailStyleDefs(colors),
-    content: { padding: 20, paddingBottom: 60 },
-    description: { fontSize: 14, color: colors.textSecondary, marginBottom: 18, lineHeight: 20 },
-    card: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      marginBottom: 10,
-      backgroundColor: colors.surface,
-    },
-    cardHeader: { flexDirection: 'row', alignItems: 'center' },
-    cardTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginLeft: 8,
-      flexShrink: 1,
-    },
-    cardMeta: { fontSize: 12, color: colors.textSecondary, fontStyle: 'italic', marginTop: 2 },
-    cardDescription: { fontSize: 13, color: colors.textSecondary, marginTop: 6 },
-    contents: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
-    chip: {
-      borderRadius: 12,
-      paddingVertical: 3,
-      paddingHorizontal: 9,
-      backgroundColor: colors.background,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-    },
-    chipText: { fontSize: 12, color: colors.textSecondary },
-    actions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12, gap: 8 },
-    actionButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.background,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-    },
-    createButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primary,
-      borderRadius: 8,
-      paddingVertical: 12,
-      marginBottom: 18,
-    },
-    createButtonText: { color: colors.onPrimary, fontWeight: 'bold', marginLeft: 8 },
-    browseButton: {
-      backgroundColor: colors.surface,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const contentChips = (pack: PackSummary) =>
     [
@@ -224,7 +168,7 @@ const PackListScreen = () => {
     const chips = contentChips(item);
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
+        <View style={layout.row}>
           <Ionicons name="cube-outline" size={20} color={colors.primary} />
           <Text style={styles.cardTitle} numberOfLines={1}>
             {item.name}
@@ -295,7 +239,7 @@ const PackListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="Packs" part="list" style={{ flex: 1 }}>
         <FlatList
           contentContainerStyle={styles.content}
           data={packs}
@@ -304,7 +248,7 @@ const PackListScreen = () => {
           ListHeaderComponent={
             <>
               <Text style={styles.description}>{t('packs_description')}</Text>
-              <View ref={actionsAnchorRef} collapsable={false}>
+              <GuideAnchor screen="Packs" part="actions">
                 <TouchableOpacity
                   style={styles.createButton}
                   onPress={() => navigation.navigate('PackForm', {})}
@@ -335,12 +279,12 @@ const PackListScreen = () => {
                     {t('shipped_packs_title')}
                   </Text>
                 </TouchableOpacity>
-              </View>
+              </GuideAnchor>
             </>
           }
           ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}
         />
-      </View>
+      </GuideAnchor>
       <SharePackModal
         visible={!isServerless() && sharingPack !== null}
         packName={sharingPack?.name ?? ''}
@@ -351,5 +295,75 @@ const PackListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
+    content: { padding: 20, paddingBottom: 60 },
+    description: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 18,
+    },
+    card: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      marginBottom: 10,
+      backgroundColor: colors.surface,
+    },
+    cardTitle: {
+      ...typography.sectionTitle,
+      color: colors.text,
+      marginLeft: 8,
+      flexShrink: 1,
+    },
+    cardMeta: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      marginTop: 2,
+    },
+    cardDescription: { fontSize: 13, color: colors.textSecondary, marginTop: 6 },
+    contents: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
+    chip: {
+      borderRadius: 12,
+      paddingVertical: 3,
+      paddingHorizontal: 10,
+      backgroundColor: colors.background,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    chipText: { ...typography.caption, color: colors.textSecondary },
+    actions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12, gap: 8 },
+    actionButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.background,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    createButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      marginBottom: 18,
+    },
+    createButtonText: { color: colors.onPrimary, fontWeight: 'bold', marginLeft: 8 },
+    browseButton: {
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+  });
 
 export default PackListScreen;

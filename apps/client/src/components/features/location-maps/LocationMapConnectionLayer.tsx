@@ -10,16 +10,19 @@ import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-sk
 import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
-import type { CanvasCameraTransform } from '../../../hooks/useCanvasViewport';
-import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
-import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
-import CanvasOverlayLayer from '../graphs/CanvasOverlay/CanvasOverlayLayer';
-import OverlayDraftView from '../graphs/CanvasOverlay/OverlayDraftView';
-import type { OverlayDraft } from '../graphs/CanvasOverlay/overlayTools';
-import SkiaEdgeCanvas from '../graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
-import { measureEdgeLabelWidth } from '../graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
-import { useEdgeFont } from '../graphs/SkiaEdgeCanvas/useEdgeFont';
-import { polygonPointsToPath } from '../graphs/SkiaEdgeCanvas/polygonPointsToPath';
+import type { CanvasCameraTransform } from '@/src/hooks/canvas/useCanvasViewport';
+import {
+  interpolateColor,
+  pointOnCircleBoundary,
+} from '@keres/shared/graphs/location/locationMapGeometry';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
+import CanvasOverlayLayer from '@/src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
+import OverlayDraftView from '@/src/components/features/graphs/CanvasOverlay/OverlayDraftView';
+import type { OverlayDraft } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
 
 export interface LocationMapConnection {
   locationAId: string;

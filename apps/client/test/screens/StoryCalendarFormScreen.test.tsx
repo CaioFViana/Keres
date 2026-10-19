@@ -1,6 +1,8 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import StoryCalendarFormScreen from '@/src/screens/story-calendars/StoryCalendarFormScreen';
+
 /**
  * That the calendar form **mounts**, and the two rules it owns.
  *
@@ -11,7 +13,7 @@ import React from 'react';
  * because everything else tested the schema and the service with values that were already valid.
  */
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -56,7 +58,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
@@ -65,33 +67,33 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
-jest.mock('../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../src/utils/documentTitle', () => ({
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
-jest.mock('../../src/state/notificationStore', () => {
+jest.mock('@/src/state/ui/notificationStore', () => {
   const state = { showNotification: jest.fn() };
   return {
     __esModule: true,
     useNotificationStore: (selector: (value: typeof state) => unknown) => selector(state),
   };
 });
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: '01ARZ3NDEKTSV4RRFFQ69G5FUS' }),
 }));
-jest.mock('../../src/state/storyStore', () => {
+jest.mock('@/src/state/story/storyStore', () => {
   const state = { selectedStory: { id: '01ARZ3NDEKTSV4RRFFQ69G5FUT', title: 'A story' } };
   return {
     __esModule: true,
     useStoryStore: (selector: (value: typeof state) => unknown) => selector(state),
   };
 });
-jest.mock('../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({
     canEdit: true,
@@ -104,7 +106,7 @@ jest.mock('../../src/hooks/useStoryRole', () => ({
 const mockCreateCalendar = jest.fn(async () => ({ id: 'calendar-1' }));
 const mockUpdateCalendar = jest.fn(async () => ({ id: 'calendar-1' }));
 const mockGetById = jest.fn(async () => undefined as unknown);
-jest.mock('../../src/services/storymanagement/StoryCalendarService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/StoryCalendarService', () => ({
   __esModule: true,
   createStoryCalendarService: () => ({
     createCalendar: mockCreateCalendar,
@@ -114,7 +116,7 @@ jest.mock('../../src/services/storymanagement/StoryCalendarService', () => ({
 }));
 // The form's calendar-change review is covered by its pure projection tests. Keep this mount test
 // focused on the form's initial state, without pulling the sync-backed anchor services into it.
-jest.mock('../../src/components/features/calendars/CalendarAnchorsModal', () => ({
+jest.mock('@/src/components/features/calendars/CalendarAnchorsModal', () => ({
   __esModule: true,
   default: ({ visible, onConfirm }: { visible: boolean; onConfirm: () => void }) => {
     const { TouchableOpacity } = require('react-native') as typeof import('react-native');
@@ -123,8 +125,6 @@ jest.mock('../../src/components/features/calendars/CalendarAnchorsModal', () => 
     ) : null;
   },
 }));
-
-import StoryCalendarFormScreen from '../../src/screens/storycalendars/StoryCalendarFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

@@ -1,11 +1,14 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/src/theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 export type GraphConnectionDirection = 'forward' | 'reverse';
 
@@ -40,59 +43,18 @@ const GraphConnectionModal: React.FC<GraphConnectionModalProps> = ({
   const [directed, setDirected] = useState(true);
   const [direction, setDirection] = useState<GraphConnectionDirection>('forward');
   const [label, setLabel] = useState('');
-  const styles = StyleSheet.create({
-    sheet: { padding: 20, gap: 16 },
-    header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-    title: { flex: 1, color: colors.text, fontSize: 20, fontWeight: '700' },
-    close: { padding: 2 },
-    description: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-    switchRow: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      gap: 12,
-    },
-    switchLabel: { color: colors.text, flex: 1, fontSize: 16, fontWeight: '600' },
-    directions: { gap: 8 },
-    directionButton: {
-      alignItems: 'center',
-      borderColor: colors.border,
-      borderRadius: 8,
-      borderWidth: 1,
-      flexDirection: 'row',
-      gap: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 11,
-    },
-    directionButtonSelected: {
-      borderColor: colors.primary,
-      backgroundColor: colors.primaryContainer,
-    },
-    directionText: { color: colors.text, flex: 1, fontSize: 15 },
-    fieldLabel: { color: colors.text, fontSize: 14, fontWeight: '600', marginBottom: 6 },
-    input: {
-      borderColor: colors.border,
-      borderRadius: 8,
-      borderWidth: 1,
-      color: colors.text,
-      fontSize: 16,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-    },
-    actions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
-    cancel: { backgroundColor: colors.surface },
-    cancelText: { color: colors.text, fontWeight: '700' },
-  });
+  const styles = useThemedStyles(createStyles);
   const submit = () => onConfirm({ directed, direction, label: label.trim() || null });
 
   return (
-    <ResponsiveModal visible onClose={onClose} placement="center" contentStyle={styles.sheet}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('graph_connection_title')}</Text>
-        <TouchableOpacity onPress={onClose} style={styles.close} accessibilityLabel={t('close')}>
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <ResponsiveModal
+      visible
+      onClose={onClose}
+      placement="center"
+      inset="roomy"
+      contentStyle={styles.sheet}
+    >
+      <ModalHeader title={t('graph_connection_title')} onClose={onClose} />
       <Text style={styles.description}>
         {t('graph_connection_description', { source: sourceName, target: targetName })}
       </Text>
@@ -153,5 +115,47 @@ const GraphConnectionModal: React.FC<GraphConnectionModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sheet: { gap: 16 },
+    description: { ...typography.body, color: colors.textSecondary },
+    switchRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    switchLabel: { color: colors.text, flex: 1, fontSize: 16, fontWeight: '600' },
+    directions: { gap: 8 },
+    directionButton: {
+      alignItems: 'center',
+      borderColor: colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      flexDirection: 'row',
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+    },
+    directionButtonSelected: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primaryContainer,
+    },
+    directionText: { color: colors.text, flex: 1, fontSize: 15 },
+    fieldLabel: { ...typography.label, color: colors.text, marginBottom: 6 },
+    input: {
+      ...typography.bodyLarge,
+      borderColor: colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      color: colors.text,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    },
+    actions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
+    cancel: { backgroundColor: colors.surface },
+    cancelText: { color: colors.text, fontWeight: '700' },
+  });
 
 export default GraphConnectionModal;

@@ -8,7 +8,20 @@ import {
   type ManuscriptScene,
   type ManuscriptSection,
 } from '../manuscriptSections';
+import type { ManuscriptImage } from '../../images/imageInfo';
+import type { PageLayout } from '../pageFormat';
 import { parseManuscriptMarkdown } from '../parseManuscriptMarkdown';
+import type { BlockPresenter } from '../manuscriptStyle';
+import type { ManuscriptSong } from '../manuscriptSections';
+import {
+  type PrintedSongs,
+  SONGS_BOOKMARK_ID,
+  type SongPrint,
+  songBlocks,
+  songMentionBlock,
+  songTitleBlock,
+  sungSongsOf,
+} from '../songPrint';
 
 /** The minimum the pipeline needs to know about a choice. */
 export interface ManuscriptChoice {
@@ -33,6 +46,9 @@ export type CompiledSpan = {
   strikethrough: boolean;
 };
 
+/** A page's picture as it is placed: which one, and how it sits in its frame. */
+export type CompiledPageImage = { mediaId: string; fit: 'contain' | 'cover' };
+
 export type CompiledBlock =
   | { kind: 'title'; text: string }
   | { kind: 'subtitle'; text: string }
@@ -44,11 +60,36 @@ export type CompiledBlock =
       name: string;
       /** Null when this scene already contributed its bookmark (route loops). */
       bookmarkId: string | null;
+      /**
+       * Set when the gamebook gives every scene a page of its own in the paged formats (PDF, Word).
+       */
+      ownPage?: boolean;
     }
   | { kind: 'loose-heading'; label: string; bookmarkId: string }
   | { kind: 'paragraph'; spans: CompiledSpan[] }
+  /** One bulleted list item; consecutive items group into one list per renderer. */
+  | { kind: 'bullet'; spans: CompiledSpan[] }
+  /** One numbered list item; renderers number consecutive items from 1. */
+  | { kind: 'ordered'; index: number; spans: CompiledSpan[] }
   /** Between two scenes of one chapter, when a separator is asked for: drawn centered. */
   | { kind: 'scene-break'; text: string }
+  /**
+   * One page of a comic or frame of a storyboard: its caption and its picture. `image` is `null` when
+   * the picture is gone, and `placeholder` says so in its place. The page's text follows as paragraphs.
+   */
+  | {
+      kind: 'page';
+      id: string;
+      label: string;
+      /** The page number (the first of two for a double-page spread, which takes both). */
+      number: number;
+      /** A double-page spread: one picture over two pages. */
+      spread: boolean;
+      /** What goes with the page, a line at a time; the flow layout also writes them as the paragraphs that follow. */
+      text: string[];
+      image: CompiledPageImage | null;
+      placeholder: string;
+    }
   | {
       kind: 'choice';
       id: string;
@@ -57,13 +98,26 @@ export type CompiledBlock =
       /** Null when the target is not part of this export: render name-only, no reference. */
       targetBookmarkId: string | null;
       targetSceneName: string | null;
+      /** A gamebook's number for the target scene: the paged formats say it beside the page ("page 12, scene 7"). */
+      targetSceneNumber?: number;
       /** Requirement lines carried from the choice input; renderers draw one sub-line each. */
       requirements?: string[];
       /** Effect lines carried from the choice input; renderers draw one sub-line each. */
       effects?: string[];
     };
 
-export type CompiledManuscript = { title: string; blocks: CompiledBlock[] };
+export type CompiledManuscript = {
+  title: string;
+  blocks: CompiledBlock[];
+  /** The pictures the `page` blocks point at, by `mediaId`. A page whose picture is absent here is a placeholder. */
+  images?: Record<string, ManuscriptImage>;
+  /** Width over height of the frame pictures are shown in; absent is the comic-book page's. */
+  pageAspect?: number;
+  /** How the pages are laid out; absent is a flow. */
+  pageLayout?: PageLayout;
+  /** The cover: a key into `images`. It comes first in the formats that carry pictures. */
+  cover?: string;
+};
 
 /** Word bookmark names start with a letter, hold no spaces and stay under 40 chars. */
 export function bookmarkIdForScene(sceneId: string): string {
@@ -113,8 +167,51 @@ type SectionsInput = {
    * A gamebook: every scene carries its number as a heading (the name too, when `showNames`), and a
    * choice into a scene that is not in the export ends there, saying so with `endLabel`.
    */
-  gamebook?: { showNames: boolean; endLabel: string };
+  gamebook?: { showNames: boolean; endLabel: string; scenePerPage?: boolean };
+  /** What a page is called and what stands in for a picture that is gone. */
+  pageWords?: PageWords;
+  /**
+   * Presents each block at creation (the pipeline's fused path): the parsed
+   * inlines never survive beside a second full copy of the spans. Absent, blocks
+   * come out raw exactly as before.
+   */
+  present?: BlockPresenter;
 };
+
+/**
+ * The words and choices a scene's extras carry: a page's caption ("Page"), the stand-in for a
+ * missing picture, when set the label the scene's music is written under (it is left out
+ * otherwise) and, when set, how the songs the scenes sing are printed (none are otherwise).
+ */
+export type PageWords = {
+  caption: string;
+  removed: string;
+  /** `flow` (the default) writes a page's text as the paragraphs after it; the other layouts keep it in the page. */
+  layout?: PageLayout;
+  musicLabel?: string;
+  songs?: SongPrint;
+};
+
+const DEFAULT_PAGE_WORDS: PageWords = { caption: 'Page', removed: 'Image removed' };
+
+const plainSpan = (text: string): CompiledSpan => ({
+  text,
+  bold: false,
+  italic: false,
+  underline: false,
+  strikethrough: false,
+});
+
+/** `Music: Title - cue`, or nothing for a link with neither a title nor a cue. */
+export function musicCueLine(
+  label: string,
+  music: { title: string | null; cue: string | null },
+): string {
+  const title = music.title?.trim() ?? '';
+  const cue = (music.cue ?? '').replace(/\s+/g, ' ').trim();
+  if (!title && !cue) return '';
+  return `${label}: ${[title, cue].filter(Boolean).join(' \u2014 ')}`;
+}
 
 function sectionsToBlocks({
   sections,
@@ -125,7 +222,11 @@ function sectionsToBlocks({
   resetSceneNumbersPerChapter,
   sceneSeparator,
   gamebook,
+  pageWords = DEFAULT_PAGE_WORDS,
+  present,
 }: SectionsInput): CompiledBlock[] {
+  // Pages are numbered through the whole manuscript, as the pages of an issue are.
+  let pageNumber = 0;
   // First occurrence wins: a looping route bookmarks the scene once, and every choice
   // points at that bookmark.
   const bookmarkFor = new Map<string, string>();
@@ -141,7 +242,13 @@ function sectionsToBlocks({
     }
   }
   const emitted = new Set<string>();
+  // What the songs have printed so far, and the songs an appendix will gather, in the order sung.
+  const printedSongs: PrintedSongs = new Set();
+  const appendixSongs = new Map<string, ManuscriptSong>();
   const blocks: CompiledBlock[] = [];
+  const emit = (block: CompiledBlock): void => {
+    blocks.push(present ? present(block) : block);
+  };
   // Per-group scene counters for restarted numbering: each container and the
   // appendix count their own scenes from 1. Routes never open a group, so the
   // single implicit group reproduces the global positions exactly.
@@ -150,7 +257,7 @@ function sectionsToBlocks({
   for (const section of sections) {
     if (section.kind === 'container') {
       groupKey = section.containerId;
-      blocks.push({
+      emit({
         kind: 'chapter',
         id: section.containerId,
         number: section.containerType === 'chapter' ? section.index : null,
@@ -161,7 +268,7 @@ function sectionsToBlocks({
     }
     if (section.kind === 'loose-heading') {
       groupKey = APPENDIX_BOOKMARK_ID;
-      blocks.push({
+      emit({
         kind: 'loose-heading',
         label: looseHeadingLabel,
         bookmarkId: APPENDIX_BOOKMARK_ID,
@@ -173,36 +280,92 @@ function sectionsToBlocks({
     // A separator marks where one scene ends and the next begins inside a chapter - never
     // before a chapter's first scene, which its heading already opens.
     if (sceneSeparator !== null && groupNumber > 1) {
-      blocks.push({ kind: 'scene-break', text: sceneSeparator });
+      emit({ kind: 'scene-break', text: sceneSeparator });
     }
     const bookmarkId = bookmarkFor.get(section.scene.id) ?? null;
     // Without scene names there is no heading to hang the bookmark on, so
     // choices degrade to bare text: any reference would name a scene.
     if (includeSceneNames || gamebook) {
-      blocks.push({
+      emit({
         kind: 'scene-heading',
         id: section.scene.id,
         number: resetSceneNumbersPerChapter ? groupNumber : section.position,
         name: gamebook && !gamebook.showNames ? '' : section.scene.name,
         bookmarkId: bookmarkId && !emitted.has(bookmarkId) ? bookmarkId : null,
+        ...(gamebook?.scenePerPage ? { ownPage: true } : {}),
       });
     }
     if (bookmarkId) emitted.add(bookmarkId);
     if (section.scene.body) {
       for (const parsed of parseManuscriptMarkdown(section.scene.body)) {
-        blocks.push({ kind: 'paragraph', spans: toSpans(parsed) });
+        if (parsed.kind === 'bullet') emit({ kind: 'bullet', spans: toSpans(parsed) });
+        else if (parsed.kind === 'ordered')
+          emit({ kind: 'ordered', index: parsed.index, spans: toSpans(parsed) });
+        else emit({ kind: 'paragraph', spans: toSpans(parsed) });
+      }
+    }
+    for (const page of section.scene.pages ?? []) {
+      // A page whose picture is gone stays in the story, waiting for another, but is not in the
+      // manuscript: no number, no caption, and its text stays with it.
+      if (!page.mediaId) continue;
+      const spread = page.spread === true;
+      const first = pageNumber + 1;
+      pageNumber += spread ? 2 : 1;
+      // What goes with the page, a line at a time: a script's lines are not one paragraph.
+      const lines = (page.text ?? '')
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line !== '');
+      emit({
+        kind: 'page',
+        id: page.id,
+        label: spread
+          ? `${pageWords.caption} ${first}\u2013${first + 1}`
+          : `${pageWords.caption} ${first}`,
+        number: first,
+        spread,
+        text: lines,
+        image: page.mediaId ? { mediaId: page.mediaId, fit: page.fit } : null,
+        placeholder: pageWords.removed,
+      });
+      if (!pageWords.layout || pageWords.layout === 'flow') {
+        for (const line of lines) emit({ kind: 'paragraph', spans: [plainSpan(line)] });
+      }
+    }
+    if (pageWords.musicLabel) {
+      for (const music of section.scene.music ?? []) {
+        const line = musicCueLine(pageWords.musicLabel, music);
+        if (line) emit({ kind: 'paragraph', spans: [{ ...plainSpan(line), italic: true }] });
+      }
+    }
+    if (pageWords.songs) {
+      for (const song of sungSongsOf(section.scene.music)) {
+        if (pageWords.songs.placement === 'appendix') {
+          if (!appendixSongs.has(song.id)) appendixSongs.set(song.id, song);
+          continue;
+        }
+        const once = pageWords.songs.repeat === 'first-only';
+        const printedHere = songBlocks(song, song.sections, printedSongs, {
+          print: pageWords.songs,
+          showLabels: false,
+          skipPrinted: once,
+        });
+        // A part sung before is not set again: the scene says which song it is, and no more.
+        if (printedHere.length > 0) for (const block of printedHere) emit(block);
+        else if (once) emit(songMentionBlock(song.title));
       }
     }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {
       if (gamebook) {
         const targetBookmarkId = bookmarkFor.get(choice.nextSceneId) ?? null;
         const targetPosition = positionOf.get(choice.nextSceneId);
-        blocks.push({
+        emit({
           kind: 'choice',
           id: choice.id,
           text: targetBookmarkId ? choice.text : `${choice.text} — ${gamebook.endLabel}`,
           targetSceneId: choice.nextSceneId,
           targetBookmarkId,
+          targetSceneNumber: targetBookmarkId ? targetPosition : undefined,
           // Without names a reference is the scene's number: "See 12".
           targetSceneName:
             targetBookmarkId && targetPosition !== undefined
@@ -215,7 +378,7 @@ function sectionsToBlocks({
         });
         continue;
       }
-      blocks.push({
+      emit({
         kind: 'choice',
         id: choice.id,
         text: choice.text,
@@ -225,6 +388,20 @@ function sectionsToBlocks({
         requirements: choice.requirements,
         effects: choice.effects,
       });
+    }
+  }
+  if (pageWords.songs && appendixSongs.size > 0) {
+    // The appendix is the work complete: every song once, whole, whatever each scene sang of it.
+    emit({ kind: 'loose-heading', label: pageWords.songs.heading, bookmarkId: SONGS_BOOKMARK_ID });
+    for (const song of appendixSongs.values()) {
+      emit(songTitleBlock(song.title));
+      for (const block of songBlocks(song, null, new Set(), {
+        print: pageWords.songs,
+        showLabels: true,
+        skipPrinted: false,
+      })) {
+        emit(block);
+      }
     }
   }
   return blocks;
@@ -278,6 +455,12 @@ export type CompileLinearOptions = {
   arcId?: string | null;
   /** Text drawn between two scenes of a chapter (`#`, `* * *`...). Defaults to none. */
   sceneSeparator?: string | null;
+  pageWords?: PageWords;
+  /**
+   * Presents each block at creation (the pipeline's fused path). Absent, blocks
+   * come out raw exactly as before.
+   */
+  present?: BlockPresenter;
 };
 
 /**
@@ -305,15 +488,18 @@ export function compileLinearManuscript({
   resetSceneNumbersPerChapter = false,
   arcId = null,
   sceneSeparator = null,
+  pageWords,
+  present,
 }: CompileLinearOptions): CompiledManuscript {
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   let sections = linearManuscriptSections(chapters, scenes, { arcId });
   if (!includeLooseScenes) sections = withoutLooseSections(sections, chaptersById);
   if (arcId) sections = renumberArcChapters(sections);
+  const at = (block: CompiledBlock): CompiledBlock => (present ? present(block) : block);
   return {
     title,
     blocks: [
-      { kind: 'title', text: title },
+      at({ kind: 'title', text: title }),
       ...sectionsToBlocks({
         sections,
         choicesBySceneId: groupChoices(choices),
@@ -322,6 +508,8 @@ export function compileLinearManuscript({
         includeSceneNames,
         resetSceneNumbersPerChapter,
         sceneSeparator,
+        pageWords,
+        present,
       }),
     ],
   };
@@ -346,6 +534,14 @@ export type CompileGamebookOptions = {
   startLabels: { choose: string; begin: string };
   /** Text drawn between two consecutive scenes. Defaults to none. */
   sceneSeparator?: string | null;
+  /** Every scene opens a page of its own in the paged formats. */
+  scenePerPage?: boolean;
+  pageWords?: PageWords;
+  /**
+   * Presents each block at creation (the pipeline's fused path). Absent, blocks
+   * come out raw exactly as before.
+   */
+  present?: BlockPresenter;
 };
 
 /**
@@ -362,6 +558,9 @@ export function compileGamebookManuscript({
   endLabel,
   startLabels,
   sceneSeparator = null,
+  scenePerPage = false,
+  pageWords,
+  present,
 }: CompileGamebookOptions): CompiledManuscript {
   const sections = gamebookManuscriptSections(scenes, choices, { order, seed });
   const positionOf = new Map(
@@ -393,15 +592,17 @@ export function compileGamebookManuscript({
               targetSceneId: start.id,
               targetBookmarkId: bookmarkIdForScene(start.id),
               targetSceneName: showSceneNames ? start.name : String(positionOf.get(start.id)),
+              targetSceneNumber: positionOf.get(start.id),
             }),
           ),
         ]
       : [];
+  const at = (block: CompiledBlock): CompiledBlock => (present ? present(block) : block);
   return {
     title,
     blocks: [
-      { kind: 'title', text: title },
-      ...opening,
+      at({ kind: 'title', text: title }),
+      ...opening.map(at),
       ...sectionsToBlocks({
         sections,
         choicesBySceneId: groupChoices(choices),
@@ -410,7 +611,9 @@ export function compileGamebookManuscript({
         includeSceneNames: true,
         resetSceneNumbersPerChapter: false,
         sceneSeparator,
-        gamebook: { showNames: showSceneNames, endLabel },
+        gamebook: { showNames: showSceneNames, endLabel, scenePerPage },
+        pageWords,
+        present,
       }),
     ],
   };
@@ -467,4 +670,6 @@ export type ManuscriptRenderOptions = {
   fontFamily?: 'serif' | 'sans';
   /** Page geometry (PDF). */
   pageSize?: 'a4' | '6x9';
+  /** How a comic's pages are laid out; a PDF of spreads is set on landscape sheets, one opening to a sheet. */
+  pageLayout?: PageLayout;
 };

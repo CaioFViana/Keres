@@ -12,18 +12,29 @@ const mocks = vi.hoisted(() => ({
   setLogSink: vi.fn(),
 }));
 
-vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
-vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
-vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
-vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
-vi.mock('../src/services/MediaStorageConfigurationService', () => ({
+vi.mock('@/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
+vi.mock('@/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
+vi.mock('@/index', () => ({ createApp: mocks.createApp }));
+vi.mock('@/services/static-delivery/hostedClientDelivery', () => ({
+  warmHostedClientDelivery: vi.fn(),
+}));
+vi.mock('@/services/admin/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
+vi.mock('@/services/media-storage/MediaStorageConfigurationService', () => ({
   assertMediaStorageConfiguration: mocks.assertStorage,
 }));
-vi.mock('../src/services/MediaStorageService', () => ({
+vi.mock('@/services/media-storage/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
-vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
-vi.mock('../src/utils/logger', () => ({
+vi.mock('@/services/compliance/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+// Not what this test is about, and importing them pulls the whole database layer in cold (past the test's 5 s under load).
+vi.mock('@/services/compliance/AuditService', () => ({
+  auditService: { record: vi.fn(), prune: vi.fn() },
+}));
+vi.mock('@/services/auth/AttemptLimitService', () => ({ pruneAttemptLimits: vi.fn() }));
+vi.mock('@/services/accounts/UserService', () => ({
+  userService: { pruneDeletedAccounts: vi.fn() },
+}));
+vi.mock('@/utils/logger', () => ({
   logger: { info: mocks.loggerInfo, error: mocks.loggerError },
   setLogSink: mocks.setLogSink,
 }));
@@ -48,7 +59,7 @@ describe('production server bootstrap - fatal startup error', () => {
     });
 
     vi.resetModules();
-    await expect(import('../src/server')).rejects.toBe(processExitSentinel);
+    await expect(import('@/server')).rejects.toBe(processExitSentinel);
 
     expect(mocks.loggerError).toHaveBeenCalledWith('Fatal error during startup', bootError);
     expect(exitSpy).toHaveBeenCalledWith(1);
@@ -56,5 +67,6 @@ describe('production server bootstrap - fatal startup error', () => {
     expect(mocks.listen).not.toHaveBeenCalled();
 
     exitSpy.mockRestore();
-  });
+    // `resetModules` re-imports the whole application cold, which is slow while other suites share the machine.
+  }, 30_000);
 });

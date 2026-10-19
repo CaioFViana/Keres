@@ -1,6 +1,6 @@
 {
   "name": "keres-monorepo",
-  "version": "1.9.0",
+  "version": "1.10.1",
   "author": "",
   "description": "",
   "keywords": [],
@@ -10,9 +10,18 @@
     "client:start": "bun run --cwd apps/client start",
     "client:android": "bun run --cwd apps/client android",
     "client:build": "bun run --cwd apps/client build",
+    "client:build:hosted": "bun run --cwd apps/client build:hosted",
     "client:db:generate": "bun run --cwd apps/client db:generate",
     "api:start": "bun run --cwd apps/api start",
     "api:build": "bun run --cwd apps/api build",
+    "payments:start": "bun run --cwd apps/payments start",
+    "payments:dev": "bun run --cwd apps/payments dev",
+    "payments:local": "bun scripts/payments-local.ts",
+    "payments:env-check": "bun scripts/payments-env-check.ts",
+    "verification:start": "bun run --cwd apps/verification start",
+    "verification:dev": "bun run --cwd apps/verification dev",
+    "verification:reviewer:add": "bun run --cwd apps/verification reviewer:add",
+    "verification:local": "bun scripts/age-verification-local.ts",
     "db:generate": "bun run api:db:generate && bun run api:db:generate:sqlite && bun run client:db:generate && bun run --cwd apps/client prestart",
     "api:db:generate": "bun run --cwd apps/api db:generate",
     "api:db:generate:sqlite": "bun run --cwd apps/api db:generate:sqlite",
@@ -21,7 +30,9 @@
     "admin:start": "bun run --cwd apps/admin start",
     "admin:build": "bun run --cwd apps/admin build",
     "site:start": "bun run --cwd apps/site start",
+    "site:start:landing": "bun run --cwd apps/site start:landing",
     "site:build": "bun run --cwd apps/site build",
+    "site:build:landing": "bun run --cwd apps/site build:landing",
     "desktop:start": "bun run --cwd apps/desktop start",
     "desktop:package": "bun run --cwd apps/desktop package",
     "desktop:capture": "bun run --cwd apps/desktop capture:screens",
@@ -37,6 +48,7 @@
     "locales:audit": "bun scripts/verify-translations.ts",
     "format": "biome format --write .",
     "format:check": "biome format .",
+    "check": "biome ci --error-on-warnings .",
     "release:check": "bun scripts/release-check.ts",
     "version:set": "bun scripts/version-set.ts",
     "code:lines": "bun scripts/count-code-lines.ts",
@@ -49,7 +61,8 @@
   ],
   "patchedDependencies": {
     "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch",
-    "expo-sqlite@57.0.3": "patches/expo-sqlite@57.0.3.patch"
+    "expo-sqlite@57.0.3": "patches/expo-sqlite@57.0.3.patch",
+    "react-native-enriched-html@1.1.1": "patches/react-native-enriched-html@1.1.1.patch"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.8"

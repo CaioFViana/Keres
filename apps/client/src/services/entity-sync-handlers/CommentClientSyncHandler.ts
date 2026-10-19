@@ -5,8 +5,8 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
-import { comments } from '../../db/schema';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '@/src/db';
+import { comments } from '@/src/db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class CommentClientSyncHandler implements ClientSyncEntityHandler {

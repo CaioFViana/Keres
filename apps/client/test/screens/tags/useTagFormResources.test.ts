@@ -1,15 +1,15 @@
+import { renderHook } from '@testing-library/react-native';
+import { useTagFormResources } from '@/src/screens/tags/useTagFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateTagService = jest.fn();
 
-jest.mock('../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   createTagService: (...args: unknown[]) => mockCreateTagService(...args),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useTagFormResources } from '../../../src/screens/tags/useTagFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'tag-service' };

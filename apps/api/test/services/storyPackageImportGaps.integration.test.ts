@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   boards,
   chapterAnchors,
@@ -12,12 +12,12 @@ import {
   storyCalendars,
   tiers,
   users,
-} from '../../src/db/schema';
-import { insertPortableCollection } from '../../src/services/story-packages/DatabaseStoryPackageCollectionRepository';
-import { StoryExportImportService } from '../../src/services/StoryExportImportService';
-import { AppError } from '../../src/utils/errors';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { insertPortableCollection } from '@/services/story-packages/DatabaseStoryPackageCollectionRepository';
+import { StoryExportImportService } from '@/services/stories/StoryExportImportService';
+import { AppError } from '@/utils/errors';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 const OLD = new Date('2020-01-01T00:00:00.000Z');
 
@@ -678,7 +678,7 @@ describe('import phases validate their own inputs', () => {
 
   it('core refuses a location relation, scene and choice with missing ends', async () => {
     const { importStoryCore } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageCoreImport'
+      '@/services/story-packages/DatabaseStoryPackageCoreImport'
     );
     const placeId = newId();
     // Core inserts the package root itself, so the harness skips the story seed here.
@@ -720,7 +720,7 @@ describe('import phases validate their own inputs', () => {
 
   it('core refuses the second end of a location relation, scene and choice', async () => {
     const { importStoryCore } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageCoreImport'
+      '@/services/story-packages/DatabaseStoryPackageCoreImport'
     );
     const placeId = newId();
     const chapterId = newId();
@@ -764,7 +764,7 @@ describe('import phases validate their own inputs', () => {
     // remap. The chapterless scene travels the whole path like any other scene and lands with a
     // null chapterId.
     const { importStoryCore } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageCoreImport'
+      '@/services/story-packages/DatabaseStoryPackageCoreImport'
     );
     const ghostArcId = newId();
     const chapterId = newId();
@@ -799,7 +799,7 @@ describe('import phases validate their own inputs', () => {
 
   it('narrative refuses a note relation and a character relation with missing ends', async () => {
     const { importNarrativeCollections } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageNarrativeImport'
+      '@/services/story-packages/DatabaseStoryPackageNarrativeImport'
     );
     const noteId = newId();
     const characterId = newId();
@@ -821,7 +821,7 @@ describe('import phases validate their own inputs', () => {
 
   it('narrative refuses anchors and character links with missing ends', async () => {
     const { importNarrativeCollections } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageNarrativeImport'
+      '@/services/story-packages/DatabaseStoryPackageNarrativeImport'
     );
     const anchor = (overrides: Record<string, unknown>) =>
       base({
@@ -877,7 +877,7 @@ describe('import phases validate their own inputs', () => {
 
   it('assets refuses a plot link and a route step with missing ends', async () => {
     const { importStoryAssets } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageAssetsImport'
+      '@/services/story-packages/DatabaseStoryPackageAssetsImport'
     );
     await runPhase(importStoryAssets, {
       plots: [base({ name: 'Trama', details: null })],
@@ -893,7 +893,7 @@ describe('import phases validate their own inputs', () => {
 
   it('interactions refuses a check with a missing group', async () => {
     const { importStoryInteractions } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageInteractionsImport'
+      '@/services/story-packages/DatabaseStoryPackageInteractionsImport'
     );
     await runPhase(importStoryInteractions, {
       choiceChecks: [
@@ -915,7 +915,7 @@ describe('import phases validate their own inputs', () => {
 
   it('interactions refuses the remaining dangling ends', async () => {
     const { importStoryInteractions } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageInteractionsImport'
+      '@/services/story-packages/DatabaseStoryPackageInteractionsImport'
     );
     const check = (overrides: Record<string, unknown>) =>
       base({
@@ -1023,7 +1023,7 @@ describe('import phases validate their own inputs', () => {
 
   it('final refuses a mode and a ladder with missing ends', async () => {
     const { importStoryFinalCollections } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageFinalImport'
+      '@/services/story-packages/DatabaseStoryPackageFinalImport'
     );
     await runPhase(importStoryFinalCollections, {
       modes: [base({ characterId: newId(), name: 'Eco' })],
@@ -1036,7 +1036,7 @@ describe('import phases validate their own inputs', () => {
 
   it('final refuses comments and stat values with missing ends', async () => {
     const { importStoryFinalCollections } = await import(
-      '../../src/services/story-packages/DatabaseStoryPackageFinalImport'
+      '@/services/story-packages/DatabaseStoryPackageFinalImport'
     );
     // A comment on a custom field the file never carried.
     const entityId = newId();

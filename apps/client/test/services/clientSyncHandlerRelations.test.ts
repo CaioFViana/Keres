@@ -1,12 +1,12 @@
 /** @jest-environment node */
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import { CommentClientSyncHandler } from '../../src/services/entity-sync-handlers/CommentClientSyncHandler';
-import { FavoriteClientSyncHandler } from '../../src/services/entity-sync-handlers/FavoriteClientSyncHandler';
-import { GalleryRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/GalleryRelationClientSyncHandler';
-import { LocationRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationRelationClientSyncHandler';
-import { SeeAlsoRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { CommentClientSyncHandler } from '@/src/services/entity-sync-handlers/CommentClientSyncHandler';
+import { FavoriteClientSyncHandler } from '@/src/services/entity-sync-handlers/FavoriteClientSyncHandler';
+import { GalleryRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/GalleryRelationClientSyncHandler';
+import { LocationRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/LocationRelationClientSyncHandler';
+import { SeeAlsoRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/SeeAlsoRelationClientSyncHandler';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const CREATED_AT = '2026-08-10T12:00:00.000Z';

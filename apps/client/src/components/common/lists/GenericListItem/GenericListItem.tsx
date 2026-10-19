@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -8,7 +8,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { useTheme } from '../../../../theme';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface GenericListItemProps {
   headerContent: React.ReactNode;
@@ -83,7 +84,86 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     borderBottomWidth: isOpen || animatedHeight.value > 0 ? 1 : 0,
   }));
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles);
+
+  const onLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      const measuredHeight = event.nativeEvent.layout.height;
+      if (contentHeight.value !== measuredHeight) {
+        // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
+        contentHeight.value = measuredHeight;
+        if (isOpen) {
+          // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
+          animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
+        }
+      }
+    },
+    [isOpen, animatedHeight, contentHeight],
+  );
+
+  if (isMeasuring) {
+    return (
+      <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
+        <View style={styles.header}>
+          {leadingIcon && <View style={styles.leadingIcon}>{leadingIcon}</View>}
+          {headerContent}
+          <View style={styles.headerRight}>{rightActions}</View>
+        </View>
+        {isOpen && <View style={styles.expandedContentInner}>{expandedContent}</View>}
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
+      <Animated.View style={[styles.header, animatedHeaderStyle]}>
+        <Pressable
+          onPress={onPress}
+          style={styles.headerToggle}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityState={{ expanded: isOpen }}
+        />
+        {leadingIcon && (
+          <View style={styles.leadingIcon} pointerEvents="none">
+            {leadingIcon}
+          </View>
+        )}
+        <View style={styles.headerContent} pointerEvents="none">
+          {headerContent}
+        </View>
+        <View style={styles.headerRight} pointerEvents="box-none">
+          {rightActions}
+          <View pointerEvents="none">
+            <Ionicons
+              name={isOpen ? 'chevron-up' : 'chevron-down'}
+              size={24}
+              color={colors.textSecondary}
+              style={styles.dropdownArrow}
+            />
+          </View>
+        </View>
+      </Animated.View>
+
+      <MeasurementContext.Provider value>
+        <View style={styles.measurementContent} pointerEvents="none">
+          <View style={styles.expandedContentInner} onLayout={onLayout}>
+            {expandedContent}
+          </View>
+        </View>
+      </MeasurementContext.Provider>
+
+      <Animated.View style={[styles.animatedWrapper, animatedContainerStyle]}>
+        <Animated.View style={animatedContentStyle}>
+          <View style={styles.expandedContentInner}>{expandedContent}</View>
+        </Animated.View>
+      </Animated.View>
+    </View>
+  );
+};
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     container: {
       backgroundColor: colors.card,
       marginVertical: 4,
@@ -137,81 +217,5 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
       padding: 10,
     },
   });
-
-  const onLayout = React.useCallback(
-    (event: LayoutChangeEvent) => {
-      const measuredHeight = event.nativeEvent.layout.height;
-      if (contentHeight.value !== measuredHeight) {
-        // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
-        contentHeight.value = measuredHeight;
-        if (isOpen) {
-          // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
-          animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
-        }
-      }
-    },
-    [isOpen, animatedHeight, contentHeight],
-  );
-
-  if (isMeasuring) {
-    return (
-      <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
-        <View style={styles.header}>
-          {leadingIcon && <View style={styles.leadingIcon}>{leadingIcon}</View>}
-          {headerContent}
-          <View style={styles.headerRight}>{rightActions}</View>
-        </View>
-        {isOpen && <View style={styles.expandedContentInner}>{expandedContent}</View>}
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
-      <Animated.View style={[styles.header, animatedHeaderStyle]}>
-        <Pressable
-          onPress={onPress}
-          style={styles.headerToggle}
-          accessibilityRole="button"
-          accessibilityLabel={accessibilityLabel}
-          accessibilityState={{ expanded: isOpen }}
-        />
-        {leadingIcon && (
-          <View style={styles.leadingIcon} pointerEvents="none">
-            {leadingIcon}
-          </View>
-        )}
-        <View style={styles.headerContent} pointerEvents="none">
-          {headerContent}
-        </View>
-        <View style={styles.headerRight} pointerEvents="box-none">
-          {rightActions}
-          <View pointerEvents="none">
-            <MaterialCommunityIcons
-              name={isOpen ? 'chevron-up' : 'chevron-down'}
-              size={24}
-              color={colors.textSecondary}
-              style={styles.dropdownArrow}
-            />
-          </View>
-        </View>
-      </Animated.View>
-
-      <MeasurementContext.Provider value>
-        <View style={styles.measurementContent} pointerEvents="none">
-          <View style={styles.expandedContentInner} onLayout={onLayout}>
-            {expandedContent}
-          </View>
-        </View>
-      </MeasurementContext.Provider>
-
-      <Animated.View style={[styles.animatedWrapper, animatedContainerStyle]}>
-        <Animated.View style={animatedContentStyle}>
-          <View style={styles.expandedContentInner}>{expandedContent}</View>
-        </Animated.View>
-      </Animated.View>
-    </View>
-  );
-};
 
 export default GenericListItem;

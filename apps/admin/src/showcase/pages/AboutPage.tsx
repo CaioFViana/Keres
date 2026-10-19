@@ -1,5 +1,5 @@
 import { Trans, useTranslation } from 'react-i18next';
-import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
+import { useShowcaseConfig } from '@/showcase/config/ShowcaseConfigProvider';
 
 export function AboutPage() {
   const { t } = useTranslation('showcase');

@@ -1,19 +1,22 @@
 import { LanguageInstallRow } from '@/src/components/common';
-import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
+import { useLanguageLabel } from '@/src/hooks/ui/useLanguageLabel';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import {
   createShippedPackService,
   type ShippedPackPreview,
-} from '../../services/storymanagement/ShippedPackService';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useShippedPacksInstallerStore } from '../../state/shippedPacksInstallerStore';
-import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { packExtrasChips } from '../../utils/packChips';
+} from '@/src/services/storymanagement/packs/ShippedPackService';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useShippedPacksInstallerStore } from '@/src/state/app/shippedPacksInstallerStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { commonDetailStyleDefs, commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { layout } from '@/src/theme/layout';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { packExtrasChips } from '@/src/services/storymanagement/packs/packChips';
 
 interface ShippedPacksContentProps {
   /**
@@ -106,49 +109,7 @@ const ShippedPacksContent: React.FC<ShippedPacksContentProps> = ({
     [drizzleDb, markInstalled, showNotification, t],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    ...commonDetailStyleDefs(colors),
-    content: { padding: 20, paddingBottom: 60 },
-    description: { fontSize: 14, color: colors.textSecondary, marginBottom: 18, lineHeight: 20 },
-    modalHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 4,
-    },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, flexShrink: 1 },
-    card: {
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      borderRadius: 8,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      marginBottom: 10,
-      backgroundColor: colors.surface,
-    },
-    cardTitleRow: { flexDirection: 'row', alignItems: 'center' },
-    cardTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginLeft: 8,
-      flexShrink: 1,
-    },
-    cardDescription: { fontSize: 13, color: colors.textSecondary, marginTop: 6 },
-    contents: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
-    chip: {
-      borderRadius: 12,
-      paddingVertical: 3,
-      paddingHorizontal: 9,
-      backgroundColor: colors.background,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-    },
-    chipText: { fontSize: 12, color: colors.textSecondary },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const renderItem = useCallback(
     ({ item }: { item: ShippedPackGroup }) => {
@@ -177,7 +138,7 @@ const ShippedPacksContent: React.FC<ShippedPacksContentProps> = ({
 
       return (
         <View style={styles.card}>
-          <View style={styles.cardTitleRow}>
+          <View style={layout.row}>
             <Ionicons name="cube-outline" size={18} color={colors.primary} />
             <Text style={styles.cardTitle} numberOfLines={1}>
               {shown.name}
@@ -220,7 +181,6 @@ const ShippedPacksContent: React.FC<ShippedPacksContentProps> = ({
       styles.card,
       styles.cardDescription,
       styles.cardTitle,
-      styles.cardTitleRow,
       styles.chip,
       styles.chipText,
       styles.contents,
@@ -256,5 +216,56 @@ const ShippedPacksContent: React.FC<ShippedPacksContentProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    ...commonScreenStyleDefs(colors),
+    ...commonDetailStyleDefs(colors),
+    content: { padding: 20, paddingBottom: 60 },
+    description: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 18,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 4,
+    },
+    modalTitle: {
+      ...typography.title,
+      color: colors.text,
+      flexShrink: 1,
+    },
+    card: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      marginBottom: 10,
+      backgroundColor: colors.surface,
+    },
+    cardTitle: {
+      ...typography.sectionTitle,
+      color: colors.text,
+      marginLeft: 8,
+      flexShrink: 1,
+    },
+    cardDescription: { fontSize: 13, color: colors.textSecondary, marginTop: 6 },
+    contents: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6 },
+    chip: {
+      borderRadius: 12,
+      paddingVertical: 3,
+      paddingHorizontal: 10,
+      backgroundColor: colors.background,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+    },
+    chipText: { ...typography.caption, color: colors.textSecondary },
+  });
 
 export default ShippedPacksContent;

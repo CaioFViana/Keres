@@ -2,11 +2,11 @@ import type { CustomAttributeValues } from '@/src/components/common/forms/Custom
 import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AppDrizzleClient, SceneSelect } from '../../../db';
-import { useDurableFormDraft } from '../../../hooks/useDurableFormDraft';
-import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
-import { readEntityFormSecondaryDraft } from '../../../services/storymanagement/EntityFormSecondaryDraftStore';
-import type { SceneService } from '../../../services/storymanagement/SceneService';
+import type { AppDrizzleClient, SceneSelect } from '@/src/db';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { createAttributeValueService } from '@/src/services/storymanagement/entities/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import type { SceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
 import type { StorySchemaField } from '@keres/shared';
 
 type UseSceneFormStateOptions = {

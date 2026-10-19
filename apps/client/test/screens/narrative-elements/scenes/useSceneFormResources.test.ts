@@ -1,3 +1,6 @@
+import { renderHook } from '@testing-library/react-native';
+import { useSceneFormResources } from '@/src/screens/narrative-elements/scenes/useSceneFormResources';
+
 const mockUseDrizzle = jest.fn();
 const mockCreateSceneService = jest.fn();
 const mockFetchChapters = jest.fn();
@@ -13,13 +16,13 @@ const mockFetchItems = jest.fn();
 const mockSetItemDb = jest.fn();
 const mockInitItem = jest.fn();
 
-jest.mock('../../../../src/db', () => ({
+jest.mock('@/src/db', () => ({
   useDrizzle: (...args: unknown[]) => mockUseDrizzle(...args),
 }));
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   createSceneService: (...args: unknown[]) => mockCreateSceneService(...args),
 }));
-jest.mock('../../../../src/state/chapterStore', () => ({
+jest.mock('@/src/state/story/chapterStore', () => ({
   useChapterStore: () => ({
     chapters: [{ id: 'chapter-1' }],
     fetchChapters: mockFetchChapters,
@@ -27,7 +30,7 @@ jest.mock('../../../../src/state/chapterStore', () => ({
     initializeService: mockInitChapter,
   }),
 }));
-jest.mock('../../../../src/state/locationStore', () => ({
+jest.mock('@/src/state/story/locationStore', () => ({
   useLocationStore: () => ({
     locations: [{ id: 'location-1' }],
     fetchLocations: mockFetchLocations,
@@ -35,7 +38,7 @@ jest.mock('../../../../src/state/locationStore', () => ({
     initializeService: mockInitLocation,
   }),
 }));
-jest.mock('../../../../src/state/characterStore', () => ({
+jest.mock('@/src/state/story/characterStore', () => ({
   useCharacterStore: () => ({
     characters: [{ id: 'character-1' }],
     fetchCharacters: mockFetchCharacters,
@@ -43,7 +46,7 @@ jest.mock('../../../../src/state/characterStore', () => ({
     initializeService: mockInitCharacter,
   }),
 }));
-jest.mock('../../../../src/state/itemStore', () => ({
+jest.mock('@/src/state/story/itemStore', () => ({
   useItemStore: () => ({
     items: [{ id: 'item-1' }],
     fetchItems: mockFetchItems,
@@ -51,9 +54,6 @@ jest.mock('../../../../src/state/itemStore', () => ({
     initializeService: mockInitItem,
   }),
 }));
-
-import { renderHook } from '@testing-library/react-native';
-import { useSceneFormResources } from '../../../../src/screens/narrative-elements/scenes/useSceneFormResources';
 
 const fakeDb = { marker: 'db' };
 const fakeService = { marker: 'scene-service' };

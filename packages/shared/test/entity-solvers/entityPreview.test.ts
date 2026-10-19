@@ -13,7 +13,7 @@ import {
   getStorySyncEntityTypes,
   getEntityRowReferences,
 } from '../../entity-solvers/entities/EntityRegistry';
-import { FullStoryExportSchema } from '../../schemas/FullStorySchemas';
+import { FullStoryExportSchema } from '../../schemas/story/FullStorySchemas';
 
 const isArraySchema = (schema: unknown): boolean => {
   let current = schema as { def: { type: string; innerType?: unknown } };
@@ -62,7 +62,7 @@ describe('entity previews', () => {
   });
 
   it('derives every portable foreign key from the entity handlers', () => {
-    expect(getStoryExportReferences()).toHaveLength(38);
+    expect(getStoryExportReferences()).toHaveLength(44);
     expect(getStoryExportReferences()).toContainEqual({
       collection: 'scenes',
       field: 'chapterId',

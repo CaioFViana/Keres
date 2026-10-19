@@ -1,7 +1,7 @@
 import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   chapters,
   characters,
@@ -12,7 +12,7 @@ import {
   stories,
   tiers,
   users,
-} from '../../src/db/schema';
+} from '@/db/schema';
 import {
   newId,
   registerUser,
@@ -20,8 +20,8 @@ import {
   shareStory,
   type TestUser,
   uploadTestStory,
-} from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let storyId: string;

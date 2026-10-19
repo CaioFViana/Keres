@@ -1,24 +1,32 @@
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { deflateSync } from 'node:zlib';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   chapters,
   choiceCheckGroups,
   choiceChecks,
   choices,
   effects,
+  galleries,
   items,
+  scenePages,
+  sceneMusic,
   scenes,
   showcaseSettings,
+  songs,
   storyArcs,
   storyPublications,
-} from '../../src/db/schema';
-import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { installBunShim } from '../helpers/bunShim';
-import { truncateAll } from '../helpers/database';
+  stories,
+} from '@/db/schema';
+import { SHOWCASE_SETTINGS_SINGLETON_ID } from '@/db/schema/tables/showcaseSettings';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { mediaStorageService } from '@/services/media-storage/MediaStorageService';
+import { installBunShim } from '@test/helpers/bunShim';
+import { truncateAll } from '@test/helpers/database';
 
 // Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();
@@ -351,11 +359,26 @@ describe('publishing with a manuscript', () => {
     expect(manuscript).toContain('End body.');
   });
 
+  it('accepts one scene per page for a branching PDF and says the scene beside the page', async () => {
+    const story = await uploadTestStory(ana.token, 'Branches', 'branching');
+    await seedBranchingContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'pdf',
+        scenePerPage: true,
+        labels: { sceneWord: 'cena', goToPage: 'Vá para a página' },
+      },
+    });
+
+    expect(status).toBe(200);
+  });
+
   it('refuses an oversized manuscript and writes no package', async () => {
     const story = await uploadTestStory(ana.token);
-    // 1800 scenes at the per-scene body cap: ~54 MB of prose, past the 50 MB manuscript cap.
+    // 3600 scenes at the per-scene body cap: ~108 MB of prose, past the 100 MB manuscript cap.
     const body = 'y'.repeat(30000);
-    const rows = Array.from({ length: 1800 }, (_, index) => ({
+    const rows = Array.from({ length: 3600 }, (_, index) => ({
       id: newId(),
       storyId: story.id,
       chapterId: null,
@@ -440,5 +463,416 @@ describe('manuscript blob lifetime', () => {
     });
     expect(status).toBe(200);
     expect(await storedPublicationFiles(story.id)).toEqual([]);
+  });
+});
+
+/** A real 6x4 PNG (opaque RGB), so every renderer can embed it. */
+function realPng(): Buffer {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (bytes: Buffer) => {
+    let c = 0xffffffff;
+    for (const byte of bytes) c = crcTable[(c ^ byte) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const checksum = Buffer.alloc(4);
+    checksum.writeUInt32BE(crc(body));
+    return Buffer.concat([length, body, checksum]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(6, 0);
+  header.writeUInt32BE(4, 4);
+  header.set([8, 2, 0, 0, 0], 8);
+  const rows = Buffer.concat(
+    Array.from({ length: 4 }, () => Buffer.concat([Buffer.from([0]), Buffer.alloc(6 * 3, 90)])),
+  );
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(rows)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+/** One scene with two pages: a Gallery picture stored on the server, and a page whose picture is gone. */
+async function seedComicContent(storyId: string): Promise<void> {
+  const chapterId = newId();
+  await db.insert(chapters).values({ id: chapterId, storyId, name: 'Issue one', index: 1 });
+  const sceneId = newId();
+  await db
+    .insert(scenes)
+    .values({ id: sceneId, storyId, chapterId, name: 'Opening', index: 1, body: null });
+  const png = realPng();
+  const hash = createHash('md5').update(png).digest('hex');
+  await mediaStorageService.store(
+    hash,
+    'image/png',
+    png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer,
+  );
+  const galleryId = newId();
+  await db.insert(galleries).values({
+    id: galleryId,
+    storyId,
+    mediaType: 'image',
+    mimeType: 'image/png',
+    fileName: 'panel.png',
+    hash,
+    sizeBytes: png.byteLength,
+  });
+  await db.insert(scenePages).values([
+    { id: newId(), storyId, sceneId, rank: 'a0', galleryId, fit: 'contain', text: 'First panel' },
+    { id: newId(), storyId, sceneId, rank: 'a1', galleryId: null, fit: 'cover', text: 'Lost art' },
+  ]);
+}
+
+async function storedManuscriptBytes(storyId: string): Promise<Buffer> {
+  const files = await storedPublicationFiles(storyId);
+  const manuscript = files.find((file) => file.includes('.manuscript.'));
+  if (!manuscript) throw new Error('Expected a stored manuscript file.');
+  return readFile(path.join(process.env.MEDIA_STORAGE_PATH!, 'publications', storyId, manuscript));
+}
+
+describe('publishing the pages of a comic', () => {
+  it('puts the stored pictures and the page texts in an HTML manuscript, leaving out the page whose picture is gone', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'html' } });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figcaption>Page 1</figcaption>');
+    expect(html).toContain('data:image/png;base64,');
+    expect(html).toContain('First panel');
+    expect(html).not.toContain('Lost art');
+    expect(html).not.toContain('Page 2');
+  });
+
+  it('captions the pages in the words and the noun the publisher sent', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'html',
+        pageNoun: 'frame',
+        labels: { frameLabel: 'Quadro', mediaRemoved: 'Imagem removida' },
+      },
+    });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figcaption>Quadro 1</figcaption>');
+    expect(html).not.toContain('Frame 1');
+  });
+
+  it('embeds the picture in a PDF, in a frame the arc chose', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'pdf', pageFormat: 'wide' },
+    });
+
+    expect(status).toBe(200);
+    const pdf = (await storedManuscriptBytes(story.id)).toString('latin1');
+    expect(pdf).toContain('/Subtype /Image');
+    expect(pdf).toContain('/XObject <<');
+  });
+
+  it('sets the page beside its text on a planning sheet, and the text once', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'html', pageLayout: 'sheet' },
+    });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figure class="page sheet"');
+    expect(html).toContain('<div class="script"><figcaption>Page 1</figcaption><p>First panel</p>');
+    expect(html.match(/First panel/g)).toHaveLength(1);
+  });
+
+  it('sets the pages of a PDF in spreads on landscape sheets', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'pdf', pageLayout: 'spreads' },
+    });
+
+    expect(status).toBe(200);
+    const pdf = (await storedManuscriptBytes(story.id)).toString('latin1');
+    expect(pdf).toContain('/MediaBox [0 0 841.89 595.28]');
+    expect(pdf).toContain('/Subtype /Image');
+  });
+
+  it('refuses a layout it does not know', async () => {
+    const story = await uploadTestStory(ana.token);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'html', pageLayout: 'carousel' },
+    });
+
+    expect(status).toBe(422);
+  });
+
+  it('leaves the pictures out of a markdown manuscript but keeps each page and its text', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'md' } });
+
+    expect(status).toBe(200);
+    const md = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(md).toContain('**Page 1**');
+    expect(md).toContain('First panel');
+    expect(md).not.toContain('Lost art');
+    expect(md).not.toContain('Image removed');
+    expect(md).not.toContain('data:image');
+  });
+
+  it('refuses a book whose pictures alone would pass the limit, before reading them, and writes nothing', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+    // A declared size past the 100 MB manuscript cap, so the pre-compile estimate refuses.
+    await db
+      .update(galleries)
+      .set({ sizeBytes: 120 * 1024 * 1024 })
+      .where(eq(galleries.storyId, story.id));
+
+    const { status, data } = await publish(ana.token, story.id, { manuscript: { format: 'epub' } });
+
+    expect(status).toBe(400);
+    expect(data.message).toMatch(/exceeds the .* limit/);
+    expect(await storedPublicationFiles(story.id)).toEqual([]);
+  });
+});
+
+/**
+ * A tavern scene sung to a song with a chorus, an audio reference of the Gallery that plays under it,
+ * and a second scene that sings only the chorus again.
+ */
+async function seedSongContent(storyId: string): Promise<void> {
+  const chapterId = newId();
+  await db.insert(chapters).values({ id: chapterId, storyId, name: 'One', index: 1 });
+  const tavern = newId();
+  const funeral = newId();
+  await db.insert(scenes).values([
+    { id: tavern, storyId, chapterId, name: 'Tavern', index: 1, body: 'The bard stands.' },
+    { id: funeral, storyId, chapterId, name: 'Funeral', index: 2, body: 'They bury him.' },
+  ]);
+  const songId = newId();
+  await db.insert(songs).values({
+    id: songId,
+    storyId,
+    title: 'The Lantern Song',
+    lyrics: '{sov: Verse 1}\n[G]Light the lantern\n{eov}\n{soc: Chorus}\nHome, home, home\n{eoc}',
+    lyricsTranslation: '{sov: Verse 1}\nAcende o lampião\n{eov}',
+  });
+  const referenceId = newId();
+  await db.insert(galleries).values({
+    id: referenceId,
+    storyId,
+    mediaType: 'audio',
+    mimeType: 'audio/mpeg',
+    fileName: 'secret-reference.mp3',
+    hash: createHash('md5').update('secret-reference').digest('hex'),
+    sizeBytes: 1,
+  });
+  await db.insert(sceneMusic).values([
+    {
+      id: newId(),
+      storyId,
+      sceneId: tavern,
+      rank: 'a0',
+      songId,
+      galleryId: null,
+      role: 'in-world',
+      cue: 'as the bard begins',
+      sections: null,
+    },
+    {
+      id: newId(),
+      storyId,
+      sceneId: tavern,
+      rank: 'a1',
+      songId: null,
+      galleryId: referenceId,
+      role: 'score',
+      cue: 'comes in under the song',
+      sections: null,
+    },
+    {
+      id: newId(),
+      storyId,
+      sceneId: funeral,
+      rank: 'a0',
+      songId,
+      galleryId: null,
+      role: 'in-world',
+      cue: null,
+      sections: ['Chorus'],
+    },
+  ]);
+}
+
+describe('publishing the songs of a story', () => {
+  it('leaves the songs out unless the publication asks for them', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'md' } });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md).toContain('The bard stands.');
+    expect(md).not.toContain('Light the lantern');
+  });
+
+  it('gathers the songs in an appendix, each once and whole', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true },
+    });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md).toContain('Songs');
+    expect(md).toContain('The Lantern Song');
+    expect(md).toContain('Light the lantern');
+    expect(md.match(/Home, home, home/g)).toHaveLength(1);
+  });
+
+  it('prints each part of a song after the scene that sings it, and names it where it was sung before', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true, songsPlacement: 'after-scene' },
+    });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md.indexOf('Light the lantern')).toBeGreaterThan(md.indexOf('The bard stands.'));
+    expect(md.indexOf('Light the lantern')).toBeLessThan(md.indexOf('They bury him.'));
+    expect(md.match(/Home, home, home/g)).toHaveLength(1);
+    expect(md).toContain('The Lantern Song');
+  });
+
+  it('prints the translation when asked to', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true, songLanguage: 'both' },
+    });
+
+    expect(status).toBe(200);
+    expect(await storedManuscript(story.id)).toContain('Acende o lampião');
+  });
+
+  it('never publishes a reference of the Gallery, the score or the cues, whatever the request says', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true, includeMusicCues: true },
+    });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md).not.toContain('secret-reference');
+    expect(md).not.toContain('comes in under the song');
+    expect(md).not.toContain('as the bard begins');
+    expect(md).not.toContain('Music:');
+  });
+
+  it('writes the songs of a script as Fountain lyrics and no notes', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'fountain',
+        includeSongs: true,
+        screenplay: { includeMusicNotes: true },
+      },
+    });
+
+    expect(status).toBe(200);
+    const text = await storedManuscript(story.id);
+    expect(text).toContain('~Light the lantern');
+    expect(text).not.toContain('[[');
+  });
+});
+
+/** A story whose cover is a picture of its Gallery, stored on the server. */
+async function seedCover(storyId: string): Promise<string> {
+  const png = realPng();
+  const hash = createHash('md5').update(png).digest('hex');
+  await mediaStorageService.store(
+    hash,
+    'image/png',
+    png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer,
+  );
+  const galleryId = newId();
+  await db.insert(galleries).values({
+    id: galleryId,
+    storyId,
+    mediaType: 'image',
+    mimeType: 'image/png',
+    fileName: 'cover.png',
+    hash,
+    sizeBytes: png.byteLength,
+  });
+  await db.update(stories).set({ coverGalleryId: galleryId }).where(eq(stories.id, storyId));
+  return galleryId;
+}
+
+describe('publishing the cover of a story', () => {
+  it('puts the cover first in an HTML manuscript', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedCover(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'html' } });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figure class="cover">');
+    expect(html.indexOf('<figure class="cover">')).toBeLessThan(html.indexOf('<h1 class="title">'));
+  });
+
+  it('leaves it out when the publisher says so', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedCover(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'html', includeCover: false },
+    });
+
+    expect(status).toBe(200);
+    expect((await storedManuscriptBytes(story.id)).toString('utf8')).not.toContain('class="cover"');
+  });
+
+  it('puts it in a PDF as a picture of its own', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedCover(story.id);
+
+    expect((await publish(ana.token, story.id, { manuscript: { format: 'pdf' } })).status).toBe(
+      200,
+    );
+    expect((await storedManuscriptBytes(story.id)).toString('latin1')).toContain('/Subtype /Image');
   });
 });

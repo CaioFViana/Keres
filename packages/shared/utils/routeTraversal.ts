@@ -1,8 +1,8 @@
-import type { Choice } from '../entities/Choice';
-import type { ChoiceCheck } from '../entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '../entities/ChoiceCheckGroup';
-import type { Effect } from '../entities/Effect';
-import type { RouteStep } from '../entities/RouteStep';
+import type { Choice } from '../entities/narrative/Choice';
+import type { ChoiceCheck } from '../entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '../entities/narrative/ChoiceCheckGroup';
+import type { Effect } from '../entities/narrative/Effect';
+import type { RouteStep } from '../entities/narrative/RouteStep';
 import {
   applySimulationEffects,
   emptyStorySimulationState,

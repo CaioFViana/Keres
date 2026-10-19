@@ -1,40 +1,52 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
-import { useFormResetHeaderAction } from '@/src/hooks/useFormResetHeaderAction';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
+import { useFormResetHeaderAction } from '@/src/hooks/forms/useFormResetHeaderAction';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { Button, TextInput, ThemePickerModal } from '@/src/components/common';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useStoryArcs } from '@/src/hooks/useStoryArcs';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useNotificationStore } from '@/src/state/notificationStore';
-import { useStoryStore } from '@/src/state/storyStore';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useLeaveScreen } from '@/src/hooks/nav/useLeaveScreen';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import type { ArcsStackParamList } from '@/src/navigation/stacks/ArcsStack';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
-import { resolveEffectiveTheme } from '@/src/utils/storyArcFilter';
-import { themeDisplayOptions } from '@keres/shared';
+import { resolveEffectiveTheme } from '@/src/utils/search/storyArcFilter';
+import {
+  DEFAULT_ARC_MEDIUM,
+  isArcMedium,
+  isPageFormat,
+  themeDisplayOptions,
+  type ArcMedium,
+  type PageFormat,
+} from '@keres/shared';
+import ArcMediumSelect from '@/src/components/features/arcs/ArcMediumSelect';
+import PageFormatSelect from '@/src/components/features/arcs/PageFormatSelect';
+import GalleryCoverField from '@/src/components/features/gallery/GalleryCoverField';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-
-type Nav = NativeStackNavigationProp<CustomizationStackParamList, 'StoryArcForm'>;
 
 type ArcFormDraftFields = {
   title: string;
   description: string;
   icon: string | null;
   themeOverride: string | null;
+  medium: ArcMedium;
+  author: string;
+  coverGalleryId: string | null;
+  pageFormat: PageFormat | null;
 };
 
 const CREATE_PRISTINE: ArcFormDraftFields = {
@@ -42,13 +54,26 @@ const CREATE_PRISTINE: ArcFormDraftFields = {
   description: '',
   icon: null,
   themeOverride: null,
+  medium: DEFAULT_ARC_MEDIUM,
+  author: '',
+  coverGalleryId: null,
+  pageFormat: null,
 };
 
 const isArcFormDraftFields = (fields: ArcFormDraftFields): boolean =>
   typeof fields.title === 'string' &&
   typeof fields.description === 'string' &&
   (fields.icon === null || typeof fields.icon === 'string') &&
-  (fields.themeOverride === null || typeof fields.themeOverride === 'string');
+  (fields.themeOverride === null || typeof fields.themeOverride === 'string') &&
+  // Drafts stored before these fields existed lack them; that is fine, not corrupt.
+  (fields.medium === undefined || isArcMedium(fields.medium)) &&
+  (fields.author === undefined || typeof fields.author === 'string') &&
+  (fields.coverGalleryId === undefined ||
+    fields.coverGalleryId === null ||
+    typeof fields.coverGalleryId === 'string') &&
+  (fields.pageFormat === undefined ||
+    fields.pageFormat === null ||
+    isPageFormat(fields.pageFormat));
 
 const StoryArcFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -56,8 +81,8 @@ const StoryArcFormScreen = () => {
   const { colors, setTheme: applyTheme } = useTheme();
   const commonInputStyles = getCommonInputStyles(colors);
   const db = useDrizzle();
-  const navigation = useNavigation<Nav>();
-  const { arcId } = useRoute<RouteProp<CustomizationStackParamList, 'StoryArcForm'>>().params;
+  const leave = useLeaveScreen();
+  const { arcId } = useRoute<RouteProp<ArcsStackParamList, 'StoryArcForm'>>().params;
   const story = useStoryStore((state) => state.selectedStory);
   const { activeArc } = useStoryArcs();
   const { canEdit } = useStoryRole(story?.id);
@@ -69,6 +94,10 @@ const StoryArcFormScreen = () => {
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState<string | null>(null);
   const [themeOverride, setThemeOverride] = useState<string | null>(null);
+  const [medium, setMedium] = useState<ArcMedium>(DEFAULT_ARC_MEDIUM);
+  const [author, setAuthor] = useState('');
+  const [coverGalleryId, setCoverGalleryId] = useState<string | null>(null);
+  const [pageFormat, setPageFormat] = useState<PageFormat | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const isEditing = !!arcId;
@@ -94,11 +123,19 @@ const StoryArcFormScreen = () => {
         setDescription(arc.description ?? '');
         setIcon(arc.icon ?? null);
         setThemeOverride(arc.themeOverride);
+        setMedium(arc.medium);
+        setAuthor(arc.author ?? '');
+        setCoverGalleryId(arc.coverGalleryId);
+        setPageFormat(arc.pageFormat);
         setLoadedPristine({
           title: arc.title,
           description: arc.description ?? '',
           icon: arc.icon ?? null,
           themeOverride: arc.themeOverride,
+          medium: arc.medium,
+          author: arc.author ?? '',
+          coverGalleryId: arc.coverGalleryId,
+          pageFormat: arc.pageFormat,
         });
         setLoadedUpdatedAt(arc.updatedAt?.toISOString?.() ?? null);
         setLoaded(true);
@@ -114,6 +151,10 @@ const StoryArcFormScreen = () => {
     setDescription(fields.description);
     setIcon(fields.icon);
     setThemeOverride(fields.themeOverride);
+    setMedium(fields.medium ?? DEFAULT_ARC_MEDIUM);
+    setAuthor(fields.author ?? '');
+    setCoverGalleryId(fields.coverGalleryId ?? null);
+    setPageFormat(fields.pageFormat ?? null);
   }, []);
 
   const { clearFormDraft, deleteStoredDraft } = useDurableFormDraft<ArcFormDraftFields>({
@@ -121,7 +162,16 @@ const StoryArcFormScreen = () => {
     entityType: 'StoryArc',
     entityId: arcId,
     enabled: !!story?.id && loaded,
-    snapshot: { title, description, icon, themeOverride },
+    snapshot: {
+      title,
+      description,
+      icon,
+      themeOverride,
+      medium,
+      author,
+      coverGalleryId,
+      pageFormat,
+    },
     pristine: loadedPristine ?? CREATE_PRISTINE,
     baseUpdatedAt: arcId ? loadedUpdatedAt : undefined,
     onRestore: restoreDraftFields,
@@ -129,7 +179,16 @@ const StoryArcFormScreen = () => {
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
   const isDirty =
-    JSON.stringify({ title, description, icon, themeOverride }) !== JSON.stringify(pristineFields);
+    JSON.stringify({
+      title,
+      description,
+      icon,
+      themeOverride,
+      medium,
+      author,
+      coverGalleryId,
+      pageFormat,
+    }) !== JSON.stringify(pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -141,6 +200,10 @@ const StoryArcFormScreen = () => {
     setDescription(target.description);
     setIcon(target.icon);
     setThemeOverride(target.themeOverride);
+    setMedium(target.medium);
+    setAuthor(target.author);
+    setCoverGalleryId(target.coverGalleryId);
+    setPageFormat(target.pageFormat);
     await deleteStoredDraft();
   }, [loadedPristine, deleteStoredDraft]);
 
@@ -169,6 +232,10 @@ const StoryArcFormScreen = () => {
           description: description.trim() || null,
           icon,
           themeOverride,
+          medium,
+          author: author.trim() || null,
+          coverGalleryId,
+          pageFormat,
         });
       else
         await service.createArc(userId, {
@@ -179,10 +246,15 @@ const StoryArcFormScreen = () => {
           color: null,
           icon,
           themeOverride,
+          medium,
+          vocabulary: null,
+          author: author.trim() || null,
+          coverGalleryId,
+          pageFormat,
           isDefault: false,
         });
       await clearFormDraft();
-      navigation.goBack();
+      leave();
     } catch (error) {
       notify(error instanceof Error ? error.message : t('calendar_save_failed'), 'error');
     } finally {
@@ -209,8 +281,8 @@ const StoryArcFormScreen = () => {
           padding: 16,
         },
         cardHeading: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-        cardTitle: { color: colors.text, flex: 1, fontSize: 17, fontWeight: '700' },
-        value: { color: colors.textSecondary, lineHeight: 19, marginTop: 7 },
+        cardTitle: { color: colors.text, flex: 1, fontSize: 16, fontWeight: '700' },
+        value: { color: colors.textSecondary, lineHeight: 19, marginTop: 8 },
         action: { marginTop: 12 },
         readOnly: { color: colors.textSecondary, lineHeight: 19, marginTop: 16 },
       }),
@@ -240,6 +312,39 @@ const StoryArcFormScreen = () => {
             multiline
           />
         )}
+      </FormField>
+      <FormField label={t('arc_medium')}>
+        <ArcMediumSelect
+          value={medium}
+          onChange={setMedium}
+          arcTerm={vocab.term('Arc')}
+          disabled={!canEdit}
+        />
+      </FormField>
+      {medium === 'comic' || medium === 'storyboard' || pageFormat ? (
+        <FormField label={t('page_format')}>
+          <PageFormatSelect value={pageFormat} onChange={setPageFormat} disabled={!canEdit} />
+        </FormField>
+      ) : null}
+      <FormField label={t('arc_author')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            testID="input-author"
+            value={author}
+            onChangeText={setAuthor}
+            placeholder={t('arc_author_placeholder')}
+            editable={canEdit}
+          />
+        )}
+      </FormField>
+      <FormField label={t('cover')}>
+        <GalleryCoverField
+          storyId={story?.id}
+          value={coverGalleryId}
+          onChange={setCoverGalleryId}
+          editable={canEdit}
+        />
       </FormField>
       {canEdit ? (
         <FormField label={t('arc_icon')}>
@@ -280,7 +385,7 @@ const StoryArcFormScreen = () => {
       </View>
       {canEdit ? (
         <FormActions stackOnCompact>
-          <Button onPress={() => navigation.goBack()}>{t('cancel')}</Button>
+          <Button onPress={leave}>{t('cancel')}</Button>
           <Button onPress={handleSave} disabled={saving}>
             {t('save')}
           </Button>

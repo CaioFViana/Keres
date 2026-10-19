@@ -275,13 +275,24 @@ a {
   letter-spacing: -0.02em;
 }
 
+/* A short bar above every section title: the eye finds where a section starts while scrolling a
+   long page of look-alike blocks. */
+.section-head h2::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+}
+
 .section-head p {
   margin: 0;
   color: var(--color-text-secondary);
 }
 
 .pillar-grid,
-.feature-grid,
 .download-grid {
   display: grid;
   gap: 16px;
@@ -292,13 +303,8 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-.feature-grid {
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-}
-
 .card,
-.feature-card,
-.faq-item {
+.feature-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -307,7 +313,51 @@ a {
 
 .card,
 .feature-card {
-  padding: 18px 20px;
+  position: relative;
+  padding: 22px 24px;
+}
+
+/* The accent line on top of a card: a short stub at rest, the full edge on hover. */
+.feature-card,
+.pillar-grid .card {
+  overflow: hidden;
+}
+
+.feature-card::before,
+.pillar-grid .card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transition: width 0.25s ease;
+}
+
+.feature-card:hover::before {
+  width: 100%;
+}
+
+/* The three pillars read as a sequence: offline, universe, anywhere. */
+.pillar-grid {
+  counter-reset: pillar;
+}
+
+.pillar-grid .card {
+  counter-increment: pillar;
+  padding-top: 26px;
+}
+
+.pillar-grid .card h3::before {
+  content: counter(pillar, decimal-leading-zero);
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-primary);
 }
 
 .card h3,
@@ -318,8 +368,7 @@ a {
 }
 
 .card p,
-.feature-card p,
-.faq-item p {
+.feature-card p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.92rem;
@@ -387,12 +436,54 @@ code {
   color: var(--color-text);
 }
 
+/* Columns by how many cards there are, so the last row is never a lone orphan: groups of 4 and 8
+   run 4 / 2 / 1 wide, a group of 3 runs 3 / 1. */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.feature-grid[data-count="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .feature-grid,
+  .feature-grid[data-count="4"],
+  .feature-grid[data-count="8"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feature-grid[data-count="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .feature-grid[data-count="3"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .feature-grid,
+  .feature-grid[data-count="4"],
+  .feature-grid[data-count="8"] {
+    grid-template-columns: 1fr;
+  }
+}
+
 .faq-list {
   display: grid;
   gap: 10px;
 }
 
 .faq-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   padding: 4px 18px 4px;
 }
 
@@ -403,7 +494,10 @@ code {
 }
 
 .faq-item p {
+  margin: 0;
   padding-bottom: 14px;
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
 }
 
 .site-footer {
@@ -478,44 +572,157 @@ code {
    Photos of the app running (1440px wide), so the frame here is only border,
    crop, and shadow: no fake title bar - the photo already carries the header and
    the drawer of the application itself. */
-.showcase-shots {
-  display: flex;
-  flex-direction: column;
-  gap: 44px;
-}
-
-.showcase-shot {
-  margin: 0;
-}
-
 /* The caption comes before the photo: the reader knows what they are looking at before looking. */
-.showcase-shot figcaption {
+.showcase-caption {
   max-width: 62ch;
-  margin: 0 0 14px;
+  /* Slides carry captions of different lengths: reserving two lines keeps the stage from
+     jumping up and down as the carousel moves. */
+  min-height: 5.6rem;
+  margin: 0 0 18px;
+  padding-left: 16px;
+  border-left: 3px solid var(--color-primary);
 }
 
-.showcase-shot figcaption h3 {
+/* A soft glow of the brand colour behind the stage, so the photo floats instead of sitting
+   on the page. It stays inside the carousel's own box: nothing here can widen the page. */
+.showcase-carousel {
+  position: relative;
+  isolation: isolate;
+}
+
+.showcase-carousel::before {
+  content: "";
+  position: absolute;
+  inset: 70px 0 0;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 40%,
+    color-mix(in srgb, var(--color-primary) 22%, transparent),
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
+.showcase-caption h3 {
   margin: 0 0 6px;
   font-size: 1.15rem;
   letter-spacing: -0.01em;
 }
 
-.showcase-shot figcaption p {
+.showcase-caption p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.97rem;
   line-height: 1.55;
 }
 
-.showcase-window {
-  display: block;
+/* The framed stage: a window frame around the photo, so the carousel reads as one
+   object instead of a bare image. The border and shadow moved here from the photo link. */
+.showcase-stage {
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow:
+    var(--shadow-card),
+    0 28px 60px -28px color-mix(in srgb, var(--color-primary) 55%, transparent);
+  overflow: hidden;
+}
+
+.showcase-chrome {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.showcase-chrome i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+/* The window buttons keep a hint of the usual colours - enough to read as a window, quiet
+   enough not to compete with the photo. */
+.showcase-chrome i:nth-child(1) {
+  background: color-mix(in srgb, #ff5f57 70%, var(--color-border));
+}
+
+.showcase-chrome i:nth-child(2) {
+  background: color-mix(in srgb, #febc2e 70%, var(--color-border));
+}
+
+.showcase-chrome i:nth-child(3) {
+  background: color-mix(in srgb, #28c840 70%, var(--color-border));
+}
+
+/* The time left on this slide, drawn along the chrome's lower edge. */
+.showcase-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: showcase-progress linear forwards;
+}
+
+@keyframes showcase-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Fixed 16:10 viewport - the ratio of the tallest shots. Its height only depends on the
+   page width, never on the current slide, so narrower screens letterbox inside it instead
+   of snapping the section shorter. */
+.showcase-viewport {
+  aspect-ratio: 16 / 10;
   overflow: hidden;
   background: var(--color-bg);
   /* The photo follows the page's theme, and its background is the app's: without the same
      background here, a light border showed around a dark screen while the image loaded. */
+}
+
+/* The sliding track: every slide is one viewport wide, so translating by -100% per index
+   moves exactly one screen. The height never changes - only the offset does. */
+.carousel-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.45s ease;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track {
+    transition: none;
+  }
+}
+
+.showcase-window {
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
 .showcase-window:hover {
@@ -524,8 +731,11 @@ code {
 
 .showcase-window img {
   display: block;
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  object-fit: contain;
 }
 
 .showcase-note {
@@ -534,9 +744,117 @@ code {
   color: var(--color-text-secondary);
 }
 
+/* --- Carousel controls ------------------------------------------------------
+   One screen shows at a time; these move between them. Plain buttons and dots,
+   no autoplay and no slide animation, so nothing moves unless the reader asks. */
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 24px auto 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.carousel-button {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.carousel-button:hover {
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+/* The pause/play toggle centers an icon instead of a chevron glyph. */
+.carousel-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.carousel-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-secondary) 40%, transparent);
+  cursor: pointer;
+  transition:
+    width 0.25s ease,
+    background 0.15s;
+}
+
+.carousel-dot:hover {
+  background: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+/* The current screen is the long one: where you are shows without reading the counter. */
+.carousel-dot.is-active {
+  width: 26px;
+  background: var(--color-primary);
+}
+
+.carousel-counter {
+  margin: 0;
+  min-width: 4.5ch;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.carousel-button:focus-visible,
+.carousel-dot:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-dot,
+  .feature-card::before {
+    transition: none;
+  }
+}
+
 @media (max-width: 640px) {
-  .showcase-shots {
-    gap: 32px;
+  .carousel-slide {
+    padding: 8px;
+  }
+
+  /* Twelve dots do not fit beside the buttons on a phone: previous / counter / pause / next
+     stay on one line, and the counter says where you are. */
+  .carousel-dots {
+    display: none;
+  }
+
+  .carousel-controls {
+    gap: 16px;
   }
 }
 
@@ -633,4 +951,308 @@ code {
   background: var(--color-bg-elevated);
   font-size: 0.85rem;
   color: var(--color-text-secondary);
+}
+
+/* Landing build: the tiers, contact, and official sections. Unused by the Pages build. */
+
+/* Pricing cards. Scoped under `.tier-card` on purpose: the generic `.feature-card p`
+   rule (element + class) outranks a lone class, which is how the prices used to render
+   small and grey. Every card renders the same rows - name, hero price, sub-line, limits -
+   so columns of cards stay aligned with each other. */
+.tiers-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
+}
+
+.tier-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.tier-card.is-default {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.tier-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 1.2rem;
+}
+
+.tier-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tier-card .tier-prices {
+  margin: 14px 0 0;
+}
+
+.tier-card .tier-price {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.tier-card .tier-price a {
+  color: inherit;
+  font-size: 1.2rem;
+}
+
+.tier-card .tier-subprice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 0;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.tier-card .tier-period {
+  font-size: 0.95em;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.tier-card .tier-limits {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 8px;
+}
+
+.tier-limits li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+.tier-limits span {
+  color: var(--color-text-secondary);
+}
+
+.tier-limits strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tiers-contact {
+  margin-top: 28px;
+  text-align: center;
+}
+
+/* Legal. The two documents switch in tabs; the text itself reads like the FAQ -
+   headed sections with breathing room, capped in width so long lines stay readable. */
+.legal-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.legal-text {
+  display: grid;
+  gap: 24px;
+  max-width: 72ch;
+}
+
+.legal-section h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.legal-section p {
+  margin: 0 0 10px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* Contact. On a wide screen the section is two columns - what this is for on the left, the form
+   on the right - so the form never stretches across the whole width with its fields lost in it. On a
+   narrow one the intro sits above the form. */
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.contact-intro {
+  margin-bottom: 0;
+  max-width: none;
+}
+
+.contact-intro p {
+  max-width: 44ch;
+}
+
+.contact-points {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.contact-points li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.contact-point-icon,
+.contact-sent-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+.contact-form {
+  display: grid;
+  gap: 20px;
+  padding: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.contact-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  align-content: start;
+}
+
+/* Subject and email share a row; the message gets the width. */
+.contact-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.contact-message textarea {
+  min-height: 11rem;
+}
+
+.contact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.contact-actions .button {
+  gap: 8px;
+  padding: 12px 22px;
+}
+
+.contact-counter {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.contact-sent {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+}
+
+.contact-sent-icon {
+  width: 38px;
+  height: 38px;
+  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+  color: var(--color-accent);
+}
+
+[data-theme="light"] .contact-sent-icon {
+  color: #00873a;
+}
+
+.contact-sent p {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 900px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-form,
+  .contact-sent {
+    padding: 22px 18px;
+  }
+
+  .contact-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-message textarea {
+    min-height: 8rem;
+  }
+}
+
+.contact-form input,
+.contact-form textarea {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 400;
+  padding: 12px 14px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.contact-form input:focus-visible,
+.contact-form textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+.contact-form textarea {
+  resize: vertical;
+}
+
+.form-error {
+  margin: 0;
+  color: #b3261e;
+}
+
+[data-theme="dark"] .form-error {
+  color: #f2b8b5;
 }

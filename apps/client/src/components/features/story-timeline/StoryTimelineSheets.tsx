@@ -1,9 +1,9 @@
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
-import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
-import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
-import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/sceneTiming';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import { useStoryCalendar } from '@/src/hooks/story/useStoryCalendar';
+import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

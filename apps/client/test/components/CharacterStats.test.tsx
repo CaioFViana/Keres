@@ -1,14 +1,14 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import { formatStatNumber, formatStatValueDetailed } from '@keres/shared/graphs/statLadder';
+import { formatStatNumber, formatStatValueDetailed } from '@keres/shared/graphs/stats/statLadder';
 import React from 'react';
-import { CharacterStatPanel } from '../../src/components/features/stats/CharacterStatPanel/CharacterStatPanel';
-import { CharacterStatValuesEditor } from '../../src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
-import { ModeManager } from '../../src/components/features/stats/ModeManager/ModeManager';
-import type { StoryStatsData } from '../../src/hooks/useStoryStats';
-import { indexStatValues } from '../../src/utils/statValues';
-import type { ModeSelect, StatSelect } from '../../src/db/schema';
+import { CharacterStatPanel } from '@/src/components/features/stats/CharacterStatPanel/CharacterStatPanel';
+import { CharacterStatValuesEditor } from '@/src/components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor';
+import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeManager';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
+import { indexStatValues } from '@/src/utils/stats/statValues';
+import type { ModeSelect, StatSelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -39,17 +39,17 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
-jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: () => ({ isCompact: true, isMedium: false, isWide: false }),
 }));
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -62,7 +62,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   };
 });
 
-jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -75,7 +75,7 @@ jest.mock('../../src/components/common/inputs/TextInput/TextInput', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {
@@ -97,7 +97,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/FormActions/FormActions', () => {
+jest.mock('@/src/components/common/controls/FormActions/FormActions', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -107,7 +107,7 @@ jest.mock('../../src/components/common/controls/FormActions/FormActions', () => 
   };
 });
 
-jest.mock('../../src/components/layout/ResponsiveGrid/ResponsiveGrid', () => {
+jest.mock('@/src/components/layout/ResponsiveGrid/ResponsiveGrid', () => {
   const ReactActual = require('react');
   return {
     __esModule: true,
@@ -117,7 +117,7 @@ jest.mock('../../src/components/layout/ResponsiveGrid/ResponsiveGrid', () => {
 });
 
 const mockRadarProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/features/stats/StatRadarChart/StatRadarChart', () => {
+jest.mock('@/src/components/features/stats/StatRadarChart/StatRadarChart', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -130,7 +130,7 @@ jest.mock('../../src/components/features/stats/StatRadarChart/StatRadarChart', (
 });
 
 const mockLadderBars: Record<string, any>[] = [];
-jest.mock('../../src/components/features/stats/StatLadderBar/StatLadderBar', () => {
+jest.mock('@/src/components/features/stats/StatLadderBar/StatLadderBar', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {

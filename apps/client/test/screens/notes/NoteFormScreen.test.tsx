@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import NoteFormScreen from '@/src/screens/notes/NoteFormScreen';
+
 const mockGoBack = jest.fn();
 const mockNavigation = { goBack: mockGoBack };
 const mockRoute: { params: { noteId?: string } } = { params: {} };
@@ -61,7 +63,7 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
@@ -157,26 +159,26 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
     },
   };
 });
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityFormSecondaryDraft', () => ({
+jest.mock('@/src/hooks/forms/useEntityFormSecondaryDraft', () => ({
   __esModule: true,
   useEntityFormSecondaryDraft: () => ({
     persistSecondaryDraft: jest.fn(),
     clearSecondaryDraft: jest.fn(),
   }),
 }));
-jest.mock('../../../src/hooks/useStorySchemaFields', () => ({
+jest.mock('@/src/hooks/story/useStorySchemaFields', () => ({
   __esModule: true,
   useStorySchemaFields: () => mockCustomFields,
 }));
-jest.mock('../../../src/screens/notes/useNoteFormResources', () => ({
+jest.mock('@/src/screens/notes/useNoteFormResources', () => ({
   __esModule: true,
   useNoteFormResources: () => ({ drizzleDb: mockDb, noteServiceRef: { current: {} } }),
 }));
-jest.mock('../../../src/screens/notes/useNoteFormState', () => ({
+jest.mock('@/src/screens/notes/useNoteFormState', () => ({
   __esModule: true,
   useNoteFormState: () => ({
     ...mockFormState.current,
@@ -187,7 +189,7 @@ jest.mock('../../../src/screens/notes/useNoteFormState', () => ({
     setCustomValues: mockSetCustomValues,
   }),
 }));
-jest.mock('../../../src/screens/notes/useNoteFormAssociations', () => ({
+jest.mock('@/src/screens/notes/useNoteFormAssociations', () => ({
   __esModule: true,
   useNoteFormAssociations: () => ({
     availableTags: [{ id: 'tag-1', name: 'Lore', color: '#f00' }],
@@ -196,7 +198,7 @@ jest.mock('../../../src/screens/notes/useNoteFormAssociations', () => ({
     handleTagSelectionChange: mockHandleTagSelectionChange,
   }),
 }));
-jest.mock('../../../src/screens/notes/useNoteFormActions', () => ({
+jest.mock('@/src/screens/notes/useNoteFormActions', () => ({
   __esModule: true,
   useNoteFormActions: () => ({
     deleting: mockActionsState.current.deleting,
@@ -205,15 +207,15 @@ jest.mock('../../../src/screens/notes/useNoteFormActions', () => ({
     saving: mockActionsState.current.saving,
   }),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: () => ({ selectedStory: mockSelectedStory }),
 }));
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -233,8 +235,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => mockI18n,
 }));
-
-import NoteFormScreen from '../../../src/screens/notes/NoteFormScreen';
 
 describe('NoteFormScreen', () => {
   afterEach(() => {

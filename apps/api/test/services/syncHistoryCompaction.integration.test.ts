@@ -1,11 +1,11 @@
 import { asc, eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../../src/db';
-import { operationLog } from '../../src/db/schema';
-import { compactStoryUpdateHistory } from '../../src/services/sync/SyncHistoryCompaction';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { operationLog } from '@/db/schema';
+import { compactStoryUpdateHistory } from '@/services/sync/SyncHistoryCompaction';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 let storyId: string;

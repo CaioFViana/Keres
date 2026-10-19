@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
+import ItemListScreen from '@/src/screens/items/ItemListScreen';
+
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
@@ -27,7 +29,8 @@ let mockListState = {
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn() as jest.Mock,
 };
 let mockListProps: {
   data: { id: string; name: string }[];
@@ -57,13 +60,13 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
-jest.mock('@/src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
   },
 }));
-jest.mock('@/src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -87,10 +90,33 @@ jest.mock('@/src/components/common/lists/GenericFilterSortList/GenericFilterSort
         { testID: 'filter-tags', onPress: () => props.onFilterChange(['tag-1']) },
         'filter',
       ),
+      (props as { resultsNotice?: React.ReactNode }).resultsNotice,
       props.data.map((item) =>
         react.createElement(react.Fragment, { key: item.id }, props.renderItem({ item })),
       ),
     );
+  },
+}));
+jest.mock('@/src/components/features/arcs/OutsideArcNotice', () => ({
+  __esModule: true,
+  default: ({
+    count,
+    expanded,
+    onToggle,
+  }: {
+    count: number;
+    expanded: boolean;
+    onToggle: () => void;
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return count > 0
+      ? react.createElement(
+          native.Text,
+          { testID: 'outside-arc', onPress: onToggle },
+          `${expanded ? 'hide' : 'show'}:${count}`,
+        )
+      : null;
   },
 }));
 jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => ({
@@ -175,64 +201,64 @@ jest.mock('@/src/components/features/item-journeys/ItemJourneyRows', () => ({
   },
 }));
 const mockDb = {};
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
-jest.mock('../../../src/hooks/useOpenPresenceMatrixViewer', () => ({
+jest.mock('@/src/hooks/character/useOpenPresenceMatrixViewer', () => ({
   __esModule: true,
   useOpenPresenceMatrixViewer: () => ({ openItemList: mockOpenItemList }),
 }));
-jest.mock('../../../src/hooks/useEntityArcIds', () => ({
+jest.mock('@/src/hooks/arcs/useEntityArcIds', () => ({
   __esModule: true,
   useEntityArcIds: (...args: unknown[]) => mockUseEntityArcIds(...args),
 }));
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
 }));
-jest.mock('../../../src/services/storymanagement/ItemJourneyService', () => ({
+jest.mock('@/src/services/storymanagement/entities/ItemJourneyService', () => ({
   __esModule: true,
   createItemJourneyService: () => ({ getAllByStoryId: mockGetJourneys }),
 }));
-jest.mock('../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({ getAllByStoryId: mockGetScenes }),
 }));
-jest.mock('../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({ getAllByStoryId: mockGetChapters }),
 }));
-jest.mock('../../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({ getAllByStoryId: mockGetChoices }),
 }));
-jest.mock('../../../src/services/storymanagement/CharacterService', () => ({
+jest.mock('@/src/services/storymanagement/entities/CharacterService', () => ({
   __esModule: true,
   createCharacterService: () => ({ getAllByStoryId: mockGetCharacters }),
 }));
-jest.mock('../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
-jest.mock('../../../src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));
-jest.mock('../../../src/state/itemStore', () => ({
+jest.mock('@/src/state/story/itemStore', () => ({
   __esModule: true,
   useItemStore: jest.fn(),
 }));
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) => selector(mockStoryState),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -250,7 +276,7 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
   useStoryVocabulary: () => ({
     agree: () => 'o',
@@ -262,15 +288,14 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import ItemListScreen from '../../../src/screens/items/ItemListScreen';
-
 const freshListState = () => ({
   listProps: {},
   items: [] as { id: string; name: string; characterOwnerId?: string | null }[],
   isInitialLoading: false,
   error: null as string | null,
   storyId: 'story-1' as string | undefined,
-  toggleFavorite: mockToggleFavorite,
+  handleToggleFavorite: mockToggleFavorite,
+  findMatching: jest.fn(async () => [] as unknown[]),
 });
 
 describe('ItemListScreen', () => {
@@ -403,6 +428,74 @@ describe('ItemListScreen', () => {
     expect(mockOpenItemList).toHaveBeenCalled();
     mockHeaderConfig.current?.actions[1].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('ItemForm', {});
+  });
+
+  it('counts what a search found in other arcs, and shows it on a tap', async () => {
+    mockStoryState = {
+      selectedStory: { id: 'story-1', type: 'linear' },
+      activeArcId: 'arc-1',
+    };
+    mockUseEntityArcIds.mockReturnValue(
+      new Map([
+        ['item-1', ['arc-1']],
+        ['item-2', ['arc-2']],
+      ]),
+    );
+    mockListState = {
+      ...freshListState(),
+      listProps: { currentSearchTerm: 'sw' },
+      items: [
+        { id: 'item-1', name: 'Sword' },
+        { id: 'item-2', name: 'Swan' },
+      ],
+    };
+    const view = await render(<ItemListScreen />);
+
+    await waitFor(() => expect(view.getByTestId('outside-arc').props.children).toBe('show:1'));
+    expect(mockListProps?.data.map((item) => item.id)).toEqual(['item-1']);
+    await fireEvent.press(view.getByTestId('outside-arc'));
+    await waitFor(() =>
+      expect(mockListProps?.data.map((item) => item.id)).toEqual(['item-1', 'item-2']),
+    );
+    expect(view.getByTestId('outside-arc').props.children).toBe('hide:1');
+  });
+
+  it('says nothing about other arcs when nothing is being searched', async () => {
+    mockStoryState = {
+      selectedStory: { id: 'story-1', type: 'linear' },
+      activeArcId: 'arc-1',
+    };
+    mockUseEntityArcIds.mockReturnValue(new Map([['item-2', ['arc-2']]]));
+    mockListState = { ...freshListState(), items: [{ id: 'item-2', name: 'Shield' }] };
+    const view = await render(<ItemListScreen />);
+
+    expect(view.queryByTestId('outside-arc')).toBeNull();
+  });
+
+  it('counts the rows a filter would leave in the active arc, as the list shows them', async () => {
+    mockStoryState = {
+      selectedStory: { id: 'story-1', type: 'linear' },
+      activeArcId: 'arc-1',
+    };
+    mockUseEntityArcIds.mockReturnValue(
+      new Map([
+        ['item-1', ['arc-1']],
+        ['item-2', ['arc-2']],
+      ]),
+    );
+    mockListState = {
+      ...freshListState(),
+      items: [],
+      findMatching: jest.fn(async () => [
+        { id: 'item-1', name: 'Sword' },
+        { id: 'item-2', name: 'Shield' },
+        { id: 'item-3', name: 'Compass' },
+      ]),
+    };
+    await render(<ItemListScreen />);
+
+    expect(await (mockListProps as any).onPreviewCount({ name: 'x' })).toBe(2);
+    expect(mockListState.findMatching).toHaveBeenCalledWith({ name: 'x' });
   });
 
   it('hides items from other arcs but keeps unlinked ones', async () => {

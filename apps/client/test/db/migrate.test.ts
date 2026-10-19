@@ -2,8 +2,8 @@
  * @jest-environment node
  */
 import Database from 'better-sqlite3';
-import { migrate } from '../../src/db/migrate';
-import migrations from '../../src/db/migrations';
+import { migrate } from '@/src/db/migrate';
+import migrations from '@/src/db/migrations';
 
 function expoLikeDatabase(raw: Database.Database) {
   return {

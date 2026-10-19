@@ -39,3 +39,16 @@ export function storyUpdateFlipsFavorites(update: StoryUpdate): boolean {
     typeof (update as UpdateStoryUpdate).changes?.favoriteBehavior !== 'undefined'
   );
 }
+
+/**
+ * Whether an applied Story update touched `isNsfw`. Turning the flag on expels non-verified
+ * collaborators (see `SyncPushService`); turning it off needs no repair. Creates cannot carry
+ * collaborators yet, so only updates matter.
+ */
+export function storyUpdateTouchesNsfw(update: StoryUpdate): boolean {
+  return (
+    update.entity === 'Story' &&
+    update.type === 'update' &&
+    typeof (update as UpdateStoryUpdate).changes?.isNsfw !== 'undefined'
+  );
+}

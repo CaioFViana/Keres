@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { generateLocationMapLocalId, type LocationMapContentType } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -22,37 +22,37 @@ import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/Overlay
 import TrajectoryPickerSheet from '@/src/components/features/location-maps/TrajectoryPickerSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
-import { useDrizzle } from '../../db';
+import { useDrizzle } from '@/src/db';
 import type {
   GallerySelect,
   LocationMapSelect,
   LocationRelationSelect,
   LocationSelect,
-} from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
-import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
-import { useLocationMapExport } from '../../hooks/useLocationMapExport';
-import { exportFileLanguage } from '../../utils/storyTransfer';
-import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
-import { useLocationMapImageUris } from '../../hooks/useLocationMapImageUris';
-import { useLocationMapNodeSummary } from '../../hooks/useLocationMapNodeSummary';
-import { useLocationMapTrajectories } from '../../hooks/useLocationMapTrajectories';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { createLocationMapService } from '../../services/storymanagement/LocationMapService';
-import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { createLocationService } from '../../services/storymanagement/LocationService';
-import { useLocationMapDraftStore } from '../../state/locationMapDraftStore';
-import { useNotificationStore } from '../../state/notificationStore';
-import { readShowcaseRequest } from '../../showcase/showcaseRequest';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { removeLocationMapPoint } from '../../utils/locationMapContent';
+} from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useLocationMapRelations } from '@/src/screens/location-maps/useLocationMapRelations';
+import { useLocationMapCanvasActions } from '@/src/screens/location-maps/useLocationMapCanvasActions';
+import { useLocationMapExport } from '@/src/screens/location-maps/useLocationMapExport';
+import { exportFileLanguage } from '@/src/utils/io/storyTransfer';
+import { useCanvasOverlayActions } from '@/src/hooks/canvas/useCanvasOverlayActions';
+import { useLocationMapImageUris } from '@/src/screens/location-maps/useLocationMapImageUris';
+import { useLocationMapNodeSummary } from '@/src/screens/location-maps/useLocationMapNodeSummary';
+import { useLocationMapTrajectories } from '@/src/screens/location-maps/useLocationMapTrajectories';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import type { LocationStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createLocationMapService } from '@/src/services/storymanagement/entities/LocationMapService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { useLocationMapDraftStore } from '@/src/state/drafts/locationMapDraftStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { readShowcaseRequest } from '@/src/services/showcase/showcaseRequest';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { removeLocationMapPoint } from '@/src/utils/location-map/locationMapContent';
 const LocationMapScreen = () => {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
@@ -131,9 +131,16 @@ const LocationMapScreen = () => {
         setMap(null);
         return;
       }
-      const keep = storyId
+      const remembered = storyId
         ? await useLocationMapDraftStore.getState().hydrate(storyId, mapId)
         : null;
+      // The store also still holds the drawing of a session that ended clean (saved, then closed): its content
+      // equals what it had saved. That is no unsaved work, so it is not "restored" - the map opens from what is
+      // saved now (which may be newer, if a sync brought one), without a notice.
+      const keep =
+        remembered && JSON.stringify(remembered.content) !== JSON.stringify(remembered.savedContent)
+          ? remembered
+          : null;
       setMap(row);
       setLocations(loadedLocations.filter((x) => !x.isDeleted));
       setGalleries(loadedGalleries.filter((x) => !x.isDeleted));

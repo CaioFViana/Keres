@@ -5,6 +5,10 @@ import type { EntityDomainHandler } from './contracts';
 export const operationLogEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.OperationLog,
   syncable: false,
+  async resolveCompactName(context, entityId) {
+    const reference = await operationLogEntityHandler.resolveReference!(context, entityId);
+    return reference.name;
+  },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.OperationLog, entityId);
     const id = typeof row?.id === 'string' ? row.id : entityId;

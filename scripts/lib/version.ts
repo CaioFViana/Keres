@@ -14,6 +14,7 @@ export const VERSIONED_JSON_FILES = [
   'apps/desktop/package.json',
   'apps/admin/package.json',
   'apps/site/package.json',
+  'apps/payments/package.json',
   'packages/shared/package.json',
 ];
 export const APP_JSON_FILE = 'apps/client/app.json';

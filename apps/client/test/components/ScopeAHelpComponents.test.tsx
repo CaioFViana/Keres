@@ -1,10 +1,10 @@
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
-import { HelpFieldTable } from '../../src/components/features/help/HelpFieldTable/HelpFieldTable';
-import { HelpSearchBar } from '../../src/components/features/help/HelpSearchBar/HelpSearchBar';
-import { HighlightedText } from '../../src/components/features/help/HelpSearchBar/HighlightedText';
+import { HelpFieldTable } from '@/src/components/features/help/HelpFieldTable/HelpFieldTable';
+import { HelpSearchBar } from '@/src/components/features/help/HelpSearchBar/HelpSearchBar';
+import { HighlightedText } from '@/src/components/features/help/HelpSearchBar/HighlightedText';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: { background: '#fff', border: '#ddd', surface: '#fff', text: '#111' },
   }),

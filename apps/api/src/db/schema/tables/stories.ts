@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, json, table, text, timestamp, timestampNow } from '../columns';
-import type { StoryVocabulary } from '@keres/shared/entities/Story';
+import { boolean, integer, json, table, text, timestamp, timestampNow } from '@/db/schema/columns';
+import type { StoryVocabulary } from '@keres/shared/entities/story/Story';
 import { users } from './users';
 import { characters } from './characters';
 import { storyPermissions } from './storyPermissions';
@@ -24,7 +24,7 @@ import { seeAlsoRelations } from './seeAlsoRelations';
 import { comments } from './comments';
 import { plots } from './plots';
 import { plotScenes } from './plotScenes';
-import { storyTypeEnum } from '../enums';
+import { storyTypeEnum } from '@/db/schema/enums';
 
 export const stories = table('stories', {
   id: text('id').primaryKey(),
@@ -58,6 +58,11 @@ export const stories = table('stories', {
   timelineEpochSeconds: integer('timeline_epoch_seconds'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
+  /**
+   * Adults-only story: only age-verified (+18) users may be added as collaborators, and it only
+   * shows in the public showcase to signed-in verified users. Owner-only (see STORY_OWNER_ONLY_FIELDS).
+   */
+  isNsfw: boolean('is_nsfw').notNull().default(false),
   /** Renders entity names found in the story's text as links. See `entityMentions.ts` on the client. */
   autoLinkMentions: boolean('auto_link_mentions').notNull().default(false),
   /** Story Analysis also reports elements that are not referenced anywhere. Opinion, so opt-in. */
@@ -68,6 +73,8 @@ export const stories = table('stories', {
   statNotation: text('stat_notation').notNull().default('letter'),
   /** Per-story presentation terminology. Null means the app's standard translated vocabulary. */
   vocabulary: json('vocabulary').$type<StoryVocabulary | null>(),
+  /** Gallery medium used as the universe cover; a row-level link, remapped on import. */
+  coverGalleryId: text('cover_gallery_id'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),

@@ -56,6 +56,14 @@ const SEMANTIC_PAIRS: Pair[] = [
     foreground: 'textSecondary',
     minimum: TEXT_MIN,
   },
+  // The favorites filter draws its star on primaryContainer (see FavoriteFilterButton); its other icon
+  // uses onPrimaryContainer, which the pair above already covers.
+  {
+    label: 'primaryContainer/star',
+    background: 'primaryContainer',
+    foreground: 'star',
+    minimum: UI_MIN,
+  },
   { label: 'background/star', background: 'background', foreground: 'star', minimum: UI_MIN },
   { label: 'card/star', background: 'card', foreground: 'star', minimum: UI_MIN },
 ];

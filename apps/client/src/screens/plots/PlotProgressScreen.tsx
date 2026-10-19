@@ -1,22 +1,22 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { buildPlotCoverage } from '@keres/shared/graphs/plotCoverageLayout';
-import { renderPlotCoverageSvg } from '@keres/shared/graphs/plotCoverageSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { buildPlotCoverage } from '@keres/shared/graphs/plot-coverage/plotCoverageLayout';
+import { renderPlotCoverageSvg } from '@keres/shared/graphs/plot-coverage/plotCoverageSvg';
+import { buildChapterColors } from '@keres/shared/graphs/story/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useStoryPlots } from '../../hooks/useStoryPlots';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { deliverMapExport } from '../../utils/storyTransfer';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useFormScrollBottomPadding } from '@/src/hooks/forms/useFormScrollBottomPadding';
+import { useStoryPlots } from '@/src/screens/plots/useStoryPlots';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useTheme } from '@/src/theme';
+import { getCommonContainerStyles } from '@/src/theme/commonStyles';
+import { deliverMapExport } from '@/src/utils/io/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 /**
  * How much of the story each plot covers. **Coverage**, not participation: a scene may
@@ -108,6 +108,8 @@ const PlotProgressScreen = () => {
 
   const exportCoverage = useCallback(async () => {
     if (!selectedStory || entries.length === 0) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setSaving(true);
     try {
       const svg = renderPlotCoverageSvg(entries, {
@@ -120,11 +122,7 @@ const PlotProgressScreen = () => {
         border: colors.border,
         primary: colors.primary,
       });
-      const result = await deliverMapExport(
-        svg,
-        `${selectedStory.title}-cobertura.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const result = await deliverMapExport(svg, `${selectedStory.title}-cobertura.svg`, format);
       notify(
         result.delivered
           ? t('plot_coverage_export_success', { fileName: result.fileName })

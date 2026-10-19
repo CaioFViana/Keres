@@ -58,6 +58,11 @@
     "functions": 97,
     "branches": 97
   },
+  "payments": {
+    "lines": 80,
+    "functions": 80.9,
+    "branches": 67.3
+  },
   "admin": {
     "lines": 96.8,
     "functions": 96.7,

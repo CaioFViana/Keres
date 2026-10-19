@@ -14,8 +14,9 @@ import {
 import type { SQL } from 'drizzle-orm';
 import { and, count, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import type { z } from 'zod';
-import { db, type CompatibleDb } from '../../db';
-import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
+import { db, type CompatibleDb } from '@/db';
+import { items, scenes } from '@/db/schema';
+import { getApiEntityTable } from '@/services/entity-sync-handlers/ApiEntityTableRegistry';
 import { syncValuesMatch } from './syncValueComparison';
 
 /**
@@ -181,7 +182,8 @@ export interface SyncEntityHandler {
     context: SyncEntityMutationPolicyContext,
     update: DeleteStoryUpdate,
   ): DeleteStoryUpdate;
-  tierLimitScope: 'story' | 'entity' | 'none';
+  /** Which plan ceiling a create (or restore) is held to: see `assertPlanRoomFor` in SyncPushService. */
+  tierLimitScope: 'story' | 'entity' | 'comment' | 'none';
   /** Deleted rows (tombstones), optionally restricted to one story. Used by AdminRecoveryService. */
   findDeleted(
     storyId?: string,
@@ -205,7 +207,7 @@ export abstract class BaseSyncEntityHandler<
 > implements SyncEntityHandler
 {
   abstract entityName: string;
-  tierLimitScope: 'story' | 'entity' | 'none' = 'entity';
+  tierLimitScope: 'story' | 'entity' | 'comment' | 'none' = 'entity';
   /**
    * Fields naming what a row is (a tag's name, a pair of related characters, one entity's value
    * for one field). Two devices can make the same thing offline; the second is refused as a
@@ -702,6 +704,47 @@ export abstract class BaseSyncEntityHandler<
       throw new SyncConflictError(
         'referenced_entity_deleted',
         `${entityType} ${entityId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
+    }
+  }
+
+  /**
+   * Refuses an item reference that is deleted or belongs to another story. ChoiceCheck and Effect
+   * both link to items by a plain column, so the check lives here instead of in each handler.
+   */
+  protected async assertItemInStory(
+    storyId: string,
+    itemId: string,
+    database: CompatibleDb = db,
+  ): Promise<void> {
+    const itemExists = await database.query.items.findFirst({
+      where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
+    });
+    if (!itemExists) {
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `Validation Error: Item with ID ${itemId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
+    }
+  }
+
+  /**
+   * Refuses a link to a scene that is deleted or belongs to another story. `linkName` names the
+   * linking entity in the message. The link's own target is not checked: a link outlives its scene.
+   */
+  protected async assertSceneAlive(
+    storyId: string,
+    sceneId: string,
+    database: CompatibleDb,
+    linkName: string,
+  ): Promise<void> {
+    const scene = await database.query.scenes.findFirst({
+      where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
+    });
+    if (!scene) {
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `The scene this ${linkName} belongs to is no longer active.`,
       );
     }
   }

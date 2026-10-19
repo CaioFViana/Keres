@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import RelatedEntitiesList from '../../src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
+import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -27,9 +27,9 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 const mockNavigateToEntityDetail = jest.fn();
-jest.mock('../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   __esModule: true,
-  ...jest.requireActual('../../src/utils/entityNavigation'),
+  ...jest.requireActual('@/src/utils/entity/entityNavigation'),
   navigateToEntityDetail: (...args: unknown[]) => mockNavigateToEntityDetail(...args),
 }));
 

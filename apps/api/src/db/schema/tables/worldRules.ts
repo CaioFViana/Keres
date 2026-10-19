@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import { boolean, integer, table, text, timestamp, timestampNow } from '@/db/schema/columns';
 import { stories } from './stories';
-import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
+import type { WorldPieceSection } from '@keres/shared/entities/narrative/WorldRule';
 
 export const worldRules = table('world_rules', {
   id: text('id').primaryKey(),

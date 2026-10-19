@@ -3,13 +3,13 @@
  */
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { CharacterRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/CharacterRelationClientSyncHandler';
-import { GalleryClientSyncHandler } from '../../src/services/entity-sync-handlers/GalleryClientSyncHandler';
-import { LocationRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationRelationClientSyncHandler';
-import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
-import { mediaFileService } from '../../src/services/MediaFileService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { CharacterRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/CharacterRelationClientSyncHandler';
+import { GalleryClientSyncHandler } from '@/src/services/entity-sync-handlers/GalleryClientSyncHandler';
+import { LocationRelationClientSyncHandler } from '@/src/services/entity-sync-handlers/LocationRelationClientSyncHandler';
+import { StorySchemaFieldClientSyncHandler } from '@/src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
+import { mediaFileService } from '@/src/services/media/MediaFileService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = 'story-sync-specialties';
 const EARLY = '2026-08-10T12:00:00.000Z';

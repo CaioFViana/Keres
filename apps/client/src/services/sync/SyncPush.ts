@@ -8,14 +8,16 @@ import type {
 } from '@keres/shared';
 import { MAX_SYNC_BATCH_SIZE, safeParseStoryUpdate } from '@keres/shared';
 import { and, asc, eq, inArray, isNull, max } from 'drizzle-orm';
-import * as schema from '../../db/schema';
-import type { OperationLogSelect } from '../../db/schema';
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { withOpLogLock } from '../../utils/opLogMutex';
-import { trimSyncedOperationLogs } from '../../utils/syncUtils';
-import { getEntityTable, toEntityColumns } from '../entityTableRegistry';
+import * as schema from '@/src/db/schema';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
+import { trimSyncedOperationLogs } from '@/src/services/sync/syncUtils';
+import { columnsOf, getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
 import { raiseConflictsServerVersion, withoutDerivedPosition } from './syncConflictHelpers';
-import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflictService';
+import {
+  findContestedFields,
+  mergeLocalOperationPayloads,
+} from '@/src/services/sync/SyncConflictService';
 import type { SyncContext } from './SyncContext';
 import { foldIntoTwin, isFoldableDuplicate } from './duplicateFold';
 import { foldRoutePaths } from './routePaths';
@@ -27,12 +29,28 @@ import {
 } from './pushRefusals';
 import { deriveBaseVersion, onlyMoves, syncEntityKey } from './syncPure';
 
+/** What a failure is logged as: its message when it has one, otherwise the thrown value itself. */
+const detailOf = (error: unknown): unknown =>
+  (typeof error === 'object' && error !== null && 'message' in error ? error.message : undefined) ||
+  error;
+
 /** Rounds of push batches per cycle; a larger backlog continues on the next cycle. */
 export const PUSH_MAX_ROUNDS = 50;
+
+/**
+ * What the server refused in a push. `conflicts` counts the changes the person has to decide on (quarantined ones
+ * included); `refusals` are the server's conflicts that carry their reason, for the message to list. Automatic
+ * cycles never show it; a save made by hand reads it to say what did not reach the server.
+ */
+export interface PushOutcomeReport {
+  conflicts: number;
+  refusals: SharedSyncConflict[];
+}
 
 /** Builds and pushes local batches, then records the server's per-operation result. */
 export class SyncPush {
   private readonly maxRounds: number;
+  private outcome: PushOutcomeReport = { conflicts: 0, refusals: [] };
 
   public constructor(
     private readonly context: SyncContext,
@@ -41,10 +59,18 @@ export class SyncPush {
     this.maxRounds = options?.maxRounds ?? PUSH_MAX_ROUNDS;
   }
 
+  /** What the last push refused: read after `pushPendingOperations` by a save the person made by hand. */
+  public get lastOutcome(): PushOutcomeReport {
+    return this.outcome;
+  }
+
   public async pushPendingOperations(): Promise<{ offline: boolean }> {
     const notifier = this.context.notifier();
+    this.outcome = { conflicts: 0, refusals: [] };
     let totalApplied = 0;
     let totalConflicts = 0;
+    // The conflicts the server returned in this push, for a save the person made by hand (see `PushOutcomeReport`).
+    const refusals: SharedSyncConflict[] = [];
     const quarantinedEntities = new Set<string>();
     let roundsRun = 0;
     let lastRemaining = 0;
@@ -52,7 +78,7 @@ export class SyncPush {
     for (let chunk = 0; chunk < this.maxRounds; chunk += 1) {
       roundsRun = chunk + 1;
       const pending = await this.getPushableOperations();
-      const mapped: { op: OperationLogSelect; update: StoryUpdate }[] = [];
+      const mapped: { op: schema.OperationLogSelect; update: StoryUpdate }[] = [];
       for (const op of pending) {
         const built = this.tryBuildStoryUpdateFromLocalOp(op);
         if (built.update) {
@@ -63,13 +89,13 @@ export class SyncPush {
           // as progress, so the loop below keeps draining the remaining valid ops.
           try {
             await this.quarantineUnpushableOperation(op, built.reason);
-          } catch (quarantineError: any) {
+          } catch (quarantineError) {
             // The conflicted mark may already have committed while the conflict row did not: the
             // op would sit out of every future queue with no conflict to resolve it, so release
             // it back and retry the quarantine on the next push instead of aborting this one.
             console.log(
               `Quarantine failed for operation ${op.id}, retrying on the next push:`,
-              quarantineError?.message || quarantineError,
+              detailOf(quarantineError),
             );
             await this.context
               .db()!
@@ -107,6 +133,7 @@ export class SyncPush {
       );
       totalApplied += summary.applied;
       totalConflicts += summary.conflicts;
+      if (summary.conflicts > 0) refusals.push(...(pushResponse.data.conflicts ?? []));
 
       const remaining = await this.getPushableOperations();
       lastRemaining = remaining.length;
@@ -133,12 +160,13 @@ export class SyncPush {
     // a trim failure must never fail the push that just succeeded.
     try {
       await trimSyncedOperationLogs(this.context.db()!, this.context.storyId()!);
-    } catch (trimError: any) {
+    } catch (trimError) {
       console.log(
         `Error trimming synchronized operations for story ${this.context.storyId()}:`,
-        trimError?.message || trimError,
+        detailOf(trimError),
       );
     }
+    this.outcome = { conflicts: totalConflicts, refusals };
     return { offline: false };
   }
 
@@ -152,7 +180,7 @@ export class SyncPush {
    * every retry - so an envelope it would refuse is quarantined here instead of sent.
    */
   private tryBuildStoryUpdateFromLocalOp(
-    op: OperationLogSelect,
+    op: schema.OperationLogSelect,
   ): { update: StoryUpdate; reason: null } | { update: null; reason: string } {
     const built = this.buildStoryUpdateFromLocalOp(op);
     if (!built.update) return built;
@@ -166,12 +194,12 @@ export class SyncPush {
   }
 
   private buildStoryUpdateFromLocalOp(
-    op: OperationLogSelect,
+    op: schema.OperationLogSelect,
   ): { update: StoryUpdate; reason: null } | { update: null; reason: string } {
-    let payloadData: Record<string, any> | null = null;
+    let payloadData: Record<string, unknown> | null = null;
     try {
       const parsed: unknown = JSON.parse(op.payload);
-      if (parsed && typeof parsed === 'object') payloadData = parsed as Record<string, any>;
+      if (parsed && typeof parsed === 'object') payloadData = parsed as Record<string, unknown>;
     } catch {
       payloadData = null;
     }
@@ -208,7 +236,7 @@ export class SyncPush {
       clientOperationId: op.id,
     };
 
-    const filteredPayloadData: Record<string, any> = { ...payloadData };
+    const filteredPayloadData: Record<string, unknown> = { ...payloadData };
     delete filteredPayloadData.createdAt;
     delete filteredPayloadData.updatedAt;
     delete filteredPayloadData.deletedAt;
@@ -259,15 +287,15 @@ export class SyncPush {
    * a silent loss, only a decision handed to the user.
    */
   private async quarantineUnpushableOperation(
-    op: OperationLogSelect,
+    op: schema.OperationLogSelect,
     reason: string,
   ): Promise<void> {
-    let localValues: Record<string, any> = {};
+    let localValues: Record<string, unknown> = {};
     let unparseable = false;
     try {
       const parsed: unknown = JSON.parse(op.payload);
       if (parsed && typeof parsed === 'object') {
-        localValues = { ...(parsed as Record<string, any>) };
+        localValues = { ...(parsed as Record<string, unknown>) };
       } else {
         unparseable = true;
       }
@@ -308,7 +336,7 @@ export class SyncPush {
    * Excluding the conflicted ones is what stops the cycle from resending forever an operation the server
    * has already refused.
    */
-  private async getPushableOperations(): Promise<OperationLogSelect[]> {
+  private async getPushableOperations(): Promise<schema.OperationLogSelect[]> {
     return this.context.db()!.query.operationLogs.findMany({
       where: and(
         eq(schema.operationLogs.storyId, this.context.storyId()!),
@@ -333,7 +361,7 @@ export class SyncPush {
   public async getUnsyncedOperationsForEntity(
     entityType: string,
     entityId: string,
-  ): Promise<OperationLogSelect[]> {
+  ): Promise<schema.OperationLogSelect[]> {
     return this.context.db()!.query.operationLogs.findMany({
       where: and(
         eq(schema.operationLogs.storyId, this.context.storyId()!),
@@ -351,7 +379,7 @@ export class SyncPush {
    * them in sequence.
    */
   public async rebasePendingOperations(
-    pendingLocalOps: OperationLogSelect[],
+    pendingLocalOps: schema.OperationLogSelect[],
     newEntityVersion?: number,
   ): Promise<void> {
     if (typeof newEntityVersion !== 'number') {
@@ -361,10 +389,10 @@ export class SyncPush {
     let base = newEntityVersion;
     let rebased = 0;
     for (const op of pendingLocalOps) {
-      let payload: Record<string, any> | null = null;
+      let payload: Record<string, unknown> | null = null;
       try {
         const parsed: unknown = JSON.parse(op.payload);
-        if (parsed && typeof parsed === 'object') payload = parsed as Record<string, any>;
+        if (parsed && typeof parsed === 'object') payload = parsed as Record<string, unknown>;
       } catch {
         payload = null;
       }
@@ -400,7 +428,7 @@ export class SyncPush {
           .db()!
           .update(table)
           .set({ version: newEntityVersion + rebased })
-          .where(eq((table as any).id, first.entityId));
+          .where(eq(columnsOf(table).id, first.entityId));
       }
     }
   }
@@ -414,7 +442,7 @@ export class SyncPush {
    */
   public async applyPushResult(
     result: SyncPushResult,
-    pushedOperations: OperationLogSelect[],
+    pushedOperations: schema.OperationLogSelect[],
     options: { silent?: boolean } = {},
   ): Promise<{ applied: number; conflicts: number }> {
     const notifier = this.context.notifier();
@@ -634,7 +662,7 @@ export class SyncPush {
             isDeleted: true,
             ...(typeof first.serverVersion === 'number' ? { version: first.serverVersion } : {}),
           } as never)
-          .where(eq((table as any).id, entityId));
+          .where(eq(columnsOf(table).id, entityId));
       }
       return true;
     }
@@ -701,7 +729,7 @@ export class SyncPush {
               .db()!
               .update(table)
               .set(columns)
-              .where(eq((table as any).id, entityId));
+              .where(eq(columnsOf(table).id, entityId));
           }
         }
         await this.rebasePendingOperations(relatedOps, first.serverVersion);

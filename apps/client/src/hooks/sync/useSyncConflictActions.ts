@@ -1,0 +1,39 @@
+import { useCallback } from 'react';
+import { useDrizzle } from '@/src/db';
+import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
+
+/** Closes the store's db argument so conflict sheets do not import the database. */
+export function useSyncConflictActions() {
+  const db = useDrizzle();
+  const keepLocalStore = useSyncConflictStore((state) => state.keepLocal);
+  const keepServerStore = useSyncConflictStore((state) => state.keepServer);
+  const keepServerAndCloneBoardStore = useSyncConflictStore(
+    (state) => state.keepServerAndCloneBoard,
+  );
+  const isResolving = useSyncConflictStore((state) => state.isResolving);
+
+  const keepLocal = useCallback(
+    (conflictId: string, chosenValues?: Record<string, any>) =>
+      keepLocalStore(db, conflictId, chosenValues),
+    [db, keepLocalStore],
+  );
+  const keepServer = useCallback(
+    (conflictId: string) => keepServerStore(db, conflictId),
+    [db, keepServerStore],
+  );
+  const keepServerAndCloneBoard = useCallback(
+    (conflictId: string, currentUserId: string, cloneName: string) =>
+      keepServerAndCloneBoardStore(db, conflictId, currentUserId, cloneName),
+    [db, keepServerAndCloneBoardStore],
+  );
+  const keepServerAndCloneSketchStore = useSyncConflictStore(
+    (state) => state.keepServerAndCloneSketch,
+  );
+  const keepServerAndCloneSketch = useCallback(
+    (conflictId: string, currentUserId: string, cloneName: string) =>
+      keepServerAndCloneSketchStore(db, conflictId, currentUserId, cloneName),
+    [db, keepServerAndCloneSketchStore],
+  );
+
+  return { isResolving, keepLocal, keepServer, keepServerAndCloneBoard, keepServerAndCloneSketch };
+}

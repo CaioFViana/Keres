@@ -1,15 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { Layout } from '../../src/components/Layout';
-import { ThemeProvider } from '../../src/theme/ThemeProvider';
-import { click, flush, render } from '../helpers/react';
+import { Layout } from '@/components/Layout';
+import { announceMessagesChanged } from '@/api/MessagesApiService';
+import { ThemeProvider } from '@/theme/ThemeProvider';
+import { click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   logout: vi.fn(),
   useAuth: vi.fn(),
+  unreadCount: vi.fn(),
 }));
 
-vi.mock('../../src/auth/AuthContext', () => ({ useAuth: mocks.useAuth }));
+vi.mock('@/api/MessagesApiService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/MessagesApiService')>()),
+  MessagesApiService: { unreadCount: mocks.unreadCount },
+}));
+
+vi.mock('@/auth/AuthContext', () => ({ useAuth: mocks.useAuth }));
 
 function renderShell(username: string | null = 'admin') {
   mocks.useAuth.mockReturnValue({
@@ -35,6 +43,7 @@ function renderShell(username: string | null = 'admin') {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.logout.mockResolvedValue(undefined);
+  mocks.unreadCount.mockResolvedValue({ unread: 0 });
 });
 
 describe('panel layout', () => {
@@ -43,9 +52,52 @@ describe('panel layout', () => {
     await flush();
 
     expect(view.container.textContent).toContain('users page');
-    for (const link of ['Users', 'Recovery', 'Logs', 'Tiers', 'Settings']) {
+    for (const link of [
+      'Users',
+      'Recovery',
+      'Logs',
+      'Tiers',
+      'Messages',
+      'Activity',
+      'Access records',
+      'Evidence holds',
+      'Payments',
+      'Settings',
+    ]) {
       expect(view.container.textContent).toContain(link);
     }
+    const groups = Array.from(view.container.querySelectorAll('.nav-group-title')).map(
+      (node) => node.textContent,
+    );
+    expect(groups).toEqual(['Content', 'System']);
+    await view.unmount();
+  });
+
+  it('badges Messages with how many still need attention, and follows changes', async () => {
+    mocks.unreadCount.mockResolvedValue({ unread: 3 });
+    const view = await renderShell();
+    await flush();
+
+    const badge = view.container.querySelector('a[href="/messages"] .nav-badge')!;
+    expect(badge.textContent).toBe('3');
+    expect(badge.getAttribute('aria-label')).toBe('3 unread');
+
+    mocks.unreadCount.mockResolvedValue({ unread: 0 });
+    await act(async () => {
+      announceMessagesChanged();
+    });
+    await flush();
+    expect(view.container.querySelector('.nav-badge')).toBeNull();
+    await view.unmount();
+  });
+
+  it('shows no badge, and still renders, when the count cannot be read', async () => {
+    mocks.unreadCount.mockRejectedValue(new Error('down'));
+    const view = await renderShell();
+    await flush();
+
+    expect(view.container.querySelector('.nav-badge')).toBeNull();
+    expect(view.container.textContent).toContain('Messages');
     await view.unmount();
   });
 
@@ -69,14 +121,23 @@ describe('panel layout', () => {
   it('signs out from the footer', async () => {
     const view = await renderShell();
 
-    await click(
-      Array.from(view.container.querySelectorAll('.sidebar-footer button')).find(
-        (button) => button.textContent === 'Sign out',
-      )!,
-    );
+    const signOut = view.container.querySelector('.sidebar-footer button[aria-label="Sign out"]')!;
+    expect(signOut.getAttribute('title')).toBe('Sign out');
+    await click(signOut);
     await flush();
 
     expect(mocks.logout).toHaveBeenCalledOnce();
+    await view.unmount();
+  });
+
+  it('shows the theme action as an icon with its name on hover', async () => {
+    const view = await renderShell();
+    await flush();
+
+    const theme = view.container.querySelectorAll('.sidebar-footer .icon-button')[0];
+    expect(theme.getAttribute('aria-label')).toBe('Theme: System');
+    expect(theme.getAttribute('title')).toBe('Theme: System');
+    expect(theme.querySelector('svg')).not.toBeNull();
     await view.unmount();
   });
 

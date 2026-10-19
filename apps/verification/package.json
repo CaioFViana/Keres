@@ -1,0 +1,27 @@
+{
+  "name": "@keres/verification",
+  "version": "1.10.0",
+  "private": true,
+  "license": "MPL-2.0",
+  "description": "Reference age-verification service for a Keres server: speaks the KERES-AGE-V1 protocol, keeps identity documents only as encrypted submissions until a human reviewer decides, then destroys them.",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
+    "reviewer:add": "bun run src/cli/addReviewer.ts",
+    "backup:now": "bun run src/cli/backupNow.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "biome lint --error-on-warnings .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@keres/shared": "workspace:*",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.6",
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.10"
+  }
+}

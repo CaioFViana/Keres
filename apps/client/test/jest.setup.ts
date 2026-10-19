@@ -11,7 +11,6 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // touches a URL fails with `ReferenceError: TextEncoder is not defined`. Node's own encoder is
 // spec-compliant, so it stands in. Guarded so the node env keeps its native binding.
 if (typeof globalThis.TextEncoder === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- setup files cannot use imports.
   const { TextEncoder } = require('util');
   Object.defineProperty(globalThis, 'TextEncoder', {
     configurable: true,
@@ -24,20 +23,18 @@ if (typeof globalThis.TextEncoder === 'undefined') {
 // Reanimated 4.2's Jest entry imports the real `react-native-worklets` index, which
 // instantiates its native module at load and throws in Jest. The worklets package ships its
 // own mock - register it so the reanimated mock below can load.
-jest.mock('react-native-worklets', () =>
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
-  require('react-native-worklets/src/mock'),
-);
+jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 
 // Reanimated schedules native-frame updates in the real runtime. Its Jest implementation keeps
 // collapsible controls deterministic and prevents animation updates from leaking outside `act`.
 jest.mock('react-native-reanimated', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const ReanimatedMock = require('react-native-reanimated/mock');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const React = require('react');
   return {
     ...ReanimatedMock,
+    // Absent from the stock mock: nothing animates in Jest, so motion is simply not reduced.
+    useReducedMotion: () => false,
     // The stock mock rebuilds the shared object on every render; the real hook keeps one object
     // per component instance, which the viewport camera mirror relies on.
     useSharedValue: (initial: unknown) => {
@@ -50,7 +47,6 @@ jest.mock('react-native-reanimated', () => {
 
 // Entity secondary-draft persistence and several stores touch AsyncStorage; native module is null in Jest.
 jest.mock('@react-native-async-storage/async-storage', () =>
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
@@ -63,6 +59,27 @@ jest.mock('expo-clipboard', () => ({
   __esModule: true,
   getStringAsync: jest.fn(async () => ''),
   setStringAsync: jest.fn(async () => true),
+}));
+
+// `expo-audio` builds its player classes from the native module when it loads, which throws in Jest;
+// the song editor reaches it through `useSongPlayback`, so every suite that mounts the navigators
+// would fail. The suites that care (media players, song playback) register their own mocks.
+jest.mock('expo-audio', () => ({
+  setAudioModeAsync: jest.fn(async () => undefined),
+  useAudioPlayer: () => ({
+    play: () => {},
+    pause: () => {},
+    replace: () => {},
+    seekTo: async () => {},
+    remove: () => {},
+  }),
+  useAudioPlayerStatus: () => ({
+    playing: false,
+    isLoaded: false,
+    duration: 0,
+    currentTime: 0,
+    didJustFinish: false,
+  }),
 }));
 
 jest.mock('expo-video', () => ({
@@ -97,7 +114,6 @@ console.info = (...args: Parameters<typeof console.info>) => {
 // Skia draws on the GPU with no host tree; tests assert the declarative scene instead, so each
 // drawing maps to a host placeholder that keeps its props (paths, paints, camera) queryable.
 jest.mock('@shopify/react-native-skia', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   const host = (type: string) => {
     // React 19 hands `ref` to function components as a prop; forwarding it to the host
@@ -123,11 +139,57 @@ jest.mock('@shopify/react-native-skia', () => {
     Text: host('SkiaText'),
     RoundedRect: host('SkiaRoundedRect'),
     ImageSVG: host('SkiaImageSVG'),
+    Picture: host('SkiaPicture'),
     useCanvasRef: () => canvasHolder,
+    // Sketch drawing: pictures record what would be drawn so tests can count and inspect it.
+    createPicture: (draw: (canvas: Record<string, unknown>) => void) => {
+      const commands: unknown[] = [];
+      draw({
+        drawPath: (path: unknown, paint: unknown) => commands.push({ path, paint }),
+        drawPicture: (picture: unknown) => commands.push({ picture }),
+        drawColor: (color: unknown) => commands.push({ color }),
+        scale: () => undefined,
+      });
+      return { __mockPicture: true, commands };
+    },
+    FillType: { Winding: 0, EvenOdd: 1 },
+    PaintStyle: { Fill: 0, Stroke: 1 },
+    StrokeCap: { Butt: 0, Round: 1, Square: 2 },
+    StrokeJoin: { Miter: 0, Round: 1, Bevel: 2 },
+    ColorType: { RGBA_8888: 4 },
+    AlphaType: { Unpremul: 3 },
     Skia: {
       SVG: {
         MakeFromString: (text: string) => (text.includes('<svg') ? { __mockSvg: text } : null),
       },
+      Path: {
+        MakeFromSVGString: (d: string) => ({
+          d,
+          fillType: 0,
+          setFillType(this: { fillType: number }, type: number) {
+            this.fillType = type;
+            return this;
+          },
+        }),
+      },
+      Paint: () => {
+        const paint: Record<string, unknown> = {};
+        const setter = (name: string) => (value: unknown) => {
+          paint[name] = value;
+        };
+        return Object.assign(paint, {
+          setAntiAlias: setter('antiAlias'),
+          setColor: setter('color'),
+          setAlphaf: setter('alpha'),
+          setStyle: setter('style'),
+          setStrokeWidth: setter('strokeWidth'),
+          setStrokeCap: setter('strokeCap'),
+          setStrokeJoin: setter('strokeJoin'),
+        });
+      },
+      Color: (value: string) => value,
+      Matrix: (values?: number[]) => ({ values }),
+      Surface: { MakeOffscreen: () => null },
     },
     // Deterministic measuring so label-centering math stays assertable: six units per
     // glyph, through the same glyph calls the canvases use (`measureText` is
@@ -150,15 +212,22 @@ jest.mock('@shopify/react-native-skia', () => {
   };
 });
 
+// Every canvas export asks SVG or PNG through a modal host that does not exist under Jest. Screens
+// and hooks resolve the choice through this module, so the default answer is SVG; a test that cares
+// about the choice (or a cancel) overrides it per case.
+jest.mock('@/src/state/ui/exportFormatPrompt', () => ({
+  __esModule: true,
+  chooseExportFormat: jest.fn(async () => 'svg'),
+}));
+
 // `react-native-enriched-html` mounts native Fabric views (TipTap on web) that
 // do not exist in Jest. Tests assert our wiring (default HTML, event mapping),
 // so the stand-in keeps every prop queryable on a host placeholder. Like the
 // Skia mock, the ref stays out of the host tree (the renderer would overwrite
 // test-driven holders); tests read it off `__enrichedTest.refHolder` instead.
 jest.mock('react-native-enriched-html', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const { View } = require('react-native');
   const refHolder: { current: unknown } = { current: null };
   const EnrichedTextInput = (props: { children?: React.ReactNode }) => {
@@ -180,3 +249,18 @@ jest.mock('react-native-enriched-html', () => {
     },
   };
 });
+
+// A screen's tour hook reads the navigation container's focus. Screens are rendered here without
+// one, and the tours have their own suites, so by default the hook does nothing; a suite that tests
+// it (or a screen's wiring of it) says so with its own mock or `jest.unmock`.
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: () => undefined,
+}));
+
+// The minimum time a legal text must stay open before "I agree" works would make every suite that accepts one wait; the
+// suites of the gate itself (`TermsModal.test.tsx`) bring the real value back.
+jest.mock('@/src/legal/readingGate', () => ({
+  __esModule: true,
+  MIN_READ_SECONDS: 0,
+}));

@@ -1,10 +1,10 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import SyncConflictReviewSheet from '../../src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
-import type { ConflictSummary } from '../../src/services/ConflictSummaryService';
-import type { PendingConflict } from '../../src/services/SyncConflictService';
+import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
+import type { ConflictSummary } from '@/src/services/sync/ConflictSummaryService';
+import type { PendingConflict } from '@/src/services/sync/SyncConflictService';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -26,7 +26,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -37,12 +37,12 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
 });
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 let mockUserId: string | null = 'user-1';
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) => selector({ userId: mockUserId }),
 }));
@@ -53,13 +53,13 @@ const mockStore = {
   selectConflict: jest.fn(),
   clearSelection: jest.fn(),
 };
-jest.mock('../../src/state/syncConflictStore', () => ({
+jest.mock('@/src/state/sync/syncConflictStore', () => ({
   __esModule: true,
   useSyncConflictStore: (selector: (state: unknown) => unknown) => selector(mockStore),
 }));
 
 let mockSummaries: ConflictSummary[] = [];
-jest.mock('../../src/hooks/useConflictReviewData', () => ({
+jest.mock('@/src/hooks/sync/useConflictReviewData', () => ({
   __esModule: true,
   useConflictReviewData: () => ({ summaries: mockSummaries }),
 }));
@@ -70,13 +70,13 @@ const mockActions = {
   keepServer: jest.fn(),
   keepServerAndCloneBoard: jest.fn(),
 };
-jest.mock('../../src/hooks/useSyncConflictActions', () => ({
+jest.mock('@/src/hooks/sync/useSyncConflictActions', () => ({
   __esModule: true,
   useSyncConflictActions: () => mockActions,
 }));
 
 const mockRowProps = new Map<string, Record<string, any>>();
-jest.mock('../../src/components/features/sync/SyncConflictReviewSheet/ConflictRow', () => {
+jest.mock('@/src/components/features/sync/SyncConflictReviewSheet/ConflictRow', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -89,7 +89,7 @@ jest.mock('../../src/components/features/sync/SyncConflictReviewSheet/ConflictRo
 });
 
 const mockDetailProps = { current: null as Record<string, any> | null };
-jest.mock('../../src/components/features/sync/ConflictDetailSheet/ConflictDetailSheet', () => {
+jest.mock('@/src/components/features/sync/ConflictDetailSheet/ConflictDetailSheet', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -102,20 +102,17 @@ jest.mock('../../src/components/features/sync/ConflictDetailSheet/ConflictDetail
 });
 
 const mockDiffProps = { current: null as Record<string, any> | null };
-jest.mock(
-  '../../src/components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet',
-  () => {
-    const ReactActual = require('react');
-    const { View } = jest.requireActual('react-native');
-    return {
-      __esModule: true,
-      default: (props: Record<string, unknown>) => {
-        mockDiffProps.current = props as Record<string, any>;
-        return ReactActual.createElement(View, { testID: 'conflict-diff' });
-      },
-    };
-  },
-);
+jest.mock('@/src/components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet', () => {
+  const ReactActual = require('react');
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: (props: Record<string, unknown>) => {
+      mockDiffProps.current = props as Record<string, any>;
+      return ReactActual.createElement(View, { testID: 'conflict-diff' });
+    },
+  };
+});
 
 const pendingConflict = (overrides: Record<string, unknown> = {}): PendingConflict =>
   ({
@@ -150,6 +147,7 @@ const summaryOf = (overrides: Record<string, unknown> = {}): ConflictSummary =>
     canQuickResolve: true,
     canKeepMine: true,
     offerBoardClone: false,
+    offerSketchClone: false,
     diffFields: [],
     ...overrides,
   }) as ConflictSummary;

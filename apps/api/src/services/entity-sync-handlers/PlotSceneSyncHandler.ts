@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreatePlotSceneDataSchema, PartialPlotSceneSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { plots, plotScenes, scenes, stories } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { plots, plotScenes, scenes, stories } from '@/db/schema';
 import { BaseSyncEntityHandler, duplicateOf, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class PlotSceneSyncHandler extends BaseSyncEntityHandler<

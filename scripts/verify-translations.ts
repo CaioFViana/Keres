@@ -71,8 +71,8 @@ const siteSrcPath = path.join(repoRoot, 'apps', 'site', 'src');
 const siteLocalesPath = path.join(siteSrcPath, 'i18n', 'locales');
 // Everywhere a translation key can plausibly originate: the app itself, and the shared
 // package whose `entityFields.ts` feeds form-field labels into `t()` indirectly.
-const HELP_CONTENT_PATH = path.join(clientSrcPath, 'help', 'content');
-const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'storyDevices', 'content');
+const HELP_CONTENT_PATH = path.join(clientSrcPath, 'content', 'help', 'content');
+const STORY_DEVICES_CONTENT_PATH = path.join(clientSrcPath, 'content', 'story-devices', 'content');
 // Prose authored per language: it uses no translation keys and must stay out of the audit.
 const DOC_CONTENT_PATHS = [HELP_CONTENT_PATH, STORY_DEVICES_CONTENT_PATH];
 
@@ -224,6 +224,13 @@ function walkSourceFiles(rootDir: string, excludedPaths: string[]): string[] {
   return files;
 }
 
+/** i18next plural forms: `t('key', { count })` reads `key_one`, `key_other`... and never `key` itself. */
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
+
+function pluralBase(key: string): string {
+  return key.replace(PLURAL_SUFFIX, '');
+}
+
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -295,6 +302,21 @@ function scanFile(filePath: string): ScanResult {
       const arg = node.arguments[0];
       if (ts.isStringLiteral(arg) || ts.isNoSubstitutionTemplateLiteral(arg)) {
         exactUsages.push({ key: arg.text, file: filePath, line: lineOf(arg.getStart(sourceFile)) });
+        // i18next context: `t('key', { context: 'official' })` reads `key_official` where it exists and `key`
+        // elsewhere. The variants are never written out in code, so a call that passes a context is the evidence
+        // of use for every `key_<context>` (evidence only: a variant is optional, so none existing is no error).
+        const options = node.arguments[1];
+        if (
+          options &&
+          ts.isObjectLiteralExpression(options) &&
+          options.properties.some(
+            (property) =>
+              (ts.isPropertyAssignment(property) || ts.isShorthandPropertyAssignment(property)) &&
+              property.name.getText(sourceFile) === 'context',
+          )
+        ) {
+          allTemplatePatterns.push(new RegExp(`^${escapeRegExp(arg.text)}_[^.]+$`));
+        }
       } else if (ts.isTemplateExpression(arg)) {
         dynamicPatterns.push({
           pattern: patternFromTemplate(arg),
@@ -312,9 +334,10 @@ function scanFile(filePath: string): ScanResult {
       // An empty literal is the absence of a label (a MultiSelectPill's single group has no header),
       // never a key: `t('')` does not exist, and treating it as one only produces a "Missing key ''"
       // that cannot be fixed in the locale.
+      // Nor is a label that cannot be one (the `½` or `2` on a note-length button): keys are identifiers.
       if (
         (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) &&
-        init.text.trim() !== ''
+        /^[A-Za-z_][w.]*$/.test(init.text)
       ) {
         exactUsages.push({
           key: init.text,
@@ -423,7 +446,9 @@ function auditTarget(target: LocaleAuditTarget, forceRemoveUnused: boolean): boo
   console.log('\n🔄 Checking for keys used in code but missing from locale files...');
   for (const [key, usage] of firstUsageByKey) {
     for (const localeFile of localeFiles) {
-      if (!allLocaleKeysFlattened[localeFile].has(key)) {
+      const present = allLocaleKeysFlattened[localeFile];
+      const hasPluralForm = [...present].some((candidate) => pluralBase(candidate) === key);
+      if (!present.has(key) && !hasPluralForm) {
         console.error(
           `❌ Missing key '${key}' in '${localeFile}' (used at ${toRelative(usage.file)}:${usage.line})`,
         );
@@ -473,7 +498,8 @@ function auditTarget(target: LocaleAuditTarget, forceRemoveUnused: boolean): boo
   console.log('\n🔄 Detecting unused translations...');
   const unusedKeys = new Set<string>();
   for (const key of allUniqueLocaleKeys) {
-    if (firstUsageByKey.has(key)) continue;
+    const base = pluralBase(key);
+    if (firstUsageByKey.has(key) || firstUsageByKey.has(base)) continue;
     if (allLiterals.has(key)) continue;
     if (dynamicPatterns.some((dynamic) => dynamic.pattern.test(key))) continue;
     if (allTemplatePatterns.some((pattern) => pattern.test(key))) continue;

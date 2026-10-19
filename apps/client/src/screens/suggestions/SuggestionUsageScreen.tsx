@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
@@ -17,27 +17,26 @@ import {
   View,
 } from 'react-native';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
-import { useDrizzle } from '../../db';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type {
-  MainSystemDrawerParamList,
-  CustomizationStackParamList,
-} from '../../navigation/MainSystemStack';
-import type { SuggestionUsage } from '../../services/storymanagement/SuggestionService';
+import { useDrizzle } from '@/src/db';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import type { MainSystemDrawerParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
+import type { SuggestionUsage } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import {
   createSuggestionService,
   isNamedListType,
-} from '../../services/storymanagement/SuggestionService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { ENTITY_TYPE_ICONS } from '../../utils/entityTypeIcons';
-import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
+} from '@/src/services/storymanagement/suggestions/SuggestionService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { navigateToEntityDetail } from '@/src/utils/entity/entityNavigation';
+import { ENTITY_TYPE_ICONS } from '@/src/utils/entity/entityTypeIcons';
+import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 type UsageSection = { title: string; data: SuggestionUsage[] };
 
@@ -65,7 +64,7 @@ const SuggestionUsageScreen = () => {
   const navigation = useNavigation<any>();
   useBackButtonHandler({ showWebBackButton: true, onBack: () => navigation.goBack() });
   const route = useRoute<any>();
-  const { type, value } = route.params as CustomizationStackParamList['SuggestionUsage'];
+  const { type, value } = route.params as StorySettingsStackParamList['SuggestionUsage'];
   const storyId = useStoryStore((state) => state.selectedStory?.id);
   const { userId } = useUserSettingsStore();
   const { canEdit } = useStoryRole(storyId);
@@ -193,7 +192,7 @@ const SuggestionUsageScreen = () => {
     if (usage.entityType === 'CharacterRelation') return;
     navigateToEntityDetail(drawerNavigation, usage.entityType as GlobalSearchEntityType, usage.id, {
       onReturn: () =>
-        drawerNavigation.navigate('CustomizationStack', {
+        drawerNavigation.navigate('StorySettings', {
           screen: 'SuggestionUsage',
           params: { type, value },
         }),
@@ -246,7 +245,7 @@ const SuggestionUsageScreen = () => {
                               onReturn: () =>
                                 (
                                   navigation.getParent() as DrawerNavigationProp<MainSystemDrawerParamList>
-                                ).navigate('CustomizationStack', {
+                                ).navigate('StorySettings', {
                                   screen: 'SuggestionUsage',
                                   params: { type, value },
                                 }),
@@ -279,8 +278,9 @@ const SuggestionUsageScreen = () => {
         visible={renaming}
         onClose={() => setRenaming(false)}
         contentStyle={stylesForScreen.modal}
+        inset="regular"
       >
-        <Text style={stylesForScreen.modalTitle}>{t('suggestion_rename_value')}</Text>
+        <ModalHeader title={t('suggestion_rename_value')} />
         <TextInput value={newValue} onChangeText={setNewValue} style={commonInputStyles.input} />
         {usages.length > 0 && (
           <TouchableOpacity
@@ -344,8 +344,7 @@ const styles = (colors: any) =>
     empty: { color: colors.textSecondary, padding: 24, textAlign: 'center' },
     relationLinks: { flexDirection: 'row', gap: 10, marginTop: 6 },
     relationLink: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-    modal: { gap: 12, padding: 16 },
-    modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
+    modal: { gap: 12 },
     checkbox: { alignItems: 'center', flexDirection: 'row', gap: 8 },
     checkboxText: { color: colors.text, flex: 1 },
     warning: { color: colors.error, fontSize: 13, lineHeight: 18 },

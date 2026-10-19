@@ -1,14 +1,14 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { createChapterService } from '../../src/services/storymanagement/ChapterService';
-import { createCharacterService } from '../../src/services/storymanagement/CharacterService';
-import { createItemService } from '../../src/services/storymanagement/ItemService';
-import { createLocationService } from '../../src/services/storymanagement/LocationService';
-import { createSceneService } from '../../src/services/storymanagement/SceneService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { entityBase, seedLocalStory, TEST_STORY_ID } from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 let database: TestDatabase;
 

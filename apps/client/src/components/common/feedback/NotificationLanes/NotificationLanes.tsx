@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNotificationStore } from '../../../../state/notificationStore';
-import NotificationItem from '../NotificationItem/NotificationItem';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import NotificationItem from '@/src/components/common/feedback/NotificationItem/NotificationItem';
 
 /**
  * The occupied notification lanes, without any host: no Modal, no view, no positioning of its

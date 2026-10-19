@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react-native';
-import AddObjectsPill from '../../src/components/features/graphs/CanvasOverlay/AddObjectsPill';
+import AddObjectsPill from '@/src/components/features/graphs/CanvasOverlay/AddObjectsPill';
 
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
@@ -8,7 +8,7 @@ if (!(global as any).requestAnimationFrame) {
   };
 }
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -25,7 +25,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 // Captures the pill props (groups, trigger) instead of rendering the modal.
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,

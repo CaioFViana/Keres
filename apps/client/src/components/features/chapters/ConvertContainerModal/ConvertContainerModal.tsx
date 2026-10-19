@@ -6,8 +6,11 @@ import type { ChapterType } from '@keres/shared';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
+import type { ThemeColors } from '@/src/theme';
+import { typography } from '@/src/theme/tokens';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**
  * Turning a chapter into an event, or an event back into a chapter.
@@ -37,7 +40,6 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
   onCancel,
   onConfirm,
 }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
   const chapterCopy = useVocabularyEntityCopy('Chapter');
   const eventCopy = useVocabularyEntityCopy('Event');
@@ -56,26 +58,7 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
     setPosition(String(lastSlot));
   }
 
-  const styles = StyleSheet.create({
-    modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 6,
-      textAlign: 'center',
-    },
-    subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, textAlign: 'center' },
-    formGroup: { marginBottom: 15 },
-    label: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 20,
-      paddingHorizontal: '3%',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   /**
    * One slot per gap in the spine, described by what it would sit before. "At the end" is the last
@@ -90,15 +73,8 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
   ];
 
   return (
-    <ResponsiveModal
-      visible={visible}
-      onClose={onCancel}
-      contentStyle={styles.modalContent}
-      maxHeight="86%"
-    >
-      <Text style={styles.modalTitle}>
-        {becomingChapter ? chapterCopy.convertTo : eventCopy.convertTo}
-      </Text>
+    <ResponsiveModal visible={visible} onClose={onCancel} inset="roomy" maxHeight="86%">
+      <ModalHeader title={becomingChapter ? chapterCopy.convertTo : eventCopy.convertTo} />
       <Text style={styles.subtitle}>
         {becomingChapter
           ? t('chapter_convert_to_chapter_message', { name })
@@ -135,5 +111,19 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, textAlign: 'center' },
+    formGroup: { marginBottom: 15 },
+    label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },
+    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      paddingHorizontal: '3%',
+    },
+  });
 
 export default ConvertContainerModal;

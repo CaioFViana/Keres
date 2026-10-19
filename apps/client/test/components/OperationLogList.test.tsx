@@ -1,8 +1,8 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import OperationLogList from '../../src/components/features/operation-log/OperationLogList/OperationLogList';
-import type { OperationLogSelect } from '../../src/db/schema';
+import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
+import type { OperationLogSelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -25,13 +25,13 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockUseOperationLogs = jest.fn();
-jest.mock('../../src/hooks/useOperationLogs', () => ({
+jest.mock('@/src/hooks/sync/useOperationLogs', () => ({
   __esModule: true,
   useOperationLogs: (...args: unknown[]) => mockUseOperationLogs(...args),
 }));
 
 // `list-items` belongs to another scope; the list only hands the row its props.
-jest.mock('../../src/components/features/list-items/OperationLogListItem', () => {
+jest.mock('@/src/components/features/list-items/OperationLogListItem', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {

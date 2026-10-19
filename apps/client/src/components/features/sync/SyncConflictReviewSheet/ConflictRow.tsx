@@ -2,8 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
-import { useTheme } from '../../../../theme';
+import type { ConflictSummary } from '@/src/services/sync/ConflictSummaryService';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 
 interface ConflictRowProps {
   summary: ConflictSummary;
@@ -11,6 +13,7 @@ interface ConflictRowProps {
   onKeepMine: () => void;
   onKeepServer: () => void;
   onCloneBoard?: () => void;
+  onCloneSketch?: () => void;
   onOpenDetails: () => void;
 }
 
@@ -24,29 +27,13 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
   onKeepMine,
   onKeepServer,
   onCloneBoard,
+  onCloneSketch,
   onOpenDetails,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
-  const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderRadius: 8,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.border,
-      paddingVertical: 9,
-      paddingHorizontal: 11,
-      marginBottom: 7,
-    },
-    icon: { marginRight: 9 },
-    textWrapper: { flex: 1, marginRight: 8, paddingVertical: 2 },
-    title: { fontSize: 13, fontWeight: '600', color: colors.text },
-    detail: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-    actions: { flexDirection: 'row' },
-    actionButton: { padding: 8 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const icon = summary.kind === 'relation' ? 'git-network-outline' : 'document-text-outline';
 
@@ -104,6 +91,18 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
               <Ionicons name="copy-outline" size={22} color={colors.primary} />
             </TouchableOpacity>
           )}
+          {summary.offerSketchClone && onCloneSketch && (
+            <TouchableOpacity
+              onPress={onCloneSketch}
+              disabled={isResolving}
+              style={styles.actionButton}
+              accessibilityRole="button"
+              accessibilityLabel={t('conflict_clone_sketch')}
+              accessibilityHint={t('conflict_clone_sketch_description')}
+            >
+              <Ionicons name="copy-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <TouchableOpacity
@@ -120,5 +119,25 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 8,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      marginBottom: 8,
+    },
+    icon: { marginRight: 10 },
+    textWrapper: { flex: 1, marginRight: 8, paddingVertical: 2 },
+    title: { fontSize: 13, fontWeight: '600', color: colors.text },
+    detail: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+    actions: { flexDirection: 'row' },
+    actionButton: { padding: 8 },
+  });
 
 export default ConflictRow;

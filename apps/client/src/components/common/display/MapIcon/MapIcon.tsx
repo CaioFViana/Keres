@@ -3,9 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Canvas, ImageSVG, Skia } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
 import { Image, Platform, View } from 'react-native';
-import { buildKeresSvgMarkup, keresIconDataUri } from '../../../../utils/keresIconMarkup';
-import { KERES_ICON_PATHS } from '../../../../utils/keresIconPaths';
-import { mapIconGlyph } from '../../../../utils/mapIconGlyph';
+import { buildKeresSvgMarkup, keresIconDataUri } from '@/src/utils/svg/keresIconMarkup';
+import { KERES_ICON_PATHS } from '@/src/utils/svg/keresIconPaths';
+import { mapIconGlyph } from '@/src/utils/svg/mapIconGlyph';
 
 /**
  * Keres glyphs fill their box edge to edge while Ionicons carry built-in padding;

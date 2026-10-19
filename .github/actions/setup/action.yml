@@ -1,0 +1,24 @@
+name: Setup Bun and dependencies
+description: Installs Bun, restores the Bun package cache and installs from the lockfile.
+
+inputs:
+  bun-version:
+    description: Bun version to install.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+    # The package cache, not node_modules: a restored cache turns the install into a link step
+    # (seconds) while the lockfile still decides what is installed.
+    - uses: actions/cache@v4
+      with:
+        path: ~/.bun/install/cache
+        key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+        restore-keys: |
+          bun-${{ runner.os }}-
+    - run: bun install --frozen-lockfile
+      shell: bash

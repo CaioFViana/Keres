@@ -5,21 +5,21 @@ import {
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
-import type { TagsStackParamList } from '../../navigation/MainSystemStack';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import type { TagsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { useTagFormActions } from './useTagFormActions';
 import { useTagFormResources } from './useTagFormResources';
 import { useTagFormState } from './useTagFormState';
@@ -69,12 +69,11 @@ const TagFormScreen = () => {
     userId,
   });
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
+  useEntityFormHeader({
     title: isEditing ? t('edit_tag_title') : t('create_tag_title'),
-    actions: resetHeaderAction,
+    isEditing,
+    isDirty,
+    resetForm,
   });
 
   if (loading) {
@@ -89,33 +88,23 @@ const TagFormScreen = () => {
       title={isEditing ? t('edit_tag_title') : t('create_tag_title')}
       description={t('tag_form_description')}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {t('delete_tag_title')}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_tag')}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          deleteLabel={t('delete_tag_title')}
+          saveLabel={isEditing ? t('save_changes') : t('create_tag')}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('name')}
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
       <FormField label={t('color')}>
         <ColorPickerInput
@@ -127,18 +116,13 @@ const TagFormScreen = () => {
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
     </EntityFormContainer>
   );
 };

@@ -3,7 +3,7 @@ import {
   type GraphChapter,
   type GraphChoice,
   type GraphScene,
-} from '../graphs/storyGraphLayout';
+} from '../graphs/story/storyGraphLayout';
 
 /** A screen must expose which ordering it is showing rather than implying every list is a path. */
 export type NarrativePresentationOrder = 'narrative-order' | 'catalogue-order';

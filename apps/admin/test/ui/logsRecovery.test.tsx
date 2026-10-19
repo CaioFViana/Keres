@@ -2,9 +2,9 @@ import type { ReactElement } from 'react';
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { LogsPage } from '../../src/pages/logs/LogsPage';
-import { RecoveryPage } from '../../src/pages/recovery/RecoveryPage';
-import { changeInput, click, flush, render, submit } from '../helpers/react';
+import { LogsPage } from '@/pages/logs/LogsPage';
+import { RecoveryPage } from '@/pages/recovery/RecoveryPage';
+import { changeInput, click, flush, render, submit } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   listLogs: vi.fn(),
@@ -13,8 +13,8 @@ const mocks = vi.hoisted(() => ({
   browseOperationLog: vi.fn(),
 }));
 
-vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
-vi.mock('../../src/api/RecoveryApiService', () => ({
+vi.mock('@/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+vi.mock('@/api/RecoveryApiService', () => ({
   RecoveryApiService: {
     listDeleted: mocks.listDeleted,
     restore: mocks.restoreDeleted,
@@ -184,6 +184,30 @@ describe('logs page', () => {
     await flush();
   });
 
+  it('closes the detail and gives the table its width back', async () => {
+    mocks.listLogs.mockResolvedValue({
+      items: [logEntry()],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+    });
+    const view = await withRouter(<LogsPage />);
+    await flush();
+
+    await click(view.container.querySelector('tbody tr')!);
+    await flush();
+    expect(view.container.querySelector('.detail-panel')).not.toBeNull();
+
+    const close = Array.from(view.container.querySelectorAll('.detail-panel button')).find(
+      (button) => button.textContent === 'Close',
+    )!;
+    await click(close);
+    await flush();
+
+    expect(view.container.querySelector('.detail-panel')).toBeNull();
+    await view.unmount();
+  });
+
   it('shows dashes in the detail when the entry carries no names', async () => {
     mocks.listLogs.mockResolvedValue({
       items: [logEntry({ storyTitle: null, storyId: null, username: null, userId: null })],
@@ -290,8 +314,17 @@ describe('recovery page', () => {
     );
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Already restored.');
+    const modal = view.container.querySelector('.modal')!;
+    expect(modal.textContent).toContain('Already restored.');
     expect(view.container.textContent).toContain('Ana');
+
+    await click(
+      Array.from(modal.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Close',
+      )!,
+    );
+    await flush();
+    expect(view.container.querySelector('.modal')).toBeNull();
     await view.unmount();
   });
 
@@ -328,7 +361,7 @@ describe('recovery page', () => {
     );
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Restore failed.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Restore failed.');
     await view.unmount();
   });
 
@@ -476,6 +509,31 @@ describe('recovery page', () => {
     await flush();
 
     expect(view.container.querySelector('.error-text')?.textContent).toBe('Log browse is down.');
+    await view.unmount();
+  });
+
+  it('closes the operation detail and gives the table its width back', async () => {
+    mocks.browseOperationLog.mockResolvedValue({
+      items: [logRow()],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+    });
+    const view = await withRouter(<RecoveryPage />);
+
+    await submit(view.container.querySelectorAll('form')[1]);
+    await flush();
+    await click(view.container.querySelectorAll('table')[1].querySelector('tbody tr')!);
+    await flush();
+    expect(view.container.querySelector('.detail-panel')).not.toBeNull();
+
+    const close = Array.from(view.container.querySelectorAll('.detail-panel button')).find(
+      (button) => button.textContent === 'Close',
+    )!;
+    await click(close);
+    await flush();
+
+    expect(view.container.querySelector('.detail-panel')).toBeNull();
     await view.unmount();
   });
 

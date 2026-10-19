@@ -1,5 +1,5 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { commonScreenStyleDefs } from '../../../theme/commonStyles';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -15,61 +15,58 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
-import { useDrizzle } from '../../../db';
+import { useDrizzle } from '@/src/db';
 import type { ChapterType } from '@keres/shared';
-import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
-import { AppAlert } from '../../../utils/AppAlert';
-import { useScreenAnchor } from '../../../guides/useGuideAnchor';
-import { useScreenTour } from '../../../guides/useScreenTour';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
-import { useStoryRole } from '../../../hooks/useStoryRole';
+import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '@/src/db/schema';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import OutsideArcNotice from '@/src/components/features/arcs/OutsideArcNotice';
+import { useArcSearchScope } from '@/src/hooks/arcs/useArcSearchScope';
+import { chapterBelongsToArc } from '@/src/utils/search/storyArcFilter';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityListScreen } from '@/src/hooks/lists/useEntityListScreen';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useTagChangeReload } from '@/src/hooks/lists/useTagChangeReload';
 import type {
   NarrativeElementsStackParamList,
   MainSystemDrawerParamList,
-} from '../../../navigation/MainSystemStack';
-import { useChapterStore } from '../../../state/chapterStore';
-import { useSceneStore } from '../../../state/sceneStore';
-import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { useTheme } from '../../../theme';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { isUnchapteredGroup } from '../../../utils/narrativeSceneOrder';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { createChapterService } from '../../../services/storymanagement/ChapterService';
-import { createTagService } from '../../../services/storymanagement/TagService';
-import { createTagRelationService } from '../../../services/storymanagement/TagRelationService';
-import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
+} from '@/src/navigation/drawer/MainSystemDrawer';
+import { useChapterStore } from '@/src/state/story/chapterStore';
+import { useSceneStore } from '@/src/state/story/sceneStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import {
   createChapterListItemRenderer,
-  type AdvancedNarrativeMatches,
   scenesShownForChapter,
 } from './createChapterListItemRenderer';
+import { useAdvancedNarrativeMatches } from './useAdvancedNarrativeMatches';
 import { useVisibleChapters } from './useVisibleChapters';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
   NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChapterDetail'>
 >;
 
-const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: string) =>
-  Object.fromEntries(
-    Object.entries(criteria)
-      .filter(([key, value]) => key.startsWith(`${prefix}:`) && value !== undefined && value !== '')
-      .map(([key, value]) => [key.slice(prefix.length + 1), value]),
-  );
-
 const NarrativeElementsListScreen = () => {
   useBackButtonHandler();
   useScreenTour('NarrativeElementsStack');
-  const listAnchorRef = useScreenAnchor('NarrativeElements', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const activeArcId = useStoryStore((state) => state.activeArcId);
+  const effectiveArc = useStoryStore((state) => state.effectiveArc);
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
 
   const {
@@ -111,7 +108,6 @@ const NarrativeElementsListScreen = () => {
   const [tagsByChapterId, setTagsByChapterId] = useState<Map<string, TagSelect[]>>(new Map());
   const [tagsBySceneId, setTagsBySceneId] = useState<Map<string, TagSelect[]>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
-  const [advancedMatches, setAdvancedMatches] = useState<AdvancedNarrativeMatches | null>(null);
 
   const loadOutline = useCallback(async () => {
     if (!storyId) return;
@@ -131,83 +127,13 @@ const NarrativeElementsListScreen = () => {
     loadOutline();
   }, [loadOutline]);
 
-  const narrativeCriteria = useMemo(() => {
-    const chapterCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'chapter');
-    const sceneCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'scene');
-    const choiceCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'choice');
-    const hasCriteria = [chapterCriteria, sceneCriteria, choiceCriteria].some(
-      (criteria) => Object.keys(criteria).length > 0,
-    );
-    return { chapterCriteria, sceneCriteria, choiceCriteria, hasCriteria };
-  }, [advancedSearchCriteria]);
-
-  const [prevStoryId, setPrevStoryId] = useState(storyId);
-  const [prevAdvancedSearchCriteria, setPrevAdvancedSearchCriteria] =
-    useState(advancedSearchCriteria);
-  if (storyId !== prevStoryId || advancedSearchCriteria !== prevAdvancedSearchCriteria) {
-    setPrevStoryId(storyId);
-    setPrevAdvancedSearchCriteria(advancedSearchCriteria);
-    if (!storyId || !narrativeCriteria.hasCriteria) {
-      setAdvancedMatches(null);
-    }
-  }
-
-  useEffect(() => {
-    if (!storyId) {
-      return;
-    }
-    const { chapterCriteria, sceneCriteria, choiceCriteria, hasCriteria } = narrativeCriteria;
-    if (!hasCriteria) {
-      return;
-    }
-
-    let cancelled = false;
-    const loadAdvancedMatches = async () => {
-      const [matchedChapters, matchedScenes, matchedChoices] = await Promise.all([
-        Object.keys(chapterCriteria).length
-          ? createChapterService(db).getChaptersByStoryId(
-              storyId,
-              undefined,
-              undefined,
-              undefined,
-              'all',
-              chapterCriteria,
-            )
-          : Promise.resolve(outlineChapters),
-        Object.keys(sceneCriteria).length
-          ? createSceneService(db).getScenesByStoryId(
-              storyId,
-              undefined,
-              undefined,
-              undefined,
-              'all',
-              sceneCriteria,
-            )
-          : Promise.resolve(scenes),
-        Object.keys(choiceCriteria).length
-          ? createChoiceService(db).getChoicesByStoryId(
-              storyId,
-              undefined,
-              undefined,
-              undefined,
-              'all',
-              choiceCriteria,
-            )
-          : Promise.resolve(choices),
-      ]);
-      if (!cancelled) {
-        setAdvancedMatches({
-          chapterIds: new Set(matchedChapters.map((chapter) => chapter.id)),
-          sceneIds: new Set(matchedScenes.map((scene) => scene.id)),
-          choiceSourceSceneIds: new Set(matchedChoices.map((choice) => choice.sceneId)),
-        });
-      }
-    };
-    loadAdvancedMatches();
-    return () => {
-      cancelled = true;
-    };
-  }, [narrativeCriteria, choices, db, outlineChapters, scenes, storyId]);
+  const advancedMatches = useAdvancedNarrativeMatches({
+    storyId,
+    advancedSearchCriteria,
+    outlineChapters,
+    scenes,
+    choices,
+  });
 
   const loadTags = useCallback(async () => {
     if (!storyId) {
@@ -240,17 +166,7 @@ const NarrativeElementsListScreen = () => {
     loadTags();
   }, [loadTags]);
 
-  useEffect(() => {
-    const refreshTags = (changedStoryId: string) => {
-      if (changedStoryId === storyId) loadTags();
-    };
-    entityEventEmitter.on('tag_changed', refreshTags);
-    entityEventEmitter.on('tag_relation_changed', refreshTags);
-    return () => {
-      entityEventEmitter.off('tag_changed', refreshTags);
-      entityEventEmitter.off('tag_relation_changed', refreshTags);
-    };
-  }, [loadTags, storyId]);
+  useTagChangeReload(storyId, loadTags);
   useEffect(() => {
     if (storyId) {
       setSceneDbAndStoryId(db, storyId);
@@ -365,7 +281,7 @@ const NarrativeElementsListScreen = () => {
     }));
   }, [scenes, storedScenes]);
 
-  const visibleChapters = useVisibleChapters({
+  const allVisibleChapters = useVisibleChapters({
     outlineChapters,
     scenes: scenesWithFavoriteState,
     choices,
@@ -374,7 +290,6 @@ const NarrativeElementsListScreen = () => {
     activeTagIds,
     advancedMatches,
     favoriteFilterState,
-    activeArcId,
     searchQuery,
     activeSort,
     sortDirection,
@@ -382,6 +297,18 @@ const NarrativeElementsListScreen = () => {
     storyId,
     t,
   });
+  // The outline is the active arc's; a search also counts what it found in the others.
+  const inActiveArc = useCallback(
+    (chapter: ChapterSelect) =>
+      chapter.id === UNCHAPTERED_GROUP_ID || chapterBelongsToArc(chapter, activeArcId),
+    [activeArcId],
+  );
+  const {
+    data: visibleChapters,
+    outsideCount,
+    expanded: showingOtherArcs,
+    toggle: toggleOtherArcs,
+  } = useArcSearchScope(allVisibleChapters, inActiveArc, searchQuery);
 
   const memoizedChapterListItem = useMemo(
     () =>
@@ -495,7 +422,7 @@ const NarrativeElementsListScreen = () => {
     [outlineChapters, reorderingType],
   );
 
-  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
+  const styles = useThemedStyles(createStyles);
 
   useScreenHeader({
     target: 'parent',
@@ -522,13 +449,31 @@ const NarrativeElementsListScreen = () => {
         onPress: handleReorderPress,
         visible: !!canEdit,
       },
-      {
-        id: 'open-manuscript',
-        icon: 'book-outline',
-        label: t('manuscript_title'),
-        onPress: () => navigation.navigate('Manuscript', {}),
-        visible: !!selectedStory,
-      },
+      // A campaign opens its next session in one step: the real date, and the first scene waiting.
+      // Other works do not even carry the action.
+      ...(effectiveArc?.medium === 'campaign'
+        ? [
+            {
+              id: 'new-session',
+              icon: 'play-circle-outline' as const,
+              label: t('new_session_title', { session: term('Chapter') }),
+              onPress: () => navigation.navigate('NewSession'),
+              visible: !!canEdit,
+            },
+          ]
+        : []),
+      // A screenplay can be brought in from a Fountain file; no other work carries the action.
+      ...(effectiveArc?.medium === 'screenplay'
+        ? [
+            {
+              id: 'import-fountain',
+              icon: 'document-attach-outline' as const,
+              label: t('fountain_import_title'),
+              onPress: () => navigation.navigate('FountainImport'),
+              visible: !!canEdit,
+            },
+          ]
+        : []),
       {
         id: 'action-3',
         icon: 'add',
@@ -556,10 +501,20 @@ const NarrativeElementsListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+      <GuideAnchor screen="NarrativeElements" part="list" style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
+          // The rows here are chapters with their scenes, filtered by three scopes at once; no count of one
+          // store's rows would match what the list shows.
+          onPreviewCount={undefined}
           data={visibleChapters}
+          resultsNotice={
+            <OutsideArcNotice
+              count={outsideCount}
+              expanded={showingOtherArcs}
+              onToggle={toggleOtherArcs}
+            />
+          }
           renderItem={memoizedChapterListItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('chapter_outline_search_placeholder', {
@@ -597,7 +552,7 @@ const NarrativeElementsListScreen = () => {
               : []
           }
         />
-      </View>
+      </GuideAnchor>
       <ChapterReorderModal
         isVisible={reorderingType !== null}
         onClose={() => setReorderingType(null)}
@@ -621,5 +576,8 @@ const NarrativeElementsListScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
 export default NarrativeElementsListScreen;

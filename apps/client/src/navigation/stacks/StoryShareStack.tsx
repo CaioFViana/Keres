@@ -1,0 +1,25 @@
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import ManuscriptExportScreen from '@/src/screens/narrative-elements/scenes/ManuscriptExportScreen';
+import StoryPublishScreen from '@/src/screens/story-share/StoryPublishScreen';
+import StoryShareIndexScreen from '@/src/screens/story-share/StoryShareIndexScreen';
+
+export type StoryShareStackParamList = {
+  StoryShareIndex: undefined;
+  StoryPublish: undefined;
+  /** The same screen the manuscript has: reached from here, back returns here and the menu stays on this entry. */
+  ManuscriptExport: undefined;
+};
+const Stack = createNativeStackNavigator<StoryShareStackParamList>();
+
+/** Where the story leaves the app: the page to publish it on, the manuscript document, the copy to keep. */
+export default function StoryShareStackNavigator() {
+  useBackButtonHandler();
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="StoryShareIndex" component={StoryShareIndexScreen} />
+      <Stack.Screen name="StoryPublish" component={StoryPublishScreen} />
+      <Stack.Screen name="ManuscriptExport" component={ManuscriptExportScreen} />
+    </Stack.Navigator>
+  );
+}

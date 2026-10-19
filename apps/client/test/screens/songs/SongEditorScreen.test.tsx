@@ -1,0 +1,705 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
+import type { SongSelect } from '@/src/db/schema';
+import { useMusicToolsStore } from '@/src/state/drafts/musicToolsStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import SongEditorScreen, { songFileName } from '@/src/screens/songs/SongEditorScreen';
+
+const mockUseScreenTour = jest.fn();
+const mockGoBack = jest.fn();
+const mockNavigate = jest.fn();
+const mockUpdateSong = jest.fn();
+const mockDeleteSong = jest.fn();
+const mockConfirmDelete = jest.fn();
+const mockDeliverFile = jest.fn();
+const mockShowNotification = jest.fn();
+const mockPlay = jest.fn();
+const mockStop = jest.fn();
+const mockPlayTone = jest.fn();
+let mockPlayback = {
+  phase: 'idle',
+  progress: 0,
+  problem: null,
+  active: null as { sectionIndex: number; sourceIndex: number; text: string } | null,
+};
+
+let mockCanEdit = true;
+let mockAppLanguage = 'en';
+let mockSong: SongSelect | null | undefined;
+let mockUses: { sceneId: string; sceneName: string }[] = [];
+let mockHeader: {
+  title: string;
+  actions?: { id: string; onPress: () => void; visible?: boolean }[];
+} | null = null;
+
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+jest.mock('react-i18next', () => ({
+  __esModule: true,
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) =>
+      options ? `${key}:${JSON.stringify(options)}` : key,
+    i18n: { language: mockAppLanguage },
+  }),
+}));
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
+jest.mock('@react-navigation/native', () => {
+  const route = { params: { songId: 'song-1' } };
+  const navigation = {
+    goBack: () => mockGoBack(),
+    navigate: (...args: unknown[]) => mockNavigate(...args),
+  };
+  return { __esModule: true, useNavigation: () => navigation, useRoute: () => route };
+});
+jest.mock('@/src/theme', () => ({
+  __esModule: true,
+  useTheme: () => ({
+    colors: {
+      text: '#111',
+      textSecondary: '#555',
+      primary: '#00f',
+      onPrimary: '#fff',
+      border: '#ccc',
+      surface: '#fff',
+      background: '#fff',
+      error: '#f00',
+    },
+  }),
+}));
+jest.mock('@/src/theme/commonStyles', () => ({
+  __esModule: true,
+  getCommonContainerStyles: () => ({ container: {} }),
+}));
+jest.mock('@/src/db', () => {
+  const db = {};
+  return { __esModule: true, useDrizzle: () => db };
+});
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
+  __esModule: true,
+  useBackButtonHandler: () => undefined,
+}));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
+  __esModule: true,
+  useFormScrollBottomPadding: () => 0,
+}));
+jest.mock('@/src/hooks/media/useOpenGalleryMediaViewer', () => ({
+  __esModule: true,
+  useOpenGalleryMediaViewer: () => jest.fn(),
+}));
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
+  __esModule: true,
+  useScreenHeader: (args: typeof mockHeader) => {
+    mockHeader = args;
+  },
+}));
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
+  __esModule: true,
+  useStoryRole: () => ({ canEdit: mockCanEdit }),
+}));
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
+  __esModule: true,
+  useConfirmDelete: () => mockConfirmDelete,
+}));
+jest.mock('@/src/hooks/music/useSongs', () => ({
+  __esModule: true,
+  useSong: () => mockSong,
+  useSongUses: () => mockUses,
+}));
+jest.mock('@/src/hooks/music/useSongPlayback', () => ({
+  __esModule: true,
+  useSongPlayback: () => ({
+    ...mockPlayback,
+    play: mockPlay,
+    stop: mockStop,
+    playTone: mockPlayTone,
+  }),
+}));
+jest.mock('@/src/state/app/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: (selector?: (state: { userId: string }) => unknown) =>
+    selector ? selector({ userId: 'user-1' }) : { userId: 'user-1' },
+}));
+jest.mock('@/src/state/ui/notificationStore', () => ({
+  __esModule: true,
+  useNotificationStore: () => ({ showNotification: mockShowNotification }),
+}));
+jest.mock('@/src/services/storymanagement/media-music/SongService', () => ({
+  __esModule: true,
+  createSongService: () => ({ updateSong: mockUpdateSong, deleteSong: mockDeleteSong }),
+}));
+jest.mock('@/src/utils/io/storyTransfer', () => ({
+  __esModule: true,
+  deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
+}));
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    ScreenLoading: () => <Text>loading</Text>,
+    ScreenError: ({ message }: { message: string }) => <Text testID="screen-error">{message}</Text>,
+  };
+});
+jest.mock('@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ children }: { children: ReactNode }) => <View>{children}</View>,
+  };
+});
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
+  const { Text } = require('react-native');
+  return { __esModule: true, default: ({ title }: { title: string }) => <Text>{title}</Text> };
+});
+jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => {
+  const { TextInput } = require('react-native');
+  return { __esModule: true, default: TextInput };
+});
+jest.mock('@/src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ ownerType }: { ownerType: string }) => (
+      <Text testID="gallery-manager">{ownerType}</Text>
+    ),
+  };
+});
+
+const baseSong = {
+  id: 'song-1',
+  storyId: 'story-1',
+  title: 'The Lantern Song',
+  notes: 'Sung at the gate',
+  lyrics: '{start_of_verse: Verse 1}\n[G]Light the [Em]lantern\n{end_of_verse}',
+  lyricsTranslation: 'Acende o lampião',
+  melody: null,
+  key: 'G',
+  tempo: 90,
+  meter: '3/4',
+} as unknown as SongSelect;
+
+beforeEach(() => {
+  // The suite is of the music tools; the simple editor has a describe of its own.
+  useMusicToolsStore.setState({ enabled: true });
+  mockCanEdit = true;
+  mockSong = baseSong;
+  mockUses = [];
+  mockHeader = null;
+  mockUseScreenTour.mockReset();
+  mockGoBack.mockReset();
+  mockNavigate.mockReset();
+  mockUpdateSong.mockReset().mockResolvedValue(undefined);
+  mockDeleteSong.mockReset().mockResolvedValue(undefined);
+  mockConfirmDelete.mockReset();
+  mockDeliverFile.mockReset().mockResolvedValue({ delivered: true, fileName: 'x.cho' });
+  mockShowNotification.mockReset();
+  mockPlay.mockReset();
+  mockStop.mockReset();
+  mockPlayTone.mockReset();
+  mockPlayback = { phase: 'idle', progress: 0, problem: null, active: null };
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+});
+
+afterEach(async () => {
+  await act(async () => cleanup());
+  jest.restoreAllMocks();
+});
+
+describe('songFileName', () => {
+  it('makes a file name of the letters and digits of a title', () => {
+    expect(songFileName('The Lantern Song')).toBe('The-Lantern-Song.cho');
+    expect(songFileName('  Canção, do Farol! ')).toBe('Canção-do-Farol.cho');
+    expect(songFileName('???')).toBe('song.cho');
+  });
+});
+
+describe('SongEditorScreen', () => {
+  it('tours the screen for those who can edit, and the tune only once its tab is open', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('SongEditor', true);
+    expect(mockUseScreenTour).toHaveBeenCalledWith('SongTune', false);
+    expect(mockUseScreenTour).not.toHaveBeenCalledWith('SongTune', true);
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    expect(mockUseScreenTour).toHaveBeenCalledWith('SongTune', true);
+  });
+
+  it('shows the song as it is saved', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-title').props.value).toBe('The Lantern Song');
+    expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
+    expect(view.getByTestId('song-translation').props.value).toBe('Acende o lampião');
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('song-details-toggle'));
+    expect(view.getByTestId('song-key').props.value).toBe('G');
+    expect(view.getByTestId('song-tempo').props.value).toBe('90');
+    await fireEvent.press(view.getByTestId('song-tab-details'));
+    expect(view.getByTestId('song-notes').props.value).toBe('Sung at the gate');
+    expect(mockHeader?.title).toBe('The Lantern Song');
+    expect(view.getByTestId('gallery-manager').props.children).toBe('Song');
+  });
+
+  it('shows the words first, and one part of the song at a time', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-lyrics')).toBeTruthy();
+    expect(view.queryByTestId('melody-panel')).toBeNull();
+    expect(view.queryByTestId('song-notes')).toBeNull();
+    // The title is the song's, whichever part is open; the key, tempo and meter belong to the tune.
+    expect(view.getByTestId('song-title')).toBeTruthy();
+    expect(view.queryByTestId('song-key')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    expect(view.getByTestId('melody-panel')).toBeTruthy();
+    expect(view.queryByTestId('song-lyrics')).toBeNull();
+    expect(view.getByTestId('song-title')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('song-tab-details'));
+    expect(view.getByTestId('song-notes')).toBeTruthy();
+    expect(view.queryByTestId('melody-panel')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('song-tab-words'));
+    expect(view.getByTestId('song-lyrics')).toBeTruthy();
+  });
+
+  it('keeps what was typed when another part is opened and the first comes back', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.changeText(view.getByTestId('song-lyrics'), '[G]New words');
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('song-tab-words'));
+
+    expect(view.getByTestId('song-lyrics').props.value).toBe('[G]New words');
+  });
+
+  describe('the words that name a section', () => {
+    const labelsAfterAdding = async (appLanguage: string, storyLanguage: string | null) => {
+      mockAppLanguage = appLanguage;
+      useStoryStore.setState({
+        selectedStory: storyLanguage ? ({ id: 'story-1', language: storyLanguage } as never) : null,
+      });
+      mockSong = { ...baseSong, lyrics: '' } as unknown as SongSelect;
+      const view = await render(<SongEditorScreen />);
+      await fireEvent.press(view.getByTestId('song-add-verse'));
+      await fireEvent.press(view.getByTestId('song-add-chorus'));
+      return view.getByTestId('song-lyrics').props.value as string;
+    };
+
+    afterEach(async () => {
+      await act(async () => {
+        mockAppLanguage = 'en';
+        useStoryStore.setState({ selectedStory: null });
+      });
+    });
+
+    it('are those of the language of the story, whatever language the app is in', async () => {
+      const text = await labelsAfterAdding('en', 'pt');
+
+      expect(text).toContain('{start_of_verse: Verso 1}');
+      expect(text).toContain('{start_of_chorus: Refrão}');
+    });
+
+    it('do not change when the app is switched to another language', async () => {
+      const inEnglish = await labelsAfterAdding('en', 'en');
+      await act(async () => cleanup());
+      const inPortuguese = await labelsAfterAdding('pt', 'en');
+
+      expect(inEnglish).toContain('{start_of_verse: Verse 1}');
+      expect(inPortuguese).toContain('{start_of_verse: Verse 1}');
+      expect(inPortuguese).toContain('{start_of_chorus: Chorus}');
+    });
+
+    it('are English for a story with no language, and for one in a language it has no words for', async () => {
+      expect(await labelsAfterAdding('pt', null)).toContain('{start_of_verse: Verse 1}');
+      await act(async () => cleanup());
+      expect(await labelsAfterAdding('pt', 'ja')).toContain('{start_of_verse: Verse 1}');
+    });
+
+    it('read a section with no label by one name, whatever the language of the app', async () => {
+      mockAppLanguage = 'pt';
+      mockSong = {
+        ...baseSong,
+        lyrics: '{start_of_verse}\nOne two\n{end_of_verse}',
+      } as unknown as SongSelect;
+      const view = await render(<SongEditorScreen />);
+      await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+      expect(view.getByText('Verse')).toBeTruthy();
+      expect(view.queryByText('Verso')).toBeNull();
+    });
+  });
+
+  it('writes what is typed once the field is left, and only the field that changed', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.changeText(view.getByTestId('song-title'), 'The Lantern Hymn');
+    expect(mockUpdateSong).not.toHaveBeenCalled();
+    await fireEvent(view.getByTestId('song-title'), 'blur');
+
+    await waitFor(() =>
+      expect(mockUpdateSong).toHaveBeenCalledWith('user-1', 'song-1', {
+        title: 'The Lantern Hymn',
+      }),
+    );
+  });
+
+  it('moves the chords and the key together when transposed', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    const changes = mockUpdateSong.mock.calls[0][2];
+    // G up a semitone is written Ab, the way that key is: the chords follow its spelling.
+    expect(changes.key).toBe('Ab');
+    expect(changes.lyrics).toContain('[Ab]Light the [Fm]lantern');
+  });
+
+  it('spells a song moved down in the flats of its new key', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-down'));
+    await fireEvent.press(view.getByTestId('song-transpose-down'));
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    const changes = mockUpdateSong.mock.calls[0][2];
+    expect(changes.key).toBe('F');
+    expect(changes.lyrics).toContain('[F]Light the [Dm]lantern');
+  });
+
+  it('takes a transposition back: the chords, the key and the tune return together', async () => {
+    mockSong = { ...baseSong, melody: 'P:Verse 1\nC D E2' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.queryByTestId('song-transpose-undo')).toBeNull();
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    expect(view.getByTestId('song-lyrics').props.value).not.toContain('[G]Light');
+
+    await fireEvent.press(view.getByTestId('song-transpose-undo'));
+    await fireEvent.press(view.getByTestId('song-transpose-undo'));
+
+    expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('song-details-toggle'));
+    expect(view.getByTestId('song-key').props.value).toBe('G');
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
+    expect(view.getByTestId('song-melody').props.value).toBe('P:Verse 1\nC D E2');
+    expect(view.queryByTestId('song-transpose-undo')).toBeNull();
+  });
+
+  it('forgets what could be taken back once the words are written by hand', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    expect(view.getByTestId('song-transpose-undo')).toBeTruthy();
+    await fireEvent.changeText(view.getByTestId('song-lyrics'), '[G]New words');
+
+    expect(view.queryByTestId('song-transpose-undo')).toBeNull();
+  });
+
+  it('hands the song over as a ChordPro file named after its title', async () => {
+    await render(<SongEditorScreen />);
+
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const [contents, fileName, mimeType] = mockDeliverFile.mock.calls[0];
+    expect(fileName).toBe('The-Lantern-Song.cho');
+    expect(mimeType).toBe('text/plain');
+    expect(contents).toContain('{title: The Lantern Song}');
+    expect(contents).toContain('{key: G}');
+    expect(contents).toContain('{time: 3/4}');
+    expect(contents).toContain('[G]Light the [Em]lantern');
+  });
+
+  it('says where the file is when there is nothing to share it with', async () => {
+    mockDeliverFile.mockResolvedValue({
+      delivered: false,
+      uri: 'file:///cache/x.cho',
+      fileName: 'x',
+    });
+    await render(<SongEditorScreen />);
+
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.stringContaining('export_story_no_share_target'),
+        'warning',
+      ),
+    );
+  });
+
+  it('shows the tune, and writes it once the field is left', async () => {
+    mockSong = { ...baseSong, melody: 'C D E' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
+
+    expect(view.getByTestId('song-melody').props.value).toBe('C D E');
+    await fireEvent.changeText(view.getByTestId('song-melody'), 'C D E F');
+    await fireEvent(view.getByTestId('song-melody'), 'blur');
+
+    await waitFor(() =>
+      expect(mockUpdateSong).toHaveBeenCalledWith('user-1', 'song-1', { melody: 'C D E F' }),
+    );
+  });
+
+  it('moves the tune with the chords when transposed', async () => {
+    mockSong = { ...baseSong, melody: 'P:Verse 1\nC D E2' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    // G up a semitone is Ab: the notes are spelled in its flats, and keep their lengths.
+    expect(mockUpdateSong.mock.calls[0][2].melody).toBe('P:Verse 1\n_D _E F2');
+  });
+
+  it('leaves an empty tune empty when transposed', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    expect('melody' in mockUpdateSong.mock.calls[0][2]).toBe(false);
+  });
+
+  it('hands the tune over as a MIDI file named after the title', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
+    await fireEvent.press(view.getByTestId('melody-export-midi'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const [contents, fileName, mimeType] = mockDeliverFile.mock.calls[0];
+    expect(fileName).toBe('The-Lantern-Song.mid');
+    expect(mimeType).toBe('audio/midi');
+    expect(String.fromCharCode(...(contents as Uint8Array).slice(0, 4))).toBe('MThd');
+  });
+
+  it('puts the accompaniment chosen into the MIDI file, on a channel and a program of its own', async () => {
+    mockSong = {
+      ...baseSong,
+      lyrics: '{start_of_verse: Verse 1}\n[G]Light the [Em]lantern\n{end_of_verse}',
+      melody: 'G A B c',
+    } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-options-toggle'));
+    await fireEvent.press(view.getByTestId('melody-instrument-guitar'));
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
+    await fireEvent.press(view.getByTestId('melody-export-midi'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const bytes = Array.from(mockDeliverFile.mock.calls[0][0] as Uint8Array);
+    // Program change on the second channel, to the nylon guitar; and notes on that channel.
+    expect(bytes.join(',')).toContain('193,24');
+    expect(bytes).toContain(0x91);
+  });
+
+  it('leaves the MIDI file with the voice alone when no accompaniment is chosen', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
+    await fireEvent.press(view.getByTestId('melody-export-midi'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const bytes = Array.from(mockDeliverFile.mock.calls[0][0] as Uint8Array);
+    expect(bytes).not.toContain(0xc1);
+  });
+
+  it('hands the tune over as an ABC file with the words under the notes', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
+    await fireEvent.press(view.getByTestId('melody-export-abc'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const [contents, fileName, mimeType] = mockDeliverFile.mock.calls[0];
+    expect(fileName).toBe('The-Lantern-Song.abc');
+    expect(mimeType).toBe('text/vnd.abc');
+    expect(contents).toContain('T:The Lantern Song');
+    expect(contents).toContain('M:3/4');
+    expect(contents).toContain('K:G');
+    expect(contents).toContain('w: Light the lantern');
+  });
+
+  it('plays the song from the start, hummed, when play is pressed', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-play'));
+
+    expect(mockPlay).toHaveBeenCalledWith(
+      { kind: 'song' },
+      {
+        timbre: 'hum',
+        click: false,
+        instrument: null,
+        feel: 'auto',
+      },
+    );
+  });
+
+  it('stops what plays when the button is pressed again', async () => {
+    mockPlayback = { ...mockPlayback, phase: 'playing' };
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-play'));
+
+    expect(mockStop).toHaveBeenCalled();
+    expect(mockPlay).not.toHaveBeenCalled();
+  });
+
+  it('asks the player to sound a key and writes the note it plays', async () => {
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+
+    await fireEvent.press(view.getByTestId('piano-key-64'));
+
+    expect(mockPlayTone).toHaveBeenCalledWith(64, 'hum');
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
+    await fireEvent(view.getByTestId('song-melody'), 'blur');
+    await waitFor(() =>
+      expect(mockUpdateSong).toHaveBeenCalledWith('user-1', 'song-1', {
+        melody: 'P:Verse 1\nE',
+      }),
+    );
+  });
+
+  it('asks before deleting, and goes back once the song is gone', async () => {
+    await render(<SongEditorScreen />);
+
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'delete-song')?.onPress());
+    const options = mockConfirmDelete.mock.calls[0][0];
+    expect(options.titleKey).toBe('song_delete_title');
+    expect(mockDeleteSong).not.toHaveBeenCalled();
+    await act(async () => options.onConfirm());
+
+    expect(mockDeleteSong).toHaveBeenCalledWith('user-1', 'song-1');
+    expect(mockGoBack).toHaveBeenCalled();
+  });
+
+  it('lists the scenes that sing it, and opens one', async () => {
+    mockUses = [{ sceneId: 'scene-9', sceneName: 'The tavern' }];
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-details'));
+
+    await fireEvent.press(view.getByText('The tavern'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('NarrativeElementsStack', {
+      screen: 'SceneDetail',
+      params: { sceneId: 'scene-9' },
+    });
+  });
+
+  it('says so when no scene sings it', async () => {
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-details'));
+
+    expect(view.getByText('song_scenes_none')).toBeTruthy();
+  });
+
+  it('shows a loading state while the song loads, and an error for one that is gone', async () => {
+    mockSong = undefined;
+    const loading = await render(<SongEditorScreen />);
+    expect(loading.getByText('loading')).toBeTruthy();
+    await loading.unmount();
+
+    mockSong = null;
+    const gone = await render(<SongEditorScreen />);
+    expect(gone.getByTestId('screen-error').props.children).toBe('song_not_found');
+  });
+
+  it('is read-only for someone who cannot edit', async () => {
+    mockCanEdit = false;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-details'));
+
+    expect(view.getByTestId('song-title').props.editable).toBe(false);
+    expect(view.getByTestId('song-notes').props.editable).toBe(false);
+    expect(mockHeader?.actions?.find((action) => action.id === 'delete-song')?.visible).toBe(false);
+  });
+});
+
+describe('with the music tools off', () => {
+  beforeEach(() => {
+    useMusicToolsStore.setState({ enabled: false });
+  });
+
+  it('writes the words in one place: no sheet to switch to, no chords to move', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-lyrics')).toBeTruthy();
+    expect(view.queryByTestId('song-mode-sheet')).toBeNull();
+    expect(view.queryByTestId('song-transpose-up')).toBeNull();
+    expect(view.queryByTestId('song-transpose-down')).toBeNull();
+    expect(view.getByTestId('song-add-verse')).toBeTruthy();
+  });
+
+  it('asks for the words and a part marked on a line of its own, not for chords', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-lyrics').props.placeholder).toBe(
+      'song_lyrics_placeholder_simple',
+    );
+  });
+
+  it('adds a part as a heading anyone can read, not as a ChordPro block', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-add-chorus'));
+
+    const lyrics = view.getByTestId('song-lyrics').props.value as string;
+    expect(lyrics).toMatch(/^\[[^\]{}]+\]$/m);
+    expect(lyrics).not.toContain('{start_of_chorus');
+  });
+
+  it('keeps the ChordPro export for the music tools', async () => {
+    await render(<SongEditorScreen />);
+
+    expect(mockHeader?.actions?.find((action) => action.id === 'export-song')?.visible).toBe(false);
+  });
+
+  it('lets the tune be heard and written, without the sound options or the files', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    expect(view.getByTestId('melody-play')).toBeTruthy();
+    expect(view.queryByTestId('melody-options-toggle')).toBeNull();
+    expect(view.queryByTestId('melody-more-toggle')).toBeNull();
+    expect(view.queryByTestId('melody-export-midi')).toBeNull();
+  });
+
+  it('folds the key, tempo and meter away behind what they come to', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    expect(view.queryByTestId('song-key')).toBeNull();
+    expect(view.getByTestId('song-details-summary').props.children).toContain('3/4');
+
+    await fireEvent.press(view.getByTestId('song-details-toggle'));
+    expect(view.getByTestId('song-key').props.value).toBe('G');
+    expect(view.getByTestId('song-tempo').props.value).toBe('90');
+  });
+});

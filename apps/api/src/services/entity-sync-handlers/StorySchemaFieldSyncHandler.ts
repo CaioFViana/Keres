@@ -10,8 +10,8 @@ import {
   PartialStorySchemaFieldSchema,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { storySchemaFields } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { storySchemaFields } from '@/db/schema';
 import { BaseSyncEntityHandler, duplicateOf } from './BaseSyncEntityHandler';
 
 export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<

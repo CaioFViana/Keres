@@ -1,24 +1,36 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
-import type { CommentableDetailFieldProps } from '../../../src/components/features/comments/CommentableDetailField/CommentableDetailField';
-import { CharacterDetailContent } from '../../../src/screens/characters/CharacterDetailContent';
-import type { CharacterSelect } from '../../../src/db/schemas/characters';
-import type { ModeSelect } from '../../../src/db/schemas/modes';
+import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import { CharacterDetailContent } from '@/src/screens/characters/CharacterDetailContent';
+import type { CharacterSelect } from '@/src/db/schemas/characters';
+import type { ModeSelect } from '@/src/db/schemas/modes';
 import type {
   ItemJourneySelect,
   ItemSelect,
   SceneSelect,
   StoryArcSelect,
   TagSelect,
-} from '../../../src/db/schema';
-import type { StoryStatsData } from '../../../src/hooks/useStoryStats';
-import type { ScenePresenceEntry } from '../../../src/components/features/scenes/ScenePresenceList/ScenePresenceList';
+} from '@/src/db/schema';
+import type { StoryStatsData } from '@/src/hooks/story/useStoryStats';
+import type { ScenePresenceEntry } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 
-jest.mock('../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/theme', () => ({
+  useTheme: () => ({
+    isDarkMode: false,
+    colors: {
+      primary: '#00f',
+      background: '#fff',
+      border: '#ddd',
+      textSecondary: '#555',
+    },
+  }),
+}));
+
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -30,7 +42,7 @@ jest.mock('../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../src/components/common/display/DetailField/DetailField', () => {
+jest.mock('@/src/components/common/display/DetailField/DetailField', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -40,7 +52,7 @@ jest.mock('../../../src/components/common/display/DetailField/DetailField', () =
   };
 });
 
-jest.mock('../../../src/components/common/display/TagList/TagList', () => {
+jest.mock('@/src/components/common/display/TagList/TagList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -52,7 +64,7 @@ jest.mock('../../../src/components/common/display/TagList/TagList', () => {
   };
 });
 
-jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () => {
+jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -60,16 +72,22 @@ jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () =
       title,
       footer,
       landing,
+      tabs,
+      scrollResetKey,
       children,
     }: {
       title: string;
       footer?: ReactNode;
       landing?: unknown;
+      tabs?: ReactNode;
+      scrollResetKey?: string;
       children?: ReactNode;
     }) => (
       <>
         <Text testID="detail-title">{title}</Text>
         <Text testID="detail-landing">{JSON.stringify(landing ?? null)}</Text>
+        <Text testID="detail-scroll-reset">{scrollResetKey}</Text>
+        {tabs}
         {children}
         {footer}
       </>
@@ -77,7 +95,7 @@ jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () =
   };
 });
 
-jest.mock('../../../src/components/layout/ScreenSection/ScreenSection', () => {
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -91,7 +109,7 @@ jest.mock('../../../src/components/layout/ScreenSection/ScreenSection', () => {
 });
 
 jest.mock(
-  '../../../src/components/features/comments/CommentableDetailField/CommentableDetailField',
+  '@/src/components/features/comments/CommentableDetailField/CommentableDetailField',
   () => {
     const { Text } = require('react-native');
     return {
@@ -103,20 +121,15 @@ jest.mock(
   },
 );
 
-jest.mock(
-  '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({ entityId }: { entityId: string }) => (
-        <Text testID="custom-attrs">{entityId}</Text>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ entityId }: { entityId: string }) => <Text testID="custom-attrs">{entityId}</Text>,
+  };
+});
 
-jest.mock('../../../src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
+jest.mock('@/src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -136,7 +149,7 @@ jest.mock('../../../src/components/features/gallery/GalleryManager/EntityGallery
   };
 });
 
-jest.mock('../../../src/components/features/stats/CharacterStatPanel/CharacterStatPanel', () => {
+jest.mock('@/src/components/features/stats/CharacterStatPanel/CharacterStatPanel', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -158,7 +171,7 @@ jest.mock('../../../src/components/features/stats/CharacterStatPanel/CharacterSt
   };
 });
 
-jest.mock('../../../src/components/features/stats/ModeManager/ModeManager', () => {
+jest.mock('@/src/components/features/stats/ModeManager/ModeManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -171,7 +184,7 @@ jest.mock('../../../src/components/features/stats/ModeManager/ModeManager', () =
 });
 
 jest.mock(
-  '../../../src/components/features/relations/CharacterRelationManager/CharacterRelationManager',
+  '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager',
   () => {
     const { Text } = require('react-native');
     return {
@@ -195,30 +208,27 @@ jest.mock(
   },
 );
 
-jest.mock(
-  '../../../src/components/features/characters/CharacterManager/CharacterSceneManager',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        characterSceneRelations: unknown[];
-        availableScenes: { name: string }[];
-        currentCharacterId: string;
-      }) => (
-        <Text testID="scene-manager">
-          {JSON.stringify({
-            relations: props.characterSceneRelations.length,
-            scenes: props.availableScenes.map((s) => s.name),
-            current: props.currentCharacterId,
-          })}
-        </Text>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/characters/CharacterManager/CharacterSceneManager', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      characterSceneRelations: unknown[];
+      availableScenes: { name: string }[];
+      currentCharacterId: string;
+    }) => (
+      <Text testID="scene-manager">
+        {JSON.stringify({
+          relations: props.characterSceneRelations.length,
+          scenes: props.availableScenes.map((s) => s.name),
+          current: props.currentCharacterId,
+        })}
+      </Text>
+    ),
+  };
+});
 
-jest.mock('../../../src/components/features/items/ItemManager/ItemCharacterManager', () => {
+jest.mock('@/src/components/features/items/ItemManager/ItemCharacterManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -238,7 +248,7 @@ jest.mock('../../../src/components/features/items/ItemManager/ItemCharacterManag
   };
 });
 
-jest.mock('../../../src/components/features/scenes/ScenePresenceList/ScenePresenceList', () => {
+jest.mock('@/src/components/features/scenes/ScenePresenceList/ScenePresenceList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -260,7 +270,7 @@ jest.mock('../../../src/components/features/scenes/ScenePresenceList/ScenePresen
   };
 });
 
-jest.mock('../../../src/components/features/notes/NoteManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -275,7 +285,7 @@ jest.mock('../../../src/components/features/notes/NoteManager', () => {
   };
 });
 
-jest.mock('../../../src/components/features/arcs/AppearsInArcsSection', () => {
+jest.mock('@/src/components/features/arcs/AppearsInArcsSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -285,7 +295,7 @@ jest.mock('../../../src/components/features/arcs/AppearsInArcsSection', () => {
   };
 });
 
-jest.mock('../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -293,7 +303,7 @@ jest.mock('../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManage
   };
 });
 
-jest.mock('../../../src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
+jest.mock('@/src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -301,7 +311,7 @@ jest.mock('../../../src/components/features/favorites/FavoritedByList/FavoritedB
   };
 });
 
-jest.mock('../../../src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -399,6 +409,11 @@ function jsonOf(view: View, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
 }
 
+const openTab = async (view: unknown, key: 'details' | 'relations' | 'other') =>
+  fireEvent.press(
+    (view as { getByTestId: (id: string) => never }).getByTestId(`detail-tab-${key}`),
+  );
+
 describe('CharacterDetailContent', () => {
   afterEach(() => {
     cleanup();
@@ -409,11 +424,15 @@ describe('CharacterDetailContent', () => {
     expect(view.getByTestId('detail-title').props.children).toBe('Aria');
     expect(view.getByText('Captain')).toBeTruthy();
     expect(view.getByTestId('tag-list').props.children).toBe('no_tags_found');
+
+    await openTab(view, 'other');
     expect(view.getByTestId('detail-is_favorite').props.children).toBe('is_favorite:common_no');
     expect(view.getByTestId('custom-attrs').props.children).toBe('char-1');
     expect(view.getByTestId('entity-metadata')).toBeTruthy();
-    expect(view.getByTestId('seealso-marker')).toBeTruthy();
     expect(view.getByTestId('favorited-marker')).toBeTruthy();
+
+    await openTab(view, 'relations');
+    expect(view.getByTestId('seealso-marker')).toBeTruthy();
     expect(view.getByTestId('arcs-marker').props.children).toBe('arcs:0');
   });
 
@@ -445,10 +464,12 @@ describe('CharacterDetailContent', () => {
     expect(view.getByTestId('commentable-description').props.children).toBe(
       'description:common_na',
     );
+    expect(view.queryByTestId('commentable-subrace')).toBeNull();
+
+    await openTab(view, 'other');
     expect(view.getByTestId('commentable-extra_notes').props.children).toBe(
       'extra_notes:common_na',
     );
-    expect(view.queryByTestId('commentable-subrace')).toBeNull();
     expect(view.getByTestId('detail-is_favorite').props.children).toBe('is_favorite:common_yes');
   });
 
@@ -484,7 +505,7 @@ describe('CharacterDetailContent', () => {
     expect(enabled.getByTestId('section-stats_title')).toBeTruthy();
     expect(enabled.getByTestId('stat-panel').props.children).toBe('char-1:Aria:letter');
     await fireEvent.press(enabled.getByTestId('stat-panel-compare'));
-    expect(props.navigation.navigate).toHaveBeenCalledWith('CustomizationStack', {
+    expect(props.navigation.navigate).toHaveBeenCalledWith('StatsStack', {
       screen: 'StatComparison',
       params: { characterId: 'char-1', modeId: 'mode-1' },
     });
@@ -506,6 +527,7 @@ describe('CharacterDetailContent', () => {
         })}
       />,
     );
+    await openTab(view, 'relations');
     expect(jsonOf(view, 'relation-manager')).toMatchObject({
       relations: 1,
       characters: ['Bram'],
@@ -529,5 +551,75 @@ describe('CharacterDetailContent', () => {
       sceneLabel: 'Scene',
     });
     expect(jsonOf(view, 'note-relations')).toEqual({ relations: 1, notes: 2 });
+  });
+
+  describe('tabs', () => {
+    it('starts on the details and builds the other tabs only when they are opened', async () => {
+      const view = await render(<CharacterDetailContent {...baseProps()} />);
+
+      expect(view.getByTestId('commentable-gender')).toBeTruthy();
+      expect(view.queryByTestId('relation-manager')).toBeNull();
+      expect(view.queryByTestId('entity-metadata')).toBeNull();
+      expect(view.getByTestId('detail-tab-details').props.accessibilityState).toEqual({
+        selected: true,
+      });
+    });
+
+    it('keeps the fields where they belong: the entity, its links, the rest', async () => {
+      const view = await render(<CharacterDetailContent {...baseProps()} />);
+      await openTab(view, 'relations');
+      await openTab(view, 'other');
+
+      const inPanel = (panel: string, testID: string) =>
+        view
+          .getByTestId(`detail-panel-${panel}`, { includeHiddenElements: true })
+          .queryAll((node: { props: { testID?: string } }) => node.props.testID === testID).length;
+
+      expect(inPanel('details', 'commentable-biography')).toBeGreaterThan(0);
+      expect(inPanel('details', 'gallery-marker')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'relation-manager')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'seealso-marker')).toBeGreaterThan(0);
+      expect(inPanel('other', 'custom-attrs')).toBeGreaterThan(0);
+      expect(inPanel('other', 'commentable-extra_notes')).toBeGreaterThan(0);
+      expect(inPanel('other', 'entity-metadata')).toBeGreaterThan(0);
+    });
+
+    it('hides the tab left behind but keeps it built', async () => {
+      const view = await render(<CharacterDetailContent {...baseProps()} />);
+
+      await openTab(view, 'relations');
+      await openTab(view, 'details');
+
+      expect(view.getByTestId('commentable-gender')).toBeTruthy();
+      expect(view.queryByTestId('relation-manager')).toBeNull();
+      expect(
+        view.getByTestId('detail-panel-relations', { includeHiddenElements: true }),
+      ).toBeTruthy();
+    });
+
+    it('goes back to the top when the tab changes', async () => {
+      const view = await render(<CharacterDetailContent {...baseProps()} />);
+      expect(view.getByTestId('detail-scroll-reset').props.children).toBe('details');
+
+      await openTab(view, 'other');
+
+      expect(view.getByTestId('detail-scroll-reset').props.children).toBe('other');
+    });
+
+    it('opens the tab that holds the field a search result lands on', async () => {
+      const onDetails = await render(
+        <CharacterDetailContent
+          {...baseProps({ occurrence: { field: 'biography', needle: 'harbor' } })}
+        />,
+      );
+      expect(onDetails.getByTestId('commentable-biography')).toBeTruthy();
+
+      cleanup();
+      const onCustom = await render(
+        <CharacterDetailContent {...baseProps({ occurrence: { field: 'custom:abc' } })} />,
+      );
+      expect(onCustom.getByTestId('custom-attrs')).toBeTruthy();
+      expect(onCustom.queryByTestId('commentable-biography')).toBeNull();
+    });
   });
 });

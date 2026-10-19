@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 /**
  * A repeatable row of small fields: months, eras, seasons, moons.
@@ -154,10 +155,10 @@ function CalendarRowList<T extends Record<string, unknown>>({
                     accessibilityRole="button"
                     accessibilityLabel={field.label}
                   >
-                    <Text style={{ color: colors.text }} numberOfLines={1}>
+                    <ThemedText numberOfLines={1}>
                       {field.choices?.find((choice) => choice.value === row[field.key])?.label ??
                         field.placeholder}
-                    </Text>
+                    </ThemedText>
                   </TouchableOpacity>
                 ) : (
                   <TextInput

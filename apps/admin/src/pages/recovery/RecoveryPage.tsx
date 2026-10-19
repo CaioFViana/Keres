@@ -1,9 +1,11 @@
 import type { FormEvent, KeyboardEvent } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared';
-import type { DeletedItem, OperationLogEntry } from '../../api/RecoveryApiService';
-import { RecoveryApiService } from '../../api/RecoveryApiService';
+import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared/metadata/recoverableEntityTypes';
+import type { DeletedItem, OperationLogEntry } from '@/api/RecoveryApiService';
+import { RecoveryApiService } from '@/api/RecoveryApiService';
+import { Modal } from '@/components/Modal';
+import { entityTypeLabel } from '@/i18n/entityTypeLabel';
 
 export function RecoveryPage() {
   const { t, i18n } = useTranslation('admin');
@@ -20,6 +22,7 @@ export function RecoveryPage() {
   const [selectedEntry, setSelectedEntry] = useState<OperationLogEntry | null>(null);
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const search = (e?: FormEvent) => {
     e?.preventDefault();
@@ -37,14 +40,19 @@ export function RecoveryPage() {
 
   const restore = async (item: DeletedItem) => {
     const label = item.name ? `"${item.name}"` : item.id;
-    if (!confirm(t('recovery.confirmRestore', { entityType: item.entityType, label }))) return;
+    if (
+      !confirm(
+        t('recovery.confirmRestore', { entityType: entityTypeLabel(t, item.entityType), label }),
+      )
+    )
+      return;
     try {
       await RecoveryApiService.restore(item.entityType, item.id);
       setItems((prev) =>
         prev.filter((i) => !(i.entityType === item.entityType && i.id === item.id)),
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('common.restoreFailed'));
+      setNotice(err instanceof Error ? err.message : t('common.restoreFailed'));
     }
   };
 
@@ -89,9 +97,9 @@ export function RecoveryPage() {
             {t('recovery.entityType')}
             <select value={entityType} onChange={(e) => setEntityType(e.target.value)}>
               <option value="">{t('recovery.allEntityTypes')}</option>
-              {RECOVERABLE_ENTITY_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              {RECOVERABLE_ENTITY_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {entityTypeLabel(t, type)}
                 </option>
               ))}
             </select>
@@ -135,7 +143,7 @@ export function RecoveryPage() {
               <tbody>
                 {items.map((item) => (
                   <tr key={`${item.entityType}:${item.id}`}>
-                    <td>{item.entityType}</td>
+                    <td>{entityTypeLabel(t, item.entityType)}</td>
                     <td>{item.name ?? <span className="hint">{t('recovery.unnamed')}</span>}</td>
                     <td className="mono-code">{item.id}</td>
                     <td>{storyCell(item)}</td>
@@ -213,7 +221,7 @@ export function RecoveryPage() {
                     >
                       <td>{new Date(entry.createdAt).toLocaleString(i18n.language)}</td>
                       <td>{entry.operationType}</td>
-                      <td>{entry.entityType}</td>
+                      <td>{entityTypeLabel(t, entry.entityType)}</td>
                       <td>{entry.entityName ?? <span className="hint">{entry.entityId}</span>}</td>
                       <td title={entry.storyId}>{entry.storyTitle ?? entry.storyId}</td>
                       <td title={entry.userId}>{entry.username ?? entry.userId}</td>
@@ -232,13 +240,18 @@ export function RecoveryPage() {
 
             {selectedEntry && (
               <div className="detail-panel">
-                <h3>{t('recovery.operationDetail')}</h3>
+                <div className="detail-header">
+                  <h3>{t('recovery.operationDetail')}</h3>
+                  <button type="button" onClick={() => setSelectedEntry(null)}>
+                    {t('common.close')}
+                  </button>
+                </div>
                 <dl>
                   <dt>{t('recovery.columnType')}</dt>
                   <dd>{selectedEntry.operationType}</dd>
                   <dt>{t('recovery.columnEntity')}</dt>
                   <dd>
-                    {selectedEntry.entityType}
+                    {entityTypeLabel(t, selectedEntry.entityType)}
                     {selectedEntry.entityName ? ` · ${selectedEntry.entityName}` : ''}
                   </dd>
                   <dt>{t('recovery.columnId')}</dt>
@@ -264,6 +277,12 @@ export function RecoveryPage() {
           </div>
         )}
       </section>
+
+      {notice && (
+        <Modal title={t('common.notice')} onClose={() => setNotice(null)}>
+          <p>{notice}</p>
+        </Modal>
+      )}
     </div>
   );
 }

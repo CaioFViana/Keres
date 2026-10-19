@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import PlotReaderScreen from '../../../src/screens/plots/PlotReaderScreen';
+import PlotReaderScreen from '@/src/screens/plots/PlotReaderScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -18,7 +18,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -38,7 +38,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -56,7 +56,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -68,17 +68,17 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/hooks/useStoryPlots', () => ({
+jest.mock('@/src/screens/plots/useStoryPlots', () => ({
   useStoryPlots: () => mockPlotsData,
 }));
 
-jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockOpenEntity,
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

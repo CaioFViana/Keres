@@ -1,10 +1,9 @@
 import { render } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
-import ResponsiveModal from '../../../src/components/layout/ResponsiveModal/ResponsiveModal';
+import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 
 const mockKeyboard = { overlap: 0, calls: [] as boolean[] };
-jest.mock('../../../src/hooks/useKeyboardOverlap', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+jest.mock('@/src/hooks/ui/useKeyboardOverlap', () => {
   const React = require('react');
   return {
     __esModule: true,
@@ -15,13 +14,13 @@ jest.mock('../../../src/hooks/useKeyboardOverlap', () => {
     },
   };
 });
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({ colors: { background: '#fff' } }),
 }));
-jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+jest.mock('@/src/hooks/ui/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: true, isWide: false }),
 }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 

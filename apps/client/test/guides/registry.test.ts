@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { getScreenGuide, screenGuides } from '../../src/guides/registry';
+import { getScreenGuide, screenGuides } from '@/src/guides/registry';
 
 describe('screenGuides', () => {
   it('registers the pilot tours by route name', () => {
@@ -8,7 +8,7 @@ describe('screenGuides', () => {
       'BoardsStack',
       'CharactersStack',
       'CommentsStack',
-      'CustomizationStack',
+      'EntityForm',
       'ExampleStories',
       'GalleryStack',
       'GlobalSearch',
@@ -17,23 +17,30 @@ describe('screenGuides', () => {
       'LocationsStack',
       'MainDashboard',
       'Manuscript',
+      'MessageInbox',
       'NarrativeElementsStack',
       'NotesStack',
       'OperationLogStack',
       'PackList',
       'PlotsStack',
+      'SceneDetail',
+      'SceneEditor',
+      'SceneMusic',
+      'SketchCanvas',
+      'SketchStack',
+      'SongEditor',
+      'SongStack',
+      'SongTune',
       'StatList',
       'StoryAnalysis',
-      'StoryAppearance',
       'StoryArcList',
       'StoryCalendarList',
-      'StoryForm',
+      'StoryEntityCount',
       'StorySchemaList',
       'StorySelectionMain',
       'Suggestions',
       'TagsStack',
       'Vocabulary',
-      'WorldRulesStack',
     ]);
     for (const [screenId, guide] of Object.entries(screenGuides)) {
       expect(guide.id).toBe(screenId);
@@ -60,7 +67,7 @@ describe('screenGuides', () => {
     }
   });
 
-  it('addresses drawer steps at the guide drawer and screen steps at screen regions', () => {
+  it('addresses drawer steps at the guide drawer, and other steps at screen regions or header actions', () => {
     for (const guide of Object.values(screenGuides)) {
       for (const step of guide.steps) {
         expect(step.anchors?.length ?? 0).toBeGreaterThan(0);
@@ -69,7 +76,7 @@ describe('screenGuides', () => {
             expect(step.drawerId).toBe(guide.drawerId);
             expect(anchor.startsWith(`drawer:${guide.drawerId}:`)).toBe(true);
           } else {
-            expect(anchor.startsWith('screen:')).toBe(true);
+            expect(/^(screen|header):/.test(anchor)).toBe(true);
           }
         }
       }
@@ -84,7 +91,7 @@ describe('screenGuides', () => {
     process.env.EXPO_PUBLIC_SERVERLESS = '1';
     try {
       jest.isolateModules(() => {
-        const serverless: typeof screenGuides = require('../../src/guides/registry').screenGuides;
+        const serverless: typeof screenGuides = require('@/src/guides/registry').screenGuides;
         expect(stepIds(serverless)).toEqual(['stories', 'drawer-create', 'drawer-system']);
       });
     } finally {

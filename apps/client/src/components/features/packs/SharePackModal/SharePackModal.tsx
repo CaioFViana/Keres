@@ -6,7 +6,10 @@ import type { PackVisibility } from '@keres/shared';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
+import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
 
 /**
  * Sharing a pack: which server, and whether it goes on that server's public showcase.
@@ -42,7 +45,6 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
   onCancel,
   onConfirm,
 }) => {
-  const { colors } = useTheme();
   const { t } = useTranslation();
 
   const [serverId, setServerId] = useState<string | null>(null);
@@ -68,40 +70,11 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
     setServerId(onlyServerId);
   }
 
-  const styles = StyleSheet.create({
-    modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },
-    modalTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 6,
-      textAlign: 'center',
-    },
-    subtitle: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    formGroup: { marginBottom: 15 },
-    label: { fontSize: 16, color: colors.text, marginBottom: 5 },
-    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 20,
-      paddingHorizontal: '3%',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
-    <ResponsiveModal
-      visible={visible}
-      onClose={onCancel}
-      contentStyle={styles.modalContent}
-      maxHeight="86%"
-    >
-      <Text style={styles.modalTitle}>{t('packs_share_title')}</Text>
+    <ResponsiveModal visible={visible} onClose={onCancel} inset="roomy" maxHeight="86%">
+      <ModalHeader title={t('packs_share_title')} />
       <Text style={styles.subtitle}>{t('packs_share_message', { name: packName })}</Text>
 
       <View style={styles.formGroup}>
@@ -145,5 +118,24 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
     </ResponsiveModal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    subtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginBottom: 20,
+      textAlign: 'center',
+    },
+    formGroup: { marginBottom: 15 },
+    label: { ...typography.bodyLarge, color: colors.text, marginBottom: 5 },
+    hint: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+      paddingHorizontal: '3%',
+    },
+  });
 
 export default SharePackModal;

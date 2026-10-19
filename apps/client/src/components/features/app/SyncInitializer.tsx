@@ -1,25 +1,32 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { APP_RELEASE, canTalkToServer } from '@keres/shared';
-import { useDrizzle } from '../../../db';
-import apiClient, { apiUrl, isOfflineError } from '../../../services/apiClient';
-import { authTokenManager, setAuthDb } from '../../../services/AuthTokenManager';
-import { setEditorDraftDb } from '../../../services/EditorDraftService';
-import { createFriendshipService } from '../../../services/FriendshipService';
-import { createStoryInvitationService } from '../../../services/StoryInvitationService';
-import { createServerService } from '../../../services/ServerService';
-import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
-import { createStoryService } from '../../../services/storymanagement/StoryService';
-import type { ServerStoryPreview } from '../../../services/SyncEngineService';
-import { syncEngine } from '../../../services/sync/appSyncEngine';
-import { dropRevokedServerStories } from '../../../services/sync/dropRevokedServerStories';
-import { useNotificationStore } from '../../../state/notificationStore';
-import { useStoryListStore } from '../../../state/storyListStore';
-import { useStoryStore } from '../../../state/storyStore'; // Import useStoryStore
-import { useSyncConflictStore } from '../../../state/syncConflictStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { useEntityInitialLoad } from '../../../hooks/useEntityRefreshLifecycle';
+import { useDrizzle } from '@/src/db';
+import apiClient, {
+  apiUrl,
+  isOfflineError,
+  isVerificationPendingError,
+} from '@/src/services/api/apiClient';
+import { authTokenManager, setAuthDb } from '@/src/services/auth/AuthTokenManager';
+import { setEditorDraftDb } from '@/src/services/drafts/EditorDraftService';
+import { createFriendshipService } from '@/src/services/social/FriendshipService';
+import { createStoryInvitationService } from '@/src/services/social/StoryInvitationService';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { useFlushDraftsOnBackground } from '@/src/hooks/sync/useFlushDraftsOnBackground';
+import { usePaymentDueWatcher } from '@/src/hooks/billing/usePaymentDueWatcher';
+import { usePlanUsageWatcher } from '@/src/hooks/billing/usePlanUsageWatcher';
+import { ServerRealtimeService } from '@/src/services/servers/ServerRealtimeService';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import type { ServerStoryPreview } from '@/src/services/sync/SyncEngineService';
+import { syncEngine } from '@/src/services/sync/appSyncEngine';
+import { dropRevokedServerStories } from '@/src/services/sync/dropRevokedServerStories';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryListStore } from '@/src/state/story/storyListStore';
+import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
+import { useSyncConflictStore } from '@/src/state/sync/syncConflictStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { useEntityInitialLoad } from '@/src/hooks/lists/useEntityRefreshLifecycle';
 
 interface SyncInitializerProps {
   children: React.ReactNode;
@@ -40,6 +47,11 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const { fetchStories: fetchStoryList } = useStoryListStore();
   const { selectedStory } = useStoryStore(); // Get selectedStory from useStoryStore
   const { t } = useTranslation();
+  // How close the open story is to its plan: the editor's indicator and the alert notification read it.
+  usePlanUsageWatcher(drizzleClient, selectedStory);
+  useFlushDraftsOnBackground();
+  // A paid plan about to run out, said once and only if the user allowed it (see the setting).
+  usePaymentDueWatcher(drizzleClient, userId);
   const realtimeByServerRef = useRef(new Map<string, ServerRealtimeService>());
   // Connections outlive story switches, so the subscription applier reads the current story
   // from a ref instead of closing over the render's value. Synced in an effect (not during
@@ -183,6 +195,8 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
                 sawUnreachableServer = true;
                 continue;
               }
+              // A pending account is sent to its age check (the navigator's listener): nothing to report here.
+              if (isVerificationPendingError(downloadError)) continue;
               console.log(
                 `Failed to download and import story ${storyPreview.storyId}:`,
                 (downloadError as Error)?.message || downloadError,
@@ -201,6 +215,11 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           // Server unreachable: expected in an offline-first app, retried on a shorter delay.
           console.log(`Server ${server.name} is unreachable, skipping this cycle.`);
           sawUnreachableServer = true;
+          continue;
+        }
+        // Refused for want of an age check: the app opens the verification instead of a generic sync failure.
+        if (isVerificationPendingError(error)) {
+          console.log(`Sync with ${server.name} held: the account awaits age verification.`);
           continue;
         }
         console.log(
@@ -249,6 +268,8 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     if (!drizzleClient || !userId) return;
     let disposed = false;
     const realtimeConnections = realtimeByServerRef.current;
+    // The sync timer relaxes only while the active server's socket is proven alive.
+    syncEngine.setRealtimeProbe((serverId) => realtimeConnections.get(serverId)?.isLive ?? false);
     const connectServers = async () => {
       const servers = await createServerService(drizzleClient).getAllServers();
       if (disposed) return;
@@ -270,6 +291,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
     );
     return () => {
       disposed = true;
+      syncEngine.setRealtimeProbe(null);
       for (const realtime of realtimeConnections.values()) void realtime.stop();
       realtimeConnections.clear();
     };

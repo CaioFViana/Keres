@@ -9,7 +9,7 @@ vi.mock('react-dom/client', () => ({
 
 beforeAll(async () => {
   document.body.innerHTML = '<div id="root"></div>';
-  await import('../../src/showcase/main');
+  await import('@/showcase/main');
 });
 
 describe('showcase entry point', () => {

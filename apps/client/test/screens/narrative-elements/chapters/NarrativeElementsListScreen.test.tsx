@@ -6,7 +6,9 @@ import {
   type RenderResult,
   waitFor,
 } from '@testing-library/react-native';
-import { UNCHAPTERED_GROUP_ID } from '../../../../src/utils/narrativeSceneOrder';
+import { UNCHAPTERED_GROUP_ID } from '@/src/utils/analysis/narrativeSceneOrder';
+
+import NarrativeElementsListScreen from '@/src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -51,6 +53,7 @@ const mockAlert: jest.Mock = jest.fn(
 
 let mockSelectedStory: { id: string; type: string } | null = { id: 'story-1', type: 'linear' };
 let mockActiveArcId: string | null = null;
+let mockEffectiveMedium: string | null = null;
 let mockCanEdit = true;
 let mockStoredScenes: { id: string; isFavorite: boolean }[] = [];
 let mockLoading = false;
@@ -82,12 +85,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
 
-jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (args: {
     title: string;
@@ -96,12 +99,12 @@ jest.mock('../../../../src/hooks/useScreenHeader', () => ({
     mockHeaderArgs = args as never;
   },
 }));
-jest.mock('../../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
-jest.mock('../../../../src/hooks/useEntityListScreen', () => ({
+jest.mock('@/src/hooks/lists/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: () => ({
     listProps: mockListPropsValue,
@@ -117,18 +120,22 @@ jest.mock('../../../../src/hooks/useEntityListScreen', () => ({
   }),
 }));
 
-jest.mock('../../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
 }));
 
-jest.mock('../../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: object) => unknown) =>
-    selector({ selectedStory: mockSelectedStory, activeArcId: mockActiveArcId }),
+    selector({
+      selectedStory: mockSelectedStory,
+      activeArcId: mockActiveArcId,
+      effectiveArc: mockEffectiveMedium ? { id: 'arc-x', medium: mockEffectiveMedium } : null,
+    }),
 }));
 
-jest.mock('../../../../src/state/sceneStore', () => ({
+jest.mock('@/src/state/story/sceneStore', () => ({
   __esModule: true,
   useSceneStore: (selector: (state: object) => unknown) =>
     selector({
@@ -141,13 +148,13 @@ jest.mock('../../../../src/state/sceneStore', () => ({
     }),
 }));
 
-jest.mock('../../../../src/state/chapterStore', () => ({
+jest.mock('@/src/state/story/chapterStore', () => ({
   __esModule: true,
   useChapterStore: (selector: (state: object) => unknown) =>
     selector({ reorderChapters: mockReorderChapters }),
 }));
 
-jest.mock('../../../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return {
     __esModule: true,
@@ -155,7 +162,7 @@ jest.mock('../../../../src/db', () => {
   };
 });
 
-jest.mock('../../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -169,7 +176,7 @@ jest.mock('../../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../../src/vocabulary/useStoryVocabulary', () => {
+jest.mock('@/src/hooks/vocabulary/useStoryVocabulary', () => {
   const term = (value: string, plural?: boolean) => (plural ? `${value}s` : value);
   return {
     __esModule: true,
@@ -177,12 +184,12 @@ jest.mock('../../../../src/vocabulary/useStoryVocabulary', () => {
   };
 });
 
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   __esModule: true,
   entityEventEmitter: {
     on: (...args: unknown[]) => mockEmitterOn(...args),
@@ -198,7 +205,7 @@ jest.mock('react-i18next', () => {
   };
 });
 
-jest.mock('../../../../src/services/storymanagement/ChapterService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/ChapterService', () => ({
   __esModule: true,
   createChapterService: () => ({
     getAllByStoryId: mockGetAllChapters,
@@ -206,7 +213,7 @@ jest.mock('../../../../src/services/storymanagement/ChapterService', () => ({
   }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+jest.mock('@/src/services/storymanagement/scenes-chapters/SceneService', () => ({
   __esModule: true,
   createSceneService: () => ({
     getAllByStoryId: mockGetAllScenes,
@@ -214,7 +221,7 @@ jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
   }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/ChoiceService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/ChoiceService', () => ({
   __esModule: true,
   createChoiceService: () => ({
     getAllByStoryId: mockGetAllChoices,
@@ -222,136 +229,132 @@ jest.mock('../../../../src/services/storymanagement/ChoiceService', () => ({
   }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/TagService', () => ({
+jest.mock('@/src/services/storymanagement/notes-tags-comments/TagService', () => ({
   __esModule: true,
   createTagService: () => ({ getTagsByStoryId: mockGetTagsByStoryId }),
 }));
 
-jest.mock('../../../../src/services/storymanagement/TagRelationService', () => ({
+jest.mock('@/src/services/storymanagement/relations/TagRelationService', () => ({
   __esModule: true,
   createTagRelationService: () => ({ getTagsForEntity: mockGetTagsForEntity }),
 }));
 
-jest.mock(
-  '../../../../src/screens/narrative-elements/chapters/createChapterListItemRenderer',
-  () => {
-    const actual = jest.requireActual(
-      '../../../../src/screens/narrative-elements/chapters/createChapterListItemRenderer',
-    ) as object;
-    const { isUnchapteredGroup } = jest.requireActual(
-      '../../../../src/utils/narrativeSceneOrder',
-    ) as { isUnchapteredGroup: (id: string) => boolean };
-    return {
-      ...(actual as object),
-      createChapterListItemRenderer: (deps: {
-        scenesWithFavoriteState: { id: string; chapterId: string | null; isFavorite: boolean }[];
-        handleViewDetails: (id: string) => void;
-        handleOpenScene: (id: string) => void;
-        handleAddScene: (id: string) => void;
-        handleToggleFavorite: (id: string, fav: boolean) => void;
-        handleToggleSceneFavorite: (id: string, fav: boolean) => void;
-        setReorderChapterId: (id: string | null) => void;
-      }) => {
-        const Row = ({ item }: { item: { id: string; name: string; isFavorite: boolean } }) => {
-          const { Text } = require('react-native');
-          const scenes = deps.scenesWithFavoriteState.filter((scene) =>
-            isUnchapteredGroup(item.id) ? !scene.chapterId : scene.chapterId === item.id,
-          );
-          return (
-            <>
-              <Text testID={`rowname-${item.id}`}>{item.name}</Text>
-              <Text testID={`rowview-${item.id}`} onPress={() => deps.handleViewDetails(item.id)}>
-                view
-              </Text>
-              <Text
-                testID={`rowfav-${item.id}`}
-                onPress={() => deps.handleToggleFavorite(item.id, !item.isFavorite)}
-              >
-                {`fav:${item.isFavorite}`}
-              </Text>
-              <Text testID={`rowaddscene-${item.id}`} onPress={() => deps.handleAddScene(item.id)}>
-                add
-              </Text>
-              <Text
-                testID={`rowreorder-${item.id}`}
-                onPress={() => deps.setReorderChapterId(item.id)}
-              >
-                reorder
-              </Text>
-              {scenes.map((scene) => (
-                <Text
-                  key={scene.id}
-                  testID={`sceneopen-${scene.id}`}
-                  onPress={() => deps.handleOpenScene(scene.id)}
-                >
-                  {scene.id}
-                </Text>
-              ))}
-              {scenes.map((scene) => (
-                <Text
-                  key={`fav-${scene.id}`}
-                  testID={`scenefav-${scene.id}`}
-                  onPress={() => deps.handleToggleSceneFavorite(scene.id, !scene.isFavorite)}
-                >
-                  {`sfav:${scene.isFavorite}`}
-                </Text>
-              ))}
-            </>
-          );
-        };
-        return Row;
-      },
-    };
-  },
-);
-
-jest.mock(
-  '../../../../src/components/common/lists/GenericFilterSortList/GenericFilterSortList',
-  () => ({
-    __esModule: true,
-    default: (props: {
-      data: { id: string; name: string }[];
-      renderItem: (info: { item: { id: string; name: string } }) => React.ReactNode;
-      searchPlaceholder: string;
-      filterOptions: unknown[];
-      onFilterChange: (ids: string[]) => void;
-      selectedFilterValues: string[];
-      sortOptions: unknown[];
-      entityName: string;
-      storyId: string;
-      advancedSearchScopes: unknown[];
-      resultsMeta: string;
+jest.mock('@/src/screens/narrative-elements/chapters/createChapterListItemRenderer', () => {
+  const actual = jest.requireActual(
+    '@/src/screens/narrative-elements/chapters/createChapterListItemRenderer',
+  ) as object;
+  const { isUnchapteredGroup } = jest.requireActual('@/src/utils/analysis/narrativeSceneOrder') as {
+    isUnchapteredGroup: (id: string) => boolean;
+  };
+  return {
+    ...(actual as object),
+    createChapterListItemRenderer: (deps: {
+      scenesWithFavoriteState: { id: string; chapterId: string | null; isFavorite: boolean }[];
+      handleViewDetails: (id: string) => void;
+      handleOpenScene: (id: string) => void;
+      handleAddScene: (id: string) => void;
+      handleToggleFavorite: (id: string, fav: boolean) => void;
+      handleToggleSceneFavorite: (id: string, fav: boolean) => void;
+      setReorderChapterId: (id: string | null) => void;
     }) => {
-      const React = require('react');
-      const { Text } = require('react-native');
-      mockListProps = props as never;
-      return (
-        <>
-          <Text testID="list-meta">{props.resultsMeta}</Text>
-          <Text testID="list-search">{props.searchPlaceholder}</Text>
-          <Text testID="list-filters">
-            {JSON.stringify({
-              options: props.filterOptions,
-              selected: props.selectedFilterValues,
-              entity: props.entityName,
-              storyId: props.storyId,
-              sorts: props.sortOptions,
-              scopes: props.advancedSearchScopes,
-            })}
-          </Text>
-          <Text testID="list-filter-change" onPress={() => props.onFilterChange(['tag-1'])}>
-            filter
-          </Text>
-          {props.data.map((item) => (
-            <React.Fragment key={item.id}>{props.renderItem({ item })}</React.Fragment>
-          ))}
-        </>
-      );
+      const Row = ({ item }: { item: { id: string; name: string; isFavorite: boolean } }) => {
+        const { Text } = require('react-native');
+        const scenes = deps.scenesWithFavoriteState.filter((scene) =>
+          isUnchapteredGroup(item.id) ? !scene.chapterId : scene.chapterId === item.id,
+        );
+        return (
+          <>
+            <Text testID={`rowname-${item.id}`}>{item.name}</Text>
+            <Text testID={`rowview-${item.id}`} onPress={() => deps.handleViewDetails(item.id)}>
+              view
+            </Text>
+            <Text
+              testID={`rowfav-${item.id}`}
+              onPress={() => deps.handleToggleFavorite(item.id, !item.isFavorite)}
+            >
+              {`fav:${item.isFavorite}`}
+            </Text>
+            <Text testID={`rowaddscene-${item.id}`} onPress={() => deps.handleAddScene(item.id)}>
+              add
+            </Text>
+            <Text
+              testID={`rowreorder-${item.id}`}
+              onPress={() => deps.setReorderChapterId(item.id)}
+            >
+              reorder
+            </Text>
+            {scenes.map((scene) => (
+              <Text
+                key={scene.id}
+                testID={`sceneopen-${scene.id}`}
+                onPress={() => deps.handleOpenScene(scene.id)}
+              >
+                {scene.id}
+              </Text>
+            ))}
+            {scenes.map((scene) => (
+              <Text
+                key={`fav-${scene.id}`}
+                testID={`scenefav-${scene.id}`}
+                onPress={() => deps.handleToggleSceneFavorite(scene.id, !scene.isFavorite)}
+              >
+                {`sfav:${scene.isFavorite}`}
+              </Text>
+            ))}
+          </>
+        );
+      };
+      return Row;
     },
-  }),
-);
+  };
+});
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+jest.mock('@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList', () => ({
+  __esModule: true,
+  default: (props: {
+    data: { id: string; name: string }[];
+    renderItem: (info: { item: { id: string; name: string } }) => React.ReactNode;
+    searchPlaceholder: string;
+    filterOptions: unknown[];
+    onFilterChange: (ids: string[]) => void;
+    selectedFilterValues: string[];
+    sortOptions: unknown[];
+    entityName: string;
+    storyId: string;
+    advancedSearchScopes: unknown[];
+    resultsMeta: string;
+    resultsNotice?: React.ReactNode;
+  }) => {
+    const React = require('react');
+    const { Text } = require('react-native');
+    mockListProps = props as never;
+    return (
+      <>
+        {props.resultsNotice}
+        <Text testID="list-meta">{props.resultsMeta}</Text>
+        <Text testID="list-search">{props.searchPlaceholder}</Text>
+        <Text testID="list-filters">
+          {JSON.stringify({
+            options: props.filterOptions,
+            selected: props.selectedFilterValues,
+            entity: props.entityName,
+            storyId: props.storyId,
+            sorts: props.sortOptions,
+            scopes: props.advancedSearchScopes,
+          })}
+        </Text>
+        <Text testID="list-filter-change" onPress={() => props.onFilterChange(['tag-1'])}>
+          filter
+        </Text>
+        {props.data.map((item) => (
+          <React.Fragment key={item.id}>{props.renderItem({ item })}</React.Fragment>
+        ))}
+      </>
+    );
+  },
+}));
+
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -366,43 +369,40 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock(
-  '../../../../src/components/features/chapters/ChapterReorderModal/ChapterReorderModal',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({
-        isVisible,
-        onClose,
-        chapters,
-        onReorderConfirm,
-      }: {
-        isVisible: boolean;
-        onClose: () => void;
-        chapters: { id: string }[];
-        onReorderConfirm: (order: { id: string; newIndex: number }[]) => void;
-      }) => (
-        <>
-          <Text testID="chapter-reorder">
-            {JSON.stringify({ isVisible, chapters: chapters.map((chapter) => chapter.id) })}
-          </Text>
-          <Text testID="chapter-reorder-close" onPress={onClose}>
-            close
-          </Text>
-          <Text
-            testID="chapter-reorder-confirm"
-            onPress={() => onReorderConfirm([{ id: 'ch-1', newIndex: 0 }])}
-          >
-            confirm
-          </Text>
-        </>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/chapters/ChapterReorderModal/ChapterReorderModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      isVisible,
+      onClose,
+      chapters,
+      onReorderConfirm,
+    }: {
+      isVisible: boolean;
+      onClose: () => void;
+      chapters: { id: string }[];
+      onReorderConfirm: (order: { id: string; newIndex: number }[]) => void;
+    }) => (
+      <>
+        <Text testID="chapter-reorder">
+          {JSON.stringify({ isVisible, chapters: chapters.map((chapter) => chapter.id) })}
+        </Text>
+        <Text testID="chapter-reorder-close" onPress={onClose}>
+          close
+        </Text>
+        <Text
+          testID="chapter-reorder-confirm"
+          onPress={() => onReorderConfirm([{ id: 'ch-1', newIndex: 0 }])}
+        >
+          confirm
+        </Text>
+      </>
+    ),
+  };
+});
 
-jest.mock('../../../../src/components/features/scenes/SceneReorderModal/SceneReorderModal', () => {
+jest.mock('@/src/components/features/scenes/SceneReorderModal/SceneReorderModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -444,7 +444,7 @@ jest.mock('../../../../src/components/features/scenes/SceneReorderModal/SceneReo
   };
 });
 
-jest.mock('../../../../src/components/features/chapters/QuickAddSceneModal', () => {
+jest.mock('@/src/components/features/chapters/QuickAddSceneModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -471,8 +471,6 @@ jest.mock('../../../../src/components/features/chapters/QuickAddSceneModal', () 
     ),
   };
 });
-
-import NarrativeElementsListScreen from '../../../../src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
@@ -579,6 +577,7 @@ beforeEach(() => {
   mockAlertButtons = [];
   mockSelectedStory = { id: 'story-1', type: 'linear' };
   mockActiveArcId = null;
+  mockEffectiveMedium = null;
   mockCanEdit = true;
   mockStoredScenes = [];
   mockLoading = false;
@@ -686,6 +685,46 @@ describe('NarrativeElementsListScreen', () => {
     const view = await render(<NarrativeElementsListScreen />);
     await view.findByTestId(`rowname-ch-1`);
     expect(rowNames(view)).toEqual(['Arrival']);
+  });
+
+  describe('with an active arc', () => {
+    beforeEach(() => {
+      mockActiveArcId = 'arc-1';
+      mockGetAllChapters.mockResolvedValue([
+        makeChapter('ch-1', { arcId: 'arc-1' }),
+        makeChapter('ch-2', { arcId: 'arc-2' }),
+      ]);
+    });
+
+    it('lists only the arc while nothing is searched, with no notice', async () => {
+      const view = await render(<NarrativeElementsListScreen />);
+      await view.findByTestId('rowname-ch-1');
+      expect(rowNames(view)).toEqual(['Arrival', 'unchaptered_scenes']);
+      expect(view.queryByTestId('outside-arc-notice')).toBeNull();
+    });
+
+    it('counts what a search found in other arcs, and shows it on one tap', async () => {
+      mockSearchQuery = 'a';
+      const view = await render(<NarrativeElementsListScreen />);
+      await view.findByTestId('rowname-ch-1');
+      expect(rowNames(view)).toEqual(['Arrival']);
+      expect(view.getByText('search_outside_arc')).toBeTruthy();
+
+      await fireEvent.press(view.getByTestId('outside-arc-notice'));
+      expect(rowNames(view)).toEqual(['Arrival', 'Later']);
+      expect(view.getByText('search_outside_arc_hide')).toBeTruthy();
+
+      await fireEvent.press(view.getByTestId('outside-arc-notice'));
+      expect(rowNames(view)).toEqual(['Arrival']);
+    });
+
+    it('shows no notice when the search finds nothing in other arcs', async () => {
+      mockSearchQuery = 'harbor';
+      const view = await render(<NarrativeElementsListScreen />);
+      await view.findByTestId('rowname-ch-1');
+      expect(rowNames(view)).toEqual(['Arrival']);
+      expect(view.queryByTestId('outside-arc-notice')).toBeNull();
+    });
   });
 
   it('renders no rows when nothing matches', async () => {
@@ -878,7 +917,7 @@ describe('NarrativeElementsListScreen', () => {
     await view.findByTestId(`rowname-ch-1`);
     const actions = mockHeaderArgs?.actions ?? [];
     expect(mockHeaderArgs?.title).toBe('narrative_elements_title');
-    expect(actions.map((action) => action.visible)).toEqual([true, true, true, true, true]);
+    expect(actions.map((action) => action.visible)).toEqual([true, true, true, true]);
     expect(actions[0].label).toBe('story_flow_title');
     await act(async () => {
       actions[0].onPress();
@@ -888,15 +927,44 @@ describe('NarrativeElementsListScreen', () => {
       actions[1].onPress();
     });
     expect(mockNavigate).toHaveBeenCalledWith('StoryTimeline');
-    expect(actions[3].label).toBe('manuscript_title');
+    // The manuscript is a drawer entry; the header does not repeat it.
+    expect(actions.some((action) => action.label === 'manuscript_title')).toBe(false);
     await act(async () => {
       actions[3].onPress();
     });
-    expect(mockNavigate).toHaveBeenCalledWith('Manuscript', {});
-    await act(async () => {
-      actions[4].onPress();
-    });
     expect(mockNavigate).toHaveBeenCalledWith('ChapterForm', { chapterId: undefined });
+  });
+
+  it('opens a new session in one step, only in a campaign', async () => {
+    mockEffectiveMedium = 'campaign';
+    const view = await render(<NarrativeElementsListScreen />);
+    await view.findByTestId(`rowname-ch-1`);
+    const action = (mockHeaderArgs?.actions ?? []).find((row) => row.id === 'new-session');
+    expect(action?.visible).toBe(true);
+    await act(async () => {
+      action?.onPress();
+    });
+    expect(mockNavigate).toHaveBeenCalledWith('NewSession');
+  });
+
+  it('offers the script import only to a screenplay', async () => {
+    mockEffectiveMedium = 'screenplay';
+    const view = await render(<NarrativeElementsListScreen />);
+    await view.findByTestId(`rowname-ch-1`);
+    const action = (mockHeaderArgs?.actions ?? []).find((row) => row.id === 'import-fountain');
+    expect(action?.visible).toBe(true);
+    await act(async () => {
+      action?.onPress();
+    });
+    expect(mockNavigate).toHaveBeenCalledWith('FountainImport');
+    expect((mockHeaderArgs?.actions ?? []).some((row) => row.id === 'new-session')).toBe(false);
+  });
+
+  it('does not carry the new-session action for any other work', async () => {
+    mockEffectiveMedium = 'comic';
+    const view = await render(<NarrativeElementsListScreen />);
+    await view.findByTestId(`rowname-ch-1`);
+    expect((mockHeaderArgs?.actions ?? []).some((row) => row.id === 'new-session')).toBe(false);
   });
 
   it('labels the map action and hides the timeline for branching stories', async () => {
@@ -925,7 +993,6 @@ describe('NarrativeElementsListScreen', () => {
       true,
       true,
       false,
-      true,
       false,
     ]);
   });
@@ -938,7 +1005,6 @@ describe('NarrativeElementsListScreen', () => {
       false,
       false,
       true,
-      false,
       true,
     ]);
   });

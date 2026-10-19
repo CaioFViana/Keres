@@ -10,6 +10,19 @@
     "responsibilityBody": "As histórias aqui pertencem a quem as publicou, e este servidor é mantido por quem escolheu mantê-lo. O Keres, o aplicativo, não tem vínculo com nenhum dos dois, não hospeda nem modera estas histórias e não toma posição sobre elas.",
     "serverVersion": "Versão do servidor {{version}}"
   },
+  "auth": {
+    "signIn": "Entrar",
+    "signingIn": "Entrando…",
+    "signOut": "Sair",
+    "username": "Nome de usuário",
+    "password": "Senha",
+    "loginFailed": "Não foi possível entrar.",
+    "signInHint": "Uma conta do site destrava a prateleira adulta quando verificada e com o conteúdo +18 ligado no perfil do app. A sessão vive só nesta aba.",
+    "unverified": "não verificado"
+  },
+  "common": {
+    "cancel": "Cancelar"
+  },
   "footer": {
     "disclaimer": "O Keres é um companheiro de escrita para planejar histórias. Ele não tem vínculo com o servidor que hospeda esta página nem com as histórias publicadas nela, e não as endossa nem modera. Cada história aqui pertence a quem a publicou."
   },
@@ -30,7 +43,9 @@
     "publishedStories": "Histórias publicadas",
     "loading": "Carregando…",
     "empty": "Nada foi publicado neste servidor ainda. Quando alguém publicar uma história, ela aparece aqui.",
-    "loadFailed": "Não foi possível carregar as histórias."
+    "loadFailed": "Não foi possível carregar as histórias.",
+    "adultHint": "Adultos verificados conectados também podem ver a prateleira +18 aqui, depois de ligar o conteúdo +18 no perfil do app.",
+    "adultHintOptIn": "Sua conta está verificada. Ligue o conteúdo +18 no seu perfil no app para ver a prateleira +18 aqui."
   },
   "language": {
     "label": "Idioma"
@@ -157,7 +172,20 @@
     "readOnline": "Ler online",
     "preparing": "Preparando…",
     "downloadFailed": "Não foi possível iniciar o download.",
-    "mediaCount": "{{included}}/{{total}} mídias"
+    "mediaCount": "{{included}}/{{total}} mídias",
+    "adultsOnly": "+18",
+    "gatedHint": "Esta história pode ser só para adultos ou estar indisponível. Entre com uma conta verificada para saber.",
+    "gatedOptInHint": "Esta história pode ser só para adultos. O conteúdo +18 está desligado na sua conta: ligue no seu perfil no app para vê-la.",
+    "universeTitle": "O universo inteiro",
+    "universeIntro": "Versões da história como um todo: o arquivo da história (com todas as obras), um manuscript e a história para ler online.",
+    "workBy": "de {{author}}",
+    "medium": {
+      "generic": "Prosa",
+      "screenplay": "Roteiro",
+      "comic": "Quadrinhos",
+      "storyboard": "Storyboard",
+      "campaign": "Campanha"
+    }
   },
   "theme": {
     "system": "Tema: Sistema",

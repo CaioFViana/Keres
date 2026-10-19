@@ -7,9 +7,9 @@ import {
   pruneDanglingStoryExportRows,
 } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import { db } from '../../db';
-import * as schema from '../../db/schema';
-import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
+import { db } from '@/db';
+import * as schema from '@/db/schema';
+import { getApiEntityTable } from '@/services/entity-sync-handlers/ApiEntityTableRegistry';
 
 /**
  * Database read adapter for portable-story export. Shared handlers define which collections are

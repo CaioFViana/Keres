@@ -1,27 +1,40 @@
+import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import { useChoiceFormActions } from '@/src/screens/narrative-elements/choices/useChoiceFormActions';
+import type { ChoiceFormState } from '@/src/screens/narrative-elements/choices/useChoiceFormState';
+import type { ChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+
 const mockAlert = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockEmit = jest.fn();
 const mockSaveEntityWithSecondaryData = jest.fn();
 
-jest.mock('@/src/hooks/useAsyncOperation', () => ({
+// Only the shared hook imports these, and it loads them even for a form with no custom attributes.
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields', () => ({
+  validateRequiredCustomAttributes: () => null,
+}));
+jest.mock('@/src/services/storymanagement/entities/AttributeValueService', () => ({
+  createAttributeValueService: () => ({ saveValuesForEntity: jest.fn() }),
+}));
+jest.mock('@/src/hooks/ui/useAsyncOperation', () => ({
   useAsyncOperation: () => ({
     pending: false,
     run: (operation: () => Promise<void>) => operation(),
   }),
 }));
-jest.mock('../../../../src/hooks/useConfirmDelete', () => ({
+jest.mock('@/src/hooks/ui/useConfirmDelete', () => ({
   useConfirmDelete: () => mockConfirmDelete,
 }));
-jest.mock('../../../../src/services/storymanagement/EntityFormSaveCoordinator', () => ({
+jest.mock('@/src/services/storymanagement/forms/EntityFormSaveCoordinator', () => ({
   saveEntityWithSecondaryData: (...args: unknown[]) => mockSaveEntityWithSecondaryData(...args),
 }));
-jest.mock('../../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
-jest.mock('../../../../src/utils/EventEmitter', () => ({
+jest.mock('@/src/state/events/EventEmitter', () => ({
   entityEventEmitter: { emit: (...args: unknown[]) => mockEmit(...args) },
 }));
-jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: (entity: string) =>
     entity === 'Scene'
       ? { required: 'scene required' }
@@ -38,12 +51,6 @@ jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => ({
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../../helpers/silenceConsole';
-import { useChoiceFormActions } from '../../../../src/screens/narrative-elements/choices/useChoiceFormActions';
-import type { ChoiceFormState } from '../../../../src/screens/narrative-elements/choices/useChoiceFormState';
-import type { ChoiceService } from '../../../../src/services/storymanagement/ChoiceService';
 
 const createState = (overrides: Partial<ChoiceFormState> = {}): ChoiceFormState =>
   ({

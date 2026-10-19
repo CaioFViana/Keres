@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ThemeProvider, useTheme } from '../../src/theme/ThemeProvider';
-import { THEME_PALETTE_KEY, THEME_PREFERENCE_KEY } from '../../src/theme/theme';
-import { click, flush, render } from '../helpers/react';
+import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { THEME_PALETTE_KEY, THEME_PREFERENCE_KEY } from '@/theme/theme';
+import { click, flush, render } from '@test/helpers/react';
 
 function ThemeProbe() {
   const theme = useTheme();

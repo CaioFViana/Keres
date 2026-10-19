@@ -330,6 +330,104 @@
       "when": 1790617866377,
       "tag": "0046_lazy_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1790977050472,
+      "tag": "0047_previous_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1791127737823,
+      "tag": "0048_square_wolverine",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1791150723061,
+      "tag": "0049_regular_sharon_carter",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1791248241133,
+      "tag": "0050_dashing_terror",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1791311193028,
+      "tag": "0051_nifty_vindicator",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "6",
+      "when": 1791313813255,
+      "tag": "0052_violet_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "6",
+      "when": 1791317231474,
+      "tag": "0053_lyrical_mockingbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1791317634796,
+      "tag": "0054_soft_turbo",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "6",
+      "when": 1791319428077,
+      "tag": "0055_flawless_nightmare",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "6",
+      "when": 1791337961946,
+      "tag": "0056_stiff_galactus",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "6",
+      "when": 1791339752245,
+      "tag": "0057_colorful_warbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "6",
+      "when": 1791733622644,
+      "tag": "0058_lethal_phantom_reporter",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1791770496605,
+      "tag": "0059_terms_accepted_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "6",
+      "when": 1791823938964,
+      "tag": "0060_flawless_titania",
+      "breakpoints": true
     }
   ]
 }

@@ -28,6 +28,21 @@ import {
 // "Access denied" on .../File System/Origins/LOCK). Must be set before app.whenReady().
 app.setName('Keres');
 
+/**
+ * One running instance per profile. The profile (`userData`) holds the client's SQLite database (OPFS, in a
+ * worker) and the token vault, and Chromium locks that storage for whoever opened it first: a second instance
+ * on the same profile cannot use it and only fails with storage errors. So the second one does not start: it
+ * leaves at once and the one already running comes to the front (see `focusRunningInstance`).
+ *
+ * After `setName` on purpose: the lock is taken per `userData` path, which comes from the name. Runs with their
+ * own `--user-data-dir` (the screen capture, the smoke test) have a profile of their own, so they never
+ * collide with the app the user has open.
+ */
+export const hasInstanceLock = app.requestSingleInstanceLock();
+if (!hasInstanceLock) {
+  app.quit();
+}
+
 // AppImages don't have Flatpak's Secret portal. Prefer the cross-desktop Secret
 // Service there instead of Chromium silently selecting its plaintext backend.
 app.commandLine.appendSwitch('password-store', 'gnome-libsecret');
@@ -138,6 +153,26 @@ async function handleAppRequest(request: Request): Promise<Response> {
   return withIsolationHeaders(response);
 }
 
+/**
+ * What the instance that is already running does when somebody tries to open another: shows its window -
+ * restored if it was minimised, in front, with focus - or opens one if the app is running with none (on macOS
+ * the app outlives its last window).
+ */
+export function focusRunningInstance(): void {
+  const [window] = BrowserWindow.getAllWindows();
+  if (!window) {
+    void createWindow().catch((error: unknown) => {
+      console.error('[desktop] could not open a window for the second launch:', error);
+    });
+    return;
+  }
+  if (window.isMinimized()) window.restore();
+  window.focus();
+}
+
+const MIN_WINDOW_WIDTH = 360;
+const MIN_WINDOW_HEIGHT = 560;
+
 async function createWindow() {
   if (!existsSync(path.join(CLIENT_DIST, 'index.html'))) {
     throw new Error(
@@ -148,6 +183,10 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    // Below this the compact layouts (the sketch toolbar, the shared header) no longer fit their
+    // rows: 360 is a phone's width, 560 leaves the sketch canvas about 400 px under its fixed chrome.
+    minWidth: MIN_WINDOW_WIDTH,
+    minHeight: MIN_WINDOW_HEIGHT,
     title: APP_NAME,
     show: !HEADLESS,
     icon: APP_ICON, // Windows/Linux taskbar + title bar. No-op on macOS - see app.dock.setIcon below.
@@ -500,6 +539,99 @@ function withVaultLock<T>(task: () => Promise<T>): Promise<T> {
   return result;
 }
 
+/**
+ * Every write to the vault still running. The app can be closed in the middle of one (the window shut right
+ * after a login or a sign-out), and what the process had not yet written to the vault is gone with it: the
+ * quit waits for these (see `handleBeforeQuit`).
+ */
+const pendingVaultWork = new Set<Promise<unknown>>();
+
+function trackVaultWork<T>(work: Promise<T>): Promise<T> {
+  pendingVaultWork.add(work);
+  const done = () => {
+    pendingVaultWork.delete(work);
+  };
+  work.then(done, done);
+  return work;
+}
+
+/** Resolves once the vault writes in flight have landed, or after `timeoutMs` - a quit must not hang on a disk. */
+export async function flushVaultWrites(timeoutMs = 3000): Promise<void> {
+  if (pendingVaultWork.size === 0) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, timeoutMs);
+  });
+  await Promise.race([Promise.allSettled([...pendingVaultWork]), timeout]);
+  clearTimeout(timer);
+}
+
+let quitFlushed = false;
+
+/**
+ * Holds the first quit until the vault writes in flight have landed, then quits again. The second pass goes
+ * straight through. Exported so the test can drive it without Electron's event loop.
+ */
+export function handleBeforeQuit(event: { preventDefault: () => void }): void {
+  if (quitFlushed || pendingVaultWork.size === 0) return;
+  event.preventDefault();
+  quitFlushed = true;
+  void flushVaultWrites().finally(() => app.quit());
+}
+
+/** Test seam: lets a quit be held again after one went through. */
+export function resetQuitFlushForTests(): void {
+  quitFlushed = false;
+}
+
+let signalQuitInitiated = false;
+
+/**
+ * Graceful shutdown for OS signals (Ctrl+C in a terminal, SIGTERM from systemd/Docker).
+ *
+ * Registering any `process.on('SIGINT')` listener replaces Node's default "die with the
+ * signal" behavior, so without this the process never reaches `before-quit` and the vault
+ * flush in `handleBeforeQuit` is skipped. Routing the first signal through `app.quit()`
+ * keeps that flush: `before-quit` fires, pending vault writes land (up to 3s), then the app
+ * exits normally. A second signal while the first is still being handled forces an
+ * immediate exit instead of hanging on a stuck disk write. Exported so tests can drive it.
+ */
+export function handleProcessSignal(signal: 'SIGINT' | 'SIGTERM'): void {
+  if (signalQuitInitiated) {
+    console.log(`[desktop] received a second ${signal}, exiting immediately.`);
+    app.exit(1);
+    return;
+  }
+  signalQuitInitiated = true;
+  console.log(`[desktop] received ${signal}, quitting gracefully.`);
+  app.quit();
+}
+
+/** Named listeners so tests can assert the wiring and remove them from the real process. */
+export function handleSigint(): void {
+  handleProcessSignal('SIGINT');
+}
+
+/** Named listeners so tests can assert the wiring and remove them from the real process. */
+export function handleSigterm(): void {
+  handleProcessSignal('SIGTERM');
+}
+
+type SignalTarget = {
+  on(event: 'SIGINT' | 'SIGTERM', listener: () => void): unknown;
+};
+
+/** Wires both signals to the graceful shutdown above. The target is injectable for tests. */
+export function registerProcessSignalHandlers(target: SignalTarget = process): void {
+  target.on('SIGINT', handleSigint);
+  target.on('SIGTERM', handleSigterm);
+}
+
+/** Test seam: lets a signal quit be initiated again after one went through. */
+export function resetSignalShutdownForTests(): void {
+  signalQuitInitiated = false;
+}
+
 /** Exported so the test can register the channels without needing the app to be ready. */
 export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:status', async (event) => {
@@ -531,17 +663,23 @@ export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:remove', async (event, serverId: string) => {
     assertTrustedRenderer(event);
     assertValidServerId(serverId);
-    await withVaultLock(async () => {
-      const vault = await readAuthVault();
-      if (serverId in vault) {
-        delete vault[serverId];
-        await writeAuthVault(vault);
-      }
-    });
+    await trackVaultWork(
+      withVaultLock(async () => {
+        const vault = await readAuthVault();
+        if (serverId in vault) {
+          delete vault[serverId];
+          await writeAuthVault(vault);
+        }
+      }),
+    );
   });
 }
 
-async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
+function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
+  return trackVaultWork(saveTokensNow(serverId, tokens));
+}
+
+async function saveTokensNow(serverId: string, tokens: TokenPair): Promise<void> {
   if (!(await secureStorageAvailable())) {
     throw new Error('Secure credential storage is unavailable on this device.');
   }
@@ -586,7 +724,7 @@ export function registerMediaIpcHandlers() {
 
   // Lists every file as a "media/<storyId>/<file>" relative path (matching the layout
   // webMediaRelativePath in MediaFileService.ts writes), for webMediaStore's boot-time
-  // existence cache (see hydrate() in apps/client/src/services/webMediaStore.ts).
+  // existence cache (see hydrate() in apps/client/src/services/platform-web/webMediaStore.ts).
   ipcMain.handle('media:list-all', async (event) => {
     assertTrustedRenderer(event);
     const results: string[] = [];
@@ -624,6 +762,9 @@ export function registerMediaIpcHandlers() {
 }
 
 app.whenReady().then(async () => {
+  // The second instance is already on its way out: it opens nothing and touches no storage.
+  if (!hasInstanceLock) return;
+
   // `Cache-Control: no-store` (withIsolationHeaders above) stops *new* responses from being
   // cached, but doesn't touch whatever Chromium already cached in a previous run under this
   // same userData profile (HTTP cache and, separately, the V8 code cache) - during active
@@ -648,6 +789,16 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+if (hasInstanceLock) {
+  app.on('second-instance', focusRunningInstance);
+  // Ctrl+C / SIGTERM must go through app.quit() (and therefore before-quit's vault flush)
+  // instead of killing the process with the signal. Only the primary instance touches
+  // storage, so only it needs these.
+  registerProcessSignalHandlers();
+}
+
+app.on('before-quit', handleBeforeQuit);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

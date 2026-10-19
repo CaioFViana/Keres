@@ -1,6 +1,10 @@
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { hardDeleteUser, softDeleteUser, truncateAll } from '../helpers/database';
-import { newId, registerUser, request } from '../helpers/app';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { hardDeleteUser, softDeleteUser, truncateAll } from '@test/helpers/database';
+import { newId, registerUser, request } from '@test/helpers/app';
+import { enterRequiredMode, leaveRequiredMode } from '@test/helpers/ageVerificationAccounts';
 
 beforeEach(truncateAll);
 
@@ -37,6 +41,42 @@ describe('POST /auth/register', () => {
 
     expect(status).toBe(409);
     expect(data.message).toBe('User already exists');
+  });
+
+  it('seeds the tag with a slug of the username: lowercase, no spaces, within the limits', async () => {
+    const spaced = await request('POST', '/auth/register', {
+      body: { username: 'Caio Viana', password: 'senha-forte-123' },
+    });
+    expect(spaced.data.tag).toBe('caio_viana');
+
+    const long = await request('POST', '/auth/register', {
+      body: { username: 'A Rather Long Username With Spaces', password: 'senha-forte-123' },
+    });
+    expect(long.data.tag).toMatch(/^[a-z0-9_]{3,20}$/);
+    expect(long.data.tag).toBe('a_rather_long_userna');
+  });
+
+  it('gives a username too short to be a tag one that is valid, and still findable', async () => {
+    const { data } = await request('POST', '/auth/register', {
+      body: { username: 'ab', password: 'senha-forte-123' },
+    });
+
+    expect(data.tag).toMatch(/^ab[a-z0-9]{4}$/);
+    const lookup = await request('GET', `/user/by-tag/${data.tag}`, { token: data.accessToken });
+    expect(lookup.data.id).toBe(data.userId);
+  });
+
+  it('settles two usernames that make the same slug with a suffix, whatever their capitals', async () => {
+    await request('POST', '/auth/register', {
+      body: { username: 'Caio Viana', password: 'senha-forte-123' },
+    });
+    const second = await request('POST', '/auth/register', {
+      body: { username: 'caio viana', password: 'senha-forte-123' },
+    });
+
+    expect(second.status).toBe(200);
+    expect(second.data.tag).toMatch(/^caio_viana[a-z0-9]{4}$/);
+    expect(second.data.tag.length).toBeLessThanOrEqual(20);
   });
 
   it('falls back to a suffixed tag when another account already claimed that tag', async () => {
@@ -93,6 +133,24 @@ describe('POST /auth/login', () => {
     expect(status).toBe(200);
     expect(data.userId).toBe(user.userId);
     expect(typeof data.accessToken).toBe('string');
+  });
+
+  it('keeps the session in cookies for the web client, unless the caller asks for the token only', async () => {
+    const user = await registerUser('ana');
+
+    const web = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: user.password },
+    });
+    expect(web.headers.getSetCookie().join(';')).toContain('access_token=');
+
+    // The admin panel and the public site share the web client's origin, and so its cookies: they ask
+    // for no cookie, or signing in there would swap the account the web client is using.
+    const panel = await request('POST', '/auth/login', {
+      body: { username: 'ana', password: user.password, session: 'token' },
+    });
+    expect(panel.status).toBe(200);
+    expect(typeof panel.data.accessToken).toBe('string');
+    expect(panel.headers.getSetCookie()).toEqual([]);
   });
 
   it('rejects a wrong password without saying which field was wrong', async () => {
@@ -414,7 +472,13 @@ describe('GET /auth/me', () => {
     const { status, data } = await request('GET', '/auth/me', { token: user.token });
 
     expect(status).toBe(200);
-    expect(data).toEqual({ userId: user.userId, username: 'ana', tag: 'ana' });
+    expect(data).toEqual({
+      userId: user.userId,
+      username: 'ana',
+      tag: 'ana',
+      isAdultVerified: false,
+      showNsfw: false,
+    });
   });
 
   it('returns the account from the session cookie alone', async () => {
@@ -425,7 +489,32 @@ describe('GET /auth/me', () => {
     });
 
     expect(status).toBe(200);
-    expect(data).toEqual({ userId: user.userId, username: 'ana', tag: 'ana' });
+    expect(data).toEqual({
+      userId: user.userId,
+      username: 'ana',
+      tag: 'ana',
+      isAdultVerified: false,
+      showNsfw: false,
+    });
+  });
+  it('reflects a later +18 verification, where verification is required', async () => {
+    const user = await registerUser('bia');
+    enterRequiredMode();
+    try {
+      // The approval of the verification service is what leaves the flag set (the administrator cannot set it).
+      await db.update(users).set({ isAdultVerified: true }).where(eq(users.id, user.userId));
+
+      const { data } = await request('GET', '/auth/me', { token: user.token });
+      expect(data).toEqual({
+        userId: user.userId,
+        username: 'bia',
+        tag: 'bia',
+        isAdultVerified: true,
+        showNsfw: false,
+      });
+    } finally {
+      leaveRequiredMode();
+    }
   });
 
   it('rejects a missing session', async () => {

@@ -8,7 +8,7 @@ import {
   onlyPlaces,
   protectRemoteUpdate,
   withRankProtocol,
-} from '../../src/services/sync/syncPure';
+} from '@/src/services/sync/syncPure';
 
 describe('protectRemoteUpdate', () => {
   it('drops unknown keys from an update so a newer server field cannot stall the pull', () => {

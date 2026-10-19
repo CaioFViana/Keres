@@ -8,7 +8,8 @@
     "noImplicitOverride": true,
     "types": ["jest"],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@expo/vector-icons": ["./src/icons/vectorIcons.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

@@ -4,12 +4,12 @@ import GuideSpotlight, {
   roundedRectSvg,
   SPOTLIGHT_RADIUS,
   spotlightDimSvg,
-} from '../../src/components/common/feedback/GuideHost/GuideSpotlight';
+} from '@/src/components/common/feedback/GuideHost/GuideSpotlight';
 
 const RECT = { x: 10, y: 100, width: 200, height: 40 };
 
 let mockReady = true;
-jest.mock('../../src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
+jest.mock('@/src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
   __esModule: true,
   useCanvasKitReady: () => mockReady,
 }));
@@ -54,6 +54,17 @@ describe('GuideSpotlight', () => {
       strokeWidth: 2,
       color: '#00f',
     });
+  });
+
+  it('dims the whole window from the same canvas when a step has no target', async () => {
+    const screen = await render(<GuideSpotlight rect={null} borderColor="#00f" />);
+    const { width, height } = Dimensions.get('window');
+
+    expect(screen.getByTestId('guide-dim')).toBeTruthy();
+    expect(screen.queryByTestId('guide-spotlight')).toBeNull();
+    const paths = screen.container.queryAll((node) => node.type === 'SkiaPath');
+    expect(paths).toHaveLength(1);
+    expect(paths[0].props.path).toBe(spotlightDimSvg(width, height, null, SPOTLIGHT_RADIUS));
   });
 
   it('falls back to square legacy views before CanvasKit is ready', async () => {

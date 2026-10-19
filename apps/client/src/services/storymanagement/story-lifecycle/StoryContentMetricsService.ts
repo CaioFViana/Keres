@@ -1,0 +1,158 @@
+import { and, count, eq, sql } from 'drizzle-orm';
+import type { AppDrizzleClient } from '@/src/db';
+import { boards, choices, plots, scenes, stories } from '@/src/db/schema';
+import { createChapterService } from '@/src/services/storymanagement/scenes-chapters/ChapterService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { createStorySchemaFieldService } from '@/src/services/storymanagement/entities/StorySchemaFieldService';
+import { countActiveStoryEntities } from './storyEntityCount';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { createWorldRuleService } from '@/src/services/storymanagement/entities/WorldRuleService';
+
+export interface StoryCatalogCounts {
+  totalStories: number;
+  branchingStories: number;
+}
+
+/** The aggregate counts displayed in the story selection and dashboard read models. */
+export interface StoryContentCounts {
+  characterCount: number;
+  choiceCount: number;
+  locationCount: number;
+  chapterCount: number;
+  sceneCount: number;
+  noteCount: number;
+  worldRuleCount: number;
+  itemCount: number;
+  galleryCount: number;
+  tagCount: number;
+  customAttributeCount: number;
+  plotCount: number;
+  boardCount: number;
+  branchingStoryForkCount: number;
+}
+
+export interface StoryContentMetricsService {
+  getCatalogCounts(): Promise<StoryCatalogCounts>;
+  getContentCounts(storyId?: string): Promise<StoryContentCounts>;
+}
+
+/**
+ * Query-side composition for story overview screens. Entity services continue to own each
+ * table's live-row count; this service only groups those independent facts into one read model.
+ */
+export const createStoryContentMetricsService = (
+  db: AppDrizzleClient,
+): StoryContentMetricsService => {
+  const characterService = createCharacterService(db);
+  const chapterService = createChapterService(db);
+  const choiceService = createChoiceService(db);
+  const galleryService = createGalleryService(db);
+  const itemService = createItemService(db);
+  const locationService = createLocationService(db);
+  const noteService = createNoteService(db);
+  const sceneService = createSceneService(db);
+  const storySchemaFieldService = createStorySchemaFieldService(db);
+  const tagService = createTagService(db);
+  const worldRuleService = createWorldRuleService(db);
+
+  const getBranchingStoryForkCount = async (storyId?: string): Promise<number> => {
+    const result = await db
+      .select({ count: count(scenes.id) })
+      .from(scenes)
+      .innerJoin(stories, eq(scenes.storyId, stories.id))
+      .leftJoin(choices, and(eq(scenes.id, choices.sceneId), eq(choices.isDeleted, false)))
+      .where(
+        storyId
+          ? and(
+              eq(stories.id, storyId),
+              eq(stories.type, 'branching'),
+              eq(stories.isDeleted, false),
+              eq(scenes.isDeleted, false),
+            )
+          : and(
+              eq(stories.type, 'branching'),
+              eq(stories.isDeleted, false),
+              eq(scenes.isDeleted, false),
+            ),
+      )
+      .groupBy(scenes.id)
+      .having(sql`count(${choices.id}) > 1`)
+      .all();
+
+    return result.length;
+  };
+
+  return {
+    async getCatalogCounts(): Promise<StoryCatalogCounts> {
+      const [total, branching] = await Promise.all([
+        db.select({ count: count() }).from(stories).where(eq(stories.isDeleted, false)).get(),
+        db
+          .select({ count: count() })
+          .from(stories)
+          .where(and(eq(stories.type, 'branching'), eq(stories.isDeleted, false)))
+          .get(),
+      ]);
+      return {
+        totalStories: total?.count ?? 0,
+        branchingStories: branching?.count ?? 0,
+      };
+    },
+
+    async getContentCounts(storyId?: string): Promise<StoryContentCounts> {
+      const [
+        characterCount,
+        choiceCount,
+        locationCount,
+        chapterCount,
+        sceneCount,
+        noteCount,
+        worldRuleCount,
+        itemCount,
+        galleryCount,
+        tagCount,
+        customAttributeCount,
+        plotCount,
+        boardCount,
+        branchingStoryForkCount,
+      ] = await Promise.all([
+        characterService.getCharacterCount(storyId),
+        choiceService.getChoiceCount(storyId),
+        locationService.getLocationCount(storyId),
+        chapterService.getChapterCount(storyId),
+        sceneService.getSceneCount(storyId),
+        noteService.getNoteCount(storyId),
+        worldRuleService.getWorldRuleCount(storyId),
+        itemService.getItemCount(storyId),
+        galleryService.getGalleryCount(storyId),
+        tagService.getTagCount(storyId),
+        storySchemaFieldService.getCustomAttributeCount(storyId),
+        countActiveStoryEntities(db, plots, storyId),
+        countActiveStoryEntities(db, boards, storyId),
+        getBranchingStoryForkCount(storyId),
+      ]);
+
+      return {
+        characterCount,
+        choiceCount,
+        locationCount,
+        chapterCount,
+        sceneCount,
+        noteCount,
+        worldRuleCount,
+        itemCount,
+        galleryCount,
+        tagCount,
+        customAttributeCount,
+        plotCount,
+        boardCount,
+        branchingStoryForkCount,
+      };
+    },
+  };
+};

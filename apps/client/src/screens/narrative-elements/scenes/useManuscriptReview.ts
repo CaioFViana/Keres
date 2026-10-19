@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
 import type { ManuscriptSection } from '@keres/shared';
-import type { HeaderAction } from '../../../components/common/navigation/HeaderActions/HeaderActions';
+import type { HeaderAction } from '@/src/components/common/navigation/HeaderActions/HeaderActions';
 import type {
   ManuscriptReviewBar,
   ManuscriptReviewThread,
-} from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
+} from '@/src/components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
 import { Platform } from 'react-native';
-import { readCopiedPassage } from '../../../hooks/useCopiedPassage';
-import { trackSelectionContainer } from '../../../hooks/useWebSelectionClip';
-import { useSceneBodyComments } from '../../../hooks/useSceneBodyComments';
+import { readCopiedPassage } from '@/src/utils/io/copiedPassage';
+import { trackSelectionContainer } from '@/src/hooks/ui/useWebSelectionClip';
+import { useSceneBodyComments } from '@/src/hooks/scene/useSceneBodyComments';
 
 export type ManuscriptReviewMode = 'read' | 'review';
 

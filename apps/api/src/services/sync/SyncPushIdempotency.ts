@@ -1,8 +1,8 @@
 import type { StoryUpdate, SyncAppliedOperation } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
-import { operationLog } from '../../db/schema';
-import type { SyncEntityHandler } from '../entity-sync-handlers/BaseSyncEntityHandler';
+import { db } from '@/db';
+import { operationLog } from '@/db/schema';
+import type { SyncEntityHandler } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
 
 /**
  * The idempotent acknowledgement for an already-recorded client operation, or null when this

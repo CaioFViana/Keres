@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
-import type { CommentableDetailFieldProps } from '../../../../src/components/features/comments/CommentableDetailField/CommentableDetailField';
-import { SceneDetailContent } from '../../../../src/screens/narrative-elements/scenes/SceneDetailContent';
+import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
+import { SceneDetailContent } from '@/src/screens/narrative-elements/scenes/SceneDetailContent';
 import type {
   CharacterSelect,
   ChoiceSelect,
@@ -13,23 +13,39 @@ import type {
   ItemSelect,
   SceneSelect,
   TagSelect,
-} from '../../../../src/db/schema';
-import type { SaveNoteRelation } from '../../../../src/services/storymanagement/NoteRelationService';
+} from '@/src/db/schema';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
 
-jest.mock('../../../../src/theme', () => {
-  const actual = jest.requireActual('../../../../src/theme');
+jest.mock('@/src/theme', () => {
+  const actual = jest.requireActual('@/src/theme');
   return {
     ...actual,
     useTheme: () => ({
       isDarkMode: false,
-      colors: { primary: '#0000ff', text: '#111111', textSecondary: '#555555' },
+      colors: {
+        primary: '#0000ff',
+        text: '#111111',
+        textSecondary: '#555555',
+        background: '#ffffff',
+        border: '#dddddd',
+      },
     }),
   };
 });
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/features/scenes/ScenePages/ScenePagesEntry', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+jest.mock('@/src/components/features/scenes/SceneMusic/SceneMusicEntry', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -41,21 +57,27 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', () => {
+jest.mock('@/src/components/layout/DetailContainer/DetailContainer', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
     default: ({
       title,
       footer,
+      tabs,
+      scrollResetKey,
       children,
     }: {
       title: string;
       footer?: ReactNode;
+      tabs?: ReactNode;
+      scrollResetKey?: string;
       children?: ReactNode;
     }) => (
       <>
         <Text testID="detail-title">{title}</Text>
+        <Text testID="detail-scroll-reset">{scrollResetKey}</Text>
+        {tabs}
         {children}
         {footer}
       </>
@@ -63,7 +85,7 @@ jest.mock('../../../../src/components/layout/DetailContainer/DetailContainer', (
   };
 });
 
-jest.mock('../../../../src/components/layout/ScreenSection/ScreenSection', () => {
+jest.mock('@/src/components/layout/ScreenSection/ScreenSection', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -77,7 +99,7 @@ jest.mock('../../../../src/components/layout/ScreenSection/ScreenSection', () =>
 });
 
 jest.mock(
-  '../../../../src/components/features/comments/CommentableDetailField/CommentableDetailField',
+  '@/src/components/features/comments/CommentableDetailField/CommentableDetailField',
   () => {
     const { Text } = require('react-native');
     return {
@@ -89,45 +111,37 @@ jest.mock(
   },
 );
 
-jest.mock(
-  '../../../../src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: ({ entityId }: { entityId: string }) => (
-        <Text testID="custom-attrs">{entityId}</Text>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ entityId }: { entityId: string }) => <Text testID="custom-attrs">{entityId}</Text>,
+  };
+});
 
-jest.mock(
-  '../../../../src/components/features/characters/CharacterManager/SceneCharacterManager',
-  () => {
-    const { Text } = require('react-native');
-    return {
-      __esModule: true,
-      default: (props: {
-        characterRelations: unknown[];
-        availableCharacters: CharacterSelect[];
-        currentStoryId: string;
-        currentSceneId: string;
-      }) => (
-        <Text testID="scene-characters">
-          {JSON.stringify({
-            relations: props.characterRelations.length,
-            names: props.availableCharacters.map((c) => c.name),
-            storyId: props.currentStoryId,
-            sceneId: props.currentSceneId,
-          })}
-        </Text>
-      ),
-    };
-  },
-);
+jest.mock('@/src/components/features/characters/CharacterManager/SceneCharacterManager', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      characterRelations: unknown[];
+      availableCharacters: CharacterSelect[];
+      currentStoryId: string;
+      currentSceneId: string;
+    }) => (
+      <Text testID="scene-characters">
+        {JSON.stringify({
+          relations: props.characterRelations.length,
+          names: props.availableCharacters.map((c) => c.name),
+          storyId: props.currentStoryId,
+          sceneId: props.currentSceneId,
+        })}
+      </Text>
+    ),
+  };
+});
 
-jest.mock('../../../../src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
+jest.mock('@/src/components/features/gallery/GalleryManager/EntityGalleryManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -147,7 +161,7 @@ jest.mock('../../../../src/components/features/gallery/GalleryManager/EntityGall
   };
 });
 
-jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBacklinks', () => {
+jest.mock('@/src/mentions/EntityMetadataWithBacklinks', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -155,7 +169,7 @@ jest.mock('../../../../src/components/features/mentions/EntityMetadataWithBackli
   };
 });
 
-jest.mock('../../../../src/components/features/items/ItemManager/ItemSceneManager', () => {
+jest.mock('@/src/components/features/items/ItemManager/ItemSceneManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -175,7 +189,7 @@ jest.mock('../../../../src/components/features/items/ItemManager/ItemSceneManage
   };
 });
 
-jest.mock('../../../../src/components/features/notes/NoteManager/NoteRelationManager', () => {
+jest.mock('@/src/components/features/notes/NoteManager/NoteRelationManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -191,7 +205,7 @@ jest.mock('../../../../src/components/features/notes/NoteManager/NoteRelationMan
 });
 
 jest.mock(
-  '../../../../src/components/features/scenes/SceneNavigationControls/SceneNavigationControls',
+  '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls',
   () => {
     const { Text } = require('react-native');
     return {
@@ -223,7 +237,7 @@ jest.mock(
   },
 );
 
-jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager', () => {
+jest.mock('@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -231,7 +245,7 @@ jest.mock('../../../../src/components/features/seealso/SeeAlsoManager/SeeAlsoMan
   };
 });
 
-jest.mock('../../../../src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
+jest.mock('@/src/components/features/favorites/FavoritedByList/FavoritedByList', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -394,6 +408,11 @@ function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
 }
 
+const openTab = async (view: unknown, key: 'details' | 'relations' | 'other') =>
+  fireEvent.press(
+    (view as { getByTestId: (id: string) => never }).getByTestId(`detail-tab-${key}`),
+  );
+
 describe('SceneDetailContent', () => {
   afterEach(() => {
     cleanup();
@@ -407,10 +426,14 @@ describe('SceneDetailContent', () => {
     expect(view.getByText('no_tags_found')).toBeTruthy();
     expect(view.getByText(/2\. /)).toBeTruthy();
     expect(view.getByText(/Arrival/)).toBeTruthy();
+
+    await openTab(view, 'other');
     expect(view.getByTestId('custom-attrs').props.children).toBe('scene-1');
     expect(view.getByTestId('entity-metadata')).toBeTruthy();
-    expect(view.getByTestId('seealso-marker')).toBeTruthy();
     expect(view.getByTestId('favorited-marker')).toBeTruthy();
+
+    await openTab(view, 'relations');
+    expect(view.getByTestId('seealso-marker')).toBeTruthy();
   });
 
   it('omits the chapter number for non-linear stories', async () => {
@@ -456,6 +479,48 @@ describe('SceneDetailContent', () => {
     expect(view.getByText(/· DE/)).toBeTruthy();
   });
 
+  it('shows the fixed date, even with no derived date to show beside it', async () => {
+    const view = await render(
+      <SceneDetailContent
+        {...baseProps({
+          fixedDate: { text: '14 Harvest, 3019 T.A. · 07:08 · Lunar', valid: true },
+        })}
+      />,
+    );
+
+    expect(view.getByText('scene_fixed_date')).toBeTruthy();
+    expect(view.getByText('14 Harvest, 3019 T.A. · 07:08 · Lunar')).toBeTruthy();
+    expect(view.queryByText('calendar_scene_date')).toBeNull();
+  });
+
+  it('puts a valid fixed date in place of the date derived from the gap', async () => {
+    const view = await render(
+      <SceneDetailContent
+        {...baseProps({
+          fixedDate: { text: '2023-01-01 · 00:00 · Gregorian', valid: true },
+          dateForScene: () => ({ date: 'Day 3' }),
+        })}
+      />,
+    );
+
+    expect(view.getByText('2023-01-01 · 00:00 · Gregorian')).toBeTruthy();
+    expect(view.queryByText('Day 3')).toBeNull();
+  });
+
+  it('keeps the derived date beside a fixed date that is not valid, and shows the invalid one', async () => {
+    const view = await render(
+      <SceneDetailContent
+        {...baseProps({
+          fixedDate: { text: '0001-13-01T00:00 (not valid)', valid: false },
+          dateForScene: () => ({ date: 'Day 3' }),
+        })}
+      />,
+    );
+
+    expect(view.getByText('0001-13-01T00:00 (not valid)')).toBeTruthy();
+    expect(view.getByText('Day 3')).toBeTruthy();
+  });
+
   it('skips the calendar field without a date', async () => {
     const view = await render(<SceneDetailContent {...baseProps()} />);
     expect(view.queryByText('calendar_scene_date')).toBeNull();
@@ -469,8 +534,10 @@ describe('SceneDetailContent', () => {
         {...baseProps({ scene: makeScene({ summary: null, isFavorite: true }) })}
       />,
     );
-    expect(view.getByText('common_yes')).toBeTruthy();
     expect(view.getByTestId('commentable-summary').props.children).toBe('summary:common_na');
+
+    await openTab(view, 'other');
+    expect(view.getByText('common_yes')).toBeTruthy();
     expect(view.getByTestId('commentable-extra_notes').props.children).toBe(
       'extra_notes:common_na',
     );
@@ -480,6 +547,7 @@ describe('SceneDetailContent', () => {
     const location = { id: 'loc-1', name: 'Harbor', description: null };
     const props = baseProps({ location });
     const view = await render(<SceneDetailContent {...props} />);
+    await openTab(view, 'relations');
     expect(view.getByText('Harbor')).toBeTruthy();
     expect(view.getByText('common_na')).toBeTruthy();
     await fireEvent.press(view.getByText('Harbor'));
@@ -530,6 +598,11 @@ describe('SceneDetailContent', () => {
       canEdit: true,
     });
     const view = await render(<SceneDetailContent {...props} />);
+    expect(view.getByTestId('gallery-marker').props.children).toBe('Scene:scene-1');
+    await fireEvent.press(view.getByTestId('gallery-media'));
+    expect(props.openGalleryMediaViewer).toHaveBeenCalledWith('gallery-9');
+
+    await openTab(view, 'relations');
     expect(jsonOf(view, 'scene-characters')).toMatchObject({
       relations: 1,
       names: ['Lyra'],
@@ -540,9 +613,6 @@ describe('SceneDetailContent', () => {
       items: ['Sword'],
       characters: ['Lyra'],
     });
-    expect(view.getByTestId('gallery-marker').props.children).toBe('Scene:scene-1');
-    await fireEvent.press(view.getByTestId('gallery-media'));
-    expect(props.openGalleryMediaViewer).toHaveBeenCalledWith('gallery-9');
     expect(jsonOf(view, 'nav-controls')).toMatchObject({
       storyType: 'linear',
       prev: 'scene-0',
@@ -560,17 +630,82 @@ describe('SceneDetailContent', () => {
     const view = await render(
       <SceneDetailContent {...baseProps({ selectedStory: { id: 'story-1', type: 'weird' } })} />,
     );
+    await openTab(view, 'relations');
     expect(jsonOf(view, 'nav-controls').storyType).toBeNull();
   });
 
   it('renders effects only for branching stories', async () => {
     const flat = await render(<SceneDetailContent {...baseProps()} />);
+    await openTab(flat, 'relations');
     expect(flat.queryByText('effects_title')).toBeNull();
     const empty = await render(<SceneDetailContent {...baseProps({ isBranching: true })} />);
+    await openTab(empty, 'relations');
     expect(empty.getByText('no_effects')).toBeTruthy();
     const full = await render(
       <SceneDetailContent {...baseProps({ isBranching: true, sceneEffects: [{ id: 'e1' }] })} />,
     );
+    await openTab(full, 'relations');
     expect(full.getByText('• effect')).toBeTruthy();
+  });
+
+  describe('tabs', () => {
+    it('starts on the details and builds the other tabs only when they are opened', async () => {
+      const view = await render(
+        <SceneDetailContent
+          {...baseProps({ location: { id: 'l', name: 'Harbor', description: null } })}
+        />,
+      );
+
+      expect(view.getByTestId('commentable-summary')).toBeTruthy();
+      expect(view.queryByText('Harbor')).toBeNull();
+      expect(view.queryByTestId('scene-characters')).toBeNull();
+      expect(view.queryByTestId('entity-metadata')).toBeNull();
+      expect(view.getByTestId('detail-tab-details').props.accessibilityState).toEqual({
+        selected: true,
+      });
+    });
+
+    it('keeps the fields where they belong: the scene, its links, the rest', async () => {
+      const view = await render(<SceneDetailContent {...baseProps()} />);
+      await openTab(view, 'relations');
+      await openTab(view, 'other');
+
+      const inPanel = (panel: string, testID: string) =>
+        view
+          .getByTestId(`detail-panel-${panel}`, { includeHiddenElements: true })
+          .queryAll((node: { props: { testID?: string } }) => node.props.testID === testID).length;
+
+      expect(inPanel('details', 'commentable-summary')).toBeGreaterThan(0);
+      expect(inPanel('details', 'gallery-marker')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'scene-characters')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'nav-controls')).toBeGreaterThan(0);
+      expect(inPanel('relations', 'seealso-marker')).toBeGreaterThan(0);
+      expect(inPanel('other', 'custom-attrs')).toBeGreaterThan(0);
+      expect(inPanel('other', 'commentable-extra_notes')).toBeGreaterThan(0);
+      expect(inPanel('other', 'entity-metadata')).toBeGreaterThan(0);
+    });
+
+    it('goes back to the top when the tab changes', async () => {
+      const view = await render(<SceneDetailContent {...baseProps()} />);
+      expect(view.getByTestId('detail-scroll-reset').props.children).toBe('details');
+
+      await openTab(view, 'relations');
+
+      expect(view.getByTestId('detail-scroll-reset').props.children).toBe('relations');
+    });
+
+    it('opens the tab that holds the field a landing is for', async () => {
+      const onSummary = await render(
+        <SceneDetailContent {...baseProps({ occurrence: { field: 'summary', needle: 'x' } })} />,
+      );
+      expect(onSummary.getByTestId('commentable-summary')).toBeTruthy();
+
+      cleanup();
+      const onNotes = await render(
+        <SceneDetailContent {...baseProps({ occurrence: { field: 'extraNotes' } })} />,
+      );
+      expect(onNotes.getByTestId('commentable-extra_notes')).toBeTruthy();
+      expect(onNotes.queryByTestId('commentable-summary')).toBeNull();
+    });
   });
 });

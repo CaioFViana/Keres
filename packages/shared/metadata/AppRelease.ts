@@ -6,19 +6,25 @@
  * This module is consumed by both the client and the API, so there is no separate server version.
  */
 export const APP_RELEASE = {
-  name: 'Hestia',
-  version: '1.9.0',
+  name: 'Pandora',
+  version: '1.10.1',
   /**
    * The release's line, shown verbatim on the credits screen. English, never translated - it is
    * the release's voice, quoted from `docs/fluff_release_names.md`. Update it by hand with every
    * release (see `docs/release_process.md`).
    */
   phrase:
-    'At the heart of the biggest mountain, the flame of home protect us all. The first and the last. Its warmth shall embraces our families forever.',
+    'The first woman to exist. From her grand curiosity a never ending curse, as the world wont go back to what it was ever again.',
 } as const;
 
 /** Where the source lives; the credits screen links out to it. */
 export const KERES_REPOSITORY_URL = 'https://github.com/CaioFViana/Keres';
+
+/**
+ * The newest release of the official apps (mobile and desktop). The browser builds point here, since
+ * those are the ones without the browser's limits.
+ */
+export const KERES_LATEST_RELEASE_URL = `${KERES_REPOSITORY_URL}/releases/latest`;
 
 /** Keres' own license, shown on the credits screen next to the repository link. */
 export const KERES_LICENSE = {
@@ -80,5 +86,21 @@ export const THIRD_PARTY_CREDITS: readonly ReleaseCredit[] = [
     license: 'Apache License 2.0',
     licenseUrl: 'https://www.apache.org/licenses/LICENSE-2.0',
     authors: [{ name: 'Christian Robertson', url: 'https://fonts.google.com/specimen/Roboto' }],
+  },
+  {
+    project: 'Noto Serif',
+    projectUrl: 'https://fonts.google.com/noto/specimen/NotoSerif',
+    license: 'SIL Open Font License 1.1',
+    licenseUrl: 'https://openfontlicense.org',
+    authors: [{ name: 'Google Fonts', url: 'https://fonts.google.com' }],
+    noteKey: 'credits_noto_serif_note',
+  },
+  {
+    project: 'Noto Serif JP',
+    projectUrl: 'https://fonts.google.com/noto/specimen/NotoSerifJP',
+    license: 'SIL Open Font License 1.1',
+    licenseUrl: 'https://openfontlicense.org',
+    authors: [{ name: 'Google Fonts', url: 'https://fonts.google.com' }],
+    noteKey: 'credits_noto_cjk_note',
   },
 ];

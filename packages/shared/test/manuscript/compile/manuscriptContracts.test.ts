@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ShowcaseVersionSchema } from '../../../schemas/PublicationSchemas';
+import { ShowcaseVersionSchema } from '../../../schemas/story/PublicationSchemas';
 import {
   DEFAULT_MANUSCRIPT_LABELS,
   FORMAT_META,
@@ -19,8 +19,8 @@ describe('ManuscriptFormatSchema', () => {
 });
 
 describe('MAX_MANUSCRIPT_BYTES', () => {
-  it('is 50 MB', () => {
-    expect(MAX_MANUSCRIPT_BYTES).toBe(50 * 1024 * 1024);
+  it('is 100 MB', () => {
+    expect(MAX_MANUSCRIPT_BYTES).toBe(100 * 1024 * 1024);
   });
 });
 
@@ -36,6 +36,8 @@ describe('FORMAT_META', () => {
       html: { extension: 'html', mimeType: 'text/html' },
       pdf: { extension: 'pdf', mimeType: 'application/pdf' },
       epub: { extension: 'epub', mimeType: 'application/epub+zip' },
+      fountain: { extension: 'fountain', mimeType: 'text/plain' },
+      'screenplay-pdf': { extension: 'pdf', mimeType: 'application/pdf' },
     });
   });
 });
@@ -45,11 +47,17 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
     expect(DEFAULT_MANUSCRIPT_LABELS).toEqual({
       goToPage: 'Go to page',
       goToScene: 'See',
+      sceneWord: 'scene',
       looseHeading: 'Appendix',
       tocHeading: 'Contents',
       endOfExcerpt: 'end of this excerpt',
       chooseStart: 'Choose where to begin',
       beginAt: 'Begin',
+      pageLabel: 'Page',
+      frameLabel: 'Frame',
+      mediaRemoved: 'Image removed',
+      musicLabel: 'Music',
+      songsHeading: 'Songs',
     });
   });
 });
@@ -59,11 +67,21 @@ describe('ManuscriptOptionsSchema', () => {
   it('defaults the content switches', () => {
     expect(ManuscriptOptionsSchema.parse({ format: 'md' })).toEqual({
       format: 'md',
+      includeCover: true,
       includeLooseScenes: false,
+      includeMusicCues: false,
       includeSceneNames: false,
+      includeSongs: false,
       includeToc: false,
+      pageLayout: 'flow',
+      pageNoun: 'page',
       resetSceneNumbers: false,
       sceneOrder: 'discovery',
+      scenePerPage: false,
+      songChords: false,
+      songLanguage: 'sung',
+      songRepeat: 'first-only',
+      songsPlacement: 'appendix',
     });
   });
 

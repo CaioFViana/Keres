@@ -1,10 +1,12 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -16,30 +18,30 @@ import RelatedEntitiesList from '@/src/components/common/lists/RelatedEntitiesLi
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import { createNoteRelationService } from '@/src/services/storymanagement/NoteRelationService';
-import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
+import type { NoteRelation } from '@keres/shared/entities/narrative/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDrizzle } from '../../db';
-import type { TagSelect } from '../../db/schema';
-import type { NoteSelect } from '../../db/schemas/notes';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { TagSelect } from '@/src/db/schema';
+import type { NoteSelect } from '@/src/db/schemas/notes';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import { EntityService } from '../../services/EntityService'; // Import EntityService
-import { createNoteService } from '../../services/storymanagement/NoteService';
-import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
-import { createTagService } from '../../services/storymanagement/TagService';
-import { useStoryStore } from '../../state/storyStore'; // Import useStoryStore
-import { useTheme } from '../../theme';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { EntityService } from '@/src/services/entity-solvers/EntityService'; // Import EntityService
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import { useStoryStore } from '@/src/state/story/storyStore'; // Import useStoryStore
+import { useTheme } from '@/src/theme';
 
 import type { NotesScreenNavigationProp } from './NoteListScreen';
 
@@ -86,15 +88,7 @@ const NoteDetailScreen = () => {
 
   const [note, setNote] = useState<NoteSelect | null>(null);
   const { canEdit } = useStoryRole(note?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(note?.storyId, 'Note', noteId);
+  const comments = useEntityComments(note?.storyId, 'Note', noteId);
   const [noteTags, setNoteTags] = useState<TagSelect[]>([]);
   const [allNoteRelations, setAllNoteRelations] = useState<NoteRelation[]>([]);
   const [groupedEntities, setGroupedEntities] = useState<Record<string, RelatedEntityItem[]>>({
@@ -292,6 +286,9 @@ const NoteDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={t('loading_note_details')} />;
   }
@@ -306,27 +303,10 @@ const NoteDetailScreen = () => {
     );
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: note.storyId,
-    canComment: canComment,
-    isStoryOwner: isStoryOwner,
-    currentUserId: currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(note.storyId, comments);
 
-  return (
-    <DetailContainer
-      title={note.title}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={noteTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
@@ -334,25 +314,34 @@ const NoteDetailScreen = () => {
         label={t('body')}
       />
 
-      <CustomAttributeDetailFields storyId={note.storyId} entityType="Note" entityId={noteId} />
-
-      <CommentableDetailField
-        {...commentField('extraNotes', note.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
+
       <EntityGalleryManager
         ownerId={noteId}
         ownerType="Note"
         onPressMedia={openGalleryMediaViewer}
         editable={canEdit}
       />
+    </>
+  );
 
+  const relationsPanel = (
+    <>
       <RelatedEntitiesList
         title={t('related_entities_title')}
         noItemsMessage={t('no_entities_related')}
         groupedEntities={groupedEntities}
+      />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields storyId={note.storyId} entityType="Note" entityId={noteId} />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', note.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
       />
 
       <FavoritedByList storyId={note.storyId} entityId={noteId} entityType="Note" />
@@ -363,6 +352,25 @@ const NoteDetailScreen = () => {
         updatedAt={note.updatedAt}
         entityType="Note"
         entityId={note.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={note.title}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

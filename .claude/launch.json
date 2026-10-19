@@ -18,6 +18,12 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "site:start"],
       "port": 5175
+    },
+    {
+      "name": "payments-local",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "payments:local"],
+      "port": 3300
     }
   ]
 }

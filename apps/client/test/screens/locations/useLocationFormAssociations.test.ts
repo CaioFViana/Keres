@@ -1,26 +1,26 @@
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { LocationRelationSelect } from '@/src/db/schema';
+import { useLocationFormAssociations } from '@/src/screens/locations/useLocationFormAssociations';
+
 const mockUseEntityRelations = jest.fn();
 const mockSetSelectedTagIds = jest.fn();
 const mockAlert = jest.fn();
 const mockReadDraft = jest.fn();
 const mockPatchDraft = jest.fn();
 
-jest.mock('../../../src/hooks/useEntityRelations', () => ({
+jest.mock('@/src/hooks/relations/useEntityRelations', () => ({
   useEntityRelations: (...args: unknown[]) => mockUseEntityRelations(...args),
 }));
-jest.mock('../../../src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+jest.mock('@/src/state/drafts/entityFormSecondaryDraftStore', () => ({
   readEntityFormSecondaryDraft: (...args: unknown[]) => mockReadDraft(...args),
   patchEntityFormSecondaryDraft: (...args: unknown[]) => mockPatchDraft(...args),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-
-import { act, renderHook, waitFor } from '@testing-library/react-native';
-import type { LocationRelationSelect } from '../../../src/db/schema';
-import { useLocationFormAssociations } from '../../../src/screens/locations/useLocationFormAssociations';
 
 const stubRelations = () => ({
   availableTags: [],

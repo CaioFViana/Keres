@@ -2,13 +2,13 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import type { CalendarDefinitionType } from '@keres/shared';
 import React from 'react';
 import { ActivityIndicator } from 'react-native';
-import CalendarAnchorsModal from '../../src/components/features/calendars/CalendarAnchorsModal';
+import CalendarAnchorsModal from '@/src/components/features/calendars/CalendarAnchorsModal';
 import CalendarRowList, {
   type CalendarRowField,
-} from '../../src/components/features/calendars/CalendarRowList';
-import type { CalendarAnchorPreviewRow } from '../../src/utils/calendarAnchorPreview';
+} from '@/src/components/features/calendars/CalendarRowList';
+import type { CalendarAnchorPreviewRow } from '@/src/utils/entity/calendarAnchorPreview';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -41,7 +41,7 @@ jest.mock('react-native', () => {
 });
 
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -50,7 +50,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -75,12 +75,12 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
 });
 
 const mockCalendarAnchorPreview = jest.fn();
-jest.mock('../../src/hooks/useCalendarAnchorPreview', () => ({
+jest.mock('@/src/hooks/story/useCalendarAnchorPreview', () => ({
   useCalendarAnchorPreview: (...args: unknown[]) => mockCalendarAnchorPreview(...args),
 }));
 
 const mockNavigateToEntity = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigateToEntity,
 }));
 

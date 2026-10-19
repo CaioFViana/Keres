@@ -1,12 +1,14 @@
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
@@ -14,39 +16,45 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import { Ionicons } from '@expo/vector-icons';
-import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import type { Effect } from '@keres/shared/entities/Effect';
+import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useDrizzle } from '../../../db';
-import type { ChoiceSelect } from '../../../db/schema';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { ChoiceSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityInitialLoad,
   useEntityEventSubscriptions,
-} from '../../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../../hooks/useEntityComments';
-import { useEntityRelations } from '../../../hooks/useEntityRelations';
-import { useStoryRole } from '../../../hooks/useStoryRole';
-import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
-import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { createEffectService } from '../../../services/storymanagement/EffectService';
-import { createItemService } from '../../../services/storymanagement/ItemService';
-import { createSceneService } from '../../../services/storymanagement/SceneService';
-import { useStoryStore } from '../../../state/storyStore';
-import { useTheme } from '../../../theme';
-import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createChoiceService } from '@/src/services/storymanagement/choices-stats/ChoiceService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { layout } from '@/src/theme/layout';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import {
+  describeChoiceCheck,
+  describeEffect,
+} from '@/src/utils/analysis/choiceCheckEffectDescriptions';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 export type ChoiceDetailScreenParamList = {
   ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
@@ -128,21 +136,7 @@ const ChoiceDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
-  const styles = StyleSheet.create({
-    sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: colors.surface,
-    },
-    choiceEffectContainer: { marginBottom: 20 },
-    checkRow: { color: colors.text, marginTop: 4 },
-    groupLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
-    sceneLink: { flexDirection: 'row', alignItems: 'center' },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchChoice = useCallback(async () => {
     if (!choiceServiceRef.current) {
@@ -273,6 +267,9 @@ const ChoiceDetailScreen = () => {
     ],
   });
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -294,21 +291,27 @@ const ChoiceDetailScreen = () => {
     addComment,
   });
 
-  return (
-    <DetailContainer
-      title={choice.text}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const detailsPanel = (
+    <>
       <TagList tags={choiceTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
+      <CommentableDetailField
+        {...commentField('text', choice.text || t('common_na'))}
+        label={t('text')}
+      />
+
+      <CommentableDetailField
+        {...commentField('notes', choice.notes || t('common_na'))}
+        label={t('choice_notes')}
+      />
+    </>
+  );
+
+  const relationsPanel = (
+    <>
       <TouchableOpacity
         onPress={() => handleScenePress(choice.sceneId)}
-        style={styles.sceneLink}
+        style={layout.row}
         activeOpacity={0.7}
       >
         <View style={{ flex: 1 }}>
@@ -322,7 +325,7 @@ const ChoiceDetailScreen = () => {
 
       <TouchableOpacity
         onPress={() => handleScenePress(choice.nextSceneId)}
-        style={styles.sceneLink}
+        style={layout.row}
         activeOpacity={0.7}
       >
         <View style={{ flex: 1 }}>
@@ -333,16 +336,6 @@ const ChoiceDetailScreen = () => {
         </View>
         <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
       </TouchableOpacity>
-
-      <CommentableDetailField
-        {...commentField('text', choice.text || t('common_na'))}
-        label={t('text')}
-      />
-
-      <CommentableDetailField
-        {...commentField('notes', choice.notes || t('common_na'))}
-        label={t('choice_notes')}
-      />
 
       {isBranching && (
         <View style={styles.choiceEffectContainer}>
@@ -361,7 +354,7 @@ const ChoiceDetailScreen = () => {
                     : t('check_group_combinator_and_label')}
                 </Text>
                 {groupChecks.length === 0 && (
-                  <Text style={{ color: colors.textSecondary }}>{t('no_checks_in_group')}</Text>
+                  <ThemedText tone="secondary">{t('no_checks_in_group')}</ThemedText>
                 )}
                 {groupChecks.map((check) => (
                   <Text
@@ -407,14 +400,53 @@ const ChoiceDetailScreen = () => {
         entityId={choiceId}
         editable={false}
       />
+    </>
+  );
 
+  const otherPanel = (
+    <>
       <EntityMetadata
         version={choice.version}
         createdAt={choice.createdAt}
         updatedAt={choice.updatedAt}
       />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={choice.text}
+      landing={occurrence ?? null}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
+      />
     </DetailContainer>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
+    choiceEffectContainer: { marginBottom: 20 },
+    checkRow: { color: colors.text, marginTop: 4 },
+    groupLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 6 },
+  });
 
 export default ChoiceDetailScreen;

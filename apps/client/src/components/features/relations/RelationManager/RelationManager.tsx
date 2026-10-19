@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 import { relationSectionStyleDefs } from './relationSectionStyles';
 
 export type BaseItem = { id: string; isDeleted: boolean };

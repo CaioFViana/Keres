@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -62,5 +62,37 @@ describe('shared package boundaries', () => {
     expect(
       offenders(/^(react|react-native|react-native-.*|expo|expo-.*|@expo\/.*)$/, graphFiles),
     ).toEqual([]);
+  });
+
+  /**
+   * What `import { x } from '@keres/shared'` costs. A bundler that cannot prove a module is free of
+   * side effects keeps everything the barrel re-exports, so a heavy library reachable from
+   * `index.ts` is in every bundle that touches the package - the admin panel carried a word-processor
+   * writer (`docx`, `jszip`) for a user form. The modules that need them are imported by path
+   * instead: `manuscript/export` and `utils/storyZip`.
+   */
+  it('keeps the heavy libraries out of what the barrel reaches', () => {
+    const resolveImport = (from: string, specifier: string): string | null => {
+      const base = resolve(dirname(from), specifier);
+      return (
+        [`${base}.ts`, `${base}.tsx`, join(base, 'index.ts')].find((path) => existsSync(path)) ??
+        null
+      );
+    };
+    const reached = new Set<string>();
+    const pending = [join(ROOT, 'index.ts')];
+    while (pending.length) {
+      const file = pending.pop()!;
+      if (reached.has(file)) continue;
+      reached.add(file);
+      for (const specifier of importsOf(file)) {
+        if (!specifier.startsWith('.')) continue;
+        const next = resolveImport(file, specifier);
+        if (next) pending.push(next);
+      }
+    }
+
+    expect(reached.size).toBeGreaterThan(100);
+    expect(offenders(/^(docx|jszip)$/, [...reached])).toEqual([]);
   });
 });

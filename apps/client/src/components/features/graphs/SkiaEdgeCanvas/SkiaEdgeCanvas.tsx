@@ -2,7 +2,7 @@ import { Canvas, Group } from '@shopify/react-native-skia';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
-import type { CanvasCameraTransform } from '../../../../hooks/useCanvasViewport';
+import type { CanvasCameraTransform } from '@/src/hooks/canvas/useCanvasViewport';
 import { useCanvasKitReady } from './useCanvasKitReady';
 
 interface SkiaEdgeCanvasProps {

@@ -3,14 +3,12 @@ import * as SkiaMock from '@shopify/react-native-skia';
 import type { BoardContentType } from '@keres/shared';
 import React, { createRef } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
-import BoardCanvas, {
-  type BoardCanvasHandle,
-} from '../../src/components/features/boards/BoardCanvas';
-import SkiaEdgeCanvas from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
-import SkiaOverlayErrorBoundary from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
-import { boardEdgeGeometry } from '../../src/utils/boardEdges';
+import BoardCanvas, { type BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { boardEdgeGeometry } from '@/src/utils/board/boardEdges';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#000',
@@ -26,7 +24,7 @@ jest.mock('../../src/theme', () => ({
 }));
 jest.mock('expo-image', () => ({ Image: () => null }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
-jest.mock('../../src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
+jest.mock('@/src/hooks/media/useResolvedMediaUri', () => ({ useResolvedMediaUri: () => null }));
 
 type Root = RenderResult['container'];
 

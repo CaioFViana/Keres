@@ -1,17 +1,19 @@
 import React, { useCallback } from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { AppAlertButton } from '../../../../state/appAlertStore';
-import { useAppAlertStore } from '../../../../state/appAlertStore';
-import { useTheme } from '../../../../theme';
+import { useModalNavigationBar } from '@/src/hooks/ui/useModalNavigationBar';
+import type { AppAlertButton } from '@/src/state/ui/appAlertStore';
+import { useAppAlertStore } from '@/src/state/ui/appAlertStore';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { typography } from '@/src/theme/tokens';
 
 /**
- * Renders what `AppAlert.alert()` asked for (see utils/AppAlert.ts). Mounted once near the
+ * Renders what `AppAlert.alert()` asked for (see state/ui/AppAlert.ts). Mounted once near the
  * app's root (`App.tsx`), the same way as `NotificationPopup` - a single `Modal`, isolated from
  * the rest of the screen tree, so any screen can fire an alert without having to mount
  * anything locally.
  */
 const AppAlertHost: React.FC = () => {
-  const { colors } = useTheme();
   const current = useAppAlertStore((state) => state.current);
   const dismiss = useAppAlertStore((state) => state.dismiss);
 
@@ -25,73 +27,8 @@ const AppAlertHost: React.FC = () => {
     [dismiss],
   );
 
-  const styles = StyleSheet.create({
-    backdrop: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-    },
-    card: {
-      width: '100%',
-      maxWidth: 400,
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: 20,
-    },
-    title: {
-      fontSize: 17,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 8,
-    },
-    message: {
-      fontSize: 14,
-      color: colors.textSecondary,
-      lineHeight: 20,
-      marginBottom: 20,
-    },
-    buttonRow: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      flexWrap: 'wrap',
-      gap: 10,
-    },
-    button: {
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      minWidth: 72,
-      alignItems: 'center',
-    },
-    defaultButton: {
-      backgroundColor: colors.primary,
-    },
-    cancelButton: {
-      backgroundColor: colors.background,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    destructiveButton: {
-      backgroundColor: colors.error,
-    },
-    defaultButtonText: {
-      color: colors.onPrimary,
-      fontSize: 15,
-      fontWeight: 'bold',
-    },
-    cancelButtonText: {
-      color: colors.text,
-      fontSize: 15,
-      fontWeight: 'bold',
-    },
-    destructiveButtonText: {
-      color: colors.onError,
-      fontSize: 15,
-      fontWeight: 'bold',
-    },
-  });
+  const styles = useThemedStyles(createStyles);
+  useModalNavigationBar(current !== null);
 
   if (!current) {
     return null;
@@ -145,5 +82,73 @@ const AppAlertHost: React.FC = () => {
     </Modal>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    card: {
+      width: '100%',
+      maxWidth: 400,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 20,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    message: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginBottom: 20,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      flexWrap: 'wrap',
+      gap: 10,
+    },
+    button: {
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      minWidth: 72,
+      alignItems: 'center',
+    },
+    defaultButton: {
+      backgroundColor: colors.primary,
+    },
+    cancelButton: {
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    destructiveButton: {
+      backgroundColor: colors.error,
+    },
+    defaultButtonText: {
+      color: colors.onPrimary,
+      fontSize: 15,
+      fontWeight: 'bold',
+    },
+    cancelButtonText: {
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: 'bold',
+    },
+    destructiveButtonText: {
+      color: colors.onError,
+      fontSize: 15,
+      fontWeight: 'bold',
+    },
+  });
 
 export default AppAlertHost;

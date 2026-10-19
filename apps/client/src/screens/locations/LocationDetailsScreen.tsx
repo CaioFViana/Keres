@@ -1,15 +1,19 @@
-import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
+import { useLocationRelationActions } from './useLocationRelationActions';
+import { createEntityCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import TagList from '@/src/components/common/display/TagList/TagList';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
@@ -21,43 +25,42 @@ import ScenePresenceList, {
   groupScenePresenceEntries,
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
-import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene
-import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
+import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene'; // Import CharacterScene
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item'; // Import Item and ItemJourney entities
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../db';
-import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
-import type { CharacterSelect } from '../../db/schemas/characters'; // Import CharacterSelect
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { LocationRelationSelect, LocationSelect, SceneSelect } from '@/src/db/schema'; // Explicitly import SceneSelect
+import type { CharacterSelect } from '@/src/db/schemas/characters'; // Import CharacterSelect
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
-import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Import CharacterSceneService
-import type { CharacterService } from '../../services/storymanagement/CharacterService';
-import { createCharacterService } from '../../services/storymanagement/CharacterService'; // Import CharacterService
-import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '../../services/storymanagement/ItemService';
-import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { createLocationRelationService } from '../../services/storymanagement/LocationRelationService';
-import { createLocationService } from '../../services/storymanagement/LocationService';
-import { createSceneService } from '../../services/storymanagement/SceneService'; // Import createSceneService
-import { useStoryStore } from '../../state/storyStore';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { AppAlert } from '../../utils/AppAlert';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import type { LocationStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService'; // Import CharacterSceneService
+import type { CharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService'; // Import CharacterService
+import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService'; // Import ItemService
+import type { LocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createLocationRelationService } from '@/src/services/storymanagement/relations/LocationRelationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService'; // Import createSceneService
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {
@@ -90,15 +93,7 @@ const LocationDetailsScreen = () => {
 
   const [location, setLocation] = useState<LocationSelect | null>(null);
   const { canEdit } = useStoryRole(location?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(location?.storyId, 'Location', locationId);
+  const comments = useEntityComments(location?.storyId, 'Location', locationId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -358,80 +353,14 @@ const LocationDetailsScreen = () => {
     [selectedStory?.id, fetchAllItemJourneysInStory],
   );
 
-  const handleSetParent = useCallback(
-    async (newParentId: string | null) => {
-      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-      try {
-        await locationRelationServiceRef.current.setParent(
-          userId,
-          selectedStory.id,
-          locationId,
-          newParentId,
-        );
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_save_relation'),
-        );
-      }
-    },
-    [selectedStory?.id, userId, locationId, t],
-  );
-
-  const handleAddChild = useCallback(
-    async (childId: string) => {
-      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-      try {
-        await locationRelationServiceRef.current.setParent(
-          userId,
-          selectedStory.id,
-          childId,
-          locationId,
-        );
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_save_relation'),
-        );
-      }
-    },
-    [selectedStory?.id, userId, locationId, t],
-  );
-
-  const handleAddConnection = useCallback(
-    async (otherLocationId: string) => {
-      if (!locationRelationServiceRef.current || !selectedStory?.id || !userId) return;
-      try {
-        await locationRelationServiceRef.current.addConnection(
-          userId,
-          selectedStory.id,
-          locationId,
-          otherLocationId,
-        );
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_save_relation'),
-        );
-      }
-    },
-    [selectedStory?.id, userId, locationId, t],
-  );
-
-  const handleRemoveLocationRelation = useCallback(
-    async (relationId: string) => {
-      if (!locationRelationServiceRef.current || !userId) return;
-      try {
-        await locationRelationServiceRef.current.removeRelation(userId, relationId);
-      } catch (err) {
-        AppAlert.alert(
-          t('error'),
-          err instanceof Error ? err.message : t('failed_to_remove_relation'),
-        );
-      }
-    },
-    [userId, t],
-  );
+  const { handleSetParent, handleAddChild, handleAddConnection, handleRemoveLocationRelation } =
+    useLocationRelationActions({
+      relationServiceRef: locationRelationServiceRef,
+      storyId: selectedStory?.id,
+      userId,
+      locationId,
+      t,
+    });
 
   useEntityInitialLoad(fetchLocationDetails);
 
@@ -497,6 +426,9 @@ const LocationDetailsScreen = () => {
     return groupScenePresenceEntries(pairs);
   }, [allCharacters, allScenes, characterSceneRelations, locationId]);
 
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
   if (loading) {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
@@ -509,58 +441,50 @@ const LocationDetailsScreen = () => {
     return <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />;
   }
 
-  const commentField = createCommentFieldBindings({
-    storyId: location.storyId,
-    mentionSourceId: location.id,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
-    commentsByField,
-    addComment,
-  });
+  const commentField = createEntityCommentFieldBindings(location.storyId, comments, location.id);
 
-  return (
-    <DetailContainer title={location.name} landing={occurrence ?? null}>
+  const detailsPanel = (
+    <>
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField
         {...commentField('description', location.description || t('common_na'))}
         label={t('description')}
       />
+
+      <DetailField
+        label={t('field_intExt')}
+        value={location.intExt ? t(`int_ext_${location.intExt}`) : t('common_na')}
+      />
+
       <CommentableDetailField
         {...commentField('climate', location.climate || t('common_na'))}
         label={t('field_climate')}
       />
+
       <CommentableDetailField
         {...commentField('culture', location.culture || t('common_na'))}
         label={t('field_culture')}
       />
+
       <CommentableDetailField
         {...commentField('politics', location.politics || t('common_na'))}
         label={t('field_politics')}
       />
 
-      <CustomAttributeDetailFields
-        storyId={location.storyId}
-        entityType="Location"
-        entityId={locationId}
-      />
-
-      <CommentableDetailField
-        {...commentField('extraNotes', location.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
-
       <ScreenSection title={t('media_section_title')} />
+
       <EntityGalleryManager
         ownerId={locationId}
         ownerType="Location"
         onPressMedia={openGalleryMediaViewer}
         editable={canEdit}
       />
+    </>
+  );
 
+  const relationsPanel = (
+    <>
       <LocationRelationManager
         currentLocationId={locationId}
         allLocations={allLocations}
@@ -617,6 +541,21 @@ const LocationDetailsScreen = () => {
         entityId={locationId}
         editable={false}
       />
+    </>
+  );
+
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields
+        storyId={location.storyId}
+        entityType="Location"
+        entityId={locationId}
+      />
+
+      <CommentableDetailField
+        {...commentField('extraNotes', location.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <FavoritedByList storyId={location.storyId} entityId={locationId} entityType="Location" />
 
@@ -626,6 +565,20 @@ const LocationDetailsScreen = () => {
         updatedAt={location.updatedAt}
         entityType="Location"
         entityId={location.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={location.name}
+      landing={occurrence ?? null}
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

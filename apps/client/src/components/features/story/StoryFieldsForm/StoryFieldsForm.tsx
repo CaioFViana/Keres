@@ -1,13 +1,14 @@
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import type { FavoriteBehavior } from '@keres/shared/entities/Story';
+import type { FavoriteBehavior } from '@keres/shared/entities/story/Story';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
-import { getLanguageOptions } from '../../../../utils/i18n';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { getLanguageOptions } from '@/src/utils/format/i18n';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface StoryFieldsFormProps {
   title: string;
@@ -164,9 +165,9 @@ const StoryFieldsForm: React.FC<StoryFieldsFormProps> = ({
             placeholder={t('favorite_behavior')}
             disabled={favoriteBehaviorDisabled ?? !editable}
           />
-          <Text style={{ color: colors.textSecondary, marginBottom: 0 }}>
+          <ThemedText tone="secondary" style={{ marginBottom: 0 }}>
             {t(`favorite_behavior_${favoriteBehavior}_description`)}
-          </Text>
+          </ThemedText>
         </>
       )}
 

@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { env } from '../../src/config/env';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { env } from '@/config/env';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { enterRequiredMode, leaveRequiredMode } from '@test/helpers/ageVerificationAccounts';
+import { promoteToAdmin, softDeleteUser, truncateAll } from '@test/helpers/database';
 
 let admin: TestUser;
 let comum: TestUser;
@@ -28,6 +29,12 @@ describe('requireAdmin gate', () => {
     ['POST', '/admin/api/users/qualquer/regenerate-recovery-codes'],
     ['GET', '/admin/api/tiers'],
     ['POST', '/admin/api/tiers', { name: 'Pro' }],
+    ['GET', '/admin/api/messages'],
+    ['GET', '/admin/api/messages/unread-count'],
+    ['GET', '/admin/api/messages/qualquer'],
+    ['PATCH', '/admin/api/messages/qualquer', { read: true }],
+    ['POST', '/admin/api/messages/qualquer/reply', { body: 'x' }],
+    ['DELETE', '/admin/api/messages/qualquer'],
     ['GET', '/admin/api/registration-settings'],
     ['PUT', '/admin/api/registration-settings', { isRegistrationOpen: false }],
     ['GET', '/admin/api/recovery/deleted'],
@@ -483,6 +490,65 @@ describe('tiers', () => {
     expect(updated.data).toMatchObject({ name: 'Pro Plus', maxStories: 10 });
   });
 
+  it('sets, zeroes and clears the comment cap of a story through the tier routes', async () => {
+    const { data: created } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Chatty', maxCommentsPerStory: 20 },
+    });
+    expect(created).toMatchObject({ maxCommentsPerStory: 20 });
+
+    const zeroed = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxCommentsPerStory: 0 },
+    });
+    expect(zeroed.status).toBe(200);
+    expect(zeroed.data).toMatchObject({ maxCommentsPerStory: 0 });
+
+    const cleared = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxCommentsPerStory: null },
+    });
+    expect(cleared.status).toBe(200);
+    expect(cleared.data).toMatchObject({ maxCommentsPerStory: null });
+
+    const read = await request('GET', `/admin/api/tiers/${created.id}`, { token: admin.token });
+    expect(read.data).toMatchObject({ maxCommentsPerStory: null });
+
+    const negative = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxCommentsPerStory: -1 },
+    });
+    expect(negative.status).toBe(400);
+  });
+
+  it('sets, zeroes and clears the collaborator cap of a story through the tier routes', async () => {
+    const { data: created } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Crowded', maxContributorsPerStory: 4 },
+    });
+    expect(created).toMatchObject({ maxContributorsPerStory: 4 });
+
+    const zeroed = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxContributorsPerStory: 0 },
+    });
+    expect(zeroed.status).toBe(200);
+    expect(zeroed.data).toMatchObject({ maxContributorsPerStory: 0 });
+
+    const cleared = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxContributorsPerStory: null },
+    });
+    expect(cleared.status).toBe(200);
+    expect(cleared.data).toMatchObject({ maxContributorsPerStory: null });
+
+    const negative = await request('PUT', `/admin/api/tiers/${created.id}`, {
+      token: admin.token,
+      body: { maxContributorsPerStory: -1 },
+    });
+    expect(negative.status).toBe(400);
+  });
+
   it('rejects duplicate tier names on creation and rename', async () => {
     const first = await request('POST', '/admin/api/tiers', {
       token: admin.token,
@@ -549,6 +615,65 @@ describe('tiers', () => {
     expect(invalidCreate.status).toBe(400);
     expect(invalidUpdate.status).toBe(400);
   });
+
+  it('accepts storage ceilings above the 32-bit range', async () => {
+    // Postgres `integer` tops out at ~2 GB; the storage columns are `bigint` instead.
+    // SQLite never failed here (its INTEGER is 64 bits), so this only bites on Postgres -
+    // which is where the production failure came from.
+    const created = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: {
+        name: 'Heavy',
+        maxStorageBytesPerStory: 2147483648,
+        maxStorageBytesTotal: 10737418240,
+      },
+    });
+
+    expect(created.status).toBe(201);
+    expect(created.data).toMatchObject({
+      maxStorageBytesPerStory: 2147483648,
+      maxStorageBytesTotal: 10737418240,
+    });
+  });
+
+  it('round-trips sale pricing, visibility and display order', async () => {
+    const created = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: {
+        name: 'Pro',
+        priceMonthlyCents: 1990,
+        priceYearlyCents: 19900,
+        isPublicForSale: true,
+        sortOrder: 3,
+      },
+    });
+
+    expect(created.status).toBe(201);
+    expect(created.data).toMatchObject({
+      priceMonthlyCents: 1990,
+      priceYearlyCents: 19900,
+      isPublicForSale: true,
+      sortOrder: 3,
+    });
+
+    const updated = await request('PUT', `/admin/api/tiers/${created.data.id}`, {
+      token: admin.token,
+      body: { priceMonthlyCents: 0, priceYearlyCents: null, sortOrder: 0 },
+    });
+
+    expect(updated.status).toBe(200);
+    expect(updated.data).toMatchObject({
+      priceMonthlyCents: 0,
+      priceYearlyCents: null,
+      sortOrder: 0,
+    });
+
+    const negative = await request('PUT', `/admin/api/tiers/${created.data.id}`, {
+      token: admin.token,
+      body: { priceMonthlyCents: -1 },
+    });
+    expect(negative.status).toBe(400);
+  });
 });
 
 describe('registration settings', () => {
@@ -614,5 +739,79 @@ describe('registration settings', () => {
 
     expect(status).toBe(200);
     expect(data.defaultTierId).toBe(tier.id);
+  });
+
+  it('defaults the currency to BRL and accepts ISO codes', async () => {
+    const first = await request('GET', '/admin/api/registration-settings', { token: admin.token });
+    expect(first.data.currency).toBe('BRL');
+
+    const updated = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { currency: 'USD' },
+    });
+    expect(updated.status).toBe(200);
+    expect(updated.data.currency).toBe('USD');
+
+    const invalid = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { currency: 'reais' },
+    });
+    expect(invalid.status).toBe(400);
+  });
+
+  describe('the age-verification mode the admin page reads', () => {
+    afterEach(() => {
+      leaveRequiredMode();
+    });
+
+    it('reports manual on a server with no verification service, with the adults-only switch free to turn on', async () => {
+      env.AGE_VERIFICATION_MODE = 'manual';
+
+      const { status, data } = await request('GET', '/admin/api/registration-settings', {
+        token: admin.token,
+      });
+
+      expect(status).toBe(200);
+      expect(data.ageVerificationMode).toBe('manual');
+      expect(data.allowNsfw).toBe(false);
+    });
+
+    it('reports required on a server that verifies, with the row fields alongside it', async () => {
+      enterRequiredMode();
+
+      const { status, data } = await request('GET', '/admin/api/registration-settings', {
+        token: admin.token,
+      });
+
+      expect(status).toBe(200);
+      expect(data.ageVerificationMode).toBe('required');
+      expect(data).toMatchObject({ isRegistrationOpen: true, currency: 'BRL' });
+    });
+
+    it('is read-only: an update cannot change the mode, and the next read still reports the server’s', async () => {
+      enterRequiredMode();
+
+      const put = await request('PUT', '/admin/api/registration-settings', {
+        token: admin.token,
+        body: { ageVerificationMode: 'manual', isRegistrationOpen: true },
+      });
+      const { data } = await request('GET', '/admin/api/registration-settings', {
+        token: admin.token,
+      });
+
+      expect(put.status).toBe(200);
+      expect(put.data).not.toHaveProperty('ageVerificationMode');
+      expect(env.AGE_VERIFICATION_MODE).toBe('required');
+      expect(data.ageVerificationMode).toBe('required');
+    });
+
+    it('is not answered to an ordinary user', async () => {
+      const { status, data } = await request('GET', '/admin/api/registration-settings', {
+        token: comum.token,
+      });
+
+      expect(status).toBe(403);
+      expect(data).not.toHaveProperty('ageVerificationMode');
+    });
   });
 });

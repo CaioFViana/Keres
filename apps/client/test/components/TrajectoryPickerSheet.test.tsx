@@ -1,8 +1,8 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import TrajectoryPickerSheet from '../../src/components/features/location-maps/TrajectoryPickerSheet';
+import TrajectoryPickerSheet from '@/src/components/features/location-maps/TrajectoryPickerSheet';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       surface: '#111',
@@ -15,13 +15,13 @@ jest.mock('../../src/theme', () => ({
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock(
-  '../../src/components/layout/ResponsiveModal/ResponsiveModal',
+  '@/src/components/layout/ResponsiveModal/ResponsiveModal',
   () =>
     function MockResponsiveModal({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
     },
 );
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -30,7 +30,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
     ),
   };
 });
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = jest.requireActual('react-native');
   return {
     __esModule: true,

@@ -6,7 +6,7 @@ import {
 } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { Text, type TextProps } from 'react-native';
-import { useTheme } from '../../../../theme';
+import { useTheme } from '@/src/theme';
 
 interface MarkedTextProps extends Omit<TextProps, 'children'> {
   text: string;

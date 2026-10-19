@@ -1,31 +1,35 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import { Button, SingleSelectPill, TextInput } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import ArcMediumChanges from '@/src/components/features/arcs/ArcMediumChanges';
 import { useDrizzle } from '@/src/db';
-import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
-import { useScreenTour } from '@/src/guides/useScreenTour';
-import { useStoryRole } from '@/src/hooks/useStoryRole';
-import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
-import { createStoryService } from '@/src/services/storymanagement/StoryService';
-import { useStoryStore } from '@/src/state/storyStore';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useStoryArcs } from '@/src/hooks/story/useStoryArcs';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import { createStoryArcService } from '@/src/services/storymanagement/scenes-chapters/StoryArcService';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
+import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
+import { useStoryStore } from '@/src/state/story/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
-import { AppAlert } from '@/src/utils/AppAlert';
+import { AppAlert } from '@/src/state/ui/AppAlert';
 import {
   STORY_VOCABULARY_ENTITY_TYPES,
   type GrammaticalGender,
   type StoryVocabulary,
   type StoryVocabularyEntityType,
-} from '@keres/shared/entities/Story';
+} from '@keres/shared/entities/story/Story';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
-type VocabularyNavigation = NativeStackNavigationProp<CustomizationStackParamList, 'Vocabulary'>;
+type VocabularyNavigation = NativeStackNavigationProp<StorySettingsStackParamList, 'Vocabulary'>;
 type DraftTerms = Record<
   StoryVocabularyEntityType,
   {
@@ -96,7 +100,7 @@ const VocabularyTermCard = memo(
           column: { flex: 1, minWidth: 0 },
           gender: { width: 136 },
           label: { color: colors.textSecondary, fontSize: 12, marginBottom: 5 },
-          empty: { color: colors.textSecondary, fontSize: 12, marginTop: 7 },
+          empty: { color: colors.textSecondary, fontSize: 12, marginTop: 8 },
         }),
       [colors],
     );
@@ -162,15 +166,21 @@ VocabularyTermCard.displayName = 'VocabularyTermCard';
 const VocabularyScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   useScreenTour('Vocabulary');
-  const termsAnchorRef = useScreenAnchor('Vocabulary', 'terms');
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<VocabularyNavigation>();
   const { selectedStory, setSelectedStory } = useStoryStore();
   const selectedStoryId = selectedStory?.id;
-  const selectedStoryVocabulary = selectedStory?.vocabulary ?? null;
-  const { canManageStoryPolicy } = useStoryRole(selectedStory?.id);
+  // Inside an Arc this screen edits that Arc's own terms; in the every-Arc view it edits the story's.
+  const { activeArc } = useStoryArcs();
+  const { userId } = useUserSettingsStore();
+  const arcScope = activeArc;
+  const selectedStoryVocabulary = arcScope
+    ? arcScope.vocabulary
+    : (selectedStory?.vocabulary ?? null);
+  const { canEdit, canManageStoryPolicy } = useStoryRole(selectedStory?.id);
+  const canEditTerms = arcScope ? canEdit : canManageStoryPolicy;
   const [language, setLanguage] = useState<'pt' | 'en'>(() => languageFamily(i18n.language));
   const [terms, setTerms] = useState<DraftTerms>(() => draftFromVocabulary(null));
   const [saving, setSaving] = useState(false);
@@ -187,19 +197,21 @@ const VocabularyScreen = () => {
       loadedDraftRef.current = null;
       return;
     }
-    const draftKey = `${selectedStoryId}:${vocabularySignature}`;
+    const draftKey = `${selectedStoryId}:${arcScope?.id ?? 'story'}:${vocabularySignature}`;
     if (loadedDraftRef.current === draftKey) return;
     loadedDraftRef.current = draftKey;
     setLanguage(selectedStoryVocabulary?.language ?? languageFamily(i18n.language));
     setTerms(draftFromVocabulary(selectedStoryVocabulary));
-  }, [i18n.language, selectedStoryId, selectedStoryVocabulary, vocabularySignature]);
+  }, [arcScope?.id, i18n.language, selectedStoryId, selectedStoryVocabulary, vocabularySignature]);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        intro: { color: colors.textSecondary, lineHeight: 20, marginBottom: 18 },
+        intro: { color: colors.textSecondary, lineHeight: 20, marginBottom: 12 },
+        medium: { marginBottom: 18 },
+        scope: { color: colors.text, fontWeight: '700', lineHeight: 20, marginBottom: 18 },
         languageLabel: { color: colors.text, fontWeight: '700', marginBottom: 6 },
-        languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 7 },
+        languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 8 },
         // flexGrow only — `flex: 1` on the scroll content (via common.container) pins height to the
         // viewport and prevents scrolling past the first few vocabulary cards.
         content: { flexGrow: 1, paddingBottom: 40 },
@@ -227,7 +239,7 @@ const VocabularyScreen = () => {
   );
 
   const handleSave = useCallback(async () => {
-    if (!selectedStory || !canManageStoryPolicy) return;
+    if (!selectedStory || !canEditTerms) return;
     const entries = STORY_VOCABULARY_ENTITY_TYPES.map((type) => [type, terms[type]] as const);
     if (entries.some(([, term]) => Boolean(term.singular.trim()) !== Boolean(term.plural.trim()))) {
       AppAlert.alert(t('error'), t('vocabulary_term_pair_required'));
@@ -246,10 +258,20 @@ const VocabularyScreen = () => {
       Object.keys(configured).length === 0 ? null : { version: 1, language, terms: configured };
     try {
       setSaving(true);
-      await createStoryService(drizzleDb).updateStory(selectedStory.userId, selectedStory.id, {
-        vocabulary,
-      });
-      setSelectedStory({ ...selectedStory, vocabulary });
+      if (arcScope) {
+        await createStoryArcService(drizzleDb).updateArc(
+          userId ?? selectedStory.userId,
+          arcScope.id,
+          {
+            vocabulary,
+          },
+        );
+      } else {
+        await createStoryService(drizzleDb).updateStory(selectedStory.userId, selectedStory.id, {
+          vocabulary,
+        });
+        setSelectedStory({ ...selectedStory, vocabulary });
+      }
       AppAlert.alert(t('success'), t('vocabulary_saved'));
       navigation.goBack();
     } catch (error) {
@@ -259,7 +281,8 @@ const VocabularyScreen = () => {
       setSaving(false);
     }
   }, [
-    canManageStoryPolicy,
+    arcScope,
+    canEditTerms,
     drizzleDb,
     language,
     navigation,
@@ -267,6 +290,7 @@ const VocabularyScreen = () => {
     setSelectedStory,
     t,
     terms,
+    userId,
   ]);
 
   const common = getCommonContainerStyles(colors);
@@ -274,8 +298,29 @@ const VocabularyScreen = () => {
 
   return (
     <KeyboardAwareScreen style={common.container} contentContainerStyle={styles.content}>
-      <View ref={termsAnchorRef} collapsable={false}>
+      <GuideAnchor screen="Vocabulary" part="terms">
         <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
+        <Text style={styles.scope} testID="vocabulary-scope">
+          {arcScope
+            ? t('vocabulary_scope_arc', { arc: arcScope.title })
+            : t('vocabulary_scope_story')}
+        </Text>
+        {arcScope ? (
+          <View style={styles.medium} testID="vocabulary-medium">
+            <Text style={styles.languageHint}>
+              {t('vocabulary_medium_arc', { medium: t(`arc_medium_${arcScope.medium}`) })}
+            </Text>
+            <ArcMediumChanges
+              medium={arcScope.medium}
+              language={languageFamily(i18n.language)}
+              termsOnly
+            />
+          </View>
+        ) : (
+          <Text style={styles.languageHint} testID="vocabulary-medium">
+            {t('vocabulary_medium_story')}
+          </Text>
+        )}
         <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
         <SingleSelectPill
           value={language}
@@ -284,7 +329,7 @@ const VocabularyScreen = () => {
             { value: 'pt', label: t('language_portuguese') },
             { value: 'en', label: t('language_english') },
           ]}
-          disabled={!canManageStoryPolicy}
+          disabled={!canEditTerms}
         />
         <Text style={styles.languageHint}>{t('vocabulary_language_hint')}</Text>
         {STORY_VOCABULARY_ENTITY_TYPES.map((type) => (
@@ -293,11 +338,11 @@ const VocabularyScreen = () => {
             type={type}
             term={terms[type]}
             language={language}
-            editable={canManageStoryPolicy}
+            editable={canEditTerms}
             onChange={setTerm}
           />
         ))}
-        {canManageStoryPolicy && (
+        {canEditTerms && (
           <FormActions stackOnCompact style={styles.formActions}>
             <Button
               style={styles.secondaryButton}
@@ -314,7 +359,7 @@ const VocabularyScreen = () => {
           </FormActions>
         )}
         <View testID="vocabulary-footer-spacer" style={styles.footerSpacer} />
-      </View>
+      </GuideAnchor>
     </KeyboardAwareScreen>
   );
 };

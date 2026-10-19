@@ -9,9 +9,11 @@
  * prose, and counts run on {@link documentTextContent}. Storage stays a
  * markdown string so drafts, sync, export and the 30k cap are untouched.
  *
- * Body blocks are paragraphs only: scene and chapter titles live in their own
- * fields, never in the prose. Legacy `# ` prefixes degrade to plain paragraphs
- * on parse, so no stored content is ever lost.
+ * Body blocks are paragraphs or single-line list items: scene and chapter titles
+ * live in their own fields, never in the prose. Legacy `# ` prefixes degrade
+ * to plain paragraphs on parse, so no stored content is ever lost. List items
+ * (`- `, `1. `) keep their marker as structure: a paragraph that would read
+ * as one is stored backslash-escaped (`\- `, `\1. `).
  *
  * Document invariant: a block's text holds no blank-line runs and no leading or
  * trailing newline (`parseMarkdownToDocument` guarantees this; the editing
@@ -30,7 +32,10 @@ export type ManuscriptSpan = {
   marks: ManuscriptMark[];
 };
 
-export type ManuscriptBlock = { kind: 'paragraph'; spans: ManuscriptSpan[] };
+export type ManuscriptBlock =
+  | { kind: 'paragraph'; spans: ManuscriptSpan[] }
+  | { kind: 'bullet'; spans: ManuscriptSpan[] }
+  | { kind: 'ordered'; index: number; spans: ManuscriptSpan[] };
 
 export type ManuscriptDocument = { blocks: ManuscriptBlock[] };
 
@@ -102,9 +107,48 @@ export function normalizeManuscriptDocument(doc: ManuscriptDocument): Manuscript
   return {
     blocks: doc.blocks.map((block) => {
       const spans = normalizeManuscriptSpans(block.spans);
-      return { kind: 'paragraph' as const, spans: isTextlessSpans(spans) ? [] : spans };
+      const empty: ManuscriptSpan[] = [];
+      const kept = isTextlessSpans(spans) ? empty : spans;
+      if (block.kind === 'ordered')
+        return { kind: 'ordered' as const, index: clampListIndex(block.index), spans: kept };
+      return { kind: block.kind, spans: kept };
     }),
   };
+}
+
+/** Ordered markers keep the typed number, clamped to a sane range. */
+export function clampListIndex(index: number): number {
+  if (!Number.isFinite(index)) return 1;
+  return Math.min(9999, Math.max(1, Math.floor(index)));
+}
+
+/** A stored marker backslash-escaped, so it reads as literal prose. */
+const LIST_ESCAPE_PATTERN = /^ {0,3}\\(- |\d{1,9}\. )/;
+
+/** Drops one escape backslash, keeping any indent: `  \- x` reads as `  - x`. */
+export function unescapeListMarker(line: string): string {
+  return line.replace(/^(\s{0,3})\\(- |\d{1,9}\. )/, '$1$2');
+}
+
+/** Strips one list marker for reader-visible text (`- x` reads as `x`). */
+export function stripListMarker(line: string): string {
+  if (LIST_ESCAPE_PATTERN.test(line)) return unescapeListMarker(line);
+  return line.replace(/^ {0,3}(?:- |\d{1,9}\. )/, '');
+}
+
+/** Whether this raw line opens a list item (and which kind). A bare `-` or `1.` is an empty item. */
+function listMarkerOf(
+  line: string,
+): { kind: 'bullet' } | { kind: 'ordered'; index: number } | null {
+  if (LIST_ESCAPE_PATTERN.test(line)) return null;
+  if (/^ {0,3}- ?$/.test(line)) return { kind: 'bullet' };
+  const bullet = line.match(/^ {0,3}- (.*)$/);
+  if (bullet) return { kind: 'bullet' };
+  const bareOrdered = line.match(/^ {0,3}(\d{1,9})\.$/);
+  if (bareOrdered) return { kind: 'ordered', index: clampListIndex(Number(bareOrdered[1])) };
+  const ordered = line.match(/^ {0,3}(\d{1,9})\. (.*)$/);
+  if (ordered) return { kind: 'ordered', index: clampListIndex(Number(ordered[1])) };
+  return null;
 }
 
 export function isEmptyManuscriptDocument(doc: ManuscriptDocument): boolean {
@@ -289,11 +333,11 @@ export function stripInlineMarkup(line: string): string {
 export function stripMarkdownText(markdown: string): string {
   return markdown
     .split('\n')
-    .map((line) => stripInlineMarkup(line))
+    .map((line) => stripInlineMarkup(stripListMarker(line)))
     .join('\n');
 }
 
-function parseChunkLines(lines: string[]): ManuscriptBlock {
+function paragraphFromLines(lines: string[]): ManuscriptBlock {
   // Legacy `# ` prefixes (pre-removal headings) degrade to plain paragraphs.
   const [first, ...rest] = lines;
   const content = [first.replace(/^#{1,3}[ \t]+/, ''), ...rest];
@@ -303,6 +347,50 @@ function parseChunkLines(lines: string[]): ManuscriptBlock {
     ),
   );
   return { kind: 'paragraph', spans };
+}
+
+function listItemRest(line: string): string {
+  const withContent = line.match(/^ {0,3}(?:- |\d{1,9}\. )(.*)$/);
+  if (withContent) return withContent[1];
+  if (/^ {0,3}(?:-|\d{1,9}\.)$/.test(line)) return '';
+  return line;
+}
+
+function listItemBlock(
+  marker: { kind: 'bullet' } | { kind: 'ordered'; index: number },
+  line: string,
+): ManuscriptBlock {
+  const rest = listItemRest(line);
+  const spans = rest === '' ? [] : normalizeManuscriptSpans(parseInlineLine(rest));
+  if (marker.kind === 'ordered') return { kind: 'ordered', index: marker.index, spans };
+  return { kind: 'bullet', spans };
+}
+
+function parseChunkLines(lines: string[]): ManuscriptBlock[] {
+  const blocks: ManuscriptBlock[] = [];
+  let pending: string[] = [];
+  const flushPending = () => {
+    if (pending.length > 0) {
+      blocks.push(paragraphFromLines(pending));
+      pending = [];
+    }
+  };
+  for (const line of lines) {
+    // An escaped marker is literal prose: drop one backslash, keep the text.
+    if (LIST_ESCAPE_PATTERN.test(line)) {
+      pending.push(unescapeListMarker(line));
+      continue;
+    }
+    const marker = listMarkerOf(line);
+    if (marker) {
+      flushPending();
+      blocks.push(listItemBlock(marker, line));
+      continue;
+    }
+    pending.push(line);
+  }
+  flushPending();
+  return blocks;
 }
 
 const BLANK_LINE_PATTERN = /^[ \t]*$/;
@@ -322,11 +410,11 @@ export function parseMarkdownToDocument(markdown: string): ManuscriptDocument {
     .split('\n')
     .map((line) => (BLANK_LINE_PATTERN.test(line) ? '' : line))
     .join('\n');
-  const blocks = flattened.split('\n\n').map((chunk) => {
+  const blocks = flattened.split('\n\n').flatMap((chunk) => {
     const lines = chunk.split('\n');
     while (lines.length > 0 && lines[0] === '') lines.shift();
     while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-    if (lines.length === 0) return { kind: 'paragraph' as const, spans: [] };
+    if (lines.length === 0) return [{ kind: 'paragraph' as const, spans: [] }];
     lines[0] = lines[0].replace(/^[ \t]+/, '');
     lines[lines.length - 1] = lines[lines.length - 1].replace(/[ \t]+$/, '');
     return parseChunkLines(lines);
@@ -376,6 +464,19 @@ function emitLine(segments: LineSegment[]): string {
     .join('');
 }
 
+/**
+ * Escapes one paragraph line so it never reads back as structure: a legacy
+ * heading on the first line, a list marker on any line (every line is
+ * list-checked on parse). The backslash lands after any indent, where the
+ * parser's escape pattern expects it.
+ */
+function escapeParagraphLine(line: string, isFirst: boolean): string {
+  let out = line;
+  if (isFirst && LEADING_HASH_PATTERN.test(out)) out = `\\${out}`;
+  out = out.replace(/^(\s{0,3})(- |\d{1,9}\. )/, '$1\\$2');
+  return out;
+}
+
 function emitBlock(block: ManuscriptBlock): string {
   const lines: LineSegment[][] = [[]];
   for (const span of block.spans) {
@@ -385,8 +486,17 @@ function emitBlock(block: ManuscriptBlock): string {
       if (part !== '') lines[lines.length - 1].push({ text: part, marks: span.marks });
     });
   }
-  const chunk = lines.map(emitLine).join('\n');
-  return LEADING_HASH_PATTERN.test(chunk) ? `\\${chunk}` : chunk;
+  // List items are single-line by construction; a stray break degrades to a
+  // space so the marker can never leak onto its own line.
+  if (block.kind === 'bullet' || block.kind === 'ordered') {
+    const text = lines.map(emitLine).join(' ').replace(/\s+/g, ' ').trim();
+    if (text === '') return block.kind === 'bullet' ? '-' : `${block.index}.`;
+    return block.kind === 'bullet' ? `- ${text}` : `${clampListIndex(block.index)}. ${text}`;
+  }
+  return lines
+    .map(emitLine)
+    .map((line, index) => escapeParagraphLine(line, index === 0))
+    .join('\n');
 }
 
 /**
@@ -395,7 +505,18 @@ function emitBlock(block: ManuscriptBlock): string {
  * parse as markup), so stored bodies stay compact.
  */
 export function serializeDocumentToMarkdown(doc: ManuscriptDocument): string {
-  return normalizeManuscriptDocument(doc).blocks.map(emitBlock).join('\n\n');
+  const blocks = normalizeManuscriptDocument(doc).blocks;
+  const joinsList = (kind: ManuscriptBlock['kind']): boolean =>
+    kind === 'bullet' || kind === 'ordered';
+  let out = '';
+  blocks.forEach((block, index) => {
+    // Adjacent items of one list share it without blank lines, exactly as
+    // typed; anything else (including a change of list kind) separates.
+    const prev = index > 0 ? blocks[index - 1].kind : null;
+    if (index > 0) out += prev === block.kind && joinsList(block.kind) ? '\n' : '\n\n';
+    out += emitBlock(block);
+  });
+  return out;
 }
 
 /**

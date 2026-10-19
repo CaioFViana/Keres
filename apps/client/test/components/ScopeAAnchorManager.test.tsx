@@ -1,10 +1,10 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
-import AnchorManager from '../../src/components/features/chapters/AnchorManager/AnchorManager';
-import type { AnchorDraft } from '../../src/components/features/chapters/AnchorManager/AnchorEditModal';
-import type { ChapterAnchorRow } from '../../src/hooks/useChapterAnchors';
+import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
+import type { AnchorDraft } from '@/src/components/features/chapters/AnchorManager/AnchorEditModal';
+import type { ChapterAnchorRow } from '@/src/hooks/chapter/useChapterAnchors';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -25,7 +25,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
+jest.mock('@/src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -46,7 +46,7 @@ jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard',
 });
 
 const mockRelationList = jest.fn();
-jest.mock('../../src/components/common/display/EntityRelationList/EntityRelationList', () => {
+jest.mock('@/src/components/common/display/EntityRelationList/EntityRelationList', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -71,7 +71,7 @@ jest.mock('../../src/components/common/display/EntityRelationList/EntityRelation
 });
 
 const mockEditModal = jest.fn();
-jest.mock('../../src/components/features/chapters/AnchorManager/AnchorEditModal', () => ({
+jest.mock('@/src/components/features/chapters/AnchorManager/AnchorEditModal', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockEditModal(props);
@@ -80,18 +80,18 @@ jest.mock('../../src/components/features/chapters/AnchorManager/AnchorEditModal'
 }));
 
 const mockUseChapterAnchors = jest.fn();
-jest.mock('../../src/hooks/useChapterAnchors', () => ({
+jest.mock('@/src/hooks/chapter/useChapterAnchors', () => ({
   useChapterAnchors: (...args: unknown[]) => mockUseChapterAnchors(...args),
 }));
 
 const mockShowNotification = jest.fn();
-jest.mock('../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   useNotificationStore: (selector: (state: unknown) => unknown) =>
     selector({ showNotification: mockShowNotification }),
 }));
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
@@ -154,6 +154,25 @@ describe('AnchorManager', () => {
     expect(view.getByText('anchor_empty')).toBeTruthy();
     expect(view.getByText('anchor_add')).toBeTruthy();
     expect(mockEditModal.mock.calls[0][0]).toMatchObject({ visible: false });
+  });
+
+  it('explains instead of offering a stretch when the story has no scenes', async () => {
+    mockUseChapterAnchors.mockReturnValue(hookState({ scenes: [] }));
+    const view = await render(
+      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
+    );
+
+    expect(view.queryByText('anchor_add')).toBeNull();
+    expect(view.getByText('anchor_needs_scenes')).toBeTruthy();
+  });
+
+  it('does not repeat the scene explanation to a reader who cannot add anyway', async () => {
+    mockUseChapterAnchors.mockReturnValue(hookState({ scenes: [] }));
+    const view = await render(
+      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable={false} />,
+    );
+
+    expect(view.queryByText('anchor_needs_scenes')).toBeNull();
   });
 
   it('hides the add action when read-only', async () => {

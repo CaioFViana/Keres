@@ -1,0 +1,1 @@
+ALTER TABLE "tiers" ADD COLUMN "max_comments_per_story" integer;

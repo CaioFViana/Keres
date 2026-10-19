@@ -4,16 +4,17 @@ import {
   AdminUserListQuerySchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index';
+import type { JWTPayload } from '@/index';
 import {
   AdminUserNotFoundError,
   adminUserService,
   RootAdminProtectedError,
   UsernameAlreadyTakenError,
-} from '../../services/AdminUserService';
-import { TierNotFoundError } from '../../services/TierService';
-import { requireAdmin } from '../../utils/adminAuth';
-import { AppError } from '../../utils/errors';
+} from '@/services/admin/AdminUserService';
+import { TierNotFoundError } from '@/services/tiers/TierService';
+import { TagAlreadyTakenError } from '@/services/accounts/UserService';
+import { requireAdmin } from '@/utils/adminAuth';
+import { AppError } from '@/utils/errors';
 
 export const adminUserRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -38,6 +39,7 @@ export const adminUserRoutes = new Elysia()
         search: t.Optional(t.String()),
         isAdmin: t.Optional(t.String()),
         isDeleted: t.Optional(t.String()),
+        adultVerified: t.Optional(t.String()),
         tierId: t.Optional(t.String()),
         page: t.Optional(t.Numeric()),
         pageSize: t.Optional(t.Numeric()),
@@ -113,6 +115,14 @@ export const adminUserRoutes = new Elysia()
           avatarIcon: t.Nullable(t.String()),
           bio: t.Nullable(t.String()),
           isAdmin: t.Boolean(),
+          isAdultVerified: t.Boolean(),
+          verificationStatus: t.Union([
+            t.Literal('active'),
+            t.Literal('pending'),
+            t.Literal('rejected'),
+          ]),
+          verifiedAt: t.Nullable(t.Date()),
+          verificationMethod: t.Nullable(t.String()),
           tierId: t.Nullable(t.String()),
           createdAt: t.Date(),
           updatedAt: t.Date(),
@@ -139,7 +149,7 @@ export const adminUserRoutes = new Elysia()
       }
 
       try {
-        const updated = await adminUserService.update(params.id, parsed.data);
+        const updated = await adminUserService.update(params.id, parsed.data, user?.userId ?? null);
         return updated;
       } catch (error) {
         if (error instanceof AdminUserNotFoundError) {
@@ -151,6 +161,9 @@ export const adminUserRoutes = new Elysia()
         if (error instanceof TierNotFoundError) {
           throw new AppError(404, error.message);
         }
+        if (error instanceof TagAlreadyTakenError) {
+          throw new AppError(409, error.message);
+        }
         throw error;
       }
     },
@@ -160,6 +173,7 @@ export const adminUserRoutes = new Elysia()
       // POST / above.
       body: t.Object({
         isAdmin: t.Optional(t.Boolean()),
+        isAdultVerified: t.Optional(t.Boolean()),
         tierId: t.Optional(t.Nullable(t.String())),
         tag: t.Optional(t.String({ minLength: 1 })),
         avatarColor: t.Optional(t.Nullable(t.String())),
@@ -175,6 +189,14 @@ export const adminUserRoutes = new Elysia()
           avatarIcon: t.Nullable(t.String()),
           bio: t.Nullable(t.String()),
           isAdmin: t.Boolean(),
+          isAdultVerified: t.Boolean(),
+          verificationStatus: t.Union([
+            t.Literal('active'),
+            t.Literal('pending'),
+            t.Literal('rejected'),
+          ]),
+          verifiedAt: t.Nullable(t.Date()),
+          verificationMethod: t.Nullable(t.String()),
           tierId: t.Nullable(t.String()),
           createdAt: t.Date(),
           updatedAt: t.Date(),
@@ -186,7 +208,7 @@ export const adminUserRoutes = new Elysia()
         409: t.Object({ message: t.String() }),
       },
       detail: {
-        summary: 'Update a user (profile, isAdmin, tierId)',
+        summary: 'Update a user (profile, isAdmin, +18 verification, tierId)',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

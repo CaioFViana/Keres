@@ -1,12 +1,18 @@
 import { cleanup, fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
-import { ChoiceViewContent } from '../../../../src/screens/narrative-elements/choices/ChoiceViewContent';
+import { ChoiceViewContent } from '@/src/screens/narrative-elements/choices/ChoiceViewContent';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+// The graph controls read the theme from context, as they do in the app; the content gets the same palette.
+jest.mock('@/src/theme', () => ({
+  __esModule: true,
+  useTheme: () => ({ colors: mockThemeColors }),
+}));
+
+jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -21,7 +27,7 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -46,7 +52,7 @@ jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectP
   };
 });
 
-jest.mock('../../../../src/components/features/graphs/StoryGraph/StoryGraphCanvas', () => {
+jest.mock('@/src/components/features/graphs/StoryGraph/StoryGraphCanvas', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -99,7 +105,7 @@ interface SheetSection {
   items?: SheetItem[];
 }
 
-jest.mock('../../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
+jest.mock('@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -187,6 +193,7 @@ const colors = {
   star: '#ffcc00',
   shadow: '#000000',
 } as unknown as ThemeColors;
+const mockThemeColors = colors;
 
 function makeNode(overrides: Partial<GraphNode> = {}): GraphNode {
   return {

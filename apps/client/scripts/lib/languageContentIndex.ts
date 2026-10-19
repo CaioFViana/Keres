@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { srcAlias } from './srcAlias';
 
 /**
  * Writes the index of a content folder shaped as `<slug>/<lang>.json`.
@@ -62,7 +63,7 @@ export function generateLanguageContentIndex(options: LanguageContentIndexOption
       .map((file) => {
         const language = basename(file, '.json');
         const importName = toImportName(slug, language);
-        imports += `import ${importName} from '../content/${slug}/${file}';\n`;
+        imports += `import ${importName} from '${srcAlias(join(contentDir, slug, file))}';\n`;
         const payload = options.formatPayload?.(importName) ?? importName;
         return `      { language: '${language}', ${options.payloadProperty}: ${payload} },`;
       })

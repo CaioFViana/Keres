@@ -1,10 +1,10 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import CharacterRelationModal from '../../src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
-import type { Character } from '@keres/shared/entities/Character';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
+import CharacterRelationModal from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationModal';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -26,12 +26,12 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   __esModule: true,
   useVocabularyEntityCopy: () => ({ select: 'Select a character' }),
 }));
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -41,7 +41,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
+jest.mock('@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -51,7 +51,7 @@ jest.mock('../../src/components/common/inputs/SuggestionTextInput/SuggestionText
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {
@@ -61,7 +61,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/FormActions/FormActions', () => {
+jest.mock('@/src/components/common/controls/FormActions/FormActions', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -148,14 +148,17 @@ describe('CharacterRelationModal', () => {
     expect(screen.getByText('no_characters_found')).toBeTruthy();
   });
 
-  it('closes the picker without choosing', async () => {
+  it('uses the shared selector, with a search that narrows the characters', async () => {
     const screen = await render(<CharacterRelationModal {...baseProps()} />);
-    await fireEvent.press(screen.getByText('Select a character').parent!);
-    expect(screen.getByText('Bob')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('multiselect-trigger'));
 
-    await fireEvent.press(screen.getByTestId('button-close'));
+    expect(screen.getByTestId('multiselect-option-char-2')).toBeTruthy();
+    expect(screen.getByTestId('multiselect-option-char-3')).toBeTruthy();
 
-    expect(screen.queryByText('Bob')).toBeNull();
+    await fireEvent.changeText(screen.getByPlaceholderText('search'), 'zo');
+
+    expect(screen.queryByTestId('multiselect-option-char-2')).toBeNull();
+    expect(screen.getByTestId('multiselect-option-char-3')).toBeTruthy();
   });
 
   it('requires a character and a type before saving', async () => {

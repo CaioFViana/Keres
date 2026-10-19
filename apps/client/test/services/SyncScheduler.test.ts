@@ -1,15 +1,16 @@
 /**
  * @jest-environment node
  */
-import { NO_RESPONSE_ERROR } from '../../src/services/apiClient';
+import { NO_RESPONSE_ERROR } from '@/src/services/api/apiClient';
 import {
   FAILED_RETRY_MAX_MS,
+  LIVE_SYNC_INTERVAL_MS,
   OFFLINE_RETRY_MS,
   SYNC_INTERVAL_MS,
   SyncScheduler,
   failedRetryDelayMs,
-} from '../../src/services/sync/SyncScheduler';
-import type { SyncCycleOutcome } from '../../src/services/sync/SyncScheduler';
+} from '@/src/services/sync/SyncScheduler';
+import type { SyncCycleOutcome } from '@/src/services/sync/SyncScheduler';
 
 const flush = async () => {
   for (let index = 0; index < 8; index += 1) await Promise.resolve();
@@ -422,6 +423,93 @@ describe('SyncScheduler', () => {
     });
   });
 
+  describe('while the realtime channel is alive', () => {
+    let live: boolean;
+    let relaxed: SyncScheduler;
+
+    beforeEach(() => {
+      live = true;
+      relaxed = new SyncScheduler({
+        readiness: () => ready,
+        performSync,
+        isRealtimeLive: () => live,
+      });
+    });
+
+    afterEach(() => relaxed.stop());
+
+    it('waits the relaxed interval after a good cycle instead of the normal one', async () => {
+      relaxed.start();
+      await flush();
+      performSync.mockClear();
+
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS * 2);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(LIVE_SYNC_INTERVAL_MS - SYNC_INTERVAL_MS * 2);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('never relaxes below an interval the caller asked for', async () => {
+      relaxed.start(LIVE_SYNC_INTERVAL_MS * 2);
+      await flush();
+      performSync.mockClear();
+
+      jest.advanceTimersByTime(LIVE_SYNC_INTERVAL_MS * 2 - 1);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+    });
+
+    it('pulls a relaxed timer back to the normal interval when the channel is lost', async () => {
+      relaxed.start();
+      await flush();
+      performSync.mockClear();
+      jest.advanceTimersByTime(60_000);
+
+      live = false;
+      relaxed.realtimeLinkChanged();
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS - 1);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(1);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not push a timer that is already due sooner back out, nor act while still alive', async () => {
+      relaxed.start();
+      await flush();
+      performSync.mockClear();
+
+      relaxed.realtimeLinkChanged(); // still alive: nothing moves
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS * 2);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+
+      live = false;
+      jest.advanceTimersByTime(LIVE_SYNC_INTERVAL_MS - SYNC_INTERVAL_MS * 2 - 10_000);
+      relaxed.realtimeLinkChanged(); // due in 10s, under the normal interval: left as it is
+      jest.advanceTimersByTime(10_000);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the normal cadence when no probe is given, and ignores a link change while stopped', async () => {
+      scheduler.realtimeLinkChanged();
+      scheduler.start();
+      await flush();
+      performSync.mockClear();
+
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+
+      scheduler.stop();
+      expect(() => scheduler.realtimeLinkChanged()).not.toThrow();
+    });
+  });
+
   describe('failedRetryDelayMs', () => {
     it('doubles per consecutive failure from a 30s base', () => {
       expect(failedRetryDelayMs(1, () => 0.5)).toBe(60_000);
@@ -438,5 +526,60 @@ describe('SyncScheduler', () => {
       expect(failedRetryDelayMs(1, () => 0)).toBe(45_000);
       expect(failedRetryDelayMs(1, () => 1)).toBe(75_000);
     });
+  });
+});
+
+describe('SyncScheduler.runAndWait', () => {
+  let ready: { storyId: string | null; hasServer: boolean; hasDatabase: boolean };
+  let performSync: jest.Mock<Promise<SyncCycleOutcome>, [AbortSignal]>;
+  let scheduler: SyncScheduler;
+
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    ready = { storyId: 'story-1', hasServer: true, hasDatabase: true };
+    performSync = jest.fn(async (_signal: AbortSignal) => 'ok' as SyncCycleOutcome);
+    scheduler = new SyncScheduler({ readiness: () => ready, performSync });
+  });
+
+  afterEach(() => {
+    scheduler.stop();
+    jest.restoreAllMocks();
+  });
+
+  it('runs a cycle at once and resolves after it when none is in flight', async () => {
+    await scheduler.runAndWait();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves only after the follow-up cycle that carries the caller change', async () => {
+    let finishFirst!: (outcome: SyncCycleOutcome) => void;
+    performSync.mockImplementationOnce(
+      () => new Promise<SyncCycleOutcome>((resolve) => (finishFirst = resolve)),
+    );
+    scheduler.start();
+    await flush();
+
+    let resolved = false;
+    const waiting = scheduler.runAndWait().then(() => {
+      resolved = true;
+    });
+    await flush();
+    expect(resolved).toBe(false);
+
+    finishFirst('ok');
+    await waiting;
+
+    expect(performSync).toHaveBeenCalledTimes(2);
+    expect(resolved).toBe(true);
+  });
+
+  it('runs nothing while the story, server or database is not ready', async () => {
+    ready = { storyId: null, hasServer: true, hasDatabase: true };
+
+    await scheduler.runAndWait();
+
+    expect(performSync).not.toHaveBeenCalled();
   });
 });

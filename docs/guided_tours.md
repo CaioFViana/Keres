@@ -14,6 +14,11 @@ how-to for adding the next one.
 - No tours in ColdInstall (no settings row yet), AppSettings (the control
   panel), Help, or Detail/Form screens — except creation forms on the
   first-story trail.
+- ColdInstall has no tour because the settings row that remembers tours does not exist yet.
+  It has its own three-step welcome instead (what Keres is, where things live by build, the
+  name), shown whenever there is no profile; nothing is persisted. Its copy per build lives in
+  `components/features/welcome/welcomeContent.ts`, and the build itself comes from
+  `utils/clientFlavor.ts`.
 
 ## Adding a tour
 

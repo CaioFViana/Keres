@@ -1,8 +1,8 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
-import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
+import type { ChoiceCheck } from '@keres/shared/entities/narrative/ChoiceCheck';
+import type { ChoiceCheckGroup } from '@keres/shared/entities/narrative/ChoiceCheckGroup';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
@@ -12,7 +12,9 @@ import {
   type StyleProp,
   type TextStyle,
 } from 'react-native';
-import { useTheme } from '@/src/theme';
+import type { ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 interface SelectOption {
   label: string;
@@ -75,33 +77,7 @@ export default function ChoiceCheckGroupEditor({
   onAddCheck,
 }: ChoiceCheckGroupEditorProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const styles = StyleSheet.create({
-    section: { marginTop: 20 },
-    sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
-    card: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: colors.surface,
-    },
-    checkCard: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 6,
-      padding: 10,
-      marginTop: 8,
-      backgroundColor: colors.background,
-    },
-    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-    cardRowLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
-    fieldFlex: { flex: 1 },
-    removeLink: { color: colors.error, fontWeight: '600' },
-    addLink: { color: colors.primary, fontWeight: '600', marginTop: 4 },
-    empty: { color: colors.textSecondary, marginBottom: 10 },
-  });
+  const styles = useThemedStyles(createStyles);
 
   return (
     <View style={styles.section}>
@@ -116,6 +92,7 @@ export default function ChoiceCheckGroupEditor({
               <View style={styles.fieldFlex}>
                 <Text style={styles.cardRowLabel}>{t('check_group_combinator')}</Text>
                 <SingleSelectPill
+                  style={styles.select}
                   options={combinatorOptions}
                   value={group.combinator}
                   onValueChange={(value) =>
@@ -130,7 +107,7 @@ export default function ChoiceCheckGroupEditor({
             </View>
 
             {groupChecks.length === 0 && (
-              <Text style={{ color: colors.textSecondary }}>{t('no_checks_in_group')}</Text>
+              <ThemedText tone="secondary">{t('no_checks_in_group')}</ThemedText>
             )}
 
             {groupChecks.map((check) => (
@@ -139,6 +116,7 @@ export default function ChoiceCheckGroupEditor({
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_type')}</Text>
                     <SingleSelectPill
+                      style={styles.select}
                       options={checkTypeOptions}
                       value={check.type}
                       onValueChange={(value) =>
@@ -150,6 +128,7 @@ export default function ChoiceCheckGroupEditor({
                   <View style={styles.fieldFlex}>
                     <Text style={styles.cardRowLabel}>{t('check_mode')}</Text>
                     <SingleSelectPill
+                      style={styles.select}
                       options={checkModeOptions}
                       value={check.mode}
                       onValueChange={(value) =>
@@ -165,6 +144,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_scene')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={sceneOptions}
                         value={check.sceneId}
                         onValueChange={(value) => onUpdateCheck(check.id, { sceneId: value })}
@@ -193,6 +173,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_item')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={itemOptions}
                         value={check.itemId}
                         onValueChange={(value) => onUpdateCheck(check.id, { itemId: value })}
@@ -204,6 +185,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_item_presence')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={itemPresenceOptions}
                         value={check.itemPresence}
                         onValueChange={(value) =>
@@ -232,6 +214,7 @@ export default function ChoiceCheckGroupEditor({
                     <View style={styles.fieldFlex}>
                       <Text style={styles.cardRowLabel}>{t('check_trigger_state')}</Text>
                       <SingleSelectPill
+                        style={styles.select}
                         options={triggerStateOptions}
                         value={check.triggerState}
                         onValueChange={(value) =>
@@ -264,3 +247,33 @@ export default function ChoiceCheckGroupEditor({
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    section: { marginTop: 20 },
+    sectionDescription: { color: colors.textSecondary, marginBottom: 10 },
+    card: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: colors.surface,
+    },
+    checkCard: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 6,
+      padding: 10,
+      marginTop: 8,
+      backgroundColor: colors.background,
+    },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+    // The pill's own bottom margin would lift it off the line of the input beside it in a centred row.
+    select: { marginBottom: 0 },
+    cardRowLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
+    fieldFlex: { flex: 1 },
+    removeLink: { color: colors.error, fontWeight: '600' },
+    addLink: { color: colors.primary, fontWeight: '600', marginTop: 4 },
+    empty: { color: colors.textSecondary, marginBottom: 10 },
+  });

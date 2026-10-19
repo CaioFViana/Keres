@@ -1,5 +1,5 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -15,20 +15,20 @@ import { ScrollView, StyleSheet } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
-} from '../../components/common/feedback/ScreenState/ScreenState';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryNavigatorData } from '../../hooks/useStoryNavigatorData';
-import { useStorySimulation } from '../../hooks/useStorySimulation';
-import { useStoryRoutes } from '../../hooks/useStoryRoutes';
-import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { createRouteService } from '../../services/storymanagement/RouteService';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { useDrizzle } from '../../db';
+} from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryNavigatorData } from '@/src/hooks/story/useStoryNavigatorData';
+import { useStorySimulation } from '@/src/hooks/story/useStorySimulation';
+import { useStoryRoutes } from '@/src/screens/routes/useStoryRoutes';
+import type { PlotsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { createRouteService } from '@/src/services/storymanagement/entities/RouteService';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { commonScreenStyleDefs } from '@/src/theme/commonStyles';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+import { useDrizzle } from '@/src/db';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'StoryNavigator'>;
 

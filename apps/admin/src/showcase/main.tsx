@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ShowcaseApp } from './App';
 import { SHOWCASE_THEME_KEY } from './theme/ShowcaseThemeProvider';
-import { initI18n, SHOWCASE_LANGUAGE_KEY } from '../i18n';
-import { applyResolvedTheme, readThemePreference, resolveTheme } from '../theme/theme';
+import { initI18n, SHOWCASE_LANGUAGE_KEY } from '@/i18n';
+import { applyResolvedTheme, readThemePreference, resolveTheme } from '@/theme/theme';
 import './showcase.css';
 
 // Before the first paint, so whoever prefers dark does not get a flash of light in the face.

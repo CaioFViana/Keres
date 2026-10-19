@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { db } from '../../src/db';
-import { stories, users } from '../../src/db/schema';
-import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
-import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
-import { StoryArcSyncHandler } from '../../src/services/entity-sync-handlers/StoryArcSyncHandler';
-import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
-import { PlotSyncHandler } from '../../src/services/entity-sync-handlers/PlotSyncHandler';
-import { SuggestionSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionSyncHandler';
-import { TagSyncHandler } from '../../src/services/entity-sync-handlers/TagSyncHandler';
-import { WorldRuleSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleSyncHandler';
-import type { SyncEntityHandler } from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { db } from '@/db';
+import { stories, users } from '@/db/schema';
+import { ChapterSyncHandler } from '@/services/entity-sync-handlers/ChapterSyncHandler';
+import { LocationSyncHandler } from '@/services/entity-sync-handlers/LocationSyncHandler';
+import { StoryArcSyncHandler } from '@/services/entity-sync-handlers/StoryArcSyncHandler';
+import { NoteSyncHandler } from '@/services/entity-sync-handlers/NoteSyncHandler';
+import { PlotSyncHandler } from '@/services/entity-sync-handlers/PlotSyncHandler';
+import { SuggestionSyncHandler } from '@/services/entity-sync-handlers/SuggestionSyncHandler';
+import { TagSyncHandler } from '@/services/entity-sync-handlers/TagSyncHandler';
+import { WorldRuleSyncHandler } from '@/services/entity-sync-handlers/WorldRuleSyncHandler';
+import type { SyncEntityHandler } from '@/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;
@@ -270,6 +270,29 @@ describe('StoryArc ordering and defaults', () => {
       icon: 'swords',
       themeOverride: 'dark',
     });
+  });
+
+  it('keeps the page format of a work, none until one is chosen, and lets it be changed and cleared', async () => {
+    const handler = new StoryArcSyncHandler();
+    const id = newId();
+    await create(id, { title: 'Edição 1', medium: 'comic' });
+    expect((await handler.findByIdOrThrow(id)).pageFormat).toBeNull();
+
+    const change = async (changes: Record<string, unknown>, version: number) =>
+      handler.update(
+        userId,
+        storyId,
+        { type: 'update', entity: 'StoryArc', id, changes: { ...changes, version } } as never,
+        await handler.findByIdOrThrow(id),
+      );
+    await change({ pageFormat: 'wide' }, 1);
+    expect((await handler.findByIdOrThrow(id)).pageFormat).toBe('wide');
+    await change({ pageFormat: null }, 2);
+    expect((await handler.findByIdOrThrow(id)).pageFormat).toBeNull();
+
+    const bornWithOne = newId();
+    await create(bornWithOne, { title: 'Edição 2', pageFormat: 'b5' });
+    expect((await handler.findByIdOrThrow(bornWithOne)).pageFormat).toBe('b5');
   });
 
   it('refuses a second arc with an id that is already taken', async () => {

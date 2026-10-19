@@ -6,6 +6,8 @@ import {
   normalizeManuscriptSpans,
   parseMarkdownToDocument,
   serializeDocumentToMarkdown,
+  stripListMarker,
+  stripMarkdownText,
 } from '../../manuscript/ManuscriptDocument';
 import type {
   ManuscriptBlock,
@@ -336,6 +338,73 @@ describe('serializeDocumentToMarkdown', () => {
       const roundTripped = parseMarkdownToDocument(serializeDocumentToMarkdown(doc));
       expect(charMarks(roundTripped)).toEqual(charMarks(normalizeManuscriptDocument(doc)));
     }
+  });
+});
+
+describe('manuscript lists', () => {
+  it('parses bullet and ordered items with inline marks', () => {
+    const doc = parseMarkdownToDocument('- **bold** move\n\n2. second *step UAE*');
+
+    expect(doc.blocks).toHaveLength(2);
+    expect(doc.blocks[0]).toMatchObject({ kind: 'bullet' });
+    expect(doc.blocks[0].spans).toEqual([
+      { text: 'bold', marks: ['bold'] },
+      { text: ' move', marks: [] },
+    ]);
+    expect(doc.blocks[1]).toMatchObject({ kind: 'ordered', index: 2 });
+  });
+
+  it('keeps the typed ordered number, clamped to a sane range', () => {
+    expect(parseMarkdownToDocument('0. zero').blocks[0]).toMatchObject({
+      kind: 'ordered',
+      index: 1,
+    });
+    expect(parseMarkdownToDocument('007. seven').blocks[0]).toMatchObject({
+      kind: 'ordered',
+      index: 7,
+    });
+  });
+
+  it('reads a bare marker as an empty item', () => {
+    expect(parseMarkdownToDocument('-').blocks).toEqual([{ kind: 'bullet', spans: [] }]);
+    expect(parseMarkdownToDocument('3.').blocks).toEqual([
+      { kind: 'ordered', index: 3, spans: [] },
+    ]);
+  });
+
+  it('leaves star markers and marker-less dashes as paragraphs', () => {
+    expect(parseMarkdownToDocument('* nope').blocks[0]).toMatchObject({ kind: 'paragraph' });
+    expect(parseMarkdownToDocument('-nope').blocks[0]).toMatchObject({ kind: 'paragraph' });
+    expect(parseMarkdownToDocument('1.nope').blocks[0]).toMatchObject({ kind: 'paragraph' });
+  });
+
+  it('escapes paragraphs that would otherwise read as lists', () => {
+    const stored = serializeDocumentToMarkdown({
+      blocks: [paragraph('- literal'), paragraph('5. reasons')],
+    });
+
+    expect(stored).toBe('\\- literal\n\n\\5. reasons');
+    const doc = parseMarkdownToDocument(stored);
+    expect(doc.blocks.map((block) => block.kind)).toEqual(['paragraph', 'paragraph']);
+    expect(documentTextContent(doc)).toBe('- literal\n\n5. reasons');
+  });
+
+  it('round-trips mixed documents byte-identically', () => {
+    const sources = [
+      'First.\n\n- one\n- two\n\n1. step one\n2. step two\n\nLast.',
+      '- **bold** item and *italic*\n\n10. tenth',
+      '\\- not a list',
+    ];
+    for (const source of sources) {
+      expect(serializeDocumentToMarkdown(parseMarkdownToDocument(source))).toBe(source);
+    }
+  });
+
+  it('strips one marker for reader-visible text', () => {
+    expect(stripListMarker('- hello')).toBe('hello');
+    expect(stripListMarker('12. hello')).toBe('hello');
+    expect(stripListMarker('\\- hello')).toBe('- hello');
+    expect(stripMarkdownText('- **bold** move')).toBe('bold move');
   });
 });
 

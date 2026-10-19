@@ -3,8 +3,9 @@ import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
-import { useTheme } from '../../../theme';
-import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
+import { useTheme } from '@/src/theme';
+import { capturePointer, releasePointer } from '@/src/utils/ui/pointerCapture';
+import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/location/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;
 const DESTINATION_HOLD_DURATION = 550;
@@ -161,11 +162,7 @@ const LocationMapNodeView: React.FC<Props> = ({
               setShowDestinationHoldHint(true);
             }, DESTINATION_HOLD_HINT_DELAY);
           }
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            setPointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.setPointerCapture?.(pointerId);
+          capturePointer(event);
         },
         onPanResponderMove: (_event, gesture) => {
           const zoom = Math.max(scaleRef.current, 0.01);
@@ -187,11 +184,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           );
         },
         onPanResponderRelease: (event, gesture) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (connectionModeRef.current) {
             const zoom = Math.max(scaleRef.current, 0.01);
             handlers.current.onConnectionEnd?.(
@@ -218,11 +211,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           dragging.current = false;
         },
         onPanResponderTerminate: (event) => {
-          const pointerId = (event.nativeEvent as { pointerId?: number }).pointerId;
-          const target = event.currentTarget as unknown as {
-            releasePointerCapture?: (id: number) => void;
-          };
-          if (pointerId != null) target?.releasePointerCapture?.(pointerId);
+          releasePointer(event);
           if (connectionModeRef.current) handlers.current.onConnectionCancel?.();
           else handlers.current.onDragEnd(nodeId.current);
           clearDestinationHoldHint();

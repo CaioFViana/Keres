@@ -1,9 +1,12 @@
-import { entityEventEmitter } from '../../utils/EventEmitter';
-import { createKeresAxiosInstance } from '../apiClient';
-import { authTokenManager } from '../AuthTokenManager';
-import { createServerService } from '../ServerService';
-import { createSyncConflictService } from '../SyncConflictService';
-import { SyncEngineService, type SyncEngineDependencies } from '../SyncEngineService';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { createKeresAxiosInstance } from '@/src/services/api/apiClient';
+import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
+import { createServerService } from '@/src/services/servers/ServerService';
+import { createSyncConflictService } from '@/src/services/sync/SyncConflictService';
+import {
+  SyncEngineService,
+  type SyncEngineDependencies,
+} from '@/src/services/sync/SyncEngineService';
 import {
   downloadAndImportStory,
   fetchServerStoryPreviews,

@@ -1,6 +1,6 @@
 import React from 'react';
 import ThemedFullscreenModal from '@/src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
-import { usePresenceMatrixViewerStore } from '../../../state/presenceMatrixViewerStore';
+import { usePresenceMatrixViewerStore } from '@/src/state/ui/presenceMatrixViewerStore';
 import PresenceMatrixViewerContent from './PresenceMatrixViewerContent';
 
 const PresenceMatrixViewerOverlay: React.FC = () => {

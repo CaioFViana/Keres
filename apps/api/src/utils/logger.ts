@@ -1,3 +1,5 @@
+import { trackBackground } from './backgroundWork';
+
 type LogLevel = 'info' | 'warn' | 'error';
 
 type LogSink = (entry: {
@@ -5,7 +7,7 @@ type LogSink = (entry: {
   message: string;
   meta?: Record<string, unknown>;
   timestamp: string;
-}) => void;
+}) => void | Promise<unknown>;
 
 let sink: LogSink | null = null;
 
@@ -45,7 +47,9 @@ function write(level: LogLevel, message: string, meta?: Record<string, unknown>)
   }
   if (sink) {
     try {
-      sink(entry);
+      const written = sink(entry);
+      // The sink writes to the database without making the caller wait: a shutdown waits for it instead.
+      if (written) trackBackground(written.then(undefined, () => undefined));
     } catch {
       // It never lets a persistence failure take down whoever called the logger.
     }

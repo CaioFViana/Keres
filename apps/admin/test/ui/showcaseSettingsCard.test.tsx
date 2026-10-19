@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ShowcaseSettingsCard } from '../../src/pages/settings/ShowcaseSettingsCard';
-import { changeInput, click, flush, render } from '../helpers/react';
+import { ShowcaseSettingsCard } from '@/pages/settings/components/ShowcaseSettingsCard';
+import { changeInput, click, flush, render } from '@test/helpers/react';
 
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   deleteLogo: vi.fn(),
 }));
 
-vi.mock('../../src/api/ShowcaseSettingsApiService', () => ({
+vi.mock('@/api/ShowcaseSettingsApiService', () => ({
   ShowcaseSettingsApiService: {
     get: mocks.get,
     update: mocks.update,
@@ -77,7 +77,9 @@ describe('showcase branding card', () => {
     );
     await flush();
 
-    expect(mocks.update).toHaveBeenCalledWith({ siteName: 'New Name', sitePalette: 'ocean' });
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ siteName: 'New Name', sitePalette: 'ocean' }),
+    );
     expect(view.container.querySelector('.success-text')).not.toBeNull();
     await view.unmount();
   });
@@ -87,6 +89,7 @@ describe('showcase branding card', () => {
     const view = await render(<ShowcaseSettingsCard />);
     await flush();
 
+    await changeInput(view.container.querySelector('input[type="text"]')!, 'New Name');
     await click(
       [...view.container.querySelectorAll('button')].find(
         (button) => button.textContent === 'Save',
@@ -104,6 +107,7 @@ describe('showcase branding card', () => {
     const view = await render(<ShowcaseSettingsCard />);
     await flush();
 
+    await changeInput(view.container.querySelector('input[type="text"]')!, 'New Name');
     await click(
       [...view.container.querySelectorAll('button')].find(
         (button) => button.textContent === 'Save',

@@ -6,17 +6,22 @@ import SceneCharacterManager from '@/src/components/features/characters/Characte
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
-import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
+import EntityMetadata from '@/src/mentions/EntityMetadataWithBacklinks';
 import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager';
 import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import SceneMusicEntry from '@/src/components/features/scenes/SceneMusic/SceneMusicEntry';
+import ScenePagesEntry from '@/src/components/features/scenes/ScenePages/ScenePagesEntry';
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import SeeAlsoManager from '@/src/components/features/see-also/SeeAlsoManager/SeeAlsoManager';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import { DetailTabPanels, DetailTabs } from '@/src/components/layout/DetailTabs/DetailTabs';
+import { useDetailTab, useDetailTabItems } from '@/src/hooks/nav/useDetailTab';
 import type { CommentableDetailFieldProps } from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import { Ionicons } from '@expo/vector-icons';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
-import type { Note, NoteRelation } from '@keres/shared/entities/Note';
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene';
+import type { Note, NoteRelation } from '@keres/shared/entities/narrative/Note';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import {
@@ -35,10 +40,12 @@ import type {
   LocationSelect,
   SceneSelect,
   TagSelect,
-} from '../../../db/schema';
-import type { SaveNoteRelation } from '../../../services/storymanagement/NoteRelationService';
-import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
+} from '@/src/db/schema';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
+import type { SceneFixedDate } from '@/src/utils/scene/sceneFixedDate';
+import { formatSceneGap, formatSceneUniverseDuration } from '@/src/utils/scene/sceneTiming';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
+import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 
 /**
  * Presentation contract for the scene detail screen.
@@ -70,6 +77,8 @@ export interface SceneDetailContentProps {
     scene: SceneSelect,
   ): { date: string; gapRange?: unknown; durationEnd?: unknown } | null | undefined;
   calendar: unknown;
+  /** The scene's fixed date as written, when it has one. */
+  fixedDate?: SceneFixedDate | null;
   locationCopy: { entity: string };
   location: (LocationSelect & { description?: string | null }) | null | undefined;
   handleLocationPress(): void;
@@ -97,6 +106,7 @@ export interface SceneDetailContentProps {
 }
 
 export function SceneDetailContent(props: SceneDetailContentProps) {
+  useScreenTour('SceneDetail');
   const {
     scene,
     navigation,
@@ -108,6 +118,7 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     commentField,
     dateForScene,
     calendar,
+    fixedDate,
     locationCopy,
     location,
     handleLocationPress,
@@ -136,16 +147,12 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     describeEffect,
     occurrence,
   } = props;
-  return (
-    <DetailContainer
-      title={selectedStory?.type === 'linear' ? `${scene.index}. ${scene.name}` : scene.name}
-      landing={occurrence ?? null}
-      footer={
-        <>
-          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
-        </>
-      }
-    >
+  const [tab, setTab] = useDetailTab(occurrence);
+  const tabItems = useDetailTabItems(t);
+
+  // What the scene is: where it sits, its summary and prose, pages, music and timing, then its media.
+  const detailsPanel = (
+    <>
       {chapter ? (
         <Text style={styles.subTitle}>
           {selectedStory?.type === 'linear' ? `${chapter.index}. ` : ''}
@@ -169,7 +176,21 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
           {t('manuscript_unsaved_draft')}
         </Text>
       )}
-      {dateForScene(scene) && (
+      <GuideAnchor screen="SceneDetail" part="pages">
+        <ScenePagesEntry
+          scene={scene}
+          onOpen={() => navigation.navigate('ScenePages', { sceneId })}
+        />
+      </GuideAnchor>
+      <GuideAnchor screen="SceneDetail" part="music">
+        <SceneMusicEntry
+          scene={scene}
+          onOpen={() => navigation.navigate('SceneMusic', { sceneId })}
+        />
+      </GuideAnchor>
+      {fixedDate && <DetailField label={t('scene_fixed_date')} value={fixedDate.text} />}
+      {/* A valid fixed date places the scene, and the date derived from the gap would disagree with it. */}
+      {dateForScene(scene) && !fixedDate?.valid && (
         <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
       )}
       <DetailField
@@ -187,17 +208,19 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         })}${dateForScene(scene)?.durationEnd ? ` · ${dateForScene(scene)?.durationEnd}` : ''}`}
       />
 
-      <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
-
-      <DetailField
-        label={t('is_favorite')}
-        value={scene.isFavorite ? t('common_yes') : t('common_no')}
+      <ScreenSection title={t('media_section_title')} />
+      <EntityGalleryManager
+        ownerId={sceneId}
+        ownerType="Scene"
+        onPressMedia={openGalleryMediaViewer}
+        editable={canEdit}
       />
-      <CommentableDetailField
-        {...commentField('extraNotes', scene.extraNotes || t('common_na'))}
-        label={t('extra_notes')}
-      />
+    </>
+  );
 
+  // What the scene is linked to: its place, who and what is in it, and where it leads.
+  const relationsPanel = (
+    <>
       {location && (
         <>
           <ScreenSection title={locationCopy.entity} />
@@ -217,14 +240,6 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
           </TouchableOpacity>
         </>
       )}
-
-      <ScreenSection title={t('media_section_title')} />
-      <EntityGalleryManager
-        ownerId={sceneId}
-        ownerType="Scene"
-        onPressMedia={openGalleryMediaViewer}
-        editable={canEdit}
-      />
 
       <SceneCharacterManager
         characterRelations={characterSceneRelations}
@@ -293,6 +308,22 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         entityId={sceneId}
         editable={false}
       />
+    </>
+  );
+
+  // The rest: the story's custom attributes, the flags and notes, and the record of the entity.
+  const otherPanel = (
+    <>
+      <CustomAttributeDetailFields storyId={scene.storyId} entityType="Scene" entityId={sceneId} />
+
+      <DetailField
+        label={t('is_favorite')}
+        value={scene.isFavorite ? t('common_yes') : t('common_no')}
+      />
+      <CommentableDetailField
+        {...commentField('extraNotes', scene.extraNotes || t('common_na'))}
+        label={t('extra_notes')}
+      />
 
       <FavoritedByList storyId={scene.storyId} entityId={sceneId} entityType="Scene" />
 
@@ -302,6 +333,25 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         updatedAt={scene.updatedAt}
         entityType="Scene"
         entityId={scene.id}
+      />
+    </>
+  );
+
+  return (
+    <DetailContainer
+      title={selectedStory?.type === 'linear' ? `${scene.index}. ${scene.name}` : scene.name}
+      landing={occurrence ?? null}
+      tabs={<DetailTabs tabs={tabItems} value={tab} onChange={setTab} />}
+      scrollResetKey={tab}
+      footer={
+        <>
+          <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
+        </>
+      }
+    >
+      <DetailTabPanels
+        value={tab}
+        panels={{ details: detailsPanel, relations: relationsPanel, other: otherPanel }}
       />
     </DetailContainer>
   );

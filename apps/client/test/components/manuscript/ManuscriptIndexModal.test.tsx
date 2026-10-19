@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, within } from '@testing-library/react-native';
 import type { ManuscriptSection } from '@keres/shared';
 import { StyleSheet } from 'react-native';
-import ManuscriptIndexModal from '../../../src/components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
+import ManuscriptIndexModal from '@/src/components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => {
   return { __esModule: true, useTranslation: () => ({ t }) };
 });
 
-jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View } = require('react-native');
   return {
     __esModule: true,

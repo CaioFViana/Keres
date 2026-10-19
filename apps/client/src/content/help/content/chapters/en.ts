@@ -1,0 +1,90 @@
+import type { HelpPage } from '@/src/content/help/types';
+const page: HelpPage = {
+  id: 'chapters',
+  title: 'Chapters',
+  summary: 'Group scenes by the order in which readers encounter them or in chronological order.',
+  keywords: ['chapter', 'order', 'summary', 'scenes'],
+  blocks: [
+    { type: 'heading', level: 2, text: 'What it is' },
+    {
+      type: 'paragraph',
+      text: 'Chapters organize scenes in the story’s reading order or chronological. You are free to decide how to organize it.',
+    },
+    { type: 'heading', level: 2, text: 'What it is for' },
+    {
+      type: 'example',
+      title: 'Example',
+      text: 'A prologue can be the first chapter read or only for the author’s own organization, even when it shows an event from twenty years earlier. Order records reading or world chronology.',
+    },
+    { type: 'heading', level: 2, text: 'How to do it' },
+    { type: 'path', segments: ['Story menu', 'Chapters and scenes', '+'] },
+    {
+      type: 'steps',
+      items: [
+        'Create a chapter and enter Name.',
+        'Use Summary to record its role in the narrative.',
+        'Save it, open the chapter in the list, and create or associate scenes inside it.',
+        'Use chapter reordering when you want to change reading order.',
+        'In a chapter’s scene list, Quick add (lightning icon) asks only for a title and adds the scene to that chapter at once; fill in the rest of the scene later.',
+      ],
+    },
+    {
+      type: 'fields',
+      rows: [
+        {
+          key: 'name',
+          label: 'Name',
+          whatToWrite: 'A title by which you recognize the chapter. Fill it in to save.',
+          note: 'Appears in lists and when choosing a scene chapter.',
+        },
+        {
+          key: 'summary',
+          label: 'Summary',
+          whatToWrite: 'What happens or what this chapter does.',
+          note: 'Helps review the overall rhythm.',
+        },
+        {
+          key: 'arcId',
+          label: 'Arc',
+          whatToWrite: 'Choose the arc, volume or phase this chapter belongs to.',
+          note: 'Scenes in the chapter inherit that arc.',
+        },
+        {
+          key: 'order',
+          label: 'Order',
+          whatToWrite: 'The intended reading position.',
+          note: 'It does not have to represent world chronology.',
+        },
+        {
+          key: 'isFavorite',
+          label: 'Favorite',
+          whatToWrite: 'Turn on to highlight the chapter.',
+          note: 'It enters the favorites filter.',
+        },
+        {
+          key: 'extraNotes',
+          label: 'Extra notes',
+          whatToWrite: 'Reminders that do not fit in the summary.',
+          note: 'They remain in chapter details.',
+        },
+      ],
+    },
+    { type: 'heading', level: 2, text: 'When it happens (stretch)' },
+    {
+      type: 'paragraph',
+      text: 'On the timeline a chapter is placed automatically, from the start of its first scene to the end of its last. A stretch (When does this happen? in the chapter form) overrides that for what does not follow the main line. Because the position is given relative to a scene, the story needs at least one scene before you can add one.',
+    },
+    {
+      type: 'example',
+      title: 'Parallel and non-linear time',
+      text: 'A festival that takes place while the heroes travel: an event placed from the start of the scene where they leave to the end of the scene where they arrive. Or a chapter that goes back a few hours to tell the same night from another character’s side: a stretch starting some hours before the scene it retells.',
+    },
+    { type: 'heading', level: 2, text: 'What it affects elsewhere' },
+    {
+      type: 'paragraph',
+      text: 'Scenes use their chapter to appear grouped and ordered. Deleting a chapter requires reviewing scenes that depend on it.',
+    },
+    { type: 'seeAlso', pages: ['scenes', 'story-dashboard', 'lists-and-search'] },
+  ],
+};
+export default page;

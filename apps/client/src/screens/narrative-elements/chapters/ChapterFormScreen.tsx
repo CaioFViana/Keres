@@ -2,37 +2,37 @@ import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/Scre
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
-import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import MultiSelectPill, {
-  SingleSelectPill,
-} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import EntityFormActions from '@/src/components/common/forms/EntityFormActions/EntityFormActions';
+import EntityCustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/EntityCustomAttributeFields';
+import EntitySeeAlsoManager from '@/src/components/features/see-also/EntitySeeAlsoManager/EntitySeeAlsoManager';
+import EntityNotesManager from '@/src/components/features/notes/EntityNotesManager/EntityNotesManager';
+import EntityTagPicker from '@/src/components/features/tags/EntityTagPicker/EntityTagPicker';
+import FormTextAreaField from '@/src/components/common/forms/FormTextAreaField/FormTextAreaField';
+import FormTextField from '@/src/components/common/forms/FormTextField/FormTextField';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import AnchorManager from '@/src/components/features/chapters/AnchorManager/AnchorManager';
-import NoteManager from '@/src/components/features/notes/NoteManager';
-import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
-import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
-import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { useTheme } from '../../../theme';
-import { getCommonInputStyles } from '../../../theme/commonStyles';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import { StyleSheet, View } from 'react-native';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
+import type { NarrativeElementsStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { useChapterFormActions } from './useChapterFormActions';
 import { useChapterFormAssociations } from './useChapterFormAssociations';
 import { useChapterFormResources } from './useChapterFormResources';
 import { useChapterFormState } from './useChapterFormState';
+import ThemedText from '@/src/components/common/display/ThemedText/ThemedText';
 
 type ChapterFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'ChapterForm'>;
 type ChapterFormScreenNavigationProp = NativeStackNavigationProp<
@@ -146,13 +146,7 @@ const ChapterFormScreen = () => {
   const arcCopy = useVocabularyEntityCopy('Arc');
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   if (loading) {
     return <ScreenLoading />;
@@ -163,33 +157,23 @@ const ChapterFormScreen = () => {
       title={formTitle}
       description={copy.formDescription}
       actions={
-        <>
-          {isEditing && (
-            <Button
-              onPress={handleDelete}
-              style={{ backgroundColor: colors.error }}
-              disabled={saving || deleting}
-            >
-              {copy.deleteLabel}
-            </Button>
-          )}
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
-        </>
+        <EntityFormActions
+          isEditing={isEditing}
+          busy={saving || deleting}
+          deleteLabel={copy.deleteLabel}
+          saveLabel={copy.saveLabel}
+          onDelete={handleDelete}
+          onSave={handleSave}
+        />
       }
     >
-      <FormField label={t('name')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('name_placeholder')}
-            value={name}
-            onChangeText={setName}
-            style={commonInputStyles.input}
-          />
-        )}
-      </FormField>
+      <FormTextField
+        label={t('name')}
+        placeholder={t('name_placeholder')}
+        value={name}
+        onChangeText={setName}
+        style={commonInputStyles.input}
+      />
 
       {arcs.length > 1 ? (
         <FormField label={vocab.term('Arc')}>
@@ -207,18 +191,13 @@ const ChapterFormScreen = () => {
         </FormField>
       ) : null}
 
-      <FormField label={t('summary')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('summary_placeholder')}
-            value={summary || ''}
-            onChangeText={setSummary}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('summary')}
+        placeholder={t('summary_placeholder')}
+        value={summary}
+        onChangeText={setSummary}
+        style={commonInputStyles.multiline}
+      />
 
       <FormSwitchField label={t('is_favorite')} value={isFavorite} onValueChange={setIsFavorite} />
 
@@ -234,44 +213,36 @@ const ChapterFormScreen = () => {
             onValueChange={setIsEvent}
             testID="chapter-is-event"
           />
-          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 5 }}>
+          <ThemedText tone="secondary" style={{ fontSize: 13, marginBottom: 5 }}>
             {t('chapter_is_event_hint')}
-          </Text>
+          </ThemedText>
         </>
       )}
 
-      <FormField label={t('extra_notes')}>
-        {(fieldAccessibility) => (
-          <TextInput
-            {...fieldAccessibility}
-            placeholder={t('extra_notes_placeholder')}
-            value={extraNotes || ''}
-            onChangeText={setExtraNotes}
-            style={commonInputStyles.multiline}
-            multiline
-          />
-        )}
-      </FormField>
+      <FormTextAreaField
+        label={t('extra_notes')}
+        placeholder={t('extra_notes_placeholder')}
+        value={extraNotes}
+        onChangeText={setExtraNotes}
+        style={commonInputStyles.multiline}
+      />
 
-      <CustomAttributeFields
+      <EntityCustomAttributeFields
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
+        setValues={setCustomValues}
       />
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <MultiSelectPill
-            options={availableTags.map((tag) => ({
-              label: tag.name,
-              value: tag.id,
-              color: tag.color || colors.primaryContainer,
-            }))}
-            selectedValues={selectedTagIds}
+          <EntityTagPicker
+            tags={availableTags}
+            selectedTagIds={selectedTagIds}
             onSelectionChange={handleTagSelectionChange}
             placeholder={t('select_tags_for_chapter')}
             label={t('chapter_tags')}
+            defaultColor={colors.primaryContainer}
           />
         </View>
       )}
@@ -289,27 +260,29 @@ const ChapterFormScreen = () => {
 
       {selectedStory?.id && (
         <View style={styles.noteSection}>
-          <NoteManager
+          <EntityNotesManager
             noteRelations={chapterNoteRelations}
             availableNotes={allNotes}
             onSave={saveNoteRelation}
             onDelete={deleteNoteRelation}
-            editable={true}
-            currentStoryId={selectedStory.id}
-            currentEntityId={currentChapterId ?? ''}
-            currentEntityType="Chapter"
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Chapter',
+              entityId: currentChapterId ?? '',
+            }}
           />
         </View>
       )}
 
       {selectedStory?.id && (
         <View style={styles.tagSection}>
-          <SeeAlsoManager
-            ref={seeAlsoManagerRef}
-            storyId={selectedStory.id}
-            entityType="Chapter"
-            entityId={currentChapterId ?? ''}
-            editable={true}
+          <EntitySeeAlsoManager
+            managerRef={seeAlsoManagerRef}
+            target={{
+              storyId: selectedStory.id,
+              entityType: 'Chapter',
+              entityId: currentChapterId ?? '',
+            }}
           />
         </View>
       )}

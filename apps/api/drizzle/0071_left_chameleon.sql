@@ -1,0 +1,1 @@
+ALTER TABLE "scene_pages" ADD COLUMN "spread" boolean DEFAULT false NOT NULL;

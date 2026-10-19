@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { hardDeleteUser, truncateAll } from '../helpers/database';
+import { newId, registerUser, request, type TestUser } from '@test/helpers/app';
+import { hardDeleteUser, truncateAll } from '@test/helpers/database';
 
 let ana: TestUser;
 
@@ -63,6 +63,25 @@ describe('GET /user/by-tag/:tag', () => {
     expect(data.id).toBe(ana.userId);
   });
 
+  it('reads the tag the way it is stored: a leading @, spaces and accents do not matter', async () => {
+    const caio = await registerUser('caio_viana');
+
+    for (const typed of ['@Caio Viana', 'caio viana', 'CAIO_VIANA', ' Cáio_Viana ']) {
+      const { status, data } = await request('GET', `/user/by-tag/${encodeURIComponent(typed)}`, {
+        token: ana.token,
+      });
+      expect([typed, status, data.id]).toEqual([typed, 200, caio.userId]);
+    }
+  });
+
+  it('never mistakes a longer input for the tag it starts with', async () => {
+    const { status } = await request('GET', `/user/by-tag/${'ana'.padEnd(40, 'x')}`, {
+      token: ana.token,
+    });
+
+    expect(status).toBe(404);
+  });
+
   it('answers 404 for a tag nobody claimed', async () => {
     const { status } = await request('GET', '/user/by-tag/ninguem', { token: ana.token });
 
@@ -71,6 +90,21 @@ describe('GET /user/by-tag/:tag', () => {
 
   it('requires a session', async () => {
     const { status } = await request('GET', '/user/by-tag/ana');
+
+    expect(status).toBe(401);
+  });
+});
+
+describe('GET /user/plan', () => {
+  it('answers with the plan that counts for the person, here no plan and so no ceilings', async () => {
+    const { status, data } = await request('GET', '/user/plan', { token: ana.token });
+
+    expect(status).toBe(200);
+    expect(data).toMatchObject({ tierName: null, maxStories: null, storiesUsed: 0 });
+  });
+
+  it('requires a session', async () => {
+    const { status } = await request('GET', '/user/plan');
 
     expect(status).toBe(401);
   });
@@ -86,6 +120,47 @@ describe('PUT /user/tag', () => {
     expect(status).toBe(200);
     const lookup = await request('GET', '/user/by-tag/aninha', { token: ana.token });
     expect(lookup.data.id).toBe(ana.userId);
+  });
+
+  it('stores the tag as a slug - lowercase, no spaces - and answers with it as stored', async () => {
+    const { status, data } = await request('PUT', '/user/tag', {
+      token: ana.token,
+      body: { tag: '@Ana Maria' },
+    });
+
+    expect(status).toBe(200);
+    expect(data.tag).toBe('ana_maria');
+    const lookup = await request('GET', '/user/by-tag/ANA%20MARIA', { token: ana.token });
+    expect(lookup.data.id).toBe(ana.userId);
+  });
+
+  it('refuses a tag another account holds even when it is written another way', async () => {
+    const bia = await registerUser('bia');
+
+    const { status, data } = await request('PUT', '/user/tag', {
+      token: bia.token,
+      body: { tag: 'ANA' },
+    });
+
+    expect(status).toBe(409);
+    expect(data.message).toBe('Tag is already taken.');
+  });
+
+  it('lets a person write their own tag in other capitals', async () => {
+    const { status, data } = await request('PUT', '/user/tag', {
+      token: ana.token,
+      body: { tag: 'ANA' },
+    });
+
+    expect(status).toBe(200);
+    expect(data.tag).toBe('ana');
+  });
+
+  it('rejects what leaves fewer than 3 letters or digits, or more than 20', async () => {
+    for (const tag of ['a!', '!!!', 'x'.repeat(21)]) {
+      const { status } = await request('PUT', '/user/tag', { token: ana.token, body: { tag } });
+      expect([tag, status]).toEqual([tag, 400]);
+    }
   });
 
   it('frees the previous tag for someone else to take', async () => {
@@ -329,6 +404,44 @@ describe('PUT /user/recovery-codes', () => {
 
   it('requires a session', async () => {
     const { status } = await request('PUT', '/user/recovery-codes', {
+      body: { currentPassword: ana.password },
+    });
+
+    expect(status).toBe(401);
+  });
+});
+
+describe('DELETE /user/account', () => {
+  it('deactivates the account with the current password, and login stops working', async () => {
+    const { status } = await request('DELETE', '/user/account', {
+      token: ana.token,
+      body: { currentPassword: ana.password },
+    });
+
+    expect(status).toBe(200);
+
+    const login = await request('POST', '/auth/login', {
+      body: { username: ana.username, password: ana.password },
+    });
+    expect(login.status).toBe(401);
+  });
+
+  it('refuses a wrong password and leaves the account alive', async () => {
+    const { status } = await request('DELETE', '/user/account', {
+      token: ana.token,
+      body: { currentPassword: 'senha-errada-123' },
+    });
+
+    expect(status).toBe(401);
+
+    const login = await request('POST', '/auth/login', {
+      body: { username: ana.username, password: ana.password },
+    });
+    expect(login.status).toBe(200);
+  });
+
+  it('requires a session', async () => {
+    const { status } = await request('DELETE', '/user/account', {
       body: { currentPassword: ana.password },
     });
 

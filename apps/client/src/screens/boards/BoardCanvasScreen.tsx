@@ -1,4 +1,4 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
@@ -15,40 +15,47 @@ import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/sha
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigateAcrossStacks } from '@/src/hooks/nav/useNavigateAcrossStacks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useDrizzle } from '../../db';
-import type { BoardSelect } from '../../db/schema';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useScreenTour } from '../../guides/useScreenTour';
-import { useBoardCanvasLayout } from '../../hooks/useBoardCanvasLayout';
-import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
-import { useBoardNodeTitles } from '../../hooks/useBoardNodeTitles';
-import { decodeBoardPinValue, useBoardPinOptions } from '../../hooks/useBoardPinOptions';
-import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { BoardStackParamList } from '../../navigation/MainSystemStack';
-import { createBoardService } from '../../services/storymanagement/BoardService';
-import { createGalleryService } from '../../services/storymanagement/GalleryService';
-import { useBoardDraftStore } from '../../state/boardDraftStore';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
-import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
-import { galleryMediaForNode, nextStaggeredPosition } from '../../utils/boardLayout';
-import type { NavigableEntityType } from '../../utils/entityNavigation';
-import { toNavigableEntityType } from '../../utils/entityNavigation';
-import { buildBoardMapFileName, deliverMapExport } from '../../utils/storyTransfer';
-import { buildStandaloneBoardSvg } from '../../utils/storyMapSvgExport';
+import { useDrizzle } from '@/src/db';
+import type { BoardSelect } from '@/src/db/schema';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useScreenTour } from '@/src/hooks/guides/useScreenTour';
+import { useBoardCanvasLayout } from '@/src/screens/boards/useBoardCanvasLayout';
+import { useCanvasOverlayActions } from '@/src/hooks/canvas/useCanvasOverlayActions';
+import { useBoardNodeTitles } from '@/src/screens/boards/useBoardNodeTitles';
+import { decodeBoardPinValue, useBoardPinOptions } from '@/src/screens/boards/useBoardPinOptions';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import type { BoardStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { createBoardService } from '@/src/services/storymanagement/entities/BoardService';
+import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
+import { useBoardDraftStore } from '@/src/state/drafts/boardDraftStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import {
+  loadBoardEntitySummary,
+  type BoardEntitySummary,
+} from '@/src/services/storymanagement/entities/boardEntitySummary';
+import type { BoardGalleryMedia, BoardGalleryMediaById } from '@/src/utils/board/boardLayout';
+import { galleryMediaForNode, nextStaggeredPosition } from '@/src/utils/board/boardLayout';
+import type { NavigableEntityType } from '@/src/utils/entity/entityNavigation';
+import { toNavigableEntityType } from '@/src/utils/entity/entityNavigation';
+import { buildBoardMapFileName, deliverMapExport } from '@/src/utils/io/storyTransfer';
+import { buildStandaloneBoardSvg } from '@/src/utils/io/storyMapSvgExport';
+import { chooseExportFormat } from '@/src/state/ui/exportFormatPrompt';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<BoardStackParamList, 'BoardCanvas'>>();
+  const navigateAcross = useNavigateAcrossStacks();
   const { boardId } = useRoute<RouteProp<BoardStackParamList, 'BoardCanvas'>>().params;
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
@@ -136,7 +143,16 @@ const BoardCanvasScreen = () => {
         setBoard(null);
         return;
       }
-      const keep = storyId ? await useBoardDraftStore.getState().hydrate(storyId, boardId) : null;
+      const remembered = storyId
+        ? await useBoardDraftStore.getState().hydrate(storyId, boardId)
+        : null;
+      // The store also still holds the drawing of a session that ended clean (saved, then closed): its content
+      // equals what it had saved. That is no unsaved work, so it is not "restored" - the board opens from what is
+      // saved now (which may be newer, if a sync brought one), without a notice.
+      const keep =
+        remembered && JSON.stringify(remembered.content) !== JSON.stringify(remembered.savedContent)
+          ? remembered
+          : null;
       setBoard(row);
       if (keep && keep.boardId === boardId && keep.storyId === storyId) {
         setContent(keep.content);
@@ -166,6 +182,7 @@ const BoardCanvasScreen = () => {
   }, [load]);
 
   const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const styles = useThemedStyles(createStyles);
   if (storyId !== prevStoryId) {
     setPrevStoryId(storyId);
     if (!storyId) {
@@ -280,6 +297,8 @@ const BoardCanvasScreen = () => {
 
   const handleExport = useCallback(async () => {
     if (!selectedStory) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setExporting(true);
     try {
       const svg = await buildStandaloneBoardSvg(content, {
@@ -304,7 +323,7 @@ const BoardCanvasScreen = () => {
       const result = await deliverMapExport(
         svg,
         buildBoardMapFileName(selectedStory.title, board?.name ?? 'board'),
-        useUserSettingsStore.getState().exportFormat,
+        format,
       );
       if (result.delivered) {
         showNotification(t('board_export_success', { fileName: result.fileName }), 'success');
@@ -391,10 +410,6 @@ const BoardCanvasScreen = () => {
   const sheetOverlay =
     (content.overlays ?? []).find((overlay) => overlay.id === overlayActions.sheetOverlayId) ??
     null;
-
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-  });
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !board) {
@@ -520,10 +535,7 @@ const BoardCanvasScreen = () => {
               return;
             }
             if (selected.entityType === 'Gallery') {
-              navigation.getParent()?.navigate('GalleryStack', {
-                screen: 'GalleryDetail',
-                params: { galleryId: selected.entityId },
-              });
+              navigateAcross('GalleryStack', 'GalleryDetail', { galleryId: selected.entityId });
               return;
             }
             const type = toNavigableEntityType(selected.entityType);
@@ -553,5 +565,10 @@ const BoardCanvasScreen = () => {
     </View>
   );
 };
+
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+  });
 
 export default BoardCanvasScreen;

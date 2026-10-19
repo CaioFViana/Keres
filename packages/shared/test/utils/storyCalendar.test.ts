@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CalendarDefinitionSchema } from '../../schemas/StoryCalendarSchemas';
+import { CalendarDefinitionSchema } from '../../schemas/story/StoryCalendarSchemas';
 import {
   calendarCarryChain,
   calendarDaysPerYear,

@@ -5,7 +5,7 @@ import {
   type DeleteStoryUpdate,
   type UpdateStoryUpdate,
 } from '@keres/shared';
-import { db } from '../../src/db';
+import { db } from '@/db';
 import {
   chapters,
   choices,
@@ -15,14 +15,14 @@ import {
   stories,
   users,
   worldRules,
-} from '../../src/db/schema';
-import { AttributeValueSyncHandler } from '../../src/services/entity-sync-handlers/AttributeValueSyncHandler';
-import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
-import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
-import { SeeAlsoRelationSyncHandler } from '../../src/services/entity-sync-handlers/SeeAlsoRelationSyncHandler';
-import { StorySchemaFieldSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldSyncHandler';
-import { newId } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+} from '@/db/schema';
+import { AttributeValueSyncHandler } from '@/services/entity-sync-handlers/AttributeValueSyncHandler';
+import { CharacterSyncHandler } from '@/services/entity-sync-handlers/CharacterSyncHandler';
+import { LocationSyncHandler } from '@/services/entity-sync-handlers/LocationSyncHandler';
+import { SeeAlsoRelationSyncHandler } from '@/services/entity-sync-handlers/SeeAlsoRelationSyncHandler';
+import { StorySchemaFieldSyncHandler } from '@/services/entity-sync-handlers/StorySchemaFieldSyncHandler';
+import { newId } from '@test/helpers/app';
+import { truncateAll } from '@test/helpers/database';
 
 let userId: string;
 let storyId: string;

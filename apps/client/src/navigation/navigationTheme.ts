@@ -1,5 +1,5 @@
 import { DefaultTheme, type Theme as NavigationTheme } from '@react-navigation/native';
-import type { ThemeColors } from '../theme';
+import type { ThemeColors } from '@/src/theme';
 
 /**
  * Maps the app palette onto React Navigation's theme, so drawers and headers read the same

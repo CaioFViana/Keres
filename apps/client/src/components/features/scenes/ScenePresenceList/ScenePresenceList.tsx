@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
-import { useChapterNames } from '@/src/hooks/useChapterNames';
-import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
+import { useChapterNames } from '@/src/hooks/chapter/useChapterNames';
+import { useNavigateToEntityDetail } from '@/src/hooks/nav/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
-import type { NavigableEntityType } from '@/src/utils/entityNavigation';
+import type { NavigableEntityType } from '@/src/utils/entity/entityNavigation';
 import GenericRelationDisplay from '@/src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '@/src/components/features/relations/RelationManager/RelationAttributeLine';
 

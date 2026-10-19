@@ -1,8 +1,13 @@
+// ResponsiveModal reads the system insets.
 import { act, fireEvent, render } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
-import NoteRelationManager from '../../src/components/features/notes/NoteManager/NoteRelationManager';
+import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('react-native-safe-area-context', () => ({
+  __esModule: true,
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
+
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -25,7 +30,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 // The RN jest preset already renders `Modal` children while visible and null while hidden.
-jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -161,7 +166,7 @@ describe('NoteRelationManager', () => {
     await fireEvent.press(screen.getByText('First note'));
     expect(screen.getByText('A body worth reading.')).toBeTruthy();
 
-    await fireEvent.press(screen.getByText('close'));
+    await fireEvent.press(screen.getByLabelText('close'));
 
     expect(screen.queryByText('A body worth reading.')).toBeNull();
   });
@@ -172,12 +177,7 @@ describe('NoteRelationManager', () => {
     await fireEvent.press(screen.getByText('First note'));
     expect(screen.getByText('A body worth reading.')).toBeTruthy();
 
-    // The dimmed overlay is the only host with that backdrop wash.
-    const overlays = screen.container.queryAll(
-      (node) => StyleSheet.flatten(node.props.style)?.backgroundColor === 'rgba(0,0,0,0.5)',
-    );
-    expect(overlays).toHaveLength(1);
-    await fireEvent.press(overlays[0]);
+    await fireEvent.press(screen.getByTestId('responsive-modal-backdrop'));
 
     expect(screen.queryByText('A body worth reading.')).toBeNull();
   });

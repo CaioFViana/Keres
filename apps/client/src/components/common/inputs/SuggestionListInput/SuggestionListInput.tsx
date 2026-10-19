@@ -1,23 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import type { SuggestionType } from '../../../../services/storymanagement/SuggestionService';
-import { useSuggestions } from '../../../../hooks/useSuggestions';
-import { useTheme } from '../../../../theme';
-import { getCommonInputStyles } from '../../../../theme/commonStyles';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { SuggestionType } from '@/src/services/storymanagement/suggestions/SuggestionService';
+import { type ThemeColors, useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { typography } from '@/src/theme/tokens';
 import { getContrastTextColor } from '@keres/shared';
-import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import SuggestionCatalogModal from '@/src/components/common/inputs/SuggestionCatalogModal/SuggestionCatalogModal';
+import { useSuggestionCatalog } from '@/src/components/common/inputs/SuggestionCatalogModal/useSuggestionCatalog';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface SuggestionListInputProps {
   values: string[];
@@ -50,43 +42,27 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
   storyId,
 }) => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
-  const { height: screenHeight } = useWindowDimensions();
   const commonInputStyles = getCommonInputStyles(colors);
-  const { suggestions, loading: loadingSuggestions, reload } = useSuggestions(storyId, type);
+  const {
+    suggestions,
+    loading: loadingSuggestions,
+    showSuggestions,
+    searchQuery,
+    setSearchQuery,
+    closeSuggestions,
+    toggleSuggestions,
+  } = useSuggestionCatalog(storyId, type);
 
   const [draft, setDraft] = useState('');
   const draftRef = useRef(draft);
   useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredSuggestions = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase();
-    if (!query) return suggestions;
-    return suggestions.filter(([suggestion]) => suggestion.toLocaleLowerCase().includes(query));
-  }, [searchQuery, suggestions]);
 
   const selectedKeys = useMemo(
     () => new Set(values.map((value) => value.toLocaleLowerCase())),
     [values],
   );
-
-  const closeSuggestions = useCallback(() => {
-    setShowSuggestions(false);
-    setSearchQuery('');
-  }, []);
-
-  const handleToggleSuggestions = () => {
-    if (showSuggestions) {
-      closeSuggestions();
-    } else {
-      setShowSuggestions(true);
-      void reload();
-    }
-  };
 
   const addDraft = () => {
     const next = appendUnique(values, draftRef.current);
@@ -112,7 +88,98 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
   const pillBackgroundColor = colors.primaryContainer;
   const pillTextColor = getContrastTextColor(pillBackgroundColor);
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles(createStyles, [pillBackgroundColor, pillTextColor]);
+
+  return (
+    <View style={[styles.container, style]}>
+      {values.length > 0 && (
+        <View style={styles.chipRow}>
+          {values.map((value) => (
+            <View key={value} style={styles.pill}>
+              <Text style={styles.pillText}>{value}</Text>
+              <TouchableOpacity
+                testID={`suggestion-list-remove-${value}`}
+                onPress={() => removeValue(value)}
+                style={styles.removeButton}
+                accessibilityRole="button"
+              >
+                <Ionicons name="close" size={14} color={pillTextColor} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <View style={styles.inputWrapper}>
+        <TextInput
+          testID="suggestion-list-draft"
+          value={draft}
+          onChangeText={setDraft}
+          placeholder={placeholder}
+          onSubmitEditing={addDraft}
+          returnKeyType="done"
+          blurOnSubmit={false}
+          style={[commonInputStyles.input, styles.draftInput]}
+          suppressInteractionBorder
+        />
+        <TouchableOpacity
+          testID="suggestion-list-add"
+          style={styles.suggestionButton}
+          onPress={addDraft}
+        >
+          <Ionicons name="add" size={24} color={colors.onPrimary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          testID="suggestion-list-catalog"
+          style={styles.suggestionButton}
+          onPress={toggleSuggestions}
+          disabled={loadingSuggestions}
+        >
+          {loadingSuggestions ? (
+            <ActivityIndicator size="small" color={colors.onPrimary} />
+          ) : (
+            <Ionicons name="bulb-outline" size={24} color={colors.onPrimary} />
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <SuggestionCatalogModal
+        visible={showSuggestions}
+        loading={loadingSuggestions}
+        suggestions={suggestions}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onClose={closeSuggestions}
+        searchTestID="suggestion-list-search"
+        extraData={`${searchQuery}:${values.join('\0')}`}
+        renderOption={(item) => {
+          const selected = selectedKeys.has(item[0].toLocaleLowerCase());
+          return (
+            <TouchableOpacity
+              testID={`suggestion-list-option-${item[0]}`}
+              style={styles.suggestionItem}
+              onPress={() => toggleSuggestion(item[0])}
+            >
+              <Text style={styles.suggestionText}>{item[0]}</Text>
+              <View style={styles.suggestionMeta}>
+                {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
+                <View style={styles.suggestionCheck}>
+                  {selected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+      />
+    </View>
+  );
+};
+
+const createStyles = (
+  colors: ThemeColors,
+  [pillBackgroundColor, pillTextColor]: [string, string],
+) =>
+  StyleSheet.create({
     container: {
       marginBottom: 10,
     },
@@ -164,13 +231,6 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       justifyContent: 'center',
       alignItems: 'center',
     },
-    modalContent: {
-      padding: 10,
-    },
-    searchInput: {
-      width: '100%',
-      marginBottom: 10,
-    },
     suggestionItem: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -181,8 +241,8 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       borderBottomColor: colors.border,
     },
     suggestionText: {
+      ...typography.bodyLarge,
       color: colors.text,
-      fontSize: 16,
       flex: 1,
     },
     suggestionMeta: {
@@ -199,135 +259,10 @@ const SuggestionListInput: React.FC<SuggestionListInputProps> = ({
       justifyContent: 'center',
     },
     suggestionCount: {
+      ...typography.bodyLarge,
       color: colors.textSecondary,
-      fontSize: 16,
       marginRight: 8,
     },
-    noSuggestionsText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
-    },
-    closeButton: {
-      marginTop: 20,
-      alignSelf: 'flex-end',
-    },
-    suggestionsList: {
-      maxHeight: Math.min(screenHeight * 0.56, 520),
-    },
-    loadingContainer: {
-      minHeight: 90,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
   });
-
-  return (
-    <View style={[styles.container, style]}>
-      {values.length > 0 && (
-        <View style={styles.chipRow}>
-          {values.map((value) => (
-            <View key={value} style={styles.pill}>
-              <Text style={styles.pillText}>{value}</Text>
-              <TouchableOpacity
-                testID={`suggestion-list-remove-${value}`}
-                onPress={() => removeValue(value)}
-                style={styles.removeButton}
-                accessibilityRole="button"
-              >
-                <Ionicons name="close" size={14} color={pillTextColor} />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={styles.inputWrapper}>
-        <TextInput
-          testID="suggestion-list-draft"
-          value={draft}
-          onChangeText={setDraft}
-          placeholder={placeholder}
-          onSubmitEditing={addDraft}
-          returnKeyType="done"
-          blurOnSubmit={false}
-          style={[commonInputStyles.input, styles.draftInput]}
-          suppressInteractionBorder
-        />
-        <TouchableOpacity
-          testID="suggestion-list-add"
-          style={styles.suggestionButton}
-          onPress={addDraft}
-        >
-          <Ionicons name="add" size={24} color={colors.onPrimary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          testID="suggestion-list-catalog"
-          style={styles.suggestionButton}
-          onPress={handleToggleSuggestions}
-          disabled={loadingSuggestions}
-        >
-          {loadingSuggestions ? (
-            <ActivityIndicator size="small" color={colors.onPrimary} />
-          ) : (
-            <Ionicons name="bulb-outline" size={24} color={colors.onPrimary} />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ResponsiveModal
-        visible={showSuggestions}
-        onClose={closeSuggestions}
-        contentStyle={styles.modalContent}
-        maxHeight={Math.min(screenHeight * 0.78, 680)}
-      >
-        <TextInput
-          testID="suggestion-list-search"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder={t('search')}
-          style={styles.searchInput}
-        />
-        {loadingSuggestions ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={colors.primary} />
-          </View>
-        ) : (
-          <FlatList
-            style={styles.suggestionsList}
-            data={filteredSuggestions}
-            extraData={`${searchQuery}:${values.join('\0')}`}
-            keyExtractor={(item) => item[0]}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => {
-              const selected = selectedKeys.has(item[0].toLocaleLowerCase());
-              return (
-                <TouchableOpacity
-                  testID={`suggestion-list-option-${item[0]}`}
-                  style={styles.suggestionItem}
-                  onPress={() => toggleSuggestion(item[0])}
-                >
-                  <Text style={styles.suggestionText}>{item[0]}</Text>
-                  <View style={styles.suggestionMeta}>
-                    {item[1] > 0 && <Text style={styles.suggestionCount}>{item[1]}</Text>}
-                    <View style={styles.suggestionCheck}>
-                      {selected && <Ionicons name="checkmark" size={20} color={colors.primary} />}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-            ListEmptyComponent={
-              <Text style={styles.noSuggestionsText}>{t('no_suggestions_available')}</Text>
-            }
-          />
-        )}
-        <Button onPress={closeSuggestions} style={styles.closeButton}>
-          {t('close')}
-        </Button>
-      </ResponsiveModal>
-    </View>
-  );
-};
 
 export default SuggestionListInput;

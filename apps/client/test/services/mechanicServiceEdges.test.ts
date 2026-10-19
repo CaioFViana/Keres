@@ -1,13 +1,18 @@
 /**
  * @jest-environment node
  */
-import * as schema from '../../src/db/schema';
-import { createChoiceCheckGroupService } from '../../src/services/storymanagement/ChoiceCheckGroupService';
-import { createChoiceCheckService } from '../../src/services/storymanagement/ChoiceCheckService';
-import { createEffectService } from '../../src/services/storymanagement/EffectService';
-import { createItemJourneyService } from '../../src/services/storymanagement/ItemJourneyService';
-import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createChoiceCheckGroupService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckGroupService';
+import { createChoiceCheckService } from '@/src/services/storymanagement/choices-stats/ChoiceCheckService';
+import { createEffectService } from '@/src/services/storymanagement/choices-stats/EffectService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import {
+  entityBase,
+  seedLocalStory,
+  TEST_STORY_ID,
+  TEST_USER_ID,
+} from '@/test/helpers/storyTestData';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * The mechanic services' shared edges: whole-story reads, unknown-id updates, updates of

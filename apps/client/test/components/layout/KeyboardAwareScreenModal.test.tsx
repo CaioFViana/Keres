@@ -1,13 +1,12 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import KeyboardAwareScreen from '../../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { KeyboardHandledContext } from '../../../src/hooks/useKeyboardOverlap';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import { KeyboardHandledContext } from '@/src/hooks/ui/useKeyboardOverlap';
 
 // The avoiding view's `enabled` is what is under test: it is lifted onto a host node.
 jest.mock('react-native/Libraries/Components/Keyboard/KeyboardAvoidingView', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+
   const { View } = require('react-native');
   return {
     __esModule: true,
@@ -19,7 +18,7 @@ jest.mock('react-native/Libraries/Components/Keyboard/KeyboardAvoidingView', () 
       ),
   };
 });
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 0,
 }));
 

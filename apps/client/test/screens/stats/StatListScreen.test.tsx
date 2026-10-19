@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import { withSilencedConsole } from '../../helpers/silenceConsole';
-import StatListScreen from '../../../src/screens/stats/StatListScreen';
+import { withSilencedConsole } from '@/test/helpers/silenceConsole';
+import StatListScreen from '@/src/screens/stats/StatListScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -15,7 +15,7 @@ let mockCanEdit = true;
 let mockUserId: string | null = 'user-1';
 const mockUseScreenTour = jest.fn();
 
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
@@ -31,7 +31,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -51,7 +51,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -69,7 +69,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -86,7 +86,7 @@ jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', (
   };
 });
 
-jest.mock('../../../src/components/common/modals/ReorderModal/ReorderModal', () => {
+jest.mock('@/src/components/common/modals/ReorderModal/ReorderModal', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -105,7 +105,7 @@ jest.mock('../../../src/components/common/modals/ReorderModal/ReorderModal', () 
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -117,18 +117,18 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (s: any) => any) => {
     const state = { userId: mockUserId, exportFormat: 'svg' };
     return typeof selector === 'function' ? selector(state) : state;
   },
 }));
 
-jest.mock('../../../src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: () => mockStatsData,
 }));
 
-jest.mock('../../../src/hooks/useStoryRole', () => ({
+jest.mock('@/src/hooks/story/useStoryRole', () => ({
   useStoryRole: () => ({
     role: 'owner',
     canEdit: mockCanEdit,
@@ -137,19 +137,19 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
   }),
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
-jest.mock('../../../src/db', () => ({ useDrizzle: () => ({}) }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/db', () => ({ useDrizzle: () => ({}) }));
+jest.mock('@/src/state/ui/AppAlert', () => ({
   AppAlert: { alert: (...a: any[]) => mockAlert(...a) },
 }));
-jest.mock('../../../src/services/storymanagement/StatService', () => ({
+jest.mock('@/src/services/storymanagement/choices-stats/StatService', () => ({
   createStatService: () => ({ deleteStat: mockDeleteStat, reorderStats: mockReorderStats }),
 }));
-jest.mock('../../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
 

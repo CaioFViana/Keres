@@ -2,18 +2,33 @@ import { swagger } from '@elysiajs/swagger';
 import { APP_RELEASE, SYNC_PROTOCOL_RANGE } from '@keres/shared';
 import { Elysia } from 'elysia';
 import { adminRoutes } from './modules/admin/admin.route';
+import {
+  ageVerificationEventsRoutes,
+  ageVerificationPublicRoutes,
+} from './modules/age-verification/ageVerification.route';
 import { authRoutes } from './modules/auth/auth.route';
+import { SERVER_TERMS_UPDATED_AT, SERVER_TERMS_VERSION, serverTermsFor } from './legal/serverTerms';
+import {
+  PRIVACY_POLICY_UPDATED_AT,
+  PRIVACY_POLICY_VERSION,
+  privacyPolicyFor,
+} from './legal/privacyPolicy';
+import { ageVerificationMode } from './services/age-verification/ageVerificationMode';
 import { packRoutes } from './modules/pack/pack.route';
 import { friendRoutes } from './modules/friend/friend.route';
 import { storyInvitationRoutes } from './modules/friend/storyInvitation.route';
+import { messageRoutes } from './modules/message/message.route';
 import { mediaRoutes } from './modules/media/media.route';
+import { paymentRoutes, paymentEventsRoutes } from './modules/payments/payment.route';
+import { publicLandingRoutes } from './modules/public/publicLanding.route';
 import { publicRoutes } from './modules/public/public.route';
 import { publicationRoutes } from './modules/story/publication.route';
 import { storyRoutes } from './modules/story/story.route';
-import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
+import { storyReportRoutes } from './modules/story/storyReport.route';
+import { storyPermissionRoutes } from './modules/story-permission/storyPermission.route';
 import { syncRoute } from './modules/sync/sync.route';
 import { userRoutes } from './modules/user/user.route';
-import { wsRoutes } from './modules/webSocket/webSocket.route';
+import { wsRoutes } from './modules/web-socket/webSocket.route';
 
 /**
  * Keres's HTTP contract. The hosted interface occupies the origin (`/`, `/admin`, `/showcase`);
@@ -109,16 +124,72 @@ export function createApiRoutes() {
         },
       },
     )
+    .get(
+      '/keres-tos',
+      ({ set }) => {
+        set.status = 200;
+        // Public on purpose: a person reads and accepts these terms *before* creating an
+        // account, and a client keeps a local copy to show again without asking the server.
+        // Third-party operators serve their own text here - this is always this server's rules.
+        // The text of the mode this server runs in: a server without verification says so in its terms.
+        const terms = serverTermsFor(ageVerificationMode());
+        return {
+          version: SERVER_TERMS_VERSION,
+          updatedAt: SERVER_TERMS_UPDATED_AT,
+          en: terms.en,
+          pt: terms.pt,
+        };
+      },
+      {
+        detail: {
+          summary: "This server's terms of service",
+          description:
+            'Returns the versioned terms of service of this server in every supported language. ' +
+            'A client presents them at registration and records which version was accepted.',
+          tags: ['Health Check'],
+        },
+      },
+    )
+    .get(
+      '/keres-privacy',
+      ({ set }) => {
+        set.status = 200;
+        // Public on purpose, like the terms: a person reads the policy *before* creating an
+        // account, the site renders it as the public legal page, and a client keeps track of
+        // which version applies. Third-party operators serve their own text here.
+        const policy = privacyPolicyFor(ageVerificationMode());
+        return {
+          version: PRIVACY_POLICY_VERSION,
+          updatedAt: PRIVACY_POLICY_UPDATED_AT,
+          en: policy.en,
+          pt: policy.pt,
+        };
+      },
+      {
+        detail: {
+          summary: "This server's privacy policy",
+          description:
+            'Returns the versioned privacy policy of this server in every supported language. ' +
+            'A client presents it at registration and the site renders it as a public page.',
+          tags: ['Health Check'],
+        },
+      },
+    )
     .group('/admin', (app) => app.use(adminRoutes))
     .group('/auth', (app) => app.use(authRoutes))
     .group('/sync', (app) => app.use(syncRoute))
-    .group('/stories', (app) => app.use(storyRoutes).use(publicationRoutes))
+    .group('/stories', (app) => app.use(storyRoutes).use(storyReportRoutes).use(publicationRoutes))
     .group('/media', (app) => app.use(mediaRoutes))
     .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
     .group('/friend/story-invitations', (app) => app.use(storyInvitationRoutes))
     .group('/friend', (app) => app.use(friendRoutes))
+    .group('/messages', (app) => app.use(messageRoutes))
+    .group('/payments', (app) => app.use(paymentEventsRoutes).use(paymentRoutes))
+    .group('/age-verification', (app) =>
+      app.use(ageVerificationEventsRoutes).use(ageVerificationPublicRoutes),
+    )
     .group('/packs', (app) => app.use(packRoutes))
     .group('/user', (app) => app.use(userRoutes))
     .group('/ws', (app) => app.use(wsRoutes))
-    .group('/public', (app) => app.use(publicRoutes));
+    .group('/public', (app) => app.use(publicRoutes).use(publicLandingRoutes));
 }

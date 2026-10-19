@@ -12,14 +12,19 @@ apps/api/dist-server/
 apps/api/.tools/
 
 apps/api/media-storage/
+# Matrizes serifadas do PDF (`bun run fonts:fetch` na API) - baixadas com pin e
+# hash do manifesto, nunca comitadas; o zip do launcher as carrega junto.
+apps/api/assets/fonts/
 # Banco local do modo DATABASE_DRIVER=sqlite (e os arquivos auxiliares do SQLite).
 apps/api/*.db
 apps/api/*.db-wal
 apps/api/*.db-shm
+# Dados da demonstração do plugin de pagamento (`bun run payments:demo`).
+apps/api/payments-demo-data/
 
 # Build output do client web (apps/client) - gerado por `bun run export:web`, consumido
 # pelo Electron (ver apps/desktop). Não é código-fonte.
-apps/client/dist
+apps/client/dist*
 
 # Build output do Electron (apps/desktop) - main/preload compilados e instaladores gerados.
 apps/desktop/dist-electron
@@ -27,6 +32,8 @@ apps/desktop/release
 
 # Build da landing pública (apps/site), publicada no GitHub Pages pelo workflow pages.yml.
 apps/site/dist
+# Segundo build da landing (apps/site), servido pela API na raiz (`bun run site:build:landing`).
+apps/site/dist-landing
 
 # Relatórios de cobertura, gerados por `bun run test:coverage` em cada workspace.
 coverage/
@@ -36,3 +43,17 @@ coverage-sync/
 
 .tmp*
 .agents/plans/*
+
+# Payments service secrets (PSP keys, Play service account) and local env overrides: never committed.
+apps/payments/.env
+apps/payments/.env.*
+!apps/payments/.env.example
+
+# Serviço de verificação de idade: dados, chaves e segredos nunca vão para o git.
+apps/verification/data/
+apps/verification/keys/
+apps/verification/.env
+apps/verification/.env.*
+!apps/verification/.env.example
+.env.local
+apps/*/.env.local

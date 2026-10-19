@@ -15,13 +15,13 @@ const sourceFiles = (directory: string): string[] =>
 const relative = (path: string) => path.slice(SRC.length + 1).replace(/\\/g, '/');
 
 /** What puts a screen's name in the browser tab: one of these, called by the screen itself. */
-const TITLE_CALL = /useScreenHeader\(|useDocumentTitle\(|setDocumentTitle\(/;
+const TITLE_CALL = /useScreenHeader\(|useEntityFormHeader\(|useDocumentTitle\(|setDocumentTitle\(/;
 
 /** The screens the navigators register (a navigator wrapping more screens is not one of them). */
 function registeredScreens(): { route: string; file: string }[] {
   const found: { route: string; file: string }[] = [];
-  for (const entry of readdirSync(NAVIGATION).filter((name) => name.endsWith('.tsx'))) {
-    const source = readFileSync(join(NAVIGATION, entry), 'utf8');
+  for (const entryPath of sourceFiles(NAVIGATION).filter((name) => name.endsWith('.tsx'))) {
+    const source = readFileSync(entryPath, 'utf8');
     const imports = new Map<string, string>();
     for (const match of source.matchAll(/import\s+(\w+)\s+from\s+'([^']+)'/g)) {
       imports.set(match[1], match[2]);
@@ -69,7 +69,7 @@ describe('the web page title', () => {
 
   it('is only ever written through `setDocumentTitle`', () => {
     const offenders = sourceFiles(SRC)
-      .filter((path) => relative(path) !== 'utils/documentTitle.ts')
+      .filter((path) => relative(path) !== 'utils/nav/documentTitle.ts')
       .filter((path) => /document\.title\s*=/.test(readFileSync(path, 'utf8')))
       .map(relative)
       .sort();

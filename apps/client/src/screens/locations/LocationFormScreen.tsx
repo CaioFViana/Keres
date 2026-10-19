@@ -1,23 +1,22 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
-import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
-import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
-import type { LocationStackParamList } from '../../navigation/MainSystemStack';
-import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
-import { useNotificationStore } from '../../state/notificationStore';
-import { useStoryStore } from '../../state/storyStore';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { useTheme } from '../../theme';
-import { getCommonInputStyles } from '../../theme/commonStyles';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '@/src/hooks/forms/useEntityFormSecondaryDraft';
+import { useEntityFormHeader } from '@/src/hooks/forms/useEntityFormHeader';
+import { useStorySchemaFields } from '@/src/hooks/story/useStorySchemaFields';
+import type { LocationStackParamList } from '@/src/navigation/drawer/MainSystemDrawer';
+import { readEntityFormSecondaryDraft } from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import { useNotificationStore } from '@/src/state/ui/notificationStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { useTheme } from '@/src/theme';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { LocationFormContent } from './LocationFormContent';
 import { useLocationFormActions } from './useLocationFormActions';
 import { useLocationFormAssociations } from './useLocationFormAssociations';
@@ -71,6 +70,8 @@ const LocationFormScreen = () => {
     setName,
     description,
     setDescription,
+    intExt,
+    setIntExt,
     climate,
     setClimate,
     culture,
@@ -168,13 +169,7 @@ const LocationFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
-
-  useScreenHeader({
-    target: 'parent',
-    title: formTitle,
-    actions: resetHeaderAction,
-  });
+  useEntityFormHeader({ title: formTitle, isEditing, isDirty, resetForm });
 
   if (loading) {
     return <ScreenLoading />;
@@ -187,6 +182,8 @@ const LocationFormScreen = () => {
       allNotes={allNotes}
       availableTags={availableTags}
       climate={climate}
+      intExt={intExt}
+      setIntExt={setIntExt}
       colors={colors}
       commonInputStyles={commonInputStyles}
       copy={copy}

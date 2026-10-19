@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 import { asc, eq } from 'drizzle-orm';
-import * as schema from '../../src/db/schema';
-import { createStatRelationService } from '../../src/services/storymanagement/StatRelationService';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import { createStatRelationService } from '@/src/services/storymanagement/relations/StatRelationService';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 /**
  * What the client records in the operation log when touching stat values.

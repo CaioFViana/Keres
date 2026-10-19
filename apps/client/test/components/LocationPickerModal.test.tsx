@@ -1,9 +1,9 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import LocationPickerModal from '../../src/components/features/relations/LocationRelationManager/LocationPickerModal';
-import type { LocationSelect } from '../../src/db/schema';
+import LocationPickerModal from '@/src/components/features/relations/LocationRelationManager/LocationPickerModal';
+import type { LocationSelect } from '@/src/db/schema';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -25,7 +25,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+jest.mock('@/src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const ReactActual = require('react');
   const { View } = jest.requireActual('react-native');
   return {
@@ -35,7 +35,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
-jest.mock('../../src/components/common/controls/Button/Button', () => {
+jest.mock('@/src/components/common/controls/Button/Button', () => {
   const ReactActual = require('react');
   const { Text } = jest.requireActual('react-native');
   return {
@@ -104,6 +104,40 @@ describe('LocationPickerModal', () => {
     expect(onSelect).toHaveBeenCalledWith('a');
   });
 
+  it('can be searched', async () => {
+    const screen = await render(
+      <LocationPickerModal
+        isVisible
+        onClose={jest.fn()}
+        onSelect={jest.fn()}
+        title="Pick one"
+        candidates={[location({ id: 'a', name: 'Alpha' }), location({ id: 'b', name: 'Zeta' })]}
+      />,
+    );
+
+    await fireEvent.changeText(screen.getByPlaceholderText('search'), 'ze');
+
+    expect(screen.getByText('Zeta')).toBeTruthy();
+    expect(screen.queryByText('Alpha')).toBeNull();
+  });
+
+  it('closes after a choice, as the other selectors do', async () => {
+    const onClose = jest.fn();
+    const screen = await render(
+      <LocationPickerModal
+        isVisible
+        onClose={onClose}
+        onSelect={jest.fn()}
+        title="Pick one"
+        candidates={[location({ id: 'a', name: 'Alpha' })]}
+      />,
+    );
+
+    await fireEvent.press(screen.getByText('Alpha').parent!);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('says so when there is nobody to pick', async () => {
     const screen = await render(
       <LocationPickerModal
@@ -130,7 +164,7 @@ describe('LocationPickerModal', () => {
       />,
     );
 
-    await fireEvent.press(screen.getByTestId('button-close'));
+    await fireEvent.press(screen.getByLabelText('close'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });

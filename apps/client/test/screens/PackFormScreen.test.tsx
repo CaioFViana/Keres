@@ -1,16 +1,18 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+import PackFormScreen from '@/src/screens/packs/PackFormScreen';
+
 /**
  * The pack form's own rules, which live nowhere else: the sub-toggle that cannot outlive its parent,
  * and the three refusals that stop an empty or nameless pack being written.
  *
  * `PackService` is a double here on purpose - what it does with a selection is covered against a
- * real database in `test/services/PackService.test.ts`. What matters here is which selection the
+ * real database in `test/services/storymanagement/packs/PackService.test.ts`. What matters here is which selection the
  * screen hands it.
  */
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -51,7 +53,7 @@ jest.mock('@react-navigation/native', () => ({
  * `showNotification` are all effect dependencies, and a fresh object per render re-runs the effect
  * forever - which shows up as a test that times out rather than as a failure that names itself.
  */
-jest.mock('../../src/db', () => {
+jest.mock('@/src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
@@ -61,31 +63,31 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
-jest.mock('../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../src/hooks/useScreenHeader', () => ({ useScreenHeader: () => undefined }));
-jest.mock('../../src/utils/documentTitle', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: () => undefined }));
+jest.mock('@/src/utils/nav/documentTitle', () => ({
   __esModule: true,
   useDocumentTitle: () => undefined,
 }));
 // Same stability reason as the translation mock above: this is an effect dependency.
-jest.mock('../../src/state/notificationStore', () => {
+jest.mock('@/src/state/ui/notificationStore', () => {
   const state = { showNotification: jest.fn() };
   return {
     __esModule: true,
     useNotificationStore: (selector: (value: typeof state) => unknown) => selector(state),
   };
 });
-jest.mock('../../src/state/userSettingsStore', () => ({
+jest.mock('@/src/state/app/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: '01ARZ3NDEKTSV4RRFFQ69G5FUS' }),
 }));
 
 // The real one runs an Animated interpolation that never settles under RNTL's async render. What
 // this file asserts is which value the screen passes and whether it is disabled, not the animation.
-jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { View } = jest.requireActual('react-native');
   return {
     __esModule: true,
@@ -94,12 +96,12 @@ jest.mock('../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () =
 });
 
 const mockAlert = jest.fn();
-jest.mock('../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
-jest.mock('../../src/services/storymanagement/StoryService', () => ({
+jest.mock('@/src/services/storymanagement/story-lifecycle/StoryService', () => ({
   __esModule: true,
   createStoryService: () => ({
     getAllStories: async () => [
@@ -112,7 +114,7 @@ const mockCreatePack = jest.fn(async () => 'pack-1');
 const mockReextract = jest.fn(async () => undefined);
 const mockUpdateDetails = jest.fn(async () => undefined);
 const mockListPacks = jest.fn(async () => [] as unknown[]);
-jest.mock('../../src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   __esModule: true,
   createPackService: () => ({
     createPack: mockCreatePack,
@@ -121,8 +123,6 @@ jest.mock('../../src/services/storymanagement/PackService', () => ({
     listPacks: mockListPacks,
   }),
 }));
-
-import PackFormScreen from '../../src/screens/packs/PackFormScreen';
 
 beforeEach(() => {
   jest.clearAllMocks();

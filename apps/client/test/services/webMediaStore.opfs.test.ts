@@ -6,9 +6,11 @@ import {
   deleteFile,
   existsSync,
   hydrate,
+  readBlob,
   readBytes,
+  writeBlob,
   writeBytes,
-} from '../../src/services/webMediaStore';
+} from '@/src/services/platform-web/webMediaStore';
 
 type Entry =
   | { kind: 'file'; data: Uint8Array }
@@ -60,7 +62,15 @@ function installMemoryOpfs(root: Map<string, Entry>) {
           },
           async createWritable() {
             return {
-              async write(bytes: BufferSource) {
+              async write(bytes: BufferSource | Blob) {
+                if (
+                  typeof (bytes as Blob).arrayBuffer === 'function' &&
+                  !(bytes instanceof Uint8Array)
+                ) {
+                  // A Blob: what `writeBlob` hands over, so the bytes never pass through the caller.
+                  file.data = new Uint8Array(await (bytes as Blob).arrayBuffer());
+                  return;
+                }
                 const view =
                   bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes as ArrayBuffer);
                 file.data = view;
@@ -183,4 +193,19 @@ it('removes the whole media root when asked to delete the empty path', async () 
   await deleteDirectory('');
 
   expect(root.has('keres-media')).toBe(false);
+});
+
+it('stores and reads a Blob through OPFS without the caller holding the bytes', async () => {
+  const root = new Map<string, Entry>();
+  installMemoryOpfs(root);
+  const blob = { size: 3, arrayBuffer: async () => new Uint8Array([4, 5, 6]).buffer } as Blob;
+
+  await writeBlob('media/story/c.png', blob);
+
+  expect(existsSync('media/story/c.png')).toBe(true);
+  await expect(readBytes('media/story/c.png')).resolves.toEqual(new Uint8Array([4, 5, 6]));
+  // What comes back is the file the browser holds (a Blob over the file on disk), read only when asked.
+  const read = await readBlob('media/story/c.png');
+  expect(new Uint8Array(await read.arrayBuffer())).toEqual(new Uint8Array([4, 5, 6]));
+  await expect(readBlob('media/story/missing.png')).rejects.toThrow('missing');
 });

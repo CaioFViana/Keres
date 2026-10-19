@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
+import PackListScreen from '@/src/screens/packs/PackListScreen';
+
 const mockNavigate = jest.fn();
 const mockNotify = jest.fn();
 const mockListPacks = jest.fn();
@@ -22,20 +24,20 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
-jest.mock('../../../src/hooks/useScreenHeader', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
 }));
-jest.mock('../../../src/guides/useScreenTour', () => ({
+jest.mock('@/src/hooks/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
-jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
+jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
-jest.mock('../../../src/services/storymanagement/PackService', () => ({
+jest.mock('@/src/services/storymanagement/packs/PackService', () => ({
   __esModule: true,
   createPackService: () => ({
     listPacks: mockListPacks,
@@ -43,15 +45,15 @@ jest.mock('../../../src/services/storymanagement/PackService', () => ({
     deletePack: mockDeletePack,
   }),
 }));
-jest.mock('../../../src/services/ServerService', () => ({
+jest.mock('@/src/services/servers/ServerService', () => ({
   __esModule: true,
   createServerService: () => ({ getAllServers: mockGetAllServers }),
 }));
-jest.mock('../../../src/services/PackApiService', () => ({
+jest.mock('@/src/services/api/PackApiService', () => ({
   __esModule: true,
   packApiService: { upload: (...args: unknown[]) => mockUpload(...args) },
 }));
-jest.mock('../../../src/components/features/packs/SharePackModal/SharePackModal', () => ({
+jest.mock('@/src/components/features/packs/SharePackModal/SharePackModal', () => ({
   __esModule: true,
   default: (props: {
     visible: boolean;
@@ -82,12 +84,12 @@ jest.mock('../../../src/components/features/packs/SharePackModal/SharePackModal'
     );
   },
 }));
-jest.mock('../../../src/state/notificationStore', () => ({
+jest.mock('@/src/state/ui/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
     colors: {
@@ -104,7 +106,7 @@ jest.mock('../../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('../../../src/utils/AppAlert', () => ({
+jest.mock('@/src/state/ui/AppAlert', () => ({
   __esModule: true,
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -112,8 +114,6 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
 }));
-
-import PackListScreen from '../../../src/screens/packs/PackListScreen';
 
 const makePack = (overrides = {}) => ({
   id: 'pack-1',

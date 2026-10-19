@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchConfig, type ShowcaseConfig } from '../api/showcaseApi';
-import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
-import { applyShowcasePalette } from '../theme/showcasePalette';
+import { fetchConfig, type ShowcaseConfig } from '@/showcase/api/showcaseApi';
+import { useShowcaseTheme } from '@/showcase/theme/ShowcaseThemeProvider';
+import { applyShowcasePalette } from '@/showcase/theme/showcasePalette';
 
 const ShowcaseConfigContext = createContext<ShowcaseConfig | null>(null);
 

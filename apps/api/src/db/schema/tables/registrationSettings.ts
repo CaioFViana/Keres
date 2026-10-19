@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestampNow } from '../columns';
+import { TIERS_DISPLAYS } from '@keres/shared/metadata/TiersDisplay';
+import { boolean, integer, table, text, timestampNow } from '@/db/schema/columns';
 import { tiers } from './tiers';
 
 /**
@@ -21,7 +22,17 @@ export const registrationSettings = table('registration_settings', {
    * administrator's manual switch.
    */
   autoManage: boolean('auto_manage').notNull().default(false),
+  /**
+   * Whether stories may be flagged adults-only (+18) on this server. Off by default: a fresh
+   * server takes no mature content until its operator says so. Read live on every flag and
+   * publication, never trusted from the client.
+   */
+  allowNsfw: boolean('allow_nsfw').notNull().default(false),
   defaultTierId: text('default_tier_id').references(() => tiers.id),
+  /** ISO-4217 code: the one currency tier prices are expressed in, system-wide. */
+  currency: text('currency').notNull().default('BRL'),
+  /** How the public landing page presents the plans: priced for `sale`, or `info` only (no prices). */
+  tiersDisplay: text('tiers_display', { enum: TIERS_DISPLAYS }).notNull().default('sale'),
   updatedAt: timestampNow('updated_at'),
 });
 

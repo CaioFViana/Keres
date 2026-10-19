@@ -1,15 +1,15 @@
 import { render } from '@testing-library/react-native';
-import type { Character } from '@keres/shared/entities/Character';
-import type { Item, ItemJourney } from '@keres/shared/entities/Item';
-import type { Scene } from '@keres/shared/entities/Scene';
+import type { Character } from '@keres/shared/entities/narrative/Character';
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item';
+import type { Scene } from '@keres/shared/entities/narrative/Scene';
 import React from 'react';
-import type { SceneSelect } from '../../src/db/schema';
-import type { CharacterSelect } from '../../src/db/schemas/characters';
-import ItemCharacterManager from '../../src/components/features/items/ItemManager/ItemCharacterManager';
-import ItemSceneManager from '../../src/components/features/items/ItemManager/ItemSceneManager';
-import LocationItemManager from '../../src/components/features/locations/LocationManager/LocationItemManager';
+import type { SceneSelect } from '@/src/db/schema';
+import type { CharacterSelect } from '@/src/db/schemas/characters';
+import ItemCharacterManager from '@/src/components/features/items/ItemManager/ItemCharacterManager';
+import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager';
+import LocationItemManager from '@/src/components/features/locations/LocationManager/LocationItemManager';
 
-jest.mock('../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     colors: {
       background: '#fff',
@@ -27,17 +27,17 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/vocabulary/useVocabularyEntityCopy', () => ({
+jest.mock('@/src/hooks/vocabulary/useVocabularyEntityCopy', () => ({
   useVocabularyEntityCopy: (type: string) => ({ entity: type, entities: `${type}s` }),
 }));
 
 const mockNavigateToDetail = jest.fn();
-jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
+jest.mock('@/src/hooks/nav/useNavigateToEntityDetail', () => ({
   useNavigateToEntityDetail: () => mockNavigateToDetail,
 }));
 
 const mockRelationDisplay = jest.fn();
-jest.mock('../../src/components/features/relations/RelationManager/GenericRelationDisplay', () => ({
+jest.mock('@/src/components/features/relations/RelationManager/GenericRelationDisplay', () => ({
   __esModule: true,
   default: (props: Record<string, unknown>) => {
     mockRelationDisplay(props);

@@ -39,6 +39,7 @@ const reports: Record<string, [string, string][]> = {
     ['apps/api', 'coverage'],
     ['apps/api', 'coverage-integration'],
   ],
+  payments: [['apps/payments', 'coverage']],
   admin: [['apps/admin', 'coverage']],
   desktop: [['apps/desktop', 'coverage']],
   site: [['apps/site', 'coverage']],
@@ -49,9 +50,9 @@ const scopedReports: Record<string, { reports: [string, string][]; prefixes: str
     reports: reports.client,
     prefixes: [
       'src/services/sync/',
-      'src/services/SyncEngineService.ts',
-      'src/services/SyncConflictService.ts',
-      'src/services/ConflictSummaryService.ts',
+      'src/services/sync/SyncEngineService.ts',
+      'src/services/sync/SyncConflictService.ts',
+      'src/services/sync/ConflictSummaryService.ts',
     ],
   },
   clientSyncHandlers: {
@@ -64,7 +65,7 @@ const scopedReports: Record<string, { reports: [string, string][]; prefixes: str
   },
   apiSyncCore: {
     reports: reports.apiCombined,
-    prefixes: ['src/services/SyncService.ts'],
+    prefixes: ['src/services/sync/SyncService.ts'],
   },
   apiSyncHandlers: {
     reports: reports.apiCombined,
@@ -72,7 +73,7 @@ const scopedReports: Record<string, { reports: [string, string][]; prefixes: str
   },
   apiExportImport: {
     reports: reports.apiCombined,
-    prefixes: ['src/services/StoryExportImportService.ts'],
+    prefixes: ['src/services/stories/StoryExportImportService.ts'],
   },
 };
 

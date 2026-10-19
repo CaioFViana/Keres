@@ -7,8 +7,8 @@ import type {
 } from '@keres/shared';
 import { CreateRouteDataSchema, PartialRouteSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db, type CompatibleDb } from '../../db';
-import { routes, stories } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { routes, stories } from '@/db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class RouteSyncHandler extends BaseSyncEntityHandler<

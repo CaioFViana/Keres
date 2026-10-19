@@ -1,8 +1,8 @@
 import { and, count, eq, max } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, withWriteTransaction } from '../../db';
-import { lockStoryForUpdate } from '../../db/sqlOperators';
-import { favorites, operationLog, stories } from '../../db/schema';
+import { db, withWriteTransaction } from '@/db';
+import { lockStoryForUpdate } from '@/db/sqlOperators';
+import { favorites, operationLog, stories } from '@/db/schema';
 
 /**
  * Checksum of a story's favorites roster: how many rows exist and the highest version

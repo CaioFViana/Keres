@@ -1,52 +1,53 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
-import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import type { OccurrenceTarget } from '@/src/utils/entity/occurrenceTarget';
+import { useScreenHeader } from '@/src/hooks/nav/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { groupScenePresenceEntries } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
-import { useAppearsInArcs } from '@/src/hooks/useAppearsInArcs';
-import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation'; // Import CharacterRelation
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Entity type
-import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
-import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import { useAppearsInArcs } from '@/src/hooks/arcs/useAppearsInArcs';
+import type { CharacterRelation } from '@keres/shared/entities/narrative/CharacterRelation'; // Import CharacterRelation
+import type { CharacterScene } from '@keres/shared/entities/narrative/CharacterScene'; // Entity type
+import type { Item, ItemJourney } from '@keres/shared/entities/narrative/Item'; // Import Item and ItemJourney entities
+import type { Location } from '@keres/shared/entities/narrative/Location'; // Import Location entity
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
-import { useDrizzle } from '../../db';
-import type { SceneSelect } from '../../db/schema'; // For available scenes
-import type { CharacterSelect } from '../../db/schemas/characters';
-import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useDrizzle } from '@/src/db';
+import type { SceneSelect } from '@/src/db/schema'; // For available scenes
+import type { CharacterSelect } from '@/src/db/schemas/characters';
+import { useBackButtonHandler } from '@/src/hooks/nav/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
   useEntityInitialLoad,
-} from '../../hooks/useEntityRefreshLifecycle';
-import { useEntityComments } from '../../hooks/useEntityComments';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
-import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer';
-import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
-import { useStoryRole } from '../../hooks/useStoryRole';
-import type { CharacterRelationServiceInterface } from '../../services/storymanagement/CharacterRelationService';
-import { createCharacterRelationService } from '../../services/storymanagement/CharacterRelationService'; // Import CharacterRelationService
-import type { CharacterSceneServiceInterface } from '../../services/storymanagement/CharacterSceneService';
-import { createCharacterSceneService } from '../../services/storymanagement/CharacterSceneService'; // Service for CharacterScene
-import { createCharacterService } from '../../services/storymanagement/CharacterService';
-import type { ItemJourneyService } from '../../services/storymanagement/ItemJourneyService';
-import { createItemJourneyService } from '../../services/storymanagement/ItemJourneyService'; // Import ItemJourneyService
-import type { ItemService } from '../../services/storymanagement/ItemService';
-import { createItemService } from '../../services/storymanagement/ItemService'; // Import ItemService
-import type { LocationService } from '../../services/storymanagement/LocationService';
-import { createLocationService } from '../../services/storymanagement/LocationService'; // Import LocationService
-import { createSceneService } from '../../services/storymanagement/SceneService';
-import { useUserSettingsStore } from '../../state/userSettingsStore'; // Import useUserSettingsStore
-import { useTheme } from '../../theme';
-import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
-import { useStoryStats } from '../../hooks/useStoryStats';
-import { useStoryStore } from '../../state/storyStore';
-import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+} from '@/src/hooks/lists/useEntityRefreshLifecycle';
+import { useEntityComments } from '@/src/hooks/comments/useEntityComments';
+import { useEntityRelations } from '@/src/hooks/relations/useEntityRelations';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/media/useOpenGalleryMediaViewer';
+import { useOpenPresenceMatrixViewer } from '@/src/hooks/character/useOpenPresenceMatrixViewer';
+import { useStoryRole } from '@/src/hooks/story/useStoryRole';
+import type { CharacterRelationServiceInterface } from '@/src/services/storymanagement/relations/CharacterRelationService';
+import { createCharacterRelationService } from '@/src/services/storymanagement/relations/CharacterRelationService'; // Import CharacterRelationService
+import type { CharacterSceneServiceInterface } from '@/src/services/storymanagement/entities/CharacterSceneService';
+import { createCharacterSceneService } from '@/src/services/storymanagement/entities/CharacterSceneService'; // Service for CharacterScene
+import { createCharacterService } from '@/src/services/storymanagement/entities/CharacterService';
+import type { ItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService';
+import { createItemJourneyService } from '@/src/services/storymanagement/entities/ItemJourneyService'; // Import ItemJourneyService
+import type { ItemService } from '@/src/services/storymanagement/entities/ItemService';
+import { createItemService } from '@/src/services/storymanagement/entities/ItemService'; // Import ItemService
+import type { LocationService } from '@/src/services/storymanagement/entities/LocationService';
+import { createLocationService } from '@/src/services/storymanagement/entities/LocationService'; // Import LocationService
+import { createSceneService } from '@/src/services/storymanagement/scenes-chapters/SceneService';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore'; // Import useUserSettingsStore
+import { type ThemeColors } from '@/src/theme';
+import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import type { CharactersScreenNavigationProp } from '@/src/navigation/navigationProps';
+import { useStoryStats } from '@/src/hooks/story/useStoryStats';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useVocabularyEntityCopy } from '@/src/hooks/vocabulary/useVocabularyEntityCopy';
 import { CharacterDetailContent } from './CharacterDetailContent';
 import { createCharacterDetailMutations } from './createCharacterDetailMutations';
 
@@ -62,7 +63,6 @@ const noopModeWrite = async () => {};
 
 const CharacterDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const { openCharacter: openPresenceMatrix } = useOpenPresenceMatrixViewer();
@@ -147,14 +147,7 @@ const CharacterDetailScreen = () => {
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
 
   // Move styles declaration to the top
-  const styles = StyleSheet.create({
-    subTitle: {
-      fontSize: 20,
-      fontWeight: '600',
-      color: colors.textSecondary,
-      marginBottom: 15,
-    },
-  });
+  const styles = useThemedStyles(createStyles);
 
   const fetchCharacter = useCallback(async () => {
     if (!characterServiceRef.current) {
@@ -513,4 +506,14 @@ const CharacterDetailScreen = () => {
     />
   );
 };
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    subTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      marginBottom: 15,
+    },
+  });
+
 export default CharacterDetailScreen;

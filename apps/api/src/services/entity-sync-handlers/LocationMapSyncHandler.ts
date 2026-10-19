@@ -1,7 +1,7 @@
 import type { CreateLocationMapDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateLocationMapDataSchema, PartialLocationMapSchema } from '@keres/shared';
-import { db, type CompatibleDb } from '../../db';
-import { locationMaps } from '../../db/schema';
+import { db, type CompatibleDb } from '@/db';
+import { locationMaps } from '@/db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
 /**

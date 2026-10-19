@@ -1,9 +1,17 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
+import { boolean, table, text, timestamp, timestampNow, uniqueIndex } from '@/db/schema/columns';
 import { operationLog } from './operationLog';
 import { stories } from './stories';
 import { storyPermissions } from './storyPermissions';
 import { tiers } from './tiers';
+
+/**
+ * Where an account stands in age verification (see `docs/age_verification.md`). `active` is every normal account -
+ * and every account where verification is off. `pending` waits for the service's decision on its first sending;
+ * `rejected` is an account whose last sending was refused or expired (it may send again, or be closed).
+ */
+export const USER_VERIFICATION_STATUSES = ['active', 'pending', 'rejected'] as const;
+export type UserVerificationStatus = (typeof USER_VERIFICATION_STATUSES)[number];
 
 export const users = table(
   'users',
@@ -26,6 +34,25 @@ export const users = table(
     bio: text('bio'),
     /** Grants access to the /admin panel and /api/admin/* routes. Checked from the DB per request, never trusted from the JWT. */
     isAdmin: boolean('is_admin').notNull().default(false),
+    /**
+     * Manual +18 verification, set by an administrator. Gates access to NSFW stories and their
+     * showcase entries. Checked from the DB per request, never trusted from the JWT.
+     */
+    isAdultVerified: boolean('is_adult_verified').notNull().default(false),
+    /**
+     * The account's own, private choice to see adults-only stories in the public showcase and reader. It counts only
+     * while `isAdultVerified` holds (see `ShowcaseService.viewerIncludesNsfw`); revoking the verification resets it.
+     * Collaboration on +18 stories does not read it.
+     */
+    showNsfw: boolean('show_nsfw').notNull().default(false),
+    /** Age-verification standing of the account itself (see `USER_VERIFICATION_STATUSES`). */
+    verificationStatus: text('verification_status', { enum: USER_VERIFICATION_STATUSES })
+      .notNull()
+      .default('active'),
+    /** When `isAdultVerified` was granted by the service's approval; null for accounts never verified that way. */
+    verifiedAt: timestamp('verified_at'),
+    /** How the approval was checked (the service's method name); null when there is none. */
+    verificationMethod: text('verification_method'),
     /** `null` = no tier assigned; TierEnforcementService falls back to the registration settings' default tier, then to unlimited. */
     tierId: text('tier_id').references(() => tiers.id),
     createdAt: timestampNow('created_at'),

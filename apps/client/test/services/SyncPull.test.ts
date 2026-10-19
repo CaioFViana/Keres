@@ -3,12 +3,12 @@
  */
 import { eq } from 'drizzle-orm';
 import { MAX_SYNC_PULL_BATCH, type StoryUpdate } from '@keres/shared';
-import * as schema from '../../src/db/schema';
-import type { OperationLogSelect } from '../../src/db/schema';
-import type { ClientSyncEntityHandler } from '../../src/services/entity-sync-handlers/ClientSyncEntityHandler';
-import { recordLocalOperation } from '../../src/utils/syncUtils';
-import { SyncPull, type FetchRemoteUpdatesInput } from '../../src/services/sync/SyncPull';
-import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
+import * as schema from '@/src/db/schema';
+import type { OperationLogSelect } from '@/src/db/schema';
+import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
+import { recordLocalOperation } from '@/src/services/sync/syncUtils';
+import { SyncPull, type FetchRemoteUpdatesInput } from '@/src/services/sync/SyncPull';
+import { createTestDatabase, type TestDatabase } from '@/test/helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const NOW = new Date('2026-08-10T12:00:00.000Z');

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { SyncOperationLogService } from '../../src/services/sync/SyncOperationLogService';
+import { SyncOperationLogService } from '@/services/sync/SyncOperationLogService';
 import {
   resetCompactionThrottle,
   shouldCompactStoryNow,
   storyUpdateFlipsFavorites,
-} from '../../src/services/sync/pushPolicy';
+} from '@/services/sync/pushPolicy';
 
 describe('shouldCompactStoryNow', () => {
   it('runs at most once per story per hour', () => {

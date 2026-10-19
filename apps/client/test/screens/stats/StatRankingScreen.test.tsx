@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import StatRankingScreen from '../../../src/screens/stats/StatRankingScreen';
+import StatRankingScreen from '@/src/screens/stats/StatRankingScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -24,7 +24,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
-jest.mock('../../../src/theme', () => ({
+jest.mock('@/src/theme', () => ({
   useTheme: () => ({
     isDarkMode: false,
     colors: {
@@ -44,7 +44,7 @@ jest.mock('../../../src/theme', () => ({
   }),
 }));
 
-jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -62,7 +62,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
   };
 });
 
-jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+jest.mock('@/src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
@@ -74,7 +74,7 @@ jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', (
   };
 });
 
-jest.mock('../../../src/state/storyStore', () => ({
+jest.mock('@/src/state/story/storyStore', () => ({
   useStoryStore: (selector?: (s: any) => any) => {
     const state = {
       selectedStory: mockStory,
@@ -86,18 +86,18 @@ jest.mock('../../../src/state/storyStore', () => ({
   },
 }));
 
-jest.mock('../../../src/hooks/useStoryStats', () => ({
+jest.mock('@/src/hooks/story/useStoryStats', () => ({
   useStoryStats: () => mockStatsData,
 }));
 
-jest.mock('../../../src/utils/entityNavigation', () => ({
+jest.mock('@/src/utils/entity/entityNavigation', () => ({
   navigateToEntityDetail: (...a: any[]) => mockNavigateToEntity(...a),
   toNavigableEntityType: () => 'Character',
 }));
 
-jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
-jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
+jest.mock('@/src/hooks/nav/useScreenHeader', () => ({ useScreenHeader: jest.fn() }));
+jest.mock('@/src/hooks/nav/useBackButtonHandler', () => ({ useBackButtonHandler: jest.fn() }));
+jest.mock('@/src/hooks/forms/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 32,
 }));
 

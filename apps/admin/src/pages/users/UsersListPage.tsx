@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AdminUserInfo, Tier } from '@keres/shared';
-import { AdminUserApiService } from '../../api/AdminUserApiService';
-import { TierApiService } from '../../api/TierApiService';
+import { AdminUserApiService } from '@/api/AdminUserApiService';
+import { TierApiService } from '@/api/TierApiService';
+import { Modal } from '@/components/Modal';
+import { Pagination } from '@/components/Pagination';
+import { useAdminList } from '@/hooks/useAdminList';
 
 export function UsersListPage() {
   const { t, i18n } = useTranslation('admin');
-  const [users, setUsers] = useState<AdminUserInfo[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
-  const [total, setTotal] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [page, setPage] = useState(1);
-  const [reloadToken, setReloadToken] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const pageSize = 25;
 
   useEffect(() => {
@@ -27,32 +27,24 @@ export function UsersListPage() {
       });
   }, []);
 
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    setError(null);
-    AdminUserApiService.list({
-      search: appliedSearch || undefined,
-      isDeleted: showDeleted || undefined,
-      page,
-      pageSize,
-    })
-      .then((res) => {
-        if (ignore) return;
-        setUsers(res.items);
-        setTotal(res.total);
-      })
-      .catch((err) => {
-        if (ignore) return;
-        setError(err.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [page, showDeleted, appliedSearch, reloadToken]);
+  const {
+    items: users,
+    total,
+    loading,
+    error,
+    reload,
+  } = useAdminList(
+    () =>
+      AdminUserApiService.list({
+        search: appliedSearch || undefined,
+        // Off means active only; on means everyone, deleted included.
+        isDeleted: showDeleted ? undefined : false,
+        adultVerified: verifiedOnly ? true : undefined,
+        page,
+        pageSize,
+      }),
+    [page, showDeleted, verifiedOnly, appliedSearch],
+  );
 
   const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,9 +68,9 @@ export function UsersListPage() {
         if (!confirm(message)) return;
         await AdminUserApiService.softDelete(user.id);
       }
-      setReloadToken((n) => n + 1);
+      reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('common.actionFailed'));
+      setNotice(err instanceof Error ? err.message : t('common.actionFailed'));
     }
   };
 
@@ -101,7 +93,7 @@ export function UsersListPage() {
             aria-label={t('users.searchAriaLabel')}
           />
         </label>
-        <label className="checkbox-label">
+        <label className="checkbox-label switch">
           <input
             type="checkbox"
             checked={showDeleted}
@@ -111,6 +103,17 @@ export function UsersListPage() {
             }}
           />
           {t('users.showDeleted')}
+        </label>
+        <label className="checkbox-label switch">
+          <input
+            type="checkbox"
+            checked={verifiedOnly}
+            onChange={(e) => {
+              setVerifiedOnly(e.target.checked);
+              setPage(1);
+            }}
+          />
+          {t('users.verifiedOnly')}
         </label>
         <button type="submit">{t('common.search')}</button>
       </form>
@@ -125,10 +128,9 @@ export function UsersListPage() {
               <tr>
                 <th>{t('users.columnUsername')}</th>
                 <th>{t('users.columnTag')}</th>
-                <th>{t('users.columnAdmin')}</th>
                 <th>{t('users.columnTier')}</th>
+                <th>{t('users.columnVerified')}</th>
                 <th>{t('users.columnCreated')}</th>
-                <th>{t('users.columnStatus')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -136,17 +138,60 @@ export function UsersListPage() {
               {users.map((u) => (
                 <tr key={u.id} className={u.isDeleted ? 'row-deleted' : ''}>
                   <td>
-                    <Link to={`/users/${u.id}`}>{u.username}</Link>
-                  </td>
-                  <td>@{u.tag}</td>
-                  <td>{u.isAdmin ? t('common.yes') : ''}</td>
-                  <td>{tierName(u.tierId)}</td>
-                  <td>{new Date(u.createdAt).toLocaleDateString(i18n.language)}</td>
-                  <td>
-                    <span className={`status-badge${u.isDeleted ? ' deleted' : ''}`}>
-                      {u.isDeleted ? t('users.statusDeleted') : t('users.statusActive')}
+                    <span className="username-cell">
+                      <Link to={`/users/${u.id}`}>{u.username}</Link>
+                      {u.isAdmin && (
+                        <svg
+                          className="admin-shield"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          role="img"
+                          aria-label={t('users.adminBadge')}
+                        >
+                          <title>{t('users.adminBadge')}</title>
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                      )}
                     </span>
                   </td>
+                  <td>@{u.tag}</td>
+                  <td>
+                    {/* The plan the person is on, which a paid subscription decides; the assigned one is its tooltip. */}
+                    {tierName(u.effectiveTierId === undefined ? u.tierId : u.effectiveTierId)}
+                    {u.tierSource === 'subscription' && ' '}
+                    {u.tierSource === 'subscription' && (
+                      <span
+                        className="status-badge"
+                        title={t('users.tierAssignedTitle', { name: tierName(u.tierId) })}
+                      >
+                        {t('users.tierPaid')}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {u.isAdultVerified ? (
+                      <span className="status-badge" title={t('users.verifiedTitle')}>
+                        {t('users.verifiedShort')}
+                      </span>
+                    ) : u.verificationStatus === 'pending' ? (
+                      <span className="status-badge" data-testid="standing-pending">
+                        {t('users.standingPending')}
+                      </span>
+                    ) : u.verificationStatus === 'rejected' ? (
+                      <span className="status-badge" data-testid="standing-rejected">
+                        {t('users.standingRejected')}
+                      </span>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  <td>{new Date(u.createdAt).toLocaleDateString(i18n.language)}</td>
                   <td>
                     <button
                       type="button"
@@ -160,7 +205,7 @@ export function UsersListPage() {
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="empty-state">
+                  <td colSpan={8} className="empty-state">
                     {t('users.empty')}
                   </td>
                 </tr>
@@ -170,25 +215,13 @@ export function UsersListPage() {
         </div>
       )}
 
-      <div className="pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-          {t('common.previous')}
-        </button>
-        <span>
-          {t('common.pagination', {
-            page,
-            pages: Math.max(1, Math.ceil(total / pageSize)),
-            total,
-          })}
-        </span>
-        <button
-          type="button"
-          disabled={page * pageSize >= total}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          {t('common.next')}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
+
+      {notice && (
+        <Modal title={t('common.notice')} onClose={() => setNotice(null)}>
+          <p>{notice}</p>
+        </Modal>
+      )}
     </div>
   );
 }

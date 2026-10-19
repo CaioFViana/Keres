@@ -1,0 +1,487 @@
+import type {
+  Note,
+  NoteRelation,
+  NoteRelationEntities,
+} from '@keres/shared/entities/narrative/Note';
+import type { TagRelationEntities } from '@keres/shared/entities/narrative/Tag';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDrizzle } from '@/src/db';
+import type { TagSelect } from '@/src/db/schema';
+import type { SaveNoteRelation } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createNoteRelationService } from '@/src/services/storymanagement/relations/NoteRelationService';
+import { createNoteService } from '@/src/services/storymanagement/notes-tags-comments/NoteService';
+import { createTagRelationService } from '@/src/services/storymanagement/relations/TagRelationService';
+import { createTagService } from '@/src/services/storymanagement/notes-tags-comments/TagService';
+import {
+  patchEntityFormSecondaryDraft,
+  readEntityFormSecondaryDraft,
+  type EntityFormSecondaryDraft,
+} from '@/src/state/drafts/entityFormSecondaryDraftStore';
+import { useStoryStore } from '@/src/state/story/storyStore';
+import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
+import { createULID } from '@/src/utils/entity/entityUtils';
+import { entityEventEmitter } from '@/src/state/events/EventEmitter';
+import { AppAlert } from '@/src/state/ui/AppAlert';
+
+export interface UseEntityRelationsOptions {
+  /** The entity these relations hang off, e.g. `'WorldRule'`. */
+  entityType: TagRelationEntities;
+  /** Undefined while creating - tag selections are held locally until the entity exists. */
+  entityId: string | undefined;
+  /**
+   * Notes cannot be attached to other notes, so `NoteFormScreen` passes false and gets
+   * only the tag half of the hook.
+   */
+  withNotes?: boolean;
+  /** Keep creation-time selections buffered when the newly persisted id becomes available. */
+  preserveDraftOnEntityCreation?: boolean;
+}
+
+/**
+ * Tag and note relation wiring for an entity's form and detail screens.
+ *
+ * Every entity screen used to repeat this by hand: five service refs, an init effect,
+ * four fetch callbacks, the tag persist call on save, and the note relation
+ * save/delete handlers with their alerts and change events - around 120 lines per
+ * screen, across nineteen screens, differing only in the entity name.
+ */
+export function useEntityRelations({
+  entityType,
+  entityId,
+  withNotes = true,
+  preserveDraftOnEntityCreation = false,
+}: UseEntityRelationsOptions) {
+  const drizzleDb = useDrizzle();
+  const { t } = useTranslation();
+  const { userId } = useUserSettingsStore();
+  const { selectedStory } = useStoryStore();
+  const storyId = selectedStory?.id;
+  const [initialEntityId] = useState(entityId);
+  const preservesCreationDraft = preserveDraftOnEntityCreation && !initialEntityId;
+  const hydrationEntityId = preserveDraftOnEntityCreation ? initialEntityId : entityId;
+
+  // One-shot durable-draft hydration for this mount. Refresh must not reapply a stored copy
+  // over in-session deletes/edits; load once, then the session owns the queues.
+  const durableDraftSessionRef = useRef<{
+    entityKey: string | null;
+    loadPromise: Promise<EntityFormSecondaryDraft | null> | null;
+    draft: EntityFormSecondaryDraft | null | undefined;
+    appliedTags: boolean;
+    appliedNotes: boolean;
+    /** After a durable draft restores tags, keep session edits across refreshes. */
+    sessionOwnsTags: boolean;
+  }>({
+    entityKey: null,
+    loadPromise: null,
+    draft: undefined,
+    appliedTags: false,
+    appliedNotes: false,
+    sessionOwnsTags: false,
+  });
+
+  const resetDurableDraftSession = (entityKey: string | null) => {
+    durableDraftSessionRef.current = {
+      entityKey,
+      loadPromise: null,
+      draft: undefined,
+      appliedTags: false,
+      appliedNotes: false,
+      sessionOwnsTags: false,
+    };
+  };
+
+  const loadDurableDraftOnce = useCallback(async (): Promise<EntityFormSecondaryDraft | null> => {
+    if (!storyId || !hydrationEntityId) return null;
+    const entityKey = `${storyId}:${entityType}:${hydrationEntityId}`;
+    const session = durableDraftSessionRef.current;
+    if (session.entityKey !== entityKey) {
+      resetDurableDraftSession(entityKey);
+    }
+    if (durableDraftSessionRef.current.draft !== undefined) {
+      return durableDraftSessionRef.current.draft;
+    }
+    if (!durableDraftSessionRef.current.loadPromise) {
+      durableDraftSessionRef.current.loadPromise = readEntityFormSecondaryDraft(
+        storyId,
+        entityType,
+        hydrationEntityId,
+      ).then((draft) => {
+        durableDraftSessionRef.current.draft = draft;
+        return draft;
+      });
+    }
+    return durableDraftSessionRef.current.loadPromise;
+  }, [storyId, entityType, hydrationEntityId]);
+
+  // Services are cheap factories over a stable db handle, so a memo replaces the
+  // ref-plus-init-effect dance the screens were doing.
+  const services = useMemo(() => {
+    if (!drizzleDb) {
+      return null;
+    }
+    return {
+      tag: createTagService(drizzleDb),
+      tagRelation: createTagRelationService(drizzleDb),
+      note: createNoteService(drizzleDb),
+      noteRelation: createNoteRelationService(drizzleDb),
+    };
+  }, [drizzleDb]);
+
+  const [availableTags, setAvailableTags] = useState<TagSelect[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [allNotes, setAllNotes] = useState<Note[]>([]);
+  const [noteRelations, setNoteRelations] = useState<NoteRelation[]>([]);
+  // While `entityId` is undefined (creating), there is no real entity to save the relation against - it
+  // is held here until `persistNoteRelations` is called with the real id after the save.
+  const [pendingNoteRelations, setPendingNoteRelations] = useState<NoteRelation[]>([]);
+
+  const syncPendingNotesToDurableDraft = useCallback(
+    async (nextPending: NoteRelation[]) => {
+      if (!storyId || !entityId) return;
+      await patchEntityFormSecondaryDraft(storyId, entityType, entityId, {
+        pendingNoteRelations: nextPending,
+      });
+      if (durableDraftSessionRef.current.draft) {
+        durableDraftSessionRef.current.draft = {
+          ...durableDraftSessionRef.current.draft,
+          pendingNoteRelations: nextPending,
+        };
+      }
+    },
+    [storyId, entityType, entityId],
+  );
+
+  const refreshAvailableTags = useCallback(async () => {
+    if (!services || !storyId) {
+      setAvailableTags([]);
+      return;
+    }
+    try {
+      setAvailableTags(await services.tag.getTagsByStoryId(storyId));
+    } catch (err) {
+      console.error('Failed to fetch available tags:', err);
+    }
+  }, [services, storyId]);
+
+  const refreshSelectedTags = useCallback(async () => {
+    if (preservesCreationDraft) return;
+    if (!services || !storyId || !hydrationEntityId) {
+      setSelectedTagIds([]);
+      return;
+    }
+    try {
+      if (durableDraftSessionRef.current.sessionOwnsTags) {
+        return;
+      }
+      if (!durableDraftSessionRef.current.appliedTags) {
+        const draft = await loadDurableDraftOnce();
+        durableDraftSessionRef.current.appliedTags = true;
+        if (draft) {
+          // Prefer the durable draft once after a partial save across sessions.
+          setSelectedTagIds(draft.selectedTagIds);
+          durableDraftSessionRef.current.sessionOwnsTags = true;
+          return;
+        }
+      }
+      const tags = await services.tagRelation.getTagsForEntity(
+        storyId,
+        hydrationEntityId,
+        entityType,
+      );
+      setSelectedTagIds(tags.map((tag) => tag.id));
+    } catch (err) {
+      console.error(`Failed to fetch tags for ${entityType}:`, err);
+    }
+  }, [
+    services,
+    storyId,
+    hydrationEntityId,
+    entityType,
+    preservesCreationDraft,
+    loadDurableDraftOnce,
+  ]);
+
+  const refreshNotes = useCallback(async () => {
+    if (!services || !storyId || !withNotes) {
+      setAllNotes([]);
+      return;
+    }
+    try {
+      setAllNotes(await services.note.getNotesByStoryId(storyId));
+    } catch (err) {
+      console.error('Failed to fetch notes for story:', err);
+    }
+  }, [services, storyId, withNotes]);
+
+  const refreshNoteRelations = useCallback(async () => {
+    // This form owns its draft until remount. Successful writes update the local persisted
+    // list directly; a refresh must not replace it or the remaining draft after a partial save.
+    if (preservesCreationDraft) return;
+    if (!services || !storyId || !hydrationEntityId || !withNotes) {
+      setNoteRelations([]);
+      return;
+    }
+    try {
+      const relations = await services.noteRelation.getRelationsForEntity(
+        storyId,
+        hydrationEntityId,
+        entityType as NoteRelationEntities,
+      );
+      setNoteRelations(relations);
+      if (!durableDraftSessionRef.current.appliedNotes) {
+        const draft = await loadDurableDraftOnce();
+        durableDraftSessionRef.current.appliedNotes = true;
+        if (draft?.pendingNoteRelations.length) {
+          setPendingNoteRelations(draft.pendingNoteRelations);
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to fetch note relations for ${entityType}:`, err);
+    }
+  }, [
+    services,
+    storyId,
+    hydrationEntityId,
+    entityType,
+    withNotes,
+    preservesCreationDraft,
+    loadDurableDraftOnce,
+  ]);
+
+  const refresh = useCallback(async () => {
+    await Promise.all([
+      refreshAvailableTags(),
+      refreshSelectedTags(),
+      refreshNotes(),
+      refreshNoteRelations(),
+    ]);
+  }, [refreshAvailableTags, refreshSelectedTags, refreshNotes, refreshNoteRelations]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the sub-refreshes clear synchronously only when services/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
+    refresh();
+  }, [refresh]);
+
+  // Keep tags and note pickers current when they change elsewhere in the app.
+  useEffect(() => {
+    const handleNoteChange = (changedStoryId: string) => {
+      if (changedStoryId === storyId) {
+        refreshNotes();
+      }
+    };
+    const handleNoteRelationChange = (changedStoryId: string) => {
+      if (changedStoryId === storyId) {
+        refreshNoteRelations();
+      }
+    };
+    const handleTagRelationChange = (changedStoryId: string, changedEntityId?: string) => {
+      // Tag relation events carry the entity they belong to; ignore other entities'.
+      if (
+        changedStoryId === storyId &&
+        (!changedEntityId || changedEntityId === hydrationEntityId)
+      ) {
+        refreshSelectedTags();
+      }
+    };
+    const handleTagChange = (changedStoryId: string) => {
+      if (changedStoryId === storyId) {
+        refreshAvailableTags();
+      }
+    };
+
+    if (withNotes) {
+      entityEventEmitter.on('note_changed', handleNoteChange);
+      entityEventEmitter.on('note_relation_changed', handleNoteRelationChange);
+    }
+    entityEventEmitter.on('tag_relation_changed', handleTagRelationChange);
+    entityEventEmitter.on('tag_changed', handleTagChange);
+
+    return () => {
+      if (withNotes) {
+        entityEventEmitter.off('note_changed', handleNoteChange);
+        entityEventEmitter.off('note_relation_changed', handleNoteRelationChange);
+      }
+      entityEventEmitter.off('tag_relation_changed', handleTagRelationChange);
+      entityEventEmitter.off('tag_changed', handleTagChange);
+    };
+  }, [
+    withNotes,
+    storyId,
+    hydrationEntityId,
+    refreshNotes,
+    refreshNoteRelations,
+    refreshSelectedTags,
+    refreshAvailableTags,
+  ]);
+
+  /**
+   * Writes the current tag selection to the entity. Takes an explicit id because on
+   * create the entity only gets one after the save that precedes this call.
+   */
+  const persistTagRelations = useCallback(
+    async (targetEntityId: string) => {
+      if (!services || !storyId || !userId || !targetEntityId) {
+        return;
+      }
+      await services.tagRelation.updateTagsForEntity(
+        userId,
+        storyId,
+        targetEntityId,
+        entityType,
+        selectedTagIds,
+      );
+    },
+    [services, storyId, userId, entityType, selectedTagIds],
+  );
+
+  const saveNoteRelation = useCallback(
+    async (relation: SaveNoteRelation) => {
+      const pending = pendingNoteRelations.find((item) => item.id === relation.id);
+      if (pending) {
+        const previous = pendingNoteRelations;
+        const nextPending = pendingNoteRelations.map((item) =>
+          item.id === pending.id ? { ...item, ...relation } : item,
+        );
+        setPendingNoteRelations(nextPending);
+        try {
+          await syncPendingNotesToDurableDraft(nextPending);
+          AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+        } catch (error) {
+          setPendingNoteRelations(previous);
+          console.error('Failed to sync pending note relation draft:', error);
+          AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
+        }
+        return;
+      }
+      if (!entityId) {
+        // Still creating - it is held locally with a synthetic id just so the UI (list, key, remove) behaves
+        // the same; the real `relationId` only exists during the replay.
+        const draft: NoteRelation = {
+          ...relation,
+          id: `pending-${createULID()}`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          version: 1,
+          isDeleted: false,
+          deletedAt: null,
+        };
+        setPendingNoteRelations((prev) => [...prev, draft]);
+        AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+        return;
+      }
+      if (!services || !storyId || !userId) {
+        AppAlert.alert(t('error'), t('service_not_initialized'));
+        return;
+      }
+      try {
+        const saved = await services.noteRelation.saveNoteRelation(userId, relation);
+        setNoteRelations((prev) => {
+          const index = prev.findIndex((r) => r.id === saved.id);
+          return index > -1 ? prev.map((r, i) => (i === index ? saved : r)) : [...prev, saved];
+        });
+        entityEventEmitter.emit('note_relation_changed', storyId, entityId);
+        AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
+      } catch (err) {
+        console.error('Failed to save note relation:', err);
+        AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
+      }
+    },
+    [services, storyId, userId, entityId, t, pendingNoteRelations, syncPendingNotesToDurableDraft],
+  );
+
+  const deleteNoteRelation = useCallback(
+    async (relationId: string) => {
+      if (!entityId || pendingNoteRelations.some((relation) => relation.id === relationId)) {
+        const previous = pendingNoteRelations;
+        const nextPending = pendingNoteRelations.filter((r) => r.id !== relationId);
+        setPendingNoteRelations(nextPending);
+        try {
+          await syncPendingNotesToDurableDraft(nextPending);
+          AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
+        } catch (error) {
+          setPendingNoteRelations(previous);
+          console.error('Failed to sync pending note relation draft delete:', error);
+          AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
+        }
+        return;
+      }
+      if (!services || !storyId || !userId) {
+        AppAlert.alert(t('error'), t('service_not_initialized'));
+        return;
+      }
+      try {
+        const success = await services.noteRelation.deleteNoteRelation(userId, relationId);
+        if (!success) {
+          AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
+          return;
+        }
+        setNoteRelations((prev) => prev.filter((r) => r.id !== relationId));
+        entityEventEmitter.emit('note_relation_changed', storyId, entityId);
+        AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
+      } catch (err) {
+        console.error('Failed to delete note relation:', err);
+        AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
+      }
+    },
+    [services, storyId, userId, entityId, t, pendingNoteRelations, syncPendingNotesToDurableDraft],
+  );
+
+  /**
+   * Actually saves the note relations accumulated while the entity did not exist yet. The same pattern
+   * as `persistTagRelations`: called by the form right after the main save, with the id that only exists
+   * from then on.
+   */
+  const persistNoteRelations = useCallback(
+    async (targetEntityId: string) => {
+      if (!services || !storyId || !userId || pendingNoteRelations.length === 0) {
+        return;
+      }
+      for (const pending of pendingNoteRelations) {
+        const saved = await services.noteRelation.saveNoteRelation(userId, {
+          storyId,
+          noteId: pending.noteId,
+          relationId: targetEntityId,
+          relationType: pending.relationType,
+        });
+        setNoteRelations((current) => [
+          ...current.filter((relation) => relation.id !== saved.id),
+          saved,
+        ]);
+        setPendingNoteRelations((current) =>
+          current.filter((relation) => relation.id !== pending.id),
+        );
+      }
+      entityEventEmitter.emit('note_relation_changed', storyId, targetEntityId);
+    },
+    [services, storyId, userId, pendingNoteRelations],
+  );
+
+  /**
+   * The selected tags as full records. Detail screens render tag chips (name, colour)
+   * rather than editing a selection, so ids alone aren't enough for them.
+   */
+  const selectedTags = useMemo(
+    () => availableTags.filter((tag) => selectedTagIds.includes(tag.id)),
+    [availableTags, selectedTagIds],
+  );
+
+  return {
+    availableTags,
+    selectedTagIds,
+    setSelectedTagIds,
+    selectedTags,
+    allNotes,
+    // A partial save can leave both persisted relations and drafts in the same form.
+    noteRelations: [...noteRelations, ...pendingNoteRelations],
+    /** In-memory / restored note drafts only (not yet written for this entity id). */
+    pendingNoteRelations,
+    persistTagRelations,
+    saveNoteRelation,
+    deleteNoteRelation,
+    persistNoteRelations,
+    refresh,
+    refreshNotes,
+    refreshNoteRelations,
+  };
+}

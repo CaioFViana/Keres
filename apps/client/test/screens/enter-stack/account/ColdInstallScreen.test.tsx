@@ -446,6 +446,40 @@ describe('ColdInstallScreen', () => {
     );
   });
 
+  it('says why proceed is shut, and drops each reason as it is met', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome');
+    await goToNameStep(view);
+
+    // Nothing done yet: the three things the way forward waits for, named.
+    const hint = () => view.getByTestId('welcome-proceed-hint');
+    expect(hint()).toBeTruthy();
+    expect(view.getByText('welcome_needs_intro')).toBeTruthy();
+    expect(view.getByText('• welcome_needs_name')).toBeTruthy();
+    expect(view.getByText('• welcome_needs_terms')).toBeTruthy();
+    expect(view.getByText('• welcome_needs_privacy')).toBeTruthy();
+
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
+    expect(view.queryByText('• welcome_needs_name')).toBeNull();
+    expect(view.getByText('• welcome_needs_terms')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('welcome-terms-button'));
+    await view.findByTestId('welcome-terms-modal-scroll');
+    await scrollToEnd(view, 'welcome-terms-modal-scroll');
+    await fireEvent.press(view.getByTestId('welcome-terms-modal-accept'));
+    expect(view.queryByText('• welcome_needs_terms')).toBeNull();
+    expect(view.getByText('• welcome_needs_privacy')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('welcome-privacy-button'));
+    await view.findByTestId('welcome-privacy-modal-scroll');
+    await scrollToEnd(view, 'welcome-privacy-modal-scroll');
+    await fireEvent.press(view.getByTestId('welcome-privacy-modal-accept'));
+
+    // Everything met: the button opens and the explanation is gone.
+    expect(view.queryByTestId('welcome-proceed-hint')).toBeNull();
+    expect(view.getByText('enabled:proceed')).toBeTruthy();
+  });
+
   it('selects a language and enables proceed with a valid username', async () => {
     const view = await render(<ColdInstallScreen />);
     await view.findByText('welcome');

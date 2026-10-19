@@ -246,6 +246,13 @@ const ColdInstallScreen = () => {
   // server's own terms are what every account creation actually requires agreement to, at
   // registration. Forward stays shut until both are accepted: this is the app's clickwrap.
   const isProceedDisabled = trimmedUsername.length === 0 || !termsAccepted || !privacyAccepted;
+  // The same three conditions, said out loud: a button that is shut with nothing on screen saying why
+  // reads as broken. Each is named in the order the form asks for them.
+  const missing = [
+    ...(trimmedUsername.length === 0 ? [t('welcome_needs_name')] : []),
+    ...(termsAccepted ? [] : [t('welcome_needs_terms')]),
+    ...(privacyAccepted ? [] : [t('welcome_needs_privacy')]),
+  ];
 
   const metrics = useMemo<Metrics>(
     () => ({ insetTop: insets.top, pageWidth, footerBottom, isCompact }),
@@ -387,7 +394,13 @@ const ColdInstallScreen = () => {
                     onPress={() => setTermsVisible(true)}
                     accessibilityRole="button"
                     testID="welcome-terms-button"
+                    style={styles.legalRow}
                   >
+                    <Ionicons
+                      name={termsAccepted ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={termsAccepted ? colors.primary : colors.textSecondary}
+                    />
                     <Text style={styles.termsLink}>
                       {termsAccepted ? t('welcome_terms_accepted') : t('welcome_terms_read')}
                     </Text>
@@ -396,11 +409,31 @@ const ColdInstallScreen = () => {
                     onPress={() => setPrivacyVisible(true)}
                     accessibilityRole="button"
                     testID="welcome-privacy-button"
+                    style={styles.legalRow}
                   >
+                    <Ionicons
+                      name={privacyAccepted ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={privacyAccepted ? colors.primary : colors.textSecondary}
+                    />
                     <Text style={styles.termsLink}>
                       {privacyAccepted ? t('welcome_privacy_accepted') : t('welcome_privacy_read')}
                     </Text>
                   </TouchableOpacity>
+                  {isProceedDisabled && (
+                    <View
+                      style={styles.needs}
+                      testID="welcome-proceed-hint"
+                      accessibilityRole="alert"
+                    >
+                      <Text style={styles.needsIntro}>{t('welcome_needs_intro')}</Text>
+                      {missing.map((item) => (
+                        <Text key={item} style={styles.needsItem}>
+                          {`• ${item}`}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
                 </>
               )}
             </WelcomePageView>
@@ -480,13 +513,24 @@ const createStyles = (colors: ThemeColors, [m]: [Metrics]) =>
       ? { width: '100%' as const, paddingVertical: 15, borderRadius: 14 }
       : { minWidth: 200, paddingVertical: 14, borderRadius: 14 },
     back: { color: colors.primary, fontSize: 16, fontWeight: '600', padding: 10 },
+    legalRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
     termsLink: {
       color: colors.primary,
       fontSize: 14,
       fontWeight: '600',
-      marginTop: 12,
       textDecorationLine: 'underline',
     },
+    needs: {
+      alignSelf: 'stretch',
+      borderColor: colors.border,
+      borderRadius: 10,
+      borderWidth: 1,
+      marginTop: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    needsIntro: { color: colors.text, fontSize: 13, fontWeight: '700', marginBottom: 2 },
+    needsItem: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
     appLinkRow: { width: m.pageWidth, alignItems: 'flex-end', paddingTop: 10 },
     appLink: { color: colors.textSecondary, fontSize: 13, textDecorationLine: 'underline' },
   });

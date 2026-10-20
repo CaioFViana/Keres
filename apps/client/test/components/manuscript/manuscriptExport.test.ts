@@ -31,11 +31,9 @@ const labels = { goToPage: 'Go to page', goToScene: 'See', tocHeading: 'Contents
 beforeEach(() => {
   jest.clearAllMocks();
   mockDeliverFile.mockResolvedValue({ delivered: true, fileName: 'x' });
-  // Every existing test keeps the real serif loader; the wiring tests below
-  // override per case.
-  mockPdfFontMatrices.mockImplementation(() =>
-    jest.requireActual('@/src/utils/io/pdfFontAssets').pdfFontMatrices(),
-  );
+  // The real serif loader cannot fetch its asset under Jest and answers null after logging a warning;
+  // the loader itself is tested in pdfFontAssets.test.ts, and the wiring tests below override per case.
+  mockPdfFontMatrices.mockResolvedValue(null);
 });
 
 describe('exportManuscript', () => {

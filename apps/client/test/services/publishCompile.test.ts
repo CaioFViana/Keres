@@ -14,6 +14,16 @@ import {
   type PublishCompileRows,
 } from '@/src/services/storymanagement/scenes-chapters/PublishCompileService';
 
+// The shared byte cap is 100 MB; a body past it is a 200 MB string on top of its copies, which alone took
+// the worker over a 512 MB heap. The behaviour under test is "the service honors the shared cap", so a small cap
+// exercises the same refusal.
+const TEST_CAP_BYTES = 64 * 1024;
+const OVERSIZED_BODY = TEST_CAP_BYTES + 1024;
+jest.mock('@keres/shared/manuscript/compile/manuscriptContracts', () => ({
+  ...jest.requireActual('@keres/shared/manuscript/compile/manuscriptContracts'),
+  MAX_MANUSCRIPT_BYTES: 64 * 1024,
+}));
+
 jest.mock('@/src/utils/io/pdfFontAssets', () => ({
   __esModule: true,
   pdfFontMatrices: async () => null,
@@ -294,7 +304,7 @@ describe('renderPublishManuscript parity', () => {
             chapterId: 'ch-1',
             name: 'Opening',
             index: 1,
-            body: `x${'y'.repeat(101 * 1024 * 1024)}`,
+            body: `x${'y'.repeat(OVERSIZED_BODY)}`,
             isDeleted: false,
             isStart: false,
             summary: null,
@@ -343,7 +353,7 @@ describe('renderPublishReader wiring', () => {
             chapterId: 'ch-1',
             name: 'Opening',
             index: 1,
-            body: `x${'y'.repeat(101 * 1024 * 1024)}`,
+            body: `x${'y'.repeat(OVERSIZED_BODY)}`,
             isDeleted: false,
             isStart: false,
             summary: null,

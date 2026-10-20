@@ -111,6 +111,20 @@ console.info = (...args: Parameters<typeof console.info>) => {
   originalConsoleInfo(...args);
 };
 
+/**
+ * `logger.debug` writes through `console.log` in development, which is what a test run is: every sync cycle
+ * and every recorded operation would print a line per call. A test that cares about a line spies on
+ * `console.log` itself, which still works over this stand-in.
+ */
+console.log = () => undefined;
+
+// A component that calls `useTranslation` with no mock renders its keys; an instance with no catalogs gives
+// react-i18next that, instead of a missing-instance warning per file. Suites that need real strings
+// initialize their own (or mock `react-i18next`).
+require('i18next')
+  .use(require('react-i18next').initReactI18next)
+  .init({ lng: 'en', resources: {} });
+
 // Skia draws on the GPU with no host tree; tests assert the declarative scene instead, so each
 // drawing maps to a host placeholder that keeps its props (paths, paints, camera) queryable.
 jest.mock('@shopify/react-native-skia', () => {

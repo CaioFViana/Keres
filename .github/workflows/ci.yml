@@ -82,6 +82,8 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun run check
+      # Dead code and undeclared dependencies (`knip.json`). Runs in the same job: it needs no build.
+      - run: bun run knip
 
   # The repository's own scripts are not a package, but they are TypeScript. `run-all.ts`
   # checks them on unfiltered local `typecheck` runs; here they get their own tiny job so the

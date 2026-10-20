@@ -35,6 +35,7 @@ Folders are `kebab-case`, imports use the aliases (`@/src/...`), never `../`, an
    bun run typecheck
    bun run lint
    bun run check          # formatting and static checks (Biome)
+   bun run knip           # dead code and undeclared dependencies
    bun run test:report    # every suite, coverage floors, a summary per workspace
    ```
 
@@ -49,6 +50,7 @@ Folders are `kebab-case`, imports use the aliases (`@/src/...`), never `../`, an
 - **Deleting is a tombstone**, not a `DELETE`.
 - **Do not log with `console`.** Use `logger` from `@/src/utils/logging/logger`.
 - **Events are typed.** A new event goes in `apps/client/src/state/events/entityEvents.ts` before it can be emitted or listened to.
+- **Declare what you import.** A package a workspace imports must be in that workspace's `package.json`, even when another package happens to bring it along; `bun run knip` fails on the ones that are not.
 - **Do not change `ReleaseVersions.ts`** outside a release.
 - **Code, comments, tests and documents are in English.** The app's texts exist in English and Portuguese.
 - **Licence:** MPL-2.0 (see `LICENSE`).

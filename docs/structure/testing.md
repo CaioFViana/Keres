@@ -16,6 +16,23 @@ On a small machine run one workspace at a time and keep the worker count low (`-
 
 The API figure that counts is the **union** of its unit and integration suites: neither alone is representative (the unit-only file reads far lower), so `coverage-check.ts api` merges both.
 
+## Static checks
+
+| Command | What it catches |
+| --- | --- |
+| `bun run typecheck` | Type errors in every package and in the repository's own scripts. |
+| `bun run lint` | The linter of each package (ESLint for the client and the admin panel, Biome elsewhere). |
+| `bun run check` | Formatting for the whole repository, and the Biome rules where they are enabled. |
+| `bun run knip` | Unused files, exports and types; dependencies that are used but not declared (or declared and not used); binaries nobody declared. Configured in `knip.json` and run in CI. |
+
+Read a `knip` finding as a question, not an order. It does not see code that is loaded by name or by path, so check with `grep` before deleting anything. The exceptions in `knip.json` are the cases it cannot see, each with its reason:
+
+- `apps/client/test/helpers/detailTabsMock.tsx` is loaded by `require()` inside `jest.mock` factories of four screen tests.
+- `ignoreUnresolved: test/syncFuzz/server.ts` is a path `scripts/sync-fuzz-api.ts` hands to `bun` with `apps/api` as the working directory.
+- `expo-updates` is inferred by the Expo plugin; the app does not use over-the-air updates and does not declare it.
+- `rules.duplicates` is off: a module that exports the same thing by name and as default (the electron-builder hook does) is a style choice, not a defect.
+- Entry points are listed per workspace (scripts called by workflows, test setup, generated registries); a new one that nothing imports goes there.
+
 ## What to test first: the ranking
 
 A module is ranked by three questions, not by how much code it is:

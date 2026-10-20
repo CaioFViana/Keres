@@ -1,7 +1,6 @@
 {
   "name": "@keres/api",
   "version": "1.10.1",
-  "main": "index.ts",
   "scripts": {
     "start": "bun run src/server.ts",
     "start:launcher": "bun run src/launcher.ts",
@@ -48,6 +47,8 @@
     "drizzle-kit": "^0.31.6",
     "typescript": "^5.5.3",
     "vitest": "^4.1.10",
-    "@vitest/coverage-v8": "^4.1.10"
+    "@vitest/coverage-v8": "^4.1.10",
+    "jszip": "^3.10.2",
+    "png-to-ico": "^3.0.2"
   }
 }

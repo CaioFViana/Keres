@@ -38,7 +38,7 @@ const LOCAL_ONLY_FIELDS = ['localPath', 'uploadState', 'downloadState', 'thumbna
  * would fill the log with one device's file paths, which mean nothing on any other, and would make
  * conflict resolution see "changes" where only a download finished.
  */
-function syncablePayload(row: Record<string, any>): Record<string, any> {
+function syncablePayload(row: Record<string, unknown>): Record<string, unknown> {
   const payload = { ...row };
   for (const field of LOCAL_ONLY_FIELDS) {
     delete payload[field];

@@ -6,6 +6,7 @@ import { createEntityStore } from '@/src/state/lib/createEntityStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { logger } from '@/src/utils/logging/logger';
+import { errorMessageOf } from '@/src/utils/errors/errorInfo';
 
 interface ChapterExtraActions {
   reorderChapters: (
@@ -67,9 +68,9 @@ export const useChapterStore = createEntityStore<
         await service.reorderChapters(userId, storyId, newOrder, type);
         entityEventEmitter.emit('chapter_changed', storyId, 'reorder');
         await refetch(); // Re-fetch to pick up the new order and entity versions
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Failed to reorder chapters:', err);
-        setPartial({ error: err?.message || 'Failed to reorder chapters', loading: false });
+        setPartial({ error: errorMessageOf(err) || 'Failed to reorder chapters', loading: false });
       }
     },
 
@@ -91,9 +92,12 @@ export const useChapterStore = createEntityStore<
         await service.convertChapterType(userId, chapterId, targetType, position);
         entityEventEmitter.emit('chapter_changed', storyId, chapterId);
         await refetch();
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Failed to convert the chapter:', err);
-        setPartial({ error: err?.message || 'Failed to convert the chapter', loading: false });
+        setPartial({
+          error: errorMessageOf(err) || 'Failed to convert the chapter',
+          loading: false,
+        });
         // Rethrown, unlike `reorderChapters` above: converting is a deliberate act on one container
         // and the screen has to be able to tell the writer it did not happen. Swallowing here would
         // close the modal and leave nothing behind, which reads as the app ignoring them.

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { Effect } from '@keres/shared/entities/narrative/Effect';
 import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/story/storyGraphLayout';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
@@ -29,6 +30,16 @@ import {
  * Presentation contract for the choice graph screen.
  * Callbacks use method syntax so existing screen handlers remain assignable (bivariant).
  */
+/** One choice leaving or entering the selected scene, as the story map lists it. */
+export interface SceneNodeConnection {
+  choiceId: string;
+  text: string;
+  sceneId: string;
+  sceneName: string;
+  /** A compact summary of the Choice's checks/effects - undefined when it has none. */
+  extra?: string;
+}
+
 export interface ChoiceViewContentProps {
   t: TFunction;
   colors: ThemeColors;
@@ -57,9 +68,9 @@ export interface ChoiceViewContentProps {
   exporting: boolean;
   handleExport(): void | Promise<void>;
   selectedNode: GraphNode | null;
-  selectedSceneEffects: unknown[];
+  selectedSceneEffects: Effect[];
   itemNamesById: Record<string, string>;
-  connections: { outgoing: unknown[]; incoming: unknown[] };
+  connections: { outgoing: SceneNodeConnection[]; incoming: SceneNodeConnection[] };
   handleOpenScene(sceneId: string): void;
   mapSubtitle: string;
   loading: boolean;
@@ -196,7 +207,7 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
         {plots.length ? (
           <View style={{ paddingHorizontal: 12, paddingTop: 8, zIndex: 5 }}>
             <MultiSelectPill
-              options={plots.map((plot: any) => ({
+              options={plots.map((plot) => ({
                 value: plot.id,
                 label: plot.name,
               }))}
@@ -213,7 +224,7 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
           style={styles.legendBar}
           contentContainerStyle={styles.legendContent}
         >
-          {layout.chapters.map((chapter: any) => (
+          {layout.chapters.map((chapter) => (
             <View key={chapter.id} style={styles.legendChip}>
               <View style={[styles.legendSwatch, { backgroundColor: chapter.color }]} />
               <Text style={styles.legendLabel}>{`${chapter.name} (${chapter.sceneCount})`}</Text>
@@ -344,7 +355,7 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
                   {
                     title: t('effects_title'),
                     description: selectedSceneEffects
-                      .map((effect: any) => `• ${describeEffect(effect, itemNamesById, t)}`)
+                      .map((effect) => `• ${describeEffect(effect, itemNamesById, t)}`)
                       .join('\n'),
                   },
                 ]
@@ -352,7 +363,7 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
             {
               title: t('story_map_outgoing_choices'),
               emptyMessage: t('story_map_no_outgoing_choices'),
-              items: connections.outgoing.map((connection: any) => ({
+              items: connections.outgoing.map((connection) => ({
                 id: connection.choiceId,
                 icon: 'arrow-forward' as const,
                 label: connection.text || t('story_map_implicit_choice'),
@@ -365,7 +376,7 @@ export function ChoiceViewContent(props: ChoiceViewContentProps) {
             {
               title: t('story_map_incoming_choices'),
               emptyMessage: t('story_map_no_incoming_choices'),
-              items: connections.incoming.map((connection: any) => ({
+              items: connections.incoming.map((connection) => ({
                 id: connection.choiceId,
                 icon: 'arrow-back' as const,
                 label: connection.text || t('story_map_implicit_choice'),

@@ -73,7 +73,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         searchTerm,
         favoriteFilterState,
       });
-      const orderByConditions: any[] = [];
+      const orderByConditions: SQL[] = [];
 
       if (tagFilterIds && tagFilterIds.length > 0) {
         const taggedCharacters = db

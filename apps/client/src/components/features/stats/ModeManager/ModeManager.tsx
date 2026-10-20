@@ -13,6 +13,7 @@ import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/Col
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { logger } from '@/src/utils/logging/logger';
+import { errorMessageOf } from '@/src/utils/errors/errorInfo';
 
 /**
  * CRUD for a character's modes, in the form. The detail screen only displays them.
@@ -69,9 +70,9 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
       if (editingId) await onUpdate(editingId, payload);
       else await onCreate(payload);
       reset();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Failed to save mode:', error);
-      AppAlert.alert(t('error'), error?.message || t('modes_save_failed'));
+      AppAlert.alert(t('error'), errorMessageOf(error) || t('modes_save_failed'));
     } finally {
       setSaving(false);
     }

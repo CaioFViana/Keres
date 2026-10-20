@@ -25,5 +25,5 @@ export interface ClientSyncEntityHandler {
   applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void>;
   applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void>;
   /** Local read used to detect already-applied creates and to snapshot favorites. */
-  getById(id: string): Promise<any | undefined>;
+  getById(id: string): Promise<unknown>;
 }

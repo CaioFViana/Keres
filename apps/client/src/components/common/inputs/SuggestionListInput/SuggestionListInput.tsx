@@ -1,6 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import type { SuggestionType } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
@@ -16,7 +24,7 @@ interface SuggestionListInputProps {
   onChange: (values: string[]) => void;
   type: SuggestionType;
   placeholder?: string;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
   storyId: string;
 }
 

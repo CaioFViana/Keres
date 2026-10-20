@@ -1,6 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo } from 'react';
-import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
@@ -9,7 +15,7 @@ interface TriStateToggleButtonProps {
   label: string;
   value: boolean | undefined; // true, false, or undefined for "any"
   onChange: (newValue: boolean | undefined) => void;
-  style?: any; // For external styling
+  style?: StyleProp<ViewStyle>;
 }
 
 const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({

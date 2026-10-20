@@ -31,6 +31,7 @@ import { typography } from '@/src/theme/tokens';
 import { getCommonContainerStyles, getCommonInputStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { logger } from '@/src/utils/logging/logger';
+import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 
 const MIN_NEW_PASSWORD_LENGTH = 8;
 
@@ -124,11 +125,11 @@ const ChangePasswordScreen = () => {
       await userApiService.changeOwnPassword(server, currentPassword, newPassword);
       AppAlert.alert(t('success'), t('password_changed_successfully'));
       navigation.goBack();
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Failed to change password:', err);
       if (isOfflineError(err)) {
         AppAlert.alert(t('error'), t('server_unreachable'));
-      } else if (err?.response?.status === 401) {
+      } else if (httpStatusOf(err) === 401) {
         AppAlert.alert(t('error'), t('incorrect_current_password'));
       } else {
         AppAlert.alert(t('error'), t('failed_to_change_password'));
@@ -153,11 +154,11 @@ const ChangePasswordScreen = () => {
             try {
               const codes = await userApiService.regenerateRecoveryCodes(server, currentPassword);
               setRecoveryCodesToShow(codes);
-            } catch (err: any) {
+            } catch (err) {
               logger.error('Failed to regenerate recovery codes:', err);
               if (isOfflineError(err)) {
                 AppAlert.alert(t('error'), t('server_unreachable'));
-              } else if (err?.response?.status === 401) {
+              } else if (httpStatusOf(err) === 401) {
                 AppAlert.alert(t('error'), t('incorrect_current_password'));
               } else {
                 AppAlert.alert(t('error'), t('failed_to_regenerate_recovery_codes'));

@@ -10,6 +10,7 @@ import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearch
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
+import type { CharacterRelationSelect } from '@/src/db/schemas/characterRelations';
 import {
   attributeValues,
   characterRelations,
@@ -149,8 +150,10 @@ export function createSuggestionUsageService(db: AppDrizzleClient) {
     // always resolves to `Character` here. The rename below already switches on `type` for the
     // same reason.
     if (type === 'characterRelation_type') {
+      // The config for this type resolves to the relation table; the row union cannot say so.
+      const relationRows = rows as CharacterRelationSelect[];
       const ids = Array.from(
-        new Set(rows.flatMap((row: any) => [row.character1Id, row.character2Id])),
+        new Set(relationRows.flatMap((row) => [row.character1Id, row.character2Id])),
       );
       const names = new Map(
         (
@@ -161,7 +164,7 @@ export function createSuggestionUsageService(db: AppDrizzleClient) {
             .all()
         ).map((row) => [row.id, row.name]),
       );
-      return rows.map((row: any) => ({
+      return relationRows.map((row) => ({
         entityType: 'CharacterRelation' as const,
         id: row.id,
         title: `${names.get(row.character1Id) ?? ''} ↔ ${names.get(row.character2Id) ?? ''}`,
@@ -172,10 +175,10 @@ export function createSuggestionUsageService(db: AppDrizzleClient) {
     }
     const titleField =
       config.entityType === 'Character' || config.entityType === 'Item' ? 'name' : 'newState';
-    return rows.map((row: any) => ({
+    return rows.map((row) => ({
       entityType: config.entityType as SuggestionUsageEntityType,
       id: row.id,
-      title: String(row[titleField] ?? ''),
+      title: String((row as Record<string, unknown>)[titleField] ?? ''),
       snippet: `${config.field}: ${value}`,
     }));
   };
@@ -252,7 +255,7 @@ export function createSuggestionUsageService(db: AppDrizzleClient) {
     const itemService = createItemService(db);
     const relationService = createCharacterRelationService(db);
     const journeyService = createItemJourneyService(db);
-    for (const row of rows as any[]) {
+    for (const row of rows) {
       switch (type) {
         case 'character_gender':
         case 'character_race':
@@ -267,7 +270,7 @@ export function createSuggestionUsageService(db: AppDrizzleClient) {
           break;
         case 'characterRelation_type':
           await relationService.saveCharacterRelation(currentUserId, {
-            ...row,
+            ...(row as CharacterRelationSelect),
             relationType: newValue,
           });
           break;

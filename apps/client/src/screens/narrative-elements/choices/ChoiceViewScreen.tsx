@@ -40,7 +40,7 @@ import {
   describeEffect,
 } from '@/src/utils/analysis/choiceCheckEffectDescriptions';
 import { buildStoryMapFileName } from '@/src/utils/io/storyTransfer';
-import { ChoiceViewContent } from './ChoiceViewContent';
+import { ChoiceViewContent, type SceneNodeConnection } from './ChoiceViewContent';
 import { useGraphMapExport } from '@/src/hooks/graph/useGraphMapExport';
 import { logger } from '@/src/utils/logging/logger';
 
@@ -56,15 +56,6 @@ import { logger } from '@/src/utils/logging/logger';
 
 /** Above that the choices' text pollutes more than it informs; the user can turn it back on. */
 const EDGE_LABEL_AUTO_LIMIT = 40;
-
-interface SceneNodeConnection {
-  choiceId: string;
-  text: string;
-  sceneId: string;
-  sceneName: string;
-  /** A compact summary of the Choice's checks/effects - undefined when it has none. */
-  extra?: string;
-}
 
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });

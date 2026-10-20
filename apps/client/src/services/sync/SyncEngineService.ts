@@ -27,6 +27,7 @@ import { heldStorySaveReport } from './heldStorySave';
 import { protectRemoteUpdate, throwIfSyncAborted } from './syncPure';
 import { FAVORITE_TARGET_EVENTS, type SyncEventPublisher } from './syncEvents';
 import { logger } from '@/src/utils/logging/logger';
+import { errorMessageOf } from '@/src/utils/errors/errorInfo';
 
 export type { ServerStoryPreview } from './StoryTransfer';
 export { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from './SyncScheduler';
@@ -549,7 +550,7 @@ export class SyncEngineService {
             if (targetEvent) this.dependencies.events.emit(targetEvent, storyId, favorite.entityId);
           }
         }
-      } catch (pullError: any) {
+      } catch (pullError) {
         if (isAbortError(pullError)) throw pullError;
         if (isOfflineError(pullError)) {
           // Offline-first: an unreachable server is expected, not a failure worth
@@ -576,9 +577,11 @@ export class SyncEngineService {
           logger.debug(`Pull held for story ${storyId}: the account awaits age verification.`);
         } else if (isTransientServerError(pullError)) {
           // Rate limited or restarting: the backoff retries, and there is nothing to tell the user.
-          logger.debug(`Pull deferred for story ${storyId}: ${pullError?.message || pullError}`);
+          logger.debug(
+            `Pull deferred for story ${storyId}: ${errorMessageOf(pullError) ?? pullError}`,
+          );
         } else {
-          logger.debug('Error during sync pull phase:', pullError?.message || pullError);
+          logger.debug('Error during sync pull phase:', errorMessageOf(pullError) ?? pullError);
           this.dependencies.notifier.syncFailed();
         }
         pullFailed = true;
@@ -590,7 +593,7 @@ export class SyncEngineService {
       try {
         await this.push.pushPendingOperations();
         this.lastPushReport = this.push.lastOutcome;
-      } catch (pushError: any) {
+      } catch (pushError) {
         if (isAbortError(pushError)) throw pushError;
         if (isOfflineError(pushError)) {
           // The pull already applied above; its progress must not be lost to the re-fetch.
@@ -617,11 +620,13 @@ export class SyncEngineService {
           logger.debug(`Push held for story ${storyId}: the account awaits age verification.`);
         } else if (isTransientServerError(pushError)) {
           // Rate limited or restarting: the operations stay queued and the backoff retries them.
-          logger.debug(`Push deferred for story ${storyId}: ${pushError?.message || pushError}`);
+          logger.debug(
+            `Push deferred for story ${storyId}: ${errorMessageOf(pushError) ?? pushError}`,
+          );
         } else {
           logger.debug(
             `Error pushing local operations for story ${storyId}:`,
-            pushError?.message || pushError,
+            errorMessageOf(pushError) ?? pushError,
           );
           this.dependencies.notifier.pushFailed();
         }
@@ -646,7 +651,7 @@ export class SyncEngineService {
       const mediaOffline = await this.media.sync();
       if (mediaOffline) return 'offline';
       return pullFailed || pushFailed ? 'failed' : 'ok';
-    } catch (error: any) {
+    } catch (error) {
       if (isAbortError(error)) {
         logger.debug(`Sync cycle for story ${storyId} aborted.`);
         return 'ok';
@@ -666,7 +671,7 @@ export class SyncEngineService {
         logger.debug(`Sync held for story ${storyId}: the account awaits age verification.`);
         return 'failed';
       }
-      logger.debug('Error during sync operation:', error?.message || error);
+      logger.debug('Error during sync operation:', errorMessageOf(error) ?? error);
       this.dependencies.notifier.syncFailed();
       return 'failed';
     } finally {

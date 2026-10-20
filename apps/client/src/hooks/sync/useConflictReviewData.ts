@@ -16,7 +16,7 @@ import { logger } from '@/src/utils/logging/logger';
 export function useConflictReviewData(conflicts: PendingConflict[]) {
   const { t } = useTranslation();
   const db = useDrizzle();
-  const [snapshots, setSnapshots] = useState<Map<string, Record<string, any>>>(new Map());
+  const [snapshots, setSnapshots] = useState<Map<string, Record<string, unknown>>>(new Map());
   const [names, setNames] = useState<Map<string, string>>(new Map());
 
   const [prevConflicts, setPrevConflicts] = useState(conflicts);

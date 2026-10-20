@@ -42,6 +42,8 @@ import { isStoryVocabularyEntityType } from '@/src/vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import ModalHeader from '@/src/components/layout/ModalHeader/ModalHeader';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { StorySettingsStackParamList } from '@/src/navigation/stacks/StorySettingsStack';
 type StorySuggestion = [value: string, usageCount: number];
 const SUGGESTION_SOURCE_EVENTS = [
   'character_changed',
@@ -75,7 +77,8 @@ const SuggestionsScreen = () => {
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<StorySettingsStackParamList, 'Suggestions'>>();
   const { isCompact } = useResponsiveLayout();
   const db = useDrizzle();
   const { selectedStory } = useStoryStore();
@@ -403,6 +406,7 @@ const SuggestionsScreen = () => {
           key={suggestion.id}
           style={styles.row}
           onPress={() =>
+            selectedType &&
             navigation.navigate('SuggestionUsage', {
               type: selectedType,
               value: suggestion.value,
@@ -426,7 +430,9 @@ const SuggestionsScreen = () => {
         <TouchableOpacity
           key={value}
           style={styles.row}
-          onPress={() => navigation.navigate('SuggestionUsage', { type: selectedType, value })}
+          onPress={() =>
+            selectedType && navigation.navigate('SuggestionUsage', { type: selectedType, value })
+          }
         >
           <Text style={styles.storyValue}>{value}</Text>
           <Text

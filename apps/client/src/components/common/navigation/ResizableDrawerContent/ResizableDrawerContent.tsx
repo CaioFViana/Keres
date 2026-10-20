@@ -11,6 +11,7 @@ import {
 import type { ThemeColors } from '@/src/theme';
 import { AnchoredDrawerItemList } from './AnchoredDrawerItemList';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
+import { webOnlyStyle } from '@/src/theme/webStyle';
 
 export const DRAWER_MIN_WIDTH = 280;
 export const DRAWER_DEFAULT_WIDTH = 280;
@@ -172,7 +173,7 @@ const createStyles = (colors: ThemeColors, [resizable]: [boolean]) =>
       top: 0,
       width: 10,
       zIndex: 10,
-      ...(Platform.OS === 'web' ? ({ cursor: 'col-resize', userSelect: 'none' } as any) : {}),
+      ...(Platform.OS === 'web' ? webOnlyStyle({ cursor: 'col-resize', userSelect: 'none' }) : {}),
     },
     resizeIndicator: {
       backgroundColor: colors.border,

@@ -182,8 +182,8 @@ export function getServerAccessToken(serverId: string): string | null {
 interface RefreshState {
   isRefreshing: boolean;
   failedQueue: {
-    resolve: (value?: any) => void;
-    reject: (reason?: any) => void;
+    resolve: (token: string | null) => void;
+    reject: (reason: unknown) => void;
     config: InternalAxiosRequestConfig;
   }[];
 }
@@ -413,7 +413,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
                 new AxiosError('Token refresh failed', 'TOKEN_REFRESH_FAILED', originalRequest),
               );
             }
-          } catch (refreshError: any) {
+          } catch (refreshError) {
             logger.debug('Error refreshing token:', refreshError);
             tokenProvider.clearAuth(serverId);
             processQueue(
@@ -422,7 +422,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
                 'Token refresh failed',
                 'TOKEN_REFRESH_FAILED',
                 originalRequest,
-                refreshError.response,
+                isAxiosError(refreshError) ? refreshError.response : undefined,
               ),
             );
             return Promise.reject(
@@ -430,7 +430,7 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
                 'Token refresh failed',
                 'TOKEN_REFRESH_FAILED',
                 originalRequest,
-                refreshError.response,
+                isAxiosError(refreshError) ? refreshError.response : undefined,
               ),
             );
           } finally {

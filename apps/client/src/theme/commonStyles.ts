@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
+import { webOnlyStyle } from './webStyle';
 import type { ThemeColors } from '@keres/shared';
 import { saturateColor } from '@/src/utils/format/colorMath';
 
@@ -66,11 +67,7 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
       // like a second border on inputs and controls. Focus is still represented
       // by the component's own themed border/state.
       ...(Platform.OS === 'web'
-        ? ({
-            outlineColor: 'transparent',
-            outlineStyle: 'none',
-            outlineWidth: 0,
-          } as any)
+        ? webOnlyStyle({ outlineColor: 'transparent', outlineStyle: 'none', outlineWidth: 0 })
         : {}),
     },
     // The standard text area used by forms. `TextInput` clears the single-line `height` whenever

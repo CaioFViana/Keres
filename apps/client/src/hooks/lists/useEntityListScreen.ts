@@ -16,6 +16,7 @@ import { useEntityEventSubscriptions } from './useEntityRefreshLifecycle';
  * `EntityStore<TKey, TEntity, TService>` directly so TypeScript can infer the entity type
  * from the collection property - it cannot infer through a mapped type's value position.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- stores have no index signature, so only `any` accepts every concrete one
 type AnyEntityStore = EntityStoreCore<unknown> & Record<string, any>;
 
 export interface UseEntityListScreenOptions<

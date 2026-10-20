@@ -8,6 +8,7 @@ import type {
 import type { ServerSelect } from '@/src/db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from '@/src/services/auth/AuthTokenManager';
+import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 
 export class UserApiService {
   // Same reasoning as FriendshipApiService: never reuse the shared `apiClient` here,
@@ -24,8 +25,8 @@ export class UserApiService {
     try {
       const response = await this.clientFor(server).get(`/user/by-tag/${encodeURIComponent(tag)}`);
       return response.data;
-    } catch (error: any) {
-      if (error.response && error.response.status === 404) {
+    } catch (error) {
+      if (httpStatusOf(error) === 404) {
         return undefined;
       }
       throw error;
@@ -115,8 +116,8 @@ export class UserApiService {
     try {
       const response = await this.clientFor(server).get(`/user/details/${server.idUser}`);
       return response.data;
-    } catch (error: any) {
-      if (error.response && error.response.status === 404) {
+    } catch (error) {
+      if (httpStatusOf(error) === 404) {
         return undefined;
       }
       throw error;

@@ -3,7 +3,7 @@ import { logger } from '@/src/utils/logging/logger';
 
 interface DecodedJwt {
   exp: number; // Expiration time as Unix timestamp (seconds since epoch)
-  [key: string]: any; // Other claims
+  [key: string]: unknown; // Other claims
 }
 
 /**

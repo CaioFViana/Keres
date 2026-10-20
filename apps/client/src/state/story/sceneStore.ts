@@ -5,6 +5,7 @@ import { createEntityStore } from '@/src/state/lib/createEntityStore';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { logger } from '@/src/utils/logging/logger';
+import { errorMessageOf } from '@/src/utils/errors/errorInfo';
 
 interface SceneExtraActions {
   reorderScenes: (chapterId: string, newOrder: { id: string; newIndex: number }[]) => Promise<void>;
@@ -54,9 +55,9 @@ export const useSceneStore = createEntityStore<
         await service.reorderScenes(userId, storyId, chapterId, newOrder);
         entityEventEmitter.emit('scene_changed', storyId, 'reorder');
         await refetch(); // Re-fetch to pick up the new order and entity versions
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Failed to reorder scenes:', err);
-        setPartial({ error: err?.message || 'Failed to reorder scenes', loading: false });
+        setPartial({ error: errorMessageOf(err) || 'Failed to reorder scenes', loading: false });
       }
     },
   }),

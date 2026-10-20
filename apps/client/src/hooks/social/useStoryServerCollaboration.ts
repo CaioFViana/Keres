@@ -23,6 +23,7 @@ import { AppAlert } from '@/src/state/ui/AppAlert';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { useStoryInvitations } from './useStoryInvitations';
 import { logger } from '@/src/utils/logging/logger';
+import { httpStatusOf } from '@/src/utils/errors/errorInfo';
 
 /**
  * Server linkage and collaboration state for one story's settings screen.
@@ -143,11 +144,11 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
           setIsOwnerOnServer(true);
           setCollaborators(fetchedCollaborators);
         }
-      } catch (err: any) {
+      } catch (err) {
         if (cancelled) return;
         // A 403 is not an error here - it is how the server reports that the
         // current user is linked to the story but is not its owner.
-        if (err?.response?.status === 403) {
+        if (httpStatusOf(err) === 403) {
           setIsOwnerOnServer(false);
         } else {
           logger.error('Failed to check story ownership/collaborators on server:', err);
@@ -412,9 +413,9 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
             await storyService().discardCollaboratedCopy(storyId);
             AppAlert.alert(t('success'), t('leave_story_success'));
             onLeft?.();
-          } catch (err: any) {
+          } catch (err) {
             // Already out (the owner removed them meanwhile): the server has nothing left to give up.
-            if (err?.response?.status === 404) {
+            if (httpStatusOf(err) === 404) {
               try {
                 await storyService().discardCollaboratedCopy(storyId);
                 onLeft?.();

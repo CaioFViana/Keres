@@ -1,3 +1,4 @@
+import type { AdvancedSearchValue } from '@/src/types/entityFilters';
 import { Ionicons } from '@expo/vector-icons';
 import type { StorySchemaEntityType } from '@keres/shared';
 import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
@@ -115,7 +116,7 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
     };
   }, [draft, isVisible, previewCount]);
 
-  const handleInputChange = useCallback((fieldName: string, value: any) => {
+  const handleInputChange = useCallback((fieldName: string, value: AdvancedSearchValue) => {
     setSearchCriteria((prev) => ({
       ...prev,
       [fieldName]: value,
@@ -189,7 +190,7 @@ interface AdvancedSearchScopeFieldsProps {
   showLabel: boolean;
   criteria: AdvancedSearchCriteria;
   excludeFields: string[];
-  onChange: (key: string, value: any) => void;
+  onChange: (key: string, value: AdvancedSearchValue) => void;
   onSubmit: () => void;
 }
 

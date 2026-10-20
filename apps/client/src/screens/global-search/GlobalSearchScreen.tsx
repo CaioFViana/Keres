@@ -24,6 +24,7 @@ import { useStoryVocabulary } from '@/src/hooks/vocabulary/useStoryVocabulary';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import GuideAnchor from '@/src/components/features/guides/GuideAnchor';
 import { logger } from '@/src/utils/logging/logger';
+import type { ThemeColors } from '@/src/theme';
 
 type GlobalSearchScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -249,7 +250,7 @@ const GlobalSearchScreen = () => {
   );
 };
 
-const styles = (colors: any) =>
+const styles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       flex: 1,

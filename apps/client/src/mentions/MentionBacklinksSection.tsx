@@ -106,7 +106,7 @@ export const MentionBacklinksSection: React.FC<Props> = ({ entityType, entityId 
         return entry.occurrences.map((occurrence) => ({
           id: `${entry.source.type}:${entry.source.id}:${occurrence.field}`,
           title: entry.source.name,
-          icon: appearance.icon as any,
+          icon: appearance.icon as keyof typeof Ionicons.glyphMap,
           color: appearance.color,
           details: (
             <View>
@@ -188,7 +188,7 @@ export const MentionBacklinksSection: React.FC<Props> = ({ entityType, entityId 
                   return {
                     id: `${candidate.type}:${candidate.id}`,
                     title: candidate.name,
-                    icon: appearance.icon as any,
+                    icon: appearance.icon as keyof typeof Ionicons.glyphMap,
                     color: appearance.color,
                     details: (
                       <Text style={styles.candidateType}>

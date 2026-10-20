@@ -17,7 +17,7 @@ interface SyncConflictState {
   keepLocal: (
     db: AppDrizzleClient,
     conflictId: string,
-    chosenValues?: Record<string, any>,
+    chosenValues?: Record<string, unknown>,
   ) => Promise<void>;
   keepServer: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   keepServerAndCloneBoard: (

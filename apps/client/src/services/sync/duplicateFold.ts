@@ -4,11 +4,12 @@ import { and, eq, inArray } from 'drizzle-orm';
 import * as schema from '@/src/db/schema';
 import type { OperationLogSelect } from '@/src/db/schema';
 import { recordLocalOperationSync } from '@/src/services/sync/syncUtils';
-import { getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
 import { mergeLocalOperationPayloads } from '@/src/services/sync/SyncConflictService';
 import type { SyncContext } from './SyncContext';
 import { SNAPSHOT_BOOKKEEPING, withoutDerivedPosition } from './syncConflictHelpers';
 import { deriveBaseVersion } from './syncPure';
+import type { WireValues } from '@/src/types/wireValues';
 
 /**
  * Folding a row the server calls a `duplicate` into its twin.
@@ -39,10 +40,10 @@ const POLYMORPHIC_REFERENCES: { entityType: string; typeField: string; idField: 
   { entityType: 'SeeAlsoRelation', typeField: 'entityBType', idField: 'entityBId' },
 ];
 
-function parse(payload: string): Record<string, any> | null {
+function parse(payload: string): WireValues | null {
   try {
     const value: unknown = JSON.parse(payload);
-    return value && typeof value === 'object' ? (value as Record<string, any>) : null;
+    return value && typeof value === 'object' ? (value as WireValues) : null;
   } catch {
     return null;
   }
@@ -70,13 +71,13 @@ export async function foldIntoTwin(
   context: SyncContext,
   entityType: string,
   entityId: string,
-  twin: Record<string, any>,
+  twin: WireValues,
   relatedOps: OperationLogSelect[],
-  own: Record<string, any> | null = null,
+  own: WireValues | null = null,
 ): Promise<Set<string>> {
   const db = context.db()!;
   const storyId = context.storyId()!;
-  const table = getEntityTable(entityType) as any;
+  const table = getEntityTable(entityType);
   const rewritten = new Set<string>();
   if (!table) return rewritten;
   const twinId = twin.id as string;
@@ -88,7 +89,7 @@ export async function foldIntoTwin(
       })
     )?.userId ?? 'local_user';
   const local = (await db.select().from(table).where(eq(table.id, entityId)).get()) as
-    | Record<string, any>
+    | WireValues
     | undefined;
   const existedOnServer = !!own || !relatedOps.some((op) => op.operationType === 'create');
   const localWantsDelete = relatedOps.some((op) => op.operationType === 'delete');
@@ -116,24 +117,24 @@ export async function foldIntoTwin(
     ...(DIRECT_REFERENCES[entityType] ?? []).map((reference) => ({
       entityType: reference.entityType,
       fields: { [reference.field]: twinId } as Record<string, string>,
-      matches: (row: Record<string, any>) => row[reference.field] === entityId,
+      matches: (row: WireValues) => row[reference.field] === entityId,
     })),
     ...POLYMORPHIC_REFERENCES.map((reference) => ({
       entityType: reference.entityType,
       fields: { [reference.idField]: twinId } as Record<string, string>,
-      matches: (row: Record<string, any>) =>
+      matches: (row: WireValues) =>
         row[reference.typeField] === entityType && row[reference.idField] === entityId,
     })),
   ];
   for (const pointer of pointers) {
-    const pointerTable = getEntityTable(pointer.entityType) as any;
+    const pointerTable = getEntityTable(pointer.entityType);
     if (!pointerTable) continue;
     const rows = (
       (await db
         .select()
         .from(pointerTable)
-        .where(eq(pointerTable.storyId, storyId))
-        .all()) as Record<string, any>[]
+        .where(eq(columnsOf(pointerTable).storyId, storyId))
+        .all()) as WireValues[]
     ).filter(
       // A deleted reference is history: it keeps pointing where it did.
       (row) => !row.isDeleted && pointer.matches(row),

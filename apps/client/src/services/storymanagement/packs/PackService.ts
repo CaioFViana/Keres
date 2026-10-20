@@ -20,6 +20,8 @@ import {
 import { createSuggestionService } from '@/src/services/storymanagement/suggestions/SuggestionService';
 import { createStoryService } from '@/src/services/storymanagement/story-lifecycle/StoryService';
 import { logger } from '@/src/utils/logging/logger';
+import { columnsOf } from '@/src/db/entityTableRegistry';
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core';
 
 /**
  * Packs: the reusable part of a story's structure.
@@ -373,11 +375,12 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
   ): Promise<PackContentType['extras']> {
     // One where clause for thirteen tables, mirroring the exporter's generic read: every
     // extras table carries `storyId` and soft-delete flags.
-    const liveRows = async <T>(table: object): Promise<T[]> => {
+    const liveRows = async <T>(table: SQLiteTable): Promise<T[]> => {
+      const columns = columnsOf(table);
       const rows = await db
         .select()
-        .from(table as any)
-        .where(and(eq((table as any).storyId, storyId), eq((table as any).isDeleted, false)))
+        .from(table)
+        .where(and(eq(columns.storyId, storyId), eq(columns.isDeleted, false)))
         .all();
       return rows as T[];
     };

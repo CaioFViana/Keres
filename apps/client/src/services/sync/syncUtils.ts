@@ -9,6 +9,7 @@ import i18n from '@/src/utils/format/i18n';
 import { createULID } from '@/src/utils/entity/entityUtils';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import { logger } from '@/src/utils/logging/logger';
+import type { WireValues } from '@/src/types/wireValues';
 
 /** Thrown when a story-content mutation is attempted by a user with only reader access. */
 export class StoryReadOnlyError extends Error {
@@ -150,7 +151,7 @@ export function recordLocalOperationSync(
   operationType: StoryUpdateType,
   entityType: string,
   entityId: string,
-  payload: Record<string, any>,
+  payload: WireValues,
 ): number {
   const story = db
     .select({ lastOperationLog: schema.stories.lastOperationLog })
@@ -220,7 +221,7 @@ export async function recordLocalOperation(
   operationType: StoryUpdateType,
   entityType: string,
   entityId: string,
-  payload: Record<string, any>,
+  payload: WireValues,
 ): Promise<void> {
   if (!db) {
     logger.error('recordLocalOperation: Drizzle client (db) not set.');
@@ -275,7 +276,7 @@ function joinPendingConflict(
   conflict: typeof schema.syncConflicts.$inferSelect,
   operationId: string,
   operationType: StoryUpdateType,
-  payload: Record<string, any>,
+  payload: WireValues,
 ): void {
   const parse = <T>(raw: string | null, fallback: T): T => {
     try {
@@ -294,7 +295,7 @@ function joinPendingConflict(
         operationId,
       ]),
       localValues: JSON.stringify({
-        ...parse<Record<string, any>>(conflict.localValues, {}),
+        ...parse<WireValues>(conflict.localValues, {}),
         ...values,
       }),
       // A later deletion is the strongest intent; a create stays a create.

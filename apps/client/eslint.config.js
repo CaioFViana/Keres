@@ -51,6 +51,18 @@ module.exports = defineConfig([
     },
   },
   {
+    // The app's code. The content-build scripts under `scripts/` read loosely typed example-story data and are
+    // not held to it; tests are off in their own block below.
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    rules: {
+      /**
+       * `any` switches the checker off for everything it touches. Use `unknown` and narrow, or the real type;
+       * where a library's own generics leave no honest type, suppress the line and say why.
+       */
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+  {
     files: ['test/**/*.ts', 'test/**/*.tsx'],
     languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: __dirname } },
     rules: {

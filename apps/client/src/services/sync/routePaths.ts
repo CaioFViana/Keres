@@ -7,6 +7,7 @@ import { isFoldableDuplicate } from './duplicateFold';
 import type { SyncContext } from './SyncContext';
 import { type RoutePathStep } from './routePathDecision';
 import { syncEntityKey } from './syncPure';
+import type { WireValues } from '@/src/types/wireValues';
 
 /**
  * A route's path as one thing.
@@ -31,7 +32,7 @@ export async function foldRoutePaths(
   const db = context.db()!;
   const storyId = context.storyId()!;
   const handled = new Set<string>();
-  const twinsByRoute = new Map<string, Record<string, any>[]>();
+  const twinsByRoute = new Map<string, WireValues[]>();
   for (const { entityType, entityId, group } of refused) {
     if (entityType !== 'RouteStep') continue;
     const duplicate = group.find(isFoldableDuplicate);

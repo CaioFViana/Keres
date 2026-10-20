@@ -11,6 +11,7 @@ import {
   buildCheapStoryAnalysisFindings,
   buildStoryAnalysisReport,
 } from '@/src/utils/analysis/storyAnalysisChecks';
+import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 
 export interface StoryAnalysisReport {
   findings: StoryAnalysisFinding[];
@@ -41,7 +42,7 @@ export interface StoryAnalysisService {
  */
 export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisService => {
   const fetchAnalysisInput = async (storyId: string): Promise<StoryAnalysisInput> => {
-    const belongsToStory = (table: { storyId: any; isDeleted: any }) =>
+    const belongsToStory = (table: { storyId: SQLiteColumn; isDeleted: SQLiteColumn }) =>
       and(eq(table.storyId, storyId), eq(table.isDeleted, false));
 
     const [

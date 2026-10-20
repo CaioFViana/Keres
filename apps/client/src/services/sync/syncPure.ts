@@ -6,6 +6,7 @@ import type {
 } from '@keres/shared';
 import { ARRANGED } from '@keres/shared';
 import { omitClientProtectedFields, toEntityColumns } from '@/src/db/entityTableRegistry';
+import type { WireValues } from '@/src/types/wireValues';
 
 /**
  * Pure sync helpers, free of database and network access so they stay unit-testable.
@@ -22,7 +23,7 @@ import { omitClientProtectedFields, toEntityColumns } from '@/src/db/entityTable
  * interleaving write; `undefined` means the payload carries no version and the
  * operation must be skipped rather than sent with a fabricated base.
  */
-export function deriveBaseVersion(payload: Record<string, any>): number | undefined {
+export function deriveBaseVersion(payload: WireValues): number | undefined {
   const resultingVersion = payload?.version;
   return typeof resultingVersion === 'number' && resultingVersion >= 1
     ? resultingVersion - 1

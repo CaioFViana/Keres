@@ -15,7 +15,7 @@ import { createULID } from '@/src/utils/entity/entityUtils';
 import { entityEventEmitter } from '@/src/state/events/EventEmitter';
 import { withOpLogLock } from '@/src/utils/sync/opLogMutex';
 import type { ClientSyncEntityHandler } from '@/src/services/entity-sync-handlers/ClientSyncEntityHandler';
-import { getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable, toEntityColumns } from '@/src/db/entityTableRegistry';
 import {
   findContestedFields,
   mergeLocalOperationPayloads,
@@ -30,6 +30,7 @@ import type { FavoritesFingerprint } from './syncFavoritesFingerprint';
 import { computeLocalFavoritesFingerprint } from './syncFavoritesFingerprint';
 import { deriveBaseVersion, onlyMoves, onlyPlaces, throwIfSyncAborted } from './syncPure';
 import { logger } from '@/src/utils/logging/logger';
+import type { WireValues } from '@/src/types/wireValues';
 
 interface SyncPullOptions {
   context: SyncContext;
@@ -70,10 +71,10 @@ interface PullPageResponse {
 }
 
 /** Parses a local op payload without ever throwing; null means corrupted or not an object. */
-function parseLocalOpPayload(payload: string): Record<string, any> | null {
+function parseLocalOpPayload(payload: string): WireValues | null {
   try {
     const parsed: unknown = JSON.parse(payload);
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, any>) : null;
+    return parsed && typeof parsed === 'object' ? (parsed as WireValues) : null;
   } catch {
     return null;
   }
@@ -322,7 +323,7 @@ export class SyncPull {
     await runner
       .update(table)
       .set({ ...tombstone, ...version } as never)
-      .where(eq((table as any).id, update.id));
+      .where(eq(columnsOf(table).id, update.id));
   }
 
   /**
@@ -470,7 +471,7 @@ export class SyncPull {
     const fieldOps = pendingLocalOps;
     const pushableOps = fieldOps.filter((op) => op.conflictState === null);
     const hasOpenConflict = pushableOps.length < fieldOps.length;
-    const refreshOpenConflict = async (serverValues: Record<string, any>) => {
+    const refreshOpenConflict = async (serverValues: WireValues) => {
       if (!hasOpenConflict) return;
       await this.context.conflictService().refreshServerSnapshot({
         storyId: this.context.storyId()!,
@@ -521,7 +522,7 @@ export class SyncPull {
     const firstOpSnapshot = fieldOps[0] ? parseLocalOpPayload(fieldOps[0].payload) : null;
     const recordConflict = async (
       reason: 'deleted_on_server' | 'edited_on_server' | 'concurrent_edit',
-      serverValues: Record<string, any> | null,
+      serverValues: WireValues | null,
     ) =>
       this.context.conflictService().recordConflict({
         storyId: this.context.storyId()!,
@@ -585,7 +586,7 @@ export class SyncPull {
         `SyncPull: cannot reconcile remote operation type '${remoteType}' for ${remoteEntity} ${entityId}.`,
       );
     }
-    const remoteValues: Record<string, any> =
+    const remoteValues: WireValues =
       update.type === 'create'
         ? { ...(update as CreateStoryUpdate).data }
         : { ...(update as UpdateStoryUpdate).changes };
@@ -665,7 +666,7 @@ export class SyncPull {
    */
   private async deriveFreshClientVersion(
     op: OperationLogSelect,
-    snapshot: Record<string, any> | null,
+    snapshot: WireValues | null,
   ): Promise<number | null> {
     try {
       const row = await this.context.db()!.query.operationLogs.findFirst({

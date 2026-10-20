@@ -59,11 +59,8 @@ export function createULID(): string {
  * @param newObject The updated object.
  * @returns An object containing only the fields that have changed, or an empty object if no changes.
  */
-export function getChangedFields<T extends Record<string, any>>(
-  oldObject: T,
-  newObject: T,
-): Partial<T> {
-  const changes: Partial<T> = {};
+export function getChangedFields<T extends object>(oldObject: T, newObject: T): Partial<T> {
+  const changes: Record<string, unknown> = {};
 
   if (!oldObject && newObject) {
     return newObject; // If oldObject is null/undefined and newObject exists, all of newObject is a change
@@ -76,18 +73,20 @@ export function getChangedFields<T extends Record<string, any>>(
     return {};
   }
 
+  const oldFields = oldObject as Record<string, unknown>;
+  const newFields = newObject as Record<string, unknown>;
   const allKeys = Array.from(new Set([...Object.keys(oldObject), ...Object.keys(newObject)]));
 
   for (const key of allKeys) {
-    const oldValue = oldObject[key];
-    const newValue = newObject[key];
+    const oldValue = oldFields[key];
+    const newValue = newFields[key];
 
     // Handle dates - must come before the generic nested-object branch (see doc comment above).
     if (oldValue instanceof Date || newValue instanceof Date) {
       const oldTime = oldValue instanceof Date ? oldValue.getTime() : oldValue;
       const newTime = newValue instanceof Date ? newValue.getTime() : newValue;
       if (oldTime !== newTime) {
-        (changes as Record<string, any>)[key] = newValue;
+        changes[key] = newValue;
       }
     }
     // Handle nested objects
@@ -101,7 +100,7 @@ export function getChangedFields<T extends Record<string, any>>(
     ) {
       const nestedChanges = getChangedFields(oldValue, newValue);
       if (Object.keys(nestedChanges).length > 0) {
-        (changes as Record<string, any>)[key] = nestedChanges;
+        changes[key] = nestedChanges;
       }
     }
     // Handle arrays (shallow comparison for now, can be expanded for deep array diff if needed)
@@ -110,7 +109,7 @@ export function getChangedFields<T extends Record<string, any>>(
         oldValue.length !== newValue.length ||
         !oldValue.every((val, index) => val === newValue[index])
       ) {
-        (changes as Record<string, any>)[key] = newValue;
+        changes[key] = newValue;
       }
     }
     // Handle primitives and other types
@@ -118,11 +117,11 @@ export function getChangedFields<T extends Record<string, any>>(
       // For fields removed from newObject, mark them null rather than undefined so the
       // "removed" signal survives JSON.stringify (see doc comment above).
       if (key in oldObject && !(key in newObject)) {
-        (changes as Record<string, any>)[key] = null;
+        changes[key] = null;
       } else {
-        (changes as Record<string, any>)[key] = newValue;
+        changes[key] = newValue;
       }
     }
   }
-  return changes;
+  return changes as Partial<T>;
 }

@@ -4,6 +4,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { attributeValues, storySchemaFields } from '@/src/db/schema';
 import { extractCustomFieldId } from '@/src/utils/entity/customAttributeFieldMetadata';
+import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 
 /**
  * Builds the WHERE condition for an advanced search criterion key that references a custom attribute
@@ -22,9 +23,9 @@ import { extractCustomFieldId } from '@/src/utils/entity/customAttributeFieldMet
  */
 export async function buildCustomAttributeSearchCondition(
   db: AppDrizzleClient,
-  entityIdColumn: any,
+  entityIdColumn: SQLiteColumn,
   key: string,
-  rawValue: any,
+  rawValue: unknown,
 ): Promise<SQL<boolean> | null> {
   const fieldId = extractCustomFieldId(key);
   if (!fieldId) {

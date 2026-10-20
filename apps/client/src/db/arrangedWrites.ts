@@ -2,6 +2,7 @@ import { compareRanked, planRankChanges } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
+import { columnsOf } from '@/src/db/entityTableRegistry';
 import { chapters, scenes, stats, storySchemaFields } from '@/src/db/schema';
 import { recordLocalOperationSync } from '@/src/services/sync/syncUtils';
 
@@ -32,7 +33,7 @@ function containerScope(
   storyId: string,
   container: ArrangedContainer,
 ): SQL | undefined {
-  const table = TABLES[entityType] as any;
+  const table = columnsOf(TABLES[entityType]);
   const conditions: SQL[] = [eq(table.storyId, storyId), eq(table.isDeleted, false)];
   for (const [field, value] of Object.entries(container)) {
     conditions.push(value === null ? isNull(table[field]) : eq(table[field], value));
@@ -47,10 +48,11 @@ export function arrangedRowsSync(
   storyId: string,
   container: ArrangedContainer,
 ): { id: string; rank: string }[] {
-  const table = TABLES[entityType] as any;
+  const source = TABLES[entityType];
+  const table = columnsOf(source);
   return db
     .select({ id: table.id, rank: table.rank })
-    .from(table)
+    .from(source)
     .where(containerScope(entityType, storyId, container))
     .all() as { id: string; rank: string }[];
 }
@@ -111,13 +113,14 @@ export function writeRankChangesSync(
   changes: ReadonlyMap<string, string>,
   skip: ReadonlySet<string> = new Set(),
 ): string[] {
-  const table = TABLES[entityType] as any;
+  const source = TABLES[entityType];
+  const table = columnsOf(source);
   const written: string[] = [];
   const now = new Date();
   for (const [id, rank] of changes) {
     if (skip.has(id)) continue;
     const row = db
-      .update(table)
+      .update(source)
       .set({ rank, updatedAt: now, version: sql`${table.version} + 1` })
       .where(eq(table.id, id))
       .returning({ version: table.version })

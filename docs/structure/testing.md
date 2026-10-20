@@ -14,6 +14,11 @@ How Keres is tested, what the coverage floors mean and how to add a test. The hi
 
 On a small machine run one workspace at a time and keep the worker count low (`--maxWorkers=2`; for Vitest in `packages/shared`, `NODE_OPTIONS=--max-old-space-size=512`).
 
+Two things that look like failures on such a machine and are not tests failing:
+
+- A client suite reported as "failed to run" with `A jest worker process ... SIGTERM` while every test passes. With `--workerIdleMemoryLimit` Jest restarts a worker that went over the limit, and it can do so while the next file is already running on it; a different file is hit each time and the file passes alone. CI does not set the limit. A suite whose own heap passes the `--max-old-space-size` cap does die for real, with `heap out of memory` in the log: build big inputs smaller (see the byte-cap tests in `publishCompile.test.ts`, which lower the shared cap instead of creating a 100 MB string).
+- One `An update to VirtualizedList inside a test was not wrapped in act(...)` per run, in a different list screen each time. It is the list's batching timer firing after the test's last `act`, under load; it does not reproduce running the file alone.
+
 The API figure that counts is the **union** of its unit and integration suites: neither alone is representative (the unit-only file reads far lower), so `coverage-check.ts api` merges both.
 
 ## Static checks

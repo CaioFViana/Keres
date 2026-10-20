@@ -8,7 +8,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
 import { stories } from '@/src/db/schema';
-import { getEntityTable } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable } from '@/src/db/entityTableRegistry';
 
 /**
  * SQLite read adapter for portable story packages. Shared entity handlers declare every collection
@@ -30,10 +30,11 @@ export class SQLiteStoryPackageExporter {
         if (!table || !('storyId' in table) || !('isDeleted' in table)) {
           throw new Error(`No portable SQLite table configured for ${entityType}.`);
         }
+        const columns = columnsOf(table);
         const rows = await this.db
           .select()
-          .from(table as any)
-          .where(and(eq((table as any).storyId, storyId), eq((table as any).isDeleted, false)));
+          .from(table)
+          .where(and(eq(columns.storyId, storyId), eq(columns.isDeleted, false)));
         return [collection, rows] as const;
       }),
     );

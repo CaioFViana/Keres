@@ -1,7 +1,7 @@
 import { type BoardEntitySummary, type BoardPinEntity, summarizeBoardEntity } from '@keres/shared';
 import { and, eq, type SQL } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
-import { getEntityTable } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable } from '@/src/db/entityTableRegistry';
 
 export interface EntityPreviewService {
   getBoardSummary(entityType: BoardPinEntity, entityId: string): Promise<BoardEntitySummary | null>;
@@ -17,13 +17,14 @@ export function createEntityPreviewService(db: AppDrizzleClient): EntityPreviewS
       const table = getEntityTable(entityType);
       if (!table) return null;
 
-      const conditions: SQL<boolean>[] = [eq((table as any).id, entityId) as SQL<boolean>];
+      const columns = columnsOf(table);
+      const conditions: SQL<boolean>[] = [eq(columns.id, entityId) as SQL<boolean>];
       if ('isDeleted' in table) {
-        conditions.push(eq((table as any).isDeleted, false) as SQL<boolean>);
+        conditions.push(eq(columns.isDeleted, false) as SQL<boolean>);
       }
       const row = (await db
         .select()
-        .from(table as any)
+        .from(table)
         .where(and(...conditions))
         .get()) as Record<string, unknown> | undefined;
 

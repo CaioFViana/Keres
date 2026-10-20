@@ -1,7 +1,7 @@
 import { getTierCountedEntityTypes, getTierFreeEntityTypes } from '@keres/shared';
 import { and, count, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '@/src/db';
-import { getEntityTable } from '@/src/db/entityTableRegistry';
+import { columnsOf, getEntityTable } from '@/src/db/entityTableRegistry';
 import { stories } from '@/src/db/schema';
 
 /** One story of the person on a server and how many entities the plan sees in it. */
@@ -29,12 +29,13 @@ async function countTypes(
 ): Promise<StoryEntityCounts> {
   const entries = await Promise.all(
     entityTypes.map(async (entityType) => {
-      const table = getEntityTable(entityType) as any;
+      const table = getEntityTable(entityType);
       if (!table) return [entityType, 0] as const;
+      const columns = columnsOf(table);
       const [row] = (await db
         .select({ value: count() })
         .from(table)
-        .where(and(eq(table.storyId, storyId), eq(table.isDeleted, false)))) as {
+        .where(and(eq(columns.storyId, storyId), eq(columns.isDeleted, false)))) as {
         value: number;
       }[];
       return [entityType, row?.value ?? 0] as const;

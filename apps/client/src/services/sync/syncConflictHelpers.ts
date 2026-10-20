@@ -2,6 +2,7 @@ import { ARRANGED } from '@keres/shared';
 import type { AppDrizzleClient } from '@/src/db';
 import * as schema from '@/src/db/schema';
 import { and, eq, isNull, lt, or } from 'drizzle-orm';
+import type { WireValues } from '@/src/types/wireValues';
 
 /**
  * Helpers of `SyncConflictService` and the pull/push that need no conflict-service state: the
@@ -33,10 +34,7 @@ export const SNAPSHOT_BOOKKEEPING = new Set([
  * follows the row's rank on each device, so no snapshot or merge ever writes it and no conflict
  * ever asks about it.
  */
-export function withoutDerivedPosition(
-  entityType: string,
-  values: Record<string, any>,
-): Record<string, any> {
+export function withoutDerivedPosition(entityType: string, values: WireValues): WireValues {
   const arranged = ARRANGED[entityType];
   if (!arranged || !(arranged.positionField in values)) return values;
   const { [arranged.positionField]: _position, ...rest } = values;
@@ -52,7 +50,7 @@ export function withoutDerivedPosition(
  */
 export function foldServerSnapshot(
   existing: { serverValues: string | null; serverVersion: number | null },
-  incomingValues: Record<string, any> | null | undefined,
+  incomingValues: WireValues | null | undefined,
   incomingVersion: number | null | undefined,
 ): { serverValues: string | null; serverVersion: number | null; stale: boolean } {
   if (incomingValues === undefined) {
@@ -76,8 +74,8 @@ export function foldServerSnapshot(
   const serverVersion =
     typeof incomingVersion === 'number' ? incomingVersion : existing.serverVersion;
   if (incomingValues === null) return { serverValues: null, serverVersion, stale: false };
-  const held = parseJson<Record<string, any> | null>(existing.serverValues, null);
-  const merged: Record<string, any> = { ...(held ?? {}), ...incomingValues };
+  const held = parseJson<WireValues | null>(existing.serverValues, null);
+  const merged: WireValues = { ...(held ?? {}), ...incomingValues };
   return { serverValues: JSON.stringify(merged), serverVersion, stale: false };
 }
 

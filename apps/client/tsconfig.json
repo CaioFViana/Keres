@@ -3,6 +3,7 @@
   "compilerOptions": {
     "resolveJsonModule": true,
     "strict": true,
+    "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

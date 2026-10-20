@@ -159,9 +159,9 @@ interface Shot {
   query: string;
   width: number;
   height: number;
-  settleMs?: number;
-  press?: string;
-  pressWaitMs?: number;
+  settleMs?: number | undefined;
+  press?: string | undefined;
+  pressWaitMs?: number | undefined;
 }
 
 interface Screen {

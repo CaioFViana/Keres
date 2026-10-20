@@ -9,6 +9,8 @@
     "outDir": "dist-electron",
     "rootDir": "src",
     "strict": true,
+    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true

@@ -4,6 +4,7 @@
     "module": "esnext",
     "lib": ["es2022"],
     "strict": true,
+    "noImplicitReturns": true,
     "verbatimModuleSyntax": true,
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,

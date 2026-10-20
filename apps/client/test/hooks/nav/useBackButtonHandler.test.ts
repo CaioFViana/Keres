@@ -178,7 +178,7 @@ it('takes the way back only from the screen it was registered for', async () => 
   useHeaderBackActionStore.getState().backAction?.();
   expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
   expect(returnToOrigin).not.toHaveBeenCalled();
-  form.unmount();
+  await form.unmount();
 
   // The list itself: its back is the way back to where it was opened from.
   mockNavigation.getState.mockReturnValue({ index: 0, routes: [{ name: 'StoryArcList' }] });

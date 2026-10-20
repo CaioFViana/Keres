@@ -5,6 +5,7 @@ import {
   defaultExportSettings,
   type ManuscriptExportSettings,
 } from '@/src/components/features/manuscript/export/manuscriptExportSettings';
+import { useInstantTiming } from '@/test/helpers/instantAnimations';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
@@ -59,9 +60,15 @@ function Harness({ hasMusic, format }: { hasMusic?: boolean; format?: 'fountain'
   );
 }
 
-afterEach(() => {
-  cleanup();
+// The switches glide on real frames; finish them inside the press that starts them.
+beforeEach(() => {
+  useInstantTiming();
+});
+
+afterEach(async () => {
+  await cleanup();
   latest = null;
+  jest.restoreAllMocks();
 });
 
 describe('ManuscriptExportOptions music', () => {

@@ -111,7 +111,7 @@ describe('VocabularyScreen draft', () => {
     const firstTerm = screen.getByTestId('vocabulary-Character-singular');
 
     await act(async () => {
-      fireEvent.changeText(firstTerm, 'Hero');
+      await fireEvent.changeText(firstTerm, 'Hero');
     });
 
     expect(screen.getByTestId('vocabulary-Character-singular').props.value).toBe('Hero');
@@ -134,11 +134,11 @@ describe('VocabularyScreen draft', () => {
     const screen = await render(<VocabularyScreen />);
 
     await act(async () => {
-      fireEvent.changeText(screen.getByTestId('vocabulary-Character-singular'), 'Hero');
-      fireEvent.changeText(screen.getByTestId('vocabulary-Character-plural'), 'Heroes');
+      await fireEvent.changeText(screen.getByTestId('vocabulary-Character-singular'), 'Hero');
+      await fireEvent.changeText(screen.getByTestId('vocabulary-Character-plural'), 'Heroes');
     });
     await act(async () => {
-      fireEvent.press(screen.getByText('save'));
+      await fireEvent.press(screen.getByText('save'));
     });
 
     expect(mockUpdateArc).toHaveBeenCalledWith('user-1', 'arc-1', {
@@ -157,11 +157,11 @@ describe('VocabularyScreen draft', () => {
     const screen = await render(<VocabularyScreen />);
 
     await act(async () => {
-      fireEvent.changeText(screen.getByTestId('vocabulary-Character-singular'), 'Hero');
-      fireEvent.changeText(screen.getByTestId('vocabulary-Character-plural'), 'Heroes');
+      await fireEvent.changeText(screen.getByTestId('vocabulary-Character-singular'), 'Hero');
+      await fireEvent.changeText(screen.getByTestId('vocabulary-Character-plural'), 'Heroes');
     });
     await act(async () => {
-      fireEvent.press(screen.getByText('save'));
+      await fireEvent.press(screen.getByText('save'));
     });
 
     expect(mockUpdateStory).toHaveBeenCalledWith(

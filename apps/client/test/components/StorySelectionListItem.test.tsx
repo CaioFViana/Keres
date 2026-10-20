@@ -62,14 +62,14 @@ describe('StorySelectionListItem', () => {
       view.getByText('A long description that should be shown without a hard character cut.'),
     ).toBeTruthy();
 
-    fireEvent.press(view.getByLabelText('Sea Chronicle'));
+    await fireEvent.press(view.getByLabelText('Sea Chronicle'));
     expect(onSelectStory).toHaveBeenCalledWith(story);
 
-    fireEvent.press(view.getByLabelText('favorite'));
+    await fireEvent.press(view.getByLabelText('favorite'));
     expect(onToggleFavorite).toHaveBeenCalledWith('story-1', false);
     expect(onSelectStory).toHaveBeenCalledTimes(1);
 
-    fireEvent.press(view.getByLabelText('edit_story'));
+    await fireEvent.press(view.getByLabelText('edit_story'));
     expect(onEditStory).toHaveBeenCalledWith('story-1');
     expect(onSelectStory).toHaveBeenCalledTimes(1);
   });

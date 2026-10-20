@@ -73,7 +73,9 @@ describe('useDurableFormDraft sequencing', () => {
     expect(clearMock).not.toHaveBeenCalled();
     expect(scheduleMock).not.toHaveBeenCalled();
 
-    read.resolve(null);
+    await act(async () => {
+      read.resolve(null);
+    });
   });
 
   it('resumes tracking once the restore settles with no row', async () => {

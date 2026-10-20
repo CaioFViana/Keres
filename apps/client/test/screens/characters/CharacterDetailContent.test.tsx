@@ -415,8 +415,8 @@ const openTab = async (view: unknown, key: 'details' | 'relations' | 'other') =>
   );
 
 describe('CharacterDetailContent', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   it('renders the title, subtitle, tags fallback and favorite state', async () => {
@@ -614,7 +614,7 @@ describe('CharacterDetailContent', () => {
       );
       expect(onDetails.getByTestId('commentable-biography')).toBeTruthy();
 
-      cleanup();
+      await cleanup();
       const onCustom = await render(
         <CharacterDetailContent {...baseProps({ occurrence: { field: 'custom:abc' } })} />,
       );

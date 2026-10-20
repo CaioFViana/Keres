@@ -287,7 +287,7 @@ describe('MainDrawerMenu', () => {
     );
 
     mockFocused = { route: 'CharactersStack', focus: {} };
-    view.rerender(
+    await view.rerender(
       <MainDrawerMenu
         state={{ routes: [], index: 0 } as never}
         navigation={{} as never}

@@ -6,6 +6,7 @@ import {
   defaultExportSettings,
   type ManuscriptExportSettings,
 } from '@/src/components/features/manuscript/export/manuscriptExportSettings';
+import { useInstantTiming } from '@/test/helpers/instantAnimations';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
@@ -68,9 +69,15 @@ function Harness({
   );
 }
 
-afterEach(() => {
-  cleanup();
+// The switches glide on real frames; finish them inside the press that starts them.
+beforeEach(() => {
+  useInstantTiming();
+});
+
+afterEach(async () => {
+  await cleanup();
   latest = null;
+  jest.restoreAllMocks();
 });
 
 const SCRIPT_FORMATS = [...ALL_FORMATS, 'fountain', 'screenplay-pdf'] as const;

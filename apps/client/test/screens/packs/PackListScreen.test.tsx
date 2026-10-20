@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, waitFor, act } from '@testing-library/react-native';
 
 import PackListScreen from '@/src/screens/packs/PackListScreen';
 
@@ -159,8 +159,8 @@ beforeEach(() => {
   mockUpload.mockResolvedValue(undefined);
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
   delete process.env.EXPO_PUBLIC_SERVERLESS;
 });
 
@@ -349,7 +349,9 @@ it('deletes a pack after confirmation and reloads', async () => {
   expect(mockAlert).toHaveBeenCalled();
 
   const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => Promise<void> }[];
-  await buttons.find((button) => button.text === 'delete')!.onPress!();
+  await act(async () => {
+    await buttons.find((button) => button.text === 'delete')!.onPress!();
+  });
   expect(mockDeletePack).toHaveBeenCalledWith('pack-1');
   await waitFor(() => expect(mockListPacks.mock.calls.length).toBeGreaterThan(callsBeforeDelete));
 });
@@ -363,7 +365,9 @@ it('notifies when deletion fails', async () => {
   await waitFor(() => expect(view.getByText('Starter')).toBeTruthy());
   await fireEvent.press(view.getByLabelText('delete'));
   const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => Promise<void> }[];
-  await buttons.find((button) => button.text === 'delete')!.onPress!();
+  await act(async () => {
+    await buttons.find((button) => button.text === 'delete')!.onPress!();
+  });
   expect(mockNotify).toHaveBeenCalledWith('packs_delete_failed', 'error');
   consoleSpy.mockRestore();
 });

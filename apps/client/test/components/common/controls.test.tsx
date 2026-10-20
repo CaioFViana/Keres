@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import TriStateToggleButton from '@/src/components/common/controls/TriStateToggleButton/TriStateToggleButton';
+import { useInstantTiming } from '@/test/helpers/instantAnimations';
 
 jest.mock('@/src/theme', () => {
   const actual = jest.requireActual('@/src/theme');
@@ -192,6 +193,15 @@ describe('Button icon', () => {
 });
 
 describe('ThemedSwitch', () => {
+  // The switch glides on real frames; finish them inside the call that starts them.
+  beforeEach(() => {
+    useInstantTiming();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('toggles the value when pressed', async () => {
     const onValueChange = jest.fn();
     const screen = await render(

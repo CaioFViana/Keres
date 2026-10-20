@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, waitFor, act } from '@testing-library/react-native';
 
 import StoryArcListScreen from '@/src/screens/customization/StoryArcListScreen';
 
@@ -128,8 +128,8 @@ beforeEach(() => {
   mockDeleteArc.mockResolvedValue(undefined);
 });
 
-afterEach(() => {
-  cleanup();
+afterEach(async () => {
+  await cleanup();
 });
 
 it('requests its guided tour', async () => {
@@ -207,7 +207,9 @@ it('deletes a non-default arc after confirmation', async () => {
 
   const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => Promise<void> }[];
   const confirm = buttons.find((button) => button.text === 'delete');
-  await confirm!.onPress!();
+  await act(async () => {
+    await confirm!.onPress!();
+  });
   expect(mockDeleteArc).toHaveBeenCalledWith('user-1', 'arc-2');
   expect(mockGetArcsForStory).toHaveBeenCalledTimes(2);
 });
@@ -220,7 +222,9 @@ it('notifies when deletion fails', async () => {
   await waitFor(() => expect(view.getByText('Rising')).toBeTruthy());
   await fireEvent.press(view.getByLabelText('delete'));
   const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => Promise<void> }[];
-  await buttons.find((button) => button.text === 'delete')!.onPress!();
+  await act(async () => {
+    await buttons.find((button) => button.text === 'delete')!.onPress!();
+  });
   expect(mockNotify).toHaveBeenCalledWith('boom', 'error');
 });
 

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, waitFor, act } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import StorySettingsGeneralScreen from '@/src/screens/story-settings/StorySettingsGeneralScreen';
@@ -258,8 +258,8 @@ function alertButtons(callIndex: number): { text: string; onPress?: () => void }
 }
 
 describe('StorySettingsGeneralScreen', () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await cleanup();
   });
 
   beforeEach(() => {
@@ -342,7 +342,9 @@ describe('StorySettingsGeneralScreen', () => {
     expect(mockUpdateStory).not.toHaveBeenCalled();
 
     const confirm = alertButtons(0).find((button) => button.text === 'confirm');
-    await confirm!.onPress!();
+    await act(async () => {
+      await confirm!.onPress!();
+    });
     await waitFor(() => expect(mockUpdateStory).toHaveBeenCalled());
     expect(mockUpdateStory).toHaveBeenCalledWith(
       'user-1',
@@ -371,7 +373,9 @@ describe('StorySettingsGeneralScreen', () => {
       expect.any(Array),
     );
     const convert = alertButtons(0).find((button) => button.text === 'convert');
-    await convert!.onPress!();
+    await act(async () => {
+      await convert!.onPress!();
+    });
     await waitFor(() =>
       expect(mockConvertStoryType).toHaveBeenCalledWith('user-1', 'story-1', 'branching'),
     );

@@ -1,5 +1,5 @@
 import { CalendarDefinitionSchema, type CalendarDateCoordinate } from '@keres/shared';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import CalendarDateFields from '@/src/components/common/inputs/CalendarDateFields/CalendarDateFields';
@@ -350,7 +350,11 @@ describe('CalendarDateFields, read only', () => {
 });
 
 describe('CalendarDateFields, what the preview says of the time', () => {
-  afterEach(() => useUserSettingsStore.setState({ use24HourTime: true }));
+  // Unmount first: a store change reaches a component that is still mounted as an update outside act().
+  afterEach(async () => {
+    await cleanup();
+    useUserSettingsStore.setState({ use24HourTime: true });
+  });
 
   it('includes the hour and the minute in the date read back', async () => {
     const view = await render(

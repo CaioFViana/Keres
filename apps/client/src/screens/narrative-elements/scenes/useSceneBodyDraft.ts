@@ -9,7 +9,6 @@ import {
   serializeDocumentToMarkdown,
   type ManuscriptDocument,
   type ManuscriptMark,
-  type ManuscriptSizeStatus,
 } from '@keres/shared';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -21,8 +20,6 @@ import { useAsyncOperation } from '@/src/hooks/ui/useAsyncOperation';
 import { useDurableFormDraft } from '@/src/hooks/forms/useDurableFormDraft';
 
 export type SceneBodyFields = { body: string };
-
-export type { ManuscriptSizeStatus };
 
 type UseSceneBodyDraftOptions = {
   storyId?: string;

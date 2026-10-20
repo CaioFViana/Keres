@@ -25,9 +25,6 @@ export const HEADER_SIGNATURE = 'x-keres-signature';
 /** How far a message's clock may be from ours, either way. */
 export const MAX_CLOCK_SKEW_SECONDS = 300;
 
-/** A secret shorter than this is refused: it is the only thing standing between the internet and the payments. */
-export const MIN_SECRET_LENGTH = 32;
-
 export type Direction = 'keres-to-connector' | 'connector-to-keres';
 
 const NONCE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;

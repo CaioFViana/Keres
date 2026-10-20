@@ -6,9 +6,6 @@ import { operationLogs } from '@/src/db/schema';
 import { createFavoriteService } from '@/src/services/storymanagement/notes-tags-comments/FavoriteService';
 import { logger } from '@/src/utils/logging/logger';
 
-export type OperationType = 'create' | 'update' | 'delete';
-export type EntityType = string; // e.g., 'Story', 'Character', etc.
-
 /**
  * Read-only queries over the operation log, for the List/Detail screens. Recording an
  * operation is `utils/syncUtils.ts`'s `recordLocalOperation`/`getUserIdForOperation` - every

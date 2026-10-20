@@ -211,5 +211,3 @@ export function CharacterStatValuesEditor({
     </CollapsibleCard>
   );
 }
-
-export default CharacterStatValuesEditor;

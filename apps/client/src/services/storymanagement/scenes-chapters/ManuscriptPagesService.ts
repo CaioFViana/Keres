@@ -14,7 +14,6 @@ import { mediaFileService } from '@/src/services/media/MediaFileService';
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createScenePageService, groupPagesByScene } from './ScenePageService';
 import { createSketchService } from '@/src/services/storymanagement/media-music/SketchService';
-import { ensureSketchSnapshot } from '@/src/services/storymanagement/media-music/SketchSnapshotService';
 import { logger } from '@/src/utils/logging/logger';
 
 /** A manuscript page is paper whatever theme the app is in. */
@@ -187,32 +186,6 @@ export async function estimateManuscriptPageBytes(
     sizes.set(page.sceneId, list);
   }
   return sizes;
-}
-
-/**
- * Redraws the Gallery snapshot of every Sketch that a page of the story stands on and whose drawing
- * changed since its snapshot was made, and returns how many were redrawn. This is the one automatic
- * path that still writes to the Gallery, and only on an explicit publish: the server compiles a
- * publication from what it was sent and cannot draw a Sketch itself, so the new snapshots are
- * changes that still have to sync before the publication can show them. Display draws from the
- * content itself and local export renders it directly instead, never touching the Gallery.
- */
-export async function refreshStaleSketchSnapshots(
-  db: AppDrizzleClient,
-  userId: string,
-  storyId: string,
-): Promise<number> {
-  const rows = await createScenePageService(db).getPagesForStory(storyId);
-  const sketchIds = [...new Set(rows.flatMap((page) => (page.sketchId ? [page.sketchId] : [])))];
-  let redrawn = 0;
-  for (const sketchId of sketchIds) {
-    try {
-      if ((await ensureSketchSnapshot(db, userId, sketchId))?.regenerated) redrawn += 1;
-    } catch (error) {
-      logger.debug('refreshStaleSketchSnapshots: could not redraw a snapshot.', error);
-    }
-  }
-  return redrawn;
 }
 
 /**

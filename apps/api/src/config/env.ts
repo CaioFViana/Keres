@@ -16,16 +16,25 @@ const optionalEnvironmentString = z.preprocess(
   z.string().min(1).optional(),
 );
 
-/** A key shared with the payment connector: long enough to be a key and not a word (see `MIN_SECRET_LENGTH`). */
+/** A key shared with the payment connector or the age-verification service must be at least this long: a key, not a word. */
+const MIN_SECRET_LENGTH = 32;
+
+/** A key shared with the payment connector: long enough to be a key and not a word. */
 const connectorSecret = z.preprocess(
   (value) => (value === '' ? undefined : value),
-  z.string().min(32, 'must have at least 32 characters').optional(),
+  z
+    .string()
+    .min(MIN_SECRET_LENGTH, `must have at least ${MIN_SECRET_LENGTH} characters`)
+    .optional(),
 );
 
 /** A key shared with the age-verification service: the same rule as the payment connector's keys. */
 const verifierSecret = z.preprocess(
   (value) => (value === '' ? undefined : value),
-  z.string().min(32, 'must have at least 32 characters').optional(),
+  z
+    .string()
+    .min(MIN_SECRET_LENGTH, `must have at least ${MIN_SECRET_LENGTH} characters`)
+    .optional(),
 );
 
 /** Compose expands an unset variable to an empty string: for the age-verification keys that means "not set". */

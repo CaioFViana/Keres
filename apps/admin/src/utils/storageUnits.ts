@@ -8,8 +8,6 @@ const UNIT_FACTORS: ReadonlyArray<readonly [StorageUnit, number]> = [
   ['B', 1],
 ];
 
-export const STORAGE_UNITS: readonly StorageUnit[] = ['B', 'KB', 'MB', 'GB'];
-
 export function unitFactor(unit: StorageUnit): number {
   return UNIT_FACTORS.find(([name]) => name === unit)![1];
 }

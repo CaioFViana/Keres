@@ -6,8 +6,6 @@ import type { Lang } from './http';
  * English is the default. Only English and Portuguese exist; any other tag is treated as absent.
  */
 
-export const LANGS: readonly Lang[] = ['en', 'pt'];
-
 /** `pt-BR` and `pt_BR` are Portuguese; `en-GB` is English; anything else is not one of ours. */
 export function langOfTag(tag: string): Lang | undefined {
   const base = tag.trim().toLowerCase().split(/[-_]/)[0];

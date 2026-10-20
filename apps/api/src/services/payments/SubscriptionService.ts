@@ -37,8 +37,6 @@ import { periodStartFor } from './periodConversion';
 
 type SubscriptionRow = typeof paymentSubscriptions.$inferSelect;
 
-export { DUE_ABANDONED_AFTER_DAYS } from './subscriptionLapse';
-
 /** Whether a method is bought inside a mobile app through the device's store (Google Play, App Store). */
 export function isStoreMethod(method: PaymentMethodOption | null): boolean {
   return (method?.flow ?? 'redirect') === 'native';

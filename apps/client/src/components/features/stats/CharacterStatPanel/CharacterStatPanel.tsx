@@ -204,5 +204,3 @@ export function CharacterStatPanel({
     </View>
   );
 }
-
-export default CharacterStatPanel;

@@ -1,4 +1,4 @@
-import type { CompiledManuscript, ManuscriptRenderOptions } from './manuscriptCompiler';
+import type { CompiledManuscript } from './manuscriptCompiler';
 import { DEFAULT_PAGE_ASPECT, type PageBlock, type PageOpening } from './manuscriptPageFigure';
 import {
   pagePicturePlacement,
@@ -246,12 +246,4 @@ export function openingPlateRun(
     if (opening.right) place(opening.right, half, 1, () => half + SPINE);
   }
   return plateRun(pictures, lines, height, { spaceBefore: 0, spaceAfter: 0, forcePageBreak: true });
-}
-
-/** Whether the pdf should be set on landscape sheets: the manuscript lays its pages out in spreads. */
-export function setsSpreads(
-  manuscript: Pick<CompiledManuscript, 'pageLayout'>,
-  options: ManuscriptRenderOptions,
-): boolean {
-  return (options.pageLayout ?? manuscript.pageLayout) === 'spreads';
 }

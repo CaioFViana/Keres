@@ -613,9 +613,6 @@ export class SyncHarness {
   }
 }
 
-/** The fields a convergence check compares, from a local row or a server row. */
-export const CONTENT_FIELDS = ['name', 'title', 'description', 'isDeleted', 'version'] as const;
-
 export function contentOf(
   row: Record<string, unknown> | undefined | null,
   entityType = 'Character',

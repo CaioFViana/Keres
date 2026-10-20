@@ -1,5 +1,4 @@
 import {
-  type ParsedSong,
   parseChordPro,
   type SongLine,
   type SongSection,
@@ -197,5 +196,3 @@ export function countSongsPrintedWhole(
   }
   return whole.size;
 }
-
-export type { ParsedSong };

@@ -174,5 +174,3 @@ export function ModeManager({ modes, editable, onCreate, onUpdate, onDelete }: M
     </CollapsibleCard>
   );
 }
-
-export default ModeManager;

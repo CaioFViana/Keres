@@ -475,5 +475,3 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     onCommitTail: commitTail,
   };
 }
-
-export type CanvasOverlayActions = ReturnType<typeof useCanvasOverlayActions>;

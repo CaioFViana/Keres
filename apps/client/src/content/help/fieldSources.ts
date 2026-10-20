@@ -1,8 +1,5 @@
 import { serverFieldClassifications } from './serverFieldClassifications';
-import { fieldSources } from './visibleFieldSources';
 export { entityMetadataHelpPages, fieldSources } from './visibleFieldSources';
-
-export const visibleEntityProperties = fieldSources;
 
 export type EntityPropertyClassification = {
   /** Fields presented to the reader on a screen, flow, or help article. */

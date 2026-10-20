@@ -85,7 +85,6 @@ export type {
   CharacterStackParamList,
   CommentsStackParamList,
   GalleryStackParamList,
-  ItemDetailScreenParamList,
   ItemStackParamList,
   LocationStackParamList,
   NarrativeElementsStackParamList,

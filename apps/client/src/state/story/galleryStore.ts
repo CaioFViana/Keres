@@ -4,8 +4,6 @@ import type { GalleryService } from '@/src/services/storymanagement/media-music/
 import { createGalleryService } from '@/src/services/storymanagement/media-music/GalleryService';
 import { createEntityStore } from '@/src/state/lib/createEntityStore';
 
-export type { FavoriteFilterState } from '@/src/types/entityFilters';
-
 /**
  * The gallery does not filter by tags, so the store factory's generic `activeFilterTags` slot carries
  * the selected media types here ('image' | 'video' | 'audio'). Reusing the slot is what allows using

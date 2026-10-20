@@ -87,5 +87,3 @@ export const FAQ_ITEMS = [
   'cost',
   'showcase',
 ] as const;
-
-export type FeatureGroupId = (typeof FEATURE_GROUPS)[number]['id'];

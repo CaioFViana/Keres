@@ -30,21 +30,13 @@ import {
 export {
   customAttributeSuggestionType,
   isNamedListType,
-  isWorldPieceSuggestionType,
   LIST_CATALOG_TYPE,
-  NAMED_LIST_TYPE_PREFIX,
   namedListDisplayKey,
-  namedListType,
-  parseNamedListCatalogValue,
   WORLD_PIECE_CATEGORY_TYPE,
   WORLD_PIECE_TYPE_PREFIX,
 } from './suggestionTypes';
 export type { NamedSuggestionList } from './suggestionTypes';
-export type {
-  SuggestionType,
-  SuggestionUsage,
-  SuggestionUsageEntityType,
-} from './SuggestionUsageService';
+export type { SuggestionType, SuggestionUsage } from './SuggestionUsageService';
 
 export interface SuggestionServiceInterface {
   getSuggestions(type: SuggestionType, storyId: string): Promise<[string, number][]>;

@@ -130,5 +130,3 @@ export function StatRadarChart({ layout, emptyMessage }: StatRadarChartProps) {
     </View>
   );
 }
-
-export default StatRadarChart;

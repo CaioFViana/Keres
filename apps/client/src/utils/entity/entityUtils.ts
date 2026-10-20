@@ -1,5 +1,4 @@
 import { ulid } from 'ulid';
-import type { AppDrizzleClient } from '@/src/db';
 
 export type BaseEntityFieldNames =
   | 'id'
@@ -127,13 +126,3 @@ export function getChangedFields<T extends Record<string, any>>(
   }
   return changes;
 }
-
-/**
- * Returns a function that compares entity changes. This is primarily for character service testing.
- * The AppDrizzleClient is not directly used in this utility, but is a common import pattern in this project.
- */
-export const createDiffUtils = (db: AppDrizzleClient) => {
-  return {
-    getChangedFields: getChangedFields,
-  };
-};

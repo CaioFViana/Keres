@@ -8,5 +8,3 @@ export { default as SuggestionListInput } from './SuggestionListInput/Suggestion
 export { default as SuggestionTextInput } from './SuggestionTextInput/SuggestionTextInput';
 export { default as ThemePickerModal } from './ThemePickerModal/ThemePickerModal';
 export { default as TextInput } from './TextInput/TextInput';
-
-export type { MultiSelectGroup, MultiSelectOption } from './MultiSelectPill/MultiSelectPill';

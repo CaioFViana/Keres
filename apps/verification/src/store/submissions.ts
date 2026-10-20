@@ -26,9 +26,6 @@ export const OPEN_SUBMISSION_STATUSES: readonly SubmissionStatus[] = [
   'claimed',
 ];
 
-/** The reviewer's decisions. `expired` and `canceled` are endings, not decisions. */
-export const DECIDED_SUBMISSION_STATUSES: readonly SubmissionStatus[] = ['approved', 'rejected'];
-
 export const BLOB_ROLES = ['document-front', 'document-back', 'photo'] as const;
 export type BlobRole = (typeof BLOB_ROLES)[number];
 

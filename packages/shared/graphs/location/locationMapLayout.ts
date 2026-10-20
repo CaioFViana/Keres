@@ -5,7 +5,6 @@ export const LOCATION_MAP_CANVAS_PADDING = 240,
   LOCATION_MAP_IMAGE_DEFAULT_HEIGHT = 240,
   LOCATION_MAP_IMAGE_MIN = 80,
   LOCATION_MAP_IMAGE_MAX = 4000,
-  LOCATION_MAP_IMAGE_STEP = 1.1,
   LOCATION_MAP_NODE_SIZE = 44;
 export function locationMapCanvasBounds(
   content: LocationMapContentType,

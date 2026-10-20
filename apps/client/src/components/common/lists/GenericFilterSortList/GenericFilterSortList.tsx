@@ -20,8 +20,6 @@ import FavoriteFilterButton from '@/src/components/common/controls/FavoriteFilte
 import { FiltersButton, SortDirectionButton } from './ListToolbarButtons';
 import { SearchHighlightContext } from '@/src/components/common/lists/SearchHighlight/SearchHighlight';
 
-export type { GuidedEmptyStateAction } from './ListEmptyStates';
-
 /** Wide enough for search, tags, sort and the buttons to share one row. */
 const WIDE_TOOLBAR_MIN_WIDTH = 760;
 

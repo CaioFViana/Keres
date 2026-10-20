@@ -14,7 +14,7 @@ export class RouteClientSyncHandler implements ClientSyncEntityHandler {
     if (!this.dbInstance) throw new Error('RouteClientSyncHandler: Drizzle client (db) not set.');
     return this.dbInstance;
   }
-  async applyCreate(_: string, update: CreateStoryUpdate) {
+  async applyCreate(update: CreateStoryUpdate) {
     if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as Route;
     await this.db.insert(schema.routes).values({
@@ -25,7 +25,7 @@ export class RouteClientSyncHandler implements ClientSyncEntityHandler {
       deletedAt: data.deletedAt ? new Date(data.deletedAt) : null,
     });
   }
-  async applyUpdate(_: string, update: UpdateStoryUpdate) {
+  async applyUpdate(update: UpdateStoryUpdate) {
     if (update.entity !== this.entityName || !update.id || !update.changes) return;
     const changes = update.changes as Partial<Route>;
     await this.db
@@ -38,7 +38,7 @@ export class RouteClientSyncHandler implements ClientSyncEntityHandler {
       })
       .where(eq(schema.routes.id, update.id));
   }
-  async applyDelete(_: string, update: DeleteStoryUpdate) {
+  async applyDelete(update: DeleteStoryUpdate) {
     if (update.entity !== this.entityName || !update.id) return;
     await this.db
       .update(schema.routes)

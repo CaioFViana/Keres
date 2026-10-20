@@ -138,7 +138,7 @@ const ItemDetailScreen = () => {
   }, [selectedStory?.id]);
 
   const handleItemChange = useCallback(
-    async (changedStoryId: string, changedItemId: string) => {
+    async (_changedStoryId: string, changedItemId: string) => {
       if (changedItemId === itemId && itemServiceRef.current) {
         const updatedItem = await itemServiceRef.current.getById(itemId);
         if (!updatedItem || updatedItem.isDeleted) {

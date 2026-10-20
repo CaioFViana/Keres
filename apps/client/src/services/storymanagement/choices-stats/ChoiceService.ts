@@ -15,7 +15,7 @@ import {
   runLocalWrite,
 } from '@/src/services/sync/syncUtils';
 import { createServerService } from '@/src/services/servers/ServerService';
-import type { AdvancedSearchCriteria, FavoriteFilterState } from '@/src/types/entityFilters';
+import type { AdvancedSearchCriteria } from '@/src/types/entityFilters';
 import { buildNativeAdvancedSearchConditions } from '@/src/services/storymanagement/story-lifecycle/advancedSearchConditions';
 import {
   applyListSort,
@@ -24,17 +24,12 @@ import {
 import { softDeleteRowSync } from '@/src/db/softDelete';
 import { logger } from '@/src/utils/logging/logger';
 
-// Choices have no favourite flag; the parameter is accepted for signature parity with
-// the other entity services and ignored by the implementation.
-export type { FavoriteFilterState };
-
 export interface ChoiceService {
   getChoicesByStoryId(
     storyId: string,
     searchTerm?: string,
     sortBy?: string | null,
     sortDirection?: 'asc' | 'desc',
-    favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: AdvancedSearchCriteria,
   ): Promise<ChoiceSelect[]>;
   getChoiceCount(storyId?: string): Promise<number>;
@@ -80,7 +75,6 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
       searchTerm,
       sortBy,
       sortDirection,
-      favoriteFilterState,
       advancedSearchCriteria,
     ): Promise<ChoiceSelect[]> {
       const conditions: SQL<boolean>[] = storyEntityConditions(choices, storyId, {

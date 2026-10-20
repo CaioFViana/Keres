@@ -116,15 +116,8 @@ const ChoiceDetailScreen = () => {
   const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({});
   const [itemNamesById, setItemNamesById] = useState<Record<string, string>>({});
   const { canEdit } = useStoryRole(choice?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(choice?.storyId, 'Choice', choiceId);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(choice?.storyId, 'Choice', choiceId);
 
   const {
     selectedTags: choiceTags,
@@ -166,7 +159,7 @@ const ChoiceDetailScreen = () => {
   }, [choiceId, navigation, copy, t]);
 
   const handleChoiceChange = useCallback(
-    async (changedStoryId: string, changedChoiceId: string) => {
+    async (_changedStoryId: string, changedChoiceId: string) => {
       if (changedChoiceId === choiceId && choiceServiceRef.current) {
         const updatedChoice = await choiceServiceRef.current.getById(choiceId);
         if (!updatedChoice || updatedChoice.isDeleted) {
@@ -287,7 +280,6 @@ const ChoiceDetailScreen = () => {
     isStoryOwner: isStoryOwner,
     currentUserId: currentUserId,
     onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
     commentsByField,
     addComment,
   });

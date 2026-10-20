@@ -239,9 +239,9 @@ describe('skip after repeated failures', () => {
     (engine as any).entityHandlers.set('Character', {
       setDb: (...args: any[]) => realHandler.setDb(...args),
       getById: (...args: any[]) => realHandler.getById(...args),
-      applyCreate: jest.fn().mockImplementation(async (storyId: string, update: any) => {
+      applyCreate: jest.fn().mockImplementation(async (update: any, storyId: string) => {
         if (update?.id === 'char-poison') throw new Error('poison');
-        return realHandler.applyCreate(storyId, update);
+        return realHandler.applyCreate(update, storyId);
       }),
       applyUpdate: (...args: any[]) => realHandler.applyUpdate(...args),
       applyDelete: (...args: any[]) => realHandler.applyDelete(...args),
@@ -287,10 +287,10 @@ describe('skip after repeated failures', () => {
     (engine as any).entityHandlers.set('Character', {
       setDb: (...args: any[]) => realHandler.setDb(...args),
       getById: (...args: any[]) => realHandler.getById(...args),
-      applyCreate: jest.fn().mockImplementation(async (storyId: string, update: any) => {
+      applyCreate: jest.fn().mockImplementation(async (update: any, storyId: string) => {
         attempts += 1;
         if (attempts <= 2) throw new Error('transient');
-        return realHandler.applyCreate(storyId, update);
+        return realHandler.applyCreate(update, storyId);
       }),
     });
 

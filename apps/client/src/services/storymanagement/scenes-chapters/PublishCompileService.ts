@@ -252,7 +252,6 @@ export function buildPublishCompileInput(
 export async function compilePublishArtifacts(
   db: AppDrizzleClient,
   story: StorySelect,
-  userId: string,
   manuscriptOptions: PublishManuscriptOptions | undefined,
   readerOptions: PublishReaderOptions | undefined,
   t: TFunction,
@@ -300,7 +299,7 @@ export async function compilePublishArtifacts(
     const readPictures = manuscriptCarriesPictures || readerOptions !== undefined;
     const loadedPages =
       (manuscriptOptions || readerOptions) && inScope.size > 0
-        ? await loadManuscriptPages(db, userId, story.id, inScope, readPictures)
+        ? await loadManuscriptPages(db, story.id, inScope, readPictures)
         : null;
     signal?.throwIfAborted();
 

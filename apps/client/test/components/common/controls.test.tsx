@@ -305,4 +305,22 @@ describe('TriStateToggleButton', () => {
     await pressIcon(screen);
     expect(onChange).toHaveBeenCalledWith(undefined);
   });
+
+  it('names the filter for screen readers and reads each state as checked, unchecked or mixed', async () => {
+    const states = [
+      [undefined, 'mixed'],
+      [true, true],
+      [false, false],
+    ] as const;
+
+    for (const [value, checked] of states) {
+      const screen = await render(
+        <TriStateToggleButton label="Favorite" value={value} onChange={jest.fn()} />,
+      );
+      const button = screen.getByLabelText('Favorite');
+      expect(button.props.accessibilityRole).toBe('checkbox');
+      expect(button.props.accessibilityState).toEqual({ checked });
+      await screen.unmount();
+    }
+  });
 });

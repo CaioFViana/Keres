@@ -166,7 +166,7 @@ export function recordLocalOperationSync(
   }
   const next = (story.lastOperationLog || 0) + 1;
   const operationId = createULID();
-  const heldBy = findConflictHoldingEdits(db, storyId, entityType, entityId, operationType);
+  const heldBy = findConflictHoldingEdits(db, storyId, entityType, entityId);
   // An arranged row's position is derived from its rank on every device: an edit never carries it.
   const arranged = ARRANGED[entityType];
   const recorded =
@@ -252,7 +252,6 @@ function findConflictHoldingEdits(
   storyId: string,
   entityType: string,
   entityId: string,
-  operationType: StoryUpdateType,
 ): typeof schema.syncConflicts.$inferSelect | undefined {
   const conflict = db
     .select()

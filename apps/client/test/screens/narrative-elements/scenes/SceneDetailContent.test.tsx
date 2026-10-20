@@ -358,7 +358,6 @@ function commentField(_field: string, value: string): Omit<CommentableDetailFiel
     currentUserId: null,
     onAddComment: async () => {},
     onDeleteComment: async () => {},
-    onUpdateComment: async () => {},
   };
 }
 

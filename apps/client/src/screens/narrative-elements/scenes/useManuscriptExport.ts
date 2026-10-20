@@ -370,7 +370,6 @@ export function useManuscriptExport() {
             userId && selectedStory?.id
               ? await loadManuscriptPages(
                   db,
-                  userId,
                   selectedStory.id,
                   new Set(shipping.map((scene) => scene.id)),
                   carriesPictures,

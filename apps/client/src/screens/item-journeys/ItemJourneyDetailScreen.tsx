@@ -181,7 +181,7 @@ const ItemJourneyDetailScreen = () => {
   }, [itemJourneyId, navigation, t, items, itemCopy]);
 
   const handleItemJourneyChange = useCallback(
-    async (changedStoryId: string, changedItemJourneyId: string) => {
+    async (_changedStoryId: string, changedItemJourneyId: string) => {
       if (changedItemJourneyId === itemJourneyId && itemJourneyServiceRef.current) {
         const updatedItemJourney = await itemJourneyServiceRef.current.getById(itemJourneyId);
         if (!updatedItemJourney || updatedItemJourney.isDeleted) {

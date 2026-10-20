@@ -21,7 +21,7 @@ export class NoteClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
@@ -42,7 +42,7 @@ export class NoteClientSyncHandler implements ClientSyncEntityHandler {
     logger.debug(`Applied create for Note ${update.id} in story ${storyId}`);
   }
 
-  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
@@ -66,7 +66,7 @@ export class NoteClientSyncHandler implements ClientSyncEntityHandler {
     logger.debug(`Applied update for Note ${update.id}`);
   }
 
-  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {

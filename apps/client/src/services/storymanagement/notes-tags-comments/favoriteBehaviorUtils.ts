@@ -23,7 +23,6 @@ export async function normalizeFavoriteUpdate<T extends { isFavorite?: boolean }
 export async function normalizeFavoriteCreate<T extends { isFavorite?: boolean }>(
   db: AppDrizzleClient,
   storyId: string,
-  entityType: FavoriteEntityType,
   data: T,
 ): Promise<{ data: T; individualFavorite: boolean | undefined }> {
   const service = createFavoriteService(db);

@@ -47,7 +47,6 @@ it('keeps inner padding around marker-sheet controls so input borders can render
       icon="flag"
       color="#8BC34A"
       destinationMapId="map-2"
-      destinationName="Bonfire"
       destinationUnavailable={false}
       destinationOptions={[]}
       canEdit

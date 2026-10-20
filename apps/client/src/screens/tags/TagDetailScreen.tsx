@@ -183,7 +183,7 @@ const TagDetailScreen = () => {
   }, [allTagRelations, drizzleDb, selectedStory?.id, t]);
 
   const handleTagChange = useCallback(
-    async (changedStoryId: string, changedTagId: string) => {
+    async (_changedStoryId: string, changedTagId: string) => {
       if (changedTagId === tagId) {
         // Re-fetch the tag to get the latest status
         if (tagServiceRef.current) {
@@ -202,7 +202,7 @@ const TagDetailScreen = () => {
   );
 
   const handleTagRelationChange = useCallback(
-    (changedStoryId: string, changedTagId: string) => {
+    (_changedStoryId: string, changedTagId: string) => {
       if (changedTagId === tagId) {
         fetchTagRelations(); // Refetch relations if a tag relation changed
       }

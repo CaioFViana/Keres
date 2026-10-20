@@ -184,7 +184,7 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         );
         newChapter = { ...newChapter, arcId: defaultArc.id };
       }
-      const favorite = await normalizeFavoriteCreate(db, newChapter.storyId, 'Chapter', newChapter);
+      const favorite = await normalizeFavoriteCreate(db, newChapter.storyId, newChapter);
       newChapter = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,

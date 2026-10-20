@@ -116,7 +116,7 @@ describe('captureImageThumbnail', () => {
   it('falls back to a canvas element where there is no OffscreenCanvas', async () => {
     stubBitmap(2000, 2000);
     globals.OffscreenCanvas = undefined;
-    const toBlob = jest.fn((callback: (blob: Blob | null) => void, type: string, quality: number) =>
+    const toBlob = jest.fn((callback: (blob: Blob | null) => void, type: string) =>
       callback(new Blob([JPEG as BlobPart], { type })),
     );
     const canvas = {

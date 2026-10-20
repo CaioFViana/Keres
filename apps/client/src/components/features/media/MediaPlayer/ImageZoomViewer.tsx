@@ -235,7 +235,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
         },
 
         onPanResponderTerminationRequest: () => false,
-        onPanResponderRelease: (event) => {
+        onPanResponderRelease: () => {
           gesture.current.pinchDistance = 0;
 
           if (tapCandidate.current.moved) {

@@ -91,15 +91,8 @@ function SceneEditorContent({
   const openComments = useCallback(() => setCommentsOpen(true), []);
   const { containerRef, readSelection } = useWebSelectionClip(`scene-body-${scene.id}`);
   const { canEdit } = useStoryRole(scene.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(scene.storyId, 'Scene', scene.id);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(scene.storyId, 'Scene', scene.id);
   const bodyComments = useMemo(
     () => commentsByField[SCENE_BODY_DRAFT_FIELD] ?? [],
     [commentsByField],
@@ -333,7 +326,6 @@ function SceneEditorContent({
         currentUserId={currentUserId}
         onSubmit={handleAddComment}
         onDelete={deleteComment}
-        onUpdate={updateComment}
       />
     </View>
   );

@@ -310,7 +310,7 @@ const LocationDetailsScreen = () => {
   );
 
   const handleCharacterChange = useCallback(
-    (changedStoryId: string, changedCharacterId: string) => {
+    (changedStoryId: string, _changedCharacterId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllCharactersInStory();
       }
@@ -319,7 +319,7 @@ const LocationDetailsScreen = () => {
   );
 
   const handleCharacterSceneChange = useCallback(
-    (changedStoryId: string, changedCharacterSceneId: string) => {
+    (changedStoryId: string, _changedCharacterSceneId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllCharacterSceneRelations();
       }
@@ -328,7 +328,7 @@ const LocationDetailsScreen = () => {
   );
 
   const handleSceneChange = useCallback(
-    (changedStoryId: string, changedSceneId: string) => {
+    (changedStoryId: string, _changedSceneId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllScenesInStory();
       }
@@ -337,7 +337,7 @@ const LocationDetailsScreen = () => {
   );
 
   const handleItemChange = useCallback(
-    (changedStoryId: string, changedItemId: string) => {
+    (changedStoryId: string, _changedItemId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllItemsInStory();
       }
@@ -346,7 +346,7 @@ const LocationDetailsScreen = () => {
   );
 
   const handleItemJourneyChange = useCallback(
-    (changedStoryId: string, changedItemJourneyId: string) => {
+    (changedStoryId: string, _changedItemJourneyId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllItemJourneysInStory();
       }

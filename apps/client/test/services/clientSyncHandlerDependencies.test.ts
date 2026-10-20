@@ -69,9 +69,9 @@ describe('dependent client sync handlers', () => {
       deletedAt: null,
     };
 
-    await handler.applyCreate(STORY_ID, createUpdate('ChoiceCheckGroup', group.id, group));
-    await handler.applyUpdate(STORY_ID, updateUpdate('ChoiceCheckGroup', group.id, { order: 1 }));
-    await handler.applyDelete(STORY_ID, deleteUpdate('ChoiceCheckGroup', group.id));
+    await handler.applyCreate(createUpdate('ChoiceCheckGroup', group.id, group));
+    await handler.applyUpdate(updateUpdate('ChoiceCheckGroup', group.id, { order: 1 }));
+    await handler.applyDelete(deleteUpdate('ChoiceCheckGroup', group.id));
 
     expect(await handler.getById(group.id)).toEqual(
       expect.objectContaining({ choiceId: 'choice-1', order: 1, isDeleted: true }),
@@ -105,12 +105,9 @@ describe('dependent client sync handlers', () => {
       deletedAt: null,
     };
 
-    await handler.applyCreate(STORY_ID, createUpdate('ChoiceCheck', check.id, check));
-    await handler.applyUpdate(
-      STORY_ID,
-      updateUpdate('ChoiceCheck', check.id, { triggerState: 'unset' }),
-    );
-    await handler.applyDelete(STORY_ID, deleteUpdate('ChoiceCheck', check.id));
+    await handler.applyCreate(createUpdate('ChoiceCheck', check.id, check));
+    await handler.applyUpdate(updateUpdate('ChoiceCheck', check.id, { triggerState: 'unset' }));
+    await handler.applyDelete(deleteUpdate('ChoiceCheck', check.id));
 
     expect(await handler.getById(check.id)).toEqual(
       expect.objectContaining({ triggerState: 'unset', isDeleted: true }),
@@ -134,12 +131,9 @@ describe('dependent client sync handlers', () => {
       deletedAt: null,
     };
 
-    await handler.applyCreate(STORY_ID, createUpdate('ItemJourney', journey.id, journey));
-    await handler.applyUpdate(
-      STORY_ID,
-      updateUpdate('ItemJourney', journey.id, { newState: 'usada' }),
-    );
-    await handler.applyDelete(STORY_ID, deleteUpdate('ItemJourney', journey.id));
+    await handler.applyCreate(createUpdate('ItemJourney', journey.id, journey));
+    await handler.applyUpdate(updateUpdate('ItemJourney', journey.id, { newState: 'usada' }));
+    await handler.applyDelete(deleteUpdate('ItemJourney', journey.id));
 
     expect(await handler.getById(journey.id)).toEqual(
       expect.objectContaining({

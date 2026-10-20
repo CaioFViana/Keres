@@ -37,7 +37,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
@@ -63,7 +63,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     logger.debug(`Applied create for Gallery ${update.id} in story ${storyId}`);
   }
 
-  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
@@ -147,7 +147,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
     }
   }
 
-  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {

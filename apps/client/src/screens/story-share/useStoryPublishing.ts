@@ -20,7 +20,6 @@ import { compilePublishArtifacts } from '@/src/services/storymanagement/scenes-c
 import { fetchServerStoryPreviews } from '@/src/services/sync/StoryTransfer';
 import { useConnectivityStore } from '@/src/state/sync/connectivityStore';
 import { useNotificationStore } from '@/src/state/ui/notificationStore';
-import { useUserSettingsStore } from '@/src/state/app/userSettingsStore';
 import { AppAlert } from '@/src/state/ui/AppAlert';
 import { usePublishManuscript } from './usePublishManuscript';
 import { logger } from '@/src/utils/logging/logger';
@@ -84,7 +83,6 @@ export function useStoryPublishing(storyId: string | undefined) {
   const { t, i18n } = useTranslation();
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
-  const userId = useUserSettingsStore((state) => state.userId);
   const isOffline = useConnectivityStore((state) => state.isOffline);
   const manuscript = usePublishManuscript(drizzleDb);
   const { resetForStory } = manuscript;
@@ -403,7 +401,6 @@ export function useStoryPublishing(storyId: string | undefined) {
           compiled = await compilePublishArtifacts(
             drizzleDb,
             story,
-            userId ?? '',
             manuscriptOptions,
             readerOptions,
             t,
@@ -501,7 +498,6 @@ export function useStoryPublishing(storyId: string | undefined) {
     story,
     t,
     usePassword,
-    userId,
   ]);
 
   /**

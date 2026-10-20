@@ -47,10 +47,6 @@ interface CommentThreadModalProps {
     criticality: number;
   }) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
-  onUpdate: (
-    commentId: string,
-    changes: { commentText?: string; criticality?: number },
-  ) => Promise<void>;
   /** Manuscript prose composer: explain that the first match anchors the comment. */
   showExcerptAnchorNotice?: boolean;
   /** A fresh text selection, pre-filled into the excerpt composer on open. */
@@ -74,7 +70,6 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   currentUserId,
   onSubmit,
   onDelete,
-  onUpdate,
   showExcerptAnchorNotice = false,
   initialExcerpt = null,
 }) => {

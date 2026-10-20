@@ -1035,7 +1035,6 @@ describe('NarrativeElementsListScreen', () => {
       undefined,
       undefined,
       undefined,
-      'all',
       { text: 'Sail' },
     );
     await waitFor(() => expect(rowNames(view)).toEqual(['Arrival']));

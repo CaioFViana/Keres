@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { type ThemeColors, useTheme } from '@/src/theme';
 import { useThemedStyles } from '@/src/theme/useThemedStyles';
 
 interface TriStateToggleButtonProps {
+  /** What the button filters by: read by screen readers, and shown as the hover text on the web. */
   label: string;
   value: boolean | undefined; // true, false, or undefined for "any"
   onChange: (newValue: boolean | undefined) => void;
@@ -54,10 +55,22 @@ const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({
 
   const styles = useThemedStyles(createStyles);
 
+  // react-native-web forwards no `title`, which is what the browser shows on hover.
+  const setHoverText = useCallback(
+    (node: { setAttribute?: (name: string, value: string) => void } | null) => {
+      if (Platform.OS === 'web') node?.setAttribute?.('title', label);
+    },
+    [label],
+  );
+
   return (
     <TouchableOpacity
       style={[styles.buttonContainer, { backgroundColor: backgroundColor }, style]}
       onPress={handlePress}
+      ref={setHoverText as never}
+      accessibilityRole="checkbox"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: value === undefined ? 'mixed' : value }}
     >
       <Ionicons name={iconName} size={20} color={iconColor} />
     </TouchableOpacity>

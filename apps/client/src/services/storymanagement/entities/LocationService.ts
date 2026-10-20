@@ -181,12 +181,7 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
     ): Promise<LocationSelect> {
       await assertStoryIsWritable(db, locationData.storyId);
       let newLocation = prepareNewEntityData<LocationInsert>(locationData);
-      const favorite = await normalizeFavoriteCreate(
-        db,
-        newLocation.storyId,
-        'Location',
-        newLocation,
-      );
+      const favorite = await normalizeFavoriteCreate(db, newLocation.storyId, newLocation);
       newLocation = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,

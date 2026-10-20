@@ -209,7 +209,6 @@ describe('CommentableDetailField', () => {
     currentUserId: 'user-1',
     onAddComment: jest.fn(async () => {}),
     onDeleteComment: jest.fn(async () => {}),
-    onUpdateComment: jest.fn(async () => {}),
   };
 
   it('falls back to a plain field when nobody can comment and none exist', async () => {

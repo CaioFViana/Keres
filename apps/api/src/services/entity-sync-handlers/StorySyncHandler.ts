@@ -88,7 +88,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
 
   async create(
     userId: string,
-    storyId: string,
+    _storyId: string,
     update: CreateStoryUpdate,
     database: CompatibleDb = db,
   ): Promise<void> {

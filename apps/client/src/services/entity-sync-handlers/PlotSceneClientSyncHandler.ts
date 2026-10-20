@@ -23,7 +23,7 @@ export class PlotSceneClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(_: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as PlotScene;
     await this.db.insert(schema.plotScenes).values({
@@ -35,7 +35,7 @@ export class PlotSceneClientSyncHandler implements ClientSyncEntityHandler {
     });
   }
 
-  async applyUpdate(_: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id || !update.changes) return;
     const changes = update.changes as Partial<PlotScene>;
     await this.db
@@ -49,7 +49,7 @@ export class PlotSceneClientSyncHandler implements ClientSyncEntityHandler {
       .where(eq(schema.plotScenes.id, update.id));
   }
 
-  async applyDelete(_: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
     await this.db
       .update(schema.plotScenes)

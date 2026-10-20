@@ -25,7 +25,7 @@ export class BoardSyncHandler extends BaseSyncEntityHandler<
   }
 
   async create(
-    userId: string,
+    _userId: string,
     storyId: string,
     update: CreateStoryUpdate,
     database: CompatibleDb = db,

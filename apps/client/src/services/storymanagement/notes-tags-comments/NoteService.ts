@@ -211,7 +211,7 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
     async createNote(currentUserId: string, noteData: Create<NoteInsert>): Promise<NoteSelect> {
       await assertStoryIsWritable(db, noteData.storyId);
       let newNote = prepareNewEntityData<NoteInsert>(noteData);
-      const favorite = await normalizeFavoriteCreate(db, newNote.storyId, 'Note', newNote);
+      const favorite = await normalizeFavoriteCreate(db, newNote.storyId, newNote);
       newNote = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,

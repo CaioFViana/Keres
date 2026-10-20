@@ -167,7 +167,7 @@ export class SyncPullApply {
         if (update.type === 'create') {
           await pull.applyRemoteCreate(update, handler);
         } else if (update.type === 'update') {
-          await handler.applyUpdate(storyId, update);
+          await handler.applyUpdate(update, storyId);
         } else if (update.type === 'delete') {
           await pull.applyRemoteDelete(update, handler, tx);
         }

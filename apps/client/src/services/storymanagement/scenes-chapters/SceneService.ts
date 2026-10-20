@@ -267,7 +267,7 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
     ): Promise<SceneSelect> {
       await assertStoryIsWritable(db, sceneData.storyId);
       let newScene = prepareNewEntityData<SceneInsert>({ ...sceneData, index: 1, rank: '' });
-      const favorite = await normalizeFavoriteCreate(db, newScene.storyId, 'Scene', newScene);
+      const favorite = await normalizeFavoriteCreate(db, newScene.storyId, newScene);
       newScene = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,

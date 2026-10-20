@@ -208,7 +208,7 @@ const NoteDetailScreen = () => {
   }, [allNoteRelations, drizzleDb, note?.storyId, t]);
 
   const handleNoteChange = useCallback(
-    async (changedStoryId: string, changedNoteId: string) => {
+    async (_changedStoryId: string, changedNoteId: string) => {
       if (changedNoteId === noteId) {
         if (noteServiceRef.current) {
           const updatedNote = await noteServiceRef.current.getById(noteId);
@@ -226,7 +226,7 @@ const NoteDetailScreen = () => {
   );
 
   const handleNoteRelationChange = useCallback(
-    (changedStoryId: string, changedRelationId: string) => {
+    (_changedStoryId: string, _changedRelationId: string) => {
       // This event is emitted when any note_relation changes. We need to check if it affects *this* note.
       // However, for simplicity and ensuring data consistency, we'll refetch all relations for this note.
       // A more optimized approach would involve parsing changedRelationId if it contains noteId.
@@ -236,7 +236,7 @@ const NoteDetailScreen = () => {
   );
 
   const handleTagRelationChange = useCallback(
-    (changedStoryId: string, changedEntityId: string) => {
+    (_changedStoryId: string, changedEntityId: string) => {
       if (changedEntityId === noteId) {
         fetchTagsForNote();
       }

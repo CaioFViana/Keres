@@ -198,12 +198,7 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
     ): Promise<CharacterSelect> {
       await assertStoryIsWritable(db, characterData.storyId);
       let newCharacter = prepareNewEntityData<CharacterInsert>(characterData);
-      const favorite = await normalizeFavoriteCreate(
-        db,
-        newCharacter.storyId,
-        'Character',
-        newCharacter,
-      );
+      const favorite = await normalizeFavoriteCreate(db, newCharacter.storyId, newCharacter);
       newCharacter = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,

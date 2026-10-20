@@ -134,7 +134,7 @@ describe('normalizeFavoriteCreate', () => {
     mockFavoriteService.getBehavior.mockResolvedValue('global');
     const data = { name: 'Keres', isFavorite: true };
 
-    const result = await normalizeFavoriteCreate(db, STORY_ID, ENTITY_TYPE, data);
+    const result = await normalizeFavoriteCreate(db, STORY_ID, data);
 
     expect(result).toEqual({ data, individualFavorite: undefined });
   });
@@ -143,7 +143,7 @@ describe('normalizeFavoriteCreate', () => {
   it('strips the favourite from the entity and hands it back to the caller', async () => {
     mockFavoriteService.getBehavior.mockResolvedValue('individual');
 
-    const result = await normalizeFavoriteCreate(db, STORY_ID, ENTITY_TYPE, {
+    const result = await normalizeFavoriteCreate(db, STORY_ID, {
       name: 'Keres',
       isFavorite: true,
     });
@@ -157,7 +157,7 @@ describe('normalizeFavoriteCreate', () => {
 
     const data: { name: string; isFavorite?: boolean } = { name: 'Keres' };
 
-    const result = await normalizeFavoriteCreate(db, STORY_ID, ENTITY_TYPE, data);
+    const result = await normalizeFavoriteCreate(db, STORY_ID, data);
 
     expect(result.individualFavorite).toBe(false);
   });

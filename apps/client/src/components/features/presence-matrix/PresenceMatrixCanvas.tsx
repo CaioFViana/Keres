@@ -66,7 +66,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
     /** Scene indexes whose column reaches the culling window; rows and headers cull with these. */
     const visibleSceneIndexes = useMemo(
       () =>
-        layout.scenes.flatMap((scene, index) =>
+        layout.scenes.flatMap((_scene, index) =>
           spatialRectIntersects(
             {
               x: gridLeft + index * layout.sceneWidth,
@@ -83,7 +83,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
     );
     const visibleRowIndexes = useMemo(
       () =>
-        layout.rows.flatMap((row, rowIndex) =>
+        layout.rows.flatMap((_row, rowIndex) =>
           spatialRectIntersects(
             {
               x: gridLeft,

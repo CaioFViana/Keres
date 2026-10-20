@@ -1841,8 +1841,8 @@ describe('pull failure containment', () => {
     await runOneCycle();
 
     expect(applyCreate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ id: 'WIDGET1ZZZZZZZZZZZZZZZZZZZ' }),
+      STORY_ID,
     );
     expect((await readStory())?.lastServerSyncedLog).toBe(1);
   });

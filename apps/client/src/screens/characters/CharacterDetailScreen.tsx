@@ -118,15 +118,8 @@ const CharacterDetailScreen = () => {
     () => statData.modes.filter((mode) => mode.characterId === characterId),
     [statData.modes, characterId],
   );
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(character?.storyId, 'Character', characterId);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(character?.storyId, 'Character', characterId);
   const [characterRelations, setCharacterRelations] = useState<CharacterRelation[]>([]); // State for relations
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]); // State for all characters in story
 
@@ -279,7 +272,7 @@ const CharacterDetailScreen = () => {
   }, [character?.storyId]);
 
   const handleCharacterChange = useCallback(
-    async (changedStoryId: string, changedCharacterId: string) => {
+    async (_changedStoryId: string, changedCharacterId: string) => {
       if (changedCharacterId === characterId) {
         if (characterServiceRef.current) {
           const updatedCharacter = await characterServiceRef.current.getById(characterId);
@@ -296,7 +289,7 @@ const CharacterDetailScreen = () => {
   );
 
   const handleCharacterRelationChange = useCallback(
-    (changedStoryId: string, changedCharacterId: string) => {
+    (_changedStoryId: string, changedCharacterId: string) => {
       if (changedCharacterId === characterId) {
         fetchRelationsForCharacter();
       }
@@ -305,7 +298,7 @@ const CharacterDetailScreen = () => {
   );
 
   const handleCharacterSceneChange = useCallback(
-    (changedStoryId: string, changedCharacterId: string) => {
+    (_changedStoryId: string, changedCharacterId: string) => {
       if (changedCharacterId === characterId) {
         fetchScenesForCharacter();
       }
@@ -314,7 +307,7 @@ const CharacterDetailScreen = () => {
   );
 
   const handleItemChange = useCallback(
-    (changedStoryId: string, changedItemId: string) => {
+    (changedStoryId: string, _changedItemId: string) => {
       if (character?.storyId === changedStoryId) {
         fetchAllItemsInStory();
       }
@@ -323,7 +316,7 @@ const CharacterDetailScreen = () => {
   );
 
   const handleItemJourneyChange = useCallback(
-    (changedStoryId: string, changedItemJourneyId: string) => {
+    (changedStoryId: string, _changedItemJourneyId: string) => {
       if (character?.storyId === changedStoryId) {
         fetchAllItemJourneysInStory();
       }
@@ -332,7 +325,7 @@ const CharacterDetailScreen = () => {
   );
 
   const handleLocationChange = useCallback(
-    (changedStoryId: string, changedLocationId: string) => {
+    (changedStoryId: string, _changedLocationId: string) => {
       if (character?.storyId === changedStoryId) {
         fetchAllLocationsInStory();
       }
@@ -462,7 +455,6 @@ const CharacterDetailScreen = () => {
     isStoryOwner,
     currentUserId,
     onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
     commentsByField,
     addComment,
   });

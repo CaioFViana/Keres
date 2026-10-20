@@ -358,7 +358,6 @@ function mockServicesLoaded() {
       _a: unknown,
       _b: unknown,
       _c: unknown,
-      _d: unknown,
       criteria: Record<string, string>,
     ) => {
       if (criteria?.nextSceneId) return [{ id: 'choice-in', sceneId: 'scene-0' }];

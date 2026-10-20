@@ -216,12 +216,7 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
     ): Promise<WorldRuleSelect> {
       await assertStoryIsWritable(db, worldRuleData.storyId);
       let newWorldRule = prepareNewEntityData<WorldRuleInsert>(worldRuleData);
-      const favorite = await normalizeFavoriteCreate(
-        db,
-        newWorldRule.storyId,
-        'WorldRule',
-        newWorldRule,
-      );
+      const favorite = await normalizeFavoriteCreate(db, newWorldRule.storyId, newWorldRule);
       newWorldRule = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,

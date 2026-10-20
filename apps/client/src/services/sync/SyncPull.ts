@@ -275,23 +275,26 @@ export class SyncPull {
               data: { ...createUpdate.data, storyId: this.context.storyId() },
             } as CreateStoryUpdate)
           : createUpdate;
-      await handler.applyCreate(this.context.storyId()!, scoped);
+      await handler.applyCreate(scoped, this.context.storyId()!);
       return;
     }
 
-    await handler.applyUpdate(this.context.storyId()!, {
-      ...createUpdate,
-      type: 'update',
-      id: update.id!,
-      changes: {
-        // An arranged row's position follows its rank here; the create's copy is not written.
-        ...withoutDerivedPosition(update.entity, createUpdate.data ?? {}),
-        version:
-          typeof createUpdate.data?.version === 'number'
-            ? createUpdate.data.version
-            : (createUpdate.version ?? 0),
-      },
-    } as UpdateStoryUpdate);
+    await handler.applyUpdate(
+      {
+        ...createUpdate,
+        type: 'update',
+        id: update.id!,
+        changes: {
+          // An arranged row's position follows its rank here; the create's copy is not written.
+          ...withoutDerivedPosition(update.entity, createUpdate.data ?? {}),
+          version:
+            typeof createUpdate.data?.version === 'number'
+              ? createUpdate.data.version
+              : (createUpdate.version ?? 0),
+        },
+      } as UpdateStoryUpdate,
+      this.context.storyId()!,
+    );
   }
 
   /**
@@ -306,7 +309,7 @@ export class SyncPull {
     handler: ClientSyncEntityHandler,
     runner: AppDrizzleClient | AppDrizzleTransaction = this.context.db(),
   ): Promise<void> {
-    await handler.applyDelete(this.context.storyId(), update);
+    await handler.applyDelete(update, this.context.storyId());
     const table = getEntityTable(update.entity);
     if (!table || !update.id) return;
     const tombstone = toEntityColumns(update.entity, update.data ?? {});
@@ -358,11 +361,14 @@ export class SyncPull {
       ),
     );
     if (Object.keys(changes).length === 0) return;
-    await handler.applyUpdate(this.context.storyId(), {
-      ...update,
-      type: 'update',
-      changes,
-    } as UpdateStoryUpdate);
+    await handler.applyUpdate(
+      {
+        ...update,
+        type: 'update',
+        changes,
+      } as UpdateStoryUpdate,
+      this.context.storyId(),
+    );
   }
 
   /**
@@ -593,12 +599,15 @@ export class SyncPull {
           Object.entries(remoteValues).filter(([key]) => key !== 'version'),
         );
         if (Object.keys(placement).length > 0) {
-          await handler.applyUpdate(this.context.storyId()!, {
-            ...update,
-            type: 'update',
-            id: entityId,
-            changes: placement,
-          } as UpdateStoryUpdate);
+          await handler.applyUpdate(
+            {
+              ...update,
+              type: 'update',
+              id: entityId,
+              changes: placement,
+            } as UpdateStoryUpdate,
+            this.context.storyId()!,
+          );
         }
         await rebaseOnto(update.version);
         await refreshOpenConflict(remoteValues);
@@ -624,12 +633,15 @@ export class SyncPull {
     );
 
     if (mergeableEntries.length > 0) {
-      await handler.applyUpdate(this.context.storyId()!, {
-        ...update,
-        type: 'update',
-        id: entityId,
-        changes: Object.fromEntries(mergeableEntries),
-      } as UpdateStoryUpdate);
+      await handler.applyUpdate(
+        {
+          ...update,
+          type: 'update',
+          id: entityId,
+          changes: Object.fromEntries(mergeableEntries),
+        } as UpdateStoryUpdate,
+        this.context.storyId()!,
+      );
     }
 
     if (contestedFields.length === 0) {

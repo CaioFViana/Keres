@@ -28,7 +28,6 @@ interface Props {
   color: string;
   destinationMapId?: string | null;
   /** Kept for callers that still provide the resolved name; the selector already displays it. */
-  destinationName?: string | null;
   destinationUnavailable: boolean;
   destinationOptions: { label: string; value: string }[];
   canEdit: boolean;

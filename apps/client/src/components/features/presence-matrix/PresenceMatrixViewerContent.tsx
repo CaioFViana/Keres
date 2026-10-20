@@ -189,7 +189,7 @@ const PresenceMatrixViewerContent: React.FC<{
         ),
       }));
     if (request.kind === 'character')
-      rows = ids.map((id, index) => ({
+      rows = ids.map((id) => ({
         id,
         label: characters.find((x) => x.id === id)?.name ?? id,
         color: characterColorOf(id),

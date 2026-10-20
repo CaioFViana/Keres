@@ -40,10 +40,6 @@ interface ManuscriptReviewToolsProps {
     criticality: number;
   }) => Promise<void>;
   onDeleteThread: (commentId: string) => Promise<void>;
-  onUpdateThread: (
-    commentId: string,
-    changes: { commentText?: string; criticality?: number },
-  ) => Promise<void>;
   testID?: string;
 }
 
@@ -63,7 +59,6 @@ export function ManuscriptReviewTools({
   currentUserId,
   onSubmitThread,
   onDeleteThread,
-  onUpdateThread,
   testID,
 }: ManuscriptReviewToolsProps) {
   const { colors } = useTheme();
@@ -123,7 +118,6 @@ export function ManuscriptReviewTools({
           currentUserId={currentUserId}
           onSubmit={onSubmitThread}
           onDelete={onDeleteThread}
-          onUpdate={onUpdateThread}
         />
       )}
     </>

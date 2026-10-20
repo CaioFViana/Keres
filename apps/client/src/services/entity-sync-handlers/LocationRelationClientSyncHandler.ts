@@ -30,7 +30,7 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
@@ -52,7 +52,7 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     logger.debug(`Applied create for LocationRelation ${update.id} in story ${storyId}`);
   }
 
-  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
@@ -84,7 +84,7 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     logger.debug(`Applied update for LocationRelation ${update.id}`);
   }
 
-  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {

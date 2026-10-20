@@ -175,7 +175,7 @@ const ChapterDetailScreen = () => {
   }, [selectedStory?.id]);
 
   const handleChapterChange = useCallback(
-    async (changedStoryId: string, changedChapterId: string) => {
+    async (_changedStoryId: string, changedChapterId: string) => {
       if (changedChapterId === chapterId) {
         if (chapterServiceRef.current) {
           const updatedChapter = await chapterServiceRef.current.getById(chapterId);
@@ -192,7 +192,7 @@ const ChapterDetailScreen = () => {
   );
 
   const handleSceneChange = useCallback(
-    (changedStoryId: string, changedSceneId: string) => {
+    (changedStoryId: string, _changedSceneId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllScenesInStory();
       }
@@ -201,7 +201,7 @@ const ChapterDetailScreen = () => {
   );
 
   const handleLocationChange = useCallback(
-    (changedStoryId: string, changedLocationId: string) => {
+    (changedStoryId: string, _changedLocationId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllLocationsInStory();
       }

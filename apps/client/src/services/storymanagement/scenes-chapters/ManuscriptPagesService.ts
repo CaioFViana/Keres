@@ -54,7 +54,6 @@ const isSketchMediaKey = (mediaId: string) => mediaId.startsWith('sketch:');
  */
 export async function loadManuscriptPages(
   db: AppDrizzleClient,
-  userId: string,
   storyId: string,
   sceneIds?: ReadonlySet<string>,
   /** False for a format with no pictures: nothing is read or drawn, a page only learns whether its picture exists. */

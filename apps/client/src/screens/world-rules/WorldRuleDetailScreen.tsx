@@ -111,7 +111,7 @@ const WorldRuleDetailScreen = () => {
   }, [worldRuleId, setWorldRule, setLoading, setError, setHeaderTitle, navigation, copy, t]);
 
   const handleWorldRuleChange = useCallback(
-    async (changedStoryId: string, changedWorldRuleId: string) => {
+    async (_changedStoryId: string, changedWorldRuleId: string) => {
       if (changedWorldRuleId === worldRuleId) {
         if (worldRuleServiceRef.current) {
           const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
@@ -128,7 +128,7 @@ const WorldRuleDetailScreen = () => {
   );
 
   const handleTagRelationChange = useCallback(
-    async (changedStoryId: string, changedEntityId: string) => {
+    async (_changedStoryId: string, changedEntityId: string) => {
       if (changedEntityId === worldRuleId && worldRuleServiceRef.current) {
         const updatedWorldRule = await worldRuleServiceRef.current.getById(worldRuleId);
         if (updatedWorldRule && !updatedWorldRule.isDeleted) {

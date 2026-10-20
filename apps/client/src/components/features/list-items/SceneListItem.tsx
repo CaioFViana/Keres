@@ -49,7 +49,7 @@ const SceneListItem: React.FC<SceneListItemProps> = ({
     />
   );
 
-  const renderExpandedContent = (scn: SceneSelect) => (
+  const renderExpandedContent = () => (
     <View>
       {summaryText && <Text style={styles.summaryText}>{summaryText}</Text>}
       {notesText && <Text style={styles.notesText}>{notesText}</Text>}

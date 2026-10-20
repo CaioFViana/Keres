@@ -28,7 +28,7 @@ export class SketchClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
     const sketch = update.data as Sketch;
 
@@ -42,7 +42,7 @@ export class SketchClientSyncHandler implements ClientSyncEntityHandler {
     });
   }
 
-  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName || !update.id || !update.changes) return;
 
     const local = await this.db.query.sketches.findFirst({
@@ -66,7 +66,7 @@ export class SketchClientSyncHandler implements ClientSyncEntityHandler {
       .where(eq(schema.sketches.id, update.id));
   }
 
-  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
 
     await this.db

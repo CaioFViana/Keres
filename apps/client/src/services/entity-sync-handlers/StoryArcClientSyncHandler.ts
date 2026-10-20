@@ -23,7 +23,7 @@ export class StoryArcClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as StoryArc;
     await this.db.insert(schema.storyArcs).values({
@@ -36,7 +36,7 @@ export class StoryArcClientSyncHandler implements ClientSyncEntityHandler {
     });
   }
 
-  async applyUpdate(_storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id || !update.changes) return;
     const changes = update.changes as Partial<StoryArc>;
     await this.db
@@ -50,7 +50,7 @@ export class StoryArcClientSyncHandler implements ClientSyncEntityHandler {
       .where(eq(schema.storyArcs.id, update.id));
   }
 
-  async applyDelete(_storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName || !update.id) return;
     await this.db
       .update(schema.storyArcs)

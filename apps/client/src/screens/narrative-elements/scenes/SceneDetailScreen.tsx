@@ -87,15 +87,8 @@ const SceneDetailScreen = () => {
   } = useSceneDetailServices(selectedStory?.id);
   const [scene, setScene] = useState<SceneSelect | null>(null);
   const { canEdit } = useStoryRole(scene?.storyId);
-  const {
-    commentsByField,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    addComment,
-    deleteComment,
-    updateComment,
-  } = useEntityComments(scene?.storyId, 'Scene', sceneId);
+  const { commentsByField, canComment, isStoryOwner, currentUserId, addComment, deleteComment } =
+    useEntityComments(scene?.storyId, 'Scene', sceneId);
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [location, setLocation] = useState<Location | null>(null);
   const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined);
@@ -232,7 +225,6 @@ const SceneDetailScreen = () => {
         undefined,
         undefined,
         undefined,
-        undefined,
         { sceneId },
       );
       setChoicesForScene(choices);
@@ -255,7 +247,6 @@ const SceneDetailScreen = () => {
     try {
       const choices = await choiceServiceRef.current.getChoicesByStoryId(
         selectedStory.id,
-        undefined,
         undefined,
         undefined,
         undefined,
@@ -353,7 +344,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleItemChange = useCallback(
-    (changedStoryId: string, changedItemId: string) => {
+    (changedStoryId: string, _changedItemId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchAllItems();
       }
@@ -362,7 +353,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleItemJourneyChange = useCallback(
-    (changedStoryId: string, changedItemJourneyId: string) => {
+    (changedStoryId: string, _changedItemJourneyId: string) => {
       if (selectedStory?.id === changedStoryId) {
         fetchItemJourneysForScene();
       }
@@ -371,7 +362,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleSceneChange = useCallback(
-    async (changedStoryId: string, changedSceneId: string) => {
+    async (_changedStoryId: string, changedSceneId: string) => {
       if (changedSceneId === sceneId) {
         if (sceneServiceRef.current) {
           const updatedScene = await sceneServiceRef.current.getById(sceneId);
@@ -407,7 +398,7 @@ const SceneDetailScreen = () => {
   );
 
   const handleCharacterSceneChange = useCallback(
-    (changedStoryId: string, changedSceneId: string) => {
+    (_changedStoryId: string, changedSceneId: string) => {
       if (changedSceneId === sceneId) {
         fetchCharacterSceneRelations();
       }
@@ -571,7 +562,6 @@ const SceneDetailScreen = () => {
     isStoryOwner: isStoryOwner,
     currentUserId: currentUserId,
     onDeleteComment: deleteComment,
-    onUpdateComment: updateComment,
     commentsByField,
     addComment,
   });

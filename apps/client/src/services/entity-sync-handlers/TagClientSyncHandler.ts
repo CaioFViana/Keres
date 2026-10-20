@@ -21,7 +21,7 @@ export class TagClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate, storyId: string): Promise<void> {
     // ADDED storyId parameter
     if (update.entity !== this.entityName) return;
 
@@ -43,7 +43,7 @@ export class TagClientSyncHandler implements ClientSyncEntityHandler {
     logger.debug(`Applied create for Tag ${update.id} in story ${storyId}`);
   }
 
-  async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate, storyId: string): Promise<void> {
     // ADDED storyId parameter
     if (update.entity !== this.entityName) return;
 
@@ -67,7 +67,7 @@ export class TagClientSyncHandler implements ClientSyncEntityHandler {
     logger.debug(`Applied update for Tag ${update.id} in story ${storyId}`); // ADDED storyId to log
   }
 
-  async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate, storyId: string): Promise<void> {
     // ADDED storyId parameter
     if (update.entity !== this.entityName) return;
 

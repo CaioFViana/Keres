@@ -231,7 +231,7 @@ describe('ImageZoomViewer', () => {
 
   beforeEach(() => {
     jest.spyOn(Image, 'getSize').mockImplementation(((
-      uri: string,
+      _uri: string,
       success: (w: number, h: number) => void,
     ) => {
       success(800, 600);
@@ -265,8 +265,8 @@ describe('ImageZoomViewer', () => {
 
   it('falls back to the viewport when the size cannot be read', async () => {
     jest.spyOn(Image, 'getSize').mockImplementation(((
-      uri: string,
-      success,
+      _uri: string,
+      _success,
       failure?: () => void,
     ) => {
       failure?.();

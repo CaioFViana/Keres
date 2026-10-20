@@ -174,7 +174,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (evt, gestureState) => {
+        onPanResponderGrant: (_evt, gestureState) => {
           saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
             setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
             handleColorSelect(
@@ -184,7 +184,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
             );
           });
         },
-        onPanResponderMove: (evt, gestureState) => {
+        onPanResponderMove: (_evt, gestureState) => {
           if (pickerLayout.width > 0) {
             handleColorSelect(gestureState, pickerLayout, false);
           }
@@ -198,7 +198,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (evt, gestureState) => {
+        onPanResponderGrant: (_evt, gestureState) => {
           hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
             setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
             handleColorSelect(
@@ -208,7 +208,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
             );
           });
         },
-        onPanResponderMove: (evt, gestureState) => {
+        onPanResponderMove: (_evt, gestureState) => {
           if (hueLayout.width > 0) {
             handleColorSelect(gestureState, hueLayout, true);
           }

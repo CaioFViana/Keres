@@ -99,7 +99,7 @@ describe('ChoiceService listing', () => {
     await seedChoice('a', 'scene-a', 'scene-b');
     await seedChoice('b', 'scene-b', 'scene-c');
 
-    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', 'all', {
+    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', {
       sceneId: 'scene-b',
     });
 
@@ -122,7 +122,7 @@ describe('ChoiceService listing', () => {
     });
     await seedChoice('c', 'scene-gone', 'scene-a');
 
-    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', 'all', {
+    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', {
       chapterId: 'chapter-1',
     });
 
@@ -134,7 +134,7 @@ describe('ChoiceService listing', () => {
     await seedChoice('a', 'scene-a', 'scene-b');
     await seedChoice('b', 'scene-b', 'scene-c');
 
-    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', 'all', {
+    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', {
       sceneId: 'scene-a',
       chapterId: 'chapter-1',
     });
@@ -147,7 +147,7 @@ describe('ChoiceService listing', () => {
     await seedChoice('a', 'scene-a', 'scene-b');
     await seedChoice('b', 'scene-a', 'scene-c');
 
-    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', 'all', {
+    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', {
       nextSceneId: 'scene-c',
     });
 
@@ -163,7 +163,7 @@ describe('ChoiceService listing', () => {
     });
     await seedChoice('c', 'scene-a', 'scene-c', { text: 'Wait', notes: 'stall for time' });
 
-    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', 'all', {
+    const rows = await service.getChoicesByStoryId(TEST_STORY_ID, undefined, null, 'asc', {
       choiceSearch: 'gate',
     });
 

@@ -68,7 +68,7 @@ export function useOccurrenceLandingController(target: OccurrenceTarget | null) 
           return;
         }
         if (segHeight <= 0) return;
-        scroller.measureInWindow((viewX, viewY, viewWidth, viewHeight) => {
+        scroller.measureInWindow((_viewX, viewY, _viewWidth, viewHeight) => {
           if (generation !== generationRef.current) return;
           const delta = computeScrollAdjustment({
             segTop: segY,

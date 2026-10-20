@@ -393,8 +393,8 @@ export abstract class BaseSyncEntityHandler<
   ): Promise<void>;
 
   async update(
-    userId: string,
-    storyId: string,
+    _userId: string,
+    _storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<CreateType>,
     database: CompatibleDb = db,
@@ -477,8 +477,8 @@ export abstract class BaseSyncEntityHandler<
   }
 
   async delete(
-    userId: string,
-    storyId: string,
+    _userId: string,
+    _storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<CreateType>,
     database: CompatibleDb = db,

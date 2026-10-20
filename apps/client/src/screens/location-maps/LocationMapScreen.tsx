@@ -469,7 +469,6 @@ const LocationMapScreen = () => {
           connectCandidates={connectCandidates}
           canEdit={canEdit}
           destinationMapId={openedNode.destinationMapId}
-          destinationName={destinationName(openedNode.destinationMapId)}
           destinationUnavailable={
             !!openedNode.destinationMapId && !destinationName(openedNode.destinationMapId)
           }

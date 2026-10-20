@@ -113,7 +113,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
     async createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect> {
       await assertStoryIsWritable(db, tagData.storyId);
       let newTag = prepareNewEntityData<TagInsert>(tagData);
-      const favorite = await normalizeFavoriteCreate(db, newTag.storyId, 'Tag', newTag);
+      const favorite = await normalizeFavoriteCreate(db, newTag.storyId, newTag);
       newTag = favorite.data;
       const userIdToLog = await getUserIdForOperation(
         db,

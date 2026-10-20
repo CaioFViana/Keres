@@ -80,7 +80,7 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
       />
     );
 
-  const renderExpandedContent = (chap: ChapterSelect) => (
+  const renderExpandedContent = () => (
     <View>
       {summaryText && <Text style={styles.summaryText}>{summaryText}</Text>}
       {notesText && <Text style={styles.notesText}>{notesText}</Text>}

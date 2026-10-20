@@ -254,7 +254,7 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         downloadState: 'downloaded',
       } as Create<GalleryInsert>);
 
-      const favorite = await normalizeFavoriteCreate(db, newGallery.storyId, 'Gallery', newGallery);
+      const favorite = await normalizeFavoriteCreate(db, newGallery.storyId, newGallery);
       newGallery = favorite.data;
 
       const userIdToLog = await getUserIdForOperation(

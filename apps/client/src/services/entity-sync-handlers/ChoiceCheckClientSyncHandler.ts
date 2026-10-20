@@ -25,7 +25,7 @@ export class ChoiceCheckClientSyncHandler implements ClientSyncEntityHandler {
     return this.dbInstance;
   }
 
-  async applyCreate(entityId: string, update: CreateStoryUpdate): Promise<void> {
+  async applyCreate(update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {
@@ -45,7 +45,7 @@ export class ChoiceCheckClientSyncHandler implements ClientSyncEntityHandler {
     logger.debug(`Applied create for ChoiceCheck ${update.id}`);
   }
 
-  async applyUpdate(entityId: string, update: UpdateStoryUpdate): Promise<void> {
+  async applyUpdate(update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id || !update.changes) {
@@ -67,7 +67,7 @@ export class ChoiceCheckClientSyncHandler implements ClientSyncEntityHandler {
     logger.debug(`Applied update for ChoiceCheck ${update.id}`);
   }
 
-  async applyDelete(entityId: string, update: DeleteStoryUpdate): Promise<void> {
+  async applyDelete(update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
     if (!update.id) {

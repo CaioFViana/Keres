@@ -97,7 +97,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
   // operation changes has to be logged, or no other device ever learns of it.
 
   async create(
-    userId: string,
+    _userId: string,
     storyId: string,
     update: CreateStoryUpdate,
     database: CompatibleDb = db,

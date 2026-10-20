@@ -58,11 +58,11 @@ describe('CharacterRelationClientSyncHandler', () => {
     const handler = new CharacterRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('CharacterRelation', 'old', relation('old', LATE)),
+      STORY_ID,
     );
 
-    await handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'new', relation('new')));
+    await handler.applyCreate(createUpdate('CharacterRelation', 'new', relation('new')), STORY_ID);
 
     const rows = await database.db.select().from(schema.characterRelations).all();
     expect(rows).toEqual(
@@ -82,23 +82,23 @@ describe('CharacterRelationClientSyncHandler', () => {
     const handler = new CharacterRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('CharacterRelation', 'kept', relation('kept')),
+      STORY_ID,
     );
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('CharacterRelation', 'moving', {
         ...relation('moving'),
         character1Id: 'character-c',
         character2Id: 'character-d',
       }),
+      STORY_ID,
     );
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('CharacterRelation', 'moving', { relationType: 'rival', updatedAt: EARLY }),
+      STORY_ID,
     );
-    await handler.applyDelete(STORY_ID, deleteUpdate('CharacterRelation', 'moving'));
+    await handler.applyDelete(deleteUpdate('CharacterRelation', 'moving'), STORY_ID);
 
     expect(await handler.getById('kept')).toEqual(expect.objectContaining({ isDeleted: false }));
     expect(await handler.getById('moving')).toEqual(
@@ -110,7 +110,7 @@ describe('CharacterRelationClientSyncHandler', () => {
     const handler = new CharacterRelationClientSyncHandler();
 
     await expect(
-      handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'r-1', {})),
+      handler.applyCreate(createUpdate('CharacterRelation', 'r-1', {}), STORY_ID),
     ).rejects.toThrow(/Drizzle client \(db\).*not set/);
   });
 
@@ -118,9 +118,9 @@ describe('CharacterRelationClientSyncHandler', () => {
     const handler = new CharacterRelationClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'r-1', {}));
-    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'r-1', {}));
-    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'r-1'));
+    await handler.applyCreate(createUpdate('OutraEntidade', 'r-1', {}), STORY_ID);
+    await handler.applyUpdate(updateUpdate('OutraEntidade', 'r-1', {}), STORY_ID);
+    await handler.applyDelete(deleteUpdate('OutraEntidade', 'r-1'), STORY_ID);
 
     expect(await database.db.select().from(schema.characterRelations).all()).toEqual([]);
   });
@@ -129,22 +129,31 @@ describe('CharacterRelationClientSyncHandler', () => {
     const handler = new CharacterRelationClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, {
-      type: 'create',
-      entity: 'CharacterRelation',
-      data: {},
-    } as never);
-    await handler.applyUpdate(STORY_ID, {
-      type: 'update',
-      entity: 'CharacterRelation',
-      changes: {},
-    } as never);
-    await handler.applyUpdate(STORY_ID, {
-      type: 'update',
-      entity: 'CharacterRelation',
-      id: 'r-1',
-    } as never);
-    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'CharacterRelation' } as never);
+    await handler.applyCreate(
+      {
+        type: 'create',
+        entity: 'CharacterRelation',
+        data: {},
+      } as never,
+      STORY_ID,
+    );
+    await handler.applyUpdate(
+      {
+        type: 'update',
+        entity: 'CharacterRelation',
+        changes: {},
+      } as never,
+      STORY_ID,
+    );
+    await handler.applyUpdate(
+      {
+        type: 'update',
+        entity: 'CharacterRelation',
+        id: 'r-1',
+      } as never,
+      STORY_ID,
+    );
+    await handler.applyDelete({ type: 'delete', entity: 'CharacterRelation' } as never, STORY_ID);
 
     expect(await database.db.select().from(schema.characterRelations).all()).toEqual([]);
   });
@@ -154,12 +163,12 @@ describe('CharacterRelationClientSyncHandler', () => {
     handler.setDb(database.db);
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('CharacterRelation', 'tomb', {
         ...relation('tomb'),
         isDeleted: true,
         deletedAt: EARLY,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('tomb');
@@ -173,8 +182,8 @@ describe('CharacterRelationClientSyncHandler', () => {
 
     await expect(
       handler.applyUpdate(
-        STORY_ID,
         updateUpdate('CharacterRelation', 'nao-existe', { relationType: 'rival' }),
+        STORY_ID,
       ),
     ).resolves.toBeUndefined();
 
@@ -188,15 +197,15 @@ describe('CharacterRelationClientSyncHandler', () => {
   it('applies a duplicate-free update against the stored pair', async () => {
     const handler = new CharacterRelationClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'r-1', relation('r-1')));
+    await handler.applyCreate(createUpdate('CharacterRelation', 'r-1', relation('r-1')), STORY_ID);
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('CharacterRelation', 'r-1', {
         relationType: 'rival',
         createdAt: EARLY,
         deletedAt: EARLY,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('r-1');
@@ -233,12 +242,12 @@ describe('LocationRelationClientSyncHandler', () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'first', relation('first', 'connected_to', 'a', 'b')),
+      STORY_ID,
     );
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'second', relation('second', 'contains', 'parent', 'child')),
+      STORY_ID,
     );
 
     const rows = await database.db.select().from(schema.locationRelations).all();
@@ -249,7 +258,7 @@ describe('LocationRelationClientSyncHandler', () => {
     const handler = new LocationRelationClientSyncHandler();
 
     await expect(
-      handler.applyCreate(STORY_ID, createUpdate('LocationRelation', 'r-1', {})),
+      handler.applyCreate(createUpdate('LocationRelation', 'r-1', {}), STORY_ID),
     ).rejects.toThrow(/Drizzle client \(db\).*not set/);
   });
 
@@ -257,7 +266,7 @@ describe('LocationRelationClientSyncHandler', () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'r-1', {}));
+    await handler.applyCreate(createUpdate('OutraEntidade', 'r-1', {}), STORY_ID);
 
     expect(await database.db.select().from(schema.locationRelations).all()).toEqual([]);
   });
@@ -266,17 +275,23 @@ describe('LocationRelationClientSyncHandler', () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'r-1', {}));
-    await handler.applyUpdate(STORY_ID, {
-      type: 'update',
-      entity: 'LocationRelation',
-      changes: {},
-    } as never);
-    await handler.applyUpdate(STORY_ID, {
-      type: 'update',
-      entity: 'LocationRelation',
-      id: 'r-1',
-    } as never);
+    await handler.applyUpdate(updateUpdate('OutraEntidade', 'r-1', {}), STORY_ID);
+    await handler.applyUpdate(
+      {
+        type: 'update',
+        entity: 'LocationRelation',
+        changes: {},
+      } as never,
+      STORY_ID,
+    );
+    await handler.applyUpdate(
+      {
+        type: 'update',
+        entity: 'LocationRelation',
+        id: 'r-1',
+      } as never,
+      STORY_ID,
+    );
 
     expect(await database.db.select().from(schema.locationRelations).all()).toEqual([]);
   });
@@ -286,7 +301,7 @@ describe('LocationRelationClientSyncHandler', () => {
     handler.setDb(database.db);
     const { updatedAt: _dropped, ...bare } = relation('new', 'connected_to', 'b', 'a');
 
-    await handler.applyCreate(STORY_ID, createUpdate('LocationRelation', 'new', bare));
+    await handler.applyCreate(createUpdate('LocationRelation', 'new', bare), STORY_ID);
 
     expect((await handler.getById('new'))?.updatedAt).toBeInstanceOf(Date);
   });
@@ -296,12 +311,12 @@ describe('LocationRelationClientSyncHandler', () => {
     handler.setDb(database.db);
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'tomb', {
         ...relation('tomb', 'connected_to', 'a', 'b'),
         isDeleted: true,
         deletedAt: EARLY,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('tomb');
@@ -317,18 +332,21 @@ describe('LocationRelationClientSyncHandler', () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'r-1', relation('r-1', 'connected_to', 'a', 'b')),
+      STORY_ID,
     );
 
-    await handler.applyUpdate(STORY_ID, {
-      ...updateUpdate('LocationRelation', 'r-1', {
-        relationType: 'connected_to',
-        createdAt: EARLY,
-        deletedAt: EARLY,
-      }),
-      operationTime: LATE,
-    });
+    await handler.applyUpdate(
+      {
+        ...updateUpdate('LocationRelation', 'r-1', {
+          relationType: 'connected_to',
+          createdAt: EARLY,
+          deletedAt: EARLY,
+        }),
+        operationTime: LATE,
+      },
+      STORY_ID,
+    );
 
     const row = await handler.getById('r-1');
     expect(row?.updatedAt).toBeInstanceOf(Date);
@@ -341,16 +359,16 @@ describe('LocationRelationClientSyncHandler', () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'r-1', relation('r-1', 'connected_to', 'a', 'b')),
+      STORY_ID,
     );
     // The timestamp column only keeps whole seconds, so the comparison drops the
     // milliseconds - otherwise the test flakes whenever "now" has any.
     const before = Math.floor(Date.now() / 1000) * 1000;
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('LocationRelation', 'r-1', { relationType: 'connected_to' }),
+      STORY_ID,
     );
 
     const row = await handler.getById('r-1');
@@ -362,11 +380,11 @@ describe('LocationRelationClientSyncHandler', () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('LocationRelation', 'r-1', relation('r-1', 'connected_to', 'a', 'b')),
+      STORY_ID,
     );
 
-    await handler.applyDelete(STORY_ID, deleteUpdate('LocationRelation', 'r-1'));
+    await handler.applyDelete(deleteUpdate('LocationRelation', 'r-1'), STORY_ID);
 
     const row = await handler.getById('r-1');
     expect(row).toMatchObject({ isDeleted: true });
@@ -397,7 +415,6 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Gallery', 'gallery-link', {
         ...media('gallery-link'),
         mediaType: 'link',
@@ -405,6 +422,7 @@ describe('GalleryClientSyncHandler', () => {
         fileName: 'notes.example',
         sourceUrl: 'https://notes.example/lore',
       }),
+      STORY_ID,
     );
 
     expect(await handler.getById('gallery-link')).toMatchObject({
@@ -420,13 +438,13 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Gallery', 'gallery-1', {
         ...media('gallery-1'),
         localPath: 'file:///other-device.png',
         uploadState: 'pending',
         downloadState: 'downloaded',
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('gallery-1');
@@ -440,13 +458,13 @@ describe('GalleryClientSyncHandler', () => {
   it('invalidates downloaded bytes when a remote hash changes', async () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
+    await handler.applyCreate(createUpdate('Gallery', 'gallery-1', media('gallery-1')), STORY_ID);
     await database.db
       .update(schema.galleries)
       .set({ localPath: 'desktop-media:media/story/hash-one.png', downloadState: 'downloaded' })
       .where(eq(schema.galleries.id, 'gallery-1'));
 
-    await handler.applyUpdate(STORY_ID, updateUpdate('Gallery', 'gallery-1', { hash: 'hash-two' }));
+    await handler.applyUpdate(updateUpdate('Gallery', 'gallery-1', { hash: 'hash-two' }), STORY_ID);
 
     expect(await handler.getById('gallery-1')).toMatchObject({
       hash: 'hash-two',
@@ -460,7 +478,7 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
 
     await expect(
-      handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', {})),
+      handler.applyCreate(createUpdate('Gallery', 'gallery-1', {}), STORY_ID),
     ).rejects.toThrow(/Drizzle client \(db\).*not set/);
   });
 
@@ -468,9 +486,9 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'gallery-1', {}));
-    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'gallery-1', {}));
-    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'gallery-1'));
+    await handler.applyCreate(createUpdate('OutraEntidade', 'gallery-1', {}), STORY_ID);
+    await handler.applyUpdate(updateUpdate('OutraEntidade', 'gallery-1', {}), STORY_ID);
+    await handler.applyDelete(deleteUpdate('OutraEntidade', 'gallery-1'), STORY_ID);
 
     expect(await database.db.select().from(schema.galleries).all()).toEqual([]);
   });
@@ -479,14 +497,17 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
 
-    await handler.applyCreate(STORY_ID, { type: 'create', entity: 'Gallery', data: {} } as never);
-    await handler.applyUpdate(STORY_ID, {
-      type: 'update',
-      entity: 'Gallery',
-      changes: {},
-    } as never);
-    await handler.applyUpdate(STORY_ID, { type: 'update', entity: 'Gallery', id: 'g-1' } as never);
-    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Gallery' } as never);
+    await handler.applyCreate({ type: 'create', entity: 'Gallery', data: {} } as never, STORY_ID);
+    await handler.applyUpdate(
+      {
+        type: 'update',
+        entity: 'Gallery',
+        changes: {},
+      } as never,
+      STORY_ID,
+    );
+    await handler.applyUpdate({ type: 'update', entity: 'Gallery', id: 'g-1' } as never, STORY_ID);
+    await handler.applyDelete({ type: 'delete', entity: 'Gallery' } as never, STORY_ID);
 
     expect(await database.db.select().from(schema.galleries).all()).toEqual([]);
   });
@@ -496,12 +517,12 @@ describe('GalleryClientSyncHandler', () => {
     handler.setDb(database.db);
 
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Gallery', 'gallery-9', {
         ...media('gallery-9'),
         isDeleted: true,
         deletedAt: EARLY,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('gallery-9');
@@ -512,15 +533,15 @@ describe('GalleryClientSyncHandler', () => {
   it('revives the ISO dates a gallery change carries', async () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
+    await handler.applyCreate(createUpdate('Gallery', 'gallery-1', media('gallery-1')), STORY_ID);
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Gallery', 'gallery-1', {
         title: 'New title',
         createdAt: EARLY,
         deletedAt: EARLY,
       }),
+      STORY_ID,
     );
 
     const row = await handler.getById('gallery-1');
@@ -536,15 +557,15 @@ describe('GalleryClientSyncHandler', () => {
   it('keeps downloaded bytes when a change carries no new hash', async () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
+    await handler.applyCreate(createUpdate('Gallery', 'gallery-1', media('gallery-1')), STORY_ID);
     await database.db
       .update(schema.galleries)
       .set({ localPath: 'desktop-media:media/story/hash-one.png', downloadState: 'downloaded' })
       .where(eq(schema.galleries.id, 'gallery-1'));
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Gallery', 'gallery-1', { title: 'Retitled' }),
+      STORY_ID,
     );
 
     expect(await handler.getById('gallery-1')).toMatchObject({
@@ -558,13 +579,13 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('Gallery', 'gallery-link', { ...media('gallery-link'), mediaType: 'link' }),
+      STORY_ID,
     );
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Gallery', 'gallery-link', { hash: 'hash-two' }),
+      STORY_ID,
     );
 
     expect(await handler.getById('gallery-link')).toMatchObject({
@@ -578,7 +599,7 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
     const deleteLocal = jest.spyOn(mediaFileService, 'deleteLocal').mockImplementation(() => {});
-    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
+    await handler.applyCreate(createUpdate('Gallery', 'gallery-1', media('gallery-1')), STORY_ID);
     await database.db
       .update(schema.galleries)
       .set({
@@ -589,8 +610,8 @@ describe('GalleryClientSyncHandler', () => {
       .where(eq(schema.galleries.id, 'gallery-1'));
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Gallery', 'gallery-1', { hash: 'hash-two', version: 1 }),
+      STORY_ID,
     );
 
     // The old frame belongs to the old bytes: keeping it would show the wrong thumbnail with no
@@ -609,8 +630,8 @@ describe('GalleryClientSyncHandler', () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
     const deleteLocal = jest.spyOn(mediaFileService, 'deleteLocal').mockImplementation(() => {});
-    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
-    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-2', media('gallery-2')));
+    await handler.applyCreate(createUpdate('Gallery', 'gallery-1', media('gallery-1')), STORY_ID);
+    await handler.applyCreate(createUpdate('Gallery', 'gallery-2', media('gallery-2')), STORY_ID);
     await database.db
       .update(schema.galleries)
       .set({ localPath: 'shared.png', downloadState: 'downloaded' })
@@ -621,8 +642,8 @@ describe('GalleryClientSyncHandler', () => {
       .set({ localPath: 'shared.png', downloadState: 'downloaded' })
       .where(eq(schema.galleries.id, 'gallery-1'));
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('Gallery', 'gallery-1', { hash: 'hash-two', version: 1 }),
+      STORY_ID,
     );
 
     expect(deleteLocal).not.toHaveBeenCalledWith('shared.png');
@@ -631,9 +652,9 @@ describe('GalleryClientSyncHandler', () => {
   it('soft-deletes the gallery row, keeping it so the tombstone survives', async () => {
     const handler = new GalleryClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
+    await handler.applyCreate(createUpdate('Gallery', 'gallery-1', media('gallery-1')), STORY_ID);
 
-    await handler.applyDelete(STORY_ID, deleteUpdate('Gallery', 'gallery-1'));
+    await handler.applyDelete(deleteUpdate('Gallery', 'gallery-1'), STORY_ID);
 
     const row = await handler.getById('gallery-1');
     expect(row).toMatchObject({ isDeleted: true });
@@ -665,12 +686,11 @@ describe('StorySchemaFieldClientSyncHandler', () => {
     const handler = new StorySchemaFieldClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
-      STORY_ID,
       createUpdate('StorySchemaField', 'field-1', field('field-1')),
+      STORY_ID,
     );
 
     await handler.applyUpdate(
-      STORY_ID,
       updateUpdate('StorySchemaField', 'field-1', {
         name: 'Prestígio',
         key: 'prestige',

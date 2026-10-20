@@ -12,6 +12,7 @@
     "verbatimModuleSyntax": true,
     // `noImplicitOverride` is left out for now: 52 inherited methods would need the modifier.
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

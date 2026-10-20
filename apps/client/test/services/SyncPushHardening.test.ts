@@ -285,8 +285,8 @@ describe('conflict versions within one pull batch', () => {
     expect(merged).toEqual({ conflicted: false });
     // The remote version is not merged as a field: the rebase moves the row's version.
     expect(handler.applyUpdate).toHaveBeenCalledWith(
-      STORY_ID,
       expect.objectContaining({ changes: { name: 'Server name' } }),
+      STORY_ID,
     );
 
     const conflicted = await pull.reconcileRemoteUpdate(

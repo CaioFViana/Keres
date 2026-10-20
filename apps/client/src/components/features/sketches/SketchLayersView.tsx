@@ -53,6 +53,7 @@ const LayerNode = memo(function LayerNode({
       dragging && transform
         ? moving.update(layer.items.filter((item) => transform.items.has(item)))
         : [],
+    // Same dependency as `pictures` above: `transform.items` is the only part of `transform` read.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [layer.items, dragging, moving, transform?.items],
   );

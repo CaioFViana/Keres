@@ -14,6 +14,7 @@
     // classes of carelessness: forgotten variable/import, `case` falling through to the next, and
     // a method overriding the base class's without saying so.
     "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "skipLibCheck": true,

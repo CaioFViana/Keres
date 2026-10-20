@@ -54,7 +54,7 @@ describe('AdminUserApiService', () => {
   });
 
   it('creates a user with the form payload as the body', async () => {
-    const input = { username: 'ana', password: 'segredo123' } as any;
+    const input = { username: 'ana', password: 'segredo123' } as never;
 
     await AdminUserApiService.create(input);
 
@@ -62,7 +62,7 @@ describe('AdminUserApiService', () => {
   });
 
   it('updates a user with PUT, not POST', async () => {
-    await AdminUserApiService.update('user-1', { isAdmin: true } as any);
+    await AdminUserApiService.update('user-1', { isAdmin: true } as never);
 
     expect(mocks.put).toHaveBeenCalledWith('/admin/users/user-1', { isAdmin: true });
     expect(mocks.post).not.toHaveBeenCalled();
@@ -178,13 +178,13 @@ describe('TierApiService', () => {
     ['get', () => TierApiService.get('tier-1'), 'get', ['/admin/tiers/tier-1']],
     [
       'create',
-      () => TierApiService.create({ name: 'Pro' } as any),
+      () => TierApiService.create({ name: 'Pro' } as never),
       'post',
       ['/admin/tiers', { name: 'Pro' }],
     ],
     [
       'update',
-      () => TierApiService.update('tier-1', { name: 'Pro+' } as any),
+      () => TierApiService.update('tier-1', { name: 'Pro+' } as never),
       'put',
       ['/admin/tiers/tier-1', { name: 'Pro+' }],
     ],
@@ -209,7 +209,7 @@ describe('RegistrationSettingsApiService', () => {
   });
 
   it('updates with PUT, since the resource is a singleton', async () => {
-    await RegistrationSettingsApiService.update({ allowRegistration: true } as any);
+    await RegistrationSettingsApiService.update({ allowRegistration: true } as never);
 
     expect(mocks.put).toHaveBeenCalledWith('/admin/registration-settings', {
       allowRegistration: true,

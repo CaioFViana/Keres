@@ -66,7 +66,7 @@ export function renderStoryMapSvg(layout: StoryGraphLayout, options: StoryMapSvg
 
   const body = [
     `<rect x="0" y="0" width="${canvasWidth}" height="${totalHeight}" fill="${options.colors.background}"/>`,
-    renderHeader(options, canvasWidth, legendRows),
+    renderHeader(options, legendRows),
     `<g transform="translate(0 ${round(headerHeight)})">`,
     // Edges first: passing under the nodes keeps a curve from striking through the scene's text.
     ...layout.edges.map((edge) => renderEdge(edge)),
@@ -149,11 +149,7 @@ function wrapLegendRows(items: LegendItem[], availableWidth: number): LegendItem
   return rows;
 }
 
-function renderHeader(
-  options: StoryMapSvgOptions,
-  canvasWidth: number,
-  legendRows: LegendItem[][],
-): string {
+function renderHeader(options: StoryMapSvgOptions, legendRows: LegendItem[][]): string {
   const parts = renderMapTitle(options.title, options.subtitle, options.colors);
 
   legendRows.forEach((row, rowIndex) => {

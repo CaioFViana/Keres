@@ -16,8 +16,8 @@
     // is left in the bundle. Complements `@typescript-eslint/consistent-type-imports`, which
     // already asks for the same thing line by line.
     "verbatimModuleSyntax": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {

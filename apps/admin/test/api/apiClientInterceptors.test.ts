@@ -28,7 +28,7 @@ function respondWith(response: { status: number; data?: unknown }) {
       statusText: 'OK',
       headers: {},
       config,
-    } as any;
+    } as never;
   };
 }
 

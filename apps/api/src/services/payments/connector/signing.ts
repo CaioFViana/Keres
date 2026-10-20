@@ -13,7 +13,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
  * a request into an answer. What it does not buy is confidentiality: use TLS for that. The checks run in an order that
  * keeps unauthenticated callers from costing anything: shape, then time, then signature, and only then the nonce.
  *
- * The scheme is documented in `docs/payment_connectors.md`; a connector implements it on its own, in any language.
+ * The scheme is documented in `docs/compliance/payment_connectors.md`; a connector implements it on its own, in any language.
  */
 
 export const SIGNATURE_SCHEME = 'KERES-CONNECT-V1';

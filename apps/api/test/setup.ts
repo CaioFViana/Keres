@@ -35,12 +35,12 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 process.env.MEDIA_STORAGE_PATH ??= path.join(os.tmpdir(), 'keres-media-test');
 
-// The keys shared with a payment connector (see docs/payment_connectors.md). The tests that play the connector sign
+// The keys shared with a payment connector (see docs/compliance/payment_connectors.md). The tests that play the connector sign
 // with these; one per direction, as the server requires.
 process.env.PAYMENT_EVENTS_SECRET ??= 'test-events-secret-test-events-secret-000';
 process.env.PAYMENT_CONNECTOR_SECRET ??= 'test-connector-secret-test-connector-0001';
 
-// The keys shared with the age-verification service (see docs/age_verification.md). Same rule: one per direction.
+// The keys shared with the age-verification service (see docs/compliance/age_verification.md). Same rule: one per direction.
 process.env.AGE_VERIFICATION_EVENTS_SECRET ??= 'test-age-events-secret-test-age-events-0000';
 process.env.AGE_VERIFICATION_SECRET ??= 'test-age-secret-test-age-secret-000000000001';
 

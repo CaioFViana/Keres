@@ -109,7 +109,7 @@ I am not happy with this release, but at the same time the scope creep destroyed
 - Portuguese says "quadro" for "board" (Decided would be better to translate it after all). Counts read "Stories: N" with no plural to get wrong (one/plural system was failing on me).
 - Desktop locks to one instance and shuts down cleanly. Backups, quieter logs, resilience, as closing signals from OS are being respected now.
 - Server backups: the last 30 daily copies plus the first one of each month for 3 months, nothing older than about 3 months.
-- The privacy policy (now version 3) and the data rules (`docs/data-governance.md`) say plainly what is kept and for how long: backups, sign-in records with IP, and the admin log without IP.
+- The privacy policy (now version 3) and the data rules (`docs/compliance/data-governance.md`) say plainly what is kept and for how long: backups, sign-in records with IP, and the admin log without IP.
 - **Smaller servers.** A story you delete is now erased from the server for good 30 days later (you can still restore it before that), and so are the stories of an account that was erased. Stories already downloaded on other devices stay there, as local copies.
 - The sync history squashes harder where it weighs most: edits to scenes, sketches, boards, maps and songs older than 2 days collapse into one (the newest 3 stay). If a device stays offline for days and edits the same thing, it may now see a conflict to resolve that it would not have seen before.
 - Restoring a server backup can no longer bring back an account you deleted: the server keeps a tiny separate list (account ids and dates only) and deletes those accounts again at start.
@@ -134,5 +134,5 @@ I am not happy with this release, but at the same time the scope creep destroyed
 
 - (Dev) Theme styles build once per palette, forms and lists share their code, soft-delete is one helper, PDFs build byte-identical from split files costing way less system resources to build.
 - (Dev) The Android app finally has its real package name (`me.keres.client`), everywhere. Consequences listed above.
-- (Dev) Files tidied by topic in the app, shared code, API and admin, with a guide on where new ones go (`docs/file_structure.md`). Imports use short paths now, and a test keeps it that way.
+- (Dev) Files tidied by topic in the app, shared code, API and admin, with a guide on where new ones go (`docs/structure/file_structure.md`). Imports use short paths now, and a test keeps it that way.
 - (Dev) Starting the app no longer leaves a changed `registry.ts` behind. Mainly development issue. Biome is restricted now, as it doesnt affect json and code generated files.

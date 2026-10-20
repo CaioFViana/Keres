@@ -9,7 +9,7 @@ record it with scenes is to make it a chapter, which forces it into the numbered
 of the timeline sees "Chapter 4" where the writer meant "an era". The Event is the same container
 with the numbering removed and a chronology of its own.
 
-This is a §2 item from [`FEATURE_LANDSCAPE.md`](../FEATURE_LANDSCAPE.md): a constraint Keres imposes
+This is a §2 item from [`FEATURE_LANDSCAPE.md`](../product/FEATURE_LANDSCAPE.md): a constraint Keres imposes
 on the writer rather than a feature it lacks. The story's shape is currently **derived from scenes**,
 and every scene must belong to a numbered chapter, so anything a writer records with scenes acquires
 a position in narrative time whether it has one or not.
@@ -350,7 +350,7 @@ inside the eras still checked, and a report that comes back rather than throwing
 
 Two things remain untested rather than unknown, and both are screens: the narrative timeline is
 empty for such a story (correct - there is no spine to draw), and the container list shows only
-events. Neither has a suite yet, which is Phase 5 of `docs/TESTING_ROADMAP.md`.
+events. Neither has a suite yet (screens are the lowest testing priority; see `docs/structure/testing.md`).
 
 ---
 
@@ -407,8 +407,8 @@ refused — which is why they can ship at protocol 1 and the nullable column can
 
 ## 11. What the testing roadmap requires first
 
-This feature lands on the least-tested critical machinery in the repository. From
-[`docs/TESTING_ROADMAP.md`](../TESTING_ROADMAP.md):
+This feature lands on the least-tested critical machinery in the repository. From the testing roadmap of September 2026 (since replaced by
+[`docs/structure/testing.md`](../structure/testing.md)):
 
 | Roadmap item | Why it becomes blocking |
 | --- | --- |

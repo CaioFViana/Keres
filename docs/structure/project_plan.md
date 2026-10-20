@@ -4,7 +4,7 @@ An offline-first organizer for stories (solo or collaborative), with intelligent
 
 The backend uses **Elysia (Bun)** + **Zod** for routes/validation, **Drizzle ORM** for persistence (**PostgreSQL** on the server), **ULID** as identifiers. The frontend is **React Native + Expo** (native mobile and web through React Native Web) with support for a local SQLite (Drizzle + expo-sqlite) in an offline-first model with a synchronization engine of its own. The frontend's web build is what the desktop app (**Electron**) packages for Windows/Mac/Linux. A separate administration panel (React + Vite) is served by the API itself.
 
-> See `docs/file_structure.md` for the complete, up-to-date directory mapping - the structure below is a high-level summary.
+> See `docs/structure/file_structure.md` for the complete, up-to-date directory mapping - the structure below is a high-level summary.
 
 ---
 
@@ -67,7 +67,7 @@ axes - editorial, temporal and causal - are described in [`narrative-structure.m
 The Story is the universe; an Arc is one work inside it (a book, a film, an issue, a season, a campaign module).
 Each Arc has a `medium` (`generic`, `screenplay`, `comic`, `storyboard`, `campaign`: an output profile, never a data rule),
 an optional vocabulary, author, cover (`coverGalleryId`) and page format, and can be published on its own. Every story has a default
-Arc. Rationale and leftovers: [`finished_planning/arc_medium_plan.md`](finished_planning/arc_medium_plan.md).
+Arc. Rationale and leftovers: [`decisions/arc_medium_plan.md`](../decisions/arc_medium_plan.md).
 
 ### Calendars (`StoryCalendar`)
 A story-owned custom calendar (months, eras, seasons, moons, negative years, time of day). Scenes and containers
@@ -95,7 +95,7 @@ independently navigable destination. Deliberately, Plots do not get tags, favour
 suggestions or custom attributes.
 
 The history of the decisions and the implementation's acceptance criteria are preserved in
-[`finished_planning/PLOT_IMPLEMENTATION_PLAN.md`](finished_planning/PLOT_IMPLEMENTATION_PLAN.md).
+[`decisions/PLOT_IMPLEMENTATION_PLAN.md`](../decisions/PLOT_IMPLEMENTATION_PLAN.md).
 
 ### Locations
 General information about a place.
@@ -107,7 +107,7 @@ General information about a place.
 - `Board`: a freeform spatial canvas (entity pins, free notes, arrows that are not story relations), saved as one JSON document.
 - `LocationMap`: a map over gallery image bases with positioned Location points, map-only markers and point-to-map navigation.
 - `Sketch`: a drawing (strokes and fills, no persisted bitmap) saved as one compact document and snapshotted to the Gallery
-  on demand. Format and decisions: [`finished_planning/sketch_canvas_plan.md`](finished_planning/sketch_canvas_plan.md).
+  on demand. Format and decisions: [`decisions/sketch_canvas_plan.md`](../decisions/sketch_canvas_plan.md).
 
 ### Scene Pages (`ScenePage`)
 An ordered page of a comic or storyboard scene: exactly one of a `Sketch` or a Gallery image, plus the page's text and a
@@ -116,7 +116,7 @@ An ordered page of a comic or storyboard scene: exactly one of a `Sketch` or a G
 ### Songs and Scene Music (`Song`, `SceneMusic`)
 `Song` is a lead sheet (ChordPro subset lyrics, optional translation, melody in a closed ABC subset, key/tempo/meter).
 `SceneMusic` links a scene to exactly one of a `Song` or a Gallery item (audio or link), with a `role` (`in-world` or `score`), a cue
-and the sung `sections`. See [`finished_planning/ALBUM_MUSICAL_PLAN.md`](finished_planning/ALBUM_MUSICAL_PLAN.md).
+and the sung `sections`. See [`decisions/ALBUM_MUSICAL_PLAN.md`](../decisions/ALBUM_MUSICAL_PLAN.md).
 
 ### Relational tables
 
@@ -160,7 +160,7 @@ path as a Route; it never persists simulated item or trigger state.
 ### World Rules / World Pieces
 `WorldRule` is the persisted entity behind the **World Pieces** feature: a `section` (rules, fauna, flora, mythology,
 people, knowledge and others) plus creator-owned types scoped to the section. Existing rules live in the **Rules** section
-([`finished_planning/WORLD_PIECES_PLAN.md`](finished_planning/WORLD_PIECES_PLAN.md)). For example, who can do what? What is the balance of power?
+([`decisions/WORLD_PIECES_PLAN.md`](../decisions/WORLD_PIECES_PLAN.md)). For example, who can do what? What is the balance of power?
 
 E.g. Mana is required to cast spells.
 E.g. With elemental crystals, we can power machines to cast the same spells of that element.
@@ -353,7 +353,7 @@ graph LR
 
 ## 🔗 Architecture flow
 
-- **Other services:** `apps/payments` is the separate payment connector service, and `apps/verification` the separate age-verification service; both talk to the API through signed contracts ([`payment_connectors.md`](payment_connectors.md), [`age_verification.md`](age_verification.md)). `apps/admin` serves the admin panel and the public showcase; `apps/site` is the landing page.
+- **Other services:** `apps/payments` is the separate payment connector service, and `apps/verification` the separate age-verification service; both talk to the API through signed contracts ([`payment_connectors.md`](../compliance/payment_connectors.md), [`age_verification.md`](../compliance/age_verification.md)). `apps/admin` serves the admin panel and the public showcase; `apps/site` is the landing page.
 - **API** (`apps/api`)
   - Elysia (Bun) exposes REST/JSON routes.
   - Zod validates inputs/outputs.
@@ -363,7 +363,7 @@ graph LR
 
 ### Conflict resolution strategy
 
-The current behaviour is in `docs/conflict_resolution_client_strategy.md`. In summary:
+The current behaviour is in `docs/structure/conflict_resolution_client_strategy.md`. In summary:
 
 *   **OCC by the entity's `version`.** An update requires `changes.version` (the base the client read). The comparison is for equality, not `<`. Omitting the base is **not** last-write-wins: the push 422s.
 *   **Different fields of the same entity** are merged automatically. The same field, with different values, becomes a conflict for the user (`SyncConflictService`).

@@ -23,7 +23,7 @@ export default defineConfig({
         'index.ts',
       ],
       // A floor, not a target: pinned slightly below the measured value to absorb fluctuation, and to rise
-      // along with coverage. See the ratchet rule in docs/TESTING_ROADMAP.md §12.
+      // along with coverage. See the ratchet rule in docs/structure/testing.md.
       thresholds: coverageThresholds.shared,
     },
   },

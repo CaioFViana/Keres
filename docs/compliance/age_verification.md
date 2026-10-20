@@ -1,7 +1,6 @@
 # Age verification
 
-An account on a Keres server is **18+ and verified**. This is a deliberate decision (section G of
-`LEGAL_IMPLEMENTATION_PLAN.md`): with no account of a minor there is no parental link or supervision (Lei 15.211/2025,
+An account on a Keres server is **18+ and verified**. This is a deliberate decision: with no account of a minor there is no parental link or supervision (Lei 15.211/2025,
 Art. 24) and the data model does not change. Declaring "I am 18" does not produce that effect - the barrier has to be real.
 
 Offline use of the app is free: no gate, no document, nothing leaves the device. The gate is the **account on a server**.
@@ -13,7 +12,7 @@ server never sees a document, a photo, a date of birth or a document number.
 
 The contract is `packages/shared/age-verification/AgeVerificationConnector.ts` (types) plus the wire schemas in
 `packages/shared/schemas/accounts/AgeVerificationSchemas.ts`. A service imports nothing of Keres. It has the same shape as the
-payment connector (`docs/payment_connectors.md`) - and the same care, with one deliberate difference, below.
+payment connector (`docs/compliance/payment_connectors.md`) - and the same care, with one deliberate difference, below.
 
 ## Modes (`AGE_VERIFICATION_MODE`)
 
@@ -157,7 +156,7 @@ protocol above. Operated by the operator of the server it serves.
   back-off until Keres answers 2xx; events carry no personal data).
 - **Expiry**: an undecided sending older than the configured days is destroyed and reported `verification.expired`; a
   `cancel` from Keres destroys it at once.
-- **Residual risk, assumed in writing** (`docs/data-governance.md`): a manual look at an image does not inspect a hologram
+- **Residual risk, assumed in writing** (`docs/compliance/data-governance.md`): a manual look at an image does not inspect a hologram
   or a chip; it is a proportionate measure, not equivalent to presential verification.
 
 ## Trying it locally

@@ -1,7 +1,7 @@
 /**
  * What Keres asks of an age-verification service, and what such a service tells Keres.
  *
- * An account on a Keres server is 18+ and verified (see `docs/age_verification.md`). The verification is not done by
+ * An account on a Keres server is 18+ and verified (see `docs/compliance/age_verification.md`). The verification is not done by
  * the server: it is a **separate service** run by the operator of that server (the official one by the Keres team, a
  * third-party server by whoever hosts it). The person sends an identity document and a live photo **to that service**,
  * a human reviewer there checks them and decides, and the service tells the server only the signed result. The
@@ -28,7 +28,7 @@ export const VERIFIER_CAPABILITIES = ['status', 'cancel'] as const;
 export type VerifierCapability = (typeof VERIFIER_CAPABILITIES)[number];
 
 /**
- * How the server treats age (see `docs/age_verification.md`). `required`: every new account is created pending and only
+ * How the server treats age (see `docs/compliance/age_verification.md`). `required`: every new account is created pending and only
  * activates when the external service approves it. `manual`: no external service; new accounts are active at once and
  * start not verified, an administrator marks or revokes the verified flag by hand, and the adults-only area can be on.
  * The legacy value `disabled` is read as `manual` (normalised in `apps/api/src/config/env.ts`).

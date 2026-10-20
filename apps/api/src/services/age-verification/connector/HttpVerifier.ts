@@ -43,7 +43,7 @@ const isLoopbackHost = (hostname: string) =>
 
 /**
  * The age-verification service as the server uses it: a separate service, spoken to over HTTP, in the contract of
- * `docs/age_verification.md`. Nothing of it is loaded into this process - what it can do is what it says in
+ * `docs/compliance/age_verification.md`. Nothing of it is loaded into this process - what it can do is what it says in
  * `/v1/info`, and each optional call exists only when the service said it implements it.
  *
  * Everything it returns has been signed by the service and validated against the contract before it is used; what is

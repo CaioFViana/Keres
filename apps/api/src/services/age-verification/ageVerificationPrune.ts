@@ -28,7 +28,7 @@ import { auditService } from '@/services/compliance/AuditService';
 import { type AgeVerificationRow, standingSince } from './ageVerificationStatus';
 
 /**
- * The housekeeping of age verification (see `docs/age_verification.md`): accounts that nobody completed, and the refusals
+ * The housekeeping of age verification (see `docs/compliance/age_verification.md`): accounts that nobody completed, and the refusals
  * of accounts that are in. Nothing here is scheduled - the caller decides when it runs.
  */
 

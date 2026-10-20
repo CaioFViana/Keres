@@ -286,18 +286,18 @@ planning documents, not a replacement for dedicated cartography or campaign-publ
 ## 10. 2026-10-20 capability record
 
 The 1.10 release (patch notes: `PATCH_NOTES_1.10.md`) widened the product beyond the September audit. What is
-implemented, and where it is recorded in detail (`docs/feature_inventory.md`):
+implemented, and where it is recorded in detail (`docs/product/feature_inventory.md`):
 
 - **Arcs as works with a medium.** Each Arc has a medium, vocabulary, author, cover and page format and can
-  be published alone under a plan ceiling (`maxPublishedArcs`). Plan: `finished_planning/arc_medium_plan.md`.
+  be published alone under a plan ceiling (`maxPublishedArcs`). Plan: `decisions/arc_medium_plan.md`.
 - **Screenplay, comics and storyboards.** Fountain text with import, an industry-layout PDF and a stated page
   estimate; scene pages (a Sketch or a Gallery image plus text) compiled into HTML, EPUB, DOCX, PDF and the online
   reader. Pages are roughs, not final-quality art.
 - **Sketches.** A drawing board without a persisted bitmap (strokes and fills, layers, geometric eraser,
-  bucket). Plan: `finished_planning/sketch_canvas_plan.md`.
+  bucket). Plan: `decisions/sketch_canvas_plan.md`.
 - **Songs and music.** Songs are an entity (lyrics with chords, translation, a melody, key/tempo/meter) with a
   synthesized hummed preview, MIDI/ABC/ChordPro export and a music cue sheet; a scene carries its own music.
-  Plan: `finished_planning/ALBUM_MUSICAL_PLAN.md`.
+  Plan: `decisions/ALBUM_MUSICAL_PLAN.md`.
 - **Manuscript and publishing.** Compilation to DOCX, EPUB, PDF, Markdown, text and HTML on the device and on the
   server, a gamebook form for branching stories, an online reader and versioned per-work publication to the
   showcase.

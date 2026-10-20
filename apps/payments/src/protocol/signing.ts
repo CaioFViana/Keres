@@ -5,7 +5,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
  * `apps/api/src/services/payments/connector/signing.ts` implements for the server side. Kept as
  * its own copy on purpose: this service ships alone in its own image and cannot import the
  * server's code. The two copies are held together by the conformance tests (`test/signing.test.ts`),
- * which pin the canonical strings, and by `docs/payment_connectors.md`, which is the contract.
+ * which pin the canonical strings, and by `docs/compliance/payment_connectors.md`, which is the contract.
  *
  * Summary: every request Keres sends is HMAC-SHA256 over
  * `KERES-CONNECT-V1\nkeres-to-connector\nMETHOD\n/path?query\ntimestamp\nnonce\nbody-sha256`,

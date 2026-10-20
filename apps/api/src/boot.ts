@@ -102,7 +102,7 @@ export async function warnIfPaymentsHaveNoDefaultPlan(): Promise<boolean> {
 
 /**
  * Says, at every start, how this server treats age. In `manual` no external service checks anyone: the server says so,
- * since accounts start unverified and only an administrator can mark them (see "Modes" in docs/age_verification.md).
+ * since accounts start unverified and only an administrator can mark them (see "Modes" in docs/compliance/age_verification.md).
  */
 export function announceAgeVerification(): void {
   if (isAgeVerificationRequired()) {

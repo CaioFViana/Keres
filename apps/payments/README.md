@@ -1,7 +1,7 @@
 # Keres payments microservice
 
 The official payment service for keres.me. It speaks the connector contract
-(`docs/payment_connectors.md`) to a Keres server on one side, and PayPal,
+(`docs/compliance/payment_connectors.md`) to a Keres server on one side, and PayPal,
 Google Pay (through Stripe Checkout) and Google Play Billing on the other.
 
 It ships **alone**: its own image (`apps/payments/Dockerfile`), its own port,

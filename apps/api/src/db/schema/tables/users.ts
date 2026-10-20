@@ -6,7 +6,7 @@ import { storyPermissions } from './storyPermissions';
 import { tiers } from './tiers';
 
 /**
- * Where an account stands in age verification (see `docs/age_verification.md`). `active` is every normal account -
+ * Where an account stands in age verification (see `docs/compliance/age_verification.md`). `active` is every normal account -
  * and every account where verification is off. `pending` waits for the service's decision on its first sending;
  * `rejected` is an account whose last sending was refused or expired (it may send again, or be closed).
  */

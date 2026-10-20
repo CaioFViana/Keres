@@ -10,8 +10,8 @@ export const APP_RELEASE = {
   version: '1.10.1',
   /**
    * The release's line, shown verbatim on the credits screen. English, never translated - it is
-   * the release's voice, quoted from `docs/fluff_release_names.md`. Update it by hand with every
-   * release (see `docs/release_process.md`).
+   * the release's voice, quoted from `docs/extras/fluff_release_names.md`. Update it by hand with every
+   * release (see `docs/procedures/release_process.md`).
    */
   phrase:
     'The first woman to exist. From her grand curiosity a never ending curse, as the world wont go back to what it was ever again.',

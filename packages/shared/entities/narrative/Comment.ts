@@ -7,7 +7,7 @@ import type { CommentEntityType } from '../../metadata/CommentEntityType';
  * `contentSnapshot` freezes the field's value at the moment of the comment, so the comment still
  * makes sense after the field is edited; `excerptText` is the relevant passage inside that
  * snapshot, typed/pasted by the author (not a real text selection - see
- * `docs/project_plan.md`/the implementation plan).
+ * `docs/structure/project_plan.md`/the implementation plan).
  */
 export interface Comment {
   id: string;

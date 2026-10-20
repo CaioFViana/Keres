@@ -62,7 +62,7 @@ const PUBLIC_INFO_RETURNING = {
 
 /**
  * Only an active account is ever shown to another person: a pending or refused one is found by nobody but its own
- * sign-in (see `docs/age_verification.md`). Every lookup of another account filters on this, so it is written once.
+ * sign-in (see `docs/compliance/age_verification.md`). Every lookup of another account filters on this, so it is written once.
  */
 export const ACTIVE_ACCOUNT = eq(users.verificationStatus, 'active');
 

@@ -72,4 +72,4 @@ Exceptions to the pattern:
 
 ## Help
 
-The **Help** entry is available in the main menu and in a story's menu. The index is searchable and every mapped screen shows a contextual help icon that opens the corresponding page. Guided tours (`docs/guided_tours.md`) anchor to screen elements.
+The **Help** entry is available in the main menu and in a story's menu. The index is searchable and every mapped screen shows a contextual help icon that opens the corresponding page. Guided tours (`docs/procedures/guided_tours.md`) anchor to screen elements.

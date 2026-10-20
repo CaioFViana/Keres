@@ -1,7 +1,7 @@
 import { AppError } from '@/utils/errors';
 
 /**
- * What a session of a pending account may still reach (see `docs/age_verification.md`, "Registration in required
+ * What a session of a pending account may still reach (see `docs/compliance/age_verification.md`, "Registration in required
  * mode"). A pending account is useless until the service approves it: its session carries the `pending` claim, and the
  * request pipeline refuses that claim everywhere except on this list. The check reads only the token - no database
  * hit per request - so the list is the whole rule.

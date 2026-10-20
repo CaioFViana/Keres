@@ -2,7 +2,7 @@
 
 For the people who review documents for a server's verification service. Read it
 before your first item. The design behind the service is in
-`docs/age_verification.md`; the procedure below is the reviewer's script, as a
+`docs/compliance/age_verification.md`; the procedure below is the reviewer's script, as a
 checklist.
 
 ## What you decide

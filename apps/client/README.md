@@ -137,7 +137,7 @@ There is currently no automated iOS release build: it requires a final bundle id
 
 The documents below are currently maintained in Portuguese:
 
-- [Screen flow](../../docs/screen_flow.md)
-- [Project structure](../../docs/file_structure.md)
-- [Sync and conflict resolution](../../docs/conflict_resolution_client_strategy.md)
-- [Choice mechanics](../../docs/choice_mechanics.md)
+- [Screen flow](../../docs/structure/screen_flow.md)
+- [Project structure](../../docs/structure/file_structure.md)
+- [Sync and conflict resolution](../../docs/structure/conflict_resolution_client_strategy.md)
+- [Choice mechanics](../../docs/structure/choice_mechanics.md)

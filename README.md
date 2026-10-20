@@ -7,7 +7,7 @@
   <p><strong>English</strong> · <a href="README.pt.md">Português</a></p>
 
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
-  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-54-000020?logo=expo" alt="Expo 54" /></a>
+  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-57-000020?logo=expo" alt="Expo 57" /></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 16" /></a>
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&amp;logoColor=white" alt="Docker ready" /></a>
 </div>
@@ -364,14 +364,34 @@ The `.github/workflows/pages.yml` workflow builds and publishes on every push to
 
 ## Technical documentation
 
-The documents below are currently maintained in Portuguese:
+New here? Start with [CONTRIBUTING.md](CONTRIBUTING.md). The documentation lives in `docs/`, in folders by purpose:
 
-- [Monorepo structure and file conventions (where a new file goes)](docs/file_structure.md)
-- [Project plan and architecture](docs/project_plan.md)
-- [Screen flow](docs/screen_flow.md)
-- [Choice mechanics](docs/choice_mechanics.md)
-- [Stat system and radar chart](docs/stat_system.md)
-- [Sync and conflict resolution](docs/conflict_resolution_client_strategy.md)
+**`docs/structure/`** - how Keres is built
+
+- [Monorepo structure and file conventions (where a new file goes)](docs/structure/file_structure.md)
+- [Project plan and architecture](docs/structure/project_plan.md)
+- [Screen flow](docs/structure/screen_flow.md)
+- [Narrative structure](docs/structure/narrative-structure.md) and [choice mechanics](docs/structure/choice_mechanics.md)
+- [Stat system and radar chart](docs/structure/stat_system.md)
+- [Sync and conflict resolution](docs/structure/conflict_resolution_client_strategy.md) and [sync failure modes](docs/structure/sync-failure-modes.md)
+- [Testing](docs/structure/testing.md)
+
+**`docs/procedures/`** - step by step
+
+- [Adding an entity or a field](docs/procedures/adding_an_entity.md)
+- [Release process](docs/procedures/release_process.md)
+- [Guided tours](docs/procedures/guided_tours.md)
+- [Testing payments locally](docs/procedures/payments_local_test.md)
+
+**`docs/compliance/`** - data, age verification and payment contracts
+
+- [Data governance](docs/compliance/data-governance.md), [age verification](docs/compliance/age_verification.md) and its [reviewer guide](docs/compliance/age_verification_reviewer.md), [payment connectors](docs/compliance/payment_connectors.md)
+
+**`docs/product/`** - what Keres is and is not: the [feature landscape](docs/product/FEATURE_LANDSCAPE.md) and the code-grounded [feature inventory](docs/product/feature_inventory.md)
+
+**`docs/decisions/`** - why the big features are the way they are (finished design plans)
+
+**`docs/extras/`** - release names and patch notes
 
 ## Operational security
 

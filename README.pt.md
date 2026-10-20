@@ -7,7 +7,7 @@
   <p><a href="README.md">English</a> · <strong>Português</strong></p>
 
   <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.2.19-14151A?logo=bun" alt="Bun 1.2.19" /></a>
-  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-54-000020?logo=expo" alt="Expo 54" /></a>
+  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-57-000020?logo=expo" alt="Expo 57" /></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 16" /></a>
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&amp;logoColor=white" alt="Docker ready" /></a>
 </div>
@@ -364,12 +364,14 @@ O workflow `.github/workflows/pages.yml` constrói e publica a cada push em `mas
 
 ## Documentação técnica
 
-- [Estrutura do monorepo e convenções de arquivos (onde vai um arquivo novo)](docs/file_structure.md)
-- [Plano e arquitetura do projeto](docs/project_plan.md)
-- [Fluxo de telas](docs/screen_flow.md)
-- [Mecânicas de escolhas](docs/choice_mechanics.md)
-- [Sistema de status e gráfico radar](docs/stat_system.md)
-- [Sincronização e resolução de conflitos](docs/conflict_resolution_client_strategy.md)
+A documentação técnica está em inglês. Quem chega agora deve começar por [CONTRIBUTING.md](CONTRIBUTING.md); os documentos ficam em `docs/`, em pastas por finalidade (`structure/`, `procedures/`, `compliance/`, `product/`, `decisions/`, `extras/`).
+
+- [Estrutura do monorepo e convenções de arquivos (onde vai um arquivo novo)](docs/structure/file_structure.md)
+- [Plano e arquitetura do projeto](docs/structure/project_plan.md)
+- [Fluxo de telas](docs/structure/screen_flow.md)
+- [Mecânicas de escolhas](docs/structure/choice_mechanics.md)
+- [Sistema de status e gráfico radar](docs/structure/stat_system.md)
+- [Sincronização e resolução de conflitos](docs/structure/conflict_resolution_client_strategy.md)
 
 ## Segurança operacional
 

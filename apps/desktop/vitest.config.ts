@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**'],
-      // A floor, not a target - see the ratchet rule in docs/TESTING_ROADMAP.md §12.
+      // A floor, not a target - see the ratchet rule in docs/structure/testing.md.
       thresholds: coverageThresholds.desktop,
     },
   },

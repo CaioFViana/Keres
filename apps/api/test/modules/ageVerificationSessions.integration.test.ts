@@ -18,7 +18,7 @@ import { postVerifierEvents } from '@test/helpers/ageVerificationEvents';
 import { truncateAll } from '@test/helpers/database';
 
 /**
- * Registration in `required` mode and the session that goes with a pending account (`docs/age_verification.md`,
+ * Registration in `required` mode and the session that goes with a pending account (`docs/compliance/age_verification.md`,
  * "Registration in required mode"). Accounts that exist before the mode is entered are active; the ones made after it
  * are pending until the fake service decides.
  */

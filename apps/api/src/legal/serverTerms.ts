@@ -9,7 +9,7 @@ import type { AgeVerificationMode } from '@keres/shared';
  * always serves *this* server's rules, whatever they are.
  *
  * The text depends on the age-verification mode (`AGE_VERIFICATION_MODE`, see
- * `docs/age_verification.md`): a `required` server verifies its accounts through a verification
+ * `docs/compliance/age_verification.md`): a `required` server verifies its accounts through a verification
  * service; a `manual` one says plainly that it runs no automated check, that minors are not
  * allowed by default, that an administrator marks verified accounts by hand, and that it takes no
  * payments (plans are granted by its team). Both share the version number, so the digest (the hash

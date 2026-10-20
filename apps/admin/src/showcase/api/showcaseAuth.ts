@@ -15,7 +15,7 @@ export interface ShowcaseViewer {
   userId: string;
   username: string;
   tag: string;
-  /** Age-verified by an administrator (see the server's docs/age_verification.md). */
+  /** Age-verified by an administrator (see the server's docs/compliance/age_verification.md). */
   isAdultVerified: boolean;
   /** The account's own choice to see adults-only stories here. Counts only while `isAdultVerified` holds. */
   showNsfw: boolean;

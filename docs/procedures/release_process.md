@@ -1,7 +1,7 @@
 # Release Process
 
 Checklist to cut a new Keres release. Steps 1-2 are manual; everything after
-the tag push is handled by [`.github/workflows/release.yml`](../.github/workflows/release.yml).
+the tag push is handled by [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
 
 ## 1. Pre-flight
 
@@ -16,7 +16,7 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
       `ci.yml`. No artifact starts being compiled before that passes.
 
 - [ ] Decide the compatibility numbers in
-      [`packages/shared/metadata/ReleaseVersions.ts`](../packages/shared/metadata/ReleaseVersions.ts):
+      [`packages/shared/metadata/ReleaseVersions.ts`](../../packages/shared/metadata/ReleaseVersions.ts):
       the story export format and the sync protocol version are bumped by hand, in an official release
       only, when the shape of an export or of the wire changed (with the matching migration).
       `release:check` prints them so the question gets asked.
@@ -24,15 +24,15 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 ## 2. Version and release name
 
 - [ ] Decide the new semver version and a codename in the spirit of
-      [`docs/fluff_release_names.md`](fluff_release_names.md).
+      [`docs/extras/fluff_release_names.md`](../extras/fluff_release_names.md).
 - [ ] Run `bun run version:set 1.2.3 Galatea` (replace both values). It updates every
       workspace `package.json`, Expo's `app.json`, and the `name`/`version` fields of
-      [`packages/shared/metadata/AppRelease.ts`](../packages/shared/metadata/AppRelease.ts),
+      [`packages/shared/metadata/AppRelease.ts`](../../packages/shared/metadata/AppRelease.ts),
       the one human-facing identity consumed by both client and server. The rest of that
       file is hand-owned and survives the stamp.
 - [ ] Set the release's `phrase` in `AppRelease.ts` by hand, quoting the new entry's line.
 - [ ] Add the release's entry to
-      [`docs/fluff_release_names.md`](fluff_release_names.md).
+      [`docs/extras/fluff_release_names.md`](../extras/fluff_release_names.md).
 
 > The release workflow repeats the version stamp from the tag as a safeguard. The local
 > command includes `apps/site` as well, so every workspace manifest and the packaged

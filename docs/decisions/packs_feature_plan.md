@@ -252,6 +252,6 @@ place. A test rebuilds them in memory and refuses a definition edited without re
 3. **Collision policy at the picker** is the only genuinely new UX decision in the feature. Left
    vague, it becomes "last pack wins", which is the worst option.
 4. **Shipped-pack maintenance**, in two languages, is the same recurring cost already documented for
-   the example stories (`docs/example_story_feature_matrix.md`).
+   the example stories (`docs/structure/example_story_feature_matrix.md`).
 5. **Scope drift into a pack editor.** Every request to "just let me tweak one field in the pack"
    ends the zero-CRUD property. The answer is: change the story, re-extract.

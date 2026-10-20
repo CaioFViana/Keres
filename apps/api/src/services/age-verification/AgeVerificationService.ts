@@ -28,7 +28,7 @@ import {
 } from './ageVerificationStatus';
 
 /**
- * Age verification on the Keres server (see `docs/age_verification.md`): a sending of a document to the operator's
+ * Age verification on the Keres server (see `docs/compliance/age_verification.md`): a sending of a document to the operator's
  * verification service, the service's decisions as they come back as signed events, the standing of each account, and
  * the removal of the adults-only area when a verification is revoked. The document itself never reaches this code.
  *

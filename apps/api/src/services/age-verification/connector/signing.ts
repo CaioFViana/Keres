@@ -15,7 +15,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
  *
  * It is the scheme of the payment connector (`payments/connector/signing.ts`) with its own tag: a payments signature is
  * never valid here, and the other way round, even under the same key. The scheme is documented in
- * `docs/age_verification.md`; a service implements it on its own, in any language.
+ * `docs/compliance/age_verification.md`; a service implements it on its own, in any language.
  */
 
 export const SIGNATURE_SCHEME = 'KERES-AGE-V1';

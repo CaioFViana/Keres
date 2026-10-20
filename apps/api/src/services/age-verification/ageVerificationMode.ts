@@ -2,7 +2,7 @@ import type { AgeVerificationMode } from '@keres/shared/age-verification/AgeVeri
 import { env } from '@/config/env';
 
 /**
- * How this server treats age (see `docs/age_verification.md`): `required` makes every new account wait for the
+ * How this server treats age (see `docs/compliance/age_verification.md`): `required` makes every new account wait for the
  * external service's approval; `manual` has no service, starts accounts active and not verified, and lets an
  * administrator mark them verified by hand.
  */

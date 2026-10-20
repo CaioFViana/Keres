@@ -16,7 +16,7 @@
 
 - **Keres never charges and never stores a card.** It keeps only: plan, paid period, status, amount and the provider's references.
 - **The payments service is separate** (another process, another port, and in production another machine: `buy.keres.me`). It speaks
-  the "connector contract" with Keres (`docs/payment_connectors.md`) and each provider's API on the other side.
+  the "connector contract" with Keres (`docs/compliance/payment_connectors.md`) and each provider's API on the other side.
 - **Buying in the Android app does not use PayPal/Stripe:** it uses Google Play Billing. The app buys from the store and sends the
   *purchase token* to Keres, Keres asks the service, and the service asks Google. Renewals and cancellations made in the store
   arrive through Google notifications (`/v1/play/notifications`).

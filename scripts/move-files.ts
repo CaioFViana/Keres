@@ -26,7 +26,7 @@ import { repoRoot } from './lib/packages';
  *
  * `--normalize <package root>` moves nothing: it rewrites every parent-relative (`../`) specifier of
  * that package to its alias. The import rule of the repo is: alias across folders, `./` for the same
- * folder or below, never `../` (see docs/file_structure.md). `packages/shared` is exempt: it is
+ * folder or below, never `../` (see docs/structure/file_structure.md). `packages/shared` is exempt: it is
  * consumed as source by the apps, and an alias inside it would not resolve for them.
  */
 

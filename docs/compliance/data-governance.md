@@ -6,7 +6,7 @@ with their own policies; this document answers for the official one, and gives
 the rules every server that runs age verification must follow (see the
 verification sections and the self-hoster checklist). The user-facing promises
 live in the
-[privacy policy](../apps/api/src/legal/privacyPolicy.ts) - this is the
+[privacy policy](../../apps/api/src/legal/privacyPolicy.ts) - this is the
 operational companion behind them.
 
 ## Controller and contact
@@ -18,7 +18,7 @@ operational companion behind them.
 ## Roles in age verification
 
 The verification service is run by the operator of each server, never by
-Keres as a product (`docs/age_verification.md`).
+Keres as a product (`docs/compliance/age_verification.md`).
 
 | Party | Role | What it receives |
 |---|---|---|
@@ -57,7 +57,7 @@ II). The Art. 11 basis for that comparison is not fixed here: it goes to the
 legal review (D23).
 
 Children: accounts on a Keres server are 18+ and verified
-(`docs/age_verification.md`). On the official server an account is created
+(`docs/compliance/age_verification.md`). On the official server an account is created
 pending and becomes active only when the verification service approves the
 holder. No account of a minor exists, so no parental link or supervision is
 needed (Lei 15.211/2025, Art. 24). The official server serves no adults-only
@@ -124,7 +124,7 @@ since the dump date (see `apps/api/deploy/README.md`).
 This assessment covers the verification service as every server runs it. The
 official server's figures are the Keres team's; any other server's operator
 must make the same assessment for its own service. Update it with every change
-to the flow in `docs/age_verification.md`.
+to the flow in `docs/compliance/age_verification.md`.
 
 **Purpose.** Confirm that the holder of an account is 18 or over (Lei
 15.211/2025), and stop the same document from verifying two accounts on the same
@@ -190,7 +190,7 @@ non-consensual imagery carries the diligent-removal duty (Marco Civil Art. 21).
 ## Self-hoster checklist
 
 For servers run by someone other than the Keres team. Work through it before
-the server opens. The reviewer handbook is `docs/age_verification_reviewer.md`.
+the server opens. The reviewer handbook is `docs/compliance/age_verification_reviewer.md`.
 
 1. **Choose the mode** (`AGE_VERIFICATION_MODE`):
    - `required`: new accounts are created pending and become active only when
@@ -232,5 +232,4 @@ the server opens. The reviewer handbook is `docs/age_verification_reviewer.md`.
 ## External items (not code)
 
 Play Console links, Data Safety, IARC, advocate review, provider DPAs and the
-named encarregado stay in D21/D23 of
-[LEGAL_IMPLEMENTATION_PLAN.md](../LEGAL_IMPLEMENTATION_PLAN.md).
+named encarregado are not code and are handled outside this repository.

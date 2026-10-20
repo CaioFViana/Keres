@@ -153,7 +153,7 @@ const envSchema = z.object({
    */
   /**
    * The payment connector this server sells plans through: the address of a separate service that speaks to one
-   * payment provider (see docs/payment_connectors.md). Absent, the server sells nothing and nothing about payments
+   * payment provider (see docs/compliance/payment_connectors.md). Absent, the server sells nothing and nothing about payments
    * is shown. It must be `https`, unless it is this machine (`localhost`) or `PAYMENT_CONNECTOR_ALLOW_INSECURE` says
    * the network between them can be trusted with what is not secret: every message is signed whatever the transport,
    * but only TLS keeps them private.
@@ -211,7 +211,7 @@ const envSchema = z.object({
     z.coerce.number().int().min(30).max(3650).default(1825),
   ),
   /**
-   * How this server treats age (see docs/age_verification.md). `required`: an account is 18+ and verified through the
+   * How this server treats age (see docs/compliance/age_verification.md). `required`: an account is 18+ and verified through the
    * external service, so boot refuses to start without the service's address and both keys, and a new registration
    * waits for the service's approval. `manual` (the default): no external service; accounts start active and not
    * verified, an administrator marks them by hand, and the adults-only area can be turned on. The legacy `disabled`

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    // `verbatimModuleSyntax` não se aplica aqui: o processo principal do Electron é CommonJS,
-    // e a flag proíbe sintaxe de módulo ES num arquivo CJS. O ESLint cobre a mesma disciplina.
+    // `verbatimModuleSyntax` does not apply here: Electron's main process is CommonJS, and the
+    // flag forbids ES module syntax in a CJS file. The linter covers the same discipline.
     "module": "CommonJS",
     "moduleResolution": "node",
     "lib": ["ES2022"],

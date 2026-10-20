@@ -111,6 +111,53 @@ describe('createStoryEntityCountService', () => {
   });
 });
 
+describe('countOwnedOnServer', () => {
+  const owned = (id: string, over: Partial<typeof schema.stories.$inferInsert> = {}) =>
+    seedLocalStory(database, { id, title: id, serverId: 'srv-1', myRole: 'owner', ...over });
+
+  it('lists the own live stories of the server with their counts, the fullest first', async () => {
+    await owned('small');
+    await owned('big');
+    await insertCharacter('c-1', { storyId: 'big' });
+    await insertCharacter('c-2', { storyId: 'big' });
+    await insertCharacter('c-3', { storyId: 'small' });
+
+    const usage = await createStoryEntityCountService(database.db).countOwnedOnServer('srv-1');
+
+    expect(usage).toEqual([
+      { id: 'big', title: 'big', total: 2 },
+      { id: 'small', title: 'small', total: 1 },
+    ]);
+  });
+
+  it('leaves out shared stories, deleted ones, other servers and local-only stories', async () => {
+    await owned('mine');
+    await owned('shared', { myRole: 'writer' });
+    await owned('gone', { isDeleted: true });
+    await owned('elsewhere', { serverId: 'srv-2' });
+    // The one the suite seeds is a local story with no server.
+
+    const usage = await createStoryEntityCountService(database.db).countOwnedOnServer('srv-1');
+
+    expect(usage).toEqual([{ id: 'mine', title: 'mine', total: 0 }]);
+  });
+
+  it('breaks a tie by title and does not count what the plan does not', async () => {
+    await owned('b-story');
+    await owned('a-story');
+    await insertCharacter('c-1', { storyId: 'a-story' });
+    await insertCharacter('c-2', { storyId: 'b-story' });
+    await insertCharacter('c-gone', { storyId: 'a-story', isDeleted: true });
+
+    const usage = await createStoryEntityCountService(database.db).countOwnedOnServer('srv-1');
+
+    expect(usage.map(({ id, total }) => [id, total])).toEqual([
+      ['a-story', 1],
+      ['b-story', 1],
+    ]);
+  });
+});
+
 describe('countFreeForStory', () => {
   const insertTagRelation = (
     id: string,

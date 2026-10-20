@@ -21,8 +21,10 @@ import ServerActionRow from '@/src/components/features/servers/ServerActionRow';
 import TermsModal from '@/src/components/features/servers/TermsModal/TermsModal';
 import { serverCardStyleDefs } from '@/src/components/features/servers/serverCardStyleDefs';
 import ServerStatusPill from '@/src/components/features/servers/ServerStatusPill';
+import StoryUsageCard from '@/src/components/features/servers/StoryUsageCard';
 import { useDrizzle } from '@/src/db';
 import { useAccountPlan } from '@/src/screens/enter-stack/servers/useAccountPlan';
+import { useServerStoryUsage } from '@/src/screens/enter-stack/servers/useServerStoryUsage';
 import { useAccountVerificationNotice } from '@/src/screens/enter-stack/servers/useAccountVerificationNotice';
 import { useAgeVerificationInfo } from '@/src/screens/enter-stack/servers/useAgeVerificationInfo';
 import { formatDateTime } from '@/src/utils/format/formatDateTime';
@@ -282,6 +284,8 @@ const ServerDetailScreen = () => {
   // screen comes back to the front, because the approval may have happened on the verification screen.
   const focused = useIsFocused();
   const verificationNotice = useAccountVerificationNotice(stableServer, online && focused);
+  // The person's own stories here and how full each is, read again whenever the screen comes back to the front.
+  const { stories: storyUsage } = useServerStoryUsage(serverId, focused);
 
   const hasUnseenAdminMessage = useIsConversationUnseen(adminConversationKey(serverId));
 
@@ -409,6 +413,12 @@ const ServerDetailScreen = () => {
         <>
           <Text style={styles.sectionTitle}>{t('server_plan_section')}</Text>
           {plan ? <PlanLimitsCard plan={plan} /> : null}
+          {plan && storyUsage.length > 0 ? (
+            <>
+              <Text style={styles.sectionTitle}>{t('plan_card_story_usage_title')}</Text>
+              <StoryUsageCard stories={storyUsage} limit={plan.maxEntitiesPerStory} />
+            </>
+          ) : null}
           {payments?.info.subscription ? (
             <PlanStatusCard subscription={payments.info.subscription} />
           ) : null}

@@ -2056,6 +2056,8 @@
   "plan_card_entities_used": "Items in use: {{used}} of {{limit}}",
   "plan_card_no_plan": "No plan limits",
   "plan_card_stories_used": "Stories in use: {{used}} of {{limit}}",
+  "plan_card_story_items_of": "{{used}} of {{limit}}",
+  "plan_card_story_usage_title": "Items per story",
   "plan_limit_comments_none": "No comments per story",
   "plan_limit_comments_one": "Up to 1 comment per story",
   "plan_limit_comments_other": "Up to {{count}} comments per story",

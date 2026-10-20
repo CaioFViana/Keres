@@ -308,7 +308,7 @@ export function TiersPage() {
             {priceInput(t('tiers.priceYearly'), 'priceYearlyCents')}
             {productInput(t('tiers.playMonthlyProduct'), 'playMonthlyProductId')}
             {productInput(t('tiers.playYearlyProduct'), 'playYearlyProductId')}
-            <label className="check">
+            <label className="checkbox-label switch">
               <input
                 type="checkbox"
                 checked={form.webMonthlyEnabled ?? true}
@@ -316,7 +316,7 @@ export function TiersPage() {
               />
               {t('tiers.webMonthly')} <span className="hint">{t('tiers.webHint')}</span>
             </label>
-            <label className="check">
+            <label className="checkbox-label switch">
               <input
                 type="checkbox"
                 checked={form.webYearlyEnabled ?? true}

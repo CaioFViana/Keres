@@ -249,6 +249,33 @@ describe('landing build', () => {
     await unmount();
   });
 
+  it('calls the default plan free even when no price was filled in, and leaves other unpriced plans to contact', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        currency: 'BRL',
+        tiers: [
+          { ...freeTier, priceMonthlyCents: null, priceYearlyCents: null },
+          {
+            ...paidTier,
+            id: '01ARZ3NDEKTSV4RRFFQ69G5FCX',
+            name: 'Enterprise',
+            priceMonthlyCents: null,
+            priceYearlyCents: null,
+          },
+        ],
+      }),
+    );
+    const { container, unmount } = await renderLanding();
+    await flush();
+
+    const [free, enterprise] = [...container.querySelectorAll('#tiers .tier-card')];
+    expect(free.querySelector('.tier-price')?.textContent).toBe(siteEn.tiers.free);
+    expect(free.querySelector('.tier-price a')).toBeNull();
+    expect(enterprise.querySelector('.tier-price a')?.textContent).toBe(siteEn.tiers.customPrice);
+
+    await unmount();
+  });
+
   it('says so when the server has no plans for sale', async () => {
     const { container, unmount } = await renderLanding();
     await flush();

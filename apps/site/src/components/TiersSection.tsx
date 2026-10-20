@@ -35,15 +35,17 @@ function TierCard({
   const hero = monthly ?? yearly;
   const heroPeriod = monthly !== null ? t('tiers.perMonth') : t('tiers.perYear');
   const showYearlyLine = monthly !== null && yearly !== null && !(monthly === 0 && yearly === 0);
-  const heroPrice =
-    hero === null ? null : hero === 0 ? (
-      t('tiers.free')
-    ) : (
-      <>
-        {formatPrice(hero, currency, i18n.language)}
-        <span className="tier-period">{heroPeriod}</span>
-      </>
-    );
+  // The default plan is the one every new account starts on and nobody pays for: left without a price
+  // it is still free, not "ask us". Any other plan without a price is the one sold by arrangement.
+  const isFree = hero === 0 || (hero === null && tier.isDefault);
+  const heroPrice = isFree ? (
+    t('tiers.free')
+  ) : hero === null ? null : (
+    <>
+      {formatPrice(hero, currency, i18n.language)}
+      <span className="tier-period">{heroPeriod}</span>
+    </>
+  );
 
   return (
     <article className={`feature-card tier-card${tier.isDefault ? ' is-default' : ''}`}>

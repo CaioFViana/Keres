@@ -140,8 +140,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   // Removing the per-test clipboard stub restores jsdom's navigator.
-  // @ts-expect-error the stub added a property jsdom never ships
-  delete navigator.clipboard;
+  Reflect.deleteProperty(navigator, 'clipboard');
 });
 
 describe('users list', () => {
